@@ -1,0 +1,10 @@
+// Stringify
+#define TOSTR_(x) #x
+#define STRINGIFY(x) TOSTR_(x)
+
+
+// Version
+#define ThermalFIST_VERSION_MAJOR @ThermalFIST_VERSION_MAJOR@
+#define ThermalFIST_VERSION_MINOR @ThermalFIST_VERSION_MINOR@
+#define ThermalFIST_VERSION_DEVEL @ThermalFIST_VERSION_DEVEL@
+#define INPUT_FOLDER "${PROJECT_SOURCE_DIR}/input"
