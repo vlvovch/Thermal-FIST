@@ -1,3 +1,4 @@
+# Hadron list from the THERMUS v3.0 package http://www.phy.uct.ac.za/phy/people/academic/wheaton/research
 #         pdgid                name         stable      mass[GeV]     degeneracy     statistics              B              Q              S              C            |S|            |C|     width[GeV] threshold[GeV]
             111                 pi0              1        0.13498              1             -1              0              0              0              0              0              0              0              0
             211                 pi+              1        0.13957              1             -1              0              1              0              0              0              0              0              0
