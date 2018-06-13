@@ -173,7 +173,7 @@ class ThermalParticle
 		void SetWeight(double weight) { m_Weight = weight; }
 
 		int DecayType() const { return m_DecayType; }
-		void SetDecayType(int type) { m_DecayType = m_DecayType; }		
+		void SetDecayType(int type) { m_DecayType = type; }		
 
 		const std::vector<ParticleDecay>& Decays() const { return m_Decays; }
 				  std::vector<ParticleDecay>& Decays()       { return m_Decays; }
