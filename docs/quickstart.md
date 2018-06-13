@@ -1,4 +1,4 @@
-## CuteHRG 0.1
+## Thermal-FIST 0.5
 
 ### External dependencies
 
@@ -26,13 +26,13 @@ The standard analysis can be performed within the gui.
 
 From the build folder, run with
 ```bash
-./bin/QtHRG
+./bin/QtThermalFIST
 ```
 
 For most part using the gui should be self-explanatory. 
 
 The particle list is read from file.
-Standard list is in the `$(CuteHRG)/input/list/PDG2014` folder.
+Standard list is in the `$(ThermalFIST)/input/list/PDG2014` folder.
 There `list-mulibaryons.dat` contains hadrons plus multibaryons, while `list.dat` contains hadrons only. In the same there should also be a `decays.dat` file specifying all the decay channels.
 
 The gui consists of three tabs:
@@ -56,7 +56,7 @@ Set the interaction parameters for EV/QvdW HRG models:
 1. **Same for all**: constant radius parameter for all species.
 2. **Bag-like**: mass-proportional eigenvolumes. The *Radius (fm)* value determines the nucleon radius in such a scheme.
 3. **Point-like mesons**: eigenvolume is proportional to the absolute baryon number, i.e. mesons are point-like
-4. **Custom**: The interaction parameters are read from external file. For *Diagonal EV* the external file should contain a list of rows (one for each species) with two columns: 1 - PDGID, 2 - v_i. For *Crossterms EV*, one row for each pair of species, three columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij. For *QvdW-HRG*, one row for each pair of species, four columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij, 4 - a_ij. If some species/pair of species is not found in the input file, then the parameters are zero for that. Some sample input files are provided in `$(CuteHRG)/input/list/PDG2014/interaction` folder.
+4. **Custom**: The interaction parameters are read from external file. For *Diagonal EV* the external file should contain a list of rows (one for each species) with two columns: 1 - PDGID, 2 - v_i. For *Crossterms EV*, one row for each pair of species, three columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij. For *QvdW-HRG*, one row for each pair of species, four columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij, 4 - a_ij. If some species/pair of species is not found in the input file, then the parameters are zero for that. Some sample input files are provided in `$(ThermalFIST)/input/list/PDG2014/interaction` folder.
 
 
 #### Thermal fits tab
@@ -64,7 +64,7 @@ Set the interaction parameters for EV/QvdW HRG models:
 Thermal fitting. HRG model specification same as in previous tab.
 If $mu_Q$ and $mu_S$ are not constrained, they are fitted as well.
 
-The experimental data can be loaded from external file. Some samples are provided in `$(CuteHRG)/input/data`. Limited possibility for manual editing is provided as well.
+The experimental data can be loaded from external file. Some samples are provided in `$(ThermalFIST)/input/data`. Limited possibility for manual editing is provided as well.
 Another useful feature is the analysis of the $chi^2$ profiles, done in separate window. Should be opened after a global fit was performed.
 
 #### Event generator tab
