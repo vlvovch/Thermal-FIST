@@ -15,3 +15,5 @@ The package is not fully documented yet, but should be perfectly usable. See the
 
 Note that calculations may break down for excessive/overstressed parameters.
 This should be carefully monitored.
+
+*Copyright (C) 2018  Volodymyr Vovchenko*
