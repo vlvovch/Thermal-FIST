@@ -31,10 +31,8 @@ if(WIN32)
   endif()
 endif()
 
-qt5_use_modules(QtThermalFIST Widgets PrintSupport)
-
 # Use the Widgets module from Qt 5.
-target_link_libraries(QtThermalFIST ThermalFIST)
+target_link_libraries(QtThermalFIST ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
 set_property(TARGET QtThermalFIST PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
