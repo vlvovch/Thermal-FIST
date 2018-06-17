@@ -1,5 +1,5 @@
-#ifndef THERMALMODELCANONICALBSQPLUS_H
-#define THERMALMODELCANONICALBSQPLUS_H
+#ifndef THERMALMODELCANONICAL_H
+#define THERMALMODELCANONICAL_H
 
 #include <map>
 
@@ -29,11 +29,11 @@ class ThermalModelCanonical :
 	public:
 		ThermalModelCanonical(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters());
 
-		~ThermalModelCanonical(void);
+		virtual ~ThermalModelCanonical(void);
 
 		void ChangeTPS(ThermalParticleSystem *TPS_);
 
-		void CalculateQuantumNumbersRange(bool doubleRange = false);
+		virtual void CalculateQuantumNumbersRange(bool doubleRange = false);
 
 		void SetParameters(double T, double gammaS, double V, int B, int Q, int S = 0, int C = 0);
 
@@ -46,16 +46,16 @@ class ThermalModelCanonical :
 		virtual void FixParameters(double) { };
 		virtual void FixParametersNoReset() { };
 
-		void CalculateDensities();
-		void CalculatePartitionFunctions();
-		void CalculatePartitionFunctionsBoseOnly();
+		virtual void CalculateDensities();
+		virtual void CalculatePartitionFunctions();
+		virtual void CalculatePartitionFunctionsBoseOnly();
 
 		// TODO check the validity
 		virtual double CalculateParticleScaledVariance(int part);
-		void CalculateTwoParticleCorrelations();
+		virtual void CalculateTwoParticleCorrelations();
 
 		// TODO properly for higher moments
-		void CalculateFluctuations();
+		virtual void CalculateFluctuations();
 
 
 		virtual double CalculateEnergyDensity();
@@ -68,7 +68,7 @@ class ThermalModelCanonical :
 
 		virtual double ParticleScalarDensity(int part) { return 0.; }
 
-	private:
+	protected:
 
 		std::map<QuantumNumbers, int> m_QNMap;
 		std::vector<QuantumNumbers> m_QNvec;
