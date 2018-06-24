@@ -25,9 +25,9 @@ add_executable(QtThermalFIST ${QTHRG_SOURCES})
 
 if(WIN32)
   if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")
-    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtHRG-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}")
+    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}")
   else()
-    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtHRG-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}")
+    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}")
   endif()
 endif()
 
