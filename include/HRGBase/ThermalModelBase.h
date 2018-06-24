@@ -88,9 +88,13 @@ class ThermalModelBase
 		void SetVolume(double Volume) { m_Volume = Volume; m_Parameters.V = Volume; }
 		void SetVolumeRadius(double Radius) { m_Volume = 4. / 3.*xMath::Pi() * Radius * Radius * Radius; m_Parameters.V = m_Volume; }
 
-		double StrangenessCanonicalVolume() const { return m_Parameters.SVc; }
-		void SetStrangenessCanonicalVolume(double Volume) { m_Parameters.SVc = Volume; }
-		void SetStrangenessCanonicalVolumeRadius(double Radius) { m_Parameters.SVc = 4. / 3. * xMath::Pi() * Radius * Radius * Radius; }
+		double StrangenessCanonicalVolume() const { return CanonicalVolume(); }
+		void SetStrangenessCanonicalVolume(double Volume) { SetCanonicalVolume(Volume); }
+		void SetStrangenessCanonicalVolumeRadius(double Radius) { SetCanonicalVolumeRadius(Radius); }
+		
+		double CanonicalVolume() const { return m_Parameters.SVc; }
+		void SetCanonicalVolume(double Volume) { m_Parameters.SVc = Volume; }
+		void SetCanonicalVolumeRadius(double Radius) { m_Parameters.SVc = 4. / 3. * xMath::Pi() * Radius * Radius * Radius; }
 
 		virtual void FixParameters();
 		virtual void FixParametersNoReset();

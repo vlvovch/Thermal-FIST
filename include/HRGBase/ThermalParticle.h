@@ -36,7 +36,7 @@ struct ThermalModelParameters {
 	double		gammaS;	/**< Chemical non-equilibirum fugacity of strange quarks */
 	double		gammaC;	/**< Chemical non-equilibirum fugacity of charm quarks */
 	double		V;				/**< Total system volume [fm^3] */
-	double  SVc;			/**< Strangeness correlation volume [fm^3] */
+	double  SVc;			/**< Canonical correlation volume [fm^3] */
 	int			B;				/**< Total baryon charge (CE) */
 	int			Q;				/**< Total electric charge (CE) */
 	int			S;				/**< Total strangeness charge (CE) */
