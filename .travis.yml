@@ -14,5 +14,5 @@ script:
   - mkdir build
   - cd build
   - cmake -DINCLUDE_TESTS=ON ../
-  - make
+  - make -j$(nproc)
   - make test
