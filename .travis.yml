@@ -1,0 +1,18 @@
+language: cpp
+compiler: g++
+sudo: required
+dist: trusty
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
+install:
+  - sudo apt-get install g++-6 cmake qt5-default
+  
+script:
+  - mkdir build
+  - cd build
+  - cmake -DINCLUDE_TESTS=ON ../
+  - make -j$(nproc)
+  - make test
