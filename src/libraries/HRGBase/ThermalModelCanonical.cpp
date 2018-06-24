@@ -95,7 +95,6 @@ void ThermalModelCanonical::SetParameters(double T, double gammaS, double V, int
 	m_Parameters.T = T;
 	m_Parameters.gammaS = gammaS;
 	m_Parameters.V = V;
-	//m_Parameters.Vc = V;
 	m_Parameters.B = B;
 	m_Parameters.Q = Q;
 	m_Parameters.S = S;
