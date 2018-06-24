@@ -1,4 +1,6 @@
 # Thermal-FIST
+[![Build Status](https://travis-ci.org/vlvovch/Thermal-FIST.svg?branch=master)](https://travis-ci.org/vlvovch/Thermal-FIST)
+
 **Thermal-FIST** (or simply **The FIST**) is a C++ package designed for the convenient general-purpose analysis within the family of the hadron resonance gas (HRG) models.
 This mainly includes the statistical analysis of particle production in heavy-ion collisions and the phenomenology of the hadronic equation of state. 
 
