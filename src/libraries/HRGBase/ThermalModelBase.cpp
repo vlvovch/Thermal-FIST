@@ -514,9 +514,11 @@ namespace ThermalModelBaseNamespace {
 		for (int i = 0; i < 4; ++i) {
 			if (vConstr[i]) {
 				if (vType[i] == 0)
-					ret[i1] = (dens[i1] * ThM->Parameters().V - vTotals[i1]) / vTotals[i1];
+					//ret[i1] = (dens[i1] * ThM->Parameters().V - vTotals[i1]) / vTotals[i1];
+					ret[i1] = (dens[i] * ThM->Parameters().V - vTotals[i]) / vTotals[i];
 				else
-					ret[i1] = dens[i1] / absdens[i1];
+					//ret[i1] = dens[i1] / absdens[i1];
+					ret[i1] = dens[i] / absdens[i];
 				i1++;
 			}
 		}
@@ -597,9 +599,11 @@ namespace ThermalModelBaseNamespace {
 					if (vConstr[j]) {
 						ret(i1, i2) = 0.;
 						if (vType[i] == 0)
-							ret(i1, i2) = deriv[i1][i2] * ThM->Parameters().V / vTotals[i1];
+							//ret(i1, i2) = deriv[i1][i2] * ThM->Parameters().V / vTotals[i1];
+							ret(i1, i2) = deriv[i][j] * ThM->Parameters().V / vTotals[i];
 						else
-							ret(i1, i2) = deriv[i1][i2] / absdens[i1] - dens[i1] / absdens[i1] / absdens[i1] * derivabs[i1][i2];
+							//ret(i1, i2) = deriv[i1][i2] / absdens[i1] - dens[i1] / absdens[i1] / absdens[i1] * derivabs[i1][i2];
+							ret(i1, i2) = deriv[i][j] / absdens[i] - dens[i] / absdens[i] / absdens[i] * derivabs[i][j];
 						i2++;
 					}
 				i1++;
@@ -948,7 +952,8 @@ void ThermalModelBase::FixParametersNoReset() {
 }
 
 void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
-	double muBinit, double muQinit, double muSinit, double muCinit) {
+	double muBinit, double muQinit, double muSinit, double muCinit,
+	bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
 	m_Parameters.muB = muBinit;
 	m_Parameters.muS = muSinit;
 	m_Parameters.muQ = muQinit;
@@ -961,10 +966,10 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 	vector<int> vConstr(4, 1);
 	vector<int> vType(4, 0);
 
-	vConstr[0] = m_TPS->hasBaryons();
-	vConstr[1] = m_TPS->hasCharged();
-	vConstr[2] = m_TPS->hasStrange();
-	vConstr[3] = m_TPS->hasCharmed();
+	vConstr[0] = m_TPS->hasBaryons() && ConstrMuB;
+	vConstr[1] = m_TPS->hasCharged() && ConstrMuQ;
+	vConstr[2] = m_TPS->hasStrange() && ConstrMuS;
+	vConstr[3] = m_TPS->hasCharmed() && ConstrMuC;
 
 	vType[0] = (int)(totB == 0.0);
 	vType[1] = (int)(totQ == 0.0);

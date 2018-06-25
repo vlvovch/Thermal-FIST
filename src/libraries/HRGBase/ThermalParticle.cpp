@@ -267,7 +267,7 @@ double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & par
 
 
 double ThermalParticle::ScaledVariance(const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const {
-	if (m_Degeneracy == 0) return 1.;
+	if (m_Degeneracy == 0.0) return 1.;
 	if (m_Statistics == 0) return 1.;
 	double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu);
 	if (dens==0.) return 1.;

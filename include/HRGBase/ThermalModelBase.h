@@ -102,7 +102,8 @@ class ThermalModelBase
 
 
 		virtual void SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
-																					double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.);
+																					double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,
+			                                   bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
 
 
 		virtual void CalculateDensities() = 0;
