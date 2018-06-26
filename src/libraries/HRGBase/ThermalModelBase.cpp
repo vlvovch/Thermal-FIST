@@ -959,6 +959,10 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 	m_Parameters.muQ = muQinit;
 	m_Parameters.muC = muCinit;
 	if (totB == 0.0 && totQ == 0.0 && totS == 0.0 && totC == 0.0) {
+		m_Parameters.muB = 0.;
+		m_Parameters.muS = 0.;
+		m_Parameters.muQ = 0.;
+		m_Parameters.muC = 0.;
 		FillChemicalPotentials();
 		CalculateDensities();
 		return;
