@@ -460,6 +460,14 @@ double ThermalModelEVDiagonal::CommonSuppressionFactor()
 	return m_Suppression;
 }
 
+double ThermalModelEVDiagonal::MuShift(int id)
+{
+	if (id >= 0. && id < m_v.size())
+		return -m_v[id] * m_Pressure;
+	else
+		return 0.0;
+}
+
 double ThermalModelEVDiagonal::CalculateEigenvolumeFraction() {
 	double tEV = 0.;
 	for (int i = 0; i < m_TPS->Particles().size(); ++i) {

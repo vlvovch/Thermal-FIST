@@ -60,13 +60,21 @@ struct ParticleDecay
 	std::vector<int> mDaughters;		/**< PDGID numbers of daughter particles */
 	double mM0;										/**< Sum of masses of decay products */
 
+	double mPole;
+	double mL;                      /**< Orbital angular momentum for decay, used in the eBW scheme */
+	std::vector<double> mBratioVsM; /**< Mass-dependent branching ratios */
+	double mBratioAverage;          /**< Average branching ratios after integrating with the Boltzmann factor*/
+
 	/// Constructor.
 	/**
 	*   Takes branching ratio and vector of PDG IDs of daughter particles.
 	*/
 	ParticleDecay(double bratio=0., const std::vector<int> &daughters=std::vector<int>(0)) : 
-			mBratio(bratio), mDaughters(daughters), mM0(0.) {
+			mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),
+		  mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio) {
 	}
+
+	double ModifiedWidth(double m);
 };
 
 /**
@@ -77,7 +85,7 @@ class ThermalParticle
 {
 	public:
 		enum ResonanceWidthShape					{ RelativisticBreitWiger, NonRelativisticBreitWiger};
-		enum ResonanceWidthIntegration		{ TwoGamma, FullInterval, FullIntervalWeighted };
+		enum ResonanceWidthIntegration		{ TwoGamma, FullInterval, FullIntervalWeighted, eBW };
 
 		ThermalParticle(bool Stable_=true, std::string Name="hadron", int PDGID=0, double Deg=1., int Stat=0, double Mass=0.,
 			int Strange=0, int Baryon=0, int Charge=0, double AbsS=0., double Width=0., double Threshold=0., int Charm = 0, double AbsC = 0., double radius = 0.5, int Quark = 0);
@@ -86,9 +94,12 @@ class ThermalParticle
 
 		void FillCoefficients();
 
+		// Fill coefficients for mass integration in the eBW scheme
+		void FillCoefficientsDynamical();
+
 
 		void NormalizeBranchingRatios();
-		void RestoreBranchingRatios() { m_Decays = m_DecaysOrig; }
+		void RestoreBranchingRatios();// { m_Decays = m_DecaysOrig; }
 		
 		double Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type = IdealGasFunctions::ParticleDensity, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
 
@@ -160,14 +171,21 @@ class ThermalParticle
 		double DecayThresholdMass() const { return m_Threshold; }
 		void SetDecayThresholdMass(double threshold);// { m_Threshold = threshold; }
 
+		// Threshold calculated from daughter masses
+		double DecayThresholdMassDynamical() const { return m_ThresholdDynamical; }
+		void CalculateAndSetDynamicalThreshold();
+
 		ResonanceWidthShape GetResonanceWidthShape() const { return m_ResonanceWidthShape;  }
-		void SetResonanceWidthShape(ResonanceWidthShape shape) { m_ResonanceWidthShape = shape; }
+		void SetResonanceWidthShape(ResonanceWidthShape shape);// { m_ResonanceWidthShape = shape; }
 
 		ResonanceWidthIntegration GetResonanceWidthIntegrationType() const { return m_ResonanceWidthIntegrationType; }
 		void SetResonanceWidthIntegrationType(ResonanceWidthIntegration type);// { m_ResonanceWidthIntegrationType = type; }
 
 		// Resonance Mass Distribution: Relativistic or Non-relativistic Breit-Wigner
 		double MassDistribution(double m) const;
+
+		// Resonance Mass Distribution with energy dependent width
+		double MassDistribution(double m, double width) const;
 
 		double Weight() const { return m_Weight; }
 		void SetWeight(double weight) { m_Weight = weight; }
@@ -201,6 +219,8 @@ class ThermalParticle
 		const std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() const		{ return m_DecayProbabilities; }
 		std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities()								{ return m_DecayProbabilities; }
 
+		void CalculateThermalBranchingRatios(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.);
+
 		void SetCalculationType(IdealGasFunctions::QStatsCalculationType type)					{ m_QuantumStatisticsCalculationType = type; }
 		IdealGasFunctions::QStatsCalculationType CalculationType()																const { return m_QuantumStatisticsCalculationType; }
 
@@ -224,6 +244,17 @@ class ThermalParticle
 		std::vector<double> m_xleg,   m_wleg;
 		std::vector<double> m_xleg32, m_wleg32;
 		std::vector<double> m_brweight;
+
+
+		/**
+		*	For the eBW scheme
+		*/
+		std::vector<double> m_xlegdyn, m_wlegdyn, m_vallegdyn;
+		std::vector<double> m_xlegpdyn, m_wlegpdyn, m_vallegpdyn;
+		std::vector<double> m_xlagdyn, m_wlagdyn, m_vallagdyn;
+
+		std::vector<double> m_xalldyn, m_walldyn, m_densalldyn;
+
 
 		bool m_Stable;								/**< Flag whether particle is stable. */
 		bool m_AntiParticle;					/**< Whether particle was created as an antiparticle to another one. */
@@ -258,6 +289,7 @@ class ThermalParticle
 
 		double m_Width;							/**< Resonance width (GeV) */
 		double m_Threshold;					/**< Lower decay threshold (GeV) */
+		double m_ThresholdDynamical; /**< Lower decay threshold (GeV) calculated from daughter masses */
 		ResonanceWidthShape m_ResonanceWidthShape;									/**< Either relativistic or non-relativitic Breit-Wigner */
 		ResonanceWidthIntegration m_ResonanceWidthIntegrationType;	/**< Plus-minus TwoGamma or from m0 to infty */
 		double m_Radius;							/**< Hard-core radius (fm) */

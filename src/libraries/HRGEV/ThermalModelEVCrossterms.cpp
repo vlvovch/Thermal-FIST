@@ -706,3 +706,15 @@ double ThermalModelEVCrossterms::CalculateChargeScaledVariance(bool susc) {
 double ThermalModelEVCrossterms::CalculateStrangenessScaledVariance(bool susc) {
 	return 1.;
 }
+
+double ThermalModelEVCrossterms::MuShift(int id)
+{
+	if (id >= 0. && id < m_Virial.size()) {
+		double dMu = 0.;
+		for (int j = 0; j < m_TPS->Particles().size(); ++j) 
+			dMu += -m_Virial[id][j] * m_Ps[j];
+		return dMu;
+	}
+	else
+		return 0.0;
+}

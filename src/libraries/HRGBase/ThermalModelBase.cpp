@@ -724,6 +724,15 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 }
 
 
+void ThermalModelBase::SetUseWidth(bool useWidth)
+{
+	if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		m_TPS->ProcessDecays();
+	}
+	m_UseWidth = useWidth;
+}
+
 void ThermalModelBase::SetNormBratio(bool normBratio) {
 	if (normBratio != m_NormBratio) {
 		m_NormBratio = normBratio;
@@ -848,6 +857,16 @@ void ThermalModelBase::SetStatistics(bool stats) {
 		m_TPS->Particle(i).UseStatistics(stats);
 }
 
+void ThermalModelBase::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
+{
+	if (!m_UseWidth) {
+		printf("**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!\n");
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	}
+	else
+		m_TPS->SetResonanceWidthIntegrationType(type);
+}
+
 void ThermalModelBase::FillChemicalPotentials() {
 	m_Chem.resize(m_TPS->Particles().size());
 	for (int i = 0; i < m_TPS->Particles().size(); ++i)
@@ -865,6 +884,13 @@ void ThermalModelBase::SetChemicalPotentials(const std::vector<double>& chem)
 
 
 void ThermalModelBase::CalculateFeeddown() {
+	if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+			m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i], MuShift(i));
+		}
+		m_TPS->ProcessDecays();
+	}
+
 	for (int i = 0; i < m_TPS->Particles().size(); ++i) {
 		m_densitiestotal[i] = m_densities[i];
 		for (int j = 0; j < m_TPS->Particles()[i].DecayContributions().size(); ++j)

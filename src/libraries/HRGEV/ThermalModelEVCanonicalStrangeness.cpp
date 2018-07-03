@@ -137,6 +137,14 @@ double ThermalModelEVCanonicalStrangeness::CalculatePressure() {
 	return ret;
 }
 
+double ThermalModelEVCanonicalStrangeness::MuShift(int id)
+{
+	if (id >= 0. && id < m_v.size())
+		return -m_v[id] * m_PNS;
+	else
+		return 0.0;
+}
+
 
 void ThermalModelEVCanonicalStrangeness::PrepareModelEV()
 {

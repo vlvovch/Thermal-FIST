@@ -94,6 +94,10 @@ public:
 
 	double CommonSuppressionFactor();
 
+protected:
+	// TODO: test
+	virtual double MuShift(int id);
+
 private:
 	std::vector<double> m_densitiesid;
 	std::vector<double> m_densitiesidnoshift;
