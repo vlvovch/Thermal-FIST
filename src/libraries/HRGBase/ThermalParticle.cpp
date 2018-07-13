@@ -384,6 +384,92 @@ void ThermalParticle::FillCoefficientsDynamical() {
 	for (int j = 0; j < m_walldyn.size(); ++j) {
 		tsum += m_walldyn[j];
 	}
+
+	// For testing
+	//if (PdgId() == 2224) {
+	//	FILE *f = fopen("Delta(1232)++_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j) 
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
+	//if (PdgId() == 2214) {
+	//	FILE *f = fopen("Delta(1232)+_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
+	//if (PdgId() == 1114) {
+	//	FILE *f = fopen("Delta(1232)-_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
+	//if (PdgId() == 32224) {
+	//	FILE *f = fopen("Delta(1600)++_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
+	//if (PdgId() == 9000213) {
+	//	FILE *f = fopen("pi(1400)+_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
+	//if (PdgId() == 12212) {
+	//	FILE *f = fopen("N(1440)+_width.dat", "w");
+	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
+	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+	//	fclose(f);
+	//}
+
 	//printf("%15s: %10lf\n", Name().c_str(), tsum);
 
 	//for (int i = 0; i < m_Decays.size(); ++i) {
