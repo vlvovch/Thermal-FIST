@@ -43,6 +43,39 @@ std::vector<ParticleDecay> ThermalParticleSystem::GetDecaysFromAntiParticle(cons
 	return ret;
 }
 
+void ThermalParticleSystem::FillDecayProperties()
+{
+	for (int i = 0; i < m_Particles.size(); ++i) {
+		if (m_Particles[i].Decays().size() != 0) {
+			double tsumb = 0.;
+
+			for (int j = 0; j < m_Particles[i].Decays().size(); ++j) {
+
+				m_Particles[i].Decays()[j].mPole = m_Particles[i].Mass();
+
+				double M0 = 0.;
+				double tS = 0.;
+				for (int k = 0; k < m_Particles[i].Decays()[j].mDaughters.size(); ++k) {
+					int tid = PdgToId(m_Particles[i].Decays()[j].mDaughters[k]);
+					if (tid != -1) {
+						M0 += m_Particles[tid].Mass();
+						tS += max(0., (m_Particles[tid].Degeneracy() - 1.) / 2.);
+					}
+				}
+				m_Particles[i].Decays()[j].mM0 = M0;
+				m_Particles[i].Decays()[j].mL = abs(max(0., (m_Particles[i].Degeneracy() - 1.) / 2.) - tS);
+
+				//printf("%15s %d: %lf\n", m_Particles[i].Name().c_str(), j, m_Particles[i].Decays()[j].mL);
+
+				//tsumb += m_Particles[i].Decays()[j].mBratioAtPole;
+				tsumb += m_Particles[i].Decays()[j].mBratio;
+				m_Particles[i].Decays()[j].mBratioAverage = m_Particles[i].Decays()[j].mBratio;
+			}
+		}
+		m_Particles[i].CalculateAndSetDynamicalThreshold();
+		m_Particles[i].FillCoefficientsDynamical();
+	}
+}
 
 void ThermalParticleSystem::FillDecayThresholds()
 {
@@ -75,7 +108,7 @@ void ThermalParticleSystem::FillResonanceDecays() {
 
 	for (int i = 0; i < m_Particles.size(); ++i) {
 		for (int j = 0; j < m_Particles[i].DecayContributions().size(); ++j) {
-			vector<double> tmp = GoResonanceDecayProbs(m_Particles[i].DecayContributions()[j].second, i);
+			vector<double> tmp = GoResonanceDecayProbs(m_Particles[i].DecayContributions()[j].second, i, true);
 			if (tmp.size() > 1) m_Particles[i].DecayProbabilities().push_back(make_pair(tmp, m_Particles[i].DecayContributions()[j].second));
 		}
 		for (int j = 0; j < m_Particles[i].DecayProbabilities().size(); ++j) {
@@ -110,7 +143,7 @@ void ThermalParticleSystem::FillResonanceDecays() {
 		m_Particles[i].DeltaNch().resize(0);
 
 		for (int nti = 0; nti < 3; nti++) {
-			vector<double> prob = GoResonanceDecayProbsCharge(i, nchtyp[nti]);
+			vector<double> prob = GoResonanceDecayProbsCharge(i, nchtyp[nti], true);
 			double tmp = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
 			for (int jj = 0; jj < prob.size(); ++jj) {
 				tmp  += prob[jj] * jj;
@@ -136,14 +169,22 @@ void ThermalParticleSystem::GoResonance(int ind, int startind, double BR) {
 	}
 	else if (ind != startind) m_Particles[ind].DecayContributions().push_back(make_pair(BR, startind));
 	if (!m_Particles[ind].IsStable()) {
-		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i)
+		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
+			double tbr = m_Particles[ind].Decays()[i].mBratio;
+
+			// TODO: Fix(?) for canonical ensemble
+			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
+				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
 			for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
-				if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0) GoResonance(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*m_Particles[ind].Decays()[i].mBratio);
+				if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0) 
+					GoResonance(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr);
 			}
+		}
 	}
 }
 
-std::vector<double> ThermalParticleSystem::GoResonanceDecayProbs(int ind, int goalind) {
+std::vector<double> ThermalParticleSystem::GoResonanceDecayProbs(int ind, int goalind, bool firstdecay) {
 	std::vector<double> ret(1, 0.);
 	if (m_Particles[ind].IsStable()) {
 		if (ind == goalind) ret.push_back(1.);
@@ -158,6 +199,10 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbs(int ind, int go
 		ret[0] = 0.;
 		vector<double> tret;
 		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
+			double tbr = m_Particles[ind].Decays()[i].mBratio;
+			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
+				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
 			tret.resize(1);
 			tret[0] = 1.;
 			for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
@@ -172,7 +217,8 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbs(int ind, int go
 			}
 			if (ret.size() < tret.size()) ret.resize(tret.size(), 0.);
 			for (int j = 0; j < tret.size(); ++j)
-				ret[j] += m_Particles[ind].Decays()[i].mBratio * tret[j];
+				//ret[j] += m_Particles[ind].Decays()[i].mBratio * tret[j];
+				ret[j] += tbr * tret[j];
 		}
 		double totprob = 0.;
 		for (int i = 0; i < ret.size(); ++i)
@@ -189,7 +235,7 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbs(int ind, int go
 	return ret;
 }
 
-std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, int nch)
+std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, int nch, bool firstdecay)
 {
 	bool fl = false;
 	int tQ = m_Particles[ind].ElectricCharge();
@@ -210,6 +256,10 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, 
 		ret[0] = 0.;
 		vector<double> tret;
 		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
+			double tbr = m_Particles[ind].Decays()[i].mBratio;
+			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
+				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
 			tret.resize(1);
 			tret[0] = 1.;
 			for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
@@ -225,7 +275,8 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, 
 			if (ret.size() < tret.size()) 
 				ret.resize(tret.size(), 0.);
 			for (int j = 0; j < tret.size(); ++j)
-				ret[j] += m_Particles[ind].Decays()[i].mBratio * tret[j];
+				//ret[j] += m_Particles[ind].Decays()[i].mBratio * tret[j];
+				ret[j] += tbr * tret[j];
 		}
 		double totprob = 0.;
 		for (int i = 0; i < ret.size(); ++i)
@@ -565,8 +616,9 @@ void ThermalParticleSystem::LoadDecays(std::string DecaysFile, bool GenerateAnti
 		m_Particles[i].SetDecaysOriginal(m_Particles[i].Decays());
 	fin.close();
 
-	ProcessDecays();
+	FillDecayProperties();
 	FillDecayThresholds();
+	ProcessDecays();
 }
 
 std::string ThermalParticleSystem::GetNameFromPDG(int pdgid) {
@@ -608,8 +660,15 @@ void ThermalParticleSystem::SetResonanceWidthShape(ThermalParticle::ResonanceWid
 
 void ThermalParticleSystem::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
 {
+	bool dodecays = (type != m_ResonanceWidthIntegrationType);
+
+	m_ResonanceWidthIntegrationType = type; 
+	
 	for (int i = 0; i < m_Particles.size(); ++i)
 		m_Particles[i].SetResonanceWidthIntegrationType(type);
+
+	if (dodecays)
+		ProcessDecays();
 }
 
 void ThermalParticleSystem::SeparateDecaysIntoWeakAndStrong() {
@@ -675,9 +734,17 @@ void ThermalParticleSystem::GoResonanceWeak(int ind, int startind, double BR) {
 	}
 	else if (ind != startind) m_Particles[ind].WeakDecayContributions().push_back(make_pair(BR, startind));
 	if (m_Particles[ind].DecayType() != 0) {
-		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i)
+		for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
+			double tbr = m_Particles[ind].Decays()[i].mBratio;
+
+			// TODO: Fix(?) for canonical ensemble
+			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
+				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
 			for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
-				if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0) GoResonanceWeak(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*m_Particles[ind].Decays()[i].mBratio);
+				if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0) 
+					GoResonanceWeak(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr);
 			}
+		}
 	}
 }

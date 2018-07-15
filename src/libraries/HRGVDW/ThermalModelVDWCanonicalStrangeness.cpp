@@ -190,6 +190,14 @@ double ThermalModelVDWCanonicalStrangeness::CalculatePressure() {
 	return ret;
 }
 
+double ThermalModelVDWCanonicalStrangeness::MuShift(int id)
+{
+	if (id >= 0. && id < m_Virial.size())
+		return m_MuStar[id] - m_Chem[id];
+	else
+		return 0.0;
+}
+
 
 void ThermalModelVDWCanonicalStrangeness::PrepareModelVDW()
 {

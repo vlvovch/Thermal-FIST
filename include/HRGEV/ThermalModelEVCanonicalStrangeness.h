@@ -44,6 +44,9 @@ class ThermalModelEVCanonicalStrangeness : public ThermalModelCanonicalStrangene
 		virtual double CalculatePressure();
 
 	protected:
+		// TODO: test
+		virtual double MuShift(int id);
+
 		ThermalModelEVDiagonal *m_modelEV;
 		std::vector<double> m_v;                       /**< Vector of eigenvolumes of all hadrons */
 		double m_PNS;		/**< Pressure of all non-strange hadrons */

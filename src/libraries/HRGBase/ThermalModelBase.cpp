@@ -724,6 +724,21 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 }
 
 
+void ThermalModelBase::SetUseWidth(bool useWidth)
+{
+	if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		m_TPS->ProcessDecays();
+	}
+	m_UseWidth = useWidth;
+}
+
+void ThermalModelBase::SetUseWidth(ThermalParticle::ResonanceWidthIntegration type)
+{
+	m_UseWidth = (type != ThermalParticle::ZeroWidth);
+	m_TPS->SetResonanceWidthIntegrationType(type);
+}
+
 void ThermalModelBase::SetNormBratio(bool normBratio) {
 	if (normBratio != m_NormBratio) {
 		m_NormBratio = normBratio;
@@ -848,6 +863,16 @@ void ThermalModelBase::SetStatistics(bool stats) {
 		m_TPS->Particle(i).UseStatistics(stats);
 }
 
+void ThermalModelBase::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
+{
+	if (!m_UseWidth) {
+		printf("**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!\n");
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	}
+	else
+		m_TPS->SetResonanceWidthIntegrationType(type);
+}
+
 void ThermalModelBase::FillChemicalPotentials() {
 	m_Chem.resize(m_TPS->Particles().size());
 	for (int i = 0; i < m_TPS->Particles().size(); ++i)
@@ -865,6 +890,13 @@ void ThermalModelBase::SetChemicalPotentials(const std::vector<double>& chem)
 
 
 void ThermalModelBase::CalculateFeeddown() {
+	if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+			m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i], MuShift(i));
+		}
+		m_TPS->ProcessDecays();
+	}
+
 	for (int i = 0; i < m_TPS->Particles().size(); ++i) {
 		m_densitiestotal[i] = m_densities[i];
 		for (int j = 0; j < m_TPS->Particles()[i].DecayContributions().size(); ++j)
@@ -1121,7 +1153,7 @@ double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
 	if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112)  != -1)
 		return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
-	printf("**WARNING** %s: Density with PDG ID %d not found!", m_TAG.c_str(), PDGID);
+	printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
 
 	return 0.;
 }
