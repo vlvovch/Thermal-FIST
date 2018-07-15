@@ -85,7 +85,7 @@ class ThermalParticle
 {
 	public:
 		enum ResonanceWidthShape					{ RelativisticBreitWiger, NonRelativisticBreitWiger};
-		enum ResonanceWidthIntegration		{ TwoGamma, FullInterval, FullIntervalWeighted, eBW };
+		enum ResonanceWidthIntegration		{ ZeroWidth, TwoGamma, FullInterval, FullIntervalWeighted, eBW };
 
 		ThermalParticle(bool Stable_=true, std::string Name="hadron", int PDGID=0, double Deg=1., int Stat=0, double Mass=0.,
 			int Strange=0, int Baryon=0, int Charge=0, double AbsS=0., double Width=0., double Threshold=0., int Charm = 0, double AbsC = 0., double radius = 0.5, int Quark = 0);

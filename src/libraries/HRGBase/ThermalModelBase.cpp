@@ -733,6 +733,12 @@ void ThermalModelBase::SetUseWidth(bool useWidth)
 	m_UseWidth = useWidth;
 }
 
+void ThermalModelBase::SetUseWidth(ThermalParticle::ResonanceWidthIntegration type)
+{
+	m_UseWidth = (type != ThermalParticle::ZeroWidth);
+	m_TPS->SetResonanceWidthIntegrationType(type);
+}
+
 void ThermalModelBase::SetNormBratio(bool normBratio) {
 	if (normBratio != m_NormBratio) {
 		m_NormBratio = normBratio;

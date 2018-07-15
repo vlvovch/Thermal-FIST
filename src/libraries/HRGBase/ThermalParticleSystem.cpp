@@ -660,10 +660,15 @@ void ThermalParticleSystem::SetResonanceWidthShape(ThermalParticle::ResonanceWid
 
 void ThermalParticleSystem::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
 {
+	bool dodecays = (type != m_ResonanceWidthIntegrationType);
+
 	m_ResonanceWidthIntegrationType = type; 
 	
 	for (int i = 0; i < m_Particles.size(); ++i)
 		m_Particles[i].SetResonanceWidthIntegrationType(type);
+
+	if (dodecays)
+		ProcessDecays();
 }
 
 void ThermalParticleSystem::SeparateDecaysIntoWeakAndStrong() {

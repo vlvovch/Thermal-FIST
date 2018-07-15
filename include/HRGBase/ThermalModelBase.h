@@ -22,6 +22,7 @@ class ThermalModelBase
 
 		bool UseWidth() const { return m_UseWidth; }
 		void SetUseWidth(bool useWidth);// { m_UseWidth = useWidth; }
+		void SetUseWidth(ThermalParticle::ResonanceWidthIntegration type);
 		
 		bool NormBratio() const { return m_NormBratio; }
 		void SetNormBratio(bool normBratio);
