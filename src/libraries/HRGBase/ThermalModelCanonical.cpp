@@ -262,7 +262,8 @@ void ThermalModelCanonical::CalculatePartitionFunctions()
 	}
 
 	for (int iN = 0; iN < m_PartialZ.size(); ++iN) {
-		m_PartialZ[iN] /= pow(2. * xMath::Pi(), 3) * 2.;
+		m_PartialZ[iN] /= pow(2. * xMath::Pi(), 3);
+		m_PartialZ[iN] *= 2.; // Because phiQ was integrated over [0,\pi] only 
 		if (m_CMAX != 0)
 			m_PartialZ[iN] /= 2. * xMath::Pi();
 	}
@@ -377,7 +378,8 @@ void ThermalModelCanonical::CalculatePartitionFunctionsBoseOnly()
 	}
 
 	for (int iN = 0; iN < m_PartialZ.size(); ++iN) {
-		m_PartialZ[iN] /= pow(2. * xMath::Pi(), 2) * 2.;
+		m_PartialZ[iN] /= pow(2. * xMath::Pi(), 2);// *2.;
+		m_PartialZ[iN] *= 2.; // Because phiQ was integrated over [0,\pi] only 
 		if (m_CMAX != 0)
 			m_PartialZ[iN] /= 2. * xMath::Pi();
 	}

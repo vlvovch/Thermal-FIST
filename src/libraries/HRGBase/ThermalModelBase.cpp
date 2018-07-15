@@ -1147,7 +1147,7 @@ double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
 	if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112)  != -1)
 		return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
-	printf("**WARNING** %s: Density with PDG ID %d not found!", m_TAG.c_str(), PDGID);
+	printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
 
 	return 0.;
 }

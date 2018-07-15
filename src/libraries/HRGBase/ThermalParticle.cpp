@@ -91,10 +91,6 @@ void ThermalParticle::SetResonanceWidthIntegrationType(ResonanceWidthIntegration
 
 double ThermalParticle::MassDistribution(double m) const
 {
-	//if (m_ResonanceWidthShape==RelativisticBreitWiger) 
-	//	return m_Mass * m_Width * m / ((m * m - m_Mass*m_Mass)*(m * m - m_Mass*m_Mass) + m_Mass*m_Mass*m_Width*m_Width);
-	//else 
-	//	return 1. / ((m - m_Mass)*(m - m_Mass) + m_Width*m_Width / 4.);
 	return MassDistribution(m, m_Width);
 }
 
@@ -384,99 +380,6 @@ void ThermalParticle::FillCoefficientsDynamical() {
 	for (int j = 0; j < m_walldyn.size(); ++j) {
 		tsum += m_walldyn[j];
 	}
-
-	// For testing
-	//if (PdgId() == 2224) {
-	//	FILE *f = fopen("Delta(1232)++_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j) 
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//if (PdgId() == 2214) {
-	//	FILE *f = fopen("Delta(1232)+_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//if (PdgId() == 1114) {
-	//	FILE *f = fopen("Delta(1232)-_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//if (PdgId() == 32224) {
-	//	FILE *f = fopen("Delta(1600)++_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//if (PdgId() == 9000213) {
-	//	FILE *f = fopen("pi(1400)+_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//if (PdgId() == 12212) {
-	//	FILE *f = fopen("N(1440)+_width.dat", "w");
-	//	for (int j = 0; j < m_xlegpdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlegdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-	//	for (int j = 0; j < m_xlagdyn.size(); ++j)
-	//		fprintf(f, "%15lf%15lf\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-	//	fclose(f);
-	//}
-
-	//printf("%15s: %10lf\n", Name().c_str(), tsum);
-
-	//for (int i = 0; i < m_Decays.size(); ++i) {
-	//    m_Decays[i].mBratioRenormalized = tCP[i] / tC;
-	//    //printf("%lf %lf", tCP[i], tC);
-	//    //printf("%15s %d: %10.2lf %10.2lf\n", Name().c_str(), i, m_Decays[i].mBratioAtPole, m_Decays[i].mBratioRenormalized);
-	//}
 }
 
 void ThermalParticle::UseStatistics(bool enable) {
