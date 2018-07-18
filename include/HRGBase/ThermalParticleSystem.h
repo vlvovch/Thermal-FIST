@@ -24,6 +24,8 @@ class ThermalParticleSystem
 
 		void ProcessDecays() { FillResonanceDecays(); SeparateDecaysIntoWeakAndStrong(); FillResonanceWeakDecays(); }
 
+		void FillDecayProperties();
+
 		void FillDecayThresholds();
 
 		void FillResonanceDecays();
@@ -34,9 +36,9 @@ class ThermalParticleSystem
 
 		void GoResonanceWeak(int ind, int startind, double BR);
 
-		std::vector<double> GoResonanceDecayProbs(int ind, int goalind);
+		std::vector<double> GoResonanceDecayProbs(int ind, int goalind, bool firstdecay = false);
 
-		std::vector<double> GoResonanceDecayProbsCharge(int ind, int nch);
+		std::vector<double> GoResonanceDecayProbsCharge(int ind, int nch, bool firstdecay = false);
 
 		void LoadTable(std::string InputFile="", bool GenerateAntiParticles = true, double mcut = 1.e9);
 		void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
@@ -53,6 +55,7 @@ class ThermalParticleSystem
 		void SetClusterExpansionOrder(int order);
 		void SetResonanceWidthShape(ThermalParticle::ResonanceWidthShape shape);
 		void SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type);
+		ThermalParticle::ResonanceWidthIntegration ResonanceWidthIntegrationType() const { return m_ResonanceWidthIntegrationType; }
 
 		std::string GetNameFromPDG(int pdgid);
 
@@ -83,6 +86,8 @@ class ThermalParticleSystem
 		int m_NumCharmed;
 
 		int m_NumberOfParticles;
+
+		ThermalParticle::ResonanceWidthIntegration m_ResonanceWidthIntegrationType;
 };
 
 namespace CuteHRGHelper {

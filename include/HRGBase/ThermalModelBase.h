@@ -21,7 +21,8 @@ class ThermalModelBase
 		virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0)) { }
 
 		bool UseWidth() const { return m_UseWidth; }
-		void SetUseWidth(bool useWidth) { m_UseWidth = useWidth; }
+		void SetUseWidth(bool useWidth);// { m_UseWidth = useWidth; }
+		void SetUseWidth(ThermalParticle::ResonanceWidthIntegration type);
 		
 		bool NormBratio() const { return m_NormBratio; }
 		void SetNormBratio(bool normBratio);
@@ -65,7 +66,7 @@ class ThermalModelBase
 		virtual void SetCalculationType(IdealGasFunctions::QStatsCalculationType type) { m_TPS->SetCalculationType(type); }
 		virtual void SetClusterExpansionOrder(int order) { m_TPS->SetClusterExpansionOrder(order); }
 		void SetResonanceWidthShape(ThermalParticle::ResonanceWidthShape shape) { m_TPS->SetResonanceWidthShape(shape); }
-		void SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type) { m_TPS->SetResonanceWidthIntegrationType(type); }
+		void SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type);// { m_TPS->SetResonanceWidthIntegrationType(type); }
 
 		virtual void FillChemicalPotentials();
 		virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
@@ -102,10 +103,14 @@ class ThermalModelBase
 
 
 		virtual void SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
-																					double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.);
+																					double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,
+			                                   bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
 
 
 		virtual void CalculateDensities() = 0;
+		virtual void ValidateCalculation();
+		std::string ValidityCheckLog() const { return m_ValidityLog; }
+
 		virtual void CalculateDensitiesGCE() { CalculateDensities(); m_GCECalculated = true; }
 
 		virtual void CalculateFeeddown();
@@ -224,6 +229,9 @@ class ThermalModelBase
 		// Conserved charges susceptibility matrix
 		std::vector< std::vector<double> > m_Susc;
 
+		// Contains log of possible errors when checking the calculation
+		std::string m_ValidityLog;
+
 		double m_wnSum;
 
 		std::string m_TAG;
@@ -233,6 +241,9 @@ class ThermalModelBase
 
 		virtual void CalculateTwoParticleFluctuationsDecays();
 		virtual void CalculateSusceptibilityMatrix();
+
+		// Shift in chemical potential due to interactions
+		virtual double MuShift(int id) { return 0.; }
 };
 
 #endif // THERMALMODELBASE_H

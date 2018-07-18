@@ -1532,6 +1532,14 @@ double ThermalModelVDWFull::ParticleScalarDensity(int part) {
 	return m_scaldens[part];
 }
 
+double ThermalModelVDWFull::MuShift(int id)
+{
+	if (id >= 0. && id < m_Virial.size())
+		return m_MuStar[id] - m_Chem[id];
+	else
+		return 0.0;
+}
+
 double ThermalModelVDWFull::VirialCoefficient(int i, int j) const
 {
 	if (i<0 || i >= m_Virial.size() || j<0 || j>=m_Virial.size())

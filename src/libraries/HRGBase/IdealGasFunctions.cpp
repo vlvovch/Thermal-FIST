@@ -251,7 +251,7 @@ namespace IdealGasFunctions {
 
 	double QuantumNumericalIntegrationEntropyDensity(int statistics, double T, double mu, double m, double deg)
 	{
-		return (QuantumNumericalIntegrationPressure(1, T, mu, m, deg) + QuantumNumericalIntegrationEnergyDensity(1, T, mu, m, deg) - mu * QuantumNumericalIntegrationDensity(1, T, mu, m, deg)) / T;
+		return (QuantumNumericalIntegrationPressure(statistics, T, mu, m, deg) + QuantumNumericalIntegrationEnergyDensity(statistics, T, mu, m, deg) - mu * QuantumNumericalIntegrationDensity(statistics, T, mu, m, deg)) / T;
 	}
 
 	double QuantumNumericalIntegrationScalarDensity(int statistics, double T, double mu, double m, double deg)

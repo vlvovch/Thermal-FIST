@@ -12,7 +12,13 @@
 
 using namespace std;
 
-const double lowTlimit = 10.;
+double ParticleDecay::ModifiedWidth(double m)
+{
+	if (m < mM0) return 0.;
+	if (mM0 >= mPole) return mBratio;
+	return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
+}
+
 
 
 ThermalParticle::ThermalParticle(bool Stable_, std::string Name, int PDGID, double Deg, int Stat, double Mass,
@@ -45,7 +51,10 @@ ThermalParticle::~ThermalParticle(void)
 void ThermalParticle::SetResonanceWidth(double width)
 {
 	m_Width = width;
-	if (m_Width != 0.0) FillCoefficients();
+	if (m_Width != 0.0) {
+		FillCoefficients();
+		FillCoefficientsDynamical();
+	}
 }
 
 void ThermalParticle::SetDecayThresholdMass(double threshold)
@@ -57,6 +66,23 @@ void ThermalParticle::SetDecayThresholdMass(double threshold)
 	if (m_Width != 0.0) FillCoefficients();
 }
 
+void ThermalParticle::CalculateAndSetDynamicalThreshold()
+{
+	double Thr = m_Mass + m_Width;
+	for (int i = 0; i < m_Decays.size(); ++i) {
+		Thr = min(Thr, m_Decays[i].mM0);
+	}
+	m_ThresholdDynamical = Thr;
+}
+
+void ThermalParticle::SetResonanceWidthShape(ResonanceWidthShape shape)
+{
+	if (shape != m_ResonanceWidthShape) {
+		m_ResonanceWidthShape = shape;
+		FillCoefficientsDynamical();
+	}
+}
+
 void ThermalParticle::SetResonanceWidthIntegrationType(ResonanceWidthIntegration type)
 {
 	m_ResonanceWidthIntegrationType = type;
@@ -65,10 +91,16 @@ void ThermalParticle::SetResonanceWidthIntegrationType(ResonanceWidthIntegration
 
 double ThermalParticle::MassDistribution(double m) const
 {
-	if (m_ResonanceWidthShape==RelativisticBreitWiger) 
-		return m_Mass * m_Width * m / ((m * m - m_Mass*m_Mass)*(m * m - m_Mass*m_Mass) + m_Mass*m_Mass*m_Width*m_Width);
-	else 
-		return 1. / ((m - m_Mass)*(m - m_Mass) + m_Width*m_Width / 4.);
+	return MassDistribution(m, m_Width);
+}
+
+double ThermalParticle::MassDistribution(double m, double width) const
+{
+	if (width < 0.) width = m_Width;
+	if (m_ResonanceWidthShape == RelativisticBreitWiger)
+		return m_Mass * width * m / ((m * m - m_Mass*m_Mass)*(m * m - m_Mass*m_Mass) + m_Mass*m_Mass*width*width);
+	else
+		return width / ((m - m_Mass)*(m - m_Mass) + width*width / 4.);
 }
 
 void ThermalParticle::ReadDecays(string filename) {
@@ -88,6 +120,44 @@ void ThermalParticle::ReadDecays(string filename) {
 				decay.mDaughters.push_back(tmpid);
 			}
 			m_Decays.push_back(decay);
+		}
+	}
+}
+
+void ThermalParticle::CalculateThermalBranchingRatios(const ThermalModelParameters & params, bool useWidth, double pMu, double dMu)
+{
+	if (!useWidth || m_Width == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType != eBW) {
+		for (int j = 0; j < m_Decays.size(); ++j) {
+			m_Decays[j].mBratioAverage = m_Decays[j].mBratio;
+		}
+	}
+	else {
+		double mu = pMu + dMu;
+		if (!(params.gammaq == 1.))									mu += log(params.gammaq) * GetAbsQ()  * params.T;
+		if (!(params.gammaS == 1. || m_AbsS == 0.))	mu += log(params.gammaS) * m_AbsS     * params.T;
+		if (!(params.gammaC == 1. || m_AbsC == 0.))	mu += log(params.gammaC) * m_AbsC     * params.T;
+
+		for (int j = 0; j < m_Decays.size(); ++j) {
+			m_Decays[j].mBratioAverage = 0.;
+		}
+
+		double ret1 = 0., ret2 = 0., tmp = 0.;
+		for (int i = 0; i < m_xalldyn.size(); i++) {
+			tmp = m_walldyn[i];
+			double dens = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
+			ret1 += tmp * dens;
+			ret2 += tmp;
+
+			for (int j = 0; j < m_Decays.size(); ++j) {
+				const_cast<double&>(m_Decays[j].mBratioAverage) += tmp * dens * m_Decays[j].mBratioVsM[i];
+			}
+		}
+
+		for (int j = 0; j < m_Decays.size(); ++j) {
+			if (ret1 != 0.0)
+				m_Decays[j].mBratioAverage /= ret1;
+			else
+				m_Decays[j].mBratioAverage = m_Decays[j].mBratio;
 		}
 	}
 }
@@ -131,6 +201,13 @@ void ThermalParticle::NormalizeBranchingRatios() {
 	for(int i=0;i<m_Decays.size();++i) {
 		m_Decays[i].mBratio *= 1./sum;
 	}
+	FillCoefficientsDynamical();
+}
+
+void ThermalParticle::RestoreBranchingRatios()
+{
+	m_Decays = m_DecaysOrig;
+	FillCoefficientsDynamical();
 }
 
 void ThermalParticle::FillCoefficients() {
@@ -157,6 +234,154 @@ void ThermalParticle::FillCoefficients() {
 	NumericalIntegration::GetCoefsIntegrateLaguerre32(&m_xlag32, &m_wlag32);
 }
 
+// Mass-dependent widths
+void ThermalParticle::FillCoefficientsDynamical() {
+	if (m_Width == 0.0) return;
+
+	double a, b;
+
+	if (m_Decays.size() == 0)
+		m_Threshold = m_ThresholdDynamical = m_Mass - 2.*m_Width + 1.e-6;
+
+	//a = max(m_Threshold, m_ThresholdDynamical);
+	a = m_ThresholdDynamical;
+
+	b = m_Mass + 2.*m_Width;
+	if (a >= m_Mass - 2.*m_Width) {
+		m_xlegpdyn.resize(0);
+		if (a >= m_Mass + 2.*m_Width)
+			m_xlegdyn.resize(0);
+		else
+			NumericalIntegration::GetCoefsIntegrateLegendre32(a, b, &m_xlegdyn, &m_wlegdyn);
+	}
+	else {
+		NumericalIntegration::GetCoefsIntegrateLegendre32(a, m_Mass - 2.*m_Width, &m_xlegpdyn, &m_wlegpdyn);
+		NumericalIntegration::GetCoefsIntegrateLegendre32(m_Mass - 2.*m_Width, b, &m_xlegdyn, &m_wlegdyn);
+	}
+	NumericalIntegration::GetCoefsIntegrateLaguerre32(&m_xlagdyn, &m_wlagdyn);
+
+	m_vallegpdyn = m_xlegpdyn;
+	m_vallegdyn = m_xlegdyn;
+	m_vallagdyn = m_xlagdyn;
+
+
+	double tsumb = 0.;
+	double tC = 0.;
+	vector<double> tCP(m_Decays.size(), 0.);
+
+	for (int i = 0; i < m_Decays.size(); ++i) {
+		tsumb += m_Decays[i].mBratio;
+		m_Decays[i].mBratioVsM.resize(0);
+	}
+
+	for (int j = 0; j < m_xlegpdyn.size(); ++j) {
+		double twid = 0.;
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			twid += m_Decays[i].ModifiedWidth(m_xlegpdyn[j]) * m_Width;
+		}
+
+		if (tsumb < 1.)
+			twid += (1. - tsumb) * m_Width;
+
+		if (twid == 0.0) {
+			m_vallegpdyn[j] = 0.;
+			for (int i = 0; i < m_Decays.size(); ++i)
+				m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
+			continue;
+		}
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			double ttwid = m_Decays[i].ModifiedWidth(m_xlegpdyn[j]) * m_Width;
+			m_Decays[i].mBratioVsM.push_back(ttwid / twid);
+			tCP[i] += m_wlegpdyn[j] * ttwid / twid * MassDistribution(m_xlegpdyn[j], twid);
+		}
+
+		tC += m_wlegpdyn[j] * MassDistribution(m_xlegpdyn[j], twid);
+		m_vallegpdyn[j] = MassDistribution(m_xlegpdyn[j], twid);
+	}
+
+	for (int j = 0; j < m_xlegdyn.size(); ++j) {
+		double twid = 0.;
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			twid += m_Decays[i].ModifiedWidth(m_xlegdyn[j]) * m_Width;
+		}
+
+		if (tsumb < 1.)
+			twid += (1. - tsumb) * m_Width;
+
+		if (twid == 0.0) {
+			m_vallegdyn[j] = 0.;
+			for (int i = 0; i < m_Decays.size(); ++i)
+				m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
+			continue;
+		}
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			double ttwid = m_Decays[i].ModifiedWidth(m_xlegdyn[j]) * m_Width;
+			m_Decays[i].mBratioVsM.push_back(ttwid / twid);
+			tCP[i] += m_wlegdyn[j] * ttwid / twid * MassDistribution(m_xlegdyn[j], twid);
+		}
+
+		tC += m_wlegdyn[j] * MassDistribution(m_xlegdyn[j], twid);
+		m_vallegdyn[j] = MassDistribution(m_xlegdyn[j], twid);
+	}
+
+	for (int j = 0; j < m_xlagdyn.size(); ++j) {
+		double twid = 0.;
+		double tx = m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width;
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			twid += m_Decays[i].ModifiedWidth(tx) * m_Width;
+		}
+
+		if (tsumb < 1.)
+			twid += (1. - tsumb) * m_Width;
+
+		if (twid == 0.0) {
+			m_vallagdyn[j] = 0.;
+			for (int i = 0; i < m_Decays.size(); ++i)
+				m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
+			continue;
+		}
+
+		for (int i = 0; i < m_Decays.size(); ++i) {
+			double ttwid = m_Decays[i].ModifiedWidth(tx) * m_Width;
+			m_Decays[i].mBratioVsM.push_back(ttwid / twid);
+			tCP[i] += m_wlagdyn[j] * m_Width * ttwid / twid * MassDistribution(tx, twid);
+		}
+
+		tC += m_wlagdyn[j] * m_Width * MassDistribution(tx, twid);
+		m_vallagdyn[j] = m_Width * MassDistribution(tx, twid);
+	}
+
+	m_xalldyn.resize(0);
+	m_walldyn.resize(0);
+
+	for (int j = 0; j < m_xlegpdyn.size(); ++j) {
+		m_xalldyn.push_back(m_xlegpdyn[j]);
+		m_walldyn.push_back(m_wlegpdyn[j] * m_vallegpdyn[j] / tC);
+	}
+
+	for (int j = 0; j < m_xlegdyn.size(); ++j) {
+		m_xalldyn.push_back(m_xlegdyn[j]);
+		m_walldyn.push_back(m_wlegdyn[j] * m_vallegdyn[j] / tC);
+	}
+
+	for (int j = 0; j < m_xlagdyn.size(); ++j) {
+		m_xalldyn.push_back(m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width);
+		m_walldyn.push_back(m_wlagdyn[j] * m_vallagdyn[j] / tC);
+	}
+
+	m_densalldyn.resize(m_xalldyn.size());
+
+	double tsum = 0.;
+	for (int j = 0; j < m_walldyn.size(); ++j) {
+		tsum += m_walldyn[j];
+	}
+}
+
 void ThermalParticle::UseStatistics(bool enable) {
 	if (!enable) m_Statistics = 0;
 	else m_Statistics = m_StatisticsOrig;
@@ -165,7 +390,10 @@ void ThermalParticle::UseStatistics(bool enable) {
 void ThermalParticle::SetMass(double mass)
 {
 	m_Mass = mass;
-	if (m_Width != 0.0) FillCoefficients();
+	if (m_Width != 0.0) {
+		FillCoefficients();
+		FillCoefficientsDynamical();
+	}
 }
 
 bool ThermalParticle::IsNeutral() const {
@@ -179,7 +407,7 @@ double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFu
 	if (!(params.gammaS == 1. || m_AbsS == 0.))	mu += log(params.gammaS) * m_AbsS     * params.T;
 	if (!(params.gammaC == 1. || m_AbsC == 0.))	mu += log(params.gammaC) * m_AbsC     * params.T;
 	
-	if (!useWidth || m_Width/m_Mass < 1.e-2) {
+	if (!useWidth || m_Width/m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
 		return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder);
 	}
 
@@ -188,27 +416,38 @@ double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFu
 	double ret1 = 0., ret2 = 0., tmp = 0.;
 
 	// Integration from m0 or M-2*Gamma to M+2*Gamma
-	for (int i = 0; i < ind; i++) {
+	if (m_ResonanceWidthIntegrationType != eBW) {
+		for (int i = 0; i < ind; i++) {
 
-		tmp = w[i] * MassDistribution(x[i]);
+			tmp = w[i] * MassDistribution(x[i]);
 
-		if (m_ResonanceWidthIntegrationType == FullIntervalWeighted) 
-			tmp *= m_brweight[i];
+			if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
+				tmp *= m_brweight[i];
 
-		double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, x[i], m_Degeneracy, m_ClusterExpansionOrder);
+			double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, x[i], m_Degeneracy, m_ClusterExpansionOrder);
 
-		ret1 += tmp * dens;
-		ret2 += tmp;
+			ret1 += tmp * dens;
+			ret2 += tmp;
+		}
 	}
 	
 	// Integration from M+2*Gamma to infinity
-	if (m_ResonanceWidthIntegrationType == FullInterval) {
+	if (m_ResonanceWidthIntegrationType == FullInterval || m_ResonanceWidthIntegrationType == FullIntervalWeighted) {
 		int ind2 = m_xlag32.size();
 		for (int i = 0; i < ind2; ++i) {
 			double tmass = m_Mass + 2.*m_Width + m_xlag32[i] * m_Width;
 			tmp = m_wlag32[i] * m_Width * MassDistribution(tmass);
 			double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, tmass, m_Degeneracy, m_ClusterExpansionOrder);
 
+			ret1 += tmp * dens;
+			ret2 += tmp;
+		}
+	}
+
+	if (m_ResonanceWidthIntegrationType == eBW) {
+		for (int i = 0; i < m_xalldyn.size(); i++) {
+			tmp = m_walldyn[i];
+			double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
 			ret1 += tmp * dens;
 			ret2 += tmp;
 		}
@@ -228,7 +467,7 @@ double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & par
 	if (!(params.gammaS == 1. || m_AbsS == 0.))	mu += log(params.gammaS) * m_AbsS     * params.T;
 	if (!(params.gammaC == 1. || m_AbsC == 0.))	mu += log(params.gammaC) * m_AbsC     * params.T;
 
-	if (!useWidth || m_Width / m_Mass < 1.e-2) {
+	if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
 		return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy);
 	}
 
@@ -237,20 +476,22 @@ double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & par
 	double ret1 = 0., ret2 = 0., tmp = 0.;
 
 	// Integration from m0 or M-2*Gamma to M+2*Gamma
-	for (int i = 0; i < ind; i++) {
-		tmp = w[i] * MassDistribution(x[i]);
+	if (m_ResonanceWidthIntegrationType != eBW) {
+		for (int i = 0; i < ind; i++) {
+			tmp = w[i] * MassDistribution(x[i]);
 
-		if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
-			tmp *= m_brweight[i];
+			if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
+				tmp *= m_brweight[i];
 
-		double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, x[i], m_Degeneracy);
+			double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, x[i], m_Degeneracy);
 
-		ret1 += tmp * dens;
-		ret2 += tmp;
+			ret1 += tmp * dens;
+			ret2 += tmp;
+		}
 	}
 
 	// Integration from M+2*Gamma to infinity
-	if (m_ResonanceWidthIntegrationType == FullInterval) {
+	if (m_ResonanceWidthIntegrationType == FullInterval || m_ResonanceWidthIntegrationType == FullIntervalWeighted) {
 		int ind2 = m_xlag32.size();
 		for (int i = 0; i < ind2; ++i) {
 			double tmass = m_Mass + 2.*m_Width + m_xlag32[i] * m_Width;
@@ -262,12 +503,21 @@ double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & par
 		}
 	}
 
+	if (m_ResonanceWidthIntegrationType == eBW) {
+		for (int i = 0; i < m_xalldyn.size(); i++) {
+			tmp = m_walldyn[i];
+			double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_xalldyn[i], m_Degeneracy);
+			ret1 += tmp * dens;
+			ret2 += tmp;
+		}
+	}
+
 	return mn * ret1 / ret2;
 }
 
 
 double ThermalParticle::ScaledVariance(const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const {
-	if (m_Degeneracy == 0) return 1.;
+	if (m_Degeneracy == 0.0) return 1.;
 	if (m_Statistics == 0) return 1.;
 	double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu);
 	if (dens==0.) return 1.;

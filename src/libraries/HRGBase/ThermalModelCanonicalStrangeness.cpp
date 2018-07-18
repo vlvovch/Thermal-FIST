@@ -170,7 +170,7 @@ void ThermalModelCanonicalStrangeness::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
-	m_LastCalculationSuccessFlag = true;
+	ValidateCalculation();
 }
 
 

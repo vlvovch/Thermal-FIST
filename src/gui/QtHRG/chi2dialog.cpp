@@ -1,5 +1,3 @@
-#ifdef USE_MINUIT
-
 #include "chi2dialog.h"
 
 #include <QLayout>
@@ -231,4 +229,3 @@ void chi2Dialog::finalize() {
     replotpro();
 }
 
-#endif

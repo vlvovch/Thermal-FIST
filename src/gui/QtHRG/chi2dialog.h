@@ -1,5 +1,3 @@
-#ifdef USE_MINUIT
-
 #ifndef CHI2DIALOG_H
 #define CHI2DIALOG_H
 
@@ -110,4 +108,3 @@ public slots:
 
 #endif // CHI2DIALOG_H
 
-#endif

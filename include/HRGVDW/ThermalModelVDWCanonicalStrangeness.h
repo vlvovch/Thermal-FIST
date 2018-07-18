@@ -46,6 +46,9 @@ class ThermalModelVDWCanonicalStrangeness : public ThermalModelCanonicalStrangen
 		virtual double CalculatePressure();
 
 	protected:
+		// TODO: test
+		virtual double MuShift(int id);
+
 		ThermalModelVDWFull *m_modelVDW;
 		std::vector< std::vector<double> > m_Virial;
 		std::vector< std::vector<double> > m_Attr;

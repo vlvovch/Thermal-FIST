@@ -133,7 +133,7 @@ void ThermalModelCanonicalCharm::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
-	m_LastCalculationSuccessFlag = true;
+	ValidateCalculation();
 }
 
 void ThermalModelCanonicalCharm::CalculateFluctuations() {

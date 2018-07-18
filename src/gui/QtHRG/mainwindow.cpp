@@ -53,9 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 	tab1 = new ModelTab(NULL, model);
 	tab1->resetTPS();
 
-#ifdef USE_MINUIT
 	tab2 = new FitToExperimentTab(NULL, model);
-#endif
 
 	tab3 = new EnergyDependenceTab(NULL, model);
 	tab4 = new ContourPlotTab(NULL, model);
@@ -64,9 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
 	tabWidget = new QTabWidget();
 	tabWidget->addTab(tab1, QString(tr("Thermal model")));
 
-#ifdef USE_MINUIT
 	tabWidget->addTab(tab2, QString(tr("Thermal fits")));
-#endif
 
 	tabWidget->addTab(tab5, QString(tr("Event generator")));
 
@@ -121,9 +117,8 @@ void MainWindow::loadDatabase()
 		model->ChangeTPS(TPS);
 		leDatabase->setText(path);
 		tab1->resetTPS();
-#ifdef USE_MINUIT
 		tab2->resetTPS();
-#endif
+
 		tab5->resetTPS();
 
 		cpath = path;

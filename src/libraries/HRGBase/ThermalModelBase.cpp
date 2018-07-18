@@ -514,9 +514,11 @@ namespace ThermalModelBaseNamespace {
 		for (int i = 0; i < 4; ++i) {
 			if (vConstr[i]) {
 				if (vType[i] == 0)
-					ret[i1] = (dens[i1] * ThM->Parameters().V - vTotals[i1]) / vTotals[i1];
+					//ret[i1] = (dens[i1] * ThM->Parameters().V - vTotals[i1]) / vTotals[i1];
+					ret[i1] = (dens[i] * ThM->Parameters().V - vTotals[i]) / vTotals[i];
 				else
-					ret[i1] = dens[i1] / absdens[i1];
+					//ret[i1] = dens[i1] / absdens[i1];
+					ret[i1] = dens[i] / absdens[i];
 				i1++;
 			}
 		}
@@ -597,9 +599,11 @@ namespace ThermalModelBaseNamespace {
 					if (vConstr[j]) {
 						ret(i1, i2) = 0.;
 						if (vType[i] == 0)
-							ret(i1, i2) = deriv[i1][i2] * ThM->Parameters().V / vTotals[i1];
+							//ret(i1, i2) = deriv[i1][i2] * ThM->Parameters().V / vTotals[i1];
+							ret(i1, i2) = deriv[i][j] * ThM->Parameters().V / vTotals[i];
 						else
-							ret(i1, i2) = deriv[i1][i2] / absdens[i1] - dens[i1] / absdens[i1] / absdens[i1] * derivabs[i1][i2];
+							//ret(i1, i2) = deriv[i1][i2] / absdens[i1] - dens[i1] / absdens[i1] / absdens[i1] * derivabs[i1][i2];
+							ret(i1, i2) = deriv[i][j] / absdens[i] - dens[i] / absdens[i] / absdens[i] * derivabs[i][j];
 						i2++;
 					}
 				i1++;
@@ -717,8 +721,25 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 
 	m_Ensemble = GCE;
 	m_InteractionModel = Ideal;
+
+	m_ValidityLog = "";
 }
 
+
+void ThermalModelBase::SetUseWidth(bool useWidth)
+{
+	if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		m_TPS->ProcessDecays();
+	}
+	m_UseWidth = useWidth;
+}
+
+void ThermalModelBase::SetUseWidth(ThermalParticle::ResonanceWidthIntegration type)
+{
+	m_UseWidth = (type != ThermalParticle::ZeroWidth);
+	m_TPS->SetResonanceWidthIntegrationType(type);
+}
 
 void ThermalModelBase::SetNormBratio(bool normBratio) {
 	if (normBratio != m_NormBratio) {
@@ -844,6 +865,16 @@ void ThermalModelBase::SetStatistics(bool stats) {
 		m_TPS->Particle(i).UseStatistics(stats);
 }
 
+void ThermalModelBase::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
+{
+	if (!m_UseWidth) {
+		printf("**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!\n");
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	}
+	else
+		m_TPS->SetResonanceWidthIntegrationType(type);
+}
+
 void ThermalModelBase::FillChemicalPotentials() {
 	m_Chem.resize(m_TPS->Particles().size());
 	for (int i = 0; i < m_TPS->Particles().size(); ++i)
@@ -861,6 +892,13 @@ void ThermalModelBase::SetChemicalPotentials(const std::vector<double>& chem)
 
 
 void ThermalModelBase::CalculateFeeddown() {
+	if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+		for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+			m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i], MuShift(i));
+		}
+		m_TPS->ProcessDecays();
+	}
+
 	for (int i = 0; i < m_TPS->Particles().size(); ++i) {
 		m_densitiestotal[i] = m_densities[i];
 		for (int j = 0; j < m_TPS->Particles()[i].DecayContributions().size(); ++j)
@@ -948,12 +986,17 @@ void ThermalModelBase::FixParametersNoReset() {
 }
 
 void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
-	double muBinit, double muQinit, double muSinit, double muCinit) {
+	double muBinit, double muQinit, double muSinit, double muCinit,
+	bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
 	m_Parameters.muB = muBinit;
 	m_Parameters.muS = muSinit;
 	m_Parameters.muQ = muQinit;
 	m_Parameters.muC = muCinit;
 	if (totB == 0.0 && totQ == 0.0 && totS == 0.0 && totC == 0.0) {
+		m_Parameters.muB = 0.;
+		m_Parameters.muS = 0.;
+		m_Parameters.muQ = 0.;
+		m_Parameters.muC = 0.;
 		FillChemicalPotentials();
 		CalculateDensities();
 		return;
@@ -961,10 +1004,10 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 	vector<int> vConstr(4, 1);
 	vector<int> vType(4, 0);
 
-	vConstr[0] = m_TPS->hasBaryons();
-	vConstr[1] = m_TPS->hasCharged();
-	vConstr[2] = m_TPS->hasStrange();
-	vConstr[3] = m_TPS->hasCharmed();
+	vConstr[0] = m_TPS->hasBaryons() && ConstrMuB;
+	vConstr[1] = m_TPS->hasCharged() && ConstrMuQ;
+	vConstr[2] = m_TPS->hasStrange() && ConstrMuS;
+	vConstr[3] = m_TPS->hasCharmed() && ConstrMuC;
 
 	vType[0] = (int)(totB == 0.0);
 	vType[1] = (int)(totQ == 0.0);
@@ -987,6 +1030,26 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 		broydenEigen2(xin, vConstr, vType, vTotals, this);
 	}
 	catch (...) {
+	}
+}
+
+void ThermalModelBase::ValidateCalculation()
+{
+	m_ValidityLog = "";
+
+	char cc[1000];
+
+	m_LastCalculationSuccessFlag = true;
+	for (int i = 0; i < m_densities.size(); ++i) {
+		if (m_densities[i] != m_densities[i]) {
+			m_LastCalculationSuccessFlag = false;
+			
+			sprintf(cc, "**WARNING** Density for particle %d (%s) is NaN!\n\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+			printf("%s", cc);
+
+			m_ValidityLog.append(cc);
+		}
+		//m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
 	}
 }
 
@@ -1112,7 +1175,7 @@ double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
 	if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112)  != -1)
 		return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
-	printf("**WARNING** %s: Density with PDG ID %d not found!", m_TAG.c_str(), PDGID);
+	printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
 
 	return 0.;
 }

@@ -90,6 +90,9 @@ public:
 	void SetMuStar(const std::vector<double> & MuStar) { m_MuStar = MuStar; }
 
 protected:
+	// TODO: test
+	virtual double MuShift(int id);
+
 	std::vector<double> m_DensitiesId;
 	std::vector<double> m_scaldens;
 
@@ -106,6 +109,7 @@ protected:
 
 	virtual void CalculateDensitiesOld();
 	virtual void CalculateDensitiesNew();
+
 private:
 	bool   m_SearchMultipleSolutions;
 	bool   m_LastBroydenSuccessFlag;

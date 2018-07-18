@@ -1,5 +1,3 @@
-#ifdef USE_MINUIT
-
 #ifndef CHI2PROFILEDIALOG_H
 #define CHI2PROFILEDIALOG_H
 
@@ -143,5 +141,3 @@ private:
 };
 
 #endif // CHI2PROFILEDIALOG_H
-
-#endif

@@ -68,6 +68,10 @@ public:
 	virtual double CalculateStrangenessScaledVariance(bool susc = false);
 	virtual double ParticleScalarDensity(int part) { return 0.; }
 
+protected:
+	// TODO: test
+	virtual double MuShift(int id);
+
 private:
 	std::vector<double> m_densitiesid;
 	std::vector<double> m_Ps;

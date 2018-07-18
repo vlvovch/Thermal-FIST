@@ -1,10 +1,9 @@
-#ifdef USE_MINUIT
-
 #ifndef FITTOEXPERIMENTTAB_H
 #define FITTOEXPERIMENTTAB_H
 
 #include <QWidget>
 #include <QLineEdit>
+#include <QLabel>
 #include <QPushButton>
 #include <QTableView>
 #include <QTableWidget>
@@ -68,6 +67,8 @@ class FitToExperimentTab : public QWidget
     QPushButton *buttonResults;
     QPushButton *buttonChi2Map;
 		QPushButton *buttonChi2Profile;
+		//QLabel *labelValid;
+		QPushButton *labelValid;
 
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinVolumeR;
     QCheckBox *CBTemperature, *CBmuB, *CBgammaq, *CBgammaS, *CBVolumeR;
@@ -82,7 +83,7 @@ class FitToExperimentTab : public QWidget
 
 		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
 
-    QCheckBox *checkFiniteWidth;
+		//QCheckBox *checkFiniteWidth;
 		QComboBox *comboWidth;
 
     QCheckBox *checkBratio;
@@ -122,6 +123,7 @@ signals:
 
 private slots:
     void writetofile();
+    void showValidityCheckLog();
 
 public slots:
     void changedRow();
@@ -147,4 +149,3 @@ public slots:
 
 #endif // FITTOEXPERIMENTTAB_H
 
-#endif // USE_MINUIT

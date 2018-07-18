@@ -62,8 +62,16 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     buttonResults = new QPushButton(tr("Show calculation results..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
 
+		labelValid = new QPushButton(tr("Calculation valid!"));
+		labelValid->setFlat(true);
+		labelValid->setVisible(false);
+		connect(labelValid, SIGNAL(clicked()), this, SLOT(showValidityCheckLog()));
+
+
     layMisc->addWidget(checkOnlyStable);
     layMisc->addWidget(buttonResults);
+		layMisc->addStretch(1);
+		layMisc->addWidget(labelValid, 0, Qt::AlignRight);
 
     dataLayv->addWidget(tableParticles);
     dataLayv->addLayout(layMisc);
@@ -307,14 +315,22 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
-    checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
-		checkFiniteWidth->setChecked(true);
+    //checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
+		//checkFiniteWidth->setChecked(true);
+		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
+		comboWidth = new QComboBox();
+		comboWidth->addItem(tr("Zero-width"));
+		comboWidth->addItem(tr("Breit-Wigner"));
+		comboWidth->addItem(tr("eBW"));
+		comboWidth->setCurrentIndex(1);
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
 		checkFluctuations = new QCheckBox(tr("Fluctuations"));
 		checkFluctuations->setChecked(false);
 
-    layFlags->addWidget(checkFiniteWidth);
+    //layFlags->addWidget(checkFiniteWidth);
+		layFlags->addWidget(labelWidth);
+		layFlags->addWidget(comboWidth);
     layFlags->addWidget(checkBratio);
 		layFlags->addWidget(checkFluctuations);
 
@@ -478,7 +494,7 @@ ThermalModelConfig ModelTab::getConfig()
 	ret.ConstrainMuS = checkFixMuS->isChecked();
 	ret.ConstrainMuC = checkFixMuC->isChecked();
 
-	ret.FiniteWidth        = static_cast<int>(checkFiniteWidth->isChecked());
+	ret.FiniteWidth        = comboWidth->currentIndex();// static_cast<int>(checkFiniteWidth->isChecked());
 	ret.RenormalizeBR      = checkBratio->isChecked();
 	ret.ComputeFluctations = checkFluctuations->isChecked();
 
@@ -545,8 +561,20 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	model->SetStrangeness(config.S);
 	model->SetCharm(config.C);
 
-	model->SetUseWidth(config.FiniteWidth);
-	model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	/*model->SetUseWidth(config.FiniteWidth != 0);
+	if (config.FiniteWidth == 1)
+		model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	else if (config.FiniteWidth == 2)
+		model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);*/
+	if (config.FiniteWidth == 0)
+		model->SetUseWidth(ThermalParticle::ZeroWidth);
+	else if (config.FiniteWidth == 1)
+		model->SetUseWidth(ThermalParticle::TwoGamma);
+	else if (config.FiniteWidth == 2)
+		model->SetUseWidth(ThermalParticle::eBW);
+	else
+		model->SetUseWidth(ThermalParticle::ZeroWidth);
+
 	model->SetQoverB(config.QoverB);
 	model->ConstrainMuQ(config.ConstrainMuQ);
 	model->ConstrainMuS(config.ConstrainMuS);
@@ -690,6 +718,16 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	printf("Finalizing time = %d ms\n", timerc.elapsed());
 
+	if (model->IsLastSolutionOK()) {
+		labelValid->setText(tr("Calculation valid!"));
+		labelValid->setStyleSheet("border : none; background-color : lightgreen;");
+	}
+	else {
+		labelValid->setText(tr("Calculation NOT valid!"));
+		labelValid->setStyleSheet("border : none; background-color : red;");
+	}
+	labelValid->setVisible(true);
+
 	myModel->updateAll();
 }
 
@@ -763,6 +801,15 @@ void ModelTab::showResults() {
     dialog.exec();
 }
 
+void ModelTab::showValidityCheckLog() {
+	if (!model->IsLastSolutionOK()) {
+		QMessageBox msgBox;
+		msgBox.setText("There were some issues in calculation. See the log below:");
+		msgBox.setDetailedText(model->ValidityCheckLog().c_str());
+		msgBox.exec();
+	}
+}
+
 void ModelTab::setModel(ThermalModelBase *modelop) {
     *model = *modelop;
     myModel->setModel(model);
@@ -781,6 +828,8 @@ void ModelTab::resetTPS() {
 		tableParticles->setColumnHidden(7, !model->TPS()->hasStrange());
 		tableParticles->setColumnHidden(8, !model->TPS()->hasCharmed());
 		tableParticles->resizeColumnsToContents();
+
+		labelValid->setVisible(false);
 }
 
 void ModelTab::modelChanged()

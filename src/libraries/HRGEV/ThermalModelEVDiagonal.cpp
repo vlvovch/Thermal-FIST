@@ -253,6 +253,7 @@ void ThermalModelEVDiagonal::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
+	ValidateCalculation();
 }
 
 void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {
@@ -458,6 +459,14 @@ double ThermalModelEVDiagonal::CommonSuppressionFactor()
 	if (!m_Calculated)
 		CalculateDensities();
 	return m_Suppression;
+}
+
+double ThermalModelEVDiagonal::MuShift(int id)
+{
+	if (id >= 0. && id < m_v.size())
+		return -m_v[id] * m_Pressure;
+	else
+		return 0.0;
 }
 
 double ThermalModelEVDiagonal::CalculateEigenvolumeFraction() {
