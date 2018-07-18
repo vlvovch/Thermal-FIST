@@ -35,7 +35,7 @@ struct ThermalModelConfig {
 	bool ConstrainMuC;
 
 	/// Extra flags
-	int FiniteWidth; /**< 0 - zero, 1 - BW */
+	int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
 	bool RenormalizeBR;
 	bool ComputeFluctations;
 };

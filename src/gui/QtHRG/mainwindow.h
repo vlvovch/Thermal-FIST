@@ -17,9 +17,7 @@
 #include "energydependencetab.h"
 #include "contourplottab.h"
 
-#ifdef USE_MINUIT
 #include "fittoexperimenttab.h"
-#endif
 
 
 //class TableModel;
@@ -34,9 +32,7 @@ class MainWindow : public QMainWindow
 
     ModelTab *tab1;
 	
-#ifdef USE_MINUIT
     FitToExperimentTab *tab2;
-#endif
 
     EnergyDependenceTab *tab3;
     ContourPlotTab *tab4;

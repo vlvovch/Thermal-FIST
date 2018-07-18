@@ -109,6 +109,7 @@ class ThermalModelBase
 
 		virtual void CalculateDensities() = 0;
 		virtual void ValidateCalculation();
+		std::string ValidityCheckLog() const { return m_ValidityLog; }
 
 		virtual void CalculateDensitiesGCE() { CalculateDensities(); m_GCECalculated = true; }
 
@@ -227,6 +228,9 @@ class ThermalModelBase
 
 		// Conserved charges susceptibility matrix
 		std::vector< std::vector<double> > m_Susc;
+
+		// Contains log of possible errors when checking the calculation
+		std::string m_ValidityLog;
 
 		double m_wnSum;
 

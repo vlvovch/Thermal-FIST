@@ -8,7 +8,7 @@ project (ThermalFIST)
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 0)
 set (ThermalFIST_VERSION_MINOR 5)
-set (ThermalFIST_VERSION_DEVEL 1)
+set (ThermalFIST_VERSION_DEVEL 2)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -29,7 +29,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
-   message(STATUS "WARNING! It seems you are compiling without optimization. Please set CMAKE_BUILD_TYPE.")
+   message(STATUS "WARNING! It seems you are compiling without optimization. Please set CMAKE_BUILD_TYPE=Release for optimization.")
 endif(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
 
 # Set compiler flags and options. 

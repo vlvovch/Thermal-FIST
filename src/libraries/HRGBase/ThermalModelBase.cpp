@@ -721,6 +721,8 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 
 	m_Ensemble = GCE;
 	m_InteractionModel = Ideal;
+
+	m_ValidityLog = "";
 }
 
 
@@ -1033,9 +1035,22 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 
 void ThermalModelBase::ValidateCalculation()
 {
+	m_ValidityLog = "";
+
+	char cc[1000];
+
 	m_LastCalculationSuccessFlag = true;
-	for (int i = 0; i < m_densities.size(); ++i)
-		m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
+	for (int i = 0; i < m_densities.size(); ++i) {
+		if (m_densities[i] != m_densities[i]) {
+			m_LastCalculationSuccessFlag = false;
+			
+			sprintf(cc, "**WARNING** Density for particle %d (%s) is NaN!\n\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+			printf("%s", cc);
+
+			m_ValidityLog.append(cc);
+		}
+		//m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
+	}
 }
 
 void ThermalModelBase::FixParameters(double QB) {
