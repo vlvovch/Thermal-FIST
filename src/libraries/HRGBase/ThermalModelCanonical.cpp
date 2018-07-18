@@ -154,7 +154,7 @@ void ThermalModelCanonical::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
-	m_LastCalculationSuccessFlag = true;
+	ValidateCalculation();
 }
 
 void ThermalModelCanonical::CalculatePartitionFunctions()

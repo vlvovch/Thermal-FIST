@@ -389,6 +389,7 @@ void ThermalModelEVCrossterms::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
+	ValidateCalculation();
 }
 
 void ThermalModelEVCrossterms::CalculateDensitiesNoReset() {

@@ -1031,6 +1031,13 @@ void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double 
 	}
 }
 
+void ThermalModelBase::ValidateCalculation()
+{
+	m_LastCalculationSuccessFlag = true;
+	for (int i = 0; i < m_densities.size(); ++i)
+		m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
+}
+
 void ThermalModelBase::FixParameters(double QB) {
 	m_QBgoal = QB;
 	FixParameters();

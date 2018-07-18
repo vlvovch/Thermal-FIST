@@ -253,6 +253,7 @@ void ThermalModelEVDiagonal::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
+	ValidateCalculation();
 }
 
 void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {

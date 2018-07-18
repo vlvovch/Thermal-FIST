@@ -108,6 +108,8 @@ class ThermalModelBase
 
 
 		virtual void CalculateDensities() = 0;
+		virtual void ValidateCalculation();
+
 		virtual void CalculateDensitiesGCE() { CalculateDensities(); m_GCECalculated = true; }
 
 		virtual void CalculateFeeddown();
