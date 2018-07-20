@@ -1,4 +1,4 @@
-## Thermal-FIST 0.5
+## Thermal-FIST 0.5.2
 
 ### External dependencies
 
