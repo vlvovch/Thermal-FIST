@@ -48,6 +48,7 @@ class ThermalModelBase
 		virtual void SetCharm													(int C);
 
 		virtual void SetRadius(double rad) { }
+		virtual void SetRadius(int i, double rad) { }
 		virtual void SetVirial(int i, int j, double b) { }
 		virtual void SetAttraction(int i, int j, double b) { }
 

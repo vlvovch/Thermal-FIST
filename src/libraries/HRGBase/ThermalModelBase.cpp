@@ -729,7 +729,7 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 void ThermalModelBase::SetUseWidth(bool useWidth)
 {
 	if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
-		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
 		m_TPS->ProcessDecays();
 	}
 	m_UseWidth = useWidth;
@@ -869,7 +869,7 @@ void ThermalModelBase::SetResonanceWidthIntegrationType(ThermalParticle::Resonan
 {
 	if (!m_UseWidth) {
 		printf("**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!\n");
-		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
 	}
 	else
 		m_TPS->SetResonanceWidthIntegrationType(type);

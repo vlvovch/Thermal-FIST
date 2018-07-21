@@ -698,7 +698,7 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 	if (config.FiniteWidth == 0)
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
 	else if (config.FiniteWidth == 1)
-		model->SetUseWidth(ThermalParticle::TwoGamma);
+		model->SetUseWidth(ThermalParticle::BWTwoGamma);
 	else if (config.FiniteWidth == 2)
 		model->SetUseWidth(ThermalParticle::eBW);
 	else
