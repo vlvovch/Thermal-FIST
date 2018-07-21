@@ -729,8 +729,11 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 void ThermalModelBase::SetUseWidth(bool useWidth)
 {
 	if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
-		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
 		m_TPS->ProcessDecays();
+	}
+	if (useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth) {
+		m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
 	}
 	m_UseWidth = useWidth;
 }
