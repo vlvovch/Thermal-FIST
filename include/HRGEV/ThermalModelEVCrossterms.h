@@ -36,6 +36,7 @@ public:
 	virtual void CalculateDensitiesIter();
 	void CalculateTwoParticleCorrelations();
 	void CalculateFluctuations();
+	virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 	double DensityId(int ind);
 	double Pressure(int ind);
 	double ScaledVarianceId(int ind);

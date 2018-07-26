@@ -677,6 +677,193 @@ void ThermalModelEVCrossterms::CalculateFluctuations() {
 	}
 }
 
+std::vector<double> ThermalModelEVCrossterms::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+{
+	vector<double> ret(order + 1, 0.);
+
+	// chi1
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[0] += chgs[i] * m_densities[i];
+
+	ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+
+	if (order<2) return ret;
+	// Preparing matrix for system of linear equations
+	int NN = m_densities.size();
+
+	vector<double> MuStar(NN, 0.);
+	for (int i = 0; i < NN; ++i) {
+		MuStar[i] = m_Chem[i] + MuShift(i);
+	}
+
+	MatrixXd densMatrix(2 * NN, 2 * NN);
+	VectorXd solVector(2 * NN), xVector(2 * NN);
+
+	vector<double> DensitiesId(m_densities.size()), chi2id(m_densities.size());
+	for (int i = 0; i < NN; ++i) {
+		DensitiesId[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, MuStar[i], 0.);
+		chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, MuStar[i], 0.);
+	}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j) {
+			densMatrix(i, j) = m_Virial[j][i] * DensitiesId[i];
+			if (i == j) densMatrix(i, j) += 1.;
+		}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j)
+			densMatrix(i, NN + j) = 0.;
+
+	for (int i = 0; i<NN; ++i) {
+		densMatrix(i, NN + i) = 0.;
+		for (int k = 0; k<NN; ++k) {
+			densMatrix(i, NN + i) += m_Virial[k][i] * m_densities[k];
+		}
+		densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+	}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j) {
+			densMatrix(NN + i, NN + j) = m_Virial[i][j] * DensitiesId[j];
+			if (i == j) densMatrix(NN + i, NN + j) += 1.;
+		}
+
+
+	PartialPivLU<MatrixXd> decomp(densMatrix);
+
+	// chi2
+	vector<double> dni(NN, 0.), dmus(NN, 0.);
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+		xVector[NN + i] = chgs[i];
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		dni[i] = solVector[i];
+		dmus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[1] += chgs[i] * dni[i];
+
+	ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+
+	if (order<3) return ret;
+	// chi3
+	vector<double> d2ni(NN, 0.), d2mus(NN, 0.);
+
+	vector<double> chi3id(m_densities.size());
+	for (int i = 0; i<NN; ++i)
+		chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, MuStar[i], 0.);
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_Virial[j][i] * dni[j];
+		tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+		xVector[i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_Virial[j][i] * m_densities[j];
+		tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i];
+		xVector[i] += tmp;
+	}
+	for (int i = 0; i<NN; ++i) {
+		xVector[NN + i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -m_Virial[i][j] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[j];
+
+		xVector[NN + i] = tmp;
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		d2ni[i] = solVector[i];
+		d2mus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[2] += chgs[i] * d2ni[i];
+
+	ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+
+
+	if (order<4) return ret;
+
+	// chi4
+	vector<double> d3ni(NN, 0.), d3mus(NN, 0.);
+
+	vector<double> chi4id(m_densities.size());
+	for (int i = 0; i<NN; ++i)
+		chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, MuStar[i], 0.);
+
+	vector<double> dnis(NN, 0.);
+	for (int i = 0; i<NN; ++i) {
+		dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+	}
+
+	vector<double> d2nis(NN, 0.);
+	for (int i = 0; i<NN; ++i) {
+		d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i] +
+			chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * d2mus[i];
+	}
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_Virial[j][i] * dni[j];
+		tmp = -3. * tmp * d2nis[i];
+		xVector[i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_Virial[j][i] * d2ni[j];
+		tmp = -3. * tmp * dnis[i];
+		xVector[i] += tmp;
+
+		double tmps = 0.;
+		for (int j = 0; j<NN; ++j) tmps += m_Virial[j][i] * m_densities[j];
+
+		tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * d2mus[i] * 3. * dmus[i];
+		xVector[i] += tmp;
+
+		tmp = -(tmps - 1.) * chi4id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] * dmus[i];
+		xVector[i] += tmp;
+	}
+	for (int i = 0; i<NN; ++i) {
+		xVector[NN + i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -2. * m_Virial[i][j] * d2mus[j] * dnis[j];
+		xVector[NN + i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -m_Virial[i][j] * dmus[j] * d2nis[j];
+		xVector[NN + i] += tmp;
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		d3ni[i] = solVector[i];
+		d3mus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[3] += chgs[i] * d3ni[i];
+
+	ret[3] /= pow(xMath::GeVtoifm(), 3);
+
+	return ret;
+}
+
 double ThermalModelEVCrossterms::CalculateEnergyDensity() {
 	double ret = 0.;
 	ret += m_Parameters.T * CalculateEntropyDensity();

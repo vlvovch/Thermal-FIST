@@ -120,6 +120,9 @@ class ThermalModelBase
 		
 		virtual void CalculateFluctuations();
 
+		// Calculates fluctuations of a charge, assigned to each species arbitrarily, GCE only
+		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+
 		virtual double CalculateHadronDensity();
 		virtual double GetParticlePrimordialDensity(unsigned int);
 		virtual double GetParticleTotalDensity(unsigned int);
@@ -229,6 +232,9 @@ class ThermalModelBase
 
 		// Conserved charges susceptibility matrix
 		std::vector< std::vector<double> > m_Susc;
+
+		// Cumulants of arbitrary charge calculation
+		//std::vector< std::vector<double> > m_chi;
 
 		// Contains log of possible errors when checking the calculation
 		std::string m_ValidityLog;

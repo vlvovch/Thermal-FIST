@@ -1073,6 +1073,12 @@ double ThermalModelBase::GetParticleTotalDensity(unsigned int part) {
 	return m_densitiestotal[part];
 }
 
+std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+{
+	printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG);
+	return std::vector<double>();
+}
+
 double ThermalModelBase::CalculateHadronDensity() {
 	if (!m_Calculated) CalculateDensities();
 	double ret = 0.;

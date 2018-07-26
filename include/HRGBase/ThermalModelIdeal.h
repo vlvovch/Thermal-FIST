@@ -17,6 +17,8 @@ class ThermalModelIdeal : public ThermalModelBase
 
 		virtual void CalculateFluctuations();
 
+		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+
 		virtual double CalculateEnergyDensity();
 
 		virtual double CalculateEntropyDensity();
