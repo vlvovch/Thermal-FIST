@@ -633,6 +633,7 @@ void ThermalModelEVCrossterms::CalculateTwoParticleCorrelations() {
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 // TODO include correlations

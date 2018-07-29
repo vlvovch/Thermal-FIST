@@ -653,6 +653,8 @@ std::vector<int> EventGeneratorBase::GenerateTotalsCE() const {
 				int total = RandomGenerators::RandomPoisson(mean);
 				totals[i] = total;
 				netB += totals[i] * m_THM->TPS()->Particles()[i].BaryonCharge();
+				netS += totals[i] * m_THM->TPS()->Particles()[i].Strangeness();
+				netQ += totals[i] * m_THM->TPS()->Particles()[i].ElectricCharge();
 			}
 		}
 

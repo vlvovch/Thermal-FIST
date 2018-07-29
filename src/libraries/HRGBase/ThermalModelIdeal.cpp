@@ -66,6 +66,7 @@ void ThermalModelIdeal::CalculateTwoParticleCorrelations() {
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 

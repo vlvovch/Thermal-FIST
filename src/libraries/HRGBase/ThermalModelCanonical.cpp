@@ -733,7 +733,7 @@ void ThermalModelCanonical::CalculateTwoParticleCorrelations() {
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
-
+	CalculateProxySusceptibilityMatrix();
 }
 
 void ThermalModelCanonical::CalculateFluctuations() {

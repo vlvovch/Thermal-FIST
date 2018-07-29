@@ -1445,6 +1445,7 @@ void ThermalModelVDWFull::CalculateTwoParticleCorrelations()
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 void ThermalModelVDWFull::CalculateFluctuations()

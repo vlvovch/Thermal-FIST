@@ -285,51 +285,55 @@ void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {
 		else m_wprim[i] = 1.;
 	}
 
-	for (int i = 0; i < NN; ++i)
-		//for(int j=0;j<NN;++j) 
-	{
-		m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
-		for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-			int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-			m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
-			m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
-			for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
-				int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
-				m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
-			}
-		}
-	}
+	//for (int i = 0; i < NN; ++i)
+	//	//for(int j=0;j<NN;++j) 
+	//{
+	//	m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
+	//	for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
+	//		int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+	//		m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
+	//		m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+	//		for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
+	//			int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
+	//			m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
+	//		}
+	//	}
+	//}
 
-	for (int i = 0; i < NN; ++i) {
-		m_wtot[i] = m_TotalCorrel[i][i];
-		if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
-		else m_wtot[i] = 1.;
-	}
+	//for (int i = 0; i < NN; ++i) {
+	//	m_wtot[i] = m_TotalCorrel[i][i];
+	//	if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
+	//	else m_wtot[i] = 1.;
+	//}
 
-	m_Susc.resize(4);
-	for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
+	//m_Susc.resize(4);
+	//for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
 
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			m_Susc[i][j] = 0.;
-			for (int k = 0; k < m_PrimCorrel.size(); ++k) {
-				int c1 = 0;
-				if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
-				if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
-				if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
-				if (i == 3) c1 = m_TPS->Particles()[k].Charm();
-				for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
-					int c2 = 0;
-					if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
-					if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
-					if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
-					if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
-					m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
-				}
-			}
-			m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
-		}
-	}
+	//for (int i = 0; i < 4; ++i) {
+	//	for (int j = 0; j < 4; ++j) {
+	//		m_Susc[i][j] = 0.;
+	//		for (int k = 0; k < m_PrimCorrel.size(); ++k) {
+	//			int c1 = 0;
+	//			if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
+	//			if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
+	//			if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
+	//			if (i == 3) c1 = m_TPS->Particles()[k].Charm();
+	//			for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
+	//				int c2 = 0;
+	//				if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
+	//				if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
+	//				if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
+	//				if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
+	//				m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
+	//			}
+	//		}
+	//		m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+	//	}
+	//}
+
+	CalculateSusceptibilityMatrix();
+	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 // TODO include correlations

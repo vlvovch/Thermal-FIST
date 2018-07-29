@@ -1291,11 +1291,14 @@ void ThermalModelBase::CalculateTwoParticleCorrelations() {
 	printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented", m_TAG.c_str());
 }
 
+
 void ThermalModelBase::CalculateTwoParticleFluctuationsDecays()
 {
+	// Decay contributions here are done according to Eq. (47) in nucl-th/0606036
+	
 	int NN = m_densities.size();
 
-	// Only diagonal for now
+	// Fluctuations for all
 	for (int i = 0; i < NN; ++i)
 		//for(int j=0;j<NN;++j) 
 	{
@@ -1307,6 +1310,53 @@ void ThermalModelBase::CalculateTwoParticleFluctuationsDecays()
 			for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
 				int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
 				m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
+			}
+		}
+	}
+
+
+	// Correlations only for stable
+	for (int i = 0; i < NN; ++i) {
+		if (m_TPS->Particles()[i].IsStable()) {
+			for (int j = 0; j < NN; ++j) {
+				if (j != i && m_TPS->Particles()[j].IsStable()) {
+					m_TotalCorrel[i][j] = m_PrimCorrel[i][j];
+
+					for (int r = 0; r < m_TPS->Particles()[j].DecayContributions().size(); ++r) {
+						int rr = m_TPS->Particles()[j].DecayContributions()[r].second;
+						m_TotalCorrel[i][j] += m_PrimCorrel[i][rr] * m_TPS->Particles()[j].DecayContributions()[r].first;
+					}
+
+					for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
+						int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+						m_TotalCorrel[i][j] += m_PrimCorrel[j][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+					}
+
+					for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
+						int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+
+						for (int r2 = 0; r2 < m_TPS->Particles()[j].DecayContributions().size(); ++r2) {
+							int rr2 = m_TPS->Particles()[j].DecayContributions()[r2].second;
+							m_TotalCorrel[i][j] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[j].DecayContributions()[r2].first;
+						}
+					}
+
+					
+					for (int r = 0; r < m_TPS->Particles().size(); ++r) {
+						if (r != i && r != j) { // && !m_TPS->Particles()[r].IsStable()) {
+							double nij = 0., ni = 0., nj = 0., dnij = 0.;
+							const ThermalParticle &tpart = m_TPS->Particle(r);
+							for (int br = 0; br < tpart.DecayDistributions().size(); ++br) {
+								nij += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[i] * tpart.DecayDistributions()[br].second[j];
+								ni  += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[i];
+								nj  += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[j];
+							}
+							dnij = nij - ni * nj;
+							m_TotalCorrel[i][j] += m_densities[r] / m_Parameters.T * dnij;
+						}
+					}
+
+				}
 			}
 		}
 	}
@@ -1342,6 +1392,40 @@ void ThermalModelBase::CalculateSusceptibilityMatrix()
 				}
 			}
 			m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+		}
+	}
+}
+
+void ThermalModelBase::CalculateProxySusceptibilityMatrix()
+{
+	m_ProxySusc.resize(4);
+	for (int i = 0; i < 4; ++i) 
+		m_ProxySusc[i].resize(4);
+
+	// Up to 3, no charm here yet
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			m_ProxySusc[i][j] = 0.;
+			for (int k = 0; k < m_TotalCorrel.size(); ++k) {
+				if (m_TPS->Particles()[k].IsStable()) {
+					int c1 = 0;
+					if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();// 1. * (m_TPS->Particles()[k].PdgId() == 2212) - 1. * (m_TPS->Particles()[k].PdgId() == -2212);
+					if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
+					if (i == 2) c1 = 1. * (m_TPS->Particles()[k].PdgId() == 321) - 1. * (m_TPS->Particles()[k].PdgId() == -321);
+					if (i == 3) c1 = m_TPS->Particles()[k].Charm();
+					for (int kp = 0; kp < m_TotalCorrel.size(); ++kp) {
+						if (m_TPS->Particles()[kp].IsStable()) {
+							int c2 = 0;
+							if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();//1. * (m_TPS->Particles()[kp].PdgId() == 2212) - 1. * (m_TPS->Particles()[kp].PdgId() == -2212);
+							if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
+							if (j == 2) c2 = 1. * (m_TPS->Particles()[kp].PdgId() == 321) - 1. * (m_TPS->Particles()[kp].PdgId() == -321);
+							if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
+							m_ProxySusc[i][j] += c1 * c2 * m_TotalCorrel[k][kp];
+						}
+					}
+				}
+			}
+			m_ProxySusc[i][j] = m_ProxySusc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
 		}
 	}
 }

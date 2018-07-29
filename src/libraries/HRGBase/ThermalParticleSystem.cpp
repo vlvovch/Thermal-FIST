@@ -133,6 +133,11 @@ void ThermalParticleSystem::FillResonanceDecays() {
 		}
 	}
 
+	for (int i = 0; i < m_Particles.size(); ++i)
+		m_Particles[i].DecayDistributions().resize(0);
+	for (int i = 0; i < m_Particles.size(); ++i)
+		GoResonanceDecayDistributions(i);
+
 	for (int i = 0; i < m_Particles.size(); ++i) {
 		vector<int> nchtyp(0);
 		nchtyp.push_back(0);
@@ -290,6 +295,92 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, 
 		}
 		return ret;
 	}
+	return ret;
+}
+
+std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResonanceDecayDistributions(int ind)
+{
+	if (m_Particles[ind].DecayDistributions().size() != 0)
+		return m_Particles[ind].DecayDistributions();
+
+	
+
+	std::vector<std::pair<double, std::vector<int>>> retorig(1);
+	retorig[0].first = 1.;
+	retorig[0].second = std::vector<int>(m_Particles.size(), 0);
+	retorig[0].second[ind] = 1;
+
+	std::vector<std::pair<double, std::vector<int>>> ret(0);
+
+	ThermalParticle &tpart = m_Particles[ind];
+
+	if (tpart.IsStable()) {
+		tpart.DecayDistributions() = retorig;
+		return retorig;
+	}
+	
+	for (int i = 0; i < tpart.Decays().size(); ++i) {
+		double tbr = tpart.Decays()[i].mBratio;
+		//if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
+		//	tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
+		std::vector<std::pair<double, std::vector<int> > > tret = retorig;
+
+		for (int j = 0; j < tpart.Decays()[i].mDaughters.size(); ++j) {
+			if (m_PDGtoID.count(tpart.Decays()[i].mDaughters[j]) != 0) {
+				std::vector<std::pair<double, std::vector<int> > > tmp = GoResonanceDecayDistributions(m_PDGtoID[tpart.Decays()[i].mDaughters[j]]);
+				std::vector<std::pair<double, std::vector<int> > > tmp2(tret.size() * tmp.size());
+				for (int i1 = 0; i1 < tret.size(); ++i1) {
+					for (int i2 = 0; i2 < tmp.size(); ++i2) {
+						tmp2[i1*tmp.size() + i2].first = tret[i1].first * tmp[i2].first;
+						tmp2[i1*tmp.size() + i2].second.resize(m_Particles.size());
+						for (int jj = 0; jj < tmp2[i1*tmp.size() + i2].second.size(); ++jj)
+							tmp2[i1*tmp.size() + i2].second[jj] = tret[i1].second[jj] + tmp[i2].second[jj];
+					}
+				}
+				tret = tmp2;
+			}
+		}
+
+		for (int j = 0; j < tret.size(); ++j) {
+			tret[j].first *= tbr;
+			ret.push_back(tret[j]);
+		}
+	}
+
+	double totprob = 0.;
+	for (int i = 0; i < ret.size(); ++i)
+		totprob += ret[i].first;
+	if (totprob > 1.) {
+		for (int i = 0; i < ret.size(); ++i)
+			ret[i].first *= 1. / totprob;
+	}
+	else if (totprob < 1.) {
+		double emptyprob = 1. - totprob;
+		ret.push_back( std::make_pair(emptyprob, retorig[0].second) );
+	}
+
+	tpart.DecayDistributions() = ret;
+
+	//if (tpart.BaryonCharge() == 1) {
+	//	printf("Checking baryon number conservation in decays for %d\n", tpart.PdgId());
+	//	double tBav = 0.;
+	//	for (int i = 0; i < ret.size(); ++i) {
+	//		double tbr = ret[i].first;
+	//		for (int j = 0; j < ret[i].second.size(); ++j)
+	//			if (m_Particles[j].IsStable())
+	//				tBav += tbr * ret[i].second[j] * m_Particles[j].BaryonCharge();
+	//	}
+	//	printf("<B> = %lf\n", tBav);
+	//	//printf("Decay distributions for %d\n", tpart.PdgId());
+	//	//for (int i = 0; i < ret.size(); ++i) {
+	//	//	printf("%lf\n", ret[i].first);
+	//	//	for (int j = 0; j < ret[i].second.size(); ++j)
+	//	//		if (ret[i].second[j] > 0)
+	//	//			printf("%d: %d\n", m_Particles[j].PdgId(), ret[i].second[j]);
+	//	//}
+	//}
+
 	return ret;
 }
 

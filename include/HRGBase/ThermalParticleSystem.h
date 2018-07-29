@@ -40,6 +40,8 @@ class ThermalParticleSystem
 
 		std::vector<double> GoResonanceDecayProbsCharge(int ind, int nch, bool firstdecay = false);
 
+		std::vector< std::pair<double, std::vector<int> > > GoResonanceDecayDistributions(int ind);
+
 		void LoadTable(std::string InputFile="", bool GenerateAntiParticles = true, double mcut = 1.e9);
 		void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
 		void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
