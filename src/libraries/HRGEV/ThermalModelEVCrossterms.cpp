@@ -384,8 +384,8 @@ void ThermalModelEVCrossterms::CalculateDensities() {
 		return;
 	}
 
-	// Decays
 
+	// Decays
 	CalculateFeeddown();
 
 	m_Calculated = true;

@@ -136,7 +136,7 @@ void ThermalParticleSystem::FillResonanceDecays() {
 	for (int i = 0; i < m_Particles.size(); ++i)
 		m_Particles[i].DecayDistributions().resize(0);
 	for (int i = 0; i < m_Particles.size(); ++i)
-		GoResonanceDecayDistributions(i);
+		GoResonanceDecayDistributions(i, true);
 
 	for (int i = 0; i < m_Particles.size(); ++i) {
 		vector<int> nchtyp(0);
@@ -178,6 +178,7 @@ void ThermalParticleSystem::GoResonance(int ind, int startind, double BR) {
 			double tbr = m_Particles[ind].Decays()[i].mBratio;
 
 			// TODO: Fix(?) for canonical ensemble
+			// Update: Should be fine now
 			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
 				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
 
@@ -298,10 +299,10 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, 
 	return ret;
 }
 
-std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResonanceDecayDistributions(int ind)
+std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResonanceDecayDistributions(int ind, bool firstdecay)
 {
-	if (m_Particles[ind].DecayDistributions().size() != 0)
-		return m_Particles[ind].DecayDistributions();
+	//if (m_Particles[ind].DecayDistributions().size() != 0)
+	//	return m_Particles[ind].DecayDistributions();
 
 	
 
@@ -321,8 +322,8 @@ std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResona
 	
 	for (int i = 0; i < tpart.Decays().size(); ++i) {
 		double tbr = tpart.Decays()[i].mBratio;
-		//if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
-		//	tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+		if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
+			tbr = m_Particles[ind].Decays()[i].mBratioAverage;
 
 		std::vector<std::pair<double, std::vector<int> > > tret = retorig;
 

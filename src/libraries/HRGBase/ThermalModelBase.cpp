@@ -1305,8 +1305,11 @@ void ThermalModelBase::CalculateTwoParticleFluctuationsDecays()
 		m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
 		for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
 			int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+			
 			m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
+			
 			m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+			
 			for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
 				int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
 				m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
@@ -1409,14 +1412,16 @@ void ThermalModelBase::CalculateProxySusceptibilityMatrix()
 			for (int k = 0; k < m_TotalCorrel.size(); ++k) {
 				if (m_TPS->Particles()[k].IsStable()) {
 					int c1 = 0;
-					if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();// 1. * (m_TPS->Particles()[k].PdgId() == 2212) - 1. * (m_TPS->Particles()[k].PdgId() == -2212);
+					//if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
+					if (i == 0) c1 = 1. * (m_TPS->Particles()[k].PdgId() == 2212) - 1. * (m_TPS->Particles()[k].PdgId() == -2212);
 					if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
 					if (i == 2) c1 = 1. * (m_TPS->Particles()[k].PdgId() == 321) - 1. * (m_TPS->Particles()[k].PdgId() == -321);
 					if (i == 3) c1 = m_TPS->Particles()[k].Charm();
 					for (int kp = 0; kp < m_TotalCorrel.size(); ++kp) {
 						if (m_TPS->Particles()[kp].IsStable()) {
 							int c2 = 0;
-							if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();//1. * (m_TPS->Particles()[kp].PdgId() == 2212) - 1. * (m_TPS->Particles()[kp].PdgId() == -2212);
+							//if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
+							if (j == 0) c2 = 1. * (m_TPS->Particles()[kp].PdgId() == 2212) - 1. * (m_TPS->Particles()[kp].PdgId() == -2212);
 							if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
 							if (j == 2) c2 = 1. * (m_TPS->Particles()[kp].PdgId() == 321) - 1. * (m_TPS->Particles()[kp].PdgId() == -321);
 							if (j == 3) c2 = m_TPS->Particles()[kp].Charm();

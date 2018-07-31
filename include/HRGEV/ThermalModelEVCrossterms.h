@@ -11,7 +11,7 @@ public:
 
 	virtual ~ThermalModelEVCrossterms(void);
 
-	void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
+	virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
 
 	virtual void SetParameters(double T, double muB, double muS, double muQ, double gammaS, double V, double R);
 
@@ -37,8 +37,8 @@ public:
 	void CalculateTwoParticleCorrelations();
 	void CalculateFluctuations();
 	virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
-	double DensityId(int ind);
-	double Pressure(int ind);
+	virtual double DensityId(int ind);
+	virtual double Pressure(int ind);
 	double ScaledVarianceId(int ind);
 	double PressureDiagonal(int ind, double P);
 	double PressureDiagonalTotal(double P);
@@ -73,7 +73,7 @@ protected:
 	// TODO: test
 	virtual double MuShift(int id);
 
-private:
+//private:
 	std::vector<double> m_densitiesid;
 	std::vector<double> m_Ps;
 	std::vector< std::vector<double> > m_Virial;
