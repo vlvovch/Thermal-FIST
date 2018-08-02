@@ -48,6 +48,7 @@ class ThermalModelBase
 		virtual void SetCharm													(int C);
 
 		virtual void SetRadius(double rad) { }
+		virtual void SetRadius(int i, double rad) { }
 		virtual void SetVirial(int i, int j, double b) { }
 		virtual void SetAttraction(int i, int j, double b) { }
 
@@ -119,6 +120,9 @@ class ThermalModelBase
 		
 		virtual void CalculateFluctuations();
 
+		// Calculates fluctuations of a charge, assigned to each species arbitrarily, GCE only
+		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+
 		virtual double CalculateHadronDensity();
 		virtual double GetParticlePrimordialDensity(unsigned int);
 		virtual double GetParticleTotalDensity(unsigned int);
@@ -173,11 +177,12 @@ class ThermalModelBase
 		double KurtosisTotal           (int id) const { return (id >= 0 && id < m_kurttot.size())  ? m_kurttot[id]  : 1.; }
 
 		double Susc(int i, int j) const { return m_Susc[i][j]; }
+		double ProxySusc(int i, int j) const { return m_ProxySusc[i][j]; }
 
-		double ChargedMultiplicity  (int type = 0); /// 0 - charged, 1 - +Q, -1 - -Q
-		double ChargedScaledVariance(int type = 0); /// 0 - charged, 1 - +Q, -1 - -Q
-		double ChargedMultiplicityFinal(int type = 0); /// 0 - charged, 1 - +Q, -1 - -Q
-		double ChargedScaledVarianceFinal(int type = 0); /// 0 - charged, 1 - +Q, -1 - -Q
+		double ChargedMultiplicity  (int type = 0); /// 0 - charged, 1 - N+, -1 - N-, 2 - Q+, -2 - Q-
+		double ChargedScaledVariance(int type = 0); /// 0 - charged, 1 - N+ -1 - N-, 2 - Q+, -2 - Q-
+		double ChargedMultiplicityFinal(int type = 0); /// 0 - charged, 1 - N+ -1 - N-, 2 - Q+, -2 - Q-
+		double ChargedScaledVarianceFinal(int type = 0); /// 0 - charged, 1 - N+ -1 - N-, 2 - Q+, -2 - Q-
 
 		ThermalModelEnsemble Ensemble() { return m_Ensemble; }
 		ThermalModelInteraction InteractionModel() { return m_InteractionModel;  }
@@ -229,6 +234,12 @@ class ThermalModelBase
 		// Conserved charges susceptibility matrix
 		std::vector< std::vector<double> > m_Susc;
 
+		// Susceptibility matrix of net-p, net-Q, and net-K
+		std::vector< std::vector<double> > m_ProxySusc;
+
+		// Cumulants of arbitrary charge calculation
+		//std::vector< std::vector<double> > m_chi;
+
 		// Contains log of possible errors when checking the calculation
 		std::string m_ValidityLog;
 
@@ -241,6 +252,7 @@ class ThermalModelBase
 
 		virtual void CalculateTwoParticleFluctuationsDecays();
 		virtual void CalculateSusceptibilityMatrix();
+		virtual void CalculateProxySusceptibilityMatrix();
 
 		// Shift in chemical potential due to interactions
 		virtual double MuShift(int id) { return 0.; }

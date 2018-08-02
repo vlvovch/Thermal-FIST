@@ -186,7 +186,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannDensity(T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationDensity: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -208,7 +208,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannPressure(T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationPressure: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -232,7 +232,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannEnergyDensity(T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -259,7 +259,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannScalarDensity(T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuScalarDensity(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -281,7 +281,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannTdndmu(1, T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT1dn1dmu1(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -304,7 +304,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannTdndmu(2, T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT2dn2dmu2(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -327,7 +327,7 @@ namespace IdealGasFunctions {
 		if (statistics == 0)           return BoltzmannTdndmu(3, T, mu, m, deg);
 		if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT3dn3dmu3(T, mu, m, deg);
 		if (statistics == -1 && mu > m) {
-			printf("**ERROR** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation\n");
+			printf("**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation\n");
 			return 0.;
 		}
 
@@ -348,7 +348,7 @@ namespace IdealGasFunctions {
 	double QuantumNumericalIntegrationTdndmu(int N, int statistics, double T, double mu, double m, double deg)
 	{
 		if (N < 0 || N>3) {
-			printf("**ERROR** QuantumNumericalIntegrationTdndmu: N must be between 0 and 3!\n");
+			printf("**WARNING** QuantumNumericalIntegrationTdndmu: N must be between 0 and 3!\n");
 			exit(1);
 		}
 		if (N == 0)

@@ -66,6 +66,7 @@ void ThermalModelIdeal::CalculateTwoParticleCorrelations() {
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 
@@ -108,6 +109,34 @@ void ThermalModelIdeal::CalculateFluctuations() {
 	}
 
 	m_FluctuationsCalculated = true;
+}
+
+std::vector<double> ThermalModelIdeal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+{
+	vector<double> ret(order + 1, 0.);
+
+	// chi1
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[0] += chgs[i] * m_densities[i];
+
+	ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+
+	if (order<2) return ret;
+
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[1] += chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+
+	if (order<3) return ret;
+
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[2] += chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+
+	if (order<4) return ret;
+
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+
+	return ret;
 }
 
 double ThermalModelIdeal::CalculateEnergyDensity() {

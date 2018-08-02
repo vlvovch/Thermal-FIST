@@ -285,51 +285,55 @@ void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {
 		else m_wprim[i] = 1.;
 	}
 
-	for (int i = 0; i < NN; ++i)
-		//for(int j=0;j<NN;++j) 
-	{
-		m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
-		for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-			int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-			m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
-			m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
-			for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
-				int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
-				m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
-			}
-		}
-	}
+	//for (int i = 0; i < NN; ++i)
+	//	//for(int j=0;j<NN;++j) 
+	//{
+	//	m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
+	//	for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
+	//		int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+	//		m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
+	//		m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+	//		for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
+	//			int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
+	//			m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
+	//		}
+	//	}
+	//}
 
-	for (int i = 0; i < NN; ++i) {
-		m_wtot[i] = m_TotalCorrel[i][i];
-		if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
-		else m_wtot[i] = 1.;
-	}
+	//for (int i = 0; i < NN; ++i) {
+	//	m_wtot[i] = m_TotalCorrel[i][i];
+	//	if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
+	//	else m_wtot[i] = 1.;
+	//}
 
-	m_Susc.resize(4);
-	for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
+	//m_Susc.resize(4);
+	//for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
 
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			m_Susc[i][j] = 0.;
-			for (int k = 0; k < m_PrimCorrel.size(); ++k) {
-				int c1 = 0;
-				if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
-				if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
-				if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
-				if (i == 3) c1 = m_TPS->Particles()[k].Charm();
-				for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
-					int c2 = 0;
-					if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
-					if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
-					if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
-					if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
-					m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
-				}
-			}
-			m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
-		}
-	}
+	//for (int i = 0; i < 4; ++i) {
+	//	for (int j = 0; j < 4; ++j) {
+	//		m_Susc[i][j] = 0.;
+	//		for (int k = 0; k < m_PrimCorrel.size(); ++k) {
+	//			int c1 = 0;
+	//			if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
+	//			if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
+	//			if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
+	//			if (i == 3) c1 = m_TPS->Particles()[k].Charm();
+	//			for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
+	//				int c2 = 0;
+	//				if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
+	//				if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
+	//				if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
+	//				if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
+	//				m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
+	//			}
+	//		}
+	//		m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+	//	}
+	//}
+
+	CalculateSusceptibilityMatrix();
+	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 // TODO include correlations
@@ -371,6 +375,201 @@ void ThermalModelEVDiagonal::CalculateFluctuations() {
 		m_skewtot[i] = tmp3 / tmp2;
 		m_kurttot[i] = tmp4 / tmp2;
 	}
+}
+
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
+std::vector<double> ThermalModelEVDiagonal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+{
+	vector<double> ret(order + 1, 0.);
+
+	// chi1
+	for (int i = 0; i<m_densities.size(); ++i)
+		ret[0] += chgs[i] * m_densities[i];
+
+	ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+
+	if (order<2) return ret;
+
+	
+
+	// Preparing matrix for system of linear equations
+	int NN = m_densities.size();
+
+	vector<double> MuStar(NN, 0.);
+	for (int i = 0; i < NN; ++i) {
+		MuStar[i] = m_Chem[i] + MuShift(i);
+	}
+
+
+	MatrixXd densMatrix(2 * NN, 2 * NN);
+	VectorXd solVector(2 * NN), xVector(2 * NN);
+
+	vector<double> DensitiesId(m_densities.size()), chi2id(m_densities.size());
+	for (int i = 0; i < NN; ++i) {
+		DensitiesId[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, MuStar[i], 0.);
+		chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, MuStar[i], 0.);
+	}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j) {
+			densMatrix(i, j) = m_v[j] * DensitiesId[i];
+			if (i == j) densMatrix(i, j) += 1.;
+		}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j)
+			densMatrix(i, NN + j) = 0.;
+
+	for (int i = 0; i<NN; ++i) {
+		densMatrix(i, NN + i) = 0.;
+		for (int k = 0; k<NN; ++k) {
+			densMatrix(i, NN + i) += m_v[k] * m_densities[k];
+		}
+		densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+	}
+
+	for (int i = 0; i<NN; ++i)
+		for (int j = 0; j<NN; ++j) {
+			densMatrix(NN + i, NN + j) = m_v[i] * DensitiesId[j];
+			if (i == j) densMatrix(NN + i, NN + j) += 1.;
+		}
+
+
+	PartialPivLU<MatrixXd> decomp(densMatrix);
+
+	// chi2
+	vector<double> dni(NN, 0.), dmus(NN, 0.);
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+		xVector[NN + i] = chgs[i];
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		dni[i] = solVector[i];
+		dmus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[1] += chgs[i] * dni[i];
+
+	ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+
+	if (order<3) return ret;
+	// chi3
+	vector<double> d2ni(NN, 0.), d2mus(NN, 0.);
+
+	vector<double> chi3id(m_densities.size());
+	for (int i = 0; i<NN; ++i)
+		chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, MuStar[i], 0.);
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_v[j] * dni[j];
+		tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+		xVector[i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_v[j] * m_densities[j];
+		tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i];
+		xVector[i] += tmp;
+	}
+	for (int i = 0; i<NN; ++i) {
+		xVector[NN + i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -m_v[i] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[j];
+
+		xVector[NN + i] = tmp;
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		d2ni[i] = solVector[i];
+		d2mus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[2] += chgs[i] * d2ni[i];
+
+	ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+
+
+	if (order<4) return ret;
+
+	// chi4
+	vector<double> d3ni(NN, 0.), d3mus(NN, 0.);
+
+	vector<double> chi4id(m_densities.size());
+	for (int i = 0; i<NN; ++i)
+		chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, MuStar[i], 0.);
+
+	vector<double> dnis(NN, 0.);
+	for (int i = 0; i<NN; ++i) {
+		dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+	}
+
+	vector<double> d2nis(NN, 0.);
+	for (int i = 0; i<NN; ++i) {
+		d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i] +
+			chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * d2mus[i];
+	}
+
+	for (int i = 0; i<NN; ++i) {
+		xVector[i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_v[j] * dni[j];
+		tmp = -3. * tmp * d2nis[i];
+		xVector[i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += m_v[j] * d2ni[j];
+		tmp = -3. * tmp * dnis[i];
+		xVector[i] += tmp;
+
+		double tmps = 0.;
+		for (int j = 0; j<NN; ++j) tmps += m_v[j] * m_densities[j];
+
+		tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * d2mus[i] * 3. * dmus[i];
+		xVector[i] += tmp;
+
+		tmp = -(tmps - 1.) * chi4id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] * dmus[i];
+		xVector[i] += tmp;
+	}
+	for (int i = 0; i<NN; ++i) {
+		xVector[NN + i] = 0.;
+
+		double tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -2. * m_v[i] * d2mus[j] * dnis[j];
+		xVector[NN + i] += tmp;
+
+		tmp = 0.;
+		for (int j = 0; j<NN; ++j) tmp += -m_v[i] * dmus[j] * d2nis[j];
+		xVector[NN + i] += tmp;
+	}
+
+	solVector = decomp.solve(xVector);
+
+	for (int i = 0; i<NN; ++i) {
+		d3ni[i] = solVector[i];
+		d3mus[i] = solVector[NN + i];
+	}
+
+	for (int i = 0; i<NN; ++i)
+		ret[3] += chgs[i] * d3ni[i];
+
+	ret[3] /= pow(xMath::GeVtoifm(), 3);
+
+	return ret;
 }
 
 

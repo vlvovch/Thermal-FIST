@@ -33,7 +33,7 @@ ThermalParticle::ThermalParticle(bool Stable_, std::string Name, int PDGID, doub
 	if (m_Mass < 0.200) SetClusterExpansionOrder(10);
 	
 	SetResonanceWidthShape(RelativisticBreitWiger);
-	SetResonanceWidthIntegrationType(TwoGamma);
+	SetResonanceWidthIntegrationType(BWTwoGamma);
 	
 	m_DecayContributions.resize(0);
 	m_DecayContributionsSigmas.resize(0);
@@ -212,7 +212,7 @@ void ThermalParticle::RestoreBranchingRatios()
 
 void ThermalParticle::FillCoefficients() {
 	double a, b;
-	if (m_ResonanceWidthIntegrationType != TwoGamma && m_Threshold >= 0.) {
+	if (m_ResonanceWidthIntegrationType != BWTwoGamma && m_Threshold >= 0.) {
 		a = m_Threshold;
 		b = m_Mass + 2.*m_Width;
 		NumericalIntegration::GetCoefsIntegrateLegendre32(a, b, &m_xleg, &m_wleg);

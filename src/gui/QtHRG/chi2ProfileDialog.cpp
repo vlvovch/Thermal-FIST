@@ -272,7 +272,7 @@ void chi2ProfileDialog::setModel()
 
 	model->SetUseWidth(config.FiniteWidth != 0);
 	if (config.FiniteWidth == 1)
-		model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+		model->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
 	else if (config.FiniteWidth == 2)
 		model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);
 

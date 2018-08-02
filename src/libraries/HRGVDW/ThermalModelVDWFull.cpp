@@ -221,7 +221,7 @@ vector<double> ThermalModelVDWFull::SearchSolutionsSingle(const vector<double> &
 	if (iters==MAXITS) m_LastBroydenSuccessFlag = false;
 	else m_LastBroydenSuccessFlag = true;
 	m_MaxDiff = maxdif;
-	printf("Iteration %d: %lf\n", iters, maxdif);
+	//printf("Iteration %d: %lf\n", iters, maxdif);
 	return muscur;
 }
 
@@ -270,10 +270,10 @@ vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroyden(const vector<do
 				if (i==j) densMatrix(i,j) += 1.;
 			}
 
-		printf("Before n-matrix LU-decomposition\n");
+		//printf("Before n-matrix LU-decomposition\n");
 		clock_t tbeg = clock();
 		PartialPivLU<MatrixXd> decomp(densMatrix);
-		printf("After n-matrix LU-decomposition. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
+		//printf("After n-matrix LU-decomposition. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
 
 
 		for(int i=0;i<NN;++i) xVector[i] = ns[i];
@@ -316,10 +316,10 @@ vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroyden(const vector<do
 	}
 	musnew = musold;
 	fnew   = fold;
-	printf("Before matrix inversion\n");
+	//printf("Before matrix inversion\n");
 	clock_t tbeg = clock();
 	Jinv = Jac.inverse();
-	printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
+	//printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
 
 	int iters = 1;
 	double maxdif = 0.;
@@ -416,13 +416,13 @@ vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroyden(const vector<do
 			if (m_TPS->Particles()[i].Degeneracy()>0.0) maxdif = max(maxdif, abs(musnew[i] - musold[i]));
 		}
 		iters++;
-		printf("Iteration %d: %E\n", iters, maxdif);
+		//printf("Iteration %d: %E\n", iters, maxdif);
 
 		if (maxdif<EPS) break;
 		musold = musnew;
 		fold   = fnew;
 	}
-	printf("Iteration %d: %E\n", iters, maxdif);
+	//printf("Iteration %d: %E\n", iters, maxdif);
 	for(int i=0; i<muscur.size(); ++i)
 		muscur[i] = musnew[i];
 	if (iters==MAXITS) m_LastBroydenSuccessFlag = false;
@@ -488,10 +488,10 @@ std::vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroydenOptimized(c
 					densMatrix(i, j) += 1.;
 			}
 
-		printf("Before n-matrix LU-decomposition\n");
+		//printf("Before n-matrix LU-decomposition\n");
 		clock_t tbeg = clock();
 		PartialPivLU<MatrixXd> decomp(densMatrix);
-		printf("After n-matrix LU-decomposition. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
+		//printf("After n-matrix LU-decomposition. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
 
 
 		for (int i = 0; i<NN; ++i) 
@@ -544,10 +544,10 @@ std::vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroydenOptimized(c
 	dmusnew = dmusold;
 	fnew = fold;
 
-	printf("Before matrix inversion\n");
+	//printf("Before matrix inversion\n");
 	clock_t tbeg = clock();
 	Jinv = Jac.inverse();
-	printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
+	//printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
 
 	int iters = 1;
 	double maxdif = 0.;
@@ -602,13 +602,13 @@ std::vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroydenOptimized(c
 				maxdif = max(maxdif, abs(dmusnew[i] - dmusold[i]));
 		}
 		iters++;
-		printf("Iteration %d: %E\n", iters, maxdif);
+		//printf("Iteration %d: %E\n", iters, maxdif);
 
 		if (maxdif<EPS) break;
 		dmusold = dmusnew;
 		fold = fnew;
 	}
-	printf("Iteration %d: %E\n", iters, maxdif);
+	//printf("Iteration %d: %E\n", iters, maxdif);
 	for (int i = 0; i<dmuscur.size(); ++i)
 		dmuscur[i] = dmusnew[i];
 	if (iters == MAXITS) m_LastBroydenSuccessFlag = false;
@@ -781,10 +781,10 @@ std::vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroydenOptimized2(
 	dmusnew = dmusold;
 	fnew = fold;
 
-	printf("Before matrix inversion\n");
+	//printf("Before matrix inversion\n");
 	clock_t tbeg = clock();
 	Jinv = Jac.inverse();
-	printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
+	//printf("After matrix inversion. Time: %lf s\n", (clock() - tbeg) / static_cast<double>(CLOCKS_PER_SEC));
 
 	int iters = 1;
 	double maxdif = 0.;
@@ -866,7 +866,7 @@ std::vector<double> ThermalModelVDWFull::SearchSolutionsSingleBroydenOptimized2(
 		dmusold = dmusnew;
 		fold = fnew;
 	}
-	printf("Iteration %d: %E\n", iters, maxdif);
+	//printf("Iteration %d: %E\n", iters, maxdif);
 	for (int i = 0; i<dmuscur.size(); ++i)
 		dmuscur[i] = dmusnew[i];
 	if (iters == MAXITS) m_LastBroydenSuccessFlag = false;
@@ -1445,6 +1445,7 @@ void ThermalModelVDWFull::CalculateTwoParticleCorrelations()
 
 	CalculateSusceptibilityMatrix();
 	CalculateTwoParticleFluctuationsDecays();
+	CalculateProxySusceptibilityMatrix();
 }
 
 void ThermalModelVDWFull::CalculateFluctuations()
