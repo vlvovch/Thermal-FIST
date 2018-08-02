@@ -1075,7 +1075,7 @@ double ThermalModelBase::GetParticleTotalDensity(unsigned int part) {
 
 std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
 {
-	printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG);
+	printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
 	return std::vector<double>();
 }
 
