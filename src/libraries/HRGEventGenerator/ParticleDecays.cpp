@@ -112,10 +112,12 @@ namespace ParticleDecays {
 	std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs) {
 		std::vector<SimpleParticle> ret(0);
 		if (masses.size()<1) return ret;
-		if (masses.size()==1) {
-			ret.push_back(Mother);
-			ret[0].PDGID = pdgs[0];
-			return ret;
+
+		// If only one daughter listed, assume a radiative decay A -> B + gamma
+		if (masses.size() == 1)
+		{
+			masses.push_back(0.);
+			pdgs.push_back(22);
 		}
 		SimpleParticle Mother2 = Mother;
 		// Mass validation
