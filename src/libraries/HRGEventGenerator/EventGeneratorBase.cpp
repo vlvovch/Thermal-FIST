@@ -823,7 +823,8 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 								std::vector<SimpleParticle> decres = ParticleDecays::ManyBodyDecay(primParticles[i][j], masses, pdgids);
 								for (int ind = 0; ind < decres.size(); ind++) {
 									decres[ind].processed = false;
-									primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+									if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
+										primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
 								}
 								primParticles[i][j].processed = true;
 							}

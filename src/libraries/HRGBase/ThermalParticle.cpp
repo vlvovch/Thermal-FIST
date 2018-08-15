@@ -16,7 +16,8 @@ double ParticleDecay::ModifiedWidth(double m)
 {
 	if (m < mM0) return 0.;
 	if (mM0 >= mPole) return mBratio;
-	return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
+  return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
+	//return mBratio * pow((m - mM0) / (mPole - mM0), 1. / 2.); // as in 1808.02106
 }
 
 
