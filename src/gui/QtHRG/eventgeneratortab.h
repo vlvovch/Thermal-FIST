@@ -40,211 +40,211 @@ class QStackedWidget;
 
 class EventGeneratorWorker : public QThread
 {
-    Q_OBJECT
+	Q_OBJECT
 
-    EventGeneratorBase *generator;
-    ParticlesSpectra *spectra;
-    QMutex *mutex;
-    int events;
-    double wsum, w2sum;
-    int *eventsProcessed;
-    int *stop;
-    double *nE;
-		bool performDecays;
+		EventGeneratorBase *generator;
+	ParticlesSpectra *spectra;
+	QMutex *mutex;
+	int events;
+	double wsum, w2sum;
+	int *eventsProcessed;
+	int *stop;
+	double *nE;
+	bool performDecays;
 
 
-		std::ofstream fout;
+	std::ofstream fout;
 
-    void run() Q_DECL_OVERRIDE;
-//   {
-//        if (mutex!=NULL) {
-//            for(int i=0;i<events;++i) {
-//                SimpleEvent ev = generator->GetEvent();
-//                mutex->lock();
-//                spectra->ProcessEvent(ev);
-//                (*eventsProcessed)++;
-//                mutex->unlock();
-//            }
-//        }
-//        emit calculated();
-//    }
+	void run() Q_DECL_OVERRIDE;
+	//   {
+	//        if (mutex!=NULL) {
+	//            for(int i=0;i<events;++i) {
+	//                SimpleEvent ev = generator->GetEvent();
+	//                mutex->lock();
+	//                spectra->ProcessEvent(ev);
+	//                (*eventsProcessed)++;
+	//                mutex->unlock();
+	//            }
+	//        }
+	//        emit calculated();
+	//    }
 
 public:
-    EventGeneratorWorker(
-           EventGeneratorBase *gen=NULL,
-           ParticlesSpectra *spec=NULL,
-           QMutex *mut=NULL,
-           int totalEvents = 0,
-           int *evproc = NULL,
-           int *stopo = NULL,
-           double *nEp = NULL,
-					 bool pDecays = false,
-				   std::string fileout = "",
-           QObject * parent = 0) :
-        QThread(parent), generator(gen), spectra(spec), mutex(mut),
-            events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)
-    {
-        wsum = w2sum = 0.;
-				fout.clear();
-				if (fileout != "")
-					fout.open(fileout.c_str());
-    }
+	EventGeneratorWorker(
+		EventGeneratorBase *gen = NULL,
+		ParticlesSpectra *spec = NULL,
+		QMutex *mut = NULL,
+		int totalEvents = 0,
+		int *evproc = NULL,
+		int *stopo = NULL,
+		double *nEp = NULL,
+		bool pDecays = false,
+		std::string fileout = "",
+		QObject * parent = 0) :
+		QThread(parent), generator(gen), spectra(spec), mutex(mut),
+		events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)
+	{
+		wsum = w2sum = 0.;
+		fout.clear();
+		if (fileout != "")
+			fout.open(fileout.c_str());
+	}
 signals:
-    void calculated();
+	void calculated();
 };
 
 class EventGeneratorTab : public QWidget
 {
-    Q_OBJECT
+	Q_OBJECT
 
-    QTableView *tableSpectra;
-//    QPushButton *buttonAddQuantity, *buttonRemoveQuantity;
-//    QPushButton *buttonLoadFromFile;
-//    QTableWidget *tableParameters;
+		QTableView *tableSpectra;
+	//    QPushButton *buttonAddQuantity, *buttonRemoveQuantity;
+	//    QPushButton *buttonLoadFromFile;
+	//    QTableWidget *tableParameters;
 
-    QComboBox *comboDistr;
-    QStackedWidget *plot;
-    QCustomPlot *plotDistr;
-    QCustomPlot *plot2D;
-    QCPColorMap *colormap;
-    QCPColorScale *colorScale;
-    std::map<QString, int> parammap;
-    std::vector<QString> paramnames, paramnamesx;
+	QComboBox *comboDistr;
+	QStackedWidget *plot;
+	QCustomPlot *plotDistr;
+	QCustomPlot *plot2D;
+	QCPColorMap *colormap;
+	QCPColorScale *colorScale;
+	std::map<QString, int> parammap;
+	std::vector<QString> paramnames, paramnamesx;
 
-    //QRadioButton *radioIdeal, *radioEVMF, *radioCE, *radioIdealCanonStrangeness, *radioIdealCanonCharm;
-    //QRadioButton *radioIdeal, *radioEVDiagonal, *radioQvdW;
-    //QRadioButton *radioGCE, *radioCE, *radioSCE;
-		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
-		QRadioButton *radGCE, *radCE, *radSCE;
+	//QRadioButton *radioIdeal, *radioEVMF, *radioCE, *radioIdealCanonStrangeness, *radioIdealCanonCharm;
+	//QRadioButton *radioIdeal, *radioEVDiagonal, *radioQvdW;
+	//QRadioButton *radioGCE, *radioCE, *radioSCE;
+	QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
+	QRadioButton *radGCE, *radCE, *radSCE;
 
-    QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
-		QString strEVPath;
+	QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
+	QString strEVPath;
 
-    //QRadioButton *radioBoltz, *radioQuant;
-		QLabel *labelmuS, *labelmuC;
-		QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
-		QDoubleSpinBox *spinVolumeRSC;
-		QSpinBox *spinB, *spinS, *spinQ;
-		QDoubleSpinBox *spinQBRatio;
-		QDoubleSpinBox *spinRadius;
+	//QRadioButton *radioBoltz, *radioQuant;
+	QLabel *labelmuS, *labelmuC;
+	QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
+	QDoubleSpinBox *spinVolumeRSC;
+	QSpinBox *spinB, *spinS, *spinQ;
+	QDoubleSpinBox *spinQBRatio;
+	QDoubleSpinBox *spinRadius;
 
-		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
+	QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
 
-    //QCheckBox *checkOnlyStable;
-//    QPushButton *buttonResults;
-//    QPushButton *buttonChi2Map;
+	//QCheckBox *checkOnlyStable;
+	//    QPushButton *buttonResults;
+	//    QPushButton *buttonChi2Map;
 
-    QRadioButton *radioSR, *radioSSH;
+	QRadioButton *radioSR, *radioSSH;
 
-    //QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaS, *spinVolumeR;
-		QDoubleSpinBox *spinTkin;
-    QDoubleSpinBox *spinBeta;
-    QDoubleSpinBox *spinBetat, *spinEtaMax, *spinn;
-    //QDoubleSpinBox *spinQBRatio;
-    //QDoubleSpinBox *spinRadius;
+	//QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaS, *spinVolumeR;
+	QDoubleSpinBox *spinTkin;
+	QDoubleSpinBox *spinBeta;
+	QDoubleSpinBox *spinBetat, *spinEtaMax, *spinn;
+	//QDoubleSpinBox *spinQBRatio;
+	//QDoubleSpinBox *spinRadius;
 
-    QDoubleSpinBox *spinEnergy;
+	QDoubleSpinBox *spinEnergy;
 
-    QSpinBox *spinEvents;
+	QSpinBox *spinEvents;
 
-    QCheckBox *checkFiniteWidth;
-    QCheckBox *checkBratio;
-    QCheckBox *checkDecays;
+	QCheckBox *checkFiniteWidth;
+	QCheckBox *checkBratio;
+	QCheckBox *checkDecays;
 
-    QCheckBox *checkOMP;
+	QCheckBox *checkOMP;
 
-    QPushButton *buttonCalculate;
+	QPushButton *buttonCalculate;
 
 
 
-    //TableModel *myModel;
+	//TableModel *myModel;
 
-    ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
-    EventGeneratorBase *generator;
-    ParticlesSpectra *spectra;
+	ThermalParticleSystem *TPS;
+	ThermalModelBase *model;
+	EventGeneratorBase *generator;
+	ParticlesSpectra *spectra;
 
-    QTextEdit *teDebug;
+	QTextEdit *teDebug;
 
-    SpectraModel *myModel;
+	SpectraModel *myModel;
 
-    QElapsedTimer timer;
+	QElapsedTimer timer;
 
-    QHBoxLayout *layProgress;
-    QProgressBar *progBar;
-    QLabel *labelProgress;
+	QHBoxLayout *layProgress;
+	QProgressBar *progBar;
+	QLabel *labelProgress;
 
-    QMutex mutex;
+	QMutex mutex;
 
-    int getCurrentRow();
+	int getCurrentRow();
 
-    int fCurrentSize;
-    int fTotalSize;
-    double nE;
-    bool fRunning;
-    int fStop;
-    QTimer *calcTimer;
+	int fCurrentSize;
+	int fTotalSize;
+	double nE;
+	bool fRunning;
+	int fStop;
+	QTimer *calcTimer;
 
-    QCheckBox *checkAcceptance;
-    QLineEdit *leAcceptancePath;
+	QCheckBox *checkAcceptance;
+	QLineEdit *leAcceptancePath;
 
-		QCheckBox *checkFile;
-		QLineEdit *leFilePath;
-		QPushButton *buttonChooseFile;
+	QCheckBox *checkFile;
+	QLineEdit *leFilePath;
+	QPushButton *buttonChooseFile;
 
-    //std::vector<FittedQuantity> quantities;
+	//std::vector<FittedQuantity> quantities;
 public:
-    EventGeneratorTab(QWidget *parent = 0, ThermalModelBase *model=NULL);
-    ~EventGeneratorTab();
-		ThermalModelConfig getConfig();
+	EventGeneratorTab(QWidget *parent = 0, ThermalModelBase *model = NULL);
+	~EventGeneratorTab();
+	ThermalModelConfig getConfig();
 signals:
 
 private:
-    double muBss(double ss) {
-        return 1.308 / (1. + 0.273 * ss);
-    }
+	double muBss(double ss) {
+		return 1.308 / (1. + 0.273 * ss);
+	}
 
 
-    double Tss(double ss) {
-        double tmpmuB = muBss(ss);
-        return 0.166 - 0.139 * tmpmuB * tmpmuB - 0.053 * tmpmuB * tmpmuB * tmpmuB * tmpmuB;
-    }
+	double Tss(double ss) {
+		double tmpmuB = muBss(ss);
+		return 0.166 - 0.139 * tmpmuB * tmpmuB - 0.053 * tmpmuB * tmpmuB * tmpmuB * tmpmuB;
+	}
 
-		double gammaSss(double ss) {
-			double tmpmuB = muBss(ss);
-			double tmpT = Tss(ss);
-			return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
-		}
+	double gammaSss(double ss) {
+		double tmpmuB = muBss(ss);
+		double tmpT = Tss(ss);
+		return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
+	}
 
-public slots:
-    void changedRow();
-		void loadEVFromFile();
-    void calculate();
-    void replot();
-    void replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
-                const QVector<double> &x2, const QVector<double> &y2, int index);
-    void replot2D(const QVector<double> &xv, const QVector<double> &yv, const QVector<double> &zv, int index);
-    //void benchmark();
-    void quantityDoubleClick(const QModelIndex &);
-    //void switchStability(bool);
-//    void showResults();
-//    void showChi2Map();
-    void setModel(ThermalModelBase *model);
-//    void removeQuantityFromFit();
-//    void addQuantity();
-//    void loadFromFile();
-    void updateProgress();
-    void finalize();
-    void changePlot();
-    void modelChanged();
-    void resetTPS();
-    void loadAcceptance();
-		void chooseOutputFile();
-    void updateThermalParameters();
-		void changeVolumeRSC(double);
-		void changeTkin(double);
+	public slots:
+	void changedRow();
+	void loadEVFromFile();
+	void calculate();
+	void replot();
+	void replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
+		const QVector<double> &x2, const QVector<double> &y2, int index, double rightlimit = 2.);
+	void replot2D(const QVector<double> &xv, const QVector<double> &yv, const QVector<double> &zv, int index, double rightlimit = 2.);
+	//void benchmark();
+	void quantityDoubleClick(const QModelIndex &);
+	//void switchStability(bool);
+	//    void showResults();
+	//    void showChi2Map();
+	void setModel(ThermalModelBase *model);
+	//    void removeQuantityFromFit();
+	//    void addQuantity();
+	//    void loadFromFile();
+	void updateProgress();
+	void finalize();
+	void changePlot();
+	void modelChanged();
+	void resetTPS();
+	void loadAcceptance();
+	void chooseOutputFile();
+	void updateThermalParameters();
+	void changeVolumeRSC(double);
+	void changeTkin(double);
 
-		void generateEvents(const ThermalModelConfig & config);
+	void generateEvents(const ThermalModelConfig & config);
 };
 
 #endif // FITTOEXPERIMENTTAB_H
