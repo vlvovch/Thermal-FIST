@@ -888,14 +888,40 @@ void ThermalModelFit::PrintFitLog(std::string filename, std::string comment, boo
 		if (param.toFit) {
 			double tval = param.value, terr = param.error, terrp = param.errp, terrm = param.errm;
 			
-			if (!asymm) 
-				fprintf(f, "%15s = %15lf +- %-15lf\n", tname.c_str(), tval * tmn, terr * tmn);
-			else 
-				fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
+			if (i != 5 && i != 6) {
+				if (!asymm)
+					fprintf(f, "%15s = %15lf +- %-15lf\n", tname.c_str(), tval * tmn, terr * tmn);
+				else
+					fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
+			}
+			else {
+				if (!asymm) {
+					fprintf(f, "%15s = %15lf +- %-15lf\t", tname.c_str(), tval * tmn, terr * tmn);
+					std::string tname2 = "V[fm3]";
+					if (i == 6)
+						tname2 = "Vc[fm3]";
+					fprintf(f, "%15s = %15lf +- %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terr * tmn);
+				}
+				else {
+					fprintf(f, "%15s = %15lf + %-15lf - %-15lf\t", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
+					std::string tname2 = "V[fm3]";
+					if (i == 6)
+						tname2 = "Vc[fm3]";
+					fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terrp * tmn, 4. * xMath::Pi() * pow(tval * tmn, 2) * terrm * tmn);
+				}
+			}
 		}
 		else {
 			double tval = param.value;
-			fprintf(f, "%15s = %15lf (FIXED)\n", tname.c_str(), tval * tmn);
+			if (i != 5 && i != 6)
+				fprintf(f, "%15s = %15lf (FIXED)\n", tname.c_str(), tval * tmn);
+			else {
+				fprintf(f, "%15s = %15lf (FIXED)\t", tname.c_str(), tval * tmn);
+				std::string tname2 = "V[fm3]";
+				if (i == 6)
+					tname2 = "Vc[fm3]";
+				fprintf(f, "%15s = %15lf (FIXED)\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3));
+			}
 		}
 	}
 
@@ -908,7 +934,10 @@ void ThermalModelFit::PrintFitLog(std::string filename, std::string comment, boo
 		std::string tname = m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
 		if (m_Multiplicities[i].fPDGID == 1) tname = "Npart";
 		else if (m_Multiplicities[i].fPDGID == 33340) tname = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
-		fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
+		if (m_Multiplicities[i].fValue > 1.e-5 && m_Multiplicities[i].fError > 1.e-5)
+			fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
+		else 
+			fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
 	}
 
 	for (int i = 0; i<m_Ratios.size(); ++i) {
@@ -921,7 +950,10 @@ void ThermalModelFit::PrintFitLog(std::string filename, std::string comment, boo
 		if (m_Ratios[i].PDGID2 == 1) name2 = "Npart";
 		if (m_Ratios[i].PDGID1 == 33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
 		if (m_Ratios[i].PDGID2 == 33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
-		fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
+		if (m_Ratios[i].fValue > 1.e-5 && m_Ratios[i].fError > 1.e-5)
+			fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
+		else
+			fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
 	}
 
 	if (f != stdout)
