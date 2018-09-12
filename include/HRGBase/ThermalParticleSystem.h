@@ -90,10 +90,15 @@ class ThermalParticleSystem
 		int m_NumberOfParticles;
 
 		ThermalParticle::ResonanceWidthIntegration m_ResonanceWidthIntegrationType;
+
+
+		// Map for DP-based calculations of decay distributions
+		std::vector< std::vector< std::pair<double, std::vector<int> > > > m_DecayDistributionsMap;
 };
 
 namespace CuteHRGHelper {
 	std::vector<std::string> split(const std::string &s, char delim);
+	void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 1000);
 }
 
 #endif
