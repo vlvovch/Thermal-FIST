@@ -15,6 +15,7 @@ mkdir build
 cd build
 cmake ../
 make
+make install
 ```
 
 This will build the libraries in `build/lib`, the QtHRG gui in `build/bin`,
