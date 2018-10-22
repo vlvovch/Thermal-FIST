@@ -74,6 +74,8 @@ class ModelTab : public QWidget
     //ThermalParticleSystem *TPS;
     ThermalModelBase *model;
 
+		ChargesFluctuations flucts;
+
     QTextEdit *teDebug;
 
     int getCurrentRow();
@@ -96,6 +98,7 @@ private slots:
     void modelChanged();
 		void changeVolumeRSC(double);
 		void showValidityCheckLog();
+		void computeHigherOrderFluctuations();
 public:
     void updateModel();
     void resetTPS();
