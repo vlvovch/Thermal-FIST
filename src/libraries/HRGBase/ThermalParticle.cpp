@@ -100,6 +100,15 @@ double ThermalParticle::MassDistribution(double m) const
 double ThermalParticle::MassDistribution(double m, double width) const
 {
 	if (width < 0.) width = m_Width;
+
+	// Zero if outside the interval
+	if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
+		double a = max(m_Threshold, m_Mass - 2.*m_Width);
+		double b = m_Mass + 2.*m_Width;
+		if (m < a || m > b)
+			return 0.;
+	}
+
 	if (m_ResonanceWidthShape == RelativisticBreitWiger)
 		return m_Mass * width * m / ((m * m - m_Mass*m_Mass)*(m * m - m_Mass*m_Mass) + m_Mass*m_Mass*width*width);
 	else
@@ -383,6 +392,64 @@ void ThermalParticle::FillCoefficientsDynamical() {
 	for (int j = 0; j < m_walldyn.size(); ++j) {
 		tsum += m_walldyn[j];
 	}
+}
+
+double ThermalParticle::TotalWidtheBW(double M)
+{
+	if (m_ResonanceWidthIntegrationType != eBW)
+		return m_Width;
+	
+	double tsumb = 0.0;
+	for (int i = 0; i < m_Decays.size(); ++i) {
+		tsumb += m_Decays[i].mBratio;
+	}
+	
+	double twid = 0.0;
+	for (int i = 0; i < m_Decays.size(); ++i) {
+		twid += m_Decays[i].ModifiedWidth(M) * m_Width;
+	}
+
+	if (tsumb < 1.)
+		twid += (1. - tsumb) * m_Width;
+
+	return twid;
+}
+
+std::vector<double> ThermalParticle::BranchingRatiosM(double M)
+{
+	std::vector<double> ret(m_Decays.size(), 0.);
+
+	if (m_ResonanceWidthIntegrationType != eBW) {
+		for (int i = 0; i < m_Decays.size(); ++i)
+			ret[i] = m_Decays[i].mBratio;
+
+		return ret;
+	}
+
+	double totwid = TotalWidtheBW(M);
+
+	for (int i = 0; i < m_Decays.size(); ++i) {
+		double partialwid = m_Decays[i].ModifiedWidth(M) * m_Width;
+		ret[i] = partialwid / totwid;
+	}
+
+	return ret;
+}
+
+double ThermalParticle::ThermalMassDistribution(double M, double T, double width)
+{
+	if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
+		double a = max(m_Threshold, m_Mass - 2.*m_Width);
+		double b = m_Mass + 2.*m_Width;
+		if (M < a || M > b)
+			return 0.;
+	}
+	return IdealGasFunctions::BoltzmannDensity(T, 0., M, m_Degeneracy) * MassDistribution(M, width);
+}
+
+double ThermalParticle::ThermalMassDistribution(double M, double T)
+{
+	return ThermalMassDistribution(M, T, TotalWidtheBW(M));
 }
 
 void ThermalParticle::UseStatistics(bool enable) {

@@ -97,6 +97,15 @@ class ThermalParticle
 		// Fill coefficients for mass integration in the eBW scheme
 		void FillCoefficientsDynamical();
 
+		// Total width (eBW scheme) at a given mass
+		double TotalWidtheBW(double M);
+
+		// Energy-dependent branching ratios
+		std::vector<double> BranchingRatiosM(double M);
+
+		// Thermal mass distribution (not normalized!)
+		double ThermalMassDistribution(double M, double T, double width);
+		double ThermalMassDistribution(double M, double T);
 
 		void NormalizeBranchingRatios();
 		void RestoreBranchingRatios();// { m_Decays = m_DecaysOrig; }
