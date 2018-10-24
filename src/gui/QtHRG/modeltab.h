@@ -40,6 +40,8 @@ class ModelTab : public QWidget
 
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
+		//QLabel *labelValid;
+		QPushButton *labelValid;
 
 		QLabel *labelmuS, *labelmuC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
@@ -51,7 +53,8 @@ class ModelTab : public QWidget
 
 		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
 
-    QCheckBox *checkFiniteWidth;
+    //QCheckBox *checkFiniteWidth;
+		QComboBox *comboWidth;
     QCheckBox *checkBratio;
 		QCheckBox *checkFluctuations;
 
@@ -70,6 +73,8 @@ class ModelTab : public QWidget
 
     //ThermalParticleSystem *TPS;
     ThermalModelBase *model;
+
+		ChargesFluctuations flucts;
 
     QTextEdit *teDebug;
 
@@ -92,6 +97,8 @@ private slots:
     void setModel(ThermalModelBase *model);
     void modelChanged();
 		void changeVolumeRSC(double);
+		void showValidityCheckLog();
+		void computeHigherOrderFluctuations();
 public:
     void updateModel();
     void resetTPS();

@@ -85,7 +85,7 @@ class ThermalParticle
 {
 	public:
 		enum ResonanceWidthShape					{ RelativisticBreitWiger, NonRelativisticBreitWiger};
-		enum ResonanceWidthIntegration		{ ZeroWidth, TwoGamma, FullInterval, FullIntervalWeighted, eBW };
+		enum ResonanceWidthIntegration		{ ZeroWidth, BWTwoGamma, FullInterval, FullIntervalWeighted, eBW };
 
 		ThermalParticle(bool Stable_=true, std::string Name="hadron", int PDGID=0, double Deg=1., int Stat=0, double Mass=0.,
 			int Strange=0, int Baryon=0, int Charge=0, double AbsS=0., double Width=0., double Threshold=0., int Charm = 0, double AbsC = 0., double radius = 0.5, int Quark = 0);
@@ -130,7 +130,7 @@ class ThermalParticle
 		void SetName(std::string &name) { m_Name = name; }
 
 		int  PdgId() const { return m_PDGID; }
-		void setPdgId(int PdgId) { m_PDGID = PdgId; }
+		void SetPdgId(int PdgId) { m_PDGID = PdgId; }
 
 		int  Degeneracy() const { return m_Degeneracy; }
 		void SetDegeneracy(double deg) { m_Degeneracy = deg; }
@@ -218,6 +218,9 @@ class ThermalParticle
 
 		const std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() const		{ return m_DecayProbabilities; }
 		std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities()								{ return m_DecayProbabilities; }
+
+		const std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() const { return m_DecayDistributions; }
+		std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() { return m_DecayDistributions; }
 
 		void CalculateThermalBranchingRatios(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.);
 
@@ -328,6 +331,11 @@ class ThermalParticle
 		*/
 		std::vector< std::pair< std::vector<double>, int> > m_DecayCumulants;
 		std::vector< std::pair< std::vector<double>, int> > m_DecayProbabilities;
+
+		/**
+		*   Contains all possible configurations which result from decays of a particle
+		*/
+		std::vector< std::pair<double, std::vector<int> > > m_DecayDistributions;
 
 		/**
 		*   For calculating final state charged particle multiplicities

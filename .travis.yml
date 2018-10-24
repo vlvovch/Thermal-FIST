@@ -16,3 +16,6 @@ script:
   - cmake -DINCLUDE_TESTS=ON ../
   - make -j$(nproc)
   - make test
+  - cd bin/routines
+  - ./CalculationTmu
+  - ./BagModelFit

@@ -96,6 +96,9 @@ namespace ParticleDecays {
 		ret[0] = LorentzBoost(ret[0], -vx, -vy, -vz);
 		ret[1] = LorentzBoost(ret[1], -vx, -vy, -vz);
 
+		ret[0].MotherPDGID = Mother.PDGID;
+		ret[1].MotherPDGID = Mother.PDGID;
+
 #ifdef DEBUGDECAYS
 		for(int i=0;i<ret.size();++i)
 			if (ret[i].px!=ret[i].px) {
@@ -109,10 +112,12 @@ namespace ParticleDecays {
 	std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs) {
 		std::vector<SimpleParticle> ret(0);
 		if (masses.size()<1) return ret;
-		if (masses.size()==1) {
-			ret.push_back(Mother);
-			ret[0].PDGID = pdgs[0];
-			return ret;
+
+		// If only one daughter listed, assume a radiative decay A -> B + gamma
+		if (masses.size() == 1)
+		{
+			masses.push_back(0.);
+			pdgs.push_back(22);
 		}
 		SimpleParticle Mother2 = Mother;
 		// Mass validation
@@ -139,6 +144,9 @@ namespace ParticleDecays {
 		ret1 = ManyBodyDecay(ret1[0], masses, pdgs);
 		for(int i=0;i<ret1.size();++i)
 			ret.push_back(ret1[i]);
+
+		for (int i = 0; i < ret.size(); ++i)
+			ret[i].MotherPDGID = Mother.PDGID;
 
 #ifdef DEBUGDECAYS
 		for(int i=0;i<ret.size();++i)

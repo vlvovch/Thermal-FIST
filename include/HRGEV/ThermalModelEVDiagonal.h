@@ -52,6 +52,8 @@ public:
 
 	virtual void CalculateFluctuations();
 
+	virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+
 	double DensityId(int ind);
 
 	double PressureId(int ind);

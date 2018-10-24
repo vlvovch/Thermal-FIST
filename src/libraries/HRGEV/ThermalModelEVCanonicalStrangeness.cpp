@@ -91,7 +91,8 @@ void ThermalModelEVCanonicalStrangeness::CalculateDensities() {
 	CalculateFeeddown();
 
 	m_Calculated = true;
-	m_LastCalculationSuccessFlag = true;
+	ValidateCalculation();
+	//m_LastCalculationSuccessFlag = true;
 }
 
 

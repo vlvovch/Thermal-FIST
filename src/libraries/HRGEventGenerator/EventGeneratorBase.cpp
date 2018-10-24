@@ -653,6 +653,8 @@ std::vector<int> EventGeneratorBase::GenerateTotalsCE() const {
 				int total = RandomGenerators::RandomPoisson(mean);
 				totals[i] = total;
 				netB += totals[i] * m_THM->TPS()->Particles()[i].BaryonCharge();
+				netS += totals[i] * m_THM->TPS()->Particles()[i].Strangeness();
+				netQ += totals[i] * m_THM->TPS()->Particles()[i].ElectricCharge();
 			}
 		}
 
@@ -821,7 +823,8 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 								std::vector<SimpleParticle> decres = ParticleDecays::ManyBodyDecay(primParticles[i][j], masses, pdgids);
 								for (int ind = 0; ind < decres.size(); ind++) {
 									decres[ind].processed = false;
-									primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+									if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
+										primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
 								}
 								primParticles[i][j].processed = true;
 							}

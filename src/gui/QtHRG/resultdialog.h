@@ -7,32 +7,35 @@
 #include <QPushButton>
 #include <QTextEdit>
 
+#include "BaseStructures.h"
+
 #include "tablemodel.h"
 
 class ThermalModelBase;
 
 class ResultDialog : public QDialog
 {
-    Q_OBJECT
+	Q_OBJECT
 
-    //ThermalParticle *fParticle;
-    //ThermalParticleSystem *fTPS;
+		//ThermalParticle *fParticle;
+		//ThermalParticleSystem *fTPS;
 
-    ThermalModelBase *model;
+		ThermalModelBase *model;
+	ChargesFluctuations *flucts;
 
 
-    QTextEdit *parameters;
-    QTextEdit *results;
+	QTextEdit *parameters;
+	QTextEdit *results;
 
-    QString GetParameters();
-    QString GetResults();
+	QString GetParameters();
+	QString GetResults();
 public:
-    explicit  ResultDialog(QWidget *parent = 0, ThermalModelBase *mod = NULL);
+	explicit  ResultDialog(QWidget *parent = 0, ThermalModelBase *mod = NULL, ChargesFluctuations *flucts_in = NULL);
 
 signals:
 
-public slots:
-    void checkFixTableSize();
+	public slots :
+		void checkFixTableSize();
 };
 
 #endif // DECAYSEDITOR_H

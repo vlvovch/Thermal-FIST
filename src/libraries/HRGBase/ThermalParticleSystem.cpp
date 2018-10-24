@@ -103,6 +103,7 @@ void ThermalParticleSystem::FillResonanceDecays() {
 	}
 	for (int i = m_Particles.size() - 1; i >= 0; i--)
 		if (!m_Particles[i].IsStable()) {
+			//printf("%d %d %s\n", i, m_Particles[i].PdgId(), m_Particles[i].Name().c_str());
 			GoResonance(i, i, 1.);
 		}
 
@@ -132,6 +133,19 @@ void ThermalParticleSystem::FillResonanceDecays() {
 			m_Particles[i].DecayCumulants().push_back(make_pair(moments, m_Particles[i].DecayProbabilities()[j].second));
 		}
 	}
+
+	m_DecayDistributionsMap.resize(m_Particles.size());
+	for (int i = 0; i < m_Particles.size(); ++i) {
+		m_Particles[i].DecayDistributions().resize(0);
+		m_DecayDistributionsMap[i].resize(0);
+	}
+	for (int i = 0; i < m_Particles.size(); ++i) {
+		//printf("%d %d %s ", i, m_Particles[i].PdgId(), m_Particles[i].Name().c_str());
+		m_Particles[i].DecayDistributions() = GoResonanceDecayDistributions(i, true);
+		//printf("%d\n", m_Particles[i].DecayDistributions().size());
+	}
+	// Clear m_DecayDistributionsMap and memory it occupies
+	std::vector< std::vector< std::pair<double, std::vector<int> > > >().swap(m_DecayDistributionsMap);
 
 	for (int i = 0; i < m_Particles.size(); ++i) {
 		vector<int> nchtyp(0);
@@ -173,6 +187,7 @@ void ThermalParticleSystem::GoResonance(int ind, int startind, double BR) {
 			double tbr = m_Particles[ind].Decays()[i].mBratio;
 
 			// TODO: Fix(?) for canonical ensemble
+			// Update: Should be fine now
 			if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
 				tbr = m_Particles[ind].Decays()[i].mBratioAverage;
 
@@ -293,6 +308,114 @@ std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, 
 	return ret;
 }
 
+std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResonanceDecayDistributions(int ind, bool firstdecay)
+{
+	//if (m_Particles[ind].DecayDistributions().size() != 0)
+	//	return m_Particles[ind].DecayDistributions();
+
+	if (!firstdecay && m_DecayDistributionsMap[ind].size() != 0)
+		return m_DecayDistributionsMap[ind];
+	
+
+	std::vector<std::pair<double, std::vector<int>>> retorig(1);
+	retorig[0].first = 1.;
+	retorig[0].second = std::vector<int>(m_Particles.size(), 0);
+	retorig[0].second[ind] = 1;
+
+	std::vector<std::pair<double, std::vector<int>>> ret(0);
+
+	ThermalParticle &tpart = m_Particles[ind];
+
+	if (tpart.IsStable()) {
+		tpart.DecayDistributions() = retorig;
+		return retorig;
+	}
+	
+	for (int i = 0; i < tpart.Decays().size(); ++i) {
+		double tbr = tpart.Decays()[i].mBratio;
+		if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
+			tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+
+		std::vector<std::pair<double, std::vector<int> > > tret = retorig;
+
+		for (int j = 0; j < tpart.Decays()[i].mDaughters.size(); ++j) {
+			if (m_PDGtoID.count(tpart.Decays()[i].mDaughters[j]) != 0) {
+				
+				std::vector<std::pair<double, std::vector<int> > > tmp = GoResonanceDecayDistributions(m_PDGtoID[tpart.Decays()[i].mDaughters[j]]);
+				std::vector<std::pair<double, std::vector<int> > > tmp2(tret.size() * tmp.size());
+				for (int i1 = 0; i1 < tret.size(); ++i1) {
+					for (int i2 = 0; i2 < tmp.size(); ++i2) {
+						tmp2[i1*tmp.size() + i2].first = tret[i1].first * tmp[i2].first;
+						tmp2[i1*tmp.size() + i2].second.resize(m_Particles.size());
+						for (int jj = 0; jj < tmp2[i1*tmp.size() + i2].second.size(); ++jj)
+							tmp2[i1*tmp.size() + i2].second[jj] = tret[i1].second[jj] + tmp[i2].second[jj];
+					}
+				}
+				tret = tmp2;
+
+				// Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
+				if (tret.size() > 1000) {
+					printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1000!\n",
+						m_Particles[ind].Name().c_str(),
+						m_Particles[ind].PdgId());
+					CuteHRGHelper::cutDecayDistributionsVector(tret);
+				}
+			}
+		}
+
+		for (int j = 0; j < tret.size(); ++j) {
+			tret[j].first *= tbr;
+			ret.push_back(tret[j]);
+		}
+	}
+
+	// Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
+	if (ret.size() > 1000) {
+		printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1000!\n",
+			m_Particles[ind].Name().c_str(),
+			m_Particles[ind].PdgId());
+		CuteHRGHelper::cutDecayDistributionsVector(ret);
+	}
+
+	double totprob = 0.;
+	for (int i = 0; i < ret.size(); ++i)
+		totprob += ret[i].first;
+	if (totprob > 1.) {
+		for (int i = 0; i < ret.size(); ++i)
+			ret[i].first *= 1. / totprob;
+	}
+	else if (totprob < 1.) {
+		double emptyprob = 1. - totprob;
+		ret.push_back( std::make_pair(emptyprob, retorig[0].second) );
+	}
+
+	if (!firstdecay)
+		m_DecayDistributionsMap[ind] = ret;
+
+	//tpart.DecayDistributions() = ret;
+
+	//if (tpart.BaryonCharge() == 1) {
+	//	printf("Checking baryon number conservation in decays for %d\n", tpart.PdgId());
+	//	double tBav = 0.;
+	//	for (int i = 0; i < ret.size(); ++i) {
+	//		double tbr = ret[i].first;
+	//		for (int j = 0; j < ret[i].second.size(); ++j)
+	//			if (m_Particles[j].IsStable())
+	//				tBav += tbr * ret[i].second[j] * m_Particles[j].BaryonCharge();
+	//	}
+	//	printf("<B> = %lf\n", tBav);
+	//	//printf("Decay distributions for %d\n", tpart.PdgId());
+	//	//for (int i = 0; i < ret.size(); ++i) {
+	//	//	printf("%lf\n", ret[i].first);
+	//	//	for (int j = 0; j < ret[i].second.size(); ++j)
+	//	//		if (ret[i].second[j] > 0)
+	//	//			printf("%d: %d\n", m_Particles[j].PdgId(), ret[i].second[j]);
+	//	//}
+	//}
+
+	return ret;
+}
+
 
 namespace CuteHRGHelper {
 	std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -309,6 +432,15 @@ namespace CuteHRGHelper {
 			split(s, delim, elems);
 			return elems;
 		}
+
+	void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int>>>& vect, int maxsize)
+	{
+		if (vect.size() > maxsize) {
+			std::sort(vect.begin(), vect.end());
+			std::reverse(vect.begin(), vect.end());
+			vect.resize(1000);
+		}
+	}
 }
 
 void ThermalParticleSystem::LoadTable(std::string InputFile, bool GenAntiP, double mcut) {
@@ -447,7 +579,7 @@ void ThermalParticleSystem::LoadTable_NewFormat(std::ifstream & fin, bool Genera
 			fin.getline(cc, 2000);
 			string tmp = string(cc);
 			vector<string> elems = CuteHRGHelper::split(tmp, '#');
-			if (elems.size() < 1)
+			if (elems.size() < 1 || elems[0].size() == 0)
 				continue;
 
 			istringstream iss(elems[0]);

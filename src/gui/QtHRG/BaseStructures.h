@@ -35,9 +35,17 @@ struct ThermalModelConfig {
 	bool ConstrainMuC;
 
 	/// Extra flags
-	int FiniteWidth; /**< 0 - zero, 1 - BW */
+	int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
 	bool RenormalizeBR;
 	bool ComputeFluctations;
+};
+
+struct ChargesFluctuations {
+	bool flag;
+	double chi1B, chi2B, chi3B, chi4B;
+	double chi1Q, chi2Q, chi3Q, chi4Q;
+	double chi1S, chi2S, chi3S, chi4S;
+	double chi1C, chi2C, chi3C, chi4C;
 };
 
 #endif

@@ -1,5 +1,3 @@
-#ifdef USE_MINUIT
-
 #include "fittoexperimenttab.h"
 
 #include <QLayout>
@@ -24,6 +22,7 @@
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
+
 
 #include "ItemDelegateCustom.h"
 
@@ -113,10 +112,17 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		buttonChi2Profile = new QPushButton(tr("Chi2 profile..."));
 		connect(buttonChi2Profile, SIGNAL(clicked()), this, SLOT(showChi2Profile()));
 
+		labelValid = new QPushButton(tr("Calculation valid!"));
+		labelValid->setFlat(true);
+		labelValid->setVisible(false); 
+		connect(labelValid, SIGNAL(clicked()), this, SLOT(showValidityCheckLog()));
+
     //layMisc->addWidget(checkOnlyStable);
     layMisc->addWidget(buttonResults);
     //layMisc->addWidget(buttonChi2Map);
 		layMisc->addWidget(buttonChi2Profile);
+		layMisc->addStretch(1);
+		layMisc->addWidget(labelValid, 0, Qt::AlignRight);
 
     dataLayv->addWidget(labelQuantities);
     dataLayv->addWidget(tableQuantities);
@@ -433,15 +439,23 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
 
-    checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
-		checkFiniteWidth->setChecked(true);
+    //checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
+		//checkFiniteWidth->setChecked(true);
+		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
+		comboWidth = new QComboBox();
+		comboWidth->addItem(tr("Zero-width"));
+		comboWidth->addItem(tr("Breit-Wigner"));
+		comboWidth->addItem(tr("eBW"));
+		comboWidth->setCurrentIndex(1);
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
 
 	checkFitRc  = new QCheckBox(tr("Fit Str.-Can. radius"));
 	checkFitRc->setChecked(true);
 
-    layFlags->addWidget(checkFiniteWidth);
+    //layFlags->addWidget(checkFiniteWidth);
+	layFlags->addWidget(labelWidth);
+	layFlags->addWidget(comboWidth);
   layFlags->addWidget(checkBratio);
 	layFlags->addWidget(checkFitRc);
 
@@ -577,7 +591,7 @@ ThermalModelConfig FitToExperimentTab::getConfig()
 	ret.ConstrainMuS = checkFixMuS->isChecked();
 	ret.ConstrainMuC = true;// checkFixMuC->isChecked();
 
-	ret.FiniteWidth = static_cast<int>(checkFiniteWidth->isChecked());
+	ret.FiniteWidth = comboWidth->currentIndex();
 	ret.RenormalizeBR = checkBratio->isChecked();
 	ret.ComputeFluctations = false; //checkFluctuations->isChecked();
 
@@ -676,8 +690,19 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
 	fit->SetParameters(params);
 
-	model->SetUseWidth(config.FiniteWidth);
+	/*model->SetUseWidth(config.FiniteWidth != 0);
+	if (config.FiniteWidth == 1)
 	model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	else if (config.FiniteWidth == 2)
+	model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);*/
+	if (config.FiniteWidth == 0)
+		model->SetUseWidth(ThermalParticle::ZeroWidth);
+	else if (config.FiniteWidth == 1)
+		model->SetUseWidth(ThermalParticle::BWTwoGamma);
+	else if (config.FiniteWidth == 2)
+		model->SetUseWidth(ThermalParticle::eBW);
+	else
+		model->SetUseWidth(ThermalParticle::ZeroWidth);
 
 	fit->SetQBConstraint(config.QoverB);
 
@@ -946,6 +971,8 @@ void FitToExperimentTab::modelChanged()
 void FitToExperimentTab::resetTPS() {
     model->ChangeTPS(model->TPS());
     myModel->updateAll();
+
+		labelValid->setVisible(false);
 }
 
 void FitToExperimentTab::writetofile() {
@@ -1053,12 +1080,16 @@ void FitToExperimentTab::finalize() {
     tableParameters->clearContents();
 
     tableParameters->setColumnCount(3);
-    int RowCount = 15;
+    int RowCount = 17;
+
 		if (model->Ensemble() == ThermalModelBase::CE)
 			RowCount -= 3;
+
 		if (model->Ensemble() == ThermalModelBase::SCE)
 			RowCount -= 1;
+
 		RowCount -= 1;
+
     tableParameters->setRowCount(RowCount);
     tableParameters->verticalHeader()->hide();
     tableParameters->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Parameter")));
@@ -1073,6 +1104,7 @@ void FitToExperimentTab::finalize() {
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.T.error*1.e3)));
 	else
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+
 	if (!(model->Ensemble() == ThermalModelBase::CE)) {
         cRow++;
         tableParameters->setItem(cRow, 0, new QTableWidgetItem("μB (MeV)"));
@@ -1083,6 +1115,7 @@ void FitToExperimentTab::finalize() {
 		else
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
     }
+
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("γq"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.gammaq.value)));
@@ -1099,6 +1132,7 @@ void FitToExperimentTab::finalize() {
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.gammaS.error)));
 	else
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("R (fm)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.R.value)));
@@ -1107,6 +1141,16 @@ void FitToExperimentTab::finalize() {
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
 	else
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+
+	cRow++;
+	tableParameters->setItem(cRow, 0, new QTableWidgetItem("V (fm^3)"));
+	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(4. * xMath::Pi() / 3. * pow(result.R.value, 3))));
+	//tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
+	if (result.R.toFit == true)
+		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(4. * xMath::Pi() * pow(result.R.value, 2) * result.R.error)));
+	else
+		tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+
 	if (model->Ensemble() == ThermalModelBase::SCE) {
 		cRow++;
 		tableParameters->setItem(cRow, 0, new QTableWidgetItem("Rc (fm)"));
@@ -1116,18 +1160,30 @@ void FitToExperimentTab::finalize() {
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.Rc.error)));
 		else
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+
+		cRow++;
+		tableParameters->setItem(cRow, 0, new QTableWidgetItem("Vc (fm^3)"));
+		tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(4. * xMath::Pi() / 3. * pow(result.Rc.value, 3))));
+		//tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
+		if (result.R.toFit == true)
+			tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(4. * xMath::Pi() * pow(result.Rc.value, 2) * result.Rc.error)));
+		else
+			tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
 	}
+
     cRow++;
-    tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/ndf"));
+    tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/dof"));
 	//tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2) + "/" + QString::number((int)(result.chi2 / result.chi2ndf + 0.1))));
 	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2) + "/" + QString::number(result.ndf)));
     //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(""));
+
 	cRow++;
-    tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/ndf"));
+    tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/dof"));
 	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
     //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(""));
+
 		if (!(model->Ensemble() == ThermalModelBase::CE)
 			&& !(model->Ensemble() == ThermalModelBase::SCE)) {
         cRow++;
@@ -1145,27 +1201,33 @@ void FitToExperimentTab::finalize() {
         tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.muQ.value*1.e3)));
         tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muQ.error*1.e3)));
     }
+
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("nH (fm^-3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().nH.value)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().nH.error)));
-    cRow++;
+    
+		cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("rhoB (fm^-3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().rhoB.value)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().rhoB.error)));
-    cRow++;
+    
+		cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("rhoQ (fm^-3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().rhoQ.value)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().rhoQ.error)));
-    cRow++;
+    
+		cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("e (MeV/fm^3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().en.value*1.e3)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().en.error*1.e3)));
-    cRow++;
+    
+		cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("s (fm^-3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().entropy.value)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().entropy.error)));
-    cRow++;
+    
+		cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("P (MeV/fm^3)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().pressure.value*1.e3)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().pressure.error*1.e3)));
@@ -1175,7 +1237,25 @@ void FitToExperimentTab::finalize() {
 
     buttonCalculate->setEnabled(true);
 
+		if (model->IsLastSolutionOK()) {
+			labelValid->setText(tr("Calculation valid!"));
+			labelValid->setStyleSheet("border : none; background-color : lightgreen;");
+		}
+		else {
+			labelValid->setText(tr("Calculation NOT valid!"));
+			labelValid->setStyleSheet("border : none; background-color : red;");
+		}
+		labelValid->setVisible(true);
+
     fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
 }
 
-#endif
+void FitToExperimentTab::showValidityCheckLog() {
+	if (!model->IsLastSolutionOK()) {
+		QMessageBox msgBox;
+		msgBox.setText("There were some issues in calculation. See the log below:");
+		msgBox.setDetailedText(model->ValidityCheckLog().c_str());
+		msgBox.exec();
+	}
+}
+

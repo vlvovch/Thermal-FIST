@@ -1,5 +1,3 @@
-#ifdef USE_MINUIT
-
 #include "chi2ProfileDialog.h"
 
 #include <QLayout>
@@ -272,8 +270,12 @@ void chi2ProfileDialog::setModel()
 	model->SetVolumeRadius(config.VolumeR);
 	model->SetStrangenessCanonicalVolumeRadius(config.VolumeRSC);
 
-	model->SetUseWidth(config.FiniteWidth);
-	model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
+	model->SetUseWidth(config.FiniteWidth != 0);
+	if (config.FiniteWidth == 1)
+		model->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
+	else if (config.FiniteWidth == 2)
+		model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);
+
 	model->SetQoverB(config.QoverB);
 	model->ConstrainMuQ(config.ConstrainMuQ);
 	model->ConstrainMuS(config.ConstrainMuS);
@@ -590,4 +592,3 @@ void chi2ProfileDialog::writetoFile() {
 	}
 }
 
-#endif

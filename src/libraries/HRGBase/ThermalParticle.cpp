@@ -15,8 +15,11 @@ using namespace std;
 double ParticleDecay::ModifiedWidth(double m)
 {
 	if (m < mM0) return 0.;
-	if (mM0 >= mPole) return mBratio;
-	return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
+	//if (mM0 >= mPole) return mBratio;
+	if (mM0 >= mPole)
+		return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.);
+  return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
+	//return mBratio * pow((m - mM0) / (mPole - mM0), 1. / 2.); // as in 1808.02106
 }
 
 
@@ -33,7 +36,7 @@ ThermalParticle::ThermalParticle(bool Stable_, std::string Name, int PDGID, doub
 	if (m_Mass < 0.200) SetClusterExpansionOrder(10);
 	
 	SetResonanceWidthShape(RelativisticBreitWiger);
-	SetResonanceWidthIntegrationType(TwoGamma);
+	SetResonanceWidthIntegrationType(BWTwoGamma);
 	
 	m_DecayContributions.resize(0);
 	m_DecayContributionsSigmas.resize(0);
@@ -212,7 +215,7 @@ void ThermalParticle::RestoreBranchingRatios()
 
 void ThermalParticle::FillCoefficients() {
 	double a, b;
-	if (m_ResonanceWidthIntegrationType != TwoGamma && m_Threshold >= 0.) {
+	if (m_ResonanceWidthIntegrationType != BWTwoGamma && m_Threshold >= 0.) {
 		a = m_Threshold;
 		b = m_Mass + 2.*m_Width;
 		NumericalIntegration::GetCoefsIntegrateLegendre32(a, b, &m_xleg, &m_wleg);
