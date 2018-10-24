@@ -54,8 +54,15 @@ void SSHEventGenerator::SetMomentumGenerators()
 	if (m_THM != NULL) {
 		for (int i = 0; i<m_THM->TPS()->Particles().size(); ++i) {
 			m_MomentumGens.push_back(new RandomGenerators::SSHGenerator(m_T, m_Beta, m_EtaMax, m_n, m_THM->TPS()->Particles()[i].Mass()));
-			if (!m_THM->TPS()->Particles()[i].IsStable()) m_BWGens.push_back(RandomGenerators::BreitWignerGenerator(m_THM->TPS()->Particles()[i].Mass(), m_THM->TPS()->Particles()[i].ResonanceWidth(), std::max(m_THM->TPS()->Particles()[i].Mass() - 2.*m_THM->TPS()->Particles()[i].ResonanceWidth(), m_THM->TPS()->Particles()[i].DecayThresholdMass())));
-			else m_BWGens.push_back(RandomGenerators::BreitWignerGenerator(m_THM->TPS()->Particles()[i].Mass(), 0.1, 0.2));
+			
+			double T = m_THM->Parameters().T;
+			double Mu = m_THM->ChemicalPotential(i);
+			if (m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW)
+				m_BWGens.push_back(new RandomGenerators::ThermalEnergyBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));
+			else
+				m_BWGens.push_back(new RandomGenerators::ThermalBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));
+			//if (!m_THM->TPS()->Particles()[i].IsStable()) m_BWGens.push_back(RandomGenerators::BreitWignerGenerator(m_THM->TPS()->Particles()[i].Mass(), m_THM->TPS()->Particles()[i].ResonanceWidth(), std::max(m_THM->TPS()->Particles()[i].Mass() - 2.*m_THM->TPS()->Particles()[i].ResonanceWidth(), m_THM->TPS()->Particles()[i].DecayThresholdMass())));
+			//else m_BWGens.push_back(RandomGenerators::BreitWignerGenerator(m_THM->TPS()->Particles()[i].Mass(), 0.1, 0.2));
 		}
 	}
 }

@@ -74,7 +74,7 @@ struct ParticleDecay
 		  mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio) {
 	}
 
-	double ModifiedWidth(double m);
+	double ModifiedWidth(double m) const;
 };
 
 /**
@@ -98,10 +98,10 @@ class ThermalParticle
 		void FillCoefficientsDynamical();
 
 		// Total width (eBW scheme) at a given mass
-		double TotalWidtheBW(double M);
+		double TotalWidtheBW(double M) const;
 
 		// Energy-dependent branching ratios
-		std::vector<double> BranchingRatiosM(double M);
+		std::vector<double> BranchingRatiosM(double M, bool eBW = true) const;
 
 		// Thermal mass distribution (not normalized!)
 		double ThermalMassDistribution(double M, double T, double Mu, double width);

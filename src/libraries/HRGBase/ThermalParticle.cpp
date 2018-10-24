@@ -12,7 +12,7 @@
 
 using namespace std;
 
-double ParticleDecay::ModifiedWidth(double m)
+double ParticleDecay::ModifiedWidth(double m) const
 {
 	if (m < mM0) return 0.;
 	//if (mM0 >= mPole) return mBratio;
@@ -396,7 +396,7 @@ void ThermalParticle::FillCoefficientsDynamical() {
 	}
 }
 
-double ThermalParticle::TotalWidtheBW(double M)
+double ThermalParticle::TotalWidtheBW(double M) const
 {
 	//if (m_ResonanceWidthIntegrationType != eBW)
 	//	return m_Width;
@@ -417,11 +417,11 @@ double ThermalParticle::TotalWidtheBW(double M)
 	return twid;
 }
 
-std::vector<double> ThermalParticle::BranchingRatiosM(double M)
+std::vector<double> ThermalParticle::BranchingRatiosM(double M, bool eBW) const
 {
 	std::vector<double> ret(m_Decays.size(), 0.);
 
-	if (m_ResonanceWidthIntegrationType != eBW) {
+	if (!eBW) {
 		for (int i = 0; i < m_Decays.size(); ++i)
 			ret[i] = m_Decays[i].mBratio;
 

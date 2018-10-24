@@ -467,4 +467,87 @@ namespace RandomGenerators {
 		FixParameters();
 	}
 
+	void ThermalBreitWignerGenerator::SetParameters(ThermalParticle *part, double T, double Mu)
+	{
+		m_part = part;
+		m_T = T;
+		m_Mu = Mu;
+		FixParameters();
+	}
+
+	void ThermalBreitWignerGenerator::FixParameters()
+	{
+		double Threshold = m_part->DecayThresholdMass();
+		double Width = m_part->ResonanceWidth();
+		double Mass = m_part->Mass();
+
+		double a = std::max(Threshold, Mass - 2.*Width);
+		double b = Mass + 2.*Width;
+
+		m_Xmin = a;
+		m_Xmax = b + (b - a)*0.2;
+
+		m_Max = 0.;
+
+		int iters = 1000;
+		double dM = (m_Xmax - m_Xmin) / (iters - 1.);
+		for (int i = 0; i < iters; ++i) {
+			double tM = m_Xmin + dM * i;
+			m_Max = std::max(m_Max, f(tM));
+		}
+		m_Max *= 1.2;
+	}
+
+	double ThermalBreitWignerGenerator::f(double M) const
+	{
+		return m_part->ThermalMassDistribution(M, m_T, m_Mu, m_part->ResonanceWidth());
+	}
+
+	double ThermalBreitWignerGenerator::GetRandom() const
+	{
+		if (m_part->ResonanceWidth() / m_part->Mass() < 1.e-2) 
+			return m_part->Mass();
+		while (true) {
+			double x0 = m_Xmin + (m_Xmax - m_Xmin) * randgenMT.rand();
+			double y0 = m_Max * randgenMT.rand();
+			if (y0<f(x0)) return x0;
+		}
+		return 0.;
+	}
+
+	void ThermalEnergyBreitWignerGenerator::FixParameters()
+	{
+		double Threshold = m_part->DecayThresholdMass();
+		double Width = m_part->ResonanceWidth();
+		double Mass = m_part->Mass();
+
+		double a = std::max(Threshold, Mass - 2.*Width);
+		double b = Mass + 2.*Width;
+
+		if (m_part->Decays().size() == 0)
+			a = Mass - 2.*Width + 1.e-6;
+		else
+			a = m_part->DecayThresholdMassDynamical();
+
+		b = Mass + 2.*Width;
+
+		m_Xmin = a;
+		m_Xmax = b + 0.2 * (b - a);
+
+		m_Max = 0.;
+
+		int iters = 1000;
+		double dM = (m_Xmax - m_Xmin) / (iters - 1.);
+		for (int i = 0; i < iters; ++i) {
+			double tM = m_Xmin + dM * i;
+			m_Max = std::max(m_Max, f(tM));
+		}
+		m_Max *= 1.2;
+	}
+
+	double ThermalEnergyBreitWignerGenerator::f(double M) const
+	{
+		return m_part->ThermalMassDistribution(M, m_T, m_Mu, m_part->TotalWidtheBW(M));
+	}
+
 }

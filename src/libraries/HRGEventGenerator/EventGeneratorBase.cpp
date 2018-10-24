@@ -30,6 +30,12 @@ void EventGeneratorBase::ClearMomentumGenerators()
 			delete m_MomentumGens[i];
 	}
 	m_MomentumGens.resize(0);
+
+	for (int i = 0; i < m_BWGens.size(); ++i) {
+		if (m_BWGens[i] != NULL)
+			delete m_BWGens[i];
+	}
+	m_BWGens.resize(0);
 }
 
 //void EventGeneratorBase::SetConfiguration(const ThermalModelParameters& params, EventGeneratorConfiguration::Ensemble ensemble, EventGeneratorConfiguration::ModelType modeltype, ThermalParticleSystem *TPS, ThermalModelBase *original, ExcludedVolumeModel *exmod)
@@ -77,7 +83,8 @@ void EventGeneratorBase::SetConfiguration(const ThermalModelParameters& params, 
 	else if (modeltype == EventGeneratorConfiguration::QvdW) {
 		m_THM = new ThermalModelVDWFull(TPS, params2);
 	}
-	m_THM->SetUseWidth(original->UseWidth());
+	//m_THM->SetUseWidth(original->UseWidth());
+	m_THM->SetUseWidth(original->TPS()->ResonanceWidthIntegrationType());
 	m_THM->SetStatistics(original->QuantumStatistics());
 	m_THM->SetNormBratio(original->NormBratio());
 	
@@ -776,8 +783,10 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 					std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
 
 					double tmass = m_THM->TPS()->Particles()[i].Mass();
-					if (m_THM->UseWidth() && !m_THM->TPS()->Particles()[i].IsStable())
-						tmass = m_BWGens[i].GetRandom();
+					//if (m_THM->UseWidth() && !m_THM->TPS()->Particles()[i].IsStable())
+					if (m_THM->UseWidth() && !(m_THM->TPS()->Particles()[i].ResonanceWidth() / m_THM->TPS()->Particles()[i].Mass() < 0.01))
+						tmass = m_BWGens[i]->GetRandom();
+						//tmass = m_BWGens[i].GetRandom();
 
 					primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
 				}
@@ -804,9 +813,19 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 						if (!primParticles[i][j].processed) {
 							flag_repeat = true;
 							double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+
+							std::vector<double> Bratios;
+							if (primParticles[i][j].MotherPDGID == 0 ||
+								m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+								Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+							}
+							else {
+								Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+							}
+
 							int DecayIndex = 0;
-							for (DecayIndex = 0; DecayIndex < m_THM->TPS()->Particles()[i].Decays().size(); ++DecayIndex) {
-								tsum += m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mBratio;
+							for (DecayIndex = 0; DecayIndex < Bratios.size(); ++DecayIndex) {
+								tsum += Bratios[DecayIndex];
 								if (tsum > DecParam) break;
 							}
 							if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {

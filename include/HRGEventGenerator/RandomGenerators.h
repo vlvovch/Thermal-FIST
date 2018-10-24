@@ -5,6 +5,7 @@
 
 #include "HRGEventGenerator/MersenneTwister.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
+#include "HRGBase/ThermalParticle.h"
 
 namespace RandomGenerators {
 
@@ -170,6 +171,56 @@ namespace RandomGenerators {
 		double m_Norm;
 		double m_Max;
 	};
+
+
+	// Class for generating mass of resonance in accordance with its fixed Breit-Wigner distribution multiplied by the Boltzmann factor
+	class ThermalBreitWignerGenerator
+	{
+	public:
+		ThermalBreitWignerGenerator() { }
+		ThermalBreitWignerGenerator(ThermalParticle *part, double T, double Mu) : m_part(part), m_T(T), m_Mu(Mu) { FixParameters(); }
+		virtual ~ThermalBreitWignerGenerator() { }
+
+		void SetParameters(ThermalParticle *part, double T, double Mu);
+
+
+		virtual void FixParameters();
+
+		// Unnormalized probability density of thermal resonance mass M
+		virtual double f(double M) const;
+
+		// Generates random resonance mass m from relativistic Breit-Wigner distribution
+		double GetRandom() const;
+
+	protected:
+		ThermalParticle *m_part;
+		double m_T, m_Mu;
+		double m_Xmin, m_Xmax;
+		double m_Max;
+
+		/*double m_M;
+		double m_Gamma;
+		double m_Mthr;
+		double m_Norm;
+		double m_Max;*/
+	};
+
+	// Class for generating mass of resonance in accordance with its fixed Breit-Wigner distribution multiplied by the Boltzmann factor
+	class ThermalEnergyBreitWignerGenerator
+		: public ThermalBreitWignerGenerator
+	{
+	public:
+		ThermalEnergyBreitWignerGenerator() : ThermalBreitWignerGenerator() { }
+		ThermalEnergyBreitWignerGenerator(ThermalParticle *part, double T, double Mu) : 
+			ThermalBreitWignerGenerator(part, T, Mu) { }
+		~ThermalEnergyBreitWignerGenerator() { }
+
+		virtual void FixParameters();
+
+		// Unnormalized probability density of thermal resonance mass M
+		virtual double f(double M) const;
+	};
 }
+
 
 #endif

@@ -113,7 +113,8 @@ protected:
 	static double m_LastLogWeight;
 	
 	std::vector<RandomGenerators::ParticleMomentumGenerator*>  	m_MomentumGens;
-	std::vector<RandomGenerators::BreitWignerGenerator>				  m_BWGens;
+	//std::vector<RandomGenerators::BreitWignerGenerator>				  m_BWGens;
+	std::vector<RandomGenerators::ThermalBreitWignerGenerator*>				  m_BWGens;
 };
 
 #endif
