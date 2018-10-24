@@ -894,6 +894,15 @@ void ThermalModelBase::SetChemicalPotentials(const std::vector<double>& chem)
 	m_Chem = chem;
 }
 
+double ThermalModelBase::ChemicalPotential(int i) const
+{
+	if (i < 0 || i >= m_Chem.size()) {
+		printf("**ERROR** ThermalModelBase::ChemicalPotential(int i): i is out of bounds!");
+		exit(1);
+	}
+	return m_Chem[i];
+}
+
 
 void ThermalModelBase::CalculateFeeddown() {
 	if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {

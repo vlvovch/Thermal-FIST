@@ -90,6 +90,8 @@ void ThermalParticle::SetResonanceWidthIntegrationType(ResonanceWidthIntegration
 {
 	m_ResonanceWidthIntegrationType = type;
 	FillCoefficients();
+	if (type == ThermalParticle::eBW)
+		FillCoefficientsDynamical();
 }
 
 double ThermalParticle::MassDistribution(double m) const
@@ -102,12 +104,12 @@ double ThermalParticle::MassDistribution(double m, double width) const
 	if (width < 0.) width = m_Width;
 
 	// Zero if outside the interval
-	if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
-		double a = max(m_Threshold, m_Mass - 2.*m_Width);
-		double b = m_Mass + 2.*m_Width;
-		if (m < a || m > b)
-			return 0.;
-	}
+	//if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
+	//	double a = max(m_Threshold, m_Mass - 2.*m_Width);
+	//	double b = m_Mass + 2.*m_Width;
+	//	if (m < a || m > b)
+	//		return 0.;
+	//}
 
 	if (m_ResonanceWidthShape == RelativisticBreitWiger)
 		return m_Mass * width * m / ((m * m - m_Mass*m_Mass)*(m * m - m_Mass*m_Mass) + m_Mass*m_Mass*width*width);
@@ -396,8 +398,8 @@ void ThermalParticle::FillCoefficientsDynamical() {
 
 double ThermalParticle::TotalWidtheBW(double M)
 {
-	if (m_ResonanceWidthIntegrationType != eBW)
-		return m_Width;
+	//if (m_ResonanceWidthIntegrationType != eBW)
+	//	return m_Width;
 	
 	double tsumb = 0.0;
 	for (int i = 0; i < m_Decays.size(); ++i) {
@@ -436,20 +438,23 @@ std::vector<double> ThermalParticle::BranchingRatiosM(double M)
 	return ret;
 }
 
-double ThermalParticle::ThermalMassDistribution(double M, double T, double width)
+double ThermalParticle::ThermalMassDistribution(double M, double T, double Mu, double width)
 {
-	if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
-		double a = max(m_Threshold, m_Mass - 2.*m_Width);
-		double b = m_Mass + 2.*m_Width;
-		if (M < a || M > b)
-			return 0.;
-	}
-	return IdealGasFunctions::BoltzmannDensity(T, 0., M, m_Degeneracy) * MassDistribution(M, width);
+	//if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
+	//	double a = max(m_Threshold, m_Mass - 2.*m_Width);
+	//	double b = m_Mass + 2.*m_Width;
+	//	if (M < a || M > b)
+	//		return 0.;
+	//}
+	//ThermalModelParameters params;
+	//params.T = T;
+	//return Density(params, IdealGasFunctions::ParticleDensity, false, Mu) * MassDistribution(M, width);
+	return IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, T, Mu, M, m_Degeneracy, m_ClusterExpansionOrder) * MassDistribution(M, width);
 }
 
-double ThermalParticle::ThermalMassDistribution(double M, double T)
+double ThermalParticle::ThermalMassDistribution(double M, double T, double Mu)
 {
-	return ThermalMassDistribution(M, T, TotalWidtheBW(M));
+	return ThermalMassDistribution(M, T, Mu, TotalWidtheBW(M));
 }
 
 void ThermalParticle::UseStatistics(bool enable) {

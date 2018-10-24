@@ -71,6 +71,7 @@ class ThermalModelBase
 
 		virtual void FillChemicalPotentials();
 		virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
+		double ChemicalPotential(int i) const;
 
 		//virtual void SetMesonsPoint();
 

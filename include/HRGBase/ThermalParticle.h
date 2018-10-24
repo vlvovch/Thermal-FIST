@@ -104,8 +104,8 @@ class ThermalParticle
 		std::vector<double> BranchingRatiosM(double M);
 
 		// Thermal mass distribution (not normalized!)
-		double ThermalMassDistribution(double M, double T, double width);
-		double ThermalMassDistribution(double M, double T);
+		double ThermalMassDistribution(double M, double T, double Mu, double width);
+		double ThermalMassDistribution(double M, double T, double Mu);
 
 		void NormalizeBranchingRatios();
 		void RestoreBranchingRatios();// { m_Decays = m_DecaysOrig; }
