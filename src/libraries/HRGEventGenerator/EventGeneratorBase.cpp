@@ -821,6 +821,7 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 							}
 							else {
 								Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+								//printf("%d %d %d\n", i, j, Bratios.size());
 							}
 
 							int DecayIndex = 0;
@@ -828,6 +829,7 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 								tsum += Bratios[DecayIndex];
 								if (tsum > DecParam) break;
 							}
+							//printf("%lf %d %lf\n", tsum, m_THM->TPS()->Particles()[i].PdgId(), primParticles[i][j].m);
 							if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {
 								std::vector<double> masses(0);
 								std::vector<int> pdgids(0);
@@ -846,6 +848,10 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 										primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
 								}
 								primParticles[i][j].processed = true;
+							}
+							else {
+								// Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
+								//primParticles[i][j].processed = true;
 							}
 						}
 					}

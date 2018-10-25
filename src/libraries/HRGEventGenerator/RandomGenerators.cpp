@@ -534,6 +534,9 @@ namespace RandomGenerators {
 		m_Xmin = a;
 		m_Xmax = b + 0.2 * (b - a);
 
+		//if (m_part->PdgId() == 32214)
+		//	printf("%lf %lf\n", m_Xmin, m_Xmax);
+
 		m_Max = 0.;
 
 		int iters = 1000;

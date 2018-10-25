@@ -4,7 +4,7 @@
 
 void SimpleEvent::writeToFile(std::ofstream & fout, int eventnumber)
 {
-	fout << "Event " << eventnumber << std::endl;
+	/*fout << "Event " << eventnumber << std::endl;
 	fout << "Weight: " << weight << std::endl;
 
 	fout << std::setw(20) << "pdgid"
@@ -22,5 +22,10 @@ void SimpleEvent::writeToFile(std::ofstream & fout, int eventnumber)
 			<< std::setw(20) << Particles[i].MotherPDGID
 			<< std::endl;
 	}
-	fout << std::endl;
+	fout << std::endl;*/
+	for (int i = 0; i < Particles.size(); ++i) {
+		if (Particles[i].PDGID == 2214) {
+			fout << std::setw(20) << Particles[i].m << std::endl;
+		}
+	}
 }

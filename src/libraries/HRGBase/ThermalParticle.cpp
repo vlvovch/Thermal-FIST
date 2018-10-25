@@ -394,6 +394,26 @@ void ThermalParticle::FillCoefficientsDynamical() {
 	for (int j = 0; j < m_walldyn.size(); ++j) {
 		tsum += m_walldyn[j];
 	}
+
+
+	// Output to file for debugging
+	/*{
+		char cc[300];
+		sprintf(cc, "%d_width.dat", PdgId());
+		FILE *f = fopen(cc, "w");
+
+		for (int j = 0; j < m_xlegpdyn.size(); ++j)
+			fprintf(f, "%15lf%15E\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+
+		for (int j = 0; j < m_xlegdyn.size(); ++j)
+			fprintf(f, "%15lf%15E\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+
+		for (int j = 0; j < m_xlagdyn.size(); ++j)
+			fprintf(f, "%15lf%15E\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+
+		fclose(f);
+	}*/
+
 }
 
 double ThermalParticle::TotalWidtheBW(double M) const
@@ -421,7 +441,7 @@ std::vector<double> ThermalParticle::BranchingRatiosM(double M, bool eBW) const
 {
 	std::vector<double> ret(m_Decays.size(), 0.);
 
-	if (!eBW) {
+	if (!eBW || m_Width / m_Mass < 0.01) {
 		for (int i = 0; i < m_Decays.size(); ++i)
 			ret[i] = m_Decays[i].mBratio;
 

@@ -65,13 +65,15 @@ struct ParticleDecay
 	std::vector<double> mBratioVsM; /**< Mass-dependent branching ratios */
 	double mBratioAverage;          /**< Average branching ratios after integrating with the Boltzmann factor*/
 
+	std::string mChannelName;
+
 	/// Constructor.
 	/**
 	*   Takes branching ratio and vector of PDG IDs of daughter particles.
 	*/
 	ParticleDecay(double bratio=0., const std::vector<int> &daughters=std::vector<int>(0)) : 
 			mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),
-		  mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio) {
+		  mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio), mChannelName("decay1") {
 	}
 
 	double ModifiedWidth(double m) const;

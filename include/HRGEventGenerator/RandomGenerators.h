@@ -212,7 +212,9 @@ namespace RandomGenerators {
 	public:
 		ThermalEnergyBreitWignerGenerator() : ThermalBreitWignerGenerator() { }
 		ThermalEnergyBreitWignerGenerator(ThermalParticle *part, double T, double Mu) : 
-			ThermalBreitWignerGenerator(part, T, Mu) { }
+			ThermalBreitWignerGenerator(part, T, Mu) {
+			FixParameters();
+		}
 		~ThermalEnergyBreitWignerGenerator() { }
 
 		virtual void FixParameters();

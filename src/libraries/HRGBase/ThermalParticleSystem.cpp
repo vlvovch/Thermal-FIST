@@ -53,6 +53,8 @@ void ThermalParticleSystem::FillDecayProperties()
 
 				m_Particles[i].Decays()[j].mPole = m_Particles[i].Mass();
 
+				std::string tname = "";
+
 				double M0 = 0.;
 				double tS = 0.;
 				for (int k = 0; k < m_Particles[i].Decays()[j].mDaughters.size(); ++k) {
@@ -60,6 +62,9 @@ void ThermalParticleSystem::FillDecayProperties()
 					if (tid != -1) {
 						M0 += m_Particles[tid].Mass();
 						tS += max(0., (m_Particles[tid].Degeneracy() - 1.) / 2.);
+						if (k != 0)
+							tname += " - ";
+						tname += m_Particles[tid].Name();
 					}
 				}
 				m_Particles[i].Decays()[j].mM0 = M0;
@@ -70,6 +75,9 @@ void ThermalParticleSystem::FillDecayProperties()
 				//tsumb += m_Particles[i].Decays()[j].mBratioAtPole;
 				tsumb += m_Particles[i].Decays()[j].mBratio;
 				m_Particles[i].Decays()[j].mBratioAverage = m_Particles[i].Decays()[j].mBratio;
+
+				if (tname.size() > 0)
+					m_Particles[i].Decays()[j].mChannelName = tname;
 			}
 		}
 		m_Particles[i].CalculateAndSetDynamicalThreshold();
