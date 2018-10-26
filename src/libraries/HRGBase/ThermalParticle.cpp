@@ -220,7 +220,10 @@ void ThermalParticle::NormalizeBranchingRatios() {
 
 void ThermalParticle::RestoreBranchingRatios()
 {
-	m_Decays = m_DecaysOrig;
+	//m_Decays = m_DecaysOrig;
+	for (int i = 0; i<m_Decays.size(); ++i) {
+		m_Decays[i].mBratio = m_DecaysOrig[i].mBratio;
+	}
 	FillCoefficientsDynamical();
 }
 

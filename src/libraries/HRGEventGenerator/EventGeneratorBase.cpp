@@ -815,7 +815,7 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 							double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
 
 							std::vector<double> Bratios;
-							if (primParticles[i][j].MotherPDGID == 0 ||
+							if (primParticles[i][j].MotherPDGID != 0 ||
 								m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
 								Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
 							}
@@ -851,7 +851,7 @@ SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
 							}
 							else {
 								// Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
-								//primParticles[i][j].processed = true;
+								primParticles[i][j].processed = true;
 							}
 						}
 					}
