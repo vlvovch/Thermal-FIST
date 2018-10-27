@@ -57,6 +57,7 @@ struct ThermalModelFitParametersExtended {
 struct ThermalModelFitParameters {
 	bool GCE;	// 0 - CE, 1 - GCE
 	FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
+	int B, S, Q, C;
 	double chi2, chi2ndf;
 	int ndf;
 	double fR;
@@ -73,6 +74,8 @@ struct ThermalModelFitParameters {
 		//V = FitParameter("V", true, V_, 2000., 1., 20000.);	// Volume no longer used
 		R  = FitParameter("R", true, V_, 1.0, 0., 25.0);
 		Rc = FitParameter("Rc", true, Rc_, 1.0, 0., 10.0);
+		B = Q = 2;
+		S = C = 0;
 		//fR = Rc_;
 	}
 	ThermalModelFitParameters(const ThermalModelParameters &params)//:																																																																														 //T(T_), muB(muB_), muS(muS_), muQ(muQ_), gammaS(gammaS_), R(R_)	
@@ -89,6 +92,10 @@ struct ThermalModelFitParameters {
 		R = FitParameter("R", true, pow(3. * params.V / 16. / xMath::Pi(), 1./3.), 1.0, 0., 25.0);
 		Rc = FitParameter("Rc", true, pow(3. * params.SVc / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 10.0);
 		//fR = Rc_;
+		B = params.B;
+		Q = params.Q;
+		S = params.S;
+		C = params.C;
 	}
 	FitParameter GetParameter(const std::string& name) const {
 		if (T.name==name) return T;
@@ -176,6 +183,10 @@ struct ThermalModelFitParameters {
 		ret.gammaq = gammaq.value;
 		ret.muC    = muC.value;
 		ret.gammaC = gammaC.value;
+		ret.B = B;
+		ret.Q = Q;
+		ret.S = S;
+		ret.C = C;
 		return ret;
 	}
 };
@@ -355,6 +366,9 @@ class ThermalModelFit
 		double& QT()		{ return m_QT;		}
 		double& ST()		{ return m_ST;		}
 		double& CT()    { return m_CT; }
+		double& ModelData(int index) { return m_ModelData[index]; }
+		int ModelDataSize() const { return m_ModelData.size(); }
+		void ClearModelData() { m_ModelData.clear(); }
 		int& Ndf()			{ return m_Ndf;		}
 
 
@@ -377,6 +391,7 @@ class ThermalModelFit
 		double		m_QT;
 		double		m_ST;
 		double		m_CT;
+		std::vector<double> m_ModelData;
 		int			m_Ndf;
 };
 

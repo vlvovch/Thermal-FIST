@@ -83,22 +83,26 @@ namespace ThermalModelFitNamespace {
 
 			// Ratios first
 			for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
-				if (m_THMFit->FittedQuantities()[i].toFit && m_THMFit->FittedQuantities()[i].type == FittedQuantity::Ratio) {
+				if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Ratio) {
 					const ExperimentRatio &ratio = m_THMFit->FittedQuantities()[i].ratio;
 					double dens1 = m_THMFit->GetDensity(ratio.PDGID1, ratio.fFeedDown1);
 					double dens2 = m_THMFit->GetDensity(ratio.PDGID2, ratio.fFeedDown2);
 					double ModelRatio = dens1 / dens2;
-					chi2 += (ModelRatio - ratio.fValue) * (ModelRatio - ratio.fValue) / ratio.fError / ratio.fError;
+					m_THMFit->ModelData(i) = ModelRatio;
+					if (m_THMFit->FittedQuantities()[i].toFit)
+						chi2 += (ModelRatio - ratio.fValue) * (ModelRatio - ratio.fValue) / ratio.fError / ratio.fError;
 				}
 			}
 
 			// Yields second
 			for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
-				if (m_THMFit->FittedQuantities()[i].toFit && m_THMFit->FittedQuantities()[i].type == FittedQuantity::Multiplicity) {
+				if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Multiplicity) {
 					const ExperimentMultiplicity &multiplicity = m_THMFit->FittedQuantities()[i].mult;
 					double dens = m_THMFit->GetDensity(multiplicity.fPDGID, multiplicity.fFeedDown);
 					double ModelMult = dens * m_THMFit->model()->Parameters().V;
-					chi2 += (ModelMult - multiplicity.fValue) * (ModelMult - multiplicity.fValue) / multiplicity.fError / multiplicity.fError;
+					m_THMFit->ModelData(i) = ModelMult;
+					if (m_THMFit->FittedQuantities()[i].toFit)
+						chi2 += (ModelMult - multiplicity.fValue) * (ModelMult - multiplicity.fValue) / multiplicity.fError / multiplicity.fError;
 				}
 			}
 
@@ -176,9 +180,16 @@ ThermalModelFit::~ThermalModelFit(void)
 
 ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmErrors) {
 #ifdef USE_MINUIT
+	m_ModelData.resize(m_Quantities.size(), 0.);
+
 	m_Parameters.Rc.value = m_Parameters.R.value;
 	m_Parameters.Rc.xmin  = m_Parameters.R.xmin;
 	m_Parameters.Rc.xmax  = m_Parameters.R.xmax;
+
+	m_Parameters.B = m_model->Parameters().B;
+	m_Parameters.Q = m_model->Parameters().Q;
+	m_Parameters.S = m_model->Parameters().S;
+	m_Parameters.C = m_model->Parameters().C;
 
 	m_Iters = 0;
 	FitFCN mfunc(this, verbose);
@@ -214,7 +225,7 @@ ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmEr
 	if (!m_Parameters.R.toFit || 
 		(m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) { m_Parameters.R.toFit = false; upar.Fix("R"); nparams--; }
 	if (!m_Parameters.Rc.toFit || 
-		m_model->Ensemble() != ThermalModelBase::SCE)
+		(m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE))
 		{ 
 			m_Parameters.Rc.toFit = false; 
 			upar.Fix("Rc"); 
@@ -368,6 +379,7 @@ ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmEr
 	parames.B = m_model->Parameters().B;
 	parames.S = m_model->Parameters().S;
 	parames.Q = m_model->Parameters().Q;
+	parames.C = m_model->Parameters().C;
 	m_model->SetParameters(parames);
 	m_model->SetQoverB(m_QBgoal);
 	m_model->FixParameters();
@@ -450,10 +462,11 @@ void ThermalModelFit::PrintParameters() {
 
 
 void ThermalModelFit::PrintMultiplicities() {
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	// No longer needed, done at the end of PerformFit
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 
 	for (int i = 0; i < m_Quantities.size(); ++i) {
 		if (m_Quantities[i].type == FittedQuantity::Multiplicity) {
@@ -481,10 +494,10 @@ void ThermalModelFit::PrintMultiplicities() {
 }
 
 void ThermalModelFit::PrintYields() {
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 
 	for (int i = 0; i < m_Quantities.size(); ++i) {
 		if (m_Quantities[i].type == FittedQuantity::Multiplicity) {
@@ -540,10 +553,10 @@ void ThermalModelFit::PrintYieldsTable(std::string filename) {
 		"N", "Name", "Data", "Error", "Fit", "Deviation", "Deviation2", 
 		"Residual", "ResidualError", "Data/Model", "Data/ModelError");
 
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 	for(int i=0;i<m_Multiplicities.size();++i) {
 		double dens1 = GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
@@ -586,10 +599,10 @@ void ThermalModelFit::PrintYieldsTable2(std::string filename) {
 	FILE *f = fopen(filename.c_str(), "w");
 
 	fprintf(f, "%15s\t%25s\t%15s\t%15s\t%15s\t%15s\n", "N", "Name", "Data", "Error", "Fit", "Deviation");
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 	for(int i=0;i<m_Multiplicities.size();++i) {
 
 		double dens1 = GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
@@ -625,10 +638,10 @@ void ThermalModelFit::PrintYieldsLatex(std::string filename, std::string name) {
 	fprintf(f, "\\hline\n");
 	fprintf(f, "Yield & Measurement & Fit & Deviation \\\\\n");
 	fprintf(f, "\\hline\n");
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 	for(int i=0;i<m_Multiplicities.size();++i) {
 		double dens1 = GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
@@ -684,10 +697,10 @@ void ThermalModelFit::PrintYieldsLatexAll(std::string filename, std::string name
 	fprintf(f, "\\hline\n");
 	fprintf(f, "Yield & Measurement & Fit \\\\\n");
 	fprintf(f, "\\hline\n");
-	m_model->SetParameters(m_Parameters.GetThermalModelParameters());
-	m_model->SetQoverB(m_QBgoal);
-	m_model->FixParameters();
-	m_model->CalculateDensities();
+	//m_model->SetParameters(m_Parameters.GetThermalModelParameters());
+	//m_model->SetQoverB(m_QBgoal);
+	//m_model->FixParameters();
+	//m_model->CalculateDensities();
 
 	std::vector<std::string> prt(0);
 	std::vector<int> pdgs(0);
@@ -854,7 +867,7 @@ void ThermalModelFit::PrintFitLog(std::string filename, std::string comment, boo
 
 	fprintf(f, "Extracted parameters:\n");
 	for (int i = 0; i < 10 ; ++i) {
-		if (i == 6 && m_model->Ensemble() != ThermalModelBase::SCE)
+		if (i == 6 && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)
 			continue;
 		FitParameter param = m_Parameters.GetParameter(i);
 		std::string sunit = "";
@@ -1123,7 +1136,7 @@ double ThermalModelFit::chi2Ndf(double T, double muB) {
 	if (!m_Parameters.gammaq.toFit) nparams--;
 	if (!m_Parameters.gammaS.toFit) nparams--;
 	if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
-	if (!m_Parameters.Rc.toFit || m_model->Ensemble() != ThermalModelBase::SCE) nparams--;
+	if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
 	std::vector<double> params(6, 0.);
 	params[0] = T;
 	params[1] = muB;
@@ -1151,7 +1164,7 @@ int ThermalModelFit::GetNdf() const {
 	if (!m_Parameters.gammaq.toFit) nparams--;
 	if (!m_Parameters.gammaS.toFit) nparams--;
 	if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
-	if (!m_Parameters.Rc.toFit || m_model->Ensemble() != ThermalModelBase::SCE) nparams--;
+	if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
 	int ndof = 0;
 	for (int i = 0; i < m_Quantities.size(); ++i)
 		if (m_Quantities[i].toFit) ndof++;
