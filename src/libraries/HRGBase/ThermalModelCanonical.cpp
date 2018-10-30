@@ -141,7 +141,8 @@ void ThermalModelCanonical::SetStatistics(bool stats) {
 		if (stats && IsParticleCanonical(m_TPS->Particle(i)))
 			m_TPS->Particle(i).SetCalculationType(IdealGasFunctions::ClusterExpansion);
 	}
-	CalculateQuantumNumbersRange();
+	m_PartialZ.clear();
+	//CalculateQuantumNumbersRange();
 }
 
 void ThermalModelCanonical::FixParameters()

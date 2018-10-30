@@ -216,7 +216,7 @@ ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmEr
 	int nparams = 8;
 	if (m_model->Ensemble() == ThermalModelBase::CE) {
 		m_Parameters.SetParameterFitFlag("muB", false);
-		m_Parameters.R.xmax = 5.;
+		//m_Parameters.R.xmax = 5.;
 	}
 	if (!m_Parameters.T.toFit) { upar.Fix("T"); nparams--; }
 	if (!m_Parameters.muB.toFit) { upar.Fix("muB"); nparams--; }
