@@ -1273,7 +1273,7 @@ vector<double> ThermalModelVDWFull::CalculateChargeFluctuations(const std::vecto
 	vector<double> d3ni(NN, 0.), d3mus(NN, 0.);
 
 	vector<double> chi4id(m_densities.size());
-	for(int i=0;i<NN;++i) 
+	for (int i = 0; i < NN; ++i)
 		chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_MuStar[i], 0.);
 
 	vector<double> dnis(NN, 0.);

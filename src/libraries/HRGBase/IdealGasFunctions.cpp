@@ -314,7 +314,8 @@ namespace IdealGasFunctions {
 		for (int i = 0; i < 32; i++) {
 			double tx = lagx32[i];
 			double Eexp = exp(sqrt(tx*tx + moverT*moverT) - muoverT);
-			ret += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp - statistics * Eexp) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics);
+			//ret += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp - statistics * Eexp) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics);
+			ret += lagw32[i] * T * tx * T * tx * T * (1. - statistics / Eexp) / (1. + statistics / Eexp) / (1. + statistics / Eexp) / (Eexp + statistics);
 		}
 
 		ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
@@ -331,14 +332,19 @@ namespace IdealGasFunctions {
 			return 0.;
 		}
 
+
+		//printf("\n");
 		double ret = 0.;
 		double moverT = m / T;
 		double muoverT = mu / T;
 		for (int i = 0; i < 32; i++) {
 			double tx = lagx32[i];
 			double Eexp = exp(sqrt(tx*tx + moverT*moverT) - muoverT);
-			ret += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp*Eexp - 4.*statistics*Eexp*Eexp + statistics*statistics*Eexp) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics);
+			//ret += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp*Eexp - 4.*statistics*Eexp*Eexp + statistics*statistics*Eexp) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics) / (Eexp + statistics);
+			ret += lagw32[i] * T * tx * T * tx * T * (1. - 4.*statistics / Eexp + statistics*statistics / Eexp / Eexp) / (1. + statistics / Eexp) / (1. + statistics / Eexp) / (1. + statistics / Eexp) / (Eexp + statistics);
+			//printf("%E %E  ", ret, Eexp);
 		}
+		//printf("\n");
 
 		ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
 
