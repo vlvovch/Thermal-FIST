@@ -103,6 +103,10 @@ class ThermalModelBase
 		virtual void FixParametersNoReset();
 		virtual void FixParameters(double QB);		// And zero net strangeness
 
+		void ConstrainChemicalPotentials() { return FixParameters(); }
+		void ConstrainChemicalPotentialsNoReset() { return FixParametersNoReset(); }
+		void ConstrainChemicalPotentials(double QB) { return FixParameters(QB); }
+
 
 		virtual void SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
 																					double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,

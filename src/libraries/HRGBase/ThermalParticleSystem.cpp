@@ -25,6 +25,8 @@ ThermalParticleSystem::ThermalParticleSystem(std::string InputFile, bool GenAnti
 	m_PDGtoID.clear();
 	m_IDtoPDG.resize(0);
 
+	SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
+
 	LoadTable(InputFile, GenAntiP, mcut);
 }
 

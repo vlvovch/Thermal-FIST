@@ -722,6 +722,10 @@ ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalMod
 	m_Ensemble = GCE;
 	m_InteractionModel = Ideal;
 
+	SetStatistics(m_QuantumStats);
+	SetCalculationType(IdealGasFunctions::Quadratures);
+	SetUseWidth(TPS()->ResonanceWidthIntegrationType());
+
 	m_ValidityLog = "";
 }
 

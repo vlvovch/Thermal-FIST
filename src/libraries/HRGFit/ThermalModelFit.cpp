@@ -75,7 +75,8 @@ namespace ThermalModelFitNamespace {
 			m_THMFit->model()->SetParameters(m_THMFit->model()->Parameters());
 
 			m_THMFit->model()->SetQoverB(m_THMFit->QoverB());
-			m_THMFit->model()->FixParameters();
+			//m_THMFit->model()->FixParameters();
+			m_THMFit->model()->ConstrainChemicalPotentials();
 
 			m_THMFit->model()->CalculateDensities();
 
