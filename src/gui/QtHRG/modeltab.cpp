@@ -192,8 +192,8 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinTemperature->setValue(model->Parameters().T * 1e3);
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
-    spinmuB->setMinimum(-1000.);
-    spinmuB->setMaximum(1000.);
+    spinmuB->setMinimum(-9999.);
+    spinmuB->setMaximum(9999.);
     spinmuB->setValue(model->Parameters().muB * 1e3);
 		QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
 		spingammaq = new QDoubleSpinBox();
@@ -210,18 +210,18 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
     spinmuS = new QDoubleSpinBox();
-    spinmuS->setMinimum(-1000.);
-    spinmuS->setMaximum(1000.);
+    spinmuS->setMinimum(-9999.);
+    spinmuS->setMaximum(9999.);
     spinmuS->setValue(model->Parameters().muS * 1e3);
     QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
     spinmuQ = new QDoubleSpinBox();
-    spinmuQ->setMinimum(-1000.);
-    spinmuQ->setMaximum(1000.);
+    spinmuQ->setMinimum(-9999.);
+    spinmuQ->setMaximum(9999.);
     spinmuQ->setValue(model->Parameters().muQ * 1e3);
 		labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
 		spinmuC = new QDoubleSpinBox();
-		spinmuC->setMinimum(-1000.);
-		spinmuC->setMaximum(1000.);
+		spinmuC->setMinimum(-9999.);
+		spinmuC->setMaximum(9999.);
 		spinmuC->setValue(model->Parameters().muC * 1e3);
     QLabel *labelVolume = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
