@@ -187,7 +187,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->setAlignment(Qt::AlignLeft);
     QLabel *labelTemperature = new QLabel(tr("T (MeV):"));
     spinTemperature = new QDoubleSpinBox();
-    spinTemperature->setMinimum(1.);
+    spinTemperature->setMinimum(0.01);
     spinTemperature->setMaximum(10000.);
     spinTemperature->setValue(model->Parameters().T * 1e3);
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
