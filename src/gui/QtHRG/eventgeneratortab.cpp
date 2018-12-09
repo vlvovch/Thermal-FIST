@@ -31,6 +31,8 @@
 #include "particlespectra.h"
 #include "qcustomplot.h"
 
+using namespace thermalfist;
+
 void EventGeneratorWorker::run()
 {
 	if (mutex != NULL) {

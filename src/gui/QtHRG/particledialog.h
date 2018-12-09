@@ -6,9 +6,9 @@
 #include <QTableWidget>
 #include <QPushButton>
 #include <QTextEdit>
-#include "tablemodel.h"
 
-class ThermalModelBase;
+#include "tablemodel.h"
+#include "HRGBase/ThermalModelBase.h"
 
 class ParticleDialog : public QDialog
 {
@@ -17,7 +17,7 @@ class ParticleDialog : public QDialog
     //ThermalParticle *fParticle;
     //ThermalParticleSystem *fTPS;
 
-    ThermalModelBase *model;
+    thermalfist::ThermalModelBase *model;
     int pid;
 
 
@@ -35,7 +35,7 @@ class ParticleDialog : public QDialog
 
     QString GetParticleInfo();
 public:
-    explicit  ParticleDialog(QWidget *parent = 0, ThermalModelBase *mod = NULL, int ParticleID = -1);
+    explicit  ParticleDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, int ParticleID = -1);
 
 signals:
 

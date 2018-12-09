@@ -10,11 +10,13 @@
 
 //#include "modeltab.h"
 #include "ThermalFISTConfig.h"
+#include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
+using namespace thermalfist;
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)

@@ -7,6 +7,8 @@
 
 #include "HRGBase/ThermalModelBase.h"
 
+using namespace thermalfist;
+
 const int TableModel::columnNumber = 18;
 
 TableModel::TableModel(QObject *parent)

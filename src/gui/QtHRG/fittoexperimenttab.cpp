@@ -13,6 +13,7 @@
 #include <algorithm>
 
 #include "ThermalFISTConfig.h"
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -33,6 +34,8 @@
 #include "resultdialog.h"
 #include "chi2dialog.h"
 #include "chi2ProfileDialog.h"
+
+using namespace thermalfist;
 
 void FitWorker::run()
 {

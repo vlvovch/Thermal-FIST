@@ -20,6 +20,8 @@
 
 #include "qcustomplot.h"
 
+using namespace thermalfist;
+
 chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inTPS, const ThermalModelConfig & inConfig, const ThermalModelFitParameters & inParams, const std::vector<FittedQuantity> & inQuantities, ThermalModelFit *inFit) :
     QDialog(parent), TPS(inTPS), config(inConfig), fitParams(inParams), quantities(inQuantities), modelFitInput(inFit)
 {

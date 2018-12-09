@@ -11,6 +11,8 @@
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 #include "HRGBase/xMath.h"
 
+using namespace thermalfist;
+
 ContourPlotTab::ContourPlotTab(QWidget *parent, ThermalModelBase *modelop) :
     QWidget(parent)
 {

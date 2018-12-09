@@ -9,6 +9,8 @@
 
 #include "HRGBase/ThermalModelBase.h"
 
+using namespace thermalfist;
+
 ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int ParticleID) :
     QDialog(parent), model(mod), pid(ParticleID)//, fParticle(Particle), fTPS(TPS)
 {

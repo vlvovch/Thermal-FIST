@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdio>
 
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGEventGenerator/SimpleParticle.h"
 #include "HRGEventGenerator/SimpleEvent.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
@@ -219,9 +220,6 @@ struct density2d
 	}
 };
 
-
-class ThermalModelBase;
-
 class ParticleSpectrum
 {
 	double n, n2, n3, n4;
@@ -235,7 +233,7 @@ class ParticleSpectrum
 	int PDGID;
 	double mass;
 	int tmpn;
-	MomentumDistributionBase *fDistribution;
+  thermalfist::MomentumDistributionBase *fDistribution;
 	std::vector<double> xs;
 	std::vector<double> ys;
 	bool acc;
@@ -271,7 +269,7 @@ public:
 		dndmt = density(mass, 2. + mass, 500);
 		d2ndptdy = density2d(-3., 3., 40, 0., 2., 40);
 	}
-	void SetDistribution(MomentumDistributionBase *distr) {
+	void SetDistribution(thermalfist::MomentumDistributionBase *distr) {
 		fDistribution = distr;
 	}
 	void SetAcceptance(bool acc_) { acc = acc_; }
@@ -282,7 +280,7 @@ public:
 
 	int GetPDGID() const { return PDGID; }
 	int GetEvents() const { return events; }
-	void AddParticle(const SimpleParticle &part);
+	void AddParticle(const thermalfist::SimpleParticle &part);
 	void FinishEvent(double weight = 1.);
 
 	double GetMean() const;
@@ -407,14 +405,14 @@ public:
 	std::map<int, int> fPDGtoID;
 	std::map<int, int> fPDGtoIDnet;
 	std::map<int, int> fPDGtoIDall;
-	std::vector<MomentumDistributionBase*> distrs;
+	std::vector<thermalfist::MomentumDistributionBase*> distrs;
 	double fEtaMax;
 	int fDistributionType;
-	ParticlesSpectra(ThermalModelBase *model = NULL, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5);
+	ParticlesSpectra(thermalfist::ThermalModelBase *model = NULL, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5);
 	~ParticlesSpectra();
-	void ProcessEvent(const SimpleEvent &evt);
+	void ProcessEvent(const thermalfist::SimpleEvent &evt);
 	void Reset();
-	void Reset(ThermalModelBase *model, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
+	void Reset(thermalfist::ThermalModelBase *model, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
 };
 
 

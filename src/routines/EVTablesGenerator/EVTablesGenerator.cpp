@@ -15,6 +15,7 @@
 
 using namespace std;
 
+using namespace thermalfist;
 
 // A macro for generating input files with excluded-volume/van der Waals parameters
 // Modes:

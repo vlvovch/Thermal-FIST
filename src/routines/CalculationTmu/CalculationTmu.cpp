@@ -14,6 +14,7 @@
 
 using namespace std;
 
+using namespace thermalfist;
 
 // Calculates equation of state, particle yields and fluctuations at a given set of T-mu values
 // Usage: CalculationTmu

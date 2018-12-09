@@ -2,6 +2,7 @@
 
 #include <QLayout>
 
+using namespace thermalfist;
 
 QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQuantity *quantity) :
     QDialog(parent), model(mod), quant(quantity)

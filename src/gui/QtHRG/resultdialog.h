@@ -7,11 +7,10 @@
 #include <QPushButton>
 #include <QTextEdit>
 
+#include "HRGBase/ThermalModelBase.h"
 #include "BaseStructures.h"
-
 #include "tablemodel.h"
 
-class ThermalModelBase;
 
 class ResultDialog : public QDialog
 {
@@ -20,7 +19,7 @@ class ResultDialog : public QDialog
 		//ThermalParticle *fParticle;
 		//ThermalParticleSystem *fTPS;
 
-		ThermalModelBase *model;
+  thermalfist::ThermalModelBase *model;
 	ChargesFluctuations *flucts;
 
 
@@ -30,7 +29,7 @@ class ResultDialog : public QDialog
 	QString GetParameters();
 	QString GetResults();
 public:
-	explicit  ResultDialog(QWidget *parent = 0, ThermalModelBase *mod = NULL, ChargesFluctuations *flucts_in = NULL);
+	explicit  ResultDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, ChargesFluctuations *flucts_in = NULL);
 
 signals:
 

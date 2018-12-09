@@ -10,6 +10,8 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/xMath.h"
 
+using namespace thermalfist;
+
 ResultDialog::ResultDialog(QWidget *parent, ThermalModelBase *mod, ChargesFluctuations *flucts_in) :
 	QDialog(parent), model(mod), flucts(flucts_in)//, fParticle(Particle), fTPS(TPS)
 {

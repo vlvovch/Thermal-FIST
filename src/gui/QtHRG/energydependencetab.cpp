@@ -13,6 +13,8 @@
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 #include "HRGBase/xMath.h"
 
+using namespace thermalfist;
+
 EnergyDependenceTab::EnergyDependenceTab(QWidget *parent, ThermalModelBase *modelop) :
     QWidget(parent)
 {

@@ -22,6 +22,9 @@
 
 //#include "qcustomplot.h"
 
+#include "HRGBase/ThermalModelBase.h"
+#include "HRGEventGenerator/EventGeneratorBase.h"
+
 #include "BaseStructures.h"
 
 #include <cmath>
@@ -29,9 +32,9 @@
 
 class SpectraModel;
 class ParticlesSpectra;
-class ThermalParticleSystem;
-class ThermalModelBase;
-class EventGeneratorBase;
+//class ThermalParticleSystem;
+//class ThermalModelBase;
+//class EventGeneratorBase;
 class QCustomPlot;
 class QCPColorMap;
 class QCPColorScale;
@@ -42,7 +45,7 @@ class EventGeneratorWorker : public QThread
 {
 	Q_OBJECT
 
-		EventGeneratorBase *generator;
+  thermalfist::EventGeneratorBase *generator;
 	ParticlesSpectra *spectra;
 	QMutex *mutex;
 	int events;
@@ -71,7 +74,7 @@ class EventGeneratorWorker : public QThread
 
 public:
 	EventGeneratorWorker(
-		EventGeneratorBase *gen = NULL,
+    thermalfist::EventGeneratorBase *gen = NULL,
 		ParticlesSpectra *spec = NULL,
 		QMutex *mut = NULL,
 		int totalEvents = 0,
@@ -159,9 +162,9 @@ class EventGeneratorTab : public QWidget
 
 	//TableModel *myModel;
 
-	ThermalParticleSystem *TPS;
-	ThermalModelBase *model;
-	EventGeneratorBase *generator;
+  thermalfist::ThermalParticleSystem *TPS;
+	thermalfist::ThermalModelBase *model;
+  thermalfist::EventGeneratorBase *generator;
 	ParticlesSpectra *spectra;
 
 	QTextEdit *teDebug;
@@ -194,7 +197,7 @@ class EventGeneratorTab : public QWidget
 
 	//std::vector<FittedQuantity> quantities;
 public:
-	EventGeneratorTab(QWidget *parent = 0, ThermalModelBase *model = NULL);
+	EventGeneratorTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL);
 	~EventGeneratorTab();
 	ThermalModelConfig getConfig();
 signals:
@@ -229,7 +232,7 @@ private:
 	//void switchStability(bool);
 	//    void showResults();
 	//    void showChi2Map();
-	void setModel(ThermalModelBase *model);
+	void setModel(thermalfist::ThermalModelBase *model);
 	//    void removeQuantityFromFit();
 	//    void addQuantity();
 	//    void loadFromFile();

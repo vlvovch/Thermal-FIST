@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <map>
 
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
 #include "qcustomplot.h"
 
@@ -22,8 +23,8 @@
 
 
 class QuantitiesModel;
-class ThermalParticleSystem;
-class ThermalModelBase;
+//class ThermalParticleSystem;
+//class ThermalModelBase;
 
 /*struct CalcParameter {
     std::string name;
@@ -34,7 +35,7 @@ class ContourPlotWorker : public QThread
 {
     Q_OBJECT
 
-    ThermalModelBase *model;
+    thermalfist::ThermalModelBase *model;
     double rad;
     int *currentSize;
     int *stop;
@@ -49,7 +50,7 @@ class ContourPlotWorker : public QThread
             double tmpT = Tvalues->operator [](i);
             double gammaS = 1.;
 
-						model->SetParameters(ThermalModelParameters(tmpT*1.e-3, tmpmuB*1.e-3,
+						model->SetParameters(thermalfist::ThermalModelParameters(tmpT*1.e-3, tmpmuB*1.e-3,
 							tmpmuB*1.e-3 / 5., -tmpmuB*1.e-3 / 50.,
 							gammaS, 4000.));
 
@@ -65,10 +66,10 @@ class ContourPlotWorker : public QThread
         emit calculated();
     }
 
-    std::vector<double> getParams(ThermalModelBase *modelop);
+    std::vector<double> getParams(thermalfist::ThermalModelBase *modelop);
 
 public:
-    ContourPlotWorker(ThermalModelBase *mod = NULL,
+    ContourPlotWorker(thermalfist::ThermalModelBase *mod = NULL,
            std::vector<double> *Tvalueso = NULL,
            std::vector<double> *muBvalueso = NULL,
            std::vector< std::vector<double> > *paramso = NULL,
@@ -131,12 +132,12 @@ class ContourPlotTab : public QWidget
 
     QProgressBar *progBar;
 
-    ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
+    thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelBase *model;
 
     QTimer *calcTimer;
 public:
-    ContourPlotTab(QWidget *parent = 0, ThermalModelBase *model=NULL);
+    ContourPlotTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~ContourPlotTab();
 signals:
 
@@ -162,7 +163,7 @@ private:
         return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
     }
 
-    std::vector<double> getParams(ThermalModelBase *modelop);
+    std::vector<double> getParams(thermalfist::ThermalModelBase *modelop);
 };
 
 #endif // CONTOURPLOTTAB_H

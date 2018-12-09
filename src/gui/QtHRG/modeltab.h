@@ -13,11 +13,13 @@
 #include <QRadioButton>
 #include <QTextEdit>
 
+#include "HRGBase/ThermalModelBase.h"
+
 #include "BaseStructures.h"
 
 
 class TableModel;
-class ThermalModelBase;
+//class ThermalModelBase;
 //class ThermalParticleSystem;
 
 class ModelTab : public QWidget
@@ -71,8 +73,8 @@ class ModelTab : public QWidget
 
     TableModel *myModel;
 
-    //ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
+    //thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelBase *model;
 
 		ChargesFluctuations flucts;
 
@@ -81,7 +83,7 @@ class ModelTab : public QWidget
     int getCurrentRow();
 
 public:
-    ModelTab(QWidget *parent = 0, ThermalModelBase *model=NULL);
+    ModelTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~ModelTab();
 		ThermalModelConfig getConfig();
 private slots:
@@ -94,7 +96,7 @@ private slots:
     void switchStability(bool);
 		void loadEVFromFile();
     void showResults();
-    void setModel(ThermalModelBase *model);
+    void setModel(thermalfist::ThermalModelBase *model);
     void modelChanged();
 		void changeVolumeRSC(double);
 		void showValidityCheckLog();

@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <map>
 
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
 #include "qcustomplot.h"
 
@@ -19,8 +20,8 @@
 
 
 class QuantitiesModel;
-class ThermalParticleSystem;
-class ThermalModelBase;
+//class ThermalParticleSystem;
+//class ThermalModelBase;
 
 /*struct CalcParameter {
     std::string name;
@@ -31,7 +32,7 @@ class EnergyDependenceWorker : public QThread
 {
     Q_OBJECT
 
-    ThermalModelBase *model;
+    thermalfist::ThermalModelBase *model;
     double emin, de;
     double rad;
     int iterse;
@@ -56,7 +57,7 @@ class EnergyDependenceWorker : public QThread
             //else model->TPS->RestoreBranchingRatios();
             //model->SetNormBratio(checkBratio->isChecked());
 
-						model->SetParameters(ThermalModelParameters(TT, muB,
+						model->SetParameters(thermalfist::ThermalModelParameters(TT, muB,
 							muB / 5., -muB / 50.,
 							gammaS, 4000.));
 
@@ -91,10 +92,10 @@ class EnergyDependenceWorker : public QThread
         return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
     }
 
-    std::vector<double> getParams(ThermalModelBase *modelop);
+    std::vector<double> getParams(thermalfist::ThermalModelBase *modelop);
 
 public:
-    EnergyDependenceWorker(ThermalModelBase *mod = NULL, double emin=2., double de = 1.,
+    EnergyDependenceWorker(thermalfist::ThermalModelBase *mod = NULL, double emin=2., double de = 1.,
            int iterse=10, double rad=0.5,
            std::vector< std::vector<double> > *paramso = NULL,
            std::vector<double> *varvalueso = NULL,
@@ -146,13 +147,13 @@ class EnergyDependenceTab : public QWidget
 
     QPushButton *buttonCalculate;
 
-    ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
+    thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelBase *model;
 
     QTimer *calcTimer;
 
 public:
-    EnergyDependenceTab(QWidget *parent = 0, ThermalModelBase *model=NULL);
+    EnergyDependenceTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EnergyDependenceTab();
 signals:
 
@@ -177,7 +178,7 @@ private:
         return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
     }
 
-    std::vector<double> getParams(ThermalModelBase *modelop);
+    std::vector<double> getParams(thermalfist::ThermalModelBase *modelop);
 };
 
 

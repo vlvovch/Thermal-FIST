@@ -17,19 +17,20 @@
 #include <QThread>
 
 #include "BaseStructures.h"
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
 
 class FitWorker : public QThread
 {
     Q_OBJECT
 
-    ThermalModelFit *fTHMFit;
+    thermalfist::ThermalModelFit *fTHMFit;
 
     void run() Q_DECL_OVERRIDE;
 
 public:
     FitWorker(
-           ThermalModelFit *THMFit=NULL,
+           thermalfist::ThermalModelFit *THMFit=NULL,
            QObject * parent = 0) :
         QThread(parent), fTHMFit(THMFit)
     {
@@ -40,8 +41,6 @@ signals:
 
 
 class QuantitiesModel;
-class ThermalParticleSystem;
-class ThermalModelBase;
 class QElapsedTimer;
 
 class FitToExperimentTab : public QWidget
@@ -97,9 +96,9 @@ class FitToExperimentTab : public QWidget
 
     QPushButton *buttonCalculate;
 
-    ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
-    ThermalModelFit *fitcopy;
+    thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelBase *model;
+    thermalfist::ThermalModelFit *fitcopy;
 
     QTextEdit *teDebug;
 
@@ -112,13 +111,13 @@ class FitToExperimentTab : public QWidget
 
     int getCurrentRow();
 
-    std::vector<FittedQuantity> quantities;
+    std::vector<thermalfist::FittedQuantity> quantities;
 
 public:
-    FitToExperimentTab(QWidget *parent = 0, ThermalModelBase *model=NULL);
+    FitToExperimentTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~FitToExperimentTab();
 		ThermalModelConfig getConfig();
-		ThermalModelFitParameters getFitParameters();
+    thermalfist::ThermalModelFitParameters getFitParameters();
 signals:
 
 private slots:
@@ -127,7 +126,7 @@ private slots:
 
 public slots:
     void changedRow();
-		void performFit(const ThermalModelConfig & config, const ThermalModelFitParameters & params);
+		void performFit(const ThermalModelConfig & config, const thermalfist::ThermalModelFitParameters & params);
     void calculate();
     //void benchmark();
     void quantityDoubleClick(const QModelIndex &);
@@ -135,7 +134,7 @@ public slots:
     void showResults();
     void showChi2Map();
 		void showChi2Profile();
-    void setModel(ThermalModelBase *model);
+    void setModel(thermalfist::ThermalModelBase *model);
     void removeQuantityFromFit();
     void addQuantity();
     void loadFromFile();

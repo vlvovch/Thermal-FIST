@@ -13,6 +13,9 @@
 
 using namespace std;
 
+#ifdef ThermalFIST_USENAMESPACE
+using namespace thermalfist;
+#endif
 
 // Fits within Bag Model, as in 1512.08046
 // First the global fit

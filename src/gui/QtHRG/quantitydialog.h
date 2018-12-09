@@ -10,10 +10,9 @@
 #include <QLabel>
 #include <QComboBox>
 
+#include "HRGBase/ThermalModelBase.h"
+#include "HRGFit/ThermalModelFit.h"
 #include "tablemodel.h"
-
-class ThermalModelBase;
-class FittedQuantity;
 
 class QuantityDialog : public QDialog
 {
@@ -22,8 +21,8 @@ class QuantityDialog : public QDialog
     //ThermalParticle *fParticle;
     //ThermalParticleSystem *fTPS;
 
-    ThermalModelBase *model;
-    FittedQuantity *quant;
+    thermalfist::ThermalModelBase *model;
+    thermalfist::FittedQuantity *quant;
 
     int pid;
 
@@ -44,7 +43,7 @@ class QuantityDialog : public QDialog
 
     QString GetParticleInfo();
 public:
-    explicit  QuantityDialog(QWidget *parent = 0, ThermalModelBase *mod = NULL, FittedQuantity *quantity = NULL);
+    explicit  QuantityDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, thermalfist::FittedQuantity *quantity = NULL);
 
 signals:
 

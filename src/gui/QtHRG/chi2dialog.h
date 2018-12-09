@@ -19,7 +19,7 @@ class chi2Worker : public QThread
 {
     Q_OBJECT
 
-    ThermalModelFit *modelFit;
+    thermalfist::ThermalModelFit *modelFit;
     int *currentSize;
     int *stop;
 
@@ -38,7 +38,7 @@ class chi2Worker : public QThread
     }
 
 public:
-    chi2Worker(ThermalModelFit *mod = NULL,
+    chi2Worker(thermalfist::ThermalModelFit *mod = NULL,
            std::vector<double> *Tvalueso = NULL,
            std::vector<double> *muBvalueso = NULL,
            std::vector<double> *paramso = NULL,
@@ -72,7 +72,7 @@ class chi2Dialog : public QDialog
     bool fRunning;
     int fStop;
 
-    ThermalModelFit *modelFit;
+    thermalfist::ThermalModelFit *modelFit;
 
     QCustomPlot *plot;
     QCPColorMap *colormap;
@@ -95,7 +95,7 @@ class chi2Dialog : public QDialog
     QString GetParameters();
     QString GetResults();
 public:
-    explicit  chi2Dialog(QWidget *parent = 0, ThermalModelFit *mod = NULL);
+    explicit  chi2Dialog(QWidget *parent = 0, thermalfist::ThermalModelFit *mod = NULL);
 
 signals:
 public slots:

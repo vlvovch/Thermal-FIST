@@ -3,18 +3,16 @@
 
 #include <QAbstractTableModel>
 
-//#include "ThermalModel.h"
-#include "HRGBase/ThermalParticleSystem.h"
+#include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
 #include "particlespectra.h"
 
-class ThermalModelBase;
 
 class TableModel : public QAbstractTableModel
 {
     Q_OBJECT
     //ThermalParticleSystem TPS;
-    ThermalModelBase *model;
+    thermalfist::ThermalModelBase *model;
     std::vector<int> RowToParticle;
     std::vector<int> RowToParticleAll;
     std::vector<int> RowToParticleStable;
@@ -35,7 +33,7 @@ public:
         emit( dataChanged( start_ix, end_ix ) );
     }
     void reset();
-    void setModel(ThermalModelBase *mod);
+    void setModel(thermalfist::ThermalModelBase *mod);
     void updateAll() {
         QModelIndex start_ix = createIndex( 0, 0 );
         QModelIndex end_ix = createIndex( RowToParticle.size()-1, columnNumber-1 );
@@ -54,13 +52,13 @@ public:
 class DecayTableModel : public QAbstractTableModel
 {
     Q_OBJECT
-    ThermalParticle *fParticle;
-    ThermalParticleSystem *fTPS;
+    thermalfist::ThermalParticle *fParticle;
+    thermalfist::ThermalParticleSystem *fTPS;
     int columnNumber;
     double bratioSum;
     //std::vector<int> RowToParticle;
 public:
-    DecayTableModel(QObject *parent, ThermalParticle *Particle = NULL, ThermalParticleSystem *TPS = NULL);
+    DecayTableModel(QObject *parent, thermalfist::ThermalParticle *Particle = NULL, thermalfist::ThermalParticleSystem *TPS = NULL);
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -80,15 +78,15 @@ public:
         //fParticle->Decays().push_back(ParticleDecay());
         //endInsertRows();
 			beginInsertRows(QModelIndex(), fParticle->Decays().size(), fParticle->Decays().size());
-			std::vector<ParticleDecay> decays = fParticle->Decays();
-			decays.push_back(ParticleDecay());
+			std::vector<thermalfist::ParticleDecay> decays = fParticle->Decays();
+			decays.push_back(thermalfist::ParticleDecay());
 			fParticle->SetDecays(decays);
 			endInsertRows();
     }
     void removeDecay(int number) {
         if (number>=0 && number<fParticle->Decays().size()) {
             beginRemoveRows(QModelIndex(), number, number);
-						std::vector<ParticleDecay> decays = fParticle->Decays();
+						std::vector<thermalfist::ParticleDecay> decays = fParticle->Decays();
 						decays.erase(decays.begin() + number);
 						fParticle->SetDecays(decays);
             endRemoveRows();
@@ -130,14 +128,14 @@ class QuantitiesModel : public QAbstractTableModel
 {
     Q_OBJECT
     //ThermalParticle *fParticle;
-    std::vector<FittedQuantity> *quantities;
-    ThermalModelBase *model;
+    std::vector<thermalfist::FittedQuantity> *quantities;
+    thermalfist::ThermalModelBase *model;
     //ThermalParticleSystem *fTPS;
     //int columnNumber;
     //double bratioSum;
     //std::vector<int> RowToParticle;
 public:
-    QuantitiesModel(QObject *parent, std::vector<FittedQuantity>  *quants = NULL, ThermalModelBase *modelop = NULL);
+    QuantitiesModel(QObject *parent, std::vector<thermalfist::FittedQuantity>  *quants = NULL, thermalfist::ThermalModelBase *modelop = NULL);
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
@@ -156,7 +154,7 @@ public:
     void addQuantity() {
         beginInsertRows(QModelIndex(),quantities->size(),quantities->size());
         //fParticle->Decays().push_back(ParticleDecay());
-        quantities->push_back(FittedQuantity());
+        quantities->push_back(thermalfist::FittedQuantity());
         endInsertRows();
     }
     void removeQuantity(int number) {
@@ -167,8 +165,8 @@ public:
         }
     }
 
-    void setModel(ThermalModelBase *mod);
-    void setQuantities(std::vector<FittedQuantity>  *quants);
+    void setModel(thermalfist::ThermalModelBase *mod);
+    void setQuantities(std::vector<thermalfist::FittedQuantity>  *quants);
 
     void updateAll() {
         QModelIndex start_ix = createIndex( 0, 0 );

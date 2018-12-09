@@ -28,6 +28,8 @@
 #include "particledialog.h"
 #include "resultdialog.h"
 
+using namespace thermalfist;
+
 
 ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     : QWidget(parent)

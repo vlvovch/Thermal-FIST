@@ -24,7 +24,7 @@ class chi2ProfileWorker : public QThread
 {
     Q_OBJECT
 
-    ThermalModelFit *modelFit;
+    thermalfist::ThermalModelFit *modelFit;
     int *currentSize;
     int *stop;
 
@@ -43,7 +43,7 @@ class chi2ProfileWorker : public QThread
 
 						modelFit->SetParameterFitFlag(ParameterName, false);
 						modelFit->SetParameter(ParameterName, tmpParam, 0.1, Avalues->operator [](0), Avalues->operator [](Avalues->size() - 1));
-						ThermalModelFitParameters res = modelFit->PerformFit();
+            thermalfist::ThermalModelFitParameters res = modelFit->PerformFit();
 						params->operator[](i) = res.chi2; // modelFit->chi2Ndf(tmpT*1.e-3, tmpmuB*1.e-3);
             (*currentSize)++;
         }
@@ -51,7 +51,7 @@ class chi2ProfileWorker : public QThread
     }
 
 public:
-	chi2ProfileWorker(ThermalModelFit *mod = NULL,
+	chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
 					 std::string inParameterName = "T",
            std::vector<double> *Avalueso = NULL,
            std::vector<double> *paramso = NULL,
@@ -90,14 +90,14 @@ class chi2ProfileDialog : public QDialog
     bool fRunning;
     int fStop;
 
-		ThermalModelBase *model;
-		ThermalParticleSystem *TPS;
-    ThermalModelFit *modelFit, *modelFitInput;
-		ThermalModelFitParameters fitParams;
+    thermalfist::ThermalModelBase *model;
+    thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelFit *modelFit, *modelFitInput;
+    thermalfist::ThermalModelFitParameters fitParams;
 		ThermalModelConfig config;
 		std::map <int, std::string> paramNamesMap;
 
-		std::vector<FittedQuantity> quantities;
+		std::vector<thermalfist::FittedQuantity> quantities;
 
 		QLabel *labelAmin, *labelAmax, *labelAiter;
 
@@ -124,7 +124,7 @@ class chi2ProfileDialog : public QDialog
 
 		QString lastFilePath;
 public:
-    explicit  chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inTPS, const ThermalModelConfig & inConfig, const ThermalModelFitParameters & inParams, const std::vector<FittedQuantity> & inQuantities, ThermalModelFit *inFit = NULL);
+    explicit  chi2ProfileDialog(QWidget *parent, thermalfist::ThermalParticleSystem *inTPS, const ThermalModelConfig & inConfig, const thermalfist::ThermalModelFitParameters & inParams, const std::vector<thermalfist::FittedQuantity> & inQuantities, thermalfist::ThermalModelFit *inFit = NULL);
 
 signals:
 public slots:

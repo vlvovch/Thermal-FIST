@@ -6,6 +6,8 @@
 
 #include "qcustomplot.h"
 
+using namespace thermalfist;
+
 chi2Dialog::chi2Dialog(QWidget *parent, ThermalModelFit *mod) :
     QDialog(parent), modelFit(mod)
 {

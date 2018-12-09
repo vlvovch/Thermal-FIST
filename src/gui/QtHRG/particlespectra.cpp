@@ -6,6 +6,8 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 
+using namespace thermalfist;
+
 void ParticleSpectrum::AddParticle(const SimpleParticle &part) {
 	tmpn++;
 	dndp.insert(sqrt(part.p0*part.p0 - part.m*part.m));

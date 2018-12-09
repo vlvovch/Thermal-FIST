@@ -17,12 +17,14 @@
 #include "energydependencetab.h"
 #include "contourplottab.h"
 
+#include "HRGBase/ThermalModelBase.h"
+
 #include "fittoexperimenttab.h"
 
 
 //class TableModel;
-class ThermalModelBase;
-class ThermalParticleSystem;
+//class ThermalModelBase;
+//class ThermalParticleSystem;
 
 class MainWindow : public QMainWindow
 {
@@ -43,8 +45,8 @@ class MainWindow : public QMainWindow
 		QPushButton *buttonLoadDecays;
     //QTableView *tableParticles;
 
-    ThermalParticleSystem *TPS;
-    ThermalModelBase *model;
+    thermalfist::ThermalParticleSystem *TPS;
+    thermalfist::ThermalModelBase *model;
 
 		QString cpath = "";
 
