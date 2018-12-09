@@ -15,7 +15,9 @@
 
 using namespace std;
 
+#ifdef ThermalFIST_USENAMESPACE
 using namespace thermalfist;
+#endif
 
 // A macro for generating input files with excluded-volume/van der Waals parameters
 // Modes:

@@ -3,6 +3,8 @@
 #include "HRGBase/IdealGasFunctions.h"
 #include "gtest/gtest.h"
 
+using namespace thermalfist;
+
 namespace {
 
 	TEST(BoltzmannTest, Density) {

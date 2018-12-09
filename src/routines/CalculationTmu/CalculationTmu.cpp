@@ -14,7 +14,9 @@
 
 using namespace std;
 
+#ifdef ThermalFIST_USENAMESPACE
 using namespace thermalfist;
+#endif
 
 // Calculates equation of state, particle yields and fluctuations at a given set of T-mu values
 // Usage: CalculationTmu
