@@ -514,7 +514,7 @@ namespace thermalfist {
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
+    if (!useWidth || m_Mass == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder);
     }
 
