@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -18,13 +25,8 @@
 #include "contourplottab.h"
 
 #include "HRGBase/ThermalModelBase.h"
-
 #include "fittoexperimenttab.h"
 
-
-//class TableModel;
-//class ThermalModelBase;
-//class ThermalParticleSystem;
 
 class MainWindow : public QMainWindow
 {
@@ -43,7 +45,6 @@ class MainWindow : public QMainWindow
     QLineEdit *leDatabase;
     QPushButton *buttonLoad;
 		QPushButton *buttonLoadDecays;
-    //QTableView *tableParticles;
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;

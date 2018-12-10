@@ -12,3 +12,5 @@ local*/*
 
 # Visual Studio
 .vs/*
+
+.vscode/*

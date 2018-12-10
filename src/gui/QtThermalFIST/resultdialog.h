@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef RESULTDIALOG_H
 #define RESULTDIALOG_H
 
@@ -7,34 +14,33 @@
 #include <QPushButton>
 #include <QTextEdit>
 
-#include "HRGBase/ThermalModelBase.h"
 #include "BaseStructures.h"
+
+#include "HRGBase/ThermalModelBase.h"
 #include "tablemodel.h"
 
 
 class ResultDialog : public QDialog
 {
-	Q_OBJECT
-
-		//ThermalParticle *fParticle;
-		//ThermalParticleSystem *fTPS;
-
-  thermalfist::ThermalModelBase *model;
-	ChargesFluctuations *flucts;
+    Q_OBJECT
 
 
-	QTextEdit *parameters;
-	QTextEdit *results;
+    thermalfist::ThermalModelBase *model;
+		ChargesFluctuations *flucts;
 
-	QString GetParameters();
-	QString GetResults();
+
+    QTextEdit *parameters;
+    QTextEdit *results;
+
+    QString GetParameters();
+    QString GetResults();
 public:
-	explicit  ResultDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, ChargesFluctuations *flucts_in = NULL);
+    explicit  ResultDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, ChargesFluctuations *flucts_in = NULL);
 
 signals:
 
-	public slots :
-		void checkFixTableSize();
+public slots:
+    void checkFixTableSize();
 };
 
 #endif // DECAYSEDITOR_H

@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef CHI2PROFILEDIALOG_H
 #define CHI2PROFILEDIALOG_H
 
@@ -15,7 +22,7 @@
 #include "HRGFit/ThermalModelFit.h"
 #include "BaseStructures.h"
 
-//class ThermalModelFit;
+
 class QCPColorMap;
 class QCustomPlot;
 class QCPColorScale;
@@ -31,7 +38,6 @@ class chi2ProfileWorker : public QThread
 		std::string ParameterName;
     std::vector< double > *params;
     std::vector<double> *Avalues;
-    //std::vector<double> *muBvalues;
 
     void run() Q_DECL_OVERRIDE {
         for(int i=0;i<Avalues->size() && !(*stop);++i) {
@@ -44,7 +50,7 @@ class chi2ProfileWorker : public QThread
 						modelFit->SetParameterFitFlag(ParameterName, false);
 						modelFit->SetParameter(ParameterName, tmpParam, 0.1, Avalues->operator [](0), Avalues->operator [](Avalues->size() - 1));
             thermalfist::ThermalModelFitParameters res = modelFit->PerformFit();
-						params->operator[](i) = res.chi2; // modelFit->chi2Ndf(tmpT*1.e-3, tmpmuB*1.e-3);
+						params->operator[](i) = res.chi2;
             (*currentSize)++;
         }
         emit calculated();
@@ -74,16 +80,9 @@ class chi2ProfileDialog : public QDialog
 {
     Q_OBJECT
 
-    //std::vector<double> params;
-    //std::vector<double> Avalues;
-    //int fPreviousSize;
-    //int fCurrentSize;
-    //int fTotalSize;
-
 		std::vector< std::vector<double> > vecParams;
 		std::vector< std::vector<double> > vecAvalues;
 		std::vector< double > vecAleft, vecAright;
-		//std::vector< int > vecPreviousSize;
 		std::vector< int > vecCurrentSize;
 		std::vector< int > vecTotalSize;
 
@@ -102,8 +101,6 @@ class chi2ProfileDialog : public QDialog
 		QLabel *labelAmin, *labelAmax, *labelAiter;
 
     QCustomPlot *plot;
-    //QCPColorMap *colormap;
-    //QCPColorScale *colorScale;
 
 		QComboBox *comboParameter;
 
@@ -119,8 +116,8 @@ class chi2ProfileDialog : public QDialog
     QProgressBar *progBar;
     QTimer *calcTimer;
 
-    QString GetParameters();
-    QString GetResults();
+    //QString GetParameters();
+    //QString GetResults();
 
 		QString lastFilePath;
 public:
@@ -130,7 +127,6 @@ signals:
 public slots:
     void calculate();
     void replot();
-    //void replotpro();
     void finalize();
     void updateProgress();
 		void parameterChanged(int index);

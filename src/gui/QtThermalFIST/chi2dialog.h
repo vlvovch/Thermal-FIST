@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef CHI2DIALOG_H
 #define CHI2DIALOG_H
 
@@ -10,7 +17,6 @@
 #include <QTimer>
 #include "HRGFit/ThermalModelFit.h"
 
-//class ThermalModelFit;
 class QCPColorMap;
 class QCustomPlot;
 class QCPColorScale;
@@ -61,8 +67,6 @@ class chi2Dialog : public QDialog
 {
     Q_OBJECT
 
-    //ThermalParticle *fParticle;
-    //ThermalParticleSystem *fTPS;
     std::vector<double> params;
     std::vector<double> Tvalues;
     std::vector<double> muBvalues;

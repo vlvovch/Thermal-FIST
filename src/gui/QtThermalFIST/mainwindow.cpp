@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "mainwindow.h"
 
 #include <QLayout>
@@ -8,9 +15,8 @@
 #include <QElapsedTimer>
 #include <QDebug>
 
-//#include "modeltab.h"
+
 #include "ThermalFISTConfig.h"
-#include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
@@ -23,8 +29,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	cpath = QString(INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
 
-	//QString listpath = QString(INPUT_FOLDER) + "/list/PDG2014/list-multibaryons.dat";
-	//QString listpath = QDir::currentPath() + "/input/list/PDG2014/list.dat";
 	QString listpath = cpath;
 	TPS = new ThermalParticleSystem(listpath.toStdString());
 	model = new ThermalModelIdeal(TPS);
@@ -79,7 +83,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	QString title = "Thermal-FIST " + QString::number(ThermalFIST_VERSION_MAJOR) + "." + QString::number(ThermalFIST_VERSION_MINOR);
 	if (ThermalFIST_VERSION_DEVEL != 0) title += "." + QString::number(ThermalFIST_VERSION_DEVEL);
-	//title = "Thermal-FIST 0.3";
 	setWindowTitle(title);
 }
 

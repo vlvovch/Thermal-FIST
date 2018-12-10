@@ -1,9 +1,15 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "NumberStatistics.h"
 
 
 #include <cmath>
 
-//#include "HRGBase/xMath.h"
 
 void NumberStatistics::AddEvent(int tmpn, double weight) {
     double tmn = static_cast<double>(tmpn);
@@ -60,22 +66,6 @@ double NumberStatistics::GetSkewnessError() const {
 	for(int i=1;i<sigv.size();++i)
 		sigv[i] = sigv[i-1] * sig;
   return sqrt((9. - 6. * m[4] / sigv[4] + m[3] * m[3] / sigv[3] / sigv[3] * (6. + m[4] / sigv[4]) - 2. * m[3] / sigv[3] * m[5] / sigv[5] + m[6] / sigv[6]) * sigv[2]) / sqrt(nE);
-	
-	//return sqrt(6.*events*(events-1.)/(events-2.)/(events+1.)/(events+3.) 
-	//	* GetVariance() + GetSkewness() * GetSkewness() * GetStdDevError() * GetStdDevError() / GetVariance());
-
- // double nav = n / events;
- // double n2av = n2 / events;
- // double n3av = n3 / events;
- // double n4av = n4 / events;
- // double n5av = n5 / events;
- // double n6av = n6 / events;
- // double n7av = n7 / events;
- // double n8av = n8 / events;
- // double dm32 = (n6av - 6.*n5av*nav + 15.*n4av*nav*nav - 20.*n3av*nav*nav*nav + 15.*n2av*nav*nav*nav*nav
- //                 -9.*nav*nav*nav*nav*nav*nav + 12.*nav*nav*nav*nav*n2av - 9.*nav*nav*n2av*n2av
- //                 -4.*nav*nav*nav*n3av + 6.*nav*n2av*n3av - n3av*n3av) / nE;
- // return sqrt(dm32) / GetVariance();
 }
 
 double NumberStatistics::GetSkewnessError2() const {

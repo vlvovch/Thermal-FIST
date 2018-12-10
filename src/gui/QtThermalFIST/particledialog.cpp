@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "particledialog.h"
 
 #include <QLayout>
@@ -7,12 +14,14 @@
 #include <QApplication>
 #include <QDebug>
 
+#include "SpectralFunctionDialog.h"
+
 #include "HRGBase/ThermalModelBase.h"
 
 using namespace thermalfist;
 
 ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int ParticleID) :
-    QDialog(parent), model(mod), pid(ParticleID)//, fParticle(Particle), fTPS(TPS)
+    QDialog(parent), model(mod), pid(ParticleID)
 {
     QVBoxLayout *layout = new QVBoxLayout();
 
@@ -42,6 +51,12 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
         layout->addWidget(labDecays);
         layout->addWidget(tableDecays);
     }
+
+		if (model->TPS()->Particles()[pid].ResonanceWidth() > 0.) {
+			buttonSpectralFunction = new QPushButton(tr("Spectral function..."));
+			connect(buttonSpectralFunction, SIGNAL(clicked()), this, SLOT(showSpectralFunction()));
+			layout->addWidget(buttonSpectralFunction, 0, Qt::AlignRight);
+		}
 
     QLabel *labProd = new QLabel(tr("Particle production"));
     labProd->setFont(font);
@@ -201,7 +216,7 @@ void ParticleDialog::addDecay() {
 
 void ParticleDialog::removeDecay() {
     QModelIndexList selectedList = tableDecays->selectionModel()->selectedRows();
-    qDebug() << selectedList.count() << "\n";
+    //qDebug() << selectedList.count() << "\n";
     for(unsigned int i = 0; i < selectedList.count(); ++i)
         myModel->removeDecay(selectedList.at(i).row());
 }
@@ -213,4 +228,12 @@ void ParticleDialog::addColumn() {
 
 void ParticleDialog::removeColumn() {
     myModel->removeColumn();
+}
+
+void ParticleDialog::showSpectralFunction()
+{
+	SpectralFunctionDialog dialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
+	dialog.setWindowFlags(Qt::Window);
+	dialog.setMinimumSize(QSize(800, 400));
+	dialog.exec();
 }

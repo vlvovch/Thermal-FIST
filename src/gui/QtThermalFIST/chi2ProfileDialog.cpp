@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "chi2ProfileDialog.h"
 
 #include <QLayout>
@@ -100,7 +107,6 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
 	}
 
 	plot->addGraph();
-	//plot->graph(0)->setName(comboParameter->currentText());
 	plot->graph(0)->setName("Calculated");
 	plot->graph(0)->setPen(QPen(Qt::black, 2, Qt::SolidLine));
 	plot->graph(0)->setLineStyle(QCPGraph::lsLine);
@@ -145,8 +151,6 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
   spinAiter->setValue(10);
 
 	if (comboParameter->count() > 0) {
-		//spinAmin->setValue(fitParams.GetParameter(paramNamesMap[0]).xmin);
-		//spinAmax->setValue(fitParams.GetParameter(paramNamesMap[0]).xmax);
 		spinAmin->setValue(vecAleft[0]);
 		spinAmax->setValue(vecAright[0]);
 	}
@@ -207,7 +211,6 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
   layInterface->addLayout(laychi2Range);
   layInterface->addLayout(layButtons);
   layInterface->addWidget(progBar);
-  //layInterface->addWidget(buttonCalculate, 0, Qt::AlignLeft);
 
 
   layout->addWidget(plot, 1);
@@ -221,11 +224,7 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
 
   calcTimer = new QTimer(this);
   connect(calcTimer, SIGNAL(timeout()), this, SLOT(updateProgress()));
-  //connect(calcTimer, SIGNAL(timeout()), this, SLOT(replotpro()));
 
-	//fCurrentSize = 0;
-	//fPreviousSize = 0;
-	//fTotalSize = spinAiter->value();
 	fStop = 0;
 
 	setWindowTitle(tr("chi2 profile"));
@@ -354,9 +353,6 @@ void chi2ProfileDialog::calculate() {
 			plot->xAxis->setLabel(comboParameter->currentText());
       plot->xAxis->setRange(spinAmin->value(),spinAmax->value());
 
-      //double dA = (spinAmax->value() - spinAmin->value()) / spinAiter->value();
-      //double Ast = spinAmin->value();
-
 			int cindex = comboParameter->currentIndex();
 			if (cindex<0 || cindex>=vecParams.size())
 				return;
@@ -366,10 +362,7 @@ void chi2ProfileDialog::calculate() {
 			std::vector<double> &Avalues = vecAvalues[cindex];
 			std::vector<double> &params  = vecParams[cindex];
 
-      //params.resize(spinAiter->value());
       Avalues.resize(0);
-			//double dA = (spinA)
-      //for(int i=0;i<spinAiter->value();++i) {
 			double da = (spinAmax->value() - spinAmin->value()) / spinAiter->value();
 			for (double a = spinAmin->value(); a <= spinAmax->value() + 1.e-8; a += da) {
               Avalues.push_back(a);
@@ -469,9 +462,6 @@ void chi2ProfileDialog::replot() {
 }
 
 void chi2ProfileDialog::updateProgress() {
-	//qDebug() << "Update " << fCurrentSize << "/" << fTotalSize;
-  //progBar->setRange(0, fTotalSize);
-  //progBar->setValue(fCurrentSize);
 	int cindex = comboParameter->currentIndex();
 	if (cindex<0 || cindex>vecParams.size())
 		return;
@@ -493,8 +483,6 @@ void chi2ProfileDialog::parameterChanged(int index)
 			ParameterName == "muC")
 			mn = 1.e3;
 		
-		//spinAmin->setValue(fitParams.GetParameter(paramNamesMap[index]).xmin * mn);
-		//spinAmax->setValue(fitParams.GetParameter(paramNamesMap[index]).xmax * mn);
 		spinAmin->blockSignals(true);
 		spinAmax->blockSignals(true);
 		spinAmin->setValue(vecAleft[index]);
@@ -517,31 +505,6 @@ void chi2ProfileDialog::limitsChanged()
 	vecAright[cindex] = spinAmax->value();
 }
 
-/*
-void chi2ProfileDialog::replotpro() {
-
-    int tsz = fCurrentSize;
-    for(int i=fPreviousSize;i<tsz;++i) {
-        colormap->data()->setData(muBvalues[i], Tvalues[i], params[i]);
-    }
-
-    fPreviousSize = tsz;
-
-    colormap->setGradient(QCPColorGradient::gpPolar);
-    colormap->setGradient(colormap->gradient().inverted());
-    //colormap->setData(data, true);
-    //colormap->rescaleDataRange(true);
-
-    colorScale->setGradient(colormap->gradient());
-    colorScale->setDataRange(QCPRange(spinchi2min->value(), spinchi2max->value()));
-    colormap->setColorScale(colorScale);
-    //colorScale->setDataRange(colormap->dataRange());
-
-    //delete data;
-
-    plot->rescaleAxes(true);
-    plot->replot();
-}*/
 
 void chi2ProfileDialog::finalize() {
     calcTimer->stop();

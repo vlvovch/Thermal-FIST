@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "modeltab.h"
 
 #include <QLayout>
@@ -11,6 +18,7 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <cstdio>
+#include <vector>
 
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalModelIdeal.h"
@@ -23,13 +31,13 @@
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
+
 #include "DebugText.h"
 #include "tablemodel.h"
 #include "particledialog.h"
 #include "resultdialog.h"
 
 using namespace thermalfist;
-
 
 ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     : QWidget(parent)
@@ -156,6 +164,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     grStats->setLayout(layStats);
 
     radioQuant->setChecked(true);
+		CBQuadratures->setChecked(true);
 
     QGroupBox *grEV = new QGroupBox(tr("Excluded volume/van der Waals:"));
 
@@ -189,13 +198,13 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->setAlignment(Qt::AlignLeft);
     QLabel *labelTemperature = new QLabel(tr("T (MeV):"));
     spinTemperature = new QDoubleSpinBox();
-    spinTemperature->setMinimum(0.01);
+    spinTemperature->setMinimum(1.);
     spinTemperature->setMaximum(10000.);
     spinTemperature->setValue(model->Parameters().T * 1e3);
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
-    spinmuB->setMinimum(-9999.);
-    spinmuB->setMaximum(9999.);
+    spinmuB->setMinimum(-1000.);
+    spinmuB->setMaximum(1000.);
     spinmuB->setValue(model->Parameters().muB * 1e3);
 		QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
 		spingammaq = new QDoubleSpinBox();
@@ -212,18 +221,18 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
     spinmuS = new QDoubleSpinBox();
-    spinmuS->setMinimum(-9999.);
-    spinmuS->setMaximum(9999.);
+    spinmuS->setMinimum(-1000.);
+    spinmuS->setMaximum(1000.);
     spinmuS->setValue(model->Parameters().muS * 1e3);
     QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
     spinmuQ = new QDoubleSpinBox();
-    spinmuQ->setMinimum(-9999.);
-    spinmuQ->setMaximum(9999.);
+    spinmuQ->setMinimum(-1000.);
+    spinmuQ->setMaximum(1000.);
     spinmuQ->setValue(model->Parameters().muQ * 1e3);
 		labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
 		spinmuC = new QDoubleSpinBox();
-		spinmuC->setMinimum(-9999.);
-		spinmuC->setMaximum(9999.);
+		spinmuC->setMinimum(-1000.);
+		spinmuC->setMaximum(1000.);
 		spinmuC->setValue(model->Parameters().muC * 1e3);
     QLabel *labelVolume = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
@@ -233,21 +242,26 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinVolumeR->setValue(8.);
 		connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
 
-    QLabel *labelB = new QLabel(tr("B:"));
+    labelB = new QLabel(tr("B:"));
     spinB = new QSpinBox();
     spinB->setMinimum(-1000);
     spinB->setMaximum(1000);
     spinB->setValue(2);
-    QLabel *labelS = new QLabel(tr("S:"));
+    labelS = new QLabel(tr("S:"));
     spinS = new QSpinBox();
     spinS->setMinimum(-1000);
     spinS->setMaximum(1000);
     spinS->setValue(0);
-    QLabel *labelQ = new QLabel(tr("Q:"));
+    labelQ = new QLabel(tr("Q:"));
     spinQ = new QSpinBox();
     spinQ->setMinimum(-1000);
     spinQ->setMaximum(1000);
     spinQ->setValue(2);
+		labelC = new QLabel(tr("C:"));
+		spinC = new QSpinBox();
+		spinC->setMinimum(-1000);
+		spinC->setMaximum(1000);
+		spinC->setValue(0);
 
     layParameters->addWidget(labelTemperature, 0, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinTemperature, 0, 1);
@@ -273,6 +287,8 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinS, 2, 5);
     layParameters->addWidget(labelQ, 2, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinQ, 2, 3);
+		layParameters->addWidget(labelC, 2, 6, 1, 1, Qt::AlignRight);
+		layParameters->addWidget(spinC, 2, 7);
 
     grParameters->setLayout(layParameters);
 
@@ -297,7 +313,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		checkFixMuC->setChecked(true);
 
 
-		QLabel *labelVolumeRSC = new QLabel(tr("R<sub>SC</sub>:"));
+		QLabel *labelVolumeRSC = new QLabel(tr("R<sub>C</sub>:"));
 		spinVolumeRSC = new QDoubleSpinBox();
 		spinVolumeRSC->setDecimals(4);
 		spinVolumeRSC->setMinimum(0.);
@@ -317,20 +333,17 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
-    //checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
-		//checkFiniteWidth->setChecked(true);
 		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
 		comboWidth = new QComboBox();
 		comboWidth->addItem(tr("Zero-width"));
 		comboWidth->addItem(tr("Breit-Wigner"));
 		comboWidth->addItem(tr("eBW"));
-		comboWidth->setCurrentIndex(1);
+		comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
 		checkFluctuations = new QCheckBox(tr("Fluctuations"));
 		checkFluctuations->setChecked(false);
 
-    //layFlags->addWidget(checkFiniteWidth);
 		layFlags->addWidget(labelWidth);
 		layFlags->addWidget(comboWidth);
     layFlags->addWidget(checkBratio);
@@ -363,8 +376,6 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     connect(buttonBenchmark, SIGNAL(clicked()), this, SLOT(benchmark()));
 
     teDebug = new QTextEdit;
-    teDebug->setMaximumWidth(620);
-    //teDebug->setFixedHeight(200);
     teDebug->setReadOnly(true);
     teDebug->setFontPointSize(10);
 
@@ -377,8 +388,8 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     editorLay->addLayout(layButtons);
     editorLay->addWidget(teDebug);
 
-    DataEditLay->addLayout(dataLayv);
-    DataEditLay->addLayout(editorLay);
+    DataEditLay->addLayout(dataLayv, 1);
+    DataEditLay->addLayout(editorLay, 0);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(DataEditLay);
@@ -489,14 +500,14 @@ ThermalModelConfig ModelTab::getConfig()
 	ret.B         = spinB->value();
 	ret.Q         = spinQ->value();
 	ret.S         = spinS->value();
-	ret.C         = 0;
+	ret.C         = spinC->value();
 
 	ret.QoverB       = spinQBRatio->value();
 	ret.ConstrainMuQ = checkFixMuQ->isChecked();
 	ret.ConstrainMuS = checkFixMuS->isChecked();
 	ret.ConstrainMuC = checkFixMuC->isChecked();
 
-	ret.FiniteWidth        = comboWidth->currentIndex();// static_cast<int>(checkFiniteWidth->isChecked());
+	ret.FiniteWidth        = comboWidth->currentIndex();
 	ret.RenormalizeBR      = checkBratio->isChecked();
 	ret.ComputeFluctations = checkFluctuations->isChecked();
 
@@ -563,11 +574,6 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	model->SetStrangeness(config.S);
 	model->SetCharm(config.C);
 
-	/*model->SetUseWidth(config.FiniteWidth != 0);
-	if (config.FiniteWidth == 1)
-		model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
-	else if (config.FiniteWidth == 2)
-		model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);*/
 	if (config.FiniteWidth == 0)
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
 	else if (config.FiniteWidth == 1)
@@ -659,7 +665,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	timerc.restart();
 
-	model->FixParameters();
+	//model->FixParameters();
+	model->ConstrainChemicalPotentials();
 
 	model->CalculateDensities();
 
@@ -946,6 +953,7 @@ void ModelTab::modelChanged()
         spinB->setEnabled(false);
         spinS->setEnabled(false);
         spinQ->setEnabled(false);
+				spinC->setEnabled(false);
         spinQBRatio->setEnabled(checkFixMuQ->isChecked());
         radioBoltz->setEnabled(true);
         radioQuant->setEnabled(true);
@@ -964,10 +972,8 @@ void ModelTab::modelChanged()
         spinB->setEnabled(true);
         spinS->setEnabled(true);
         spinQ->setEnabled(true);
+				spinC->setEnabled(true);
         spinQBRatio->setEnabled(false);
-        //radioBoltz->setEnabled(false);
-        //radioBoltz->setChecked(true);
-        //radioQuant->setEnabled(false);
 
 				checkFixMuQ->setEnabled(false);
 				checkFixMuS->setEnabled(false);
@@ -975,6 +981,8 @@ void ModelTab::modelChanged()
 
 				CBQuadratures->setChecked(false);
 				CBQuadratures->setEnabled(false);
+
+				spinVolumeRSC->setEnabled(true);
     }
 
 
@@ -983,7 +991,7 @@ void ModelTab::modelChanged()
 			spinmuS->setEnabled(false);
 			spinVolumeRSC->setEnabled(true);
 		}
-		else spinVolumeRSC->setEnabled(false);
+		else if (!radCE->isChecked()) spinVolumeRSC->setEnabled(false);
 
 
 		spinmuS->setVisible(model->TPS()->hasStrange());
@@ -993,6 +1001,12 @@ void ModelTab::modelChanged()
 		checkFixMuS->setVisible(model->TPS()->hasStrange());
 		checkFixMuC->setVisible(model->TPS()->hasCharmed());
 
+		labelQ->setVisible(model->TPS()->hasCharged());
+		spinQ->setVisible(model->TPS()->hasCharged());
+		labelS->setVisible(model->TPS()->hasStrange());
+		spinS->setVisible(model->TPS()->hasStrange());
+		labelC->setVisible(model->TPS()->hasCharmed());
+		spinC->setVisible(model->TPS()->hasCharmed());
 
 		if (radioBoltz->isChecked()) {
 			CBBoseOnly->setEnabled(false);

@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "chi2dialog.h"
 
 #include <QLayout>
@@ -25,7 +32,6 @@ chi2Dialog::chi2Dialog(QWidget *parent, ThermalModelFit *mod) :
 
     colorScale = new QCPColorScale(plot);
     plot->plotLayout()->addElement(0, 1, colorScale);
-    //colorScale->setLabel("Some Label Text");
 
     QVBoxLayout *layInterface = new QVBoxLayout();
     layInterface->setAlignment(Qt::AlignTop);
@@ -111,7 +117,6 @@ chi2Dialog::chi2Dialog(QWidget *parent, ThermalModelFit *mod) :
     layInterface->addLayout(laychi2Range);
     layInterface->addLayout(layButtons);
     layInterface->addWidget(progBar);
-    //layInterface->addWidget(buttonCalculate, 0, Qt::AlignLeft);
 
 
     layout->addWidget(plot, 1);
@@ -146,8 +151,6 @@ void chi2Dialog::calculate() {
                 double tmpT = Tst + (0.5 + j)*dT;
                 Tvalues.push_back(tmpT);
                 muBvalues.push_back(tmpmuB);
-                //data->setData(tmpmuB, tmpT, modelFit->chi2Ndf(tmpT*1.e-3, tmpmuB*1.e-3));
-                //qDebug() << tmpT << " " << tmpmuB << " " << modelFit->chi2Ndf(tmpT*1.e-3, tmpmuB*1.e-3);
             }
 
         fCurrentSize = 0;
@@ -194,10 +197,6 @@ void chi2Dialog::updateProgress() {
 }
 
 void chi2Dialog::replotpro() {
-    /*QCPColorMapData *data = new QCPColorMapData(spinmuBiter->value(),
-                                                spinTiter->value(),
-                                                plot->xAxis->range(),
-                                                plot->yAxis->range());*/
 
     int tsz = fCurrentSize;
     for(int i=fPreviousSize;i<tsz;++i) {
@@ -208,15 +207,11 @@ void chi2Dialog::replotpro() {
 
     colormap->setGradient(QCPColorGradient::gpPolar);
     colormap->setGradient(colormap->gradient().inverted());
-    //colormap->setData(data, true);
-    //colormap->rescaleDataRange(true);
 
     colorScale->setGradient(colormap->gradient());
     colorScale->setDataRange(QCPRange(spinchi2min->value(), spinchi2max->value()));
     colormap->setColorScale(colorScale);
-    //colorScale->setDataRange(colormap->dataRange());
 
-    //delete data;
 
     plot->rescaleAxes(true);
     plot->replot();

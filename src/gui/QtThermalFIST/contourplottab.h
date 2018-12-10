@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef CONTOURPLOTTAB_H
 #define CONTOURPLOTTAB_H
 
@@ -23,13 +30,7 @@
 
 
 class QuantitiesModel;
-//class ThermalParticleSystem;
-//class ThermalModelBase;
 
-/*struct CalcParameter {
-    std::string name;
-    double value;
-};*/
 
 class ContourPlotWorker : public QThread
 {

@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef QUANTITYDIALOG_H
 #define QUANTITYDIALOG_H
 
@@ -14,12 +21,10 @@
 #include "HRGFit/ThermalModelFit.h"
 #include "tablemodel.h"
 
+
 class QuantityDialog : public QDialog
 {
     Q_OBJECT
-
-    //ThermalParticle *fParticle;
-    //ThermalParticleSystem *fTPS;
 
     thermalfist::ThermalModelBase *model;
     thermalfist::FittedQuantity *quant;

@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "quantitydialog.h"
 
 #include <QLayout>
@@ -26,8 +33,6 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
     spinPDG2->setMaximum(2000000000);
     if (!quant->type) spinPDG2->setEnabled(false);
     else spinPDG2->setValue(quant->ratio.PDGID2);
-    //QLabel *labPDG12 = new QLabel(tr("PDGID 1"));
-    //QLabel *labPDG22 = new QLabel(tr("PDGID 2"));
     name1 = new QLabel();
     name2 = new QLabel();
     name1->setText(QString(model->TPS()->GetNameFromPDG(spinPDG1->value()).c_str()));
@@ -122,7 +127,6 @@ void QuantityDialog::changeType(bool flag) {
 }
 
 void QuantityDialog::returnOK() {
-  //quant->type = checkType->isChecked();
   if (!checkType->isChecked()) {
 		quant->type  = FittedQuantity::Multiplicity;
     quant->mult  = ExperimentMultiplicity(spinPDG1->value(), spinValue->value(), spinError->value());

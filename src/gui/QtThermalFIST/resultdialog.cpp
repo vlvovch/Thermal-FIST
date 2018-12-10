@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "resultdialog.h"
 
 #include <QLayout>
@@ -13,7 +20,7 @@
 using namespace thermalfist;
 
 ResultDialog::ResultDialog(QWidget *parent, ThermalModelBase *mod, ChargesFluctuations *flucts_in) :
-	QDialog(parent), model(mod), flucts(flucts_in)//, fParticle(Particle), fTPS(TPS)
+	QDialog(parent), model(mod), flucts(flucts_in)
 {
 	QVBoxLayout *layout = new QVBoxLayout();
 
@@ -74,7 +81,6 @@ QString ResultDialog::GetParameters() {
 	ret += QString(cc);
 	ret += QString::number(model->Parameters().T*1.e3) + " MeV\r\n";
 
-	//if (model->TAG()!="ThermalModelCanonicalBSQ") {
 	if (model->Ensemble() != ThermalModelBase::CE) {
 		sprintf(cc, "%-20s = ", "\\mu_B");
 		ret += QString(cc);
@@ -258,6 +264,7 @@ QString ResultDialog::GetResults() {
 		ret += QString(cc);
 		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::ElectricCharge)) + "\r\n";
 
+		
 		sprintf(cc, "%-25s = ", "\\chi11QS");
 		ret += QString(cc);
 		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
@@ -265,10 +272,12 @@ QString ResultDialog::GetResults() {
 		sprintf(cc, "%-25s = ", "\\chi11BS");
 		ret += QString(cc);
 		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
-
-		sprintf(cc, "%-25s = ", "CBS");
-		ret += QString(cc);
-		ret += QString::number(-3. * model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+			
+		if (model->TPS()->hasStrange()) {
+			sprintf(cc, "%-25s = ", "CBS");
+			ret += QString(cc);
+			ret += QString::number(-3. * model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		}
 
 		sprintf(cc, "%-25s = ", "\\chi11BS/\\chi2S");
 		ret += QString(cc);
@@ -277,7 +286,7 @@ QString ResultDialog::GetResults() {
 		sprintf(cc, "%-25s = ", "\\chi11QS/\\chi2S");
 		ret += QString(cc);
 		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
-
+		
 		sprintf(cc, "%-25s = ", "\\chi11QB/\\chi2B");
 		ret += QString(cc);
 		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::BaryonCharge) / model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::BaryonCharge)) + "\r\n";
@@ -431,21 +440,23 @@ QString ResultDialog::GetResults() {
 
 			ret += "\r\n";
 
-			sprintf(cc, "%-25s = ", "chi3S");
-			ret += QString(cc);
-			ret += QString::number(flucts->chi3S) + "\r\n";
+			if (model->TPS()->hasStrange()) {
+				sprintf(cc, "%-25s = ", "chi3S");
+				ret += QString(cc);
+				ret += QString::number(flucts->chi3S) + "\r\n";
 
-			sprintf(cc, "%-25s = ", "chi4S");
-			ret += QString(cc);
-			ret += QString::number(flucts->chi4S) + "\r\n";
+				sprintf(cc, "%-25s = ", "chi4S");
+				ret += QString(cc);
+				ret += QString::number(flucts->chi4S) + "\r\n";
 
-			sprintf(cc, "%-25s = ", "chi3S/chi2S");
-			ret += QString(cc);
-			ret += QString::number(flucts->chi3S / flucts->chi2S) + "\r\n";
+				sprintf(cc, "%-25s = ", "chi3S/chi2S");
+				ret += QString(cc);
+				ret += QString::number(flucts->chi3S / flucts->chi2S) + "\r\n";
 
-			sprintf(cc, "%-25s = ", "chi4S/chi2S");
-			ret += QString(cc);
-			ret += QString::number(flucts->chi4S / flucts->chi2S) + "\r\n";
+				sprintf(cc, "%-25s = ", "chi4S/chi2S");
+				ret += QString(cc);
+				ret += QString::number(flucts->chi4S / flucts->chi2S) + "\r\n";
+			}
 
 
 			if (model->TPS()->hasCharmed()) {

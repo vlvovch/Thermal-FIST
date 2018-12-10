@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef FITTOEXPERIMENTTAB_H
 #define FITTOEXPERIMENTTAB_H
 
@@ -52,9 +59,6 @@ class FitToExperimentTab : public QWidget
     QPushButton *buttonLoadFromFile;
     QTableWidget *tableParameters;
 
-    //QRadioButton *radioIdeal, *radioEVMF, *radioEVMulti, *radioCE, *radioIdealCanonStrangeness, *radioIdealCanonCharm, *radioVDWHRG;
-		//QRadioButton *radioEVCanonStrangeness, *radioVDWCanonStrangeness;
-
 		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
 		QRadioButton *radGCE, *radCE, *radSCE;
 
@@ -62,11 +66,9 @@ class FitToExperimentTab : public QWidget
 		QCheckBox *CBBoseOnly, *CBPionsOnly;
 		QCheckBox *CBQuadratures;
 
-    //QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
     QPushButton *buttonChi2Map;
 		QPushButton *buttonChi2Profile;
-		//QLabel *labelValid;
 		QPushButton *labelValid;
 
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinVolumeR;
@@ -82,7 +84,6 @@ class FitToExperimentTab : public QWidget
 
 		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
 
-		//QCheckBox *checkFiniteWidth;
 		QComboBox *comboWidth;
 
     QCheckBox *checkBratio;
@@ -92,7 +93,6 @@ class FitToExperimentTab : public QWidget
 
     QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
 		QString strEVPath;
-    //QCheckBox *checkMesons;
 
     QPushButton *buttonCalculate;
 
@@ -114,7 +114,7 @@ class FitToExperimentTab : public QWidget
     std::vector<thermalfist::FittedQuantity> quantities;
 
 public:
-    FitToExperimentTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
+    FitToExperimentTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL);
     ~FitToExperimentTab();
 		ThermalModelConfig getConfig();
     thermalfist::ThermalModelFitParameters getFitParameters();
@@ -128,9 +128,7 @@ public slots:
     void changedRow();
 		void performFit(const ThermalModelConfig & config, const thermalfist::ThermalModelFitParameters & params);
     void calculate();
-    //void benchmark();
     void quantityDoubleClick(const QModelIndex &);
-    //void switchStability(bool);
     void showResults();
     void showChi2Map();
 		void showChi2Profile();

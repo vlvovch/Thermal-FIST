@@ -1,16 +1,22 @@
-#pragma once
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
+#ifndef NUMBERSTATISTICS_H
+#define NUMBERSTATISTICS_H
 #include <string>
 #include <vector>
 #define BINOMSZ 17
 
 class NumberStatistics
 {
-	//double m1, m2, m3, m4, m5, m6, m7, m8;
 	std::vector<double> m;
     long long events;
     std::string name;
     double mass;
-    //int tmpn;
     bool acc;
 	std::vector< std::vector<int> > binom;
 public:
@@ -21,7 +27,6 @@ public:
     double wsum;
     double w2sum;
     double nE;
-    //ParticleSpectrum():n(0),n2(0),n3(0),n4(0),events(0),PDGID(0) { }
     NumberStatistics(std::string name_ = "part"):n(0),n2(0),n3(0),n4(0),n5(0),n6(0),n7(0),n8(0),n9(0),n10(0),n11(0),n12(0),events(0),name(name_) {
         means.resize(13);
         wsum  = 0.;
@@ -41,8 +46,6 @@ public:
 		m.resize(13);
     }
     ~NumberStatistics() {
-//        if (fDistribution!=NULL) delete fDistribution;
-//        fDistribution = NULL;
     }
     void Reset() {
         n = n2 = n3 = n4 = 0;
@@ -51,7 +54,6 @@ public:
         wsum  = 0.;
         w2sum = 0.;
         nE    = 0.;
-        //tmpn = 0;
     }
 
     void SetAcceptance(bool acc_) { acc = acc_; }
@@ -62,11 +64,6 @@ public:
 
     void AddEvent(int tmpn, double weight=1.);
     void AddEvent(double tmpn, double weight=1.);
-
-    /*int GetPDGID() const { return PDGID; }
-    int GetEvents() const { return events; }
-    void AddParticle(const SimpleParticle &part);
-    void FinishEvent();*/
 
 	double Cnm(int nn, int m) const {
 		if (m<0 || m>nn) return -1;
@@ -107,3 +104,4 @@ public:
 	void CalculateCentralMoments();
 };
 
+#endif

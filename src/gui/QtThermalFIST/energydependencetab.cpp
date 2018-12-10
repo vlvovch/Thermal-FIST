@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "energydependencetab.h"
 
 #include <algorithm>
@@ -377,7 +384,6 @@ std::vector<double> EnergyDependenceWorker::getParams(ThermalModelBase *modelop)
     ret.push_back(modelop->CalculateChargeDensity());
     ret.push_back(modelop->CalculateEnergyDensity());
     ret.push_back(modelop->CalculateEntropyDensity()/modelop->Parameters().T/modelop->Parameters().T/modelop->Parameters().T/xMath::GeVtoifm()/xMath::GeVtoifm()/xMath::GeVtoifm());//ret.push_back(modelop->CalculateEntropyDensity());
-    //ret.push_back(modelop->CalculatePressure());
     ret.push_back(modelop->CalculatePressure()/modelop->Parameters().T/modelop->Parameters().T/modelop->Parameters().T/modelop->Parameters().T/xMath::GeVtoifm()/xMath::GeVtoifm()/xMath::GeVtoifm());
     ret.push_back((modelop->CalculateEnergyDensity()-3.*modelop->CalculatePressure())/modelop->Parameters().T/modelop->Parameters().T/modelop->Parameters().T/modelop->Parameters().T/xMath::GeVtoifm()/xMath::GeVtoifm()/xMath::GeVtoifm());
     ret.push_back(modelop->CalculateShearViscosity() / modelop->CalculateEntropyDensity());

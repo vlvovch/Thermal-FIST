@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef PARTICLEDIALOG_H
 #define PARTICLEDIALOG_H
 
@@ -6,16 +13,13 @@
 #include <QTableWidget>
 #include <QPushButton>
 #include <QTextEdit>
+#include "decaytablemodel.h"
 
-#include "tablemodel.h"
 #include "HRGBase/ThermalModelBase.h"
 
 class ParticleDialog : public QDialog
 {
     Q_OBJECT
-
-    //ThermalParticle *fParticle;
-    //ThermalParticleSystem *fTPS;
 
     thermalfist::ThermalModelBase *model;
     int pid;
@@ -33,7 +37,10 @@ class ParticleDialog : public QDialog
     QPushButton *buttonAddDaughterColumn;
     QPushButton *buttonRemoveDaughterColumn;
 
+		QPushButton *buttonSpectralFunction;
+
     QString GetParticleInfo();
+
 public:
     explicit  ParticleDialog(QWidget *parent = 0, thermalfist::ThermalModelBase *mod = NULL, int ParticleID = -1);
 
@@ -45,6 +52,7 @@ public slots:
     void removeDecay();
     void addColumn();
     void removeColumn();
+		void showSpectralFunction();
 };
 
 #endif // DECAYSEDITOR_H

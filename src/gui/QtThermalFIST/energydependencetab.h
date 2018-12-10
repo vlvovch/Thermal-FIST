@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef ENERGYDEPENDENCETAB_H
 #define ENERGYDEPENDENCETAB_H
 
@@ -20,13 +27,6 @@
 
 
 class QuantitiesModel;
-//class ThermalParticleSystem;
-//class ThermalModelBase;
-
-/*struct CalcParameter {
-    std::string name;
-    double value;
-};*/
 
 class EnergyDependenceWorker : public QThread
 {
@@ -49,26 +49,12 @@ class EnergyDependenceWorker : public QThread
             double muB = muBss(ss);
             double gammaS = gammaSss(ss);
 
-            //model->SetStatistics(!radioBoltz->isChecked());
-            //model->SetUseWidth(checkFiniteWidth->isChecked());
-            //model->SetQBgoal(spinQBRatio->value());
-            //model->SetOMP(checkOMP->isChecked());
-            //if (checkBratio->isChecked()) model->TPS->NormalizeBranchingRatios();
-            //else model->TPS->RestoreBranchingRatios();
-            //model->SetNormBratio(checkBratio->isChecked());
-
 						model->SetParameters(thermalfist::ThermalModelParameters(TT, muB,
 							muB / 5., -muB / 50.,
 							gammaS, 4000.));
 
-            //model->SetParameters(TT, muB,
-            //                     muB/5., -muB/50.,
-            //                     gammaS, 4000., rad);
-
             model->FixParameters();
             model->CalculateDensities();
-            //varvalues->push_back(ss);
-            //params->push_back(getParams(model));
             varvalues->operator [](i) = ss;
             params->operator [](i) = getParams(model);
             (*currentSize)++;

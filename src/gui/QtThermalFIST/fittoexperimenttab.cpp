@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include "fittoexperimenttab.h"
 
 #include <QLayout>
@@ -13,7 +20,6 @@
 #include <algorithm>
 
 #include "ThermalFISTConfig.h"
-#include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -29,7 +35,7 @@
 
 #include "quantitydialog.h"
 #include "DebugText.h"
-#include "tablemodel.h"
+#include "quantitiesmodel.h"
 #include "particledialog.h"
 #include "resultdialog.h"
 #include "chi2dialog.h"
@@ -54,6 +60,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     model = new ThermalModelIdeal(modelop->TPS());
     *model = *modelop;
 
+		fitcopy = new ThermalModelFit(model);
+
     QHBoxLayout *DataEditLay = new QHBoxLayout();
 
     QVBoxLayout *dataLayv = new QVBoxLayout();
@@ -63,12 +71,9 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     quantities.push_back(FittedQuantity(ExperimentRatio(-321, 321, 0.324873, 0.027183)));
     quantities.push_back(FittedQuantity(ExperimentRatio(321, 211, 0.201706, 0.0160556)));
     quantities.push_back(FittedQuantity(ExperimentMultiplicity(-211, 300., 30.)));
-    //quantities[quantities.size()-1].type = 1;
-    //quantities[quantities.size()-1].ratio = ExperimentRatio(-211, 211, 1.09898, 0.0798674);
 
     QLabel *labelQuantities = new QLabel(tr("Data to fit:"));
-    myModel = new QuantitiesModel(this, &quantities,model);
-    //myModel->setModel(model);
+		myModel = new QuantitiesModel(this, &quantities, fitcopy);
     tableQuantities = new QTableView();
     tableQuantities->setModel(myModel);
     tableQuantities->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -77,11 +82,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableQuantities->resizeColumnsToContents();
     connect(tableQuantities, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
     //connect(tableQuantities->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));
-    //connect(tableQuantities, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(particleInfoDoubleClick(QModelIndex)));
-    //tableParticles->setSortingEnabled(true);
-    //tableParticles->show();
-    //tableParticles->setColumnCount(7);
-    //tableParticles->setRowCount(3);
 
     QHBoxLayout *layEditQuantities = new QHBoxLayout();
     layEditQuantities->setAlignment(Qt::AlignLeft);
@@ -104,9 +104,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     QHBoxLayout *layMisc = new QHBoxLayout();
     layMisc->setAlignment(Qt::AlignLeft);
-
-    //checkOnlyStable = new QCheckBox(tr("Show only stable particles"));
-    //connect(checkOnlyStable, SIGNAL(toggled(bool)), this, SLOT(switchStability(bool)));
 
     buttonResults = new QPushButton(tr("Show calculation results..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
@@ -171,7 +168,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
 		QGroupBox *grEnsemble = new QGroupBox(tr("Ensemble:"));
 
-		//QHBoxLayout *layQuant = new QHBoxLayout();
 		QHBoxLayout *layEnsemble = new QHBoxLayout();
 		layEnsemble->setAlignment(Qt::AlignLeft);
 
@@ -204,7 +200,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		CBBoseOnly  = new QCheckBox(tr("Mesons only"));
 		CBPionsOnly = new QCheckBox(tr("Pions only"));
 		CBQuadratures = new QCheckBox(tr("Use quadratures"));
-		//CBQuadratures->setChecked(true);
+		CBQuadratures->setChecked(true);
 
 		connect(radioBoltz, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 		//connect(radioQuant, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
@@ -232,17 +228,12 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spinRadius->setValue(0.3);
     layRadius->addWidget(labelRadius);
     layRadius->addWidget(spinRadius);
-    //checkMesons = new QCheckBox(tr("Point-like mesons"));
-    //checkMesons->setChecked(false);
     radioUniform = new QRadioButton(tr("Same for all"));
     radioBaglike = new QRadioButton(tr("Bag-like"));
     radioMesons = new QRadioButton(tr("Point-like mesons"));
 		radioCustomEV = new QRadioButton(tr("Custom..."));
 		strEVPath = "";
 		connect(radioCustomEV, SIGNAL(clicked()), this, SLOT(loadEVFromFile()));
-    //layRadius->addWidget(labelRadius);
-    //layRadius->addWidget(spinRadius);
-    //layRadius->addWidget(checkMesons);
     layRadius->addWidget(radioUniform);
     layRadius->addWidget(radioBaglike);
     layRadius->addWidget(radioMesons);
@@ -254,7 +245,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     QGroupBox *grParameters = new QGroupBox(tr("Parameters:"));
 
-    //QHBoxLayout *layQuant = new QHBoxLayout();
     QGridLayout *layParameters = new QGridLayout();
     layParameters->setAlignment(Qt::AlignLeft);
     //layQuant->setHorizontalSpacing(15);
@@ -442,21 +432,18 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
 
-    //checkFiniteWidth = new QCheckBox(tr("Finite resonance width"));
-		//checkFiniteWidth->setChecked(true);
 		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
 		comboWidth = new QComboBox();
 		comboWidth->addItem(tr("Zero-width"));
 		comboWidth->addItem(tr("Breit-Wigner"));
 		comboWidth->addItem(tr("eBW"));
-		comboWidth->setCurrentIndex(1);
+		comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
 
-	checkFitRc  = new QCheckBox(tr("Fit Str.-Can. radius"));
+	checkFitRc  = new QCheckBox(tr("Fit (Str.-)Can. radius"));
 	checkFitRc->setChecked(true);
 
-    //layFlags->addWidget(checkFiniteWidth);
 	layFlags->addWidget(labelWidth);
 	layFlags->addWidget(comboWidth);
   layFlags->addWidget(checkBratio);
@@ -464,7 +451,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     QGroupBox *grParallel = new QGroupBox(tr("Paralellization:"));
 
-    //QHBoxLayout *layQuant = new QHBoxLayout();
     QHBoxLayout *layParallel = new QHBoxLayout();
     layParallel->setAlignment(Qt::AlignLeft);
 
@@ -488,8 +474,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
 
     teDebug = new QTextEdit;
-    teDebug->setMaximumWidth(620);
-    //teDebug->setFixedHeight(200);
     teDebug->setReadOnly(true);
     teDebug->setFontPointSize(10);
 
@@ -502,8 +486,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     editorLay->addLayout(layButtons);
     editorLay->addWidget(teDebug);
 
-    DataEditLay->addLayout(dataLayv);
-    DataEditLay->addLayout(editorLay);
+    DataEditLay->addLayout(dataLayv, 1);
+    DataEditLay->addLayout(editorLay, 0);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(DataEditLay);
@@ -619,7 +603,7 @@ ThermalModelFitParameters FitToExperimentTab::getFitParameters()
 	ret.muQ.toFit = !checkFixMuQ->isChecked();
 	ret.muS.toFit = !checkFixMuS->isChecked();
 	ret.muC.toFit = false;
-	ret.Rc.toFit  = checkFitRc->isChecked() && (radSCE->isChecked());
+	ret.Rc.toFit  = checkFitRc->isChecked() && (radSCE->isChecked() || radCE->isChecked());
 	if (!ret.Rc.toFit)
 		ret.Rc.value = ret.R.value;
 
@@ -644,8 +628,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
 	if (config.ModelType == ThermalModelConfig::DiagonalEV)
 		modelnew = new ThermalModelEVDiagonal(model->TPS());
-	else if (config.ModelType == ThermalModelConfig::CrosstermsEV)
+	else if (config.ModelType == ThermalModelConfig::CrosstermsEV) {
 		modelnew = new ThermalModelEVCrossterms(model->TPS());
+	}
 	else if (config.ModelType == ThermalModelConfig::CE) {
 		modelnew = new ThermalModelCanonical(model->TPS());
 	}
@@ -665,7 +650,8 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 	if (model != NULL)
 		modelnew->SetNormBratio(config.RenormalizeBR);
 
-	myModel->setModel(modelnew);
+	//myModel->setModel(modelnew);
+
 	if (model != NULL)
 		delete model;
 
@@ -693,11 +679,6 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
 	fit->SetParameters(params);
 
-	/*model->SetUseWidth(config.FiniteWidth != 0);
-	if (config.FiniteWidth == 1)
-	model->SetResonanceWidthIntegrationType(ThermalParticle::TwoGamma);
-	else if (config.FiniteWidth == 2)
-	model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);*/
 	if (config.FiniteWidth == 0)
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
 	else if (config.FiniteWidth == 1)
@@ -706,6 +687,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 		model->SetUseWidth(ThermalParticle::eBW);
 	else
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
+
+	model->SetResonanceWidthShape(ThermalParticle::RelativisticBreitWiger);
+	//model->SetResonanceWidthShape(ThermalParticle::NonRelativisticBreitWiger);
 
 	fit->SetQBConstraint(config.QoverB);
 
@@ -785,6 +769,8 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 	if (fitcopy != NULL) { delete fitcopy; fitcopy = NULL; }
 	fitcopy = fit;
 
+	myModel->setModel(fitcopy);
+
 	FitWorker *wrk = new FitWorker(fit);
 
 	connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
@@ -858,6 +844,8 @@ void FitToExperimentTab::loadFromFile() {
     if (path.length()>0)
     {
         quantities = ThermalModelFit::loadExpDataFromFile(path.toStdString());
+				if (fitcopy != NULL)
+					fitcopy->ClearModelData();
         myModel->setQuantities(&quantities);
         tableQuantities->resizeColumnsToContents();
 				cpath = path;
@@ -954,8 +942,10 @@ void FitToExperimentTab::modelChanged()
 			checkFitRc->setEnabled(true);
 			checkFixMuS->setEnabled(false);
 		}
-	else
-		checkFitRc->setEnabled(false);
+		else if (radCE->isChecked())
+			checkFitRc->setEnabled(true);
+		else
+			checkFitRc->setEnabled(false);
 
 	checkFixMuS->setVisible(model->TPS()->hasStrange());
 
@@ -1014,7 +1004,7 @@ void FitToExperimentTab::updateProgress() {
 	if (fitcopy->Parameters().gammaS.toFit == true)
 		dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
   dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
-	if (model->Ensemble() == ThermalModelBase::SCE)
+	if (model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CE)
 		dbgstrm << "Vc\t= " << model->Parameters().SVc << " fm^3" << endl;
   dbgstrm << endl;
 
@@ -1024,21 +1014,13 @@ void FitToExperimentTab::updateProgress() {
   teDebug->clear();
   teDebug->append(dbgstr);
   dbgstr.clear();
+
+	myModel->updateAll();
 }
 
 void FitToExperimentTab::finalize() {
     calcTimer->stop();
     ThermalModelFitParameters result = fitcopy->Parameters();
-    model->SetParameters(result.GetThermalModelParameters());
-		if (model->Ensemble() == ThermalModelBase::CE) {
-        //model->Parameters().B = spinB->value();
-        //model->Parameters().Q = spinQ->value();
-        //model->Parameters().S = spinS->value();
-			model->SetBaryonCharge(spinB->value());
-			model->SetElectricCharge(spinQ->value());
-			model->SetStrangeness(spinS->value());
-    }
-    model->FixParameters();
 
     dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
     dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
@@ -1076,6 +1058,7 @@ void FitToExperimentTab::finalize() {
     teDebug->clear();
     teDebug->append(dbgstr);
     dbgstr.clear();
+
     myModel->updateAll();
 
 		tableQuantities->resizeColumnsToContents();
@@ -1102,7 +1085,6 @@ void FitToExperimentTab::finalize() {
     int cRow = 0;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("T (MeV)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.T.value*1.e3)));
-    //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.T.error*1.e3)));
 	if (result.T.toFit==true) 
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.T.error*1.e3)));
 	else
@@ -1112,7 +1094,6 @@ void FitToExperimentTab::finalize() {
         cRow++;
         tableParameters->setItem(cRow, 0, new QTableWidgetItem("μB (MeV)"));
         tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.muB.value*1.e3)));
-        //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muB.error*1.e3)));
 		if (result.muB.toFit==true) 
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muB.error*1.e3)));
 		else
@@ -1130,7 +1111,6 @@ void FitToExperimentTab::finalize() {
 	cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("γs"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.gammaS.value)));
-    //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.gammaS.error)));
 	if (result.gammaS.toFit==true) 
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.gammaS.error)));
 	else
@@ -1139,7 +1119,6 @@ void FitToExperimentTab::finalize() {
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("R (fm)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.R.value)));
-    //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
 	if (result.R.toFit==true) 
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
 	else
@@ -1148,17 +1127,15 @@ void FitToExperimentTab::finalize() {
 	cRow++;
 	tableParameters->setItem(cRow, 0, new QTableWidgetItem("V (fm^3)"));
 	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(4. * xMath::Pi() / 3. * pow(result.R.value, 3))));
-	//tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
 	if (result.R.toFit == true)
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(4. * xMath::Pi() * pow(result.R.value, 2) * result.R.error)));
 	else
 		tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
 
-	if (model->Ensemble() == ThermalModelBase::SCE) {
+	if (model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CE) {
 		cRow++;
 		tableParameters->setItem(cRow, 0, new QTableWidgetItem("Rc (fm)"));
 		tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.Rc.value)));
-		//tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.Rc.error)));
 		if (result.Rc.toFit==true) 
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.Rc.error)));
 		else
@@ -1167,7 +1144,6 @@ void FitToExperimentTab::finalize() {
 		cRow++;
 		tableParameters->setItem(cRow, 0, new QTableWidgetItem("Vc (fm^3)"));
 		tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(4. * xMath::Pi() / 3. * pow(result.Rc.value, 3))));
-		//tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.R.error)));
 		if (result.R.toFit == true)
 			tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(4. * xMath::Pi() * pow(result.Rc.value, 2) * result.Rc.error)));
 		else
@@ -1176,31 +1152,24 @@ void FitToExperimentTab::finalize() {
 
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/dof"));
-	//tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2) + "/" + QString::number((int)(result.chi2 / result.chi2ndf + 0.1))));
 	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2) + "/" + QString::number(result.ndf)));
-    //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(""));
 
 	cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("chi2/dof"));
 	tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
-    //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.chi2ndf)));
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(""));
 
 		if (!(model->Ensemble() == ThermalModelBase::CE)
 			&& !(model->Ensemble() == ThermalModelBase::SCE)) {
         cRow++;
         tableParameters->setItem(cRow, 0, new QTableWidgetItem("μS (MeV)"));
-        //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().muS.value*1.e3)));
-        //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().muS.error*1.e3)));
         tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.muS.value*1.e3)));
         tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muS.error*1.e3)));
     }
 		if (!(model->Ensemble() == ThermalModelBase::CE)) {
         cRow++;
         tableParameters->setItem(cRow, 0, new QTableWidgetItem("μQ (MeV)"));
-        //tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().muQ.value*1.e3)));
-        //tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(fitcopy->ExtendedParameters().muQ.error*1.e3)));
         tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.muQ.value*1.e3)));
         tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muQ.error*1.e3)));
     }

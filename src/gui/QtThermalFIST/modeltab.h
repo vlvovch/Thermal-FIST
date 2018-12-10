@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef MODELTAB_H
 #define MODELTAB_H
 
@@ -14,24 +21,16 @@
 #include <QTextEdit>
 
 #include "HRGBase/ThermalModelBase.h"
-
 #include "BaseStructures.h"
 
 
 class TableModel;
-//class ThermalModelBase;
-//class ThermalParticleSystem;
 
 class ModelTab : public QWidget
 {
     Q_OBJECT
 
     QTableView *tableParticles;
-
-    //QRadioButton *radioIdeal, *radioEVMF, *radioEVMulti, *radioCE, *radioIdealCanonStrangeness, *radioIdealCanonCharm, *radioVDWHRG;
-		//QRadioButton *radioEVCanonStrangeness, *radioVDWCanonStrangeness;
-
-		//QComboBox *comboModel;
 
 		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
 		QRadioButton *radGCE, *radCE, *radSCE;
@@ -42,20 +41,19 @@ class ModelTab : public QWidget
 
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
-		//QLabel *labelValid;
 		QPushButton *labelValid;
 
 		QLabel *labelmuS, *labelmuC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
 		QDoubleSpinBox *spinVolumeRSC;
-    QSpinBox *spinB, *spinS, *spinQ;
+		QLabel *labelB, *labelQ, *labelS, *labelC;
+    QSpinBox *spinB, *spinS, *spinQ, *spinC;
     QDoubleSpinBox *spinQBRatio;
     QDoubleSpinBox *spinRadius;
 		
 
 		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
 
-    //QCheckBox *checkFiniteWidth;
 		QComboBox *comboWidth;
     QCheckBox *checkBratio;
 		QCheckBox *checkFluctuations;
@@ -64,7 +62,6 @@ class ModelTab : public QWidget
 
     QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
 		QString strEVPath;
-    //QCheckBox *checkMesons;
 
 
     QPushButton *buttonCalculate;
@@ -73,7 +70,6 @@ class ModelTab : public QWidget
 
     TableModel *myModel;
 
-    //thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
 
 		ChargesFluctuations flucts;
