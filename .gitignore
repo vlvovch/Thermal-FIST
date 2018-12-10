@@ -9,3 +9,8 @@ build*/*
 Debug*/*
 Release*/*
 local*/*
+
+# Visual Studio
+.vs/*
+
+.vscode/*

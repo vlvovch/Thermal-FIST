@@ -1,3 +1,4 @@
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
 # Base part of the library  
 set(SRCS_HRGBase

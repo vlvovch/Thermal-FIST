@@ -7,8 +7,8 @@ project (ThermalFIST)
 
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 0)
-set (ThermalFIST_VERSION_MINOR 6)
-set (ThermalFIST_VERSION_DEVEL 4)
+set (ThermalFIST_VERSION_MINOR 7)
+set (ThermalFIST_VERSION_DEVEL 0)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -126,7 +126,7 @@ set (HRGFit_INCLUDE             "${PROJECT_SOURCE_DIR}/include/HRGFit")
 add_subdirectory(src/libraries)
 
 # Gui
-add_subdirectory(src/gui/QtHRG)
+add_subdirectory(src/gui/QtThermalFIST)
 
 # Sample routines
 add_subdirectory(src/routines)
@@ -148,16 +148,16 @@ option (INCLUDE_TESTS
 if(INCLUDE_TESTS)
 
 	# Download and unpack googletest at configure time
-	configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+	configure_file(CMakeLists.txt.in ${PROJECT_BINARY_DIR}/googletest-download/CMakeLists.txt)
 	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
 	  RESULT_VARIABLE result
-	  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+	  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/googletest-download )
 	if(result)
 	  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
 	endif()
 	execute_process(COMMAND ${CMAKE_COMMAND} --build .
 	  RESULT_VARIABLE result
-	  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+	  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/googletest-download )
 	if(result)
 	  message(FATAL_ERROR "Build step for googletest failed: ${result}")
 	endif()
@@ -168,8 +168,8 @@ if(INCLUDE_TESTS)
 
 	# Add googletest directly to our build. This defines
 	# the gtest and gtest_main targets.
-	add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-					 ${CMAKE_BINARY_DIR}/googletest-build
+	add_subdirectory(${PROJECT_BINARY_DIR}/googletest-src
+					 ${PROJECT_BINARY_DIR}/googletest-build
 					 EXCLUDE_FROM_ALL)
 
 	# The gtest/gtest_main targets carry header search path

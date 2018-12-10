@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef PARTICLEDECAYS_H
 #define PARTICLEDECAYS_H
 
@@ -9,15 +16,19 @@
 
 #include "HRGEventGenerator/SimpleParticle.h"
 
-namespace ParticleDecays {
-	double ThreeBodym12F2(double m12, double M, double m1, double m2, double m3);
-	double TernaryThreeBodym12Maximum(double M, double m1_, double m2_, double m3_);
-	extern int threebodysucc, threebodytot;
-	double GetRandomThreeBodym12(double M, double m1_, double m2_, double m3_, double fm12max);
+namespace thermalfist {
 
-	SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz);
-	std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, int pdg1, double m2, int pdg2);
-	std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs); // TODO: proper implementation for 4+ - body decays
-}
+  namespace ParticleDecays {
+    double ThreeBodym12F2(double m12, double M, double m1, double m2, double m3);
+    double TernaryThreeBodym12Maximum(double M, double m1_, double m2_, double m3_);
+    extern int threebodysucc, threebodytot;
+    double GetRandomThreeBodym12(double M, double m1_, double m2_, double m3_, double fm12max);
+
+    SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz);
+    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, int pdg1, double m2, int pdg2);
+    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs); // TODO: proper implementation for 4+ - body decays
+  }
+
+} // namespace thermalfist
 
 #endif

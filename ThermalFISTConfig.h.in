@@ -8,3 +8,6 @@
 #define ThermalFIST_VERSION_MINOR @ThermalFIST_VERSION_MINOR@
 #define ThermalFIST_VERSION_DEVEL @ThermalFIST_VERSION_DEVEL@
 #define INPUT_FOLDER "${PROJECT_SOURCE_DIR}/input"
+
+// Now using the thermalfist namespace since version 0.7
+#define ThermalFIST_USENAMESPACE 1

@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include <string.h>
 #include <fstream>
 #include <iostream>
@@ -13,6 +20,9 @@
 
 using namespace std;
 
+#ifdef ThermalFIST_USENAMESPACE
+using namespace thermalfist;
+#endif
 
 // Fits within Bag Model, as in 1512.08046
 // First the global fit

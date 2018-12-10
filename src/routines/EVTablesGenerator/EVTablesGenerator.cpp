@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include <string.h>
 #include <fstream>
 #include <iostream>
@@ -15,6 +22,9 @@
 
 using namespace std;
 
+#ifdef ThermalFIST_USENAMESPACE
+using namespace thermalfist;
+#endif
 
 // A macro for generating input files with excluded-volume/van der Waals parameters
 // Modes:

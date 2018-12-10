@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #ifndef THERMALMODELVDWCANONICALSTRANGENESS_H
 #define THERMALMODELVDWCANONICALSTRANGENESS_H
 
@@ -7,56 +14,60 @@
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWFull.h"
 
-class ThermalModelVDWCanonicalStrangeness : public ThermalModelCanonicalStrangeness
-{
-	public:
-		ThermalModelVDWCanonicalStrangeness(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters());
+namespace thermalfist {
 
-		virtual ~ThermalModelVDWCanonicalStrangeness(void);
+  class ThermalModelVDWCanonicalStrangeness : public ThermalModelCanonicalStrangeness
+  {
+  public:
+    ThermalModelVDWCanonicalStrangeness(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters());
 
-		void PrepareModelVDW();  /**< Creates a ThermalModelVDW copy */
-		void CleanModelVDW();		/**< Cleares the ThermalModelVDW copy */
+    virtual ~ThermalModelVDWCanonicalStrangeness(void);
 
-		void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
-		void FillVirialEV(const std::vector< std::vector<double> > & bij = std::vector< std::vector<double> >(0));
-		void FillAttraction(const std::vector< std::vector<double> > & aij = std::vector< std::vector<double> >(0));
-		void SetVirial(int i, int j, double b) { if (i >= 0 && i < m_Virial.size() && j >= 0 && j < m_Virial[i].size()) m_Virial[i][j] = b; }
-		void SetAttraction(int i, int j, double a) { if (i >= 0 && i < m_Attr.size() && j >= 0 && j < m_Attr[i].size())     m_Attr[i][j] = a; }
+    void PrepareModelVDW();  /**< Creates a ThermalModelVDW copy */
+    void CleanModelVDW();		/**< Cleares the ThermalModelVDW copy */
 
-		double VirialCoefficient(int i, int j) const;
-		double AttractionCoefficient(int i, int j) const;
+    void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
+    void FillVirialEV(const std::vector< std::vector<double> > & bij = std::vector< std::vector<double> >(0));
+    void FillAttraction(const std::vector< std::vector<double> > & aij = std::vector< std::vector<double> >(0));
+    void SetVirial(int i, int j, double b) { if (i >= 0 && i < m_Virial.size() && j >= 0 && j < m_Virial[i].size()) m_Virial[i][j] = b; }
+    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < m_Attr.size() && j >= 0 && j < m_Attr[i].size())     m_Attr[i][j] = a; }
 
-		virtual void ReadInteractionParameters(const std::string &filename);
-		virtual void WriteInteractionParameters(const std::string &filename);
+    double VirialCoefficient(int i, int j) const;
+    double AttractionCoefficient(int i, int j) const;
 
-		virtual void CalculateDensitiesGCE();
+    virtual void ReadInteractionParameters(const std::string &filename);
+    virtual void WriteInteractionParameters(const std::string &filename);
 
-		virtual void CalculateEnergyDensitiesGCE();
+    virtual void CalculateDensitiesGCE();
 
-		virtual void CalculatePressuresGCE();
+    virtual void CalculateEnergyDensitiesGCE();
 
-		virtual void CalculateSums(const std::vector<double> &  Vcs);
+    virtual void CalculatePressuresGCE();
 
-		virtual void CalculateDensities();
+    virtual void CalculateSums(const std::vector<double> &  Vcs);
 
-		virtual double CalculateEnergyDensity();
+    virtual void CalculateDensities();
 
-		virtual double CalculateEntropyDensity();
+    virtual double CalculateEnergyDensity();
 
-		virtual double CalculatePressure();
+    virtual double CalculateEntropyDensity();
 
-	protected:
-		// TODO: test
-		virtual double MuShift(int id);
+    virtual double CalculatePressure();
 
-		ThermalModelVDWFull *m_modelVDW;
-		std::vector< std::vector<double> > m_Virial;
-		std::vector< std::vector<double> > m_Attr;
-		double m_PNS;		/**< Pressure of all non-strange hadrons */
-		std::vector<double> m_MuStar;
-		std::vector<double> m_Suppression;		/**< Common suppression factor, from non-strange hadrons */
-		//double m_EVNS;		/**< Total eigenvolume of all non-strange hadrons */
-		//double m_EVS;		/**< Total eigenvolume of all strange hadrons */
-};
+  protected:
+    // TODO: test
+    virtual double MuShift(int id);
+
+    ThermalModelVDWFull *m_modelVDW;
+    std::vector< std::vector<double> > m_Virial;
+    std::vector< std::vector<double> > m_Attr;
+    double m_PNS;		/**< Pressure of all non-strange hadrons */
+    std::vector<double> m_MuStar;
+    std::vector<double> m_Suppression;		/**< Common suppression factor, from non-strange hadrons */
+    //double m_EVNS;		/**< Total eigenvolume of all non-strange hadrons */
+    //double m_EVS;		/**< Total eigenvolume of all strange hadrons */
+  };
+
+} // namespace thermalfist
 
 #endif // THERMALMODELEVCANONICALSTRANGENESS_H
