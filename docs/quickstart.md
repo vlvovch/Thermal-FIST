@@ -15,10 +15,13 @@ mkdir build
 cd build
 cmake ../
 make
+make install
 ```
 
 This will build the libraries in `build/lib`, the QtHRG gui in `build/bin`,
 and a couple of sample macro in `build/bin/routines`.
+
+Please see also the commands listed in the [.travis.yml](../.travis.yml) file for another example of building and running the package under the Linux system.
 
 ### QtThermalFIST
 
