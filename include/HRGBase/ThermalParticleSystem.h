@@ -56,6 +56,8 @@ namespace thermalfist {
     void WriteTableToFile(std::string OutputFile = "", bool WriteAntiParticles = false);
 
     void LoadDecays(std::string DecaysFile = "", bool GenerateAntiParticles = true);
+    void ReadDecays_OldFormat(std::ifstream &fin);
+    void ReadDecays_NewFormat(std::ifstream &fin);
 
     void NormalizeBranchingRatios();
 

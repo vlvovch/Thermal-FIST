@@ -717,12 +717,131 @@ namespace thermalfist {
     for (int i = 0; i < m_Particles.size(); ++i)
       m_Particles[i].ClearDecays();
 
+    ifstream fin(DecaysFile.c_str());
+
+    if (fin.is_open()) {
+
+      char tmpc[2000];
+      fin.getline(tmpc, 2000);
+      string tmp = string(tmpc);
+      vector<string> elems = CuteHRGHelper::split(tmp, '#');
+
+      int flnew = 0;
+      if (tmp.size() == 0 || elems.size() >= 2)
+        flnew = 1;
+      else
+        flnew = 0;
+
+      fin.clear();
+      fin.seekg(0, ios::beg);
+
+      if (flnew == 1)
+        ReadDecays_NewFormat(fin);
+      else
+        ReadDecays_OldFormat(fin);
+
+      fin.close();
+
+    }
+
+    if (GenerateAntiParticles) {
+      for (int i = 0; i < m_Particles.size(); ++i) {
+        if (m_Particles[i].PdgId() < 0)
+          m_Particles[i].SetDecays(GetDecaysFromAntiParticle(m_Particles[m_PDGtoID[-m_Particles[i].PdgId()]].Decays()));
+      }
+    }
+
+    for (int i = 0; i < m_Particles.size(); ++i)
+      m_Particles[i].SetDecaysOriginal(m_Particles[i].Decays());
+
+    FillDecayProperties();
+    FillDecayThresholds();
+    ProcessDecays();
+  }
+
+  void ThermalParticleSystem::ReadDecays_NewFormat(std::ifstream & fin)
+  {
+    vector< vector<ParticleDecay> > decays(0);
+    map<int, int> decaymap;
+    decaymap.clear();
+
+    
+    if (fin.is_open()) {
+      char cc[2000];
+      int index = 0;
+      while (!fin.eof()) {
+        fin.getline(cc, 2000);
+        string tmp = string(cc);
+        vector<string> elems = CuteHRGHelper::split(tmp, '#');
+        if (elems.size() < 1 || elems[0].size() == 0)
+          continue;
+
+        int tpdgid, tdecaysnumber = 0;
+        vector<ParticleDecay> tdecays(0);
+
+        istringstream iss(elems[0]);
+        if (!(iss >> tpdgid)) continue;
+
+        bool fl = false;
+        while (!fl) {
+          if (fin.eof()) break;
+          fin.getline(cc, 500);
+          tmp = string(cc);
+          elems = CuteHRGHelper::split(tmp, '#');
+          if (elems.size() < 1 || elems[0].size() == 0)
+            continue;
+
+          istringstream isstnum(elems[0]);
+          if (!(isstnum >> tdecaysnumber)) {
+            tdecaysnumber = 0;
+            continue;
+          }
+          fl = true;
+        }
+
+        for (int i = 0; i < tdecaysnumber; ++i) {
+          bool fl = false;
+          while (!fl) {
+            if (fin.eof()) break;
+            fin.getline(cc, 500);
+            tmp = string(cc);
+            elems = CuteHRGHelper::split(tmp, '#');
+            if (elems.size() < 1 || elems[0].size() == 0)
+              continue;
+
+            ParticleDecay tdecay;
+            istringstream issdec(elems[0]);
+            if (!(issdec >> tdecay.mBratio)) continue;
+            int tmpid;
+            while (issdec >> tmpid) {
+              tdecay.mDaughters.push_back(tmpid);
+            }
+            tdecays.push_back(tdecay);
+            fl = true;
+          }
+        }
+
+        if (tdecays.size() == tdecaysnumber && tdecays.size() != 0) {
+          decays.push_back(tdecays);
+          decaymap[tpdgid] = index;
+          index++;
+        }
+      }
+
+      for (int i = 0; i < m_Particles.size(); ++i) {
+        if (decaymap.count(m_Particles[i].PdgId()) != 0)
+          m_Particles[i].SetDecays(decays[decaymap[m_Particles[i].PdgId()]]);
+      }
+    }
+  }
+
+  void ThermalParticleSystem::ReadDecays_OldFormat(std::ifstream & fin)
+  {
     vector< vector<ParticleDecay> > decays(0);
     vector<int> pdgids(0);
     map<int, int> decaymap;
     decaymap.clear();
 
-    ifstream fin(DecaysFile.c_str());
     if (fin.is_open()) {
       int decaypartnumber = 0;
       fin >> decaypartnumber;
@@ -748,7 +867,6 @@ namespace thermalfist {
           decays[i].push_back(decay);
         }
       }
-      fin.close();
     }
 
     for (int i = 0; i < m_Particles.size(); ++i) {
@@ -756,20 +874,6 @@ namespace thermalfist {
         m_Particles[i].SetDecays(decays[decaymap[m_Particles[i].PdgId()]]);
     }
 
-    if (GenerateAntiParticles) {
-      for (int i = 0; i < m_Particles.size(); ++i) {
-        if (m_Particles[i].PdgId() < 0)
-          m_Particles[i].SetDecays(GetDecaysFromAntiParticle(m_Particles[m_PDGtoID[-m_Particles[i].PdgId()]].Decays()));
-      }
-    }
-
-    for (int i = 0; i < m_Particles.size(); ++i)
-      m_Particles[i].SetDecaysOriginal(m_Particles[i].Decays());
-    fin.close();
-
-    FillDecayProperties();
-    FillDecayThresholds();
-    ProcessDecays();
   }
 
   std::string ThermalParticleSystem::GetNameFromPDG(int pdgid) {
