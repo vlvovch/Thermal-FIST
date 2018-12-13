@@ -87,8 +87,8 @@ namespace thermalfist {
 
     double ModifiedWidth(double m) const;
 
-    bool ParticleDecay::operator==(const ParticleDecay &rhs) const; // TODO: improve
-    bool ParticleDecay::operator!=(const ParticleDecay &rhs) const { return !(*this == rhs); }
+    bool operator==(const ParticleDecay &rhs) const; // TODO: improve
+    bool operator!=(const ParticleDecay &rhs) const { return !(*this == rhs); }
   };
 
   
@@ -267,8 +267,8 @@ namespace thermalfist {
 
     ThermalParticle GenerateAntiParticle(/*ThermalParticleSystem *TPS = NULL*/) const;
 
-    bool ThermalParticle::operator==(const ThermalParticle &rhs) const; // TODO: improve
-    bool ThermalParticle::operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
+    bool operator==(const ThermalParticle &rhs) const; // TODO: improve
+    bool operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
 
   private:
     /**

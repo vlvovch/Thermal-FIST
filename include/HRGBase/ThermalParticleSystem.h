@@ -103,8 +103,8 @@ namespace thermalfist {
     */
     bool CheckDecayChargesConservation(int ind) const;
 
-    bool ThermalParticleSystem::operator==(const ThermalParticleSystem &rhs) const;
-    bool ThermalParticleSystem::operator!=(const ThermalParticleSystem &rhs) const { return !(*this == rhs); }
+    bool operator==(const ThermalParticleSystem &rhs) const;
+    bool operator!=(const ThermalParticleSystem &rhs) const { return !(*this == rhs); }
 
     static ParticleDecay::DecayType DecayTypeByParticleType(const ThermalParticle &part);
   private:
