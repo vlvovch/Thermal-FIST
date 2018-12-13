@@ -17,7 +17,7 @@
 namespace thermalfist {
 
   /**
-  * Class which contains the whole particle table
+  * Class which contains the whole particle list
   */
   class ThermalParticleSystem
   {
@@ -30,7 +30,7 @@ namespace thermalfist {
 
     std::vector<ParticleDecay> GetDecaysFromAntiParticle(const std::vector<ParticleDecay> &Decays);
 
-    void ProcessDecays() { FillResonanceDecays(); SeparateDecaysIntoWeakAndStrong(); FillResonanceWeakDecays(); }
+    void ProcessDecays();// { FillResonanceDecays(); SeparateDecaysIntoWeakAndStrong(); FillResonanceWeakDecays(); }
 
     void FillDecayProperties();
 
@@ -38,11 +38,13 @@ namespace thermalfist {
 
     void FillResonanceDecays();
 
-    void FillResonanceWeakDecays();
+    //void FillResonanceWeakDecays();
+    void FillResonanceDecaysByFeeddown();
 
     void GoResonance(int ind, int startind, double BR);
 
-    void GoResonanceWeak(int ind, int startind, double BR);
+    //void GoResonanceWeak(int ind, int startind, double BR);
+    void GoResonanceByFeeddown(int ind, int startind, double BR, Feeddown::Type feeddown);
 
     std::vector<double> GoResonanceDecayProbs(int ind, int goalind, bool firstdecay = false);
 
@@ -53,11 +55,13 @@ namespace thermalfist {
     void LoadTable(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
+    void SetTableFromVector(const std::vector<ThermalParticle> &part_in, bool GenerateAntiParticles = true);
     void WriteTableToFile(std::string OutputFile = "", bool WriteAntiParticles = false);
 
     void LoadDecays(std::string DecaysFile = "", bool GenerateAntiParticles = true);
     void ReadDecays_OldFormat(std::ifstream &fin);
     void ReadDecays_NewFormat(std::ifstream &fin);
+    void WriteDecaysToFile(std::string OutputFile = "", bool WriteAntiParticles = false);
 
     void NormalizeBranchingRatios();
 
@@ -71,7 +75,7 @@ namespace thermalfist {
 
     std::string GetNameFromPDG(int pdgid);
 
-    void SeparateDecaysIntoWeakAndStrong();
+    //void SeparateDecaysIntoWeakAndStrong();
 
     bool hasBaryons() const { return (m_NumBaryons > 0); }
     bool hasCharged() const { return (m_NumCharged > 0); }
@@ -88,10 +92,24 @@ namespace thermalfist {
     int    PdgToId(int pdgid)    /*const*/ { return (m_PDGtoID.count(pdgid) > 0) ? m_PDGtoID[pdgid] : -1; }
     int    IdToPdg(int id)      const { return (id >= 0 && id < m_Particles.size()) ? m_Particles[id].PdgId() : 0; }
 
+    void FillPdgMap();
+    void FinalizeList();
+
+    void AddParticle(const ThermalParticle & part);
+    void RemoveParticleAt(int ind);
+
+    /**
+    * Checks whether cumulative charges (B, Q, S, C) of decay products match those of decaying particle with index ind
+    */
+    bool CheckDecayChargesConservation(int ind) const;
+
+    bool ThermalParticleSystem::operator==(const ThermalParticleSystem &rhs) const;
+    bool ThermalParticleSystem::operator!=(const ThermalParticleSystem &rhs) const { return !(*this == rhs); }
+
+    static ParticleDecay::DecayType DecayTypeByParticleType(const ThermalParticle &part);
   private:
     std::vector<ThermalParticle>    m_Particles;
     std::map<int, int>              m_PDGtoID;
-    std::vector<int>                m_IDtoPDG;
     int m_NumBaryons;
     int m_NumCharged;
     int m_NumStrange;

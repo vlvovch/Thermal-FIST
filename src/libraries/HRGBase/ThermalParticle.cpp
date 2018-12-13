@@ -16,6 +16,7 @@
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/NumericalIntegration.h"
+#include "HRGBase/ThermalParticleSystem.h"
 
 using namespace std;
 
@@ -29,6 +30,22 @@ namespace thermalfist {
       return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.);
     return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
     //return mBratio * pow((m - mM0) / (mPole - mM0), 1. / 2.); // as in 1808.02106
+  }
+
+  bool ParticleDecay::operator==(const ParticleDecay & rhs) const
+  {
+    bool ret = true;
+
+    ret &= mBratio == rhs.mBratio;
+    ret &= mDaughters == rhs.mDaughters;
+    ret &= mM0 == rhs.mM0;
+    ret &= mPole == rhs.mPole;
+    ret &= mL == rhs.mL;
+    ret &= mBratioVsM == rhs.mBratioVsM;
+    ret &= mBratioAverage == rhs.mBratioAverage;
+    ret &= mChannelName == rhs.mChannelName;
+
+    return ret;
   }
 
 
@@ -47,7 +64,10 @@ namespace thermalfist {
     SetResonanceWidthShape(RelativisticBreitWiger);
     SetResonanceWidthIntegrationType(BWTwoGamma);
 
-    m_DecayContributions.resize(0);
+    m_DecayType = ParticleDecay::Default;
+
+    //m_DecayContributions.resize(0);
+    m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
     m_DecayContributionsSigmas.resize(0);
     m_DecayProbabilities.resize(0);
 
@@ -213,6 +233,76 @@ namespace thermalfist {
       }
       ret[i] = tw;
     }
+    return ret;
+  }
+
+  ThermalParticle ThermalParticle::GenerateAntiParticle(/*ThermalParticleSystem *TPS*/) const
+  {
+    string name = Name();
+    if (BaryonCharge() == 0 && name[name.size() - 1] == '+')
+      name[name.size() - 1] = '-';
+    else if (BaryonCharge() == 0 && name[name.size() - 1] == '-')
+      name[name.size() - 1] = '+';
+    else
+      name = "anti-" + name;
+
+    ThermalParticle ret = *this;
+    ret.SetName(name);
+    ret.SetPdgId(-PdgId());
+    ret.SetBaryonCharge(-BaryonCharge());
+    ret.SetStrangenessCharge(-Strangeness());
+    ret.SetElectricCharge(-ElectricCharge());
+    ret.SetCharm(-Charm());
+    ret.SetArbitraryCharge(-ArbitraryCharge());
+    ret.SetAntiParticle(true);
+    // Decays to be done separately from ThermalParticleSystem instance
+    /*if (TPS != NULL) {
+      ret.SetDecays(TPS->GetDecaysFromAntiParticle(Decays()));
+      ret.SetDecaysOriginal(ret.Decays());
+    }*/
+    return ret;
+  }
+
+  bool ThermalParticle::operator==(const ThermalParticle & rhs) const
+  {
+    bool ret = true;
+
+    /*ret &= m_xlag32 == rhs.m_xlag32;
+    ret &= m_wlag32 == rhs.m_wlag32;
+    ret &= m_xleg == rhs.m_xleg;
+    ret &= m_wleg == rhs.m_wleg;
+    ret &= m_xleg32 == rhs.m_xleg32;
+    ret &= m_wleg32 == rhs.m_wleg32;*/
+
+    ret &= m_Stable == rhs.m_Stable;
+    ret &= m_AntiParticle == rhs.m_AntiParticle;
+    ret &= m_Name == rhs.m_Name;
+    ret &= m_PDGID == rhs.m_PDGID;
+    ret &= m_Degeneracy == rhs.m_Degeneracy;
+    ret &= m_Statistics == rhs.m_Statistics;
+    ret &= m_StatisticsOrig == rhs.m_StatisticsOrig;
+    ret &= m_Mass == rhs.m_Mass;
+    ret &= m_QuantumStatisticsCalculationType == rhs.m_QuantumStatisticsCalculationType;
+    ret &= m_ClusterExpansionOrder == rhs.m_ClusterExpansionOrder;
+    ret &= m_Baryon == rhs.m_Baryon;
+    ret &= m_ElectricCharge == rhs.m_ElectricCharge;
+    ret &= m_Strangeness == rhs.m_Strangeness;
+    ret &= m_Charm == rhs.m_Charm;
+    ret &= m_Quark == rhs.m_Quark;
+    ret &= m_ArbitraryCharge == rhs.m_ArbitraryCharge;
+    ret &= m_AbsQuark == rhs.m_AbsQuark;
+    ret &= m_AbsS == rhs.m_AbsS;
+    ret &= m_AbsC == rhs.m_AbsC;
+    ret &= m_Width == rhs.m_Width;
+    ret &= m_Threshold == rhs.m_Threshold;
+    ret &= m_ThresholdDynamical == rhs.m_ThresholdDynamical;
+    ret &= m_ResonanceWidthShape == rhs.m_ResonanceWidthShape;
+    ret &= m_ResonanceWidthIntegrationType == rhs.m_ResonanceWidthIntegrationType;
+    ret &= m_Weight == rhs.m_Weight;
+    ret &= m_DecayType == rhs.m_DecayType;
+    ret &= m_Decays == rhs.m_Decays;
+    ret &= m_DecaysOrig == rhs.m_DecaysOrig;
+    
     return ret;
   }
 
@@ -662,7 +752,7 @@ namespace thermalfist {
 
   double ThermalParticle::GetAbsQ() const {
     if (m_Baryon == 0) return 2. - m_AbsC - m_AbsS;
-    else return abs(m_Baryon) * (3. - m_AbsC - m_AbsS);
+    else return abs(m_Baryon) * 3. - m_AbsC - m_AbsS;
   }
 
   double ThermalParticle::GetCharge(int index) const {

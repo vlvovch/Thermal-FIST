@@ -704,7 +704,8 @@ namespace thermalfist {
     m_Volume = params.V;
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiestotalweak.resize(m_TPS->Particles().size());
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
+
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
     m_skewprim.resize(m_TPS->Particles().size());
@@ -733,6 +734,8 @@ namespace thermalfist {
     SetStatistics(m_QuantumStats);
     SetCalculationType(IdealGasFunctions::Quadratures);
     SetUseWidth(TPS()->ResonanceWidthIntegrationType());
+
+    ResetCalculatedFlags();
 
     m_ValidityLog = "";
   }
@@ -780,83 +783,83 @@ namespace thermalfist {
   void ThermalModelBase::SetParameters(const ThermalModelParameters& params) {
     m_Parameters = params;
     m_Volume = m_Parameters.V;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetTemperature(double T)
   {
     m_Parameters.T = T;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetBaryonChemicalPotential(double muB)
   {
     m_Parameters.muB = muB;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetElectricChemicalPotential(double muQ)
   {
     m_Parameters.muQ = muQ;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStrangenessChemicalPotential(double muS)
   {
     m_Parameters.muS = muS;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetCharmChemicalPotential(double muC)
   {
     m_Parameters.muC = muC;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaS(double gammaS)
   {
     m_Parameters.gammaS = gammaS;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaC(double gammaC)
   {
     m_Parameters.gammaC = gammaC;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetBaryonCharge(int B)
   {
     m_Parameters.B = B;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetElectricCharge(int Q)
   {
     m_Parameters.Q = Q;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStrangeness(int S)
   {
     m_Parameters.S = S;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetCharm(int C)
   {
     m_Parameters.C = C;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaq(double gammaq)
   {
     m_Parameters.gammaq = gammaq;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
 
@@ -865,14 +868,14 @@ namespace thermalfist {
     m_Chem.resize(m_TPS->Particles().size());
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiestotalweak.resize(m_TPS->Particles().size());
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
     m_skewprim.resize(m_TPS->Particles().size());
     m_skewtot.resize(m_TPS->Particles().size());
     m_kurtprim.resize(m_TPS->Particles().size());
     m_kurttot.resize(m_TPS->Particles().size());
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStatistics(bool stats) {
@@ -924,16 +927,30 @@ namespace thermalfist {
       m_TPS->ProcessDecays();
     }
 
+    // Primordial
+    m_densitiesbyfeeddown[static_cast<int>(Feeddown::Primordial)] = m_densities;
+
+    // According to stability flags
+    int feed_index = static_cast<int>(Feeddown::StabilityFlag);
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       m_densitiestotal[i] = m_densities[i];
-      for (int j = 0; j < m_TPS->Particles()[i].DecayContributions().size(); ++j)
-        if (i != m_TPS->Particles()[i].DecayContributions()[j].second) m_densitiestotal[i] += m_TPS->Particles()[i].DecayContributions()[j].first * m_densities[m_TPS->Particles()[i].DecayContributions()[j].second];
+      const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+      for (int j = 0; j < decayContributions.size(); ++j)
+        if (i != decayContributions[j].second) 
+          m_densitiestotal[i] += decayContributions[j].first * m_densities[decayContributions[j].second];
     }
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      m_densitiestotalweak[i] = m_densities[i];
-      for (int j = 0; j < m_TPS->Particles()[i].WeakDecayContributions().size(); ++j)
-        if (i != m_TPS->Particles()[i].WeakDecayContributions()[j].second) m_densitiestotalweak[i] += m_TPS->Particles()[i].WeakDecayContributions()[j].first * m_densities[m_TPS->Particles()[i].WeakDecayContributions()[j].second];
+    m_densitiesbyfeeddown[feed_index] = m_densitiestotal;
+
+    // Weak, EM, strong
+    for (feed_index = static_cast<int>(Feeddown::Weak); feed_index <= static_cast<int>(Feeddown::Strong); ++feed_index) {
+      for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+        m_densitiesbyfeeddown[feed_index][i] = m_densities[i];
+        const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+        for (int j = 0; j < decayContributions.size(); ++j)
+          if (i != decayContributions[j].second)
+            m_densitiesbyfeeddown[feed_index][i] += decayContributions[j].first * m_densities[decayContributions[j].second];
+      }
     }
 
   }
@@ -1186,12 +1203,8 @@ namespace thermalfist {
   }
 
 
-  double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
-    std::vector<double> *dens;
-    if (feeddown == 0) dens = &m_densities;
-    else if (feeddown == 1) dens = &m_densitiestotal;
-    else dens = &m_densitiestotalweak;
-
+  double ThermalModelBase::GetDensity(int PDGID, const std::vector<double> *dens)
+  {
     if (m_TPS->PdgToId(PDGID) != -1)
       return dens->operator[](m_TPS->PdgToId(PDGID));
 
@@ -1203,12 +1216,36 @@ namespace thermalfist {
       return dens->operator[](m_TPS->PdgToId(3334)) + dens->operator[](m_TPS->PdgToId(-3334));
 
     // 22120 - nucleons
-    if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112)  != -1)
+    if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
       return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
     printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
 
     return 0.;
+  }
+
+  double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
+    std::vector<double> *dens;
+    if (feeddown == 0) dens = &m_densities;
+    else if (feeddown == 1) dens = &m_densitiestotal;
+    else dens = &m_densitiesbyfeeddown[static_cast<int>(Feeddown::Weak)];
+
+    return GetDensity(PDGID, dens);
+  }
+
+  double ThermalModelBase::GetDensity(int PDGID, Feeddown::Type feeddown)
+  {
+    std::vector<double> *dens;
+    if (feeddown == Feeddown::Primordial) 
+      dens = &m_densities;
+    else if (feeddown == Feeddown::StabilityFlag) 
+      dens = &m_densitiestotal;
+    else if (static_cast<int>(feeddown) < m_densitiesbyfeeddown.size()) 
+      dens = &m_densitiesbyfeeddown[static_cast<int>(feeddown)];
+    else {
+      printf("**WARNING** %s: GetDensity: Unknown feeddown: %d\n", m_TAG.c_str(), static_cast<int>(feeddown));
+    }
+    return GetDensity(PDGID, dens);
   }
 
 
@@ -1218,6 +1255,13 @@ namespace thermalfist {
       ret[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], 0.);
     }
     return ret;
+  }
+
+  void ThermalModelBase::ResetCalculatedFlags()
+  {
+    m_Calculated = false;
+    m_FluctuationsCalculated = false;
+    m_GCECalculated = false;
   }
 
   double ThermalModelBase::ChargedMultiplicity(int type)
@@ -1242,7 +1286,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVariance(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVariance(int): Fluctuations were not calculated", m_TAG.c_str());
+      printf("**WARNING** %s: ChargedScaledVariance(int): Fluctuations were not calculated\n", m_TAG.c_str());
       return 1.;
     }
     double ret = 0.0;
@@ -1293,7 +1337,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVarianceFinal(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVarianceFinal(int): Fluctuations were not calculated", m_TAG.c_str());
+      printf("**WARNING** %s: ChargedScaledVarianceFinal(int): Fluctuations were not calculated\n", m_TAG.c_str());
       return 1.;
     }
     int op = type;
@@ -1310,7 +1354,7 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateTwoParticleCorrelations() {
-    printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented", m_TAG.c_str());
+    printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented\n", m_TAG.c_str());
   }
 
 
@@ -1458,7 +1502,7 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateFluctuations() {
-    printf("**WARNING** %s: Calculation of fluctuations is not implemented", m_TAG.c_str());
+    printf("**WARNING** %s: Calculation of fluctuations is not implemented\n", m_TAG.c_str());
   }
 
 } // namespace thermalfist

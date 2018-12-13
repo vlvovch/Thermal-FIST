@@ -165,7 +165,9 @@ namespace thermalfist {
 
     virtual double GetMaxDiff() const { return m_MaxDiff; }
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
+    double GetDensity(int PDGID, const std::vector<double> *dens);
     double GetDensity(int PDGID, int feeddown);
+    double GetDensity(int PDGID, Feeddown::Type feeddown);
 
     std::vector<double> GetIdealGasDensities() const;
 
@@ -177,6 +179,7 @@ namespace thermalfist {
     const std::string& TAG() const { return m_TAG; }
     void setTAG(const std::string & tag) { m_TAG = tag; }
 
+    void ResetCalculatedFlags();
     bool IsCalculated() const { return m_Calculated; }
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
     bool IsGCECalculated() const { return m_GCECalculated; }
@@ -224,7 +227,8 @@ namespace thermalfist {
 
     std::vector<double> m_densities;
     std::vector<double> m_densitiestotal;
-    std::vector<double> m_densitiestotalweak;
+    //std::vector<double> m_densitiestotalweak;
+    std::vector< std::vector<double> > m_densitiesbyfeeddown;
     std::vector<double> m_Chem;
 
     // Scaled variance
