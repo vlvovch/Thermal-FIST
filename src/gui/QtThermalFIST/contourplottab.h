@@ -24,7 +24,7 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 // This class is currently not in use
 

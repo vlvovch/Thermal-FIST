@@ -173,6 +173,26 @@ namespace thermalfist {
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i], dMu);
   }
 
+  double ThermalModelEVCrossterms::DensityId(int i, const std::vector<double>& pstars)
+  {
+    double ret = 0.;
+
+    double dMu = 0.;
+    for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * pstars[j];
+
+    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], dMu);
+  }
+
+  double ThermalModelEVCrossterms::Pressure(int i, const std::vector<double>& pstars)
+  {
+    double ret = 0.;
+
+    double dMu = 0.;
+    for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * pstars[j];
+
+    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i], dMu);
+  }
+
   double ThermalModelEVCrossterms::ScaledVarianceId(int i) {
     double ret = 0.;
 

@@ -131,26 +131,26 @@ namespace thermalfist {
   }
 
 
-  double ThermalModelEVDiagonal::DensityId(int i) {
+  double ThermalModelEVDiagonal::DensityId(int i, double Pressure) {
     double ret = 0.;
 
-    double dMu = -m_v[i] * m_Pressure;
+    double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], dMu);
   }
 
-  double ThermalModelEVDiagonal::PressureId(int i) {
+  double ThermalModelEVDiagonal::PressureId(int i, double Pressure) {
     double ret = 0.;
 
-    double dMu = -m_v[i] * m_Pressure;
+    double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i], dMu);
   }
 
-  double ThermalModelEVDiagonal::ScaledVarianceId(int i) {
+  double ThermalModelEVDiagonal::ScaledVarianceId(int i, double Pressure) {
     double ret = 0.;
 
-    double dMu = -m_v[i] * m_Pressure;
+    double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i], dMu);
   }
@@ -200,7 +200,7 @@ namespace thermalfist {
       if (abs(r1 / m_Pressure) < TOLF) return;
       double Jinv = 0.;
       for (int i = 0; i < m_densities.size(); ++i)
-        Jinv += m_v[i] * DensityId(i);
+        Jinv += m_v[i] * DensityId(i, m_Pressure);
       Jinv += 1.;
       Jinv *= m_Pressure;
       Jinv = 1. / Jinv;
@@ -214,7 +214,7 @@ namespace thermalfist {
 
         Jinv = 0.;
         for (int i = 0; i < m_densities.size(); ++i)
-          Jinv += m_v[i] * DensityId(i);
+          Jinv += m_v[i] * DensityId(i, m_Pressure);
         Jinv += 1.;
         Jinv *= m_Pressure;
         Jinv = 1. / Jinv;
@@ -272,8 +272,8 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {
     int NN = m_densities.size();
     vector<double> tN(NN), tW(NN);
-    for (int i = 0; i < NN; ++i) tN[i] = DensityId(i);
-    for (int i = 0; i < NN; ++i) tW[i] = ScaledVarianceId(i);
+    for (int i = 0; i < NN; ++i) tN[i] = DensityId(i, m_Pressure);
+    for (int i = 0; i < NN; ++i) tW[i] = ScaledVarianceId(i, m_Pressure);
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
@@ -297,52 +297,6 @@ namespace thermalfist {
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
     }
-
-    //for (int i = 0; i < NN; ++i)
-    //  //for(int j=0;j<NN;++j) 
-    //{
-    //  m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
-    //  for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-    //    int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-    //    m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
-    //    m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
-    //    for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
-    //      int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
-    //      m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
-    //    }
-    //  }
-    //}
-
-    //for (int i = 0; i < NN; ++i) {
-    //  m_wtot[i] = m_TotalCorrel[i][i];
-    //  if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
-    //  else m_wtot[i] = 1.;
-    //}
-
-    //m_Susc.resize(4);
-    //for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
-
-    //for (int i = 0; i < 4; ++i) {
-    //  for (int j = 0; j < 4; ++j) {
-    //    m_Susc[i][j] = 0.;
-    //    for (int k = 0; k < m_PrimCorrel.size(); ++k) {
-    //      int c1 = 0;
-    //      if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
-    //      if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
-    //      if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
-    //      if (i == 3) c1 = m_TPS->Particles()[k].Charm();
-    //      for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
-    //        int c2 = 0;
-    //        if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
-    //        if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
-    //        if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
-    //        if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
-    //        m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
-    //      }
-    //    }
-    //    m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
-    //  }
-    //}
 
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();

@@ -37,7 +37,7 @@ namespace thermalfist {
     virtual void ChangeTPS(ThermalParticleSystem *TPS_);
 
     void SolveDiagonal();
-    void SolvePressure(bool resetPartials = true);  // Using Broyden's method
+    virtual void SolvePressure(bool resetPartials = true);  // Using Broyden's method
     void SolvePressureIter();  // Using iteration method
     virtual void CalculateDensities();
     virtual void CalculateDensitiesNoReset();
@@ -47,6 +47,8 @@ namespace thermalfist {
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
     virtual double DensityId(int ind);
     virtual double Pressure(int ind);
+    virtual double DensityId(int ind, const std::vector<double>& pstars);
+    virtual double Pressure(int ind, const std::vector<double>& pstars);
     double ScaledVarianceId(int ind);
     double PressureDiagonal(int ind, double P);
     double PressureDiagonalTotal(double P);

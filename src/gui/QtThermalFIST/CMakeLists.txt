@@ -18,10 +18,18 @@ file (GLOB QTHRG_SOURCES
       "*.cxx" , 
 	  "*.cpp")
 
+file (GLOB QCUSTOMPLOT_SOURCE
+      "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot/*.cpp")
+
+file (GLOB QCUSTOMPLOT_HEADER
+      "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot/*.h")
+
+source_group("QCustomPlot" FILES ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS} ${Qt5PrintSupport_EXECUTABLE_COMPILE_FLAGS}")
 	  
 # Tell CMake to create the executable
-add_executable(QtThermalFIST ${QTHRG_SOURCES})
+add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE})
 
 if(WIN32)
   if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")

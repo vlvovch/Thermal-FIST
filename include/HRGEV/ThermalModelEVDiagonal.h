@@ -52,7 +52,7 @@ namespace thermalfist {
 
     virtual void ChangeTPS(ThermalParticleSystem *TPS_);
 
-    void SolvePressure();
+    virtual void SolvePressure();
 
     virtual void CalculateDensities();
 
@@ -62,11 +62,11 @@ namespace thermalfist {
 
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 
-    double DensityId(int ind);
+    double DensityId(int ind, double Pressure);
 
-    double PressureId(int ind);
+    double PressureId(int ind, double Pressure);
 
-    double ScaledVarianceId(int ind);
+    double ScaledVarianceId(int ind, double Pressure);
 
     double Pressure(double P);
 
@@ -108,7 +108,7 @@ namespace thermalfist {
     // TODO: test
     virtual double MuShift(int id);
 
-  private:
+  //private:
     std::vector<double> m_densitiesid;
     std::vector<double> m_densitiesidnoshift;
     std::vector<double> m_v;                       /**< Vector of eigenvolumes of all hadrons */

@@ -36,7 +36,7 @@
 #include "DebugText.h"
 #include "spectramodel.h"
 #include "particlespectra.h"
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 using namespace thermalfist;
 

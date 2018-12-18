@@ -201,7 +201,7 @@ namespace thermalfist {
       if (statistics == 0)           return BoltzmannDensity(T, mu, m, deg);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation\n");
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
         return 0.;
       }
 

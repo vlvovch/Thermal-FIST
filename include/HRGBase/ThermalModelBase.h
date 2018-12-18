@@ -78,6 +78,7 @@ namespace thermalfist {
 
     virtual void FillChemicalPotentials();
     virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
+    const std::vector<double>& ChemicalPotentials() const { return m_Chem; }
     double ChemicalPotential(int i) const;
 
     //virtual void SetMesonsPoint();

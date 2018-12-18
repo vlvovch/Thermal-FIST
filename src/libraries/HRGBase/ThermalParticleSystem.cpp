@@ -1175,7 +1175,7 @@ namespace thermalfist {
     }
     else {
       // if contains strangeness (or charm), not stable under weak decays
-      if (part.Strangeness() != 0 || part.Charm())
+      if (part.Strangeness() != 0 || part.Charm() != 0)
         return ParticleDecay::Weak;
 
       return ParticleDecay::Stable;
@@ -1220,7 +1220,7 @@ namespace thermalfist {
 
         for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
           if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0)
-            GoResonanceByFeeddown(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr, Feeddown::Type(static_cast<int>(m_Particles[i].DecayType())));
+            GoResonanceByFeeddown(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr, Feeddown::Type(static_cast<int>(m_Particles[ind].DecayType())));
         }
       }
     }
