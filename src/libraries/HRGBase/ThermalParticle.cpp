@@ -119,7 +119,7 @@ namespace thermalfist {
   {
     m_ResonanceWidthIntegrationType = type;
     FillCoefficients();
-    if (type == ThermalParticle::eBW)
+    if (type == ThermalParticle::eBW || type == ThermalParticle::eBWconstBR)
       FillCoefficientsDynamical();
   }
 
@@ -613,7 +613,7 @@ namespace thermalfist {
     double ret1 = 0., ret2 = 0., tmp = 0.;
 
     // Integration from m0 or M-2*Gamma to M+2*Gamma
-    if (m_ResonanceWidthIntegrationType != eBW) {
+    if (m_ResonanceWidthIntegrationType != eBW && m_ResonanceWidthIntegrationType != eBWconstBR) {
       for (int i = 0; i < ind; i++) {
 
         tmp = w[i] * MassDistribution(x[i]);
@@ -641,7 +641,7 @@ namespace thermalfist {
       }
     }
 
-    if (m_ResonanceWidthIntegrationType == eBW) {
+    if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
       for (int i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
         double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
@@ -673,7 +673,7 @@ namespace thermalfist {
     double ret1 = 0., ret2 = 0., tmp = 0.;
 
     // Integration from m0 or M-2*Gamma to M+2*Gamma
-    if (m_ResonanceWidthIntegrationType != eBW) {
+    if (m_ResonanceWidthIntegrationType != eBW && m_ResonanceWidthIntegrationType != eBWconstBR) {
       for (int i = 0; i < ind; i++) {
         tmp = w[i] * MassDistribution(x[i]);
 
@@ -700,7 +700,7 @@ namespace thermalfist {
       }
     }
 
-    if (m_ResonanceWidthIntegrationType == eBW) {
+    if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
       for (int i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
         double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_xalldyn[i], m_Degeneracy);
