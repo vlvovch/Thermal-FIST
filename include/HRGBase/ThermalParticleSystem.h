@@ -68,6 +68,9 @@ namespace thermalfist {
     void RestoreBranchingRatios();
 
     void SetCalculationType(IdealGasFunctions::QStatsCalculationType type);
+    IdealGasFunctions::QStatsCalculationType QStatsCalculationType() const { return m_QStatsCalculationType; }
+
+
     void SetClusterExpansionOrder(int order);
     void SetResonanceWidthShape(ThermalParticle::ResonanceWidthShape shape);
     void SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type);
@@ -118,6 +121,8 @@ namespace thermalfist {
     int m_NumberOfParticles;
 
     ThermalParticle::ResonanceWidthIntegration m_ResonanceWidthIntegrationType;
+
+    IdealGasFunctions::QStatsCalculationType m_QStatsCalculationType;
 
 
     // Map for DP-based calculations of decay distributions

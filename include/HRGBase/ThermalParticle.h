@@ -43,7 +43,7 @@ namespace thermalfist {
     int      S;        /**< Total strangeness charge (CE) */
     int      C;        /**< Total charm charge (CE) */
 
-    ThermalModelParameters(double pT = 0.1, double pmuB = 0.5, double pmuS = 0., double pmuQ = 0., double pgammaS = 1., double pV = 4000., double pSVc = 1., int pB = 2, int pQ = 2, int pS = 0, int pC = 0) :
+    ThermalModelParameters(double pT = 0.155, double pmuB = 0.000, double pmuS = 0., double pmuQ = 0., double pgammaS = 1., double pV = 4000., double pSVc = 1., int pB = 2, int pQ = 2, int pS = 0, int pC = 0) :
       T(pT), muB(pmuB), muS(pmuS), muQ(pmuQ), muC(0.), gammaq(1.), gammaS(pgammaS), gammaC(1.), V(pV), SVc(pSVc), B(pB), Q(pQ), S(pS), C(pC) {
     }
 

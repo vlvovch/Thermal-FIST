@@ -35,6 +35,7 @@ namespace thermalfist {
     //m_IDtoPDG.resize(0);
 
     SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
+    SetCalculationType(IdealGasFunctions::Quadratures);
 
     LoadTable(InputFile, GenAntiP, mcut);
   }
@@ -504,6 +505,8 @@ namespace thermalfist {
 
     LoadDecays((decayprefix + "decays.dat").c_str(), GenAntiP);
 
+    SetResonanceWidthIntegrationType(m_ResonanceWidthIntegrationType);
+    SetCalculationType(m_QStatsCalculationType);
   }
 
   void ThermalParticleSystem::LoadTable_OldFormat(std::ifstream & fin, bool GenerateAntiParticles, double mcut)
@@ -958,6 +961,7 @@ namespace thermalfist {
 
   void ThermalParticleSystem::SetCalculationType(IdealGasFunctions::QStatsCalculationType type)
   {
+    m_QStatsCalculationType = type;
     for (int i = 0; i < m_Particles.size(); ++i)
       m_Particles[i].SetCalculationType(type);
   }
