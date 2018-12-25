@@ -1,4 +1,4 @@
-## Thermal-FIST 0.6
+## Quick start guide
 
 ### External dependencies
 
