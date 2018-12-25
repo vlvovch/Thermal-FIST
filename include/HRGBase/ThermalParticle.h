@@ -152,7 +152,7 @@ namespace thermalfist {
     void SetAntiParticle(bool antpar = true) { m_AntiParticle = antpar; }
 
     const std::string& Name() const { return m_Name; }
-    void SetName(std::string &name) { m_Name = name; }
+    void SetName(const std::string &name) { m_Name = name; }
 
     int  PdgId() const { return m_PDGID; }
     void SetPdgId(int PdgId) { m_PDGID = PdgId; }
