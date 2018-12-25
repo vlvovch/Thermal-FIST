@@ -130,13 +130,13 @@ void QuantityDialog::returnOK() {
   if (!checkType->isChecked()) {
 		quant->type  = FittedQuantity::Multiplicity;
     quant->mult  = ExperimentMultiplicity(spinPDG1->value(), spinValue->value(), spinError->value());
-		quant->mult.fFeedDown = comboFeeddown1->currentIndex();
+		quant->mult.fFeedDown = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
   }
 	else {
 		quant->type  = FittedQuantity::Ratio;
 		quant->ratio = ExperimentRatio(spinPDG1->value(), spinPDG2->value(), spinValue->value(), spinError->value());
-		quant->ratio.fFeedDown1 = comboFeeddown1->currentIndex();
-		quant->ratio.fFeedDown2 = comboFeeddown2->currentIndex();
+		quant->ratio.fFeedDown1 = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
+		quant->ratio.fFeedDown2 = static_cast<Feeddown::Type>(comboFeeddown2->currentIndex());
 	}
   this->accept();
 }
