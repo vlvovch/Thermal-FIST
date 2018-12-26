@@ -346,7 +346,8 @@ namespace thermalfist {
       BroydenEquationsChem eqs(this);
       BroydenJacobianChem jaco(this);
       BroydenChem broydn(this, &eqs, &jaco);
-      broydn.Solve(x22, &Broyden::BroydenSolutionCriterium(1.0E-8));
+      Broyden::BroydenSolutionCriterium crit(1.0E-8);
+      broydn.Solve(x22, &crit);
       break;
       iter++; // Obsolete
     }
@@ -403,7 +404,8 @@ namespace thermalfist {
     BroydenEquationsChemTotals eqs(vConstr, vType, vTotals, this);
     BroydenJacobianChemTotals jaco(vConstr, vType, vTotals, this);
     Broyden broydn(&eqs, &jaco);
-    broydn.Solve(xinactual, &Broyden::BroydenSolutionCriterium(1.0E-8));
+    Broyden::BroydenSolutionCriterium crit(1.0E-8);
+    broydn.Solve(xinactual, &crit);
   }
 
   void ThermalModelBase::ValidateCalculation()

@@ -224,12 +224,13 @@ namespace thermalfist {
     BroydenJacobian jac(&eqs);
     jac.SetDx(1.0E-8);
     Broyden broydn(&eqs, &jac);
+    Broyden::BroydenSolutionCriterium crit(1.0E-8);
 
     m_Pressure = 0.;
     double x0 = m_Pressure;
     std::vector<double> x(1, x0);
 
-    x = broydn.Solve(x, &Broyden::BroydenSolutionCriterium(1.0E-8));
+    x = broydn.Solve(x, &crit);
 
     m_Pressure = x[0];
     for (int i = 0; i < m_Ps.size(); ++i)
@@ -247,8 +248,9 @@ namespace thermalfist {
     BroydenEquationsCRS eqs(this);
     BroydenJacobianCRS  jac(this);
     Broyden broydn(&eqs, &jac);
+    BroydenSolutionCriteriumCRS crit(this);
 
-    m_Ps = broydn.Solve(m_Ps, &BroydenSolutionCriteriumCRS(this));
+    m_Ps = broydn.Solve(m_Ps, &crit);
     m_Pressure = 0.;
     for (int i = 0; i < m_Ps.size(); ++i) m_Pressure += m_Ps[i];
 

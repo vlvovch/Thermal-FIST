@@ -171,6 +171,7 @@ namespace thermalfist {
     BroydenEquationsDEV eqs(this);
     BroydenJacobianDEV jac(this);
     Broyden broydn(&eqs, &jac);
+    BroydenSolutionCriteriumDEV crit(this, 1.0E-8);
 
     m_Pressure = Pressure(0.);
     double mnc = pow(m_Parameters.T, 4.) * pow(xMath::GeVtoifm(), 3.);
@@ -179,7 +180,7 @@ namespace thermalfist {
     double x0 = log(m_Pressure / mnc);
     std::vector<double> x(1, x0);
 
-    x = broydn.Solve(x, &BroydenSolutionCriteriumDEV(this, 1.0E-8));
+    x = broydn.Solve(x, &crit);
 
     double current_precision = Broyden::TOL;
 

@@ -253,8 +253,9 @@ namespace thermalfist {
     BroydenEquationsVDW eqs(this);
     BroydenJacobianVDW  jac(this);
     Broyden broydn(&eqs, &jac);
+    BroydenSolutionCriteriumVDW crit(this);
 
-    dmuscur = broydn.Solve(dmuscur, &BroydenSolutionCriteriumVDW(this));
+    dmuscur = broydn.Solve(dmuscur, &crit);
 
     if (broydn.Iterations() == broydn.MaxIterations())
       m_LastBroydenSuccessFlag = false;
