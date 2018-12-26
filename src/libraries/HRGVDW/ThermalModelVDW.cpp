@@ -392,7 +392,7 @@ namespace thermalfist {
         }
       }
 
-      printf("Optimization: %d --> %d\n", NN, m_MapFromdMuStar.size());
+      printf("Optimization: %d --> %d\n", NN, static_cast<int>(m_MapFromdMuStar.size()));
     }
 
     clock_t tbeg = clock();

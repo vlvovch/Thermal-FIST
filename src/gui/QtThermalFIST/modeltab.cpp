@@ -857,14 +857,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		model->ReadInteractionParameters(config.InteractionInput);
 	}
 
-	printf("Parameters time = %d ms\n", timervdw.elapsed());
+	printf("Parameters time = %ld ms\n", timervdw.elapsed());
 
 	// If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
 	if (config.ModelType == ThermalModelConfig::CE) {
 		static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(config.ComputeFluctations);
 	}
 
-	printf("Initialization time = %d ms\n", timerc.elapsed());
+	printf("Initialization time = %ld ms\n", timerc.elapsed());
 
 	timerc.restart();
 
@@ -873,7 +873,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	model->CalculateDensities();
 
-	printf("Densities time = %d ms\n", timerc.elapsed());
+	printf("Densities time = %ld ms\n", timerc.elapsed());
 
 	timerc.restart();
 
@@ -883,7 +883,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		computeHigherOrderFluctuations();
 	}
 
-	printf("Fluctuations time = %d ms\n", timerc.elapsed());
+	printf("Fluctuations time = %ld ms\n", timerc.elapsed());
 
 	timerc.restart();
 
@@ -931,7 +931,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	teDebug->append(dbgstr);
 	dbgstr.clear();
 
-	printf("Finalizing time = %d ms\n", timerc.elapsed());
+	printf("Finalizing time = %ld ms\n", timerc.elapsed());
 
 	if (model->IsLastSolutionOK()) {
 		labelValid->setText(tr("Calculation valid!"));

@@ -51,7 +51,7 @@ namespace thermalfist {
 
   void ThermalModelEVCrossterms::FillVirial(const std::vector<double> & ri) {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size %d of ri does not match number of hadrons %d in the list", m_TAG.c_str(), ri.size(), m_TPS->Particles().size());
+      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size %d of ri does not match number of hadrons %d in the list", m_TAG.c_str(), static_cast<int>(ri.size()), static_cast<int>(m_TPS->Particles().size()));
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
