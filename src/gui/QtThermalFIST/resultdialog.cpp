@@ -25,7 +25,7 @@ ResultDialog::ResultDialog(QWidget *parent, ThermalModelBase *mod, ChargesFluctu
 	QVBoxLayout *layout = new QVBoxLayout();
 
 	QFont font = QApplication::font();
-	font.setPointSize(12);
+	font.setPointSize(font.pointSize() + 2);
 	QLabel *labParam = new QLabel(tr("Parameters:"));
 	labParam->setFont(font);
 

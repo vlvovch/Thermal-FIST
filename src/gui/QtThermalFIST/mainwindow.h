@@ -65,10 +65,12 @@ private:
   void createMenus();
 private slots:
   void loadDatabase();
-	void loadDecays();
+  void loadDecays();
   void tabChanged(int newIndex);
   void about();
   void quickstartguide();
+  void increaseFontSize();
+  void decreaseFontSize();
 };
 
 #endif // MAINWINDOW_H

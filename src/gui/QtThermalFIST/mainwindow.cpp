@@ -116,20 +116,28 @@ MainWindow::~MainWindow()
 void MainWindow::createMenus()
 {
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
-  QAction *exitLoad = new QAction(tr("Load particle list..."), this);
-  exitLoad->setShortcuts(QKeySequence::Quit);
-  connect(exitLoad, &QAction::triggered, this, &MainWindow::loadDatabase);
-  fileMenu->addAction(exitLoad);
-  QAction *exitLoadDecays = new QAction(tr("Load decays..."), this);
-  exitLoadDecays->setShortcuts(QKeySequence::Quit);
-  connect(exitLoadDecays, &QAction::triggered, this, &MainWindow::loadDecays);
-  fileMenu->addAction(exitLoadDecays);
+  QAction *loadAct = new QAction(tr("Load particle list..."), this);
+  connect(loadAct, &QAction::triggered, this, &MainWindow::loadDatabase);
+  fileMenu->addAction(loadAct);
+  QAction *loadDecaysAct = new QAction(tr("Load decays..."), this);
+  connect(loadDecaysAct, &QAction::triggered, this, &MainWindow::loadDecays);
+  fileMenu->addAction(loadDecaysAct);
   fileMenu->addSeparator();
   QAction *exitAct = new QAction(tr("E&xit"), this);
   exitAct->setShortcuts(QKeySequence::Quit);
   exitAct->setStatusTip(tr("Exit the application"));
   connect(exitAct, &QAction::triggered, this, &QWidget::close);
   fileMenu->addAction(exitAct);
+
+  QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
+  QAction *incFontAct = new QAction(tr("Increase font size"), this);
+  incFontAct->setShortcuts(QKeySequence::ZoomIn);
+  connect(incFontAct, &QAction::triggered, this, &MainWindow::increaseFontSize);
+  viewMenu->addAction(incFontAct);
+  QAction *decFontAct = new QAction(tr("Decrease font size"), this);
+  decFontAct->setShortcuts(QKeySequence::ZoomOut);
+  connect(decFontAct, &QAction::triggered, this, &MainWindow::decreaseFontSize);
+  viewMenu->addAction(decFontAct);
 
   QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
   QAction *aboutAct = new QAction(tr("&About Thermal-FIST"), this);
@@ -182,6 +190,30 @@ void MainWindow::about()
 void MainWindow::quickstartguide()
 {
   QDesktopServices::openUrl(QUrl("https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"));
+}
+
+void MainWindow::increaseFontSize()
+{
+  QFont font = QApplication::font();
+  int sz = font.pointSize();
+  font.setPointSize(sz + 1);
+  QApplication::setFont(font);
+
+  tab1->updateFontSizes();
+  tab2->updateFontSizes();
+}
+
+void MainWindow::decreaseFontSize()
+{
+  QFont font = QApplication::font();
+  int sz = font.pointSize();
+  if (sz < 2)
+    sz = 2;
+  font.setPointSize(sz - 1);
+  QApplication::setFont(font);
+
+  tab1->updateFontSizes();
+  tab2->updateFontSizes();
 }
 
 void MainWindow::loadDatabase()

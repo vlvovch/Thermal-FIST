@@ -147,6 +147,7 @@ public slots:
     void resetTPS();
     void updateProgress();
     void finalize();
+    void updateFontSizes();
 };
 
 #endif // FITTOEXPERIMENTTAB_H

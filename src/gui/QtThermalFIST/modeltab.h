@@ -110,6 +110,7 @@ private slots:
 public:
     void updateModel();
     void resetTPS();
+    void updateFontSizes();
 };
 
 #endif // MODELTAB_H

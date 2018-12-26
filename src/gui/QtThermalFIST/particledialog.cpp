@@ -26,7 +26,7 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
     QVBoxLayout *layout = new QVBoxLayout();
 
     QFont font = QApplication::font();
-    font.setPointSize(12);
+    font.setPointSize(font.pointSize() + 2);
     QLabel *labInfo = new QLabel(tr("Information:"));
     labInfo->setFont(font);
     data = new QTextEdit();

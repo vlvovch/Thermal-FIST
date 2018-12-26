@@ -75,7 +75,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QLabel *labelQuantities = new QLabel(tr("Data to fit:"));
     labelHint = new QLabel(tr("Hint: double-click on yield to edit"));
     QFont tmpf = QApplication::font();
-    tmpf.setPointSize(9);
+    tmpf.setPointSize(tmpf.pointSize() - 1);
     labelHint->setFont(tmpf);
 		myModel = new QuantitiesModel(this, &quantities, fitcopy);
     tableQuantities = new QTableView();
@@ -1286,5 +1286,11 @@ void FitToExperimentTab::showValidityCheckLog() {
 		msgBox.setDetailedText(model->ValidityCheckLog().c_str());
 		msgBox.exec();
 	}
+}
+
+void FitToExperimentTab::updateFontSizes() {
+  QFont tmpf = QApplication::font();
+  tmpf.setPointSize(tmpf.pointSize() - 1);
+  labelHint->setFont(tmpf);
 }
 

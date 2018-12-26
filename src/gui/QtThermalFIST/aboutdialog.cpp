@@ -29,8 +29,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
 
   QFont fontTitle = QApplication::font();
-  fontTitle.setPointSize(14);
+  fontTitle.setPointSize(QApplication::font().pointSize() + 4);
   fontTitle.setBold(true);
+
+  QFont fontDefault = QApplication::font();
+  //fontDefault.setPointSize(10);
 
   QString title = "Thermal-FIST";
   QString titleVersion = "Version " + QString::number(ThermalFIST_VERSION_MAJOR) + "." + QString::number(ThermalFIST_VERSION_MINOR);
@@ -41,10 +44,16 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
   layout->addWidget(labellogo, 0, Qt::AlignCenter);
   layout->addWidget(labTitle, 0, Qt::AlignCenter);
-  layout->addWidget(new QLabel(titleVersion), 0, Qt::AlignCenter);
+  QLabel *labelVersion = new QLabel(titleVersion);
+  labelVersion->setFont(fontDefault);
+  layout->addWidget(labelVersion, 0, Qt::AlignCenter);
   layout->addSpacing(20);
-  layout->addWidget(new QLabel(tr("Copyright (c) 2014-2018 Volodymyr Vovchenko")), 0, Qt::AlignCenter);
-  layout->addWidget(new QLabel(tr("GNU General Public License (GPLv3 or later)")), 0, Qt::AlignCenter);
+  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2018 Volodymyr Vovchenko"));
+  labelCC->setFont(fontDefault);
+  layout->addWidget(labelCC, 0, Qt::AlignCenter);
+  QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));
+  labelLic->setFont(fontDefault);
+  layout->addWidget(labelLic, 0, Qt::AlignCenter);
   
 
   QLabel *labelLatest = new QLabel(tr("The latest version of the program is available at <a href=\"https://github.com/vlvovch/Thermal-FIST\">https://github.com/vlvovch/Thermal-FIST</a>"));
@@ -52,7 +61,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelLatest->setTextInteractionFlags(Qt::TextBrowserInteraction);
   labelLatest->setOpenExternalLinks(true);
   QFont fontSmaller = QApplication::font();
-  fontSmaller.setPointSize(9);
+  fontSmaller.setPointSize(QApplication::font().pointSize() - 1);
   labelLatest->setFont(fontSmaller);
 
   layout->addSpacing(20);
@@ -83,6 +92,33 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelEmail->setFont(fontSmaller);
 
   layout->addWidget(labelEmail);
+
+  QLabel *labelSupportedBy= new QLabel(tr("Supported by"));
+  labelSupportedBy->setFont(fontSmaller);
+
+  QHBoxLayout *laySupported = new QHBoxLayout;
+  laySupported->setAlignment(Qt::AlignCenter);
+  QPixmap logoFIAS(":/images/fias.png");
+  QLabel *labellogoFIAS = new QLabel;
+  labellogoFIAS->setPixmap(logoFIAS.scaledToHeight(60, Qt::SmoothTransformation));
+
+  QPixmap logoGoethe(":/images/Goethe-Uni.png");
+  QLabel *labellogoGoethe = new QLabel;
+  labellogoGoethe->setPixmap(logoGoethe.scaledToHeight(70, Qt::SmoothTransformation));
+
+  QPixmap logoKNU(":/images/knu.png");
+  QLabel *labellogoKnu = new QLabel;
+  labellogoKnu->setPixmap(logoKNU.scaledToHeight(80, Qt::SmoothTransformation));
+
+  laySupported->addWidget(labellogoGoethe);
+  laySupported->addSpacing(70);
+  laySupported->addWidget(labellogoFIAS);
+  laySupported->addSpacing(70);
+  laySupported->addWidget(labellogoKnu);
+
+  layout->addSpacing(20);
+  //layout->addWidget(labelSupportedBy, 0, Qt::AlignLeft);
+  layout->addLayout(laySupported, 1);
 
   setLayout(layout);
 

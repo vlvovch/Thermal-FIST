@@ -73,7 +73,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     labelHint = new QLabel(tr("Hint: double-click on particle for more info"));
     QFont tmpf = QApplication::font();
-    tmpf.setPointSize(9);
+    tmpf.setPointSize(tmpf.pointSize() - 1);
     labelHint->setFont(tmpf);
 
 		labelValid = new QPushButton(tr("Calculation valid!"));
@@ -430,7 +430,6 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     teDebug = new QTextEdit;
     teDebug->setReadOnly(true);
-    teDebug->setFontPointSize(10);
 
 		editorLay->addLayout(layModelEnsemble);
     editorLay->addWidget(grStats);
@@ -715,8 +714,7 @@ void ModelTab::updateControlsWithConfig(const ThermalModelConfig & config)
 
 void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
-	
-	QElapsedTimer timerc;
+  QElapsedTimer timerc;
 	timerc.start();
 	
 	ThermalModelBase *modelnew;
@@ -857,14 +855,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		model->ReadInteractionParameters(config.InteractionInput);
 	}
 
-	printf("Parameters time = %ld ms\n", timervdw.elapsed());
+	printf("Parameters time = %ld ms\n", static_cast<long int>(timervdw.elapsed()));
 
 	// If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
 	if (config.ModelType == ThermalModelConfig::CE) {
 		static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(config.ComputeFluctations);
 	}
 
-	printf("Initialization time = %ld ms\n", timerc.elapsed());
+	printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -873,7 +871,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	model->CalculateDensities();
 
-	printf("Densities time = %ld ms\n", timerc.elapsed());
+	printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -883,7 +881,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		computeHigherOrderFluctuations();
 	}
 
-	printf("Fluctuations time = %ld ms\n", timerc.elapsed());
+	printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -931,7 +929,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	teDebug->append(dbgstr);
 	dbgstr.clear();
 
-	printf("Finalizing time = %ld ms\n", timerc.elapsed());
+	printf("Finalizing time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	if (model->IsLastSolutionOK()) {
 		labelValid->setText(tr("Calculation valid!"));
@@ -1226,4 +1224,10 @@ void ModelTab::modelChanged()
 			CBBoseOnly->setEnabled(true);
 			CBPionsOnly->setEnabled(true);
 		}
+}
+
+void ModelTab::updateFontSizes() {
+  QFont tmpf = QApplication::font();
+  tmpf.setPointSize(tmpf.pointSize() - 1);
+  labelHint->setFont(tmpf);
 }
