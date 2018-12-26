@@ -5,19 +5,19 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#ifndef THERMALMODELVDWFULL_H
-#define THERMALMODELVDWFULL_H
+#ifndef THERMALMODELVDW_H
+#define THERMALMODELVDW_H
 
 #include "HRGBase/ThermalModelBase.h"
 
 namespace thermalfist {
 
-  class ThermalModelVDWFull : public ThermalModelBase
+  class ThermalModelVDW : public ThermalModelBase
   {
   public:
-    ThermalModelVDWFull(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters(), int mode = 0);
+    ThermalModelVDW(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters(), int mode = 0);
 
-    virtual ~ThermalModelVDWFull(void);
+    virtual ~ThermalModelVDW(void);
 
     void FillChemicalPotentials();
     virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
@@ -52,11 +52,10 @@ namespace thermalfist {
 
     virtual void ChangeTPS(ThermalParticleSystem *TPS_);
 
-    std::vector<double> SearchSolutionsSingle(const std::vector<double> & muStarInit);
-    std::vector<double> SearchSolutionsSingleBroyden(const std::vector<double> & muStarInit);
-    std::vector<double> SearchSolutionsSingleBroydenOptimized(const std::vector<double> & muStarInit);
-    std::vector<double> SearchSolutionsSingleBroydenOptimized2(const std::vector<double> & muStarInit);
+    std::vector<double> ComputeNp(const std::vector<double>& dmustar);
+    std::vector<double> ComputeNp(const std::vector<double>& dmustar, const std::vector<double>& ns);
 
+    virtual std::vector<double> SearchSolutionsSingle(const std::vector<double> & muStarInit);
     std::vector<double> SearchSolutionsMulti(int iters = 300);
     void SearchSolutions();
 
@@ -117,7 +116,7 @@ namespace thermalfist {
     virtual void CalculateDensitiesOld();
     virtual void CalculateDensitiesNew();
 
-  private:
+  protected:
     bool   m_SearchMultipleSolutions;
     bool   m_LastBroydenSuccessFlag;
     double m_MaxDiff;
@@ -127,7 +126,37 @@ namespace thermalfist {
     std::vector<int> m_MapTodMuStar;
     std::vector<int> m_MapFromdMuStar;
     std::vector< std::vector<int> > m_dMuStarIndices;
+
+  private:
+      class BroydenEquationsVDW : public BroydenEquations
+      {
+      public:
+        BroydenEquationsVDW(ThermalModelVDW *model) : BroydenEquations(), m_THM(model) { m_N = model->m_MapFromdMuStar.size(); }
+        std::vector<double> Equations(const std::vector<double> &x);
+      private:
+        ThermalModelVDW *m_THM;
+      };
+
+      class BroydenJacobianVDW : public BroydenJacobian
+      {
+      public:
+        BroydenJacobianVDW(ThermalModelVDW *model) : BroydenJacobian(), m_THM(model) { }
+        Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      private:
+        ThermalModelVDW *m_THM;
+      };
+
+      class BroydenSolutionCriteriumVDW : public Broyden::BroydenSolutionCriterium
+      {
+      public:
+        BroydenSolutionCriteriumVDW(ThermalModelVDW *model, double relative_error = Broyden::TOL) : Broyden::BroydenSolutionCriterium(relative_error), m_THM(model) { }
+        virtual bool IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta = std::vector<double>()) const;
+      protected:
+        ThermalModelVDW *m_THM;
+      };
   };
+
+  typedef ThermalModelVDW ThermalModelVDWFull;
 
 } // namespace thermalfist
 

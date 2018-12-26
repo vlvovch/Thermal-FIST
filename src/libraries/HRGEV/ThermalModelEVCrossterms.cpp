@@ -220,65 +220,18 @@ namespace thermalfist {
   }
 
   void ThermalModelEVCrossterms::SolveDiagonal() {
+    BroydenEquationsCRSDEV eqs(this);
+    BroydenJacobian jac(&eqs);
+    jac.SetDx(1.0E-8);
+    Broyden broydn(&eqs, &jac);
+
     m_Pressure = 0.;
-    if (1) {
-      const double TOLF = 1.0e-8, EPS = 1.0e-8;
-      const int MAXITS = 200;
-      double x = m_Pressure;
-      double h = x;
-      h = EPS * abs(h);
-      if (h == 0.0) h = EPS;
-      double xh = x + h;
-      double r1 = x - PressureDiagonalTotal(x);
-      double r2 = xh - PressureDiagonalTotal(xh);
-      double Jinv = h / (r2 - r1);
-      double xold = x, rold = r1;
-      for (int iter = 1; iter <= MAXITS; ++iter) {
-        x = xold - Jinv * rold;
-        r1 = x - PressureDiagonalTotal(x);
-        Jinv = (x - xold) / (r1 - rold);
-        if (abs(r1) < TOLF) break;
-        xold = x;
-        rold = r1;
-      }
-      m_Pressure = x;
-    }
-    else {
-      double vo = 4. * 4. * xMath::Pi() / 3. * m_RHad * m_RHad * m_RHad;
-      const double TOLF = 1.0e-8, EPS = 1.0e-8;
-      const int MAXITS = 200;
-      double x = 0.;
-      double mnc = pow(m_Parameters.T, 4.) * pow(xMath::GeVtoifm(), 3.);
-      m_Pressure = PressureDiagonalTotal(0.);
-      x = log(m_Pressure / mnc);
+    double x0 = m_Pressure;
+    std::vector<double> x(1, x0);
 
-      double r1 = m_Pressure - PressureDiagonalTotal(m_Pressure);
-      if (abs(r1 / m_Pressure) < TOLF) return;
-      double Jinv = 0.;
-      for (int i = 0; i < m_densities.size(); ++i)
-        Jinv += m_Virial[i][i] * DensityId(i);
-      Jinv += 1.;
-      Jinv *= m_Pressure;
-      Jinv = 1. / Jinv;
-      double xold = x, rold = r1;
-      for (int iter = 1; iter <= MAXITS; ++iter) {
-        x = xold - Jinv * rold;
-        m_Pressure = mnc * exp(x);
-        r1 = m_Pressure - PressureDiagonalTotal(m_Pressure);
-        if (abs(r1 / m_Pressure) < TOLF) break;
+    x = broydn.Solve(x, &Broyden::BroydenSolutionCriterium(1.0E-8));
 
-        Jinv = 0.;
-        for (int i = 0; i < m_densities.size(); ++i)
-          Jinv += m_Virial[i][i] * DensityId(i);
-        Jinv += 1.;
-        Jinv *= m_Pressure;
-        Jinv = 1. / Jinv;
-
-        xold = x;
-        rold = r1;
-      }
-      m_Pressure = mnc * exp(x);
-    }
+    m_Pressure = x[0];
     for (int i = 0; i < m_Ps.size(); ++i)
       m_Ps[i] = PressureDiagonal(i, m_Pressure);
   }
@@ -290,69 +243,20 @@ namespace thermalfist {
       for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = 0.;
       SolveDiagonal();
     }
-    vector<double> Pstmp = m_Ps;
-    int iter = 0;
-    double maxdiff = 0.;
-    const double TOLF = 1.0e-10, EPS = 1.0e-8;
-    const int MAXITS = 200;
-    int NNN = m_densities.size();
-    VectorXd Pold(NNN), Pnew(NNN), Pdelta(NNN);
-    VectorXd fold(NNN), fnew(NNN), fdelta(NNN);
-    for (int i = 0; i < m_Ps.size(); ++i) {
-      Pold[i] = m_Ps[i];
-      Pnew[i] = m_Ps[i] + EPS * m_Ps[i];
-      if (Pnew[i] == 0.0) Pnew[i] = EPS;
-    }
-    for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = Pold[i];
-    vector<double> tP(NNN), tN(NNN);
-    for (int i = 0; i < NNN; ++i) {
-      tP[i] = Pressure(i);
-      tN[i] = DensityId(i);
-    }
-    MatrixXd Jac(NNN, NNN), Jinv(NNN, NNN);
-    for (int i = 0; i < NNN; ++i) {
-      for (int j = 0; j < NNN; ++j) {
-        Jac(i, j) = 0.;
-        if (i == j) Jac(i, j) += 1.;
-        Jac(i, j) += m_Virial[i][j] * tN[i];
-      }
-    }
-    {
-      for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = Pold[i];
-      for (int i = 0; i < m_Ps.size(); ++i) fold[i] = m_Ps[i] - Pressure(i);
-    }
-    Pnew = Pold;
-    fnew = fold;
-    Jinv = Jac.inverse();
-    for (iter = 1; iter < MAXITS; ++iter) {
-      Pnew = Pold - Jinv * fold;
-      for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = Pnew[i];
-      for (int i = 0; i < m_Ps.size(); ++i) fnew[i] = m_Ps[i] - Pressure(i);
-      Pdelta = Pnew - Pold;
-      fdelta = fnew - fold;
-      double norm = 0.;
-      for (int i = 0; i < NNN; ++i)
-        for (int j = 0; j < NNN; ++j)
-          norm += Pdelta[i] * Jinv(i, j) * fdelta[j];
-      VectorXd p1(NNN);
-      p1 = (Pdelta - Jinv * fdelta);
-      for (int i = 0; i < NNN; ++i) p1[i] *= 1. / norm;
-      Jinv = Jinv + (p1 * Pdelta.transpose()) * Jinv;
-      maxdiff = 0.;
-      for (int i = 0; i < m_Ps.size(); ++i) {
-        if (m_TPS->Particles()[i].Degeneracy() > 0.0) maxdiff = max(maxdiff, fabs(fnew[i] / Pnew[i]));
-      }
-      if (maxdiff < TOLF) break;
-      Pold = Pnew;
-      fold = fnew;
-    }
 
+    BroydenEquationsCRS eqs(this);
+    BroydenJacobianCRS  jac(this);
+    Broyden broydn(&eqs, &jac);
+
+    m_Ps = broydn.Solve(m_Ps, &BroydenSolutionCriteriumCRS(this));
     m_Pressure = 0.;
     for (int i = 0; i < m_Ps.size(); ++i) m_Pressure += m_Ps[i];
 
-    if (iter == MAXITS) m_LastCalculationSuccessFlag = false;
+    if (broydn.Iterations() == broydn.MaxIterations())
+      m_LastCalculationSuccessFlag = false;
     else m_LastCalculationSuccessFlag = true;
-    m_MaxDiff = maxdiff;
+
+    m_MaxDiff = broydn.MaxDifference();
   }
 
   void ThermalModelEVCrossterms::CalculateDensities() {
@@ -936,4 +840,48 @@ namespace thermalfist {
       return 0.0;
   }
 
+  std::vector<double> ThermalModelEVCrossterms::BroydenEquationsCRS::Equations(const std::vector<double>& x)
+  {
+    std::vector<double> ret(m_N);
+    for (int i = 0; i < x.size(); ++i)
+      ret[i] = x[i] - m_THM->Pressure(i, x);
+    return ret;
+  }
+
+  Eigen::MatrixXd ThermalModelEVCrossterms::BroydenJacobianCRS::Jacobian(const std::vector<double>& x)
+  {
+    int N = x.size();
+
+    vector<double> tN(N);
+    for (int i = 0; i < N; ++i) {
+      tN[i] = m_THM->DensityId(i, x);
+    }
+
+    MatrixXd Jac(N, N), Jinv(N, N);
+    for (int i = 0; i < N; ++i) {
+      for (int j = 0; j < N; ++j) {
+        Jac(i, j) = 0.;
+        if (i == j) Jac(i, j) += 1.;
+        Jac(i, j) += m_THM->VirialCoefficient(i, j) * tN[i];
+      }
+    }
+
+    return Jac;
+  }
+
+  bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  {
+    double maxdiff = 0.;
+    for (int i = 0; i < x.size(); ++i) {
+      maxdiff = std::max(maxdiff, fabs(f[i]) / x[i]);
+    }
+    return (maxdiff < m_RelativeError);
+  }
+
+  std::vector<double> ThermalModelEVCrossterms::BroydenEquationsCRSDEV::Equations(const std::vector<double>& x)
+  {
+    std::vector<double> ret(1);
+    ret[0] = x[0] - m_THM->PressureDiagonalTotal(x[0]);
+    return ret;
+  }
 } // namespace thermalfist

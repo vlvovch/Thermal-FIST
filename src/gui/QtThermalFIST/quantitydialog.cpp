@@ -50,13 +50,17 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
 		QLabel *labFeeddown1 = new QLabel(tr("Feeddown 1"));
 		comboFeeddown1 = new QComboBox();
 		comboFeeddown1->addItem(tr("Primordial"));
-		comboFeeddown1->addItem(tr("Strong decays"));
-		comboFeeddown1->addItem(tr("Strong+weak decays"));
+    comboFeeddown1->addItem(tr("Stability flags"));
+		comboFeeddown1->addItem(tr("Strong+EM+weak decays"));
+    comboFeeddown1->addItem(tr("Strong+EM decays"));
+    comboFeeddown1->addItem(tr("Strong decays"));
 		QLabel *labFeeddown2 = new QLabel(tr("Feeddown 2"));
 		comboFeeddown2 = new QComboBox();
 		comboFeeddown2->addItem(tr("Primordial"));
-		comboFeeddown2->addItem(tr("Strong decays"));
-		comboFeeddown2->addItem(tr("Strong+weak decays"));
+		comboFeeddown2->addItem(tr("Stability flags"));
+    comboFeeddown2->addItem(tr("Strong+EM+weak decays"));
+    comboFeeddown2->addItem(tr("Strong+EM decays"));
+    comboFeeddown2->addItem(tr("Strong decays"));
 
 		if (!quant->type) {
 			comboFeeddown1->setCurrentIndex(quant->mult.fFeedDown);

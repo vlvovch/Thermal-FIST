@@ -21,10 +21,12 @@
 #include <QTextEdit>
 
 #include "HRGBase/ThermalModelBase.h"
+#include "HRGFit/ThermalModelFit.h"
 #include "BaseStructures.h"
-
+//#include "fittoexperimenttab.h"
 
 class TableModel;
+class FitToExperimentTab;
 
 class ModelTab : public QWidget
 {
@@ -42,6 +44,7 @@ class ModelTab : public QWidget
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
 		QPushButton *labelValid;
+    QLabel *labelHint;
 
 		QLabel *labelmuS, *labelmuC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
@@ -67,6 +70,7 @@ class ModelTab : public QWidget
     QPushButton *buttonCalculate;
     QPushButton *buttonWriteToFile;
     QPushButton *buttonBenchmark;
+    QPushButton *buttonCalculateFitted;
 
     TableModel *myModel;
 
@@ -76,16 +80,22 @@ class ModelTab : public QWidget
 
     QTextEdit *teDebug;
 
+    const FitToExperimentTab *tabFit;
+
     int getCurrentRow();
 
 public:
     ModelTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~ModelTab();
 		ThermalModelConfig getConfig();
+    ThermalModelConfig getConfigFromFit(thermalfist::ThermalModelFit *fit, const ThermalModelConfig & configfit);
+    void setFitTab(const FitToExperimentTab *tab) { tabFit = tab; }
+    void updateControlsWithConfig(const ThermalModelConfig & config);
 private slots:
     void changedRow();
 		void performCalculation(const ThermalModelConfig & config);
     void calculate();
+    void calculateFitted();
     void writetofile();
     void benchmark();
     void particleInfoDoubleClick(const QModelIndex &);

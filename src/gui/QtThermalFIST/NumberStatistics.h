@@ -5,8 +5,6 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#ifndef NUMBERSTATISTICS_H
-#define NUMBERSTATISTICS_H
 #include <string>
 #include <vector>
 #define BINOMSZ 17
@@ -104,4 +102,3 @@ public:
 	void CalculateCentralMoments();
 };
 
-#endif

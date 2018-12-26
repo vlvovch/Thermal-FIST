@@ -50,4 +50,4 @@ public:
 };
 
 
-#endif // TABLEMODEL_H
+#endif // SPECTRAMODEL_H

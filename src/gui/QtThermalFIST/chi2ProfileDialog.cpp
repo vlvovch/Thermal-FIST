@@ -18,7 +18,7 @@
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
@@ -251,7 +251,7 @@ void chi2ProfileDialog::setModel()
 	else if (config.ModelType == ThermalModelConfig::VDWSCE)
 		model = new ThermalModelVDWCanonicalStrangeness(TPS);
 	else if (config.ModelType == ThermalModelConfig::QvdW)
-		model = new ThermalModelVDWFull(TPS);
+		model = new ThermalModelVDW(TPS);
 	else if (config.ModelType == ThermalModelConfig::CCE)
 		model = new ThermalModelCanonicalCharm(TPS);
 	else

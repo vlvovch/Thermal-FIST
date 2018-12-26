@@ -18,7 +18,7 @@
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGEventGenerator/ParticleDecays.h"
 
 namespace thermalfist {

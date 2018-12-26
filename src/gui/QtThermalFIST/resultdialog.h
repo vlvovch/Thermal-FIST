@@ -43,4 +43,5 @@ public slots:
     void checkFixTableSize();
 };
 
-#endif // DECAYSEDITOR_H
+
+#endif // RESULTDIALOG_H

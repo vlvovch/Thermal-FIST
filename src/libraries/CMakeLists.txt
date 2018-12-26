@@ -2,6 +2,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
 # Base part of the library  
 set(SRCS_HRGBase
+HRGBase/Broyden.cpp
 HRGBase/IdealGasFunctions.cpp
 HRGBase/NumericalIntegration.cpp
 HRGBase/ThermalModelIdeal.cpp
@@ -17,6 +18,7 @@ HRGBase/xMath.cpp
 source_group("HRGBase\\Source Files" FILES ${SRCS_HRGBase})
 
 set(HEADERS_HRGBase
+${PROJECT_SOURCE_DIR}/include/HRGBase/Broyden.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/IdealGasFunctions.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/BilinearSplineFunction.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/NumericalIntegration.h
@@ -55,14 +57,14 @@ source_group("HRGEV\\Header Files" FILES ${HEADERS_HRGEV})
 
 # van der Waals part of the library
 set(SRCS_HRGVDW
-HRGVDW/ThermalModelVDWFull.cpp
+HRGVDW/ThermalModelVDW.cpp
 HRGVDW/ThermalModelVDWCanonicalStrangeness.cpp
 )
 
 source_group("HRGVDW\\Source Files" FILES ${SRCS_HRGVDW})
 
 set(HEADERS_HRGVDW
-${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWFull.h
+${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDW.h
 ${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWCanonicalStrangeness.h
 )
 

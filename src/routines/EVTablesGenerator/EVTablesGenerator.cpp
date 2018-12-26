@@ -15,7 +15,7 @@
 #include "HRGBase.h"
 #include "HRGEV.h"
 #include "HRGFit.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
 
 #include "ThermalFISTConfig.h"

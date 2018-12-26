@@ -5,4 +5,4 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"

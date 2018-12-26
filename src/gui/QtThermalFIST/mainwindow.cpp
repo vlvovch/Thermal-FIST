@@ -22,6 +22,8 @@
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
+#include "aboutdialog.h"
+
 using namespace thermalfist;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -60,10 +62,14 @@ MainWindow::MainWindow(QWidget *parent)
 	tab1->resetTPS();
 
 	tab2 = new FitToExperimentTab(NULL, model);
+  tab1->setFitTab(tab2);
 
 	tab3 = new EnergyDependenceTab(NULL, model);
 	tab4 = new ContourPlotTab(NULL, model);
 	tab5 = new EventGeneratorTab(NULL, model);
+  tabEditor = new ListEditorTab(NULL, model);
+
+  
 
 	tabWidget = new QTabWidget();
 	tabWidget->addTab(tab1, QString(tr("Thermal model")));
@@ -71,6 +77,11 @@ MainWindow::MainWindow(QWidget *parent)
 	tabWidget->addTab(tab2, QString(tr("Thermal fits")));
 
 	tabWidget->addTab(tab5, QString(tr("Event generator")));
+
+  tabWidget->addTab(tabEditor, QString(tr("Particle list editor")));
+
+  currentTab = tabWidget->currentIndex();
+  connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
 	QLabel *labelCopyright = new QLabel(tr("© 2014-2018 Volodymyr Vovchenko"));
 
@@ -81,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent)
 	mainLayout->addWidget(labelCopyright, 0, Qt::AlignRight);
 	centralWidget()->setLayout(mainLayout);
 
+  createMenus();
+
 	QString title = "Thermal-FIST " + QString::number(ThermalFIST_VERSION_MAJOR) + "." + QString::number(ThermalFIST_VERSION_MINOR);
 	if (ThermalFIST_VERSION_DEVEL != 0) title += "." + QString::number(ThermalFIST_VERSION_DEVEL);
 	setWindowTitle(title);
@@ -90,6 +103,43 @@ MainWindow::~MainWindow()
 {
 	delete model;
 	delete TPS;
+}
+
+//#ifndef QT_NO_CONTEXTMENU
+//void MainWindow::contextMenuEvent(QContextMenuEvent *event)
+//{
+//  QMenu menu(this);
+//  menu.exec(event->globalPos());
+//}
+//#endif // QT_NO_CONTEXTMENU
+
+void MainWindow::createMenus()
+{
+  QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+  QAction *exitLoad = new QAction(tr("Load particle list..."), this);
+  exitLoad->setShortcuts(QKeySequence::Quit);
+  connect(exitLoad, &QAction::triggered, this, &MainWindow::loadDatabase);
+  fileMenu->addAction(exitLoad);
+  QAction *exitLoadDecays = new QAction(tr("Load decays..."), this);
+  exitLoadDecays->setShortcuts(QKeySequence::Quit);
+  connect(exitLoadDecays, &QAction::triggered, this, &MainWindow::loadDecays);
+  fileMenu->addAction(exitLoadDecays);
+  fileMenu->addSeparator();
+  QAction *exitAct = new QAction(tr("E&xit"), this);
+  exitAct->setShortcuts(QKeySequence::Quit);
+  exitAct->setStatusTip(tr("Exit the application"));
+  connect(exitAct, &QAction::triggered, this, &QWidget::close);
+  fileMenu->addAction(exitAct);
+
+  QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+  QAction *aboutAct = new QAction(tr("&About Thermal-FIST"), this);
+  //aboutAct->setStatusTip(tr("Show the application's About box"));
+  connect(aboutAct, &QAction::triggered, this, &MainWindow::about);
+  helpMenu->addAction(aboutAct);
+
+  QAction *guideAct = new QAction(tr("Quick start guide"), this);
+  connect(guideAct, &QAction::triggered, this, &MainWindow::quickstartguide);
+  helpMenu->addAction(guideAct);
 }
 
 void MainWindow::loadDecays()
@@ -103,11 +153,35 @@ void MainWindow::loadDecays()
 		TPS->LoadDecays(path.toStdString());
 		model->ChangeTPS(TPS);
 		tab1->resetTPS();
-#ifdef USE_MINUIT
 		tab2->resetTPS();
-#endif
 		tab5->resetTPS();
+    tabEditor->resetTPS();
 	}
+}
+
+void MainWindow::tabChanged(int newIndex)
+{
+  if (currentTab == tabWidget->indexOf(tabEditor) && tabEditor->haveChangesToList()) {
+    tabEditor->applyChanges();
+    tab1->resetTPS();
+    tab2->resetTPS();
+    tab5->resetTPS();
+    tabEditor->resetTPS();
+  }
+
+  currentTab = newIndex;
+}
+
+void MainWindow::about()
+{
+  AboutDialog dialog(this);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.exec();
+}
+
+void MainWindow::quickstartguide()
+{
+  QDesktopServices::openUrl(QUrl("https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"));
 }
 
 void MainWindow::loadDatabase()
@@ -115,7 +189,7 @@ void MainWindow::loadDatabase()
 	QString listpathprefix = QString(INPUT_FOLDER) + "/list";
 	if (leDatabase->text().size() != 0)
 		listpathprefix = leDatabase->text();
-	QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle database"), listpathprefix);
+	QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list"), listpathprefix);
 	if (path.length() > 0)
 	{
 		*TPS = ThermalParticleSystem(path.toStdString());
@@ -125,6 +199,8 @@ void MainWindow::loadDatabase()
 		tab2->resetTPS();
 
 		tab5->resetTPS();
+
+    tabEditor->resetTPS();
 
 		cpath = path;
 	}
