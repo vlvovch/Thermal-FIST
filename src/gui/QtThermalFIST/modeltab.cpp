@@ -8,7 +8,6 @@
 #include "modeltab.h"
 
 #include <QLayout>
-//#include <QFileDialog>
 #include <QLabel>
 #include <QHeaderView>
 #include <QGroupBox>
@@ -24,18 +23,18 @@
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
-
 #include "DebugText.h"
 #include "tablemodel.h"
 #include "particledialog.h"
 #include "resultdialog.h"
+#include "fittoexperimenttab.h"
 
 using namespace thermalfist;
 
@@ -69,8 +68,13 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     checkOnlyStable = new QCheckBox(tr("Show only stable particles"));
     connect(checkOnlyStable, SIGNAL(toggled(bool)), this, SLOT(switchStability(bool)));
 
-    buttonResults = new QPushButton(tr("Show calculation results..."));
+    buttonResults = new QPushButton(tr("Equation of state..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
+
+    labelHint = new QLabel(tr("Hint: double-click on particle for more info"));
+    QFont tmpf = QApplication::font();
+    tmpf.setPointSize(tmpf.pointSize() - 1);
+    labelHint->setFont(tmpf);
 
 		labelValid = new QPushButton(tr("Calculation valid!"));
 		labelValid->setFlat(true);
@@ -80,6 +84,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     layMisc->addWidget(checkOnlyStable);
     layMisc->addWidget(buttonResults);
+    layMisc->addWidget(labelHint);
 		layMisc->addStretch(1);
 		layMisc->addWidget(labelValid, 0, Qt::AlignRight);
 
@@ -105,6 +110,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		radEVCRS = new QRadioButton(tr("Crossterms EV"));
 		radQVDW  = new QRadioButton(tr("QvdW"));
 
+    radIdeal->setToolTip(tr("Point-particle ideal gas"));
+    radEVD->setToolTip(tr("Diagonal excluded volume model"));
+    radEVCRS->setToolTip(tr("Crossterms (non-diagonal) excluded volume model"));
+    radQVDW->setToolTip(tr("Quantum van der Waals HRG model"));
+
 		connect(radIdeal, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radEVD, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radEVCRS, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -126,6 +136,10 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		radGCE = new QRadioButton(tr("GCE"));
 		radCE  = new QRadioButton(tr("CE"));
 		radSCE = new QRadioButton(tr("SCE"));
+
+    radGCE->setToolTip(tr("Grand canonical ensemble"));
+    radCE->setToolTip(tr("Canonical ensemble"));
+    radSCE->setToolTip(tr("Strangeness-canonical ensemble"));
 
 		connect(radGCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -149,9 +163,17 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layStats->setAlignment(Qt::AlignLeft);
     radioBoltz = new QRadioButton(tr("Boltzmann"));
     radioQuant = new QRadioButton(tr("Quantum"));
+
+    radioBoltz->setToolTip(tr("Maxwell-Boltzmann"));
+    radioQuant->setToolTip(tr("Fermi-Dirac/Bose-Einstein"));
+
 		CBBoseOnly = new QCheckBox(tr("Mesons only"));
 		CBPionsOnly = new QCheckBox(tr("Pions only"));
 		CBQuadratures = new QCheckBox(tr("Use quadratures"));
+
+    CBBoseOnly->setToolTip(tr("Include quantum statistics for mesons only"));
+    CBPionsOnly->setToolTip(tr("Include quantum statistics for pions only"));
+    CBQuadratures->setToolTip(tr("Use Gauss-Laguerre quadratures (slower but more reliable) or cluster expansion (faster but unreliable for large mu)"));
 
 		connect(radioBoltz, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 
@@ -176,9 +198,13 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinRadius->setMaximum(100.);
     spinRadius->setValue(0.3);
     radioUniform  = new QRadioButton(tr("Same for all"));
+    radioUniform->setToolTip(tr("Same eigenvolume for all particles"));
     radioBaglike  = new QRadioButton(tr("Bag-like"));
+    radioBaglike->setToolTip(tr("Eigenvolumes scale linearly with mass. The input radius fixes the radius parameter of protons"));
     radioMesons   = new QRadioButton(tr("Point-like mesons"));
+    radioMesons->setToolTip(tr("Eigenvolumes scale linearly with absolute baryon number. The input radius fixes the radius parameter of baryons"));
 		radioCustomEV = new QRadioButton(tr("Custom..."));
+    radioCustomEV->setToolTip(tr("Load EV/QvdW parameters for different (pairs of) particles from file"));
 		strEVPath = "";
 		connect(radioCustomEV, SIGNAL(clicked()), this, SLOT(loadEVFromFile()));
     layRadius->addWidget(labelRadius);
@@ -201,45 +227,53 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinTemperature->setMinimum(1.);
     spinTemperature->setMaximum(10000.);
     spinTemperature->setValue(model->Parameters().T * 1e3);
+    spinTemperature->setToolTip(tr("Temperature"));
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
     spinmuB->setMinimum(-1000.);
     spinmuB->setMaximum(1000.);
     spinmuB->setValue(model->Parameters().muB * 1e3);
-		QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
+    spinmuB->setToolTip(tr("Baryochemical potential"));
+    QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
 		spingammaq = new QDoubleSpinBox();
 		spingammaq->setMinimum(0.);
 		spingammaq->setMaximum(10.);
 		spingammaq->setDecimals(4);
 		spingammaq->setValue(model->Parameters().gammaq);
+    spingammaq->setToolTip(tr("Chemical non-equilibrium factor for light quarks"));
 		QLabel *labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
     spingammaS = new QDoubleSpinBox();
     spingammaS->setMinimum(0.);
     spingammaS->setMaximum(10.);
     spingammaS->setDecimals(4);
     spingammaS->setValue(model->Parameters().gammaS);
+    spingammaS->setToolTip(tr("Chemical non-equilibrium factor for strange quarks"));
 
     labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
     spinmuS = new QDoubleSpinBox();
     spinmuS->setMinimum(-1000.);
     spinmuS->setMaximum(1000.);
     spinmuS->setValue(model->Parameters().muS * 1e3);
+    spinmuS->setToolTip(tr("Strangeness chemical potential"));
     QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
     spinmuQ = new QDoubleSpinBox();
     spinmuQ->setMinimum(-1000.);
     spinmuQ->setMaximum(1000.);
     spinmuQ->setValue(model->Parameters().muQ * 1e3);
+    spinmuQ->setToolTip(tr("Electric charge chemical potential"));
 		labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
 		spinmuC = new QDoubleSpinBox();
 		spinmuC->setMinimum(-1000.);
 		spinmuC->setMaximum(1000.);
 		spinmuC->setValue(model->Parameters().muC * 1e3);
+    spinmuC->setToolTip(tr("Charm chemical potential"));
     QLabel *labelVolume = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
     spinVolumeR->setMinimum(0.);
     spinVolumeR->setMaximum(25.);
     spinVolumeR->setDecimals(4);
     spinVolumeR->setValue(8.);
+    spinVolumeR->setToolTip(tr("System radius: the system volume is a sphere of this radius"));
 		connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
 
     labelB = new QLabel(tr("B:"));
@@ -262,6 +296,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		spinC->setMinimum(-1000);
 		spinC->setMaximum(1000);
 		spinC->setValue(0);
+
+    spinB->setToolTip(tr("Total baryon number in CE calculation"));
+    spinQ->setToolTip(tr("Total electric charge in CE calculation"));
+    spinS->setToolTip(tr("Total strangeness in CE calculation"));
+    spinC->setToolTip(tr("Total charm in CE calculation"));
 
     layParameters->addWidget(labelTemperature, 0, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinTemperature, 0, 1);
@@ -297,6 +336,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
 		checkFixMuQ = new QCheckBox(tr("Constrain μQ"));
 		checkFixMuQ->setChecked(true);
+    checkFixMuQ->setToolTip(tr("Constrain μQ to reproduce the needed Q/B ratio"));
 		connect(checkFixMuQ, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		//connect(checkFixMuS, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		//connect(checkFixMuC, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -309,8 +349,10 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
 		checkFixMuS = new QCheckBox(tr("Constrain μS"));
 		checkFixMuS->setChecked(true);
+    checkFixMuS->setToolTip(tr("Constrain μS to obtain zero net strangeness"));
 		checkFixMuC = new QCheckBox(tr("Constrain μC"));
 		checkFixMuC->setChecked(true);
+    checkFixMuC->setToolTip(tr("Constrain μS to obtain zero net charm"));
 
 
 		QLabel *labelVolumeRSC = new QLabel(tr("R<sub>C</sub>:"));
@@ -320,6 +362,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		spinVolumeRSC->setMaximum(25.);
 		spinVolumeRSC->setValue(spinVolumeR->value());
 		spinVolumeRSC->setEnabled(false);
+    spinVolumeRSC->setToolTip(tr("Correlation radius: the (canonical) correlation volume is a sphere of this radius"));
 
 		
     layQB->addWidget(labelQB);
@@ -336,13 +379,17 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
 		comboWidth = new QComboBox();
 		comboWidth->addItem(tr("Zero-width"));
-		comboWidth->addItem(tr("Breit-Wigner"));
+		comboWidth->addItem(tr("Const Breit-Wigner"));
 		comboWidth->addItem(tr("eBW"));
+    comboWidth->addItem(tr("eBW (const BRs)"));
 		comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
+    comboWidth->setToolTip(tr("Prescription for treatment of resonance widths"));
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
+    checkBratio->setToolTip(tr("Renormalize branching ratios of all particle to sum to 100\%"));
 		checkFluctuations = new QCheckBox(tr("Fluctuations"));
 		checkFluctuations->setChecked(false);
+    checkFluctuations->setToolTip(tr("Compute fluctuation observables (viewable in \"Equation of state\" dialog)"));
 
 		layFlags->addWidget(labelWidth);
 		layFlags->addWidget(comboWidth);
@@ -366,10 +413,16 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     buttonCalculate = new QPushButton(tr("Calculate"));
     connect(buttonCalculate, SIGNAL(clicked()), this, SLOT(calculate()));
 
+    buttonCalculateFitted = new QPushButton(tr("Calculate from fit tab"));
+    buttonCalculateFitted->setToolTip(tr("Use parameters found from a thermal fit in the other tab (here no rounding errors in input due to spin boxes)"));
+    connect(buttonCalculateFitted, SIGNAL(clicked()), this, SLOT(calculateFitted()));
+
     buttonWriteToFile = new QPushButton(tr("Write to file..."));
     connect(buttonWriteToFile, SIGNAL(clicked()), this, SLOT(writetofile()));
+    buttonWriteToFile->setToolTip(tr("Writes total and primordial yields of all particles to file"));
 
     layButtons->addWidget(buttonCalculate);
+    layButtons->addWidget(buttonCalculateFitted);
     layButtons->addWidget(buttonWriteToFile);
 
     buttonBenchmark = new QPushButton(tr("Benchmark"));
@@ -377,7 +430,6 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     teDebug = new QTextEdit;
     teDebug->setReadOnly(true);
-    teDebug->setFontPointSize(10);
 
 		editorLay->addLayout(layModelEnsemble);
     editorLay->addWidget(grStats);
@@ -396,6 +448,8 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     setLayout(mainLayout);
 
     modelChanged();
+
+    tabFit = NULL;
 }
 
 ModelTab::~ModelTab()
@@ -417,9 +471,10 @@ void ModelTab::changedRow()
 void ModelTab::particleInfoDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
-        ParticleDialog dialog(this, model, myModel->GetRowToParticle()[row]);
-        dialog.setWindowFlags(Qt::Window);
-        dialog.exec();
+      labelHint->setVisible(false);
+      ParticleDialog dialog(this, model, myModel->GetRowToParticle()[row]);
+      dialog.setWindowFlags(Qt::Window);
+      dialog.exec();
     }
 }
 
@@ -514,16 +569,159 @@ ThermalModelConfig ModelTab::getConfig()
 	return ret;
 }
 
+ThermalModelConfig ModelTab::getConfigFromFit(thermalfist::ThermalModelFit * fit, const ThermalModelConfig & configfit)
+{
+  ThermalModelConfig ret = configfit;
+
+  /*ret.ModelType = static_cast<int>(fit->model()->InteractionModel());
+  ThermalModelBase::ThermalModelEnsemble ens = fit->model()->Ensemble();
+  if (ens != ThermalModelBase::GCE) {
+    if (ens == ThermalModelBase::CE)
+      ret.ModelType = ThermalModelConfig::CE;
+
+    if (ens == ThermalModelBase::SCE) {
+      if (fit->model()->InteractionModel() == ThermalModelBase::Ideal)
+        ret.ModelType = ThermalModelConfig::SCE;
+      if (fit->model()->InteractionModel() == ThermalModelBase::DiagonalEV)
+        ret.ModelType = ThermalModelConfig::EVSCE;
+      if (fit->model()->InteractionModel() == ThermalModelBase::QvdW)
+        ret.ModelType = ThermalModelConfig::VDWSCE;
+    }
+
+    if (ens == ThermalModelBase::CCE)
+      ret.ModelType = ThermalModelConfig::CCE;
+  }
+
+  ret.QuantumStatistics = static_cast<int>( fit->model()->QuantumStatistics() );
+  ret.QuantumStatisticsType = static_cast<int>(fit->model()->TPS()->QStatsCalculationType());
+
+  bool pionsOnly = true, mesonsOnly = true;
+  for (int i = 0; i < fit->model()->TPS()->Particles().size(); ++i) {
+    const ThermalParticle &part = fit->model()->TPS()->Particles()[i];
+    if (part.Statistics() != 0) {
+      if (part.PdgId() != 211 && part.PdgId() != 111 && part.PdgId() != -211) {
+        pionsOnly = false;
+      }
+      if (part.BaryonCharge() != 0) {
+        mesonsOnly = false;
+      }
+    }
+  }
+
+
+
+  if (radioUniform->isChecked())
+    ret.Interaction = 0;
+  else if (radioBaglike->isChecked())
+    ret.Interaction = 1;
+  else if (radioMesons->isChecked())
+    ret.Interaction = 2;
+  else
+    ret.Interaction = 3;
+
+  ret.EVRadius = spinRadius->value();
+  ret.InteractionInput = strEVPath.toStdString();*/
+
+  ret.T = fit->Parameters().T.value;
+  ret.muB = fit->Parameters().muB.value;
+  ret.muQ = fit->Parameters().muQ.value;
+  ret.muS = fit->Parameters().muS.value;
+  ret.muC = fit->Parameters().muC.value;
+  ret.gq = fit->Parameters().gammaq.value;
+  ret.gS = fit->Parameters().gammaS.value;
+  ret.gC = fit->Parameters().gammaC.value;
+  ret.VolumeR = fit->Parameters().R.value;
+  ret.VolumeRSC = fit->Parameters().Rc.value;
+
+  ret.ComputeFluctations = checkFluctuations->isChecked();
+
+  return ret;
+}
+
+void ModelTab::updateControlsWithConfig(const ThermalModelConfig & config)
+{
+  if (config.ModelType == ThermalModelConfig::DiagonalEV
+    || config.ModelType == ThermalModelConfig::EVSCE)
+    radEVD->setChecked(true);
+  else if (config.ModelType == ThermalModelConfig::CrosstermsEV)
+    radEVCRS->setChecked(true);
+  else if (config.ModelType == ThermalModelConfig::QvdW
+    || config.ModelType == ThermalModelConfig::VDWSCE)
+    radQVDW->setChecked(true);
+  else
+    radIdeal->setChecked(true);
+
+  if (config.ModelType == ThermalModelConfig::CE)
+    radCE->setChecked(true);
+  else if (config.ModelType == ThermalModelConfig::SCE
+    || config.ModelType == ThermalModelConfig::EVSCE
+    || config.ModelType == ThermalModelConfig::VDWSCE)
+    radSCE->setChecked(true);
+  else
+    radGCE->setChecked(true);
+
+  if (config.QuantumStatistics)
+    radioQuant->setChecked(true);
+  else
+    radioBoltz->setChecked(true);
+
+  if (config.QuantumStatisticsInclude == 1) {
+    CBBoseOnly->setChecked(true);
+    CBPionsOnly->setChecked(false);
+  }
+  else if (config.QuantumStatisticsInclude == 2) {
+    CBBoseOnly->setChecked(false);
+    CBPionsOnly->setChecked(true);
+  }
+
+  CBQuadratures->setChecked(config.QuantumStatisticsType);
+
+  spinRadius->setValue(config.EVRadius);
+
+  if (config.Interaction == 1)
+    radioBaglike->setChecked(true);
+  else if (config.Interaction == 2)
+    radioMesons->setChecked(true);
+  else if (config.Interaction == 3)
+    radioCustomEV->setChecked(true);
+  else
+    radioUniform->setChecked(true);
+
+  spinTemperature->setValue(config.T * 1.e3);
+  spinmuB->setValue(config.muB * 1.e3);
+  spinmuQ->setValue(config.muQ * 1.e3);
+  spinmuS->setValue(config.muS * 1.e3);
+  spinmuC->setValue(config.muC * 1.e3);
+  spingammaq->setValue(config.gq);
+  spingammaS->setValue(config.gS);
+  spinVolumeR->setValue(config.VolumeR);
+  spinVolumeRSC->setValue(config.VolumeRSC);
+  spinB->setValue(config.B);
+  spinQ->setValue(config.Q);
+  spinS->setValue(config.S);
+  spinC->setValue(config.C);
+
+  spinQBRatio->setValue(config.QoverB);
+  checkFixMuQ->setChecked(config.ConstrainMuQ);
+  checkFixMuS->setChecked(config.ConstrainMuS);
+  checkFixMuC->setChecked(config.ConstrainMuC);
+  comboWidth->setCurrentIndex(config.FiniteWidth);
+  checkBratio->setChecked(config.RenormalizeBR);
+  checkFluctuations->setChecked(config.ComputeFluctations);
+
+  modelChanged();
+}
+
 void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
-	
-	QElapsedTimer timerc;
+  QElapsedTimer timerc;
 	timerc.start();
 	
 	ThermalModelBase *modelnew;
 
-	if (config.ModelType == ThermalModelConfig::DiagonalEV) 
-		modelnew = new ThermalModelEVDiagonal(model->TPS());
+  if (config.ModelType == ThermalModelConfig::DiagonalEV) {
+    modelnew = new ThermalModelEVDiagonal(model->TPS());
+  }
 	else if (config.ModelType == ThermalModelConfig::CrosstermsEV)
 		modelnew = new ThermalModelEVCrossterms(model->TPS());	
 	else if (config.ModelType == ThermalModelConfig::CE) {
@@ -535,8 +733,9 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		modelnew = new ThermalModelEVCanonicalStrangeness(model->TPS());
 	else if (config.ModelType == ThermalModelConfig::VDWSCE)
 		modelnew = new ThermalModelVDWCanonicalStrangeness(model->TPS());
-	else if (config.ModelType == ThermalModelConfig::QvdW)
-		modelnew = new ThermalModelVDWFull(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::QvdW) {
+    modelnew = new ThermalModelVDW(model->TPS());
+  }
 	else if (config.ModelType == ThermalModelConfig::CCE)
 		modelnew = new ThermalModelCanonicalCharm(model->TPS());
 	else
@@ -580,6 +779,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		model->SetUseWidth(ThermalParticle::BWTwoGamma);
 	else if (config.FiniteWidth == 2)
 		model->SetUseWidth(ThermalParticle::eBW);
+  else if (config.FiniteWidth == 3)
+    model->SetUseWidth(ThermalParticle::eBWconstBR);
 	else
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
 
@@ -654,14 +855,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		model->ReadInteractionParameters(config.InteractionInput);
 	}
 
-	printf("Parameters time = %d ms\n", timervdw.elapsed());
+	printf("Parameters time = %ld ms\n", static_cast<long int>(timervdw.elapsed()));
 
 	// If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
 	if (config.ModelType == ThermalModelConfig::CE) {
 		static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(config.ComputeFluctations);
 	}
 
-	printf("Initialization time = %d ms\n", timerc.elapsed());
+	printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -670,7 +871,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	model->CalculateDensities();
 
-	printf("Densities time = %d ms\n", timerc.elapsed());
+	printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -680,7 +881,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		computeHigherOrderFluctuations();
 	}
 
-	printf("Fluctuations time = %d ms\n", timerc.elapsed());
+	printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 
@@ -705,7 +906,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 		dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
 	dbgstrm << "V\t= " << model->Volume() << " fm^3" << endl;
 	dbgstrm << endl;
-	dbgstrm << "Total hadron density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+	dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
 	dbgstrm << "Net baryon density\t= " << model->CalculateBaryonDensity() << " fm^-3" << endl;
 	dbgstrm << "Net baryon number\t= " << model->CalculateBaryonDensity() * model->Volume() << endl;
 	dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
@@ -728,7 +929,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	teDebug->append(dbgstr);
 	dbgstr.clear();
 
-	printf("Finalizing time = %d ms\n", timerc.elapsed());
+	printf("Finalizing time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	if (model->IsLastSolutionOK()) {
 		labelValid->setText(tr("Calculation valid!"));
@@ -752,6 +953,13 @@ void ModelTab::calculate() {
 		spinmuQ->setValue(model->Parameters().muQ*1.e3);
 	}
 	return;
+}
+
+void ModelTab::calculateFitted()
+{
+  ThermalModelConfig config = getConfigFromFit(tabFit->Fit(), tabFit->LastUsedConfig());
+  updateControlsWithConfig(config);
+  performCalculation(config);
 }
 
 void ModelTab::writetofile() {
@@ -1016,4 +1224,10 @@ void ModelTab::modelChanged()
 			CBBoseOnly->setEnabled(true);
 			CBPionsOnly->setEnabled(true);
 		}
+}
+
+void ModelTab::updateFontSizes() {
+  QFont tmpf = QApplication::font();
+  tmpf.setPointSize(tmpf.pointSize() - 1);
+  labelHint->setFont(tmpf);
 }

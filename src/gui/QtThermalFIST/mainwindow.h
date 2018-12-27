@@ -23,6 +23,7 @@
 #include "eventgeneratortab.h"
 #include "energydependencetab.h"
 #include "contourplottab.h"
+#include "listeditortab.h"
 
 #include "HRGBase/ThermalModelBase.h"
 #include "fittoexperimenttab.h"
@@ -33,6 +34,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
     QTabWidget *tabWidget;
+    int currentTab;
 
     ModelTab *tab1;
 	
@@ -41,6 +43,7 @@ class MainWindow : public QMainWindow
     EnergyDependenceTab *tab3;
     ContourPlotTab *tab4;
     EventGeneratorTab *tab5;
+    ListEditorTab *tabEditor;
 
     QLineEdit *leDatabase;
     QPushButton *buttonLoad;
@@ -54,9 +57,20 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+protected:
+#ifndef QT_NO_CONTEXTMENU
+//  void contextMenuEvent(QContextMenuEvent *event) override;
+#endif // QT_NO_CONTEXTMENU
+private:
+  void createMenus();
 private slots:
-    void loadDatabase();
-		void loadDecays();
+  void loadDatabase();
+  void loadDecays();
+  void tabChanged(int newIndex);
+  void about();
+  void quickstartguide();
+  void increaseFontSize();
+  void decreaseFontSize();
 };
 
 #endif // MAINWINDOW_H

@@ -11,7 +11,7 @@
 #include <QLabel>
 #include <QDebug>
 
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 using namespace thermalfist;
 

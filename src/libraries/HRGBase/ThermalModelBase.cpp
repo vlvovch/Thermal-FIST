@@ -20,673 +20,6 @@ using namespace std;
 
 namespace thermalfist {
 
-  namespace ThermalModelBaseNamespace {
-    ThermalModelBase *gThM;
-
-    void broyden2(vector<double> &xin, vector<double>(*func)(const vector<double>&, ThermalModelBase*), ThermalModelBase *ThM) {
-      const double TOLF = 1.0e-8, EPS = 1.0e-8;
-      const int MAXITS = 200;
-      bool fl = 0;
-      if (abs(xin[0]) < 1e-8 && abs(xin[1]) < 1e-8) fl = 1;
-      vector<double> h = xin, xh1 = xin, xh2 = xin;
-      for (int i = 0; i < xin.size(); ++i) {
-        h[i] = EPS*abs(h[i]);
-        if (h[i] == 0.0) h[i] = EPS;
-        h[i] = max(EPS, h[i]);
-        if (i == 0) xh1[i] = xin[i] + h[i];
-        else xh2[i] = xin[i] + h[i];
-      }
-      vector<double> r1 = func(xin, ThM), r21 = func(xh1, ThM), r22 = func(xh2, ThM);
-      if (abs(r1[0]) < TOLF && abs(r1[1]) < TOLF) return;
-      double J[2][2];
-      J[0][0] = (r21[0] - r1[0]) / h[0];
-      J[0][1] = (r22[0] - r1[0]) / h[1];
-      J[1][0] = (r21[1] - r1[1]) / h[0];
-      J[1][1] = (r22[1] - r1[1]) / h[1];
-      double Jinv[2][2];
-      double det = J[0][0] * J[1][1] - J[0][1] * J[1][0];
-      if (det == 0.0) {
-        printf("**WARNING** singular Jacobian in broyden2");
-        return;
-      }
-      Jinv[0][0] = J[1][1] / det;
-      Jinv[0][1] = -J[0][1] / det;
-      Jinv[1][0] = -J[1][0] / det;
-      Jinv[1][1] = J[0][0] / det;
-      for (int i = 0; i < 2; ++i)
-        for (int j = 0; j < 2; ++j)
-          if (J[i][j] > 1.e8) return;
-      vector<double> xold = xin;
-      vector<double> rold = r1;
-      double Jinvold[2][2];
-      vector<double> rprevten = r1;
-      for (int i1 = 0; i1 < 2; ++i1)
-        for (int i2 = 0; i2 < 2; ++i2) Jinvold[i1][i2] = Jinv[i1][i2];
-      for (int iter = 1; iter <= MAXITS; ++iter) {
-        xin[0] = xold[0] - Jinv[0][0] * rold[0] - Jinv[0][1] * rold[1];
-        xin[1] = xold[1] - Jinv[1][0] * rold[0] - Jinv[1][1] * rold[1];
-        r1 = func(xin, ThM);
-        if (abs(r1[0]) < TOLF && abs(r1[1]) < TOLF) {
-          return;
-        }
-        double JF[2];
-        double DF[2];
-        double dx[2];
-        DF[0] = (r1[0] - rold[0]);
-        DF[1] = (r1[1] - rold[1]);
-        JF[0] = Jinv[0][0] * DF[0] + Jinv[0][1] * DF[1];
-        JF[1] = Jinv[1][0] * DF[0] + Jinv[1][1] * DF[1];
-        dx[0] = xin[0] - xold[0];
-        dx[1] = xin[1] - xold[1];
-        double znam = dx[0] * JF[0] + dx[1] * JF[1];
-        if (znam == 0.0) {
-          printf("**WARNING** singular Jacobian in broyden2");
-          return;
-        }
-        double xJ[2];
-        JF[0] = dx[0] - JF[0];
-        JF[1] = dx[1] - JF[1];
-        xJ[0] = dx[0] * Jinv[0][0] + dx[1] * Jinv[1][0];
-        xJ[1] = dx[0] * Jinv[0][1] + dx[1] * Jinv[1][1];
-        Jinv[0][0] = Jinv[0][0] + JF[0] * xJ[0] / znam;
-        Jinv[0][1] = Jinv[0][1] + JF[0] * xJ[1] / znam;
-        Jinv[1][0] = Jinv[1][0] + JF[1] * xJ[0] / znam;
-        Jinv[1][1] = Jinv[1][1] + JF[1] * xJ[1] / znam;
-        xold = xin;
-        rold = r1;
-      }
-      printf("**WARNING** reached maximum number of interations in broyden");
-    }
-
-    vector<double> function2(const vector<double> &xin, ThermalModelBase *ThM) {
-      vector<double> ret(2);
-      ThM->SetElectricChemicalPotential(xin[0]);
-      ThM->SetStrangenessChemicalPotential(xin[1]);
-      ThM->FillChemicalPotentials();
-      ThM->CalculateDensities();
-      double fBd = ThM->CalculateBaryonDensity();
-      double fCd = ThM->CalculateChargeDensity();
-      double fSd = ThM->CalculateStrangenessDensity();
-      double fASd = ThM->CalculateAbsoluteStrangenessDensity();
-      ret[0] = (fCd / fBd - ThM->QoverB()) / ThM->QoverB();
-      ret[1] = fSd / fASd;
-      return ret;
-    }
-
-    VectorXd broydenEigenFunc(const VectorXd &xin, ThermalModelBase *ThM) {
-      int i1 = 0;
-      if (ThM->ConstrainMuQ()) { ThM->SetElectricChemicalPotential(xin[i1]); i1++; }
-      if (ThM->ConstrainMuS()) { ThM->SetStrangenessChemicalPotential(xin[i1]); i1++; }
-      if (ThM->ConstrainMuC()) { ThM->SetCharmChemicalPotential(xin[i1]); i1++; }
-      ThM->FillChemicalPotentials();
-      ThM->CalculateDensities();
-
-      double fBd    = ThM->CalculateBaryonDensity();
-      double fQd    = ThM->CalculateChargeDensity();
-      double fSd    = ThM->CalculateStrangenessDensity();
-      double fASd = ThM->CalculateAbsoluteStrangenessDensity();
-      double fCd    = ThM->CalculateCharmDensity();
-      double fACd = ThM->CalculateAbsoluteCharmDensity();
-
-      int NNN = 0;
-      if (ThM->ConstrainMuQ()) NNN++;
-      if (ThM->ConstrainMuS()) NNN++;
-      if (ThM->ConstrainMuC()) NNN++;
-      VectorXd ret(NNN);
-
-      i1 = 0;
-      // Charge derivatives
-      if (ThM->ConstrainMuQ()) {
-        ret[i1] = (fQd / fBd - ThM->QoverB()) / ThM->QoverB();
-
-        i1++;
-      }
-
-
-      // Strangeness derivatives
-      if (ThM->ConstrainMuS()) {
-        ret[i1] = fSd / fASd;
-
-        i1++;
-      }
-
-
-      // Charm derivatives
-      if (ThM->ConstrainMuC()) {
-        ret[i1] = fCd / fACd;
-
-        i1++;
-      }
-
-      return ret;
-    }
-
-    MatrixXd broydenEigenJacobian(const VectorXd &xin, ThermalModelBase *ThM) {
-      int i1 = 0;
-      if (ThM->ConstrainMuQ()) { ThM->SetElectricChemicalPotential(xin[i1]); i1++; }
-      if (ThM->ConstrainMuS()) { ThM->SetStrangenessChemicalPotential(xin[i1]); i1++; }
-      if (ThM->ConstrainMuC()) { ThM->SetCharmChemicalPotential(xin[i1]); i1++; }
-      ThM->FillChemicalPotentials();
-      ThM->CalculateDensities();
-
-      double fBd = ThM->CalculateBaryonDensity();
-      double fQd = ThM->CalculateChargeDensity();
-      double fSd = ThM->CalculateStrangenessDensity();
-      double fASd = ThM->CalculateAbsoluteStrangenessDensity();
-      double fCd = ThM->CalculateCharmDensity();
-      double fACd = ThM->CalculateAbsoluteCharmDensity();
-
-      vector<double> m_wprim;
-      m_wprim.resize(ThM->Densities().size());
-      for (int i = 0; i < m_wprim.size(); ++i) 
-        m_wprim[i] = ThM->CalculateParticleScaledVariance(i);
-
-      int NNN = 0;
-      if (ThM->ConstrainMuQ()) NNN++;
-      if (ThM->ConstrainMuS()) NNN++;
-      if (ThM->ConstrainMuC()) NNN++;
-      MatrixXd ret(NNN, NNN);
-
-      i1 = 0;
-      // Charge derivatives
-      if (ThM->ConstrainMuQ()) {
-        int i2 = 0;
-
-        double d1 = 0., d2 = 0.;
-
-        if (ThM->ConstrainMuQ()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).ElectricCharge() * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).BaryonCharge() * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / ThM->QoverB();
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuS()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).ElectricCharge() * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).BaryonCharge() * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / ThM->QoverB();
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuC()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).ElectricCharge() * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).BaryonCharge() * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / ThM->QoverB();
-
-          i2++;
-        }
-
-        i1++;
-      }
-
-
-      // Strangeness derivatives
-      if (ThM->ConstrainMuS()) {
-        int i2 = 0;
-
-        double d1 = 0., d2 = 0.;
-
-        if (ThM->ConstrainMuQ()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Strangeness()    * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteStrangeness() * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuS()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Strangeness()    * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteStrangeness() * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuC()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Strangeness()    * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteStrangeness() * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
-
-          i2++;
-        }
-
-        i1++;
-      }
-
-
-      // Charm derivatives
-      if (ThM->ConstrainMuC()) {
-        int i2 = 0;
-
-        double d1 = 0., d2 = 0.;
-
-        if (ThM->ConstrainMuQ()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Charm() * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteCharm()  * ThM->TPS()->Particle(i).ElectricCharge() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuS()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Charm() * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteCharm()  * ThM->TPS()->Particle(i).Strangeness() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
-
-          i2++;
-        }
-
-
-        if (ThM->ConstrainMuC()) {
-          d1 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d1 += ThM->TPS()->Particle(i).Charm() * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d1 /= ThM->Parameters().T;
-
-          d2 = 0.;
-          for (int i = 0; i < m_wprim.size(); ++i)
-            d2 += ThM->TPS()->Particle(i).AbsoluteCharm()  * ThM->TPS()->Particle(i).Charm() * ThM->Densities()[i] * m_wprim[i];
-          d2 /= ThM->Parameters().T;
-
-          ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
-
-          i2++;
-        }
-
-        i1++;
-      }
-
-      return ret;
-    }
-
-    void broydenEigen(vector<double> &xin, ThermalModelBase *ThM) {
-      const double TOLF = 1.0e-8, EPS = 1.0e-8;
-      const int MAXITS = 200;
-      bool fl = 0;
-
-      int NNN = 0;
-      if (ThM->ConstrainMuQ()) NNN++;
-      if (ThM->ConstrainMuS()) NNN++;
-      if (ThM->ConstrainMuC()) NNN++;
-      if (NNN == 0) {
-        ThM->FillChemicalPotentials();
-        return;
-      }
-      VectorXd xold(NNN), xnew(NNN), xdelta(NNN);
-      VectorXd fold(NNN), fnew(NNN), fdelta(NNN);
-      MatrixXd Jac(NNN, NNN), Jinv(NNN, NNN);
-
-      NNN = 0;
-      if (ThM->ConstrainMuQ()) { xold[NNN] = xin[0]; NNN++; }
-      if (ThM->ConstrainMuS()) { xold[NNN] = xin[1]; NNN++; }
-      if (ThM->ConstrainMuC()) { xold[NNN] = xin[2]; NNN++; }
-
-
-
-      Jac = broydenEigenJacobian(xold, ThM);
-
-
-      bool constrmuQ = ThM->ConstrainMuQ();
-      bool constrmuS = ThM->ConstrainMuS();
-      bool constrmuC = ThM->ConstrainMuC();
-      bool repeat = false;
-      NNN = 0;
-      if (ThM->ConstrainMuQ()) {
-        for (int j = 0; j < Jac.rows(); ++j)
-          if (Jac(NNN, j) > 1.e8) { repeat = true; ThM->ConstrainMuQ(false); }
-        double nQ = ThM->CalculateChargeDensity();
-        double nB = ThM->CalculateBaryonDensity();
-        if (abs(nQ) < 1.e-25 || abs(nB) < 1.e-25) { repeat = true; ThM->ConstrainMuQ(false); }
-        NNN++;
-      }
-      if (ThM->ConstrainMuS()) {
-        for (int j = 0; j < Jac.rows(); ++j)
-          if (Jac(NNN, j) > 1.e8) { repeat = true; ThM->ConstrainMuS(false); }
-
-        double nS = ThM->CalculateAbsoluteStrangenessDensity();
-        if (abs(nS) < 1.e-25) { repeat = true; ThM->ConstrainMuS(false); }
-        NNN++;
-      }
-      if (ThM->ConstrainMuC()) {
-        for (int j = 0; j < Jac.rows(); ++j)
-          if (Jac(NNN, j) > 1.e8) { repeat = true; ThM->ConstrainMuC(false); }
-        double nC = ThM->CalculateAbsoluteCharmDensity();
-        if (abs(nC) < 1.e-25) { repeat = true; ThM->ConstrainMuC(false); }
-        NNN++;
-      }
-      if (repeat) {
-        broydenEigen(xin, ThM);
-        ThM->ConstrainMuQ(constrmuQ);
-        ThM->ConstrainMuS(constrmuS);
-        ThM->ConstrainMuC(constrmuC);
-        return;
-      }
-
-      fold = broydenEigenFunc(xold, ThM);
-
-      xnew = xold;
-      fnew = fold;
-
-      if (Jac.determinant() == 0.0)
-      {
-        printf("**WARNING** Singular Jacobian in BroydenEigen\n");
-        return;
-        //throw("singular Jacobian in broydenEigen");
-      }
-      Jinv = Jac.inverse();
-
-      for (int iter = 1; iter < MAXITS; ++iter) {
-        xnew = xold - Jinv * fold;
-        fnew = broydenEigenFunc(xnew, ThM);
-        xdelta = xnew - xold;
-        fdelta = fnew - fold;
-        double norm = 0.;
-        for (int i = 0; i < NNN; ++i)
-          for (int j = 0; j < NNN; ++j)
-            norm += xdelta[i] * Jinv(i, j) * fdelta[j];
-        //TVectorD p1(NNN);
-        VectorXd p1(NNN);
-        p1 = (xdelta - Jinv * fdelta);
-        for (int i = 0; i < NNN; ++i) p1[i] *= 1. / norm;
-        Jinv = Jinv + (p1 * xdelta.transpose()) * Jinv;
-        /*Jac = broydenEigenJacobian(xnew, ThM);
-        if (Jac.determinant()==0.0) throw("singular Jacobian in broydenEigen");
-        Jinv = Jac.inverse();*/
-        double maxdiff = 0.;
-        for (int i = 0; i < fnew.size(); ++i) {
-          maxdiff = max(maxdiff, fabs(fnew[i]));
-        }
-        if (maxdiff < TOLF) {
-          return;
-        }
-        xold = xnew;
-        fold = fnew;
-      }
-      printf("**WARNING** Reached maximum number of iterations in BroydenEigen\n");
-      //throw("exceed MAXITS in broyden");
-    }
-
-
-    VectorXd broydenEigenFunc2(const VectorXd &xin, const vector<int> &vConstr, const vector<int> &vType, const vector<double> &vTotals, ThermalModelBase *ThM) {
-      int NNN = 0;
-      for (int i = 0; i < 4; ++i) NNN += vConstr[i];
-
-      int i1 = 0;
-
-      for (int i = 0; i < 4; ++i) {
-        if (vConstr[i]) {
-          if (i == 0) ThM->SetBaryonChemicalPotential(xin[i1]);
-          if (i == 1) ThM->SetElectricChemicalPotential(xin[i1]);
-          if (i == 2) ThM->SetStrangenessChemicalPotential(xin[i1]);
-          if (i == 3) ThM->SetCharmChemicalPotential(xin[i1]);
-          i1++;
-        }
-      }
-
-      ThM->FillChemicalPotentials();
-      ThM->CalculateDensities();
-
-      vector<double> dens(4, 0.), absdens(4, 0.);
-      if (vConstr[0]) {
-        dens[0] = ThM->CalculateBaryonDensity();
-        absdens[0] = ThM->CalculateAbsoluteBaryonDensity();
-      }
-      if (vConstr[1]) {
-        dens[1] = ThM->CalculateChargeDensity();
-        absdens[1] = ThM->CalculateAbsoluteChargeDensity();
-      }
-      if (vConstr[2]) {
-        dens[2] = ThM->CalculateStrangenessDensity();
-        absdens[2] = ThM->CalculateAbsoluteStrangenessDensity();
-      }
-      if (vConstr[3]) {
-        dens[3] = ThM->CalculateCharmDensity();
-        absdens[3] = ThM->CalculateAbsoluteCharmDensity();
-      }
-
-      VectorXd ret(NNN);
-
-      i1 = 0;
-
-      for (int i = 0; i < 4; ++i) {
-        if (vConstr[i]) {
-          if (vType[i] == 0)
-            //ret[i1] = (dens[i1] * ThM->Parameters().V - vTotals[i1]) / vTotals[i1];
-            ret[i1] = (dens[i] * ThM->Parameters().V - vTotals[i]) / vTotals[i];
-          else
-            //ret[i1] = dens[i1] / absdens[i1];
-            ret[i1] = dens[i] / absdens[i];
-          i1++;
-        }
-      }
-
-      return ret;
-    }
-
-    MatrixXd broydenEigenJacobian2(const VectorXd &xin, const vector<int> &vConstr, const vector<int> &vType, const vector<double> &vTotals, ThermalModelBase *ThM) {
-      int NNN = 0;
-      for (int i = 0; i < 4; ++i) NNN += vConstr[i];
-
-      int i1 = 0;
-
-      for (int i = 0; i < 4; ++i) {
-        if (vConstr[i]) {
-          if (i == 0) ThM->SetBaryonChemicalPotential(xin[i1]);
-          if (i == 1) ThM->SetElectricChemicalPotential(xin[i1]);
-          if (i == 2) ThM->SetStrangenessChemicalPotential(xin[i1]);
-          if (i == 3) ThM->SetCharmChemicalPotential(xin[i1]);
-          i1++;
-        }
-      }
-
-      vector<double> tfug(4, 0.);
-      tfug[0] = exp(ThM->Parameters().muB / ThM->Parameters().T);
-      tfug[1] = exp(ThM->Parameters().muQ / ThM->Parameters().T);
-      tfug[2] = exp(ThM->Parameters().muS / ThM->Parameters().T);
-      tfug[3] = exp(ThM->Parameters().muC / ThM->Parameters().T);
-
-      ThM->FillChemicalPotentials();
-      ThM->CalculateDensities();
-
-      vector<double> dens(4, 0.), absdens(4, 0.);
-      if (vConstr[0]) {
-        dens[0] = ThM->CalculateBaryonDensity();
-        absdens[0] = ThM->CalculateAbsoluteBaryonDensity();
-      }
-      if (vConstr[1]) {
-        dens[1] = ThM->CalculateChargeDensity();
-        absdens[1] = ThM->CalculateAbsoluteChargeDensity();
-      }
-      if (vConstr[2]) {
-        dens[2] = ThM->CalculateStrangenessDensity();
-        absdens[2] = ThM->CalculateAbsoluteStrangenessDensity();
-      }
-      if (vConstr[3]) {
-        dens[3] = ThM->CalculateCharmDensity();
-        absdens[3] = ThM->CalculateAbsoluteCharmDensity();
-      }
-
-      vector<double> m_wprim;
-      m_wprim.resize(ThM->Densities().size());
-      for (int i = 0; i < m_wprim.size(); ++i) m_wprim[i] = ThM->CalculateParticleScaledVariance(i);
-
-      vector< vector<double> > deriv(4, vector<double>(4)), derivabs(4, vector<double>(4));
-      for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 4; ++j) {
-          deriv[i][j] = 0.;
-          for (int part = 0; part < m_wprim.size(); ++part)
-            deriv[i][j] += ThM->TPS()->Particles()[part].GetCharge(i) * ThM->TPS()->Particles()[part].GetCharge(j) * ThM->Densities()[part] * m_wprim[part];
-          deriv[i][j] /= ThM->Parameters().T;
-
-          derivabs[i][j] = 0.;
-          for (int part = 0; part < m_wprim.size(); ++part)
-            derivabs[i][j] += ThM->TPS()->Particles()[part].GetAbsCharge(i) * ThM->TPS()->Particles()[part].GetCharge(j) * ThM->Densities()[part] * m_wprim[part];
-          derivabs[i][j] /= ThM->Parameters().T;
-        }
-
-
-      MatrixXd ret(NNN, NNN);
-
-      i1 = 0;
-
-      for (int i = 0; i < 4; ++i) {
-        if (vConstr[i]) {
-          int i2 = 0;
-          for (int j = 0; j < 4; ++j)
-            if (vConstr[j]) {
-              ret(i1, i2) = 0.;
-              if (vType[i] == 0)
-                //ret(i1, i2) = deriv[i1][i2] * ThM->Parameters().V / vTotals[i1];
-                ret(i1, i2) = deriv[i][j] * ThM->Parameters().V / vTotals[i];
-              else
-                //ret(i1, i2) = deriv[i1][i2] / absdens[i1] - dens[i1] / absdens[i1] / absdens[i1] * derivabs[i1][i2];
-                ret(i1, i2) = deriv[i][j] / absdens[i] - dens[i] / absdens[i] / absdens[i] * derivabs[i][j];
-              i2++;
-            }
-          i1++;
-        }
-      }
-
-      return ret;
-    }
-
-    void broydenEigen2(vector<double> &xin, const vector<int> &vConstr, const vector<int> &vType, const vector<double> &vTotals, ThermalModelBase *ThM) {
-      const double TOLF = 1.0e-8, EPS = 1.0e-8;
-      const int MAXITS = 400;
-      bool fl = 0;
-
-
-      int NNN = 0;
-      for (int i = 0; i < 4; ++i) NNN += vConstr[i];
-      if (NNN == 0) return;
-      VectorXd xold(NNN), xnew(NNN), xdelta(NNN);
-      VectorXd fold(NNN), fnew(NNN), fdelta(NNN);
-      MatrixXd Jac(NNN, NNN), Jinv(NNN, NNN);
-
-      int i1 = 0;
-
-      for (int i = 0; i < 4; ++i) {
-        if (vConstr[i]) {
-          xold[i1] = xin[i];
-          i1++;
-        }
-      }
-
-      Jac = broydenEigenJacobian2(xold, vConstr, vType, vTotals, ThM);
-
-      fold = broydenEigenFunc2(xold, vConstr, vType, vTotals, ThM);
-
-      xnew = xold;
-      fnew = fold;
-
-      if (Jac.determinant() == 0.0) throw("singular Jacobian in broydenEigen");
-      Jinv = Jac.inverse();
-
-      for (int iter = 1; iter < MAXITS; ++iter) {
-        xnew = xold - Jinv * fold;
-        fnew = broydenEigenFunc2(xnew, vConstr, vType, vTotals, ThM);
-        xdelta = xnew - xold;
-        fdelta = fnew - fold;
-        double norm = 0.;
-        for (int i = 0; i < NNN; ++i)
-          for (int j = 0; j < NNN; ++j)
-            norm += xdelta[i] * Jinv(i, j) * fdelta[j];
-        VectorXd p1(NNN);
-        p1 = (xdelta - Jinv * fdelta);
-        for (int i = 0; i < NNN; ++i) p1[i] *= 1. / norm;
-        Jinv = Jinv + (p1 * xdelta.transpose()) * Jinv;
-        //Jac  = broydenEigenJacobian2(xnew, vConstr, vType, vTotals, ThM);
-        //if (Jac.determinant()==0.0) throw("singular Jacobian in broydenEigen");
-        //Jinv = Jac.inverse();
-        double maxdiff = 0.;
-        for (int i = 0; i < fnew.size(); ++i) {
-          maxdiff = max(maxdiff, fabs(fnew[i]));
-        }
-        if (maxdiff < TOLF) {
-          return;
-        }
-        xold = xnew;
-        fold = fnew;
-      }
-      throw("exceed MAXITS in broyden");
-    }
-
-  }
-
-  using namespace ThermalModelBaseNamespace;
-
-
   ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
     m_TPS(TPS_), 
     m_Parameters(params),
@@ -704,7 +37,8 @@ namespace thermalfist {
     m_Volume = params.V;
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiestotalweak.resize(m_TPS->Particles().size());
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
+
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
     m_skewprim.resize(m_TPS->Particles().size());
@@ -733,6 +67,8 @@ namespace thermalfist {
     SetStatistics(m_QuantumStats);
     SetCalculationType(IdealGasFunctions::Quadratures);
     SetUseWidth(TPS()->ResonanceWidthIntegrationType());
+
+    ResetCalculatedFlags();
 
     m_ValidityLog = "";
   }
@@ -780,83 +116,83 @@ namespace thermalfist {
   void ThermalModelBase::SetParameters(const ThermalModelParameters& params) {
     m_Parameters = params;
     m_Volume = m_Parameters.V;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetTemperature(double T)
   {
     m_Parameters.T = T;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetBaryonChemicalPotential(double muB)
   {
     m_Parameters.muB = muB;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetElectricChemicalPotential(double muQ)
   {
     m_Parameters.muQ = muQ;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStrangenessChemicalPotential(double muS)
   {
     m_Parameters.muS = muS;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetCharmChemicalPotential(double muC)
   {
     m_Parameters.muC = muC;
     FillChemicalPotentials();
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaS(double gammaS)
   {
     m_Parameters.gammaS = gammaS;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaC(double gammaC)
   {
     m_Parameters.gammaC = gammaC;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetBaryonCharge(int B)
   {
     m_Parameters.B = B;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetElectricCharge(int Q)
   {
     m_Parameters.Q = Q;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStrangeness(int S)
   {
     m_Parameters.S = S;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetCharm(int C)
   {
     m_Parameters.C = C;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetGammaq(double gammaq)
   {
     m_Parameters.gammaq = gammaq;
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
 
@@ -865,14 +201,14 @@ namespace thermalfist {
     m_Chem.resize(m_TPS->Particles().size());
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiestotalweak.resize(m_TPS->Particles().size());
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
     m_skewprim.resize(m_TPS->Particles().size());
     m_skewtot.resize(m_TPS->Particles().size());
     m_kurtprim.resize(m_TPS->Particles().size());
     m_kurttot.resize(m_TPS->Particles().size());
-    m_Calculated = false;
+    ResetCalculatedFlags();
   }
 
   void ThermalModelBase::SetStatistics(bool stats) {
@@ -924,16 +260,30 @@ namespace thermalfist {
       m_TPS->ProcessDecays();
     }
 
+    // Primordial
+    m_densitiesbyfeeddown[static_cast<int>(Feeddown::Primordial)] = m_densities;
+
+    // According to stability flags
+    int feed_index = static_cast<int>(Feeddown::StabilityFlag);
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       m_densitiestotal[i] = m_densities[i];
-      for (int j = 0; j < m_TPS->Particles()[i].DecayContributions().size(); ++j)
-        if (i != m_TPS->Particles()[i].DecayContributions()[j].second) m_densitiestotal[i] += m_TPS->Particles()[i].DecayContributions()[j].first * m_densities[m_TPS->Particles()[i].DecayContributions()[j].second];
+      const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+      for (int j = 0; j < decayContributions.size(); ++j)
+        if (i != decayContributions[j].second) 
+          m_densitiestotal[i] += decayContributions[j].first * m_densities[decayContributions[j].second];
     }
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      m_densitiestotalweak[i] = m_densities[i];
-      for (int j = 0; j < m_TPS->Particles()[i].WeakDecayContributions().size(); ++j)
-        if (i != m_TPS->Particles()[i].WeakDecayContributions()[j].second) m_densitiestotalweak[i] += m_TPS->Particles()[i].WeakDecayContributions()[j].first * m_densities[m_TPS->Particles()[i].WeakDecayContributions()[j].second];
+    m_densitiesbyfeeddown[feed_index] = m_densitiestotal;
+
+    // Weak, EM, strong
+    for (feed_index = static_cast<int>(Feeddown::Weak); feed_index <= static_cast<int>(Feeddown::Strong); ++feed_index) {
+      for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+        m_densitiesbyfeeddown[feed_index][i] = m_densities[i];
+        const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+        for (int j = 0; j < decayContributions.size(); ++j)
+          if (i != decayContributions[j].second)
+            m_densitiesbyfeeddown[feed_index][i] += decayContributions[j].first * m_densities[decayContributions[j].second];
+      }
     }
 
   }
@@ -972,7 +322,6 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::FixParametersNoReset() {
-    //printf("FixQB: %lf\n", m_Parameters.muB);
     if (fabs(m_Parameters.muB) < 1e-6) {
       m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
@@ -984,8 +333,6 @@ namespace thermalfist {
     m_ConstrainMuS &= m_TPS->hasStrange();
     m_ConstrainMuC &= m_TPS->hasCharmed();
 
-    //printf("%d %d %d\n", (int)m_ConstrainMuQ, (int)m_ConstrainMuS, (int)m_ConstrainMuC);
-
     vector<double> x22(3);
     x22[0] = m_Parameters.muQ;
     x22[1] = m_Parameters.muS;
@@ -995,18 +342,14 @@ namespace thermalfist {
     xinit[1] = x2[1] = m_Parameters.muS;
     xinit[2] = x2[2] = m_Parameters.muC;
     int iter = 0, iterMAX = 2;
-    //m_ConstrainMuS = 0;
     while (iter < iterMAX) {
-      try {
-        if (0 && m_ConstrainMuQ && m_ConstrainMuS && !m_ConstrainMuC)
-          broyden2(x22, ThermalModelBaseNamespace::function2, this);
-        else
-          broydenEigen(x22, this);
-      }
-      catch (...) {
-      }
+      BroydenEquationsChem eqs(this);
+      BroydenJacobianChem jaco(this);
+      BroydenChem broydn(this, &eqs, &jaco);
+      Broyden::BroydenSolutionCriterium crit(1.0E-8);
+      broydn.Solve(x22, &crit);
       break;
-      iter++;
+      iter++; // Obsolete
     }
   }
 
@@ -1051,11 +394,18 @@ namespace thermalfist {
     xin[2] = muSinit;
     xin[3] = muCinit;
 
-    try {
-      broydenEigen2(xin, vConstr, vType, vTotals, this);
+    vector<double> xinactual;
+    for (int i = 0; i < 4; ++i) {
+      if (vConstr[i]) {
+        xinactual.push_back(xin[i]);
+      }
     }
-    catch (...) {
-    }
+
+    BroydenEquationsChemTotals eqs(vConstr, vType, vTotals, this);
+    BroydenJacobianChemTotals jaco(vConstr, vType, vTotals, this);
+    Broyden broydn(&eqs, &jaco);
+    Broyden::BroydenSolutionCriterium crit(1.0E-8);
+    broydn.Solve(xinactual, &crit);
   }
 
   void ThermalModelBase::ValidateCalculation()
@@ -1078,10 +428,10 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelBase::FixParameters(double QB) {
-    m_QBgoal = QB;
-    FixParameters();
-  }
+  //void ThermalModelBase::FixParameters(double QB) {
+  //  m_QBgoal = QB;
+  //  FixParameters();
+  //}
 
   double ThermalModelBase::GetParticlePrimordialDensity(unsigned int part) {
     if (!m_Calculated) CalculateDensities();
@@ -1186,12 +536,8 @@ namespace thermalfist {
   }
 
 
-  double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
-    std::vector<double> *dens;
-    if (feeddown == 0) dens = &m_densities;
-    else if (feeddown == 1) dens = &m_densitiestotal;
-    else dens = &m_densitiestotalweak;
-
+  double ThermalModelBase::GetDensity(int PDGID, const std::vector<double> *dens)
+  {
     if (m_TPS->PdgToId(PDGID) != -1)
       return dens->operator[](m_TPS->PdgToId(PDGID));
 
@@ -1203,12 +549,36 @@ namespace thermalfist {
       return dens->operator[](m_TPS->PdgToId(3334)) + dens->operator[](m_TPS->PdgToId(-3334));
 
     // 22120 - nucleons
-    if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112)  != -1)
+    if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
       return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
     printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
 
     return 0.;
+  }
+
+  double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
+    std::vector<double> *dens;
+    if (feeddown == 0) dens = &m_densities;
+    else if (feeddown == 1) dens = &m_densitiestotal;
+    else dens = &m_densitiesbyfeeddown[static_cast<int>(Feeddown::Weak)];
+
+    return GetDensity(PDGID, dens);
+  }
+
+  double ThermalModelBase::GetDensity(int PDGID, Feeddown::Type feeddown)
+  {
+    std::vector<double> *dens;
+    if (feeddown == Feeddown::Primordial) 
+      dens = &m_densities;
+    else if (feeddown == Feeddown::StabilityFlag) 
+      dens = &m_densitiestotal;
+    else if (static_cast<int>(feeddown) < m_densitiesbyfeeddown.size()) 
+      dens = &m_densitiesbyfeeddown[static_cast<int>(feeddown)];
+    else {
+      printf("**WARNING** %s: GetDensity: Unknown feeddown: %d\n", m_TAG.c_str(), static_cast<int>(feeddown));
+    }
+    return GetDensity(PDGID, dens);
   }
 
 
@@ -1218,6 +588,13 @@ namespace thermalfist {
       ret[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], 0.);
     }
     return ret;
+  }
+
+  void ThermalModelBase::ResetCalculatedFlags()
+  {
+    m_Calculated = false;
+    m_FluctuationsCalculated = false;
+    m_GCECalculated = false;
   }
 
   double ThermalModelBase::ChargedMultiplicity(int type)
@@ -1242,7 +619,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVariance(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVariance(int): Fluctuations were not calculated", m_TAG.c_str());
+      printf("**WARNING** %s: ChargedScaledVariance(int): Fluctuations were not calculated\n", m_TAG.c_str());
       return 1.;
     }
     double ret = 0.0;
@@ -1293,7 +670,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVarianceFinal(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVarianceFinal(int): Fluctuations were not calculated", m_TAG.c_str());
+      printf("**WARNING** %s: ChargedScaledVarianceFinal(int): Fluctuations were not calculated\n", m_TAG.c_str());
       return 1.;
     }
     int op = type;
@@ -1310,7 +687,7 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateTwoParticleCorrelations() {
-    printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented", m_TAG.c_str());
+    printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented\n", m_TAG.c_str());
   }
 
 
@@ -1458,7 +835,564 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateFluctuations() {
-    printf("**WARNING** %s: Calculation of fluctuations is not implemented", m_TAG.c_str());
+    printf("**WARNING** %s: Calculation of fluctuations is not implemented\n", m_TAG.c_str());
+  }
+
+  std::vector<double> ThermalModelBase::BroydenEquationsChem::Equations(const std::vector<double>& x)
+  {
+    std::vector<double> ret(m_N, 0.);
+
+    int i1 = 0;
+    if (m_THM->ConstrainMuQ()) { m_THM->SetElectricChemicalPotential(x[i1]); i1++; }
+    if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
+    if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
+    m_THM->FillChemicalPotentials();
+    m_THM->CalculateDensities();
+
+    i1 = 0;
+
+    // Electric charge
+    if (m_THM->ConstrainMuQ()) {
+      double fBd = m_THM->CalculateBaryonDensity();
+      double fQd = m_THM->CalculateChargeDensity();
+
+      ret[i1] = (fQd / fBd - m_THM->QoverB()) / m_THM->QoverB();
+
+      i1++;
+    }
+
+
+    // Strangeness
+    if (m_THM->ConstrainMuS()) {
+      double fSd = m_THM->CalculateStrangenessDensity();
+      double fASd = m_THM->CalculateAbsoluteStrangenessDensity();
+
+      ret[i1] = fSd / fASd;
+
+      i1++;
+    }
+
+
+    // Charm
+    if (m_THM->ConstrainMuC()) {
+      double fCd = m_THM->CalculateCharmDensity();
+      double fACd = m_THM->CalculateAbsoluteCharmDensity();
+
+      ret[i1] = fCd / fACd;
+
+      i1++;
+    }
+
+    return ret;
+  }
+
+  Eigen::MatrixXd ThermalModelBase::BroydenJacobianChem::Jacobian(const std::vector<double>& x)
+  {
+    int i1 = 0;
+    if (m_THM->ConstrainMuQ()) { m_THM->SetElectricChemicalPotential(x[i1]); i1++; }
+    if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
+    if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
+    m_THM->FillChemicalPotentials();
+    m_THM->CalculateDensities();
+
+    double fBd  = m_THM->CalculateBaryonDensity();
+    double fQd  = m_THM->CalculateChargeDensity();
+    double fSd  = m_THM->CalculateStrangenessDensity();
+    double fASd = m_THM->CalculateAbsoluteStrangenessDensity();
+    double fCd  = m_THM->CalculateCharmDensity();
+    double fACd = m_THM->CalculateAbsoluteCharmDensity();
+    
+    vector<double> m_wprim;
+    m_wprim.resize(m_THM->Densities().size());
+    for (int i = 0; i < m_wprim.size(); ++i)
+      m_wprim[i] = m_THM->CalculateParticleScaledVariance(i);
+
+    int NNN = 0;
+    if (m_THM->ConstrainMuQ()) NNN++;
+    if (m_THM->ConstrainMuS()) NNN++;
+    if (m_THM->ConstrainMuC()) NNN++;
+    MatrixXd ret(NNN, NNN);
+
+    i1 = 0;
+    // Electric charge derivatives
+    if (m_THM->ConstrainMuQ()) {
+      int i2 = 0;
+
+      double d1 = 0., d2 = 0.;
+
+      if (m_THM->ConstrainMuQ()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuS()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuC()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+
+        i2++;
+      }
+
+      i1++;
+    }
+
+
+    // Strangeness derivatives
+    if (m_THM->ConstrainMuS()) {
+      int i2 = 0;
+
+      double d1 = 0., d2 = 0.;
+
+      if (m_THM->ConstrainMuQ()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuS()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuC()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
+
+        i2++;
+      }
+
+      i1++;
+    }
+
+
+    // Charm derivatives
+    if (m_THM->ConstrainMuC()) {
+      int i2 = 0;
+
+      double d1 = 0., d2 = 0.;
+
+      if (m_THM->ConstrainMuQ()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuS()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
+
+        i2++;
+      }
+
+
+      if (m_THM->ConstrainMuC()) {
+        d1 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d1 /= m_THM->Parameters().T;
+
+        d2 = 0.;
+        for (int i = 0; i < m_wprim.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
+        d2 /= m_THM->Parameters().T;
+
+        ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
+
+        i2++;
+      }
+
+      i1++;
+    }
+
+    return ret;
+  }
+
+  std::vector<double> ThermalModelBase::BroydenChem::Solve(const std::vector<double>& x0, BroydenSolutionCriterium * solcrit, int max_iterations)
+  {
+    if (m_Equations == NULL) {
+      printf("**ERROR** Broyden::Solve: Equations to solve not specified!\n");
+      exit(1);
+    }
+
+    int NNN = 0;
+    std::vector<double> xcur;
+    if (m_THM->ConstrainMuQ()) { xcur.push_back(x0[0]); NNN++; }
+    if (m_THM->ConstrainMuS()) { xcur.push_back(x0[1]); NNN++; }
+    if (m_THM->ConstrainMuC()) { xcur.push_back(x0[2]); NNN++; }
+    if (NNN == 0) {
+      m_THM->FillChemicalPotentials();
+      return xcur;
+    }
+
+    m_Equations->SetDimension(NNN);
+
+    m_MaxIterations = max_iterations;
+
+    BroydenSolutionCriterium *SolutionCriterium = solcrit;
+    bool UseDefaultSolutionCriterium = false;
+    if (SolutionCriterium == NULL) {
+      SolutionCriterium = new BroydenSolutionCriterium(TOL);
+      UseDefaultSolutionCriterium = true;
+    }
+
+    BroydenJacobian *JacobianInUse = m_Jacobian;
+    bool UseDefaultJacobian = false;
+    if (JacobianInUse == NULL) {
+      JacobianInUse = new BroydenJacobian(m_Equations);
+      UseDefaultJacobian = true;
+    }
+    m_Iterations = 0;
+    double &maxdiff = m_MaxDifference;
+    int N = m_Equations->Dimension();
+
+    
+
+    std::vector<double> tmpvec, xdeltavec = xcur;
+    VectorXd xold(N), xnew(N), xdelta(N);
+    VectorXd fold(N), fnew(N), fdelta(N);
+
+    xold = VectorXd::Map(&xcur[0], xcur.size());
+
+    MatrixXd Jac(N, N), Jinv(N, N);
+    Jac = JacobianInUse->Jacobian(xcur);
+
+    bool constrmuQ = m_THM->ConstrainMuQ();
+    bool constrmuS = m_THM->ConstrainMuS();
+    bool constrmuC = m_THM->ConstrainMuC();
+    bool repeat = false;
+    NNN = 0;
+    if (m_THM->ConstrainMuQ()) {
+      for (int j = 0; j < Jac.rows(); ++j)
+        if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuQ(false); }
+      double nQ = m_THM->CalculateChargeDensity();
+      double nB = m_THM->CalculateBaryonDensity();
+      if (abs(nQ) < 1.e-25 || abs(nB) < 1.e-25) { repeat = true; m_THM->ConstrainMuQ(false); }
+      NNN++;
+    }
+    if (m_THM->ConstrainMuS()) {
+      for (int j = 0; j < Jac.rows(); ++j)
+        if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuS(false); }
+
+      double nS = m_THM->CalculateAbsoluteStrangenessDensity();
+      if (abs(nS) < 1.e-25) { repeat = true; m_THM->ConstrainMuS(false); }
+      NNN++;
+    }
+    if (m_THM->ConstrainMuC()) {
+      for (int j = 0; j < Jac.rows(); ++j)
+        if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuC(false); }
+      double nC = m_THM->CalculateAbsoluteCharmDensity();
+      if (abs(nC) < 1.e-25) { repeat = true; m_THM->ConstrainMuC(false); }
+      NNN++;
+    }
+    if (repeat) {
+      std::vector<double> ret = Solve(x0, solcrit, max_iterations);
+      m_THM->ConstrainMuQ(constrmuQ);
+      m_THM->ConstrainMuS(constrmuS);
+      m_THM->ConstrainMuC(constrmuC);
+      return ret;
+    }
+
+    if (Jac.determinant() == 0.0)
+    {
+      printf("**WARNING** Singular Jacobian in Broyden::Solve\n");
+      return xcur;
+    }
+
+    Jinv = Jac.inverse();
+    tmpvec = m_Equations->Equations(xcur);
+    fold = VectorXd::Map(&tmpvec[0], tmpvec.size());
+
+    for (m_Iterations = 1; m_Iterations < max_iterations; ++m_Iterations) {
+      xnew = xold - Jinv * fold;
+
+      VectorXd::Map(&xcur[0], xcur.size()) = xnew;
+
+      tmpvec = m_Equations->Equations(xcur);
+      fnew = VectorXd::Map(&tmpvec[0], tmpvec.size());
+
+
+      maxdiff = 0.;
+      for (int i = 0; i < xcur.size(); ++i) {
+        maxdiff = std::max(maxdiff, fabs(fnew[i]));
+      }
+
+      xdelta = xnew - xold;
+      fdelta = fnew - fold;
+
+      VectorXd::Map(&xdeltavec[0], xdeltavec.size()) = xdelta;
+
+      if (SolutionCriterium->IsSolved(xcur, tmpvec, xdeltavec))
+        break;
+
+      if (!m_UseNewton) // Use Broyden's method
+      {
+
+        double norm = 0.;
+        for (int i = 0; i < N; ++i)
+          for (int j = 0; j < N; ++j)
+            norm += xdelta[i] * Jinv(i, j) * fdelta[j];
+        VectorXd p1(N);
+        p1 = (xdelta - Jinv * fdelta);
+        for (int i = 0; i < N; ++i) p1[i] *= 1. / norm;
+        Jinv = Jinv + (p1 * xdelta.transpose()) * Jinv;
+      }
+      else // Use Newton's method
+      {
+        Jac = JacobianInUse->Jacobian(xcur);
+        Jinv = Jac.inverse();
+      }
+
+      xold = xnew;
+      fold = fnew;
+    }
+
+    if (m_Iterations == max_iterations) {
+      printf("**WARNING** Reached maximum number of iterations in Broyden procedure\n");
+    }
+
+    if (UseDefaultSolutionCriterium) {
+      delete SolutionCriterium;
+      SolutionCriterium = NULL;
+    }
+    if (UseDefaultJacobian) {
+      delete JacobianInUse;
+      JacobianInUse = NULL;
+    }
+    return xcur;
+  }
+
+
+  ThermalModelBase::BroydenEquationsChemTotals::BroydenEquationsChemTotals(const std::vector<int>& vConstr, const std::vector<int>& vType, const std::vector<double>& vTotals, ThermalModelBase * model) :
+    BroydenEquations(), m_Constr(vConstr), m_Type(vType), m_Totals(vTotals), m_THM(model)
+  {
+    m_N = 0;
+    for (int i = 0; i < m_Constr.size(); ++i)
+      m_N += m_Constr[i];
+  }
+
+  std::vector<double> ThermalModelBase::BroydenEquationsChemTotals::Equations(const std::vector<double>& x)
+  {
+    std::vector<double> ret(m_N, 0.);
+
+    int i1 = 0;
+    for (int i = 0; i < 4; ++i) {
+      if (m_Constr[i]) {
+        if (i == 0) m_THM->SetBaryonChemicalPotential(x[i1]);
+        if (i == 1) m_THM->SetElectricChemicalPotential(x[i1]);
+        if (i == 2) m_THM->SetStrangenessChemicalPotential(x[i1]);
+        if (i == 3) m_THM->SetCharmChemicalPotential(x[i1]);
+        i1++;
+      }
+    }
+    m_THM->FillChemicalPotentials();
+    m_THM->CalculateDensities();
+
+    vector<double> dens(4, 0.), absdens(4, 0.);
+    if (m_Constr[0]) {
+      dens[0] = m_THM->CalculateBaryonDensity();
+      absdens[0] = m_THM->CalculateAbsoluteBaryonDensity();
+    }
+    if (m_Constr[1]) {
+      dens[1] = m_THM->CalculateChargeDensity();
+      absdens[1] = m_THM->CalculateAbsoluteChargeDensity();
+    }
+    if (m_Constr[2]) {
+      dens[2] = m_THM->CalculateStrangenessDensity();
+      absdens[2] = m_THM->CalculateAbsoluteStrangenessDensity();
+    }
+    if (m_Constr[3]) {
+      dens[3] = m_THM->CalculateCharmDensity();
+      absdens[3] = m_THM->CalculateAbsoluteCharmDensity();
+    }
+
+    i1 = 0;
+
+    for (int i = 0; i < 4; ++i) {
+      if (m_Constr[i]) {
+        if (m_Type[i] == 0)
+          ret[i1] = (dens[i] * m_THM->Parameters().V - m_Totals[i]) / m_Totals[i];
+        else
+          ret[i1] = dens[i] / absdens[i];
+        i1++;
+      }
+    }
+
+    return ret;
+  }
+
+  Eigen::MatrixXd ThermalModelBase::BroydenJacobianChemTotals::Jacobian(const std::vector<double>& x)
+  {
+    int NNN = 0;
+    for (int i = 0; i < 4; ++i) NNN += m_Constr[i];
+
+    int i1 = 0;
+
+    for (int i = 0; i < 4; ++i) {
+      if (m_Constr[i]) {
+        if (i == 0) m_THM->SetBaryonChemicalPotential(x[i1]);
+        if (i == 1) m_THM->SetElectricChemicalPotential(x[i1]);
+        if (i == 2) m_THM->SetStrangenessChemicalPotential(x[i1]);
+        if (i == 3) m_THM->SetCharmChemicalPotential(x[i1]);
+        i1++;
+      }
+    }
+
+    vector<double> tfug(4, 0.);
+    tfug[0] = exp(m_THM->Parameters().muB / m_THM->Parameters().T);
+    tfug[1] = exp(m_THM->Parameters().muQ / m_THM->Parameters().T);
+    tfug[2] = exp(m_THM->Parameters().muS / m_THM->Parameters().T);
+    tfug[3] = exp(m_THM->Parameters().muC / m_THM->Parameters().T);
+
+    m_THM->FillChemicalPotentials();
+    m_THM->CalculateDensities();
+
+    vector<double> dens(4, 0.), absdens(4, 0.);
+    if (m_Constr[0]) {
+      dens[0] = m_THM->CalculateBaryonDensity();
+      absdens[0] = m_THM->CalculateAbsoluteBaryonDensity();
+    }
+    if (m_Constr[1]) {
+      dens[1] = m_THM->CalculateChargeDensity();
+      absdens[1] = m_THM->CalculateAbsoluteChargeDensity();
+    }
+    if (m_Constr[2]) {
+      dens[2] = m_THM->CalculateStrangenessDensity();
+      absdens[2] = m_THM->CalculateAbsoluteStrangenessDensity();
+    }
+    if (m_Constr[3]) {
+      dens[3] = m_THM->CalculateCharmDensity();
+      absdens[3] = m_THM->CalculateAbsoluteCharmDensity();
+    }
+
+    vector<double> m_wprim;
+    m_wprim.resize(m_THM->Densities().size());
+    for (int i = 0; i < m_wprim.size(); ++i) m_wprim[i] = m_THM->CalculateParticleScaledVariance(i);
+
+    vector< vector<double> > deriv(4, vector<double>(4)), derivabs(4, vector<double>(4));
+    for (int i = 0; i < 4; ++i)
+      for (int j = 0; j < 4; ++j) {
+        deriv[i][j] = 0.;
+        for (int part = 0; part < m_wprim.size(); ++part)
+          deriv[i][j] += m_THM->TPS()->Particles()[part].GetCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * m_wprim[part];
+        deriv[i][j] /= m_THM->Parameters().T;
+
+        derivabs[i][j] = 0.;
+        for (int part = 0; part < m_wprim.size(); ++part)
+          derivabs[i][j] += m_THM->TPS()->Particles()[part].GetAbsCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * m_wprim[part];
+        derivabs[i][j] /= m_THM->Parameters().T;
+      }
+
+
+    MatrixXd ret(NNN, NNN);
+
+    i1 = 0;
+
+    for (int i = 0; i < 4; ++i) {
+      if (m_Constr[i]) {
+        int i2 = 0;
+        for (int j = 0; j < 4; ++j)
+          if (m_Constr[j]) {
+            ret(i1, i2) = 0.;
+            if (m_Type[i] == 0)
+              ret(i1, i2) = deriv[i][j] * m_THM->Parameters().V / m_Totals[i];
+            else
+              ret(i1, i2) = deriv[i][j] / absdens[i] - dens[i] / absdens[i] / absdens[i] * derivabs[i][j];
+            i2++;
+          }
+        i1++;
+      }
+    }
+
+    return ret;
   }
 
 } // namespace thermalfist

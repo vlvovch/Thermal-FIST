@@ -26,7 +26,7 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
     QVBoxLayout *layout = new QVBoxLayout();
 
     QFont font = QApplication::font();
-    font.setPointSize(12);
+    font.setPointSize(font.pointSize() + 2);
     QLabel *labInfo = new QLabel(tr("Information:"));
     labInfo->setFont(font);
     data = new QTextEdit();
@@ -73,6 +73,18 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
     QLabel *labelTotalMultiplicity = new QLabel(tr("Total multiplicity = "));
     if (model->IsCalculated()) labelTotalMultiplicity->setText(labelTotalMultiplicity->text() +
                                                       QString::number(model->GetParticleTotalDensity(pid) * model->Volume()));
+
+    QLabel *labelStrongMultiplicity = new QLabel(tr("Primordial + strong = "));
+    if (model->IsCalculated()) labelStrongMultiplicity->setText(labelStrongMultiplicity->text() +
+      QString::number(model->GetDensity(model->TPS()->Particle(pid).PdgId(), Feeddown::Strong) * model->Volume()));
+
+    QLabel *labelEMMultiplicity = new QLabel(tr("Primordial + strong + EM = "));
+    if (model->IsCalculated()) labelEMMultiplicity->setText(labelEMMultiplicity->text() +
+      QString::number(model->GetDensity(model->TPS()->Particle(pid).PdgId(), Feeddown::Electromagnetic) * model->Volume()));
+
+    QLabel *labelWeakMultiplicity = new QLabel(tr("Primordial + strong + EM + weak = "));
+    if (model->IsCalculated()) labelWeakMultiplicity->setText(labelWeakMultiplicity->text() +
+      QString::number(model->GetDensity(model->TPS()->Particle(pid).PdgId(), Feeddown::Weak) * model->Volume()));
 
     tableSources = new QTableWidget();
     tableSources->setColumnCount(3);
@@ -122,6 +134,9 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
     layoutProd->addWidget(labelPrimDensity);
     layoutProd->addWidget(labelPrimMultiplicity);
     layoutProd->addWidget(labelTotalMultiplicity);
+    layoutProd->addWidget(labelStrongMultiplicity);
+    layoutProd->addWidget(labelEMMultiplicity);
+    layoutProd->addWidget(labelWeakMultiplicity);
     layoutProd->addWidget(tableSources);
 
     QHBoxLayout *mainLayout = new QHBoxLayout();
@@ -150,18 +165,42 @@ QString ParticleDialog::GetParticleInfo() {
 
     ret += tr("Type") + "\t\t= ";
     if (model->TPS()->Particles()[pid].BaryonCharge()==0) ret += tr("Meson") + "\r\n";
-    else if (model->TPS()->Particles()[pid].BaryonCharge()>0) ret += tr("Baryon") + "\r\n";
-    else ret += "Anti-Baryon\r\n";
+    else if (model->TPS()->Particles()[pid].BaryonCharge() == 1) ret += tr("Baryon") + "\r\n";
+    else if (model->TPS()->Particles()[pid].BaryonCharge() == -1) ret += "Anti-Baryon\r\n";
+    else if (model->TPS()->Particles()[pid].BaryonCharge() > 1) ret += tr("Light nucleus") + "\r\n";
+    else if (model->TPS()->Particles()[pid].BaryonCharge() < -1) ret += tr("Light antinucleus") + "\r\n";
 
-    ret +=  tr("Stable?") + "\t\t= ";
-    if (model->TPS()->Particles()[pid].IsStable()) ret += tr("Yes") + "\r\n";
-    else ret += "No\r\n";
+    ret +=  tr("Stability flag") + "\t= ";
+    if (model->TPS()->Particles()[pid].IsStable()) ret += "1\r\n";
+    else ret += "0\r\n";
+    //if (model->TPS()->Particles()[pid].IsStable()) ret += tr("Yes") + "\r\n";
+    //else ret += "No\r\n";
+
+    ret += tr("Decay type") + "\t= ";
+    ParticleDecay::DecayType dtype = model->TPS()->Particles()[pid].DecayType();
+    if (dtype == ParticleDecay::Strong) ret += "Strong\r\n";
+    else if (dtype == ParticleDecay::Electromagnetic) ret += "Electromagnetic\r\n";
+    else if (dtype == ParticleDecay::Weak) ret += "Weak\r\n";
+    else ret += "Stable\r\n";
 
     ret += tr("Neutral?") + "\t\t= ";
     if (model->TPS()->Particles()[pid].IsNeutral()) ret +=  tr("Yes") + "\r\n";
     else ret += "No\r\n";
 
-    ret += tr("Spin degeneracy") + "\t= ";
+    ret += tr("Statistics") + "\t\t= ";
+    double tstat = model->TPS()->Particles()[pid].Statistics();
+    if (tstat > 0)
+      ret += "+";
+    ret += QString::number(tstat);
+    if (tstat == 1.)
+      ret += " (Fermi-Dirac)";
+    else if (tstat == -1.)
+      ret += " (Bose-Einstein)";
+    else if (tstat == 0.)
+      ret += " (Boltzmann)";
+    ret += "\r\n";
+
+    ret += tr("Degeneracy") + "\t= ";
     ret += QString::number(model->TPS()->Particles()[pid].Degeneracy()) + "\r\n";
 
     ret += tr("Electric charge") + "\t= ";
@@ -173,16 +212,19 @@ QString ParticleDialog::GetParticleInfo() {
     ret += tr("Charm") + "\t\t= ";
     ret += QString::number(model->TPS()->Particles()[pid].Charm()) + "\r\n";
 
-    ret += tr("Abs. strangeness") + "\t= ";
+    ret += tr("|u,d|") + "\t\t= ";
+    ret += QString::number(model->TPS()->Particles()[pid].AbsoluteQuark()) + "\r\n";
+
+    ret += tr("|s|") + "\t\t= ";
     ret += QString::number(model->TPS()->Particles()[pid].AbsoluteStrangeness()) + "\r\n";
 
-    ret += tr("Charm content") + "\t= ";
+    ret += tr("|c|") + "\t\t= ";
     ret += QString::number(model->TPS()->Particles()[pid].AbsoluteCharm()) + "\r\n";
 
-		ret += tr("Isospin") + "\t= ";
+		ret += tr("Isospin") + "\t\t= ";
 		ret += QString::number(2*model->TPS()->Particles()[pid].ElectricCharge() - model->TPS()->Particles()[pid].BaryonCharge() - model->TPS()->Particles()[pid].Strangeness() - model->TPS()->Particles()[pid].Charm()) + "\r\n";
 
-		ret += tr("I3") + "\t= ";
+		ret += tr("I3") + "\t\t= ";
 		ret += QString::number(model->TPS()->Particles()[pid].ElectricCharge() - (model->TPS()->Particles()[pid].BaryonCharge() + model->TPS()->Particles()[pid].Strangeness() + model->TPS()->Particles()[pid].Charm())/2.) + "\r\n";
 
     if (model->TPS()->Particles()[pid].ResonanceWidth()>1e-5) {

@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 
 namespace thermalfist {
 

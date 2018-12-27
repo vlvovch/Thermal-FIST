@@ -43,7 +43,7 @@ namespace thermalfist {
     int      S;        /**< Total strangeness charge (CE) */
     int      C;        /**< Total charm charge (CE) */
 
-    ThermalModelParameters(double pT = 0.1, double pmuB = 0.5, double pmuS = 0., double pmuQ = 0., double pgammaS = 1., double pV = 4000., double pSVc = 1., int pB = 2, int pQ = 2, int pS = 0, int pC = 0) :
+    ThermalModelParameters(double pT = 0.155, double pmuB = 0.000, double pmuS = 0., double pmuQ = 0., double pgammaS = 1., double pV = 4000., double pSVc = 1., int pB = 2, int pQ = 2, int pS = 0, int pC = 0) :
       T(pT), muB(pmuB), muS(pmuS), muQ(pmuQ), muC(0.), gammaq(1.), gammaS(pgammaS), gammaC(1.), V(pV), SVc(pSVc), B(pB), Q(pQ), S(pS), C(pC) {
     }
 
@@ -52,13 +52,21 @@ namespace thermalfist {
     }
   };
 
+  struct Feeddown {
+    enum Type { Primordial = 0, StabilityFlag = 1, Weak = 2, Electromagnetic = 3, Strong = 4 };
+    static const int NumberOfTypes = 5;
+  };
+
   /**
   *   A structure containing information about a single decay channel of a particle.
   */
   struct ParticleDecay
   {
+    enum DecayType { Stable = 0, Default = 1, Weak = 2, Electromagnetic = 3, Strong = 4 };
+    static const int NumberOfDecayTypes = 5;
+    
     double mBratio;                /**< Branching ratio */
-    std::vector<int> mDaughters;    /**< PDGID numbers of daughter particles */
+    std::vector<int> mDaughters;   /**< PDGID numbers of daughter particles */
     double mM0;                    /**< Sum of masses of decay products */
 
     double mPole;
@@ -78,7 +86,12 @@ namespace thermalfist {
     }
 
     double ModifiedWidth(double m) const;
+
+    bool operator==(const ParticleDecay &rhs) const; // TODO: improve
+    bool operator!=(const ParticleDecay &rhs) const { return !(*this == rhs); }
   };
+
+  
 
   /**
   *   A class containing all information about a particle.
@@ -88,7 +101,7 @@ namespace thermalfist {
   {
   public:
     enum ResonanceWidthShape { RelativisticBreitWiger, NonRelativisticBreitWiger };
-    enum ResonanceWidthIntegration { ZeroWidth, BWTwoGamma, FullInterval, FullIntervalWeighted, eBW };
+    enum ResonanceWidthIntegration { ZeroWidth, BWTwoGamma, FullInterval, FullIntervalWeighted, eBW, eBWconstBR };
 
     ThermalParticle(bool Stable_ = true, std::string Name = "hadron", int PDGID = 0, double Deg = 1., int Stat = 0, double Mass = 0.,
       int Strange = 0, int Baryon = 0, int Charge = 0, double AbsS = 0., double Width = 0., double Threshold = 0., int Charm = 0, double AbsC = 0., double radius = 0.5, int Quark = 0);
@@ -139,22 +152,23 @@ namespace thermalfist {
     void SetAntiParticle(bool antpar = true) { m_AntiParticle = antpar; }
 
     const std::string& Name() const { return m_Name; }
-    void SetName(std::string &name) { m_Name = name; }
+    void SetName(const std::string &name) { m_Name = name; }
 
     int  PdgId() const { return m_PDGID; }
     void SetPdgId(int PdgId) { m_PDGID = PdgId; }
 
-    int  Degeneracy() const { return m_Degeneracy; }
+    double Degeneracy() const { return m_Degeneracy; }
     void SetDegeneracy(double deg) { m_Degeneracy = deg; }
 
     int  Statistics() const { return m_Statistics; }
+    void SetStatistics(int stat) { m_Statistics = stat; }
     void UseStatistics(bool enable);
 
     double Mass() const { return m_Mass; }
     void SetMass(double mass);// { m_Mass = mass; }
 
     int BaryonCharge() const { return m_Baryon; }
-    void SetBaryonCharge(int chg) { m_Baryon = chg; }
+    void SetBaryonCharge(int chg) { m_Baryon = chg; SetAbsoluteQuark(GetAbsQ()); }
 
     int ElectricCharge() const { return m_ElectricCharge; }
     void SetElectricCharge(int chg) { m_ElectricCharge = chg; }
@@ -172,10 +186,10 @@ namespace thermalfist {
     void SetAbsoluteQuark(double abschg) { m_AbsQuark = abschg; }
 
     double AbsoluteStrangeness() const { return m_AbsS; }
-    void SetAbsoluteStrangeness(double abschg) { m_AbsS = abschg; }
+    void SetAbsoluteStrangeness(double abschg) { m_AbsS = abschg; SetAbsoluteQuark(GetAbsQ()); }
 
     double AbsoluteCharm() const { return m_AbsC; }
-    void SetAbsoluteCharm(double abschg) { m_AbsC = abschg; }
+    void SetAbsoluteCharm(double abschg) { m_AbsC = abschg; SetAbsoluteQuark(GetAbsQ()); }
 
     double ResonanceWidth() const { return m_Width; }
     void SetResonanceWidth(double width);// { m_Width = width; }
@@ -202,8 +216,8 @@ namespace thermalfist {
     double Weight() const { return m_Weight; }
     void SetWeight(double weight) { m_Weight = weight; }
 
-    int DecayType() const { return m_DecayType; }
-    void SetDecayType(int type) { m_DecayType = type; }
+    ParticleDecay::DecayType DecayType() const { return m_DecayType; }
+    void SetDecayType(ParticleDecay::DecayType type) { m_DecayType = type; }
 
     const std::vector<ParticleDecay>& Decays() const { return m_Decays; }
     std::vector<ParticleDecay>& Decays() { return m_Decays; }
@@ -216,11 +230,11 @@ namespace thermalfist {
 
     void ReadDecays(std::string filename = "");
 
-    const std::vector< std::pair<double, int> >&    DecayContributions()        const { return m_DecayContributions; }
-    std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributions; }
+    const std::vector< std::pair<double, int> >&    DecayContributions() const { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
+    std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
 
-    const std::vector< std::pair<double, int> >& WeakDecayContributions()    const { return m_WeakDecayContributions; }
-    std::vector< std::pair<double, int> >& WeakDecayContributions() { return m_WeakDecayContributions; }
+    const std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown()    const { return m_DecayContributionsByFeeddown; }
+    std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown() { return m_DecayContributionsByFeeddown; }
 
     const std::vector< std::pair<double, int> >& DecayContributionsSigmas() const { return m_DecayContributionsSigmas; }
     std::vector< std::pair<double, int> >& DecayContributionsSigmas() { return m_DecayContributionsSigmas; }
@@ -251,6 +265,11 @@ namespace thermalfist {
     const std::vector<double>& DeltaNch() const { return m_DeltaNch; }
     std::vector<double>&  DeltaNch() { return m_DeltaNch; }
 
+    ThermalParticle GenerateAntiParticle(/*ThermalParticleSystem *TPS = NULL*/) const;
+
+    bool operator==(const ThermalParticle &rhs) const; // TODO: improve
+    bool operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
+
   private:
     /**
     *  Auxiliary coefficients used for numerical integration using quadratures
@@ -271,7 +290,9 @@ namespace thermalfist {
     std::vector<double> m_xalldyn, m_walldyn, m_densalldyn;
 
 
-    bool m_Stable;                /**< Flag whether particle is stable. */
+    bool m_Stable;                /**< Flag whether particle is marked stable. */
+    ParticleDecay::DecayType m_DecayType;        /**< Type wrt to decay: Stable, Default (placeholder), Weak, Electromagnetic, Strong */
+
     bool m_AntiParticle;          /**< Whether particle was created as an antiparticle to another one. */
     std::string m_Name;          /**< Particle name. */
     int m_PDGID;                  /**< PDG (HEP) ID of a particle. */
@@ -311,7 +332,7 @@ namespace thermalfist {
     double m_Vo;                  /**< Eigenvolume parameter (fm^3). Obsolete. To be removed. */
     double m_Weight;              /**< Weight of a given particle. Default is 1 */
 
-    int m_DecayType;                          /**< 0 - stable, 1 - strong, 2 - weak  */
+    //int m_DecayType;                          /**< 0 - stable, 1 - strong, 2 - weak  */
     std::vector<ParticleDecay> m_Decays;      /**< All decay channels currently in use.  */
 
                                             /**
@@ -323,7 +344,7 @@ namespace thermalfist {
     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
     *   Contains indexes (0-based) and average yields resulting from corresponding decay chains.
     */
-    std::vector< std::pair<double, int> > m_DecayContributions;
+    //std::vector< std::pair<double, int> > m_DecayContributions;
 
     /**
     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
@@ -332,10 +353,11 @@ namespace thermalfist {
     std::vector< std::pair<double, int> > m_DecayContributionsSigmas;
 
     /**
-    *   Contains information about decay chains of heavier particles including weak decay feeddown resulting in production of a present particle.
-    *   Contains indexes (0-based) and average yields resulting from corresponding decay chains.
+    *   Contains information about decay chains of heavier particles including strong, strong/electromagnetic, or strong/electromagnetic/weak decay feeddown resulting in production of a present particle.
+    *   For each feeddown type contains indexes (0-based) and average yields resulting from corresponding decay chains.
     */
-    std::vector< std::pair<double, int> > m_WeakDecayContributions;
+    std::vector< std::vector< std::pair<double, int> > > m_DecayContributionsByFeeddown;
+    //std::vector< std::pair<double, int> > m_WeakDecayContributions;
 
     /**
     *   Contains information about decay chains of heavier particles resulting in production of a present particle.

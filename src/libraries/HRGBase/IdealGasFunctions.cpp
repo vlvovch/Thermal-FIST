@@ -23,6 +23,8 @@ namespace thermalfist {
   namespace IdealGasFunctions {
 
     double BoltzmannDensity(double T, double mu, double m, double deg) {
+      if (m == 0.)
+        return deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2. * exp(mu/ T) * xMath::GeVtoifm3();
       return deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(2, m / T) * exp((mu - m) / T) * xMath::GeVtoifm3();
     }
 
@@ -31,6 +33,8 @@ namespace thermalfist {
     }
 
     double BoltzmannEnergyDensity(double T, double mu, double m, double deg) {
+      if (m == 0.)
+        return 3 * T * BoltzmannDensity(T, mu, m, deg);
       return (3 * T + m * xMath::BesselK1exp(m / T) / xMath::BesselKexp(2, m / T)) * BoltzmannDensity(T, mu, m, deg);
     }
 
@@ -39,6 +43,8 @@ namespace thermalfist {
     }
 
     double BoltzmannScalarDensity(double T, double mu, double m, double deg) {
+      if (m == 0.)
+        return 0.;
       return deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(1, m / T) * exp((mu - m) / T) * xMath::GeVtoifm3();
     }
 
@@ -195,7 +201,7 @@ namespace thermalfist {
       if (statistics == 0)           return BoltzmannDensity(T, mu, m, deg);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation\n");
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
         return 0.;
       }
 

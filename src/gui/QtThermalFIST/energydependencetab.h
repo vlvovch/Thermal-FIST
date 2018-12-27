@@ -1,3 +1,7 @@
+#ifndef ENERGYDEPENDENCETAB_H
+#define ENERGYDEPENDENCETAB_H
+
+#include <QWidget>
 /*
  * Thermal-FIST package
  * 
@@ -5,10 +9,6 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#ifndef ENERGYDEPENDENCETAB_H
-#define ENERGYDEPENDENCETAB_H
-
-#include <QWidget>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
@@ -21,7 +21,7 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 // This class is currently not in use
 

@@ -124,17 +124,23 @@ QVariant QuantitiesModel::data(const QModelIndex &index, int role) const
     else if (col == 7) {
       if (quantity.type == FittedQuantity::Multiplicity) {
         if (quantity.mult.fFeedDown == 0) return QString(tr("Primordial"));
-        if (quantity.mult.fFeedDown == 1) return QString(tr("Strong decays"));
-        if (quantity.mult.fFeedDown == 2) return QString(tr("Strong+weak decays"));
+        if (quantity.mult.fFeedDown == 1) return QString(tr("Stability flags"));
+        if (quantity.mult.fFeedDown == 2) return QString(tr("Strong+EM+weak decays"));
+        if (quantity.mult.fFeedDown == 3) return QString(tr("Strong+EM decays"));
+        if (quantity.mult.fFeedDown == 4) return QString(tr("Strong decays"));
       }
       else {
         QString str1, str2;
         if (quantity.ratio.fFeedDown1 == 0) str1 = QString(tr("Primordial"));
-        if (quantity.ratio.fFeedDown1 == 1) str1 = QString(tr("Strong decays"));
-        if (quantity.ratio.fFeedDown1 == 2) str1 = QString(tr("Strong+weak decays"));
+        if (quantity.ratio.fFeedDown1 == 1) str1 = QString(tr("Stability flags"));
+        if (quantity.ratio.fFeedDown1 == 2) str1 = QString(tr("Strong+EM+weak decays"));
+        if (quantity.ratio.fFeedDown1 == 3) str1 = QString(tr("Strong+EM decays"));
+        if (quantity.ratio.fFeedDown1 == 4) str1 = QString(tr("Strong decays"));
         if (quantity.ratio.fFeedDown2 == 0) str2 = QString(tr("Primordial"));
-        if (quantity.ratio.fFeedDown2 == 1) str2 = QString(tr("Strong decays"));
-        if (quantity.ratio.fFeedDown2 == 2) str2 = QString(tr("Strong+weak decays"));
+        if (quantity.ratio.fFeedDown2 == 1) str2 = QString(tr("Stability flags"));
+        if (quantity.ratio.fFeedDown2 == 2) str2 = QString(tr("Strong+EM+weak decays"));
+        if (quantity.ratio.fFeedDown2 == 3) str2 = QString(tr("Strong+EM decays"));
+        if (quantity.ratio.fFeedDown2 == 4) str2 = QString(tr("Strong decays"));
         return str1 + "/" + str2;
       }
       return QVariant();

@@ -1,6 +1,6 @@
 /*
  * Thermal-FIST package
- * 
+ *
  * Copyright (c) 2014-2018 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
@@ -24,7 +24,7 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 // This class is currently not in use
 

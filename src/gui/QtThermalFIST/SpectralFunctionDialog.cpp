@@ -18,7 +18,7 @@
 #include "ThermalFISTConfig.h"
 #include "HRGBase/NumericalIntegration.h"
 
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 using namespace thermalfist;
 

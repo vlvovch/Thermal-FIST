@@ -2,6 +2,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
 # Base part of the library  
 set(SRCS_HRGBase
+HRGBase/Broyden.cpp
 HRGBase/IdealGasFunctions.cpp
 HRGBase/NumericalIntegration.cpp
 HRGBase/ThermalModelIdeal.cpp
@@ -17,6 +18,7 @@ HRGBase/xMath.cpp
 source_group("HRGBase\\Source Files" FILES ${SRCS_HRGBase})
 
 set(HEADERS_HRGBase
+${PROJECT_SOURCE_DIR}/include/HRGBase/Broyden.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/IdealGasFunctions.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/BilinearSplineFunction.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/NumericalIntegration.h
@@ -55,14 +57,14 @@ source_group("HRGEV\\Header Files" FILES ${HEADERS_HRGEV})
 
 # van der Waals part of the library
 set(SRCS_HRGVDW
-HRGVDW/ThermalModelVDWFull.cpp
+HRGVDW/ThermalModelVDW.cpp
 HRGVDW/ThermalModelVDWCanonicalStrangeness.cpp
 )
 
 source_group("HRGVDW\\Source Files" FILES ${SRCS_HRGVDW})
 
 set(HEADERS_HRGVDW
-${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWFull.h
+${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDW.h
 ${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWCanonicalStrangeness.h
 )
 
@@ -70,14 +72,14 @@ source_group("HRGVDW\\Header Files" FILES ${HEADERS_HRGVDW})
 
 # Fitter
 file (GLOB HRGFIT_SOURCES_MINUIT
-      "HRGFit/Minuit/*.cpp"
-      "HRGFit/Minuit/*.cxx")
+      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/src/*.cpp"
+      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/src/*.cxx")
 
 file (GLOB HRGFIT_HEADERS_MINUIT
-      "${PROJECT_SOURCE_DIR}/include/HRGFit/Minuit/Minuit2/*.h")
+      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include/Minuit2/*.h")
 
 file (GLOB HRGFIT_HEADERS_MINUIT_MATH
-      "${PROJECT_SOURCE_DIR}/include/HRGFit/Minuit/Math/*.h")
+      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include/Math/*.h")
 	  
 set(SRCS_HRGFit
 HRGFit/ThermalModelFit.cpp
@@ -133,9 +135,9 @@ source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator
 # source_group("HRG" FILES ${HRG_SOURCES})
 
 # Properties->C/C++->General->Additional Include Directories
-include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
+include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/thirdparty")
 if (STANDALONE_MINUIT)
-  include_directories("${HRGFit_INCLUDE}/Minuit")
+  include_directories("${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include")
 endif()
 
 if (ROOT_FOUND AND NOT STANDALONE_MINUIT)
@@ -161,7 +163,7 @@ set_property(TARGET ThermalFIST PROPERTY FOLDER "libraries")
 
 #set_property(TARGET CuteHRG PROPERTY CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-target_include_directories(ThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
+target_include_directories(ThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/thirdparty")
 
 install (TARGETS ThermalFIST
          ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)

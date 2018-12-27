@@ -12,6 +12,7 @@
 
 #include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/xMath.h"
+#include "HRGBase/Broyden.h"
 
 
 namespace thermalfist {
@@ -78,6 +79,7 @@ namespace thermalfist {
 
     virtual void FillChemicalPotentials();
     virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
+    const std::vector<double>& ChemicalPotentials() const { return m_Chem; }
     double ChemicalPotential(int i) const;
 
     //virtual void SetMesonsPoint();
@@ -108,13 +110,17 @@ namespace thermalfist {
 
     virtual void FixParameters();
     virtual void FixParametersNoReset();
-    virtual void FixParameters(double QB);    // And zero net strangeness
+    //virtual void FixParameters(double QB);    // And zero net strangeness
 
+    // Same as FixParameters but with a more clear name on what is actually does
     void ConstrainChemicalPotentials() { return FixParameters(); }
     void ConstrainChemicalPotentialsNoReset() { return FixParametersNoReset(); }
-    void ConstrainChemicalPotentials(double QB) { return FixParameters(QB); }
+    //void ConstrainChemicalPotentials(double QB) { return FixParameters(QB); }
 
-
+    // Calculates and stores in m_Parameters the chemical potentials
+    // which reproduce at given T, V, and gamma's the given total
+    // baryon, electric charge, strangness and charm numbers
+    // Useful for CE calculations
     virtual void SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
       double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,
       bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
@@ -165,7 +171,9 @@ namespace thermalfist {
 
     virtual double GetMaxDiff() const { return m_MaxDiff; }
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
+    double GetDensity(int PDGID, const std::vector<double> *dens);
     double GetDensity(int PDGID, int feeddown);
+    double GetDensity(int PDGID, Feeddown::Type feeddown);
 
     std::vector<double> GetIdealGasDensities() const;
 
@@ -177,6 +185,7 @@ namespace thermalfist {
     const std::string& TAG() const { return m_TAG; }
     void setTAG(const std::string & tag) { m_TAG = tag; }
 
+    void ResetCalculatedFlags();
     bool IsCalculated() const { return m_Calculated; }
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
     bool IsGCECalculated() const { return m_GCECalculated; }
@@ -224,7 +233,8 @@ namespace thermalfist {
 
     std::vector<double> m_densities;
     std::vector<double> m_densitiestotal;
-    std::vector<double> m_densitiestotalweak;
+    //std::vector<double> m_densitiestotalweak;
+    std::vector< std::vector<double> > m_densitiesbyfeeddown;
     std::vector<double> m_Chem;
 
     // Scaled variance
@@ -268,6 +278,60 @@ namespace thermalfist {
 
     // Shift in chemical potential due to interactions
     virtual double MuShift(int id) { return 0.; }
+
+  private:
+    class BroydenEquationsChem : public BroydenEquations
+    {
+    public:
+      BroydenEquationsChem(ThermalModelBase *model) : BroydenEquations(), m_THM(model) { m_N = 2; }
+      std::vector<double> Equations(const std::vector<double> &x);
+    private:
+      ThermalModelBase *m_THM;
+    };
+
+    class BroydenJacobianChem : public BroydenJacobian
+    {
+    public:
+      BroydenJacobianChem(ThermalModelBase *model) : BroydenJacobian(), m_THM(model) { }
+      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+    private:
+      ThermalModelBase *m_THM;
+    };
+
+    class BroydenChem : public Broyden
+    {
+    public:
+      BroydenChem(ThermalModelBase *THM, BroydenEquations *eqs = NULL, BroydenJacobian *jaco = NULL) : Broyden(eqs, jaco) { m_THM = THM; }
+      ~BroydenChem(void) { }
+      std::vector<double> Solve(const std::vector<double> &x0, BroydenSolutionCriterium *solcrit = NULL, int max_iterations = MAX_ITERS);
+    private:
+      ThermalModelBase *m_THM;
+    };
+
+
+    class BroydenEquationsChemTotals : public BroydenEquations
+    {
+    public:
+      BroydenEquationsChemTotals(const std::vector<int> & vConstr, const std::vector<int> & vType, const std::vector<double> & vTotals, ThermalModelBase *model);// : BroydenEquations(), m_THM(model) { m_N = 3; }
+      std::vector<double> Equations(const std::vector<double> &x);
+    private:
+      std::vector<int> m_Constr;
+      std::vector<int> m_Type;
+      std::vector<double> m_Totals;
+      ThermalModelBase *m_THM;
+    };
+
+    class BroydenJacobianChemTotals : public BroydenJacobian
+    {
+    public:
+      BroydenJacobianChemTotals(const std::vector<int> & vConstr, const std::vector<int> & vType, const std::vector<double> & vTotals, ThermalModelBase *model) : BroydenJacobian(), m_Constr(vConstr), m_Type(vType), m_Totals(vTotals), m_THM(model) { }
+      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+    private:
+      std::vector<int> m_Constr;
+      std::vector<int> m_Type;
+      std::vector<double> m_Totals;
+      ThermalModelBase *m_THM;
+    };
   };
 
 } // namespace thermalfist

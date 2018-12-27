@@ -36,8 +36,8 @@ namespace thermalfist {
 
     virtual void ChangeTPS(ThermalParticleSystem *TPS_);
 
-    void SolveDiagonal();
-    void SolvePressure(bool resetPartials = true);  // Using Broyden's method
+    virtual void SolveDiagonal();
+    virtual void SolvePressure(bool resetPartials = true);  // Using Broyden's method
     void SolvePressureIter();  // Using iteration method
     virtual void CalculateDensities();
     virtual void CalculateDensitiesNoReset();
@@ -47,6 +47,8 @@ namespace thermalfist {
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
     virtual double DensityId(int ind);
     virtual double Pressure(int ind);
+    virtual double DensityId(int ind, const std::vector<double>& pstars);
+    virtual double Pressure(int ind, const std::vector<double>& pstars);
     double ScaledVarianceId(int ind);
     double PressureDiagonal(int ind, double P);
     double PressureDiagonalTotal(double P);
@@ -92,6 +94,43 @@ namespace thermalfist {
     double m_TotalEntropyDensity;
     double m_RHad;
     int m_Mode;
+
+  private:
+    class BroydenEquationsCRS : public BroydenEquations
+    {
+    public:
+      BroydenEquationsCRS(ThermalModelEVCrossterms *model) : BroydenEquations(), m_THM(model) { m_N = model->Densities().size(); }
+      std::vector<double> Equations(const std::vector<double> &x);
+    private:
+      ThermalModelEVCrossterms *m_THM;
+    };
+
+    class BroydenEquationsCRSDEV : public BroydenEquations
+    {
+    public:
+      BroydenEquationsCRSDEV(ThermalModelEVCrossterms *model) : BroydenEquations(), m_THM(model) { m_N = 1; }
+      std::vector<double> Equations(const std::vector<double> &x);
+    private:
+      ThermalModelEVCrossterms *m_THM;
+    };
+
+    class BroydenJacobianCRS : public BroydenJacobian
+    {
+    public:
+      BroydenJacobianCRS(ThermalModelEVCrossterms *model) : BroydenJacobian(), m_THM(model) { }
+      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+    private:
+      ThermalModelEVCrossterms *m_THM;
+    };
+
+    class BroydenSolutionCriteriumCRS : public Broyden::BroydenSolutionCriterium
+    {
+    public:
+      BroydenSolutionCriteriumCRS(ThermalModelEVCrossterms *model, double relative_error = Broyden::TOL) : Broyden::BroydenSolutionCriterium(relative_error), m_THM(model) { }
+      virtual bool IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta = std::vector<double>()) const;
+    protected:
+      ThermalModelEVCrossterms *m_THM;
+    };
   };
 
 } // namespace thermalfist

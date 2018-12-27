@@ -203,8 +203,9 @@ namespace thermalfist {
   struct ExperimentMultiplicity {
     int fPDGID;
     double fValue, fError;
-    int fFeedDown; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
-    ExperimentMultiplicity(int PDGID = -211, double value = 300., double error = 20., int fd = 1) :
+    Feeddown::Type fFeedDown; /// 0 - primordial, 1 - stability flags, 2 - strong + EM + weak, 3 - strong + EM, 4 - strong
+    //int fFeedDown; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
+    ExperimentMultiplicity(int PDGID = -211, double value = 300., double error = 20., Feeddown::Type fd = Feeddown::StabilityFlag) :
       fPDGID(PDGID), fValue(value), fError(error), fFeedDown(fd) { }
     void addSystematicError(double percent) {
       fError = sqrt(fError*fError + percent * percent*fValue*fValue);
@@ -214,10 +215,11 @@ namespace thermalfist {
   struct ExperimentRatio {
     int PDGID1, PDGID2;
     double fValue, fError;
-    int fFeedDown1, fFeedDown2; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
-    ExperimentRatio(int PDGID1_ = 211, int PDGID2_ = -211, double value_ = 1., double error_ = 0.1, int fd1 = 1, int fd2 = 1) :
+    Feeddown::Type fFeedDown1, fFeedDown2; /// 0 - primordial, 1 - stability flags, 2 - strong + EM + weak, 3 - strong + EM, 4 - strong
+    //int fFeedDown1, fFeedDown2; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
+    ExperimentRatio(int PDGID1_ = 211, int PDGID2_ = -211, double value_ = 1., double error_ = 0.1, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
       PDGID1(PDGID1_), PDGID2(PDGID2_), fValue(value_), fError(error_), fFeedDown1(fd1), fFeedDown2(fd2) { }
-    ExperimentRatio(int PDGID1_, int PDGID2_, double value1, double error1, double value2, double error2, int fd1 = 1, int fd2 = 1) :
+    ExperimentRatio(int PDGID1_, int PDGID2_, double value1, double error1, double value2, double error2, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
       PDGID1(PDGID1_), PDGID2(PDGID2_), fFeedDown1(fd1), fFeedDown2(fd2) {
       fValue = value1 / value2;
       fError = sqrt(error1*error1 / value2 / value2 + value1 * value1 / value2 / value2 / value2 / value2 * error2 * error2);
@@ -256,7 +258,7 @@ namespace thermalfist {
 
     ~ThermalModelFit(void);
 
-    double GetDensity(int PDGID, int feeddown) const;
+    //double GetDensity(int PDGID, int feeddown) const;
 
     void SetFitFlag(const std::string& name, bool flag) {
       m_Parameters.SetParameterFitFlag(name, flag);

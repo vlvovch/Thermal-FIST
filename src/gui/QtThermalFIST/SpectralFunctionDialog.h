@@ -88,4 +88,4 @@ public slots:
 		void replotPartialWidths();
 };
 
-#endif // CHI2PROFILEDIALOG_H
+#endif // SPECTRALFUNCTIONDIALOG_H

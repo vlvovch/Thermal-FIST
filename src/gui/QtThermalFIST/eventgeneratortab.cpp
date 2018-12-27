@@ -26,7 +26,7 @@
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
@@ -36,7 +36,7 @@
 #include "DebugText.h"
 #include "spectramodel.h"
 #include "particlespectra.h"
-#include "qcustomplot.h"
+#include "QCustomPlot/qcustomplot.h"
 
 using namespace thermalfist;
 
@@ -145,7 +145,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     plot2D = new QCustomPlot();
     plot2D->xAxis->setLabel(tr("y"));
-    plot2D->yAxis->setLabel(tr("pt (GeV)"));
+    plot2D->yAxis->setLabel(tr("pT (GeV)"));
 
     colormap = new QCPColorMap(plot2D->xAxis, plot2D->yAxis);
 
@@ -192,6 +192,9 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     radIdeal      = new QRadioButton(tr("Ideal"));
 		radEVD        = new QRadioButton(tr("Diagonal EV"));
 		radQVDW       = new QRadioButton(tr("QvdW"));
+    radIdeal->setToolTip(tr("Point-particle ideal gas"));
+    radEVD->setToolTip(tr("Diagonal excluded volume model"));
+    radQVDW->setToolTip(tr("Quantum van der Waals HRG model"));
     connect(radIdeal,				SIGNAL(clicked()), this, SLOT(modelChanged()));
     connect(radEVD,					SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radQVDW,					SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -211,6 +214,9 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     radGCE   = new QRadioButton(tr("GCE"));
     radCE    = new QRadioButton(tr("CE" ));
     radSCE   = new QRadioButton(tr("SCE"));
+    radGCE->setToolTip(tr("Grand canonical ensemble"));
+    radCE->setToolTip(tr("Canonical ensemble"));
+    radSCE->setToolTip(tr("Strangeness-canonical ensemble"));
     connect(radGCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
     connect(radCE,  SIGNAL(clicked()), this, SLOT(modelChanged()));
     connect(radSCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -236,10 +242,14 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinRadius->setMaximum(100.);
     spinRadius->setValue(0.3);
     radioUniform  = new QRadioButton(tr("Same for all"));
+    radioUniform->setToolTip(tr("Same eigenvolume for all particles"));
     radioBaglike  = new QRadioButton(tr("Bag-like"));
+    radioBaglike->setToolTip(tr("Eigenvolumes scale linearly with mass. The input radius fixes the radius parameter of protons"));
     radioMesons   = new QRadioButton(tr("Point-like mesons"));
-		radioCustomEV = new QRadioButton(tr("Custom..."));
-		strEVPath = "";
+    radioMesons->setToolTip(tr("Eigenvolumes scale linearly with absolute baryon number. The input radius fixes the radius parameter of baryons"));
+    radioCustomEV = new QRadioButton(tr("Custom..."));
+    radioCustomEV->setToolTip(tr("Load EV/QvdW parameters for different (pairs of) particles from file"));
+    strEVPath = "";
 		connect(radioCustomEV, SIGNAL(clicked()), this, SLOT(loadEVFromFile()));
     layRadius->addWidget(labelRadius);
     layRadius->addWidget(spinRadius);
@@ -273,47 +283,55 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		spinTemperature->setMinimum(1.);
 		spinTemperature->setMaximum(10000.);
 		spinTemperature->setValue(model->Parameters().T * 1e3);
-		connect(spinTemperature, SIGNAL(valueChanged(double)), this, SLOT(changeTkin(double)));
+    spinTemperature->setToolTip(tr("Chemical freeze-out temperature (fixes the yields)"));
+    connect(spinTemperature, SIGNAL(valueChanged(double)), this, SLOT(changeTkin(double)));
 		QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
 		spinmuB = new QDoubleSpinBox();
 		spinmuB->setMinimum(-1000.);
 		spinmuB->setMaximum(1000.);
 		spinmuB->setValue(model->Parameters().muB * 1e3);
-		QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
+    spinmuB->setToolTip(tr("Baryochemical potential"));
+    QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
 		spingammaq = new QDoubleSpinBox();
 		spingammaq->setMinimum(0.);
 		spingammaq->setMaximum(10.);
 		spingammaq->setDecimals(4);
 		spingammaq->setValue(model->Parameters().gammaq);
-		QLabel *labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
+    spingammaq->setToolTip(tr("Chemical non-equilibrium factor for light quarks"));
+    QLabel *labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
 		spingammaS = new QDoubleSpinBox();
 		spingammaS->setMinimum(0.);
 		spingammaS->setMaximum(10.);
 		spingammaS->setDecimals(4);
 		spingammaS->setValue(model->Parameters().gammaS);
+    spingammaS->setToolTip(tr("Chemical non-equilibrium factor for strange quarks"));
 
 		labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
 		spinmuS = new QDoubleSpinBox();
 		spinmuS->setMinimum(-1000.);
 		spinmuS->setMaximum(1000.);
 		spinmuS->setValue(model->Parameters().muS * 1e3);
-		QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
+    spinmuS->setToolTip(tr("Strangeness chemical potential"));
+    QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
 		spinmuQ = new QDoubleSpinBox();
 		spinmuQ->setMinimum(-1000.);
 		spinmuQ->setMaximum(1000.);
 		spinmuQ->setValue(model->Parameters().muQ * 1e3);
-		labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
+    spinmuQ->setToolTip(tr("Electric charge chemical potential"));
+    labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
 		spinmuC = new QDoubleSpinBox();
 		spinmuC->setMinimum(-1000.);
 		spinmuC->setMaximum(1000.);
 		spinmuC->setValue(model->Parameters().muC * 1e3);
-		QLabel *labelVolume = new QLabel(tr("R (fm):"));
+    spinmuC->setToolTip(tr("Charm chemical potential"));
+    QLabel *labelVolume = new QLabel(tr("R (fm):"));
 		spinVolumeR = new QDoubleSpinBox();
 		spinVolumeR->setMinimum(0.);
 		spinVolumeR->setMaximum(25.);
 		spinVolumeR->setDecimals(4);
 		spinVolumeR->setValue(8.);
-		connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
+    spinVolumeR->setToolTip(tr("System radius: the system volume is a sphere of this radius"));
+    connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
 
 		QLabel *labelB = new QLabel(tr("B:"));
 		spinB = new QSpinBox();
@@ -330,6 +348,11 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		spinQ->setMinimum(-1000);
 		spinQ->setMaximum(1000);
 		spinQ->setValue(2);
+
+    spinB->setToolTip(tr("Total baryon number in CE calculation"));
+    spinQ->setToolTip(tr("Total electric charge in CE calculation"));
+    spinS->setToolTip(tr("Total strangeness in CE calculation"));
+    //spinC->setToolTip(tr("Total charm in CE calculation"));
 
 		layParameters->addWidget(labelTemperature, 0, 0, 1, 1, Qt::AlignRight);
 		layParameters->addWidget(spinTemperature, 0, 1);
@@ -386,6 +409,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		spinVolumeRSC->setMaximum(25.);
 		spinVolumeRSC->setValue(spinVolumeR->value());
 		spinVolumeRSC->setEnabled(false);
+    spinVolumeRSC->setToolTip(tr("Correlation radius: the (canonical) correlation volume is a sphere of this radius"));
 
 
 		layQB->addWidget(labelVolumeRSC);
@@ -398,7 +422,9 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     QHBoxLayout *layMom1 = new QHBoxLayout();
     layMom1->setAlignment(Qt::AlignLeft);
     radioSR = new QRadioButton(tr("Spherically symmetric"));
+    radioSR->setToolTip(tr("Siemens-Rasmussen momentum distribution"));
     radioSSH = new QRadioButton(tr("Cylindrically symmetric"));
+    radioSSH->setToolTip(tr("Schnedermann-Sollfrank-Heinz prescription (note that initialization takes while!)"));
     radioSR->setChecked(true);
     connect(radioSR, SIGNAL(clicked()), this, SLOT(modelChanged()));
     connect(radioSSH, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -416,30 +442,35 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		spinTkin->setMinimum(1.);
 		spinTkin->setMaximum(10000.);
 		spinTkin->setValue(model->Parameters().T * 1e3);
+    spinTkin->setToolTip(tr("Kinetic freeze-out temperature which fixes the momentum spectrum"));
     QLabel *labelBeta = new QLabel(tr("β:"));
     spinBeta = new QDoubleSpinBox();
     spinBeta->setMinimum(0.);
     spinBeta->setMaximum(1.);
     spinBeta->setDecimals(3);
     spinBeta->setValue(0.5);
+    spinBeta->setToolTip(tr("Radial flow velocity"));
     QLabel *labelBetat = new QLabel(tr("β<sub>T</sub>:"));
     spinBetat = new QDoubleSpinBox();
     spinBetat->setMinimum(0.);
     spinBetat->setMaximum(1.);
     spinBetat->setDecimals(3);
     spinBetat->setValue(0.5);
+    spinBetat->setToolTip(tr("Transverse radial flow parameter"));
     QLabel *labelEtaMax = new QLabel(tr("η<sub>max</sub>:"));
     spinEtaMax = new QDoubleSpinBox();
     spinEtaMax->setMinimum(0.);
     spinEtaMax->setMaximum(100.);
     spinEtaMax->setDecimals(3);
     spinEtaMax->setValue(1.);
+    spinEtaMax->setToolTip(tr("Longitudinal space-time rapidity cut-off"));
 		QLabel *labeln = new QLabel(tr("n:"));
 		spinn = new QDoubleSpinBox();
 		spinn->setMinimum(0.);
 		spinn->setMaximum(10.);
 		spinn->setDecimals(3);
 		spinn->setValue(1.);
+    spinn->setToolTip(tr("Transverse radial flow profile"));
 
 		layMom2->addWidget(labelTkin);
 		layMom2->addWidget(spinTkin);
@@ -450,11 +481,11 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     layMom2->addWidget(labelBetat);
     layMom2->addWidget(spinBetat);
     layMom2->addSpacing(5);
+    layMom2->addWidget(labeln);
+    layMom2->addWidget(spinn);
+		layMom2->addSpacing(5);
     layMom2->addWidget(labelEtaMax);
     layMom2->addWidget(spinEtaMax);
-		layMom2->addSpacing(5);
-		layMom2->addWidget(labeln);
-		layMom2->addWidget(spinn);
 
     layMom->addLayout(layMom1);
     layMom->addLayout(layMom2);
@@ -466,14 +497,18 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
 		comboWidth = new QComboBox();
 		comboWidth->addItem(tr("Zero-width"));
-		comboWidth->addItem(tr("Breit-Wigner"));
+		comboWidth->addItem(tr("Const Breit-Wigner"));
 		comboWidth->addItem(tr("eBW"));
+    comboWidth->addItem(tr("eBW (const BRs)"));
 		comboWidth->setCurrentIndex(0);
+    comboWidth->setToolTip(tr("Prescription for treatment of resonance widths"));
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
+    checkBratio->setToolTip(tr("Renormalize branching ratios of all particle to sum to 100\%"));
     checkBratio->setChecked(false);
 
 		checkDecays = new QCheckBox(tr("Perform decays"));
 		checkDecays->setChecked(false);
+    checkDecays->setToolTip(tr("Perform chain of decays of all unstable particles"));
 
 		layFlags->addWidget(labelWidth);
 		layFlags->addWidget(comboWidth);
@@ -485,6 +520,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 		layFile->setAlignment(Qt::AlignLeft);
 		checkFile = new QCheckBox(tr("Write events to file"));
 		checkFile->setChecked(false);
+    checkFile->setToolTip(tr("Writes generated events to file"));
 		connect(checkFile, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 
 		leFilePath = new QLineEdit("");
@@ -516,6 +552,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinEvents->setMinimum(0);
     spinEvents->setMaximum(1000000000);
     spinEvents->setValue(10000);
+    spinEvents->setToolTip(tr("Number of events to generate"));
 
     layEvents->addWidget(labelEvents);
     layEvents->addWidget(spinEvents);
@@ -564,7 +601,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     modelChanged();
 
-		spinTemperature->setValue(160.0);
+		spinTemperature->setValue(155.0);
 		spinmuB->setValue(0.0);
 		spinmuQ->setValue(0.0);
 		spinmuS->setValue(0.0);
@@ -1172,6 +1209,8 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 			model->SetUseWidth(ThermalParticle::BWTwoGamma);
 		else if (config.FiniteWidth == 2)
 			model->SetUseWidth(ThermalParticle::eBW);
+    else if (config.FiniteWidth == 3)
+      model->SetUseWidth(ThermalParticle::eBWconstBR);
 		else
 			model->SetUseWidth(ThermalParticle::ZeroWidth);
 
@@ -1194,7 +1233,7 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 		ThermalModelBase *modelEVVDW;
 		ThermalParticleSystem TPSt = *model->TPS();
 		if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
-			modelEVVDW = new ThermalModelVDWFull(&TPSt);
+			modelEVVDW = new ThermalModelVDW(&TPSt);
 		else if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
 			modelEVVDW = new ThermalModelEVDiagonal(&TPSt);
 		else

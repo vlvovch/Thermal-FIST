@@ -9,6 +9,7 @@ if (Qt5Widgets_FOUND AND Qt5PrintSupport_FOUND)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 #include_directories ("${PROJECT_SOURCE_DIR}/HRGlib/include;${PROJECT_SOURCE_DIR}/EVHRGlib/include;${PROJECT_SOURCE_DIR}/HRGEventGeneratorlib/include;${PROJECT_SOURCE_DIR}/ThermalModelFitlib/include")
 #include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
@@ -18,10 +19,18 @@ file (GLOB QTHRG_SOURCES
       "*.cxx" , 
 	  "*.cpp")
 
+file (GLOB QCUSTOMPLOT_SOURCE
+      "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot/*.cpp")
+
+file (GLOB QCUSTOMPLOT_HEADER
+      "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot/*.h")
+
+source_group("QCustomPlot" FILES ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS} ${Qt5PrintSupport_EXECUTABLE_COMPILE_FLAGS}")
 	  
 # Tell CMake to create the executable
-add_executable(QtThermalFIST ${QTHRG_SOURCES})
+add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE} qttfres.qrc qttficon.rc)
 
 if(WIN32)
   if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")

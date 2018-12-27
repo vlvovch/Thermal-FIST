@@ -1,0 +1,17 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource>
+      <file>images/FIST.png</file>
+  </qresource>
+	<qresource>
+      <file>images/FIST-about.png</file>
+  </qresource>
+  <qresource>
+    <file>images/fias.png</file>
+  </qresource>
+  <qresource>
+    <file>images/Goethe-Uni.png</file>
+  </qresource>
+  <qresource>
+    <file>images/knu.png</file>
+  </qresource>
+</RCC>

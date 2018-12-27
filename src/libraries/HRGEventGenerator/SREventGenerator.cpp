@@ -68,7 +68,7 @@ namespace thermalfist {
 
         double T = m_THM->Parameters().T;
         double Mu = m_THM->ChemicalPotential(i);
-        if (m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW)
+        if (m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW || m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBWconstBR)
           m_BWGens.push_back(new RandomGenerators::ThermalEnergyBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));
         else
           m_BWGens.push_back(new RandomGenerators::ThermalBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));

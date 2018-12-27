@@ -52,7 +52,7 @@ namespace thermalfist {
 
     virtual void ChangeTPS(ThermalParticleSystem *TPS_);
 
-    void SolvePressure();
+    virtual void SolvePressure();
 
     virtual void CalculateDensities();
 
@@ -62,11 +62,11 @@ namespace thermalfist {
 
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 
-    double DensityId(int ind);
+    double DensityId(int ind, double Pressure);
 
-    double PressureId(int ind);
+    double PressureId(int ind, double Pressure);
 
-    double ScaledVarianceId(int ind);
+    double ScaledVarianceId(int ind, double Pressure);
 
     double Pressure(double P);
 
@@ -108,7 +108,7 @@ namespace thermalfist {
     // TODO: test
     virtual double MuShift(int id);
 
-  private:
+  //private:
     std::vector<double> m_densitiesid;
     std::vector<double> m_densitiesidnoshift;
     std::vector<double> m_v;                       /**< Vector of eigenvolumes of all hadrons */
@@ -117,6 +117,56 @@ namespace thermalfist {
     double m_Densityid;
     double m_TotalDensity;
     EVSolution m_sol;
+
+  private:
+    class BroydenEquationsDEV : public BroydenEquations
+    {
+    public:
+      BroydenEquationsDEV(ThermalModelEVDiagonal *model) : BroydenEquations(), m_THM(model) { m_N = 1; m_mnc = 1.; }
+      std::vector<double> Equations(const std::vector<double> &x);
+      void SetMnc(double mnc) { m_mnc = mnc; }
+    private:
+      ThermalModelEVDiagonal *m_THM;
+      double m_mnc;
+    };
+
+    class BroydenJacobianDEV : public BroydenJacobian
+    {
+    public:
+      BroydenJacobianDEV(ThermalModelEVDiagonal *model) : BroydenJacobian(), m_THM(model) { m_mnc = 1.; }
+      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      void SetMnc(double mnc) { m_mnc = mnc; }
+    private:
+      ThermalModelEVDiagonal *m_THM;
+      double m_mnc;
+    };
+
+    class BroydenSolutionCriteriumDEV : public Broyden::BroydenSolutionCriterium
+    {
+    public:
+      BroydenSolutionCriteriumDEV(ThermalModelEVDiagonal *model, double relative_error = Broyden::TOL) : Broyden::BroydenSolutionCriterium(relative_error), m_THM(model) { }
+      virtual bool IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta = std::vector<double>()) const;
+    protected:
+      ThermalModelEVDiagonal *m_THM;
+    };
+
+    class BroydenEquationsDEVOrig : public BroydenEquations
+    {
+    public:
+      BroydenEquationsDEVOrig(ThermalModelEVDiagonal *model) : BroydenEquations(), m_THM(model) { m_N = 1; }
+      std::vector<double> Equations(const std::vector<double> &x);
+    private:
+      ThermalModelEVDiagonal *m_THM;
+    };
+
+    class BroydenJacobianDEVOrig : public BroydenJacobian
+    {
+    public:
+      BroydenJacobianDEVOrig(ThermalModelEVDiagonal *model) : BroydenJacobian(), m_THM(model) {}
+      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+    private:
+      ThermalModelEVDiagonal *m_THM;
+    };
   };
 
 } // namespace thermalfist

@@ -23,13 +23,12 @@
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
-#include "HRGVDW/ThermalModelVDWFull.h"
+#include "HRGVDW/ThermalModelVDW.h"
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
-
 
 #include "ItemDelegateCustom.h"
 
@@ -72,7 +71,12 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     quantities.push_back(FittedQuantity(ExperimentRatio(321, 211, 0.201706, 0.0160556)));
     quantities.push_back(FittedQuantity(ExperimentMultiplicity(-211, 300., 30.)));
 
+    QHBoxLayout *layoutTop = new QHBoxLayout;
     QLabel *labelQuantities = new QLabel(tr("Data to fit:"));
+    labelHint = new QLabel(tr("Hint: double-click on yield to edit"));
+    QFont tmpf = QApplication::font();
+    tmpf.setPointSize(tmpf.pointSize() - 1);
+    labelHint->setFont(tmpf);
 		myModel = new QuantitiesModel(this, &quantities, fitcopy);
     tableQuantities = new QTableView();
     tableQuantities->setModel(myModel);
@@ -82,6 +86,10 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableQuantities->resizeColumnsToContents();
     connect(tableQuantities, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
     //connect(tableQuantities->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));
+
+    layoutTop->addWidget(labelQuantities);
+    layoutTop->addStretch(1);
+    layoutTop->addWidget(labelHint, 0, Qt::AlignRight);
 
     QHBoxLayout *layEditQuantities = new QHBoxLayout();
     layEditQuantities->setAlignment(Qt::AlignLeft);
@@ -105,7 +113,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout *layMisc = new QHBoxLayout();
     layMisc->setAlignment(Qt::AlignLeft);
 
-    buttonResults = new QPushButton(tr("Show calculation results..."));
+    buttonResults = new QPushButton(tr("Equation of state..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
     buttonChi2Map = new QPushButton(tr("Show chi2 map..."));
     connect(buttonChi2Map, SIGNAL(clicked()), this, SLOT(showChi2Map()));
@@ -124,7 +132,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		layMisc->addStretch(1);
 		layMisc->addWidget(labelValid, 0, Qt::AlignRight);
 
-    dataLayv->addWidget(labelQuantities);
+    //dataLayv->addWidget(labelQuantities);
+    dataLayv->addLayout(layoutTop);
     dataLayv->addWidget(tableQuantities);
     dataLayv->addLayout(layEditQuantities);
     dataLayv->addWidget(labelParams);
@@ -153,6 +162,11 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		radEVCRS = new QRadioButton(tr("Crossterms EV"));
 		radQVDW = new QRadioButton(tr("QvdW"));
 
+    radIdeal->setToolTip(tr("Point-particle ideal gas"));
+    radEVD->setToolTip(tr("Diagonal excluded volume model"));
+    radEVCRS->setToolTip(tr("Crossterms (non-diagonal) excluded volume model"));
+    radQVDW->setToolTip(tr("Quantum van der Waals HRG model"));
+
 		connect(radIdeal, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radEVD, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radEVCRS, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -174,6 +188,10 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		radGCE = new QRadioButton(tr("GCE"));
 		radCE = new QRadioButton(tr("CE"));
 		radSCE = new QRadioButton(tr("SCE"));
+
+    radGCE->setToolTip(tr("Grand canonical ensemble"));
+    radCE->setToolTip(tr("Canonical ensemble"));
+    radSCE->setToolTip(tr("Strangeness-canonical ensemble"));
 
 		connect(radGCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
 		connect(radCE, SIGNAL(clicked()), this, SLOT(modelChanged()));
@@ -197,12 +215,20 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     layStats->setAlignment(Qt::AlignLeft);
     radioBoltz  = new QRadioButton(tr("Boltzmann"));
     radioQuant  = new QRadioButton(tr("Quantum"));
+
+    radioBoltz->setToolTip(tr("Maxwell-Boltzmann"));
+    radioQuant->setToolTip(tr("Fermi-Dirac/Bose-Einstein"));
+
 		CBBoseOnly  = new QCheckBox(tr("Mesons only"));
 		CBPionsOnly = new QCheckBox(tr("Pions only"));
 		CBQuadratures = new QCheckBox(tr("Use quadratures"));
 		CBQuadratures->setChecked(true);
 
-		connect(radioBoltz, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
+    CBBoseOnly->setToolTip(tr("Include quantum statistics for mesons only"));
+    CBPionsOnly->setToolTip(tr("Include quantum statistics for pions only"));
+    CBQuadratures->setToolTip(tr("Use Gauss-Laguerre quadratures (slower but more reliable) or cluster expansion (faster but unreliable for large mu)"));
+
+    connect(radioBoltz, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 		//connect(radioQuant, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 		//connect(CBBoseOnly, SIGNAL(stateChanged(bool)), this, SLOT(modelChanged()));
 		//connect(CBPionsOnly, SIGNAL(stateChanged(bool)), this, SLOT(modelChanged()));
@@ -229,10 +255,14 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     layRadius->addWidget(labelRadius);
     layRadius->addWidget(spinRadius);
     radioUniform = new QRadioButton(tr("Same for all"));
+    radioUniform->setToolTip(tr("Same eigenvolume for all particles"));
     radioBaglike = new QRadioButton(tr("Bag-like"));
+    radioBaglike->setToolTip(tr("Eigenvolumes scale linearly with mass. The input radius fixes the radius parameter of protons"));
     radioMesons = new QRadioButton(tr("Point-like mesons"));
-		radioCustomEV = new QRadioButton(tr("Custom..."));
-		strEVPath = "";
+    radioMesons->setToolTip(tr("Eigenvolumes scale linearly with absolute baryon number. The input radius fixes the radius parameter of baryons"));
+    radioCustomEV = new QRadioButton(tr("Custom..."));
+    radioCustomEV->setToolTip(tr("Load EV/QvdW parameters for different (pairs of) particles from file"));
+    strEVPath = "";
 		connect(radioCustomEV, SIGNAL(clicked()), this, SLOT(loadEVFromFile()));
     layRadius->addWidget(radioUniform);
     layRadius->addWidget(radioBaglike);
@@ -299,7 +329,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spingqmax->setMinimum(0.);
     spingqmax->setMaximum(100.);
 		spingqmax->setDecimals(5);
-    spingqmax->setValue(5.);
+    spingqmax->setValue(3.);
     CBgammaq = new QCheckBox(tr("Fit"));
     CBgammaq->setChecked(false);
     QLabel *labelgammaS = new QLabel(tr("γS:"));
@@ -319,7 +349,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spingsmax->setMinimum(0.);
     spingsmax->setMaximum(100.);
 		spingsmax->setDecimals(5);
-    spingsmax->setValue(5.);
+    spingsmax->setValue(3.);
     CBgammaS = new QCheckBox(tr("Fit"));
     CBgammaS->setChecked(false);
 
@@ -393,10 +423,12 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
 		checkFixMuQ = new QCheckBox(tr("Constrain μQ"));
 		checkFixMuQ->setChecked(true);
+    checkFixMuQ->setToolTip(tr("Constrain μQ to reproduce the needed Q/B ratio, otherwise fit μQ as free parameter"));
 		connect(checkFixMuQ, SIGNAL(clicked()), this, SLOT(modelChanged()));
 
 		checkFixMuS = new QCheckBox(tr("Constrain μS"));
 		checkFixMuS->setChecked(true);
+    checkFixMuS->setToolTip(tr("Constrain μS to reproduce the needed Q/B ratio, otherwise fit μS as free parameter"));
 
 
     QHBoxLayout *layCE = new QHBoxLayout();
@@ -417,6 +449,10 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spinQ->setMaximum(1000);
     spinQ->setValue(2);
 
+    spinB->setToolTip(tr("Total baryon number in CE calculation"));
+    spinQ->setToolTip(tr("Total electric charge in CE calculation"));
+    spinS->setToolTip(tr("Total strangeness in CE calculation"));
+
     layCE->addWidget(labelQB);
     layCE->addWidget(spinQBRatio);
 		layCE->addWidget(checkFixMuQ);
@@ -435,14 +471,18 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
 		comboWidth = new QComboBox();
 		comboWidth->addItem(tr("Zero-width"));
-		comboWidth->addItem(tr("Breit-Wigner"));
+		comboWidth->addItem(tr("Const Breit-Wigner"));
 		comboWidth->addItem(tr("eBW"));
+    comboWidth->addItem(tr("eBW (const BRs)"));
 		comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
+    comboWidth->setToolTip(tr("Prescription for treatment of resonance widths"));
     checkBratio = new QCheckBox(tr("Renormalize branching ratios"));
     checkBratio->setChecked(false);
+    checkBratio->setToolTip(tr("Renormalize branching ratios of all particle to sum to 100\%"));
 
 	checkFitRc  = new QCheckBox(tr("Fit (Str.-)Can. radius"));
 	checkFitRc->setChecked(true);
+  checkFitRc->setToolTip(tr("Fit the radius of correlation volume, otherwise assume correlation volume = system volume"));
 
 	layFlags->addWidget(labelWidth);
 	layFlags->addWidget(comboWidth);
@@ -467,6 +507,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     connect(buttonCalculate, SIGNAL(clicked()), this, SLOT(calculate()));
 
     QPushButton *buttonWriteToFile = new QPushButton(tr("Write to file..."));
+    buttonWriteToFile->setToolTip(tr("Write three files with (i) all yields in tex format; (ii) all yields in ascii table format; (iii) fit log"));
     connect(buttonWriteToFile, SIGNAL(clicked()), this, SLOT(writetofile()));
 
     layButtons->addWidget(buttonCalculate);
@@ -502,6 +543,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 		quantities = ThermalModelFit::loadExpDataFromFile((QString(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat").toStdString());
     myModel->setQuantities(&quantities);
     tableQuantities->resizeColumnsToContents();
+
+    lastconfig = getConfig();
 }
 
 
@@ -626,8 +669,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 {
 	ThermalModelBase *modelnew;
 
-	if (config.ModelType == ThermalModelConfig::DiagonalEV)
-		modelnew = new ThermalModelEVDiagonal(model->TPS());
+  if (config.ModelType == ThermalModelConfig::DiagonalEV) {
+    modelnew = new ThermalModelEVDiagonal(model->TPS());
+  }
 	else if (config.ModelType == ThermalModelConfig::CrosstermsEV) {
 		modelnew = new ThermalModelEVCrossterms(model->TPS());
 	}
@@ -640,8 +684,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 		modelnew = new ThermalModelEVCanonicalStrangeness(model->TPS());
 	else if (config.ModelType == ThermalModelConfig::VDWSCE)
 		modelnew = new ThermalModelVDWCanonicalStrangeness(model->TPS());
-	else if (config.ModelType == ThermalModelConfig::QvdW)
-		modelnew = new ThermalModelVDWFull(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::QvdW) {
+    modelnew = new ThermalModelVDW(model->TPS());
+  }
 	else if (config.ModelType == ThermalModelConfig::CCE)
 		modelnew = new ThermalModelCanonicalCharm(model->TPS());
 	else
@@ -649,8 +694,6 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
 	if (model != NULL)
 		modelnew->SetNormBratio(config.RenormalizeBR);
-
-	//myModel->setModel(modelnew);
 
 	if (model != NULL)
 		delete model;
@@ -685,6 +728,8 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 		model->SetUseWidth(ThermalParticle::BWTwoGamma);
 	else if (config.FiniteWidth == 2)
 		model->SetUseWidth(ThermalParticle::eBW);
+  else if (config.FiniteWidth == 3)
+    model->SetUseWidth(ThermalParticle::eBWconstBR);
 	else
 		model->SetUseWidth(ThermalParticle::ZeroWidth);
 
@@ -782,6 +827,8 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 	wrk->start();
 
 	calcTimer->start(100);
+
+  lastconfig = config;
 }
 
 void FitToExperimentTab::calculate() {
@@ -826,9 +873,10 @@ void FitToExperimentTab::removeQuantityFromFit() {
 void FitToExperimentTab::quantityDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
-        QuantityDialog dialog(this, model, &quantities[row]);
-        dialog.setWindowFlags(Qt::Window);
-        dialog.exec();
+      labelHint->setVisible(false);
+      QuantityDialog dialog(this, model, &quantities[row]);
+      dialog.setWindowFlags(Qt::Window);
+      dialog.exec();
     }
 }
 
@@ -1028,28 +1076,37 @@ void FitToExperimentTab::finalize() {
 			if (!(model->Ensemble() == ThermalModelBase::SCE))
 				dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
       dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
+      if (model->TPS()->hasCharmed() && !(model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CCE))
+        dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
     }
     else {
         dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
         dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
         dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
-				dbgstrm << "C\t= " << model->CalculateCharmDensity()      * model->Volume() << endl;
+				dbgstrm << "C\t= " << model->CalculateCharmDensity()       * model->Volume() << endl;
     }
+    dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
     dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
+    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
     dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
     dbgstrm << endl;
-    dbgstrm << "Total hadron density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+    dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
     dbgstrm << "Net baryon density\t= " << model->CalculateBaryonDensity() << " fm^-3" << endl;
     dbgstrm << "Net baryon number\t= " << model->CalculateBaryonDensity() * model->Parameters().V << endl;
-    dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Parameters().V << endl;
-    dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Parameters().V << endl;
-    dbgstrm << "Net charm\t\t= " << model->CalculateCharmDensity() * model->Parameters().V << endl;
+    if (model->TPS()->hasCharged())
+      dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Parameters().V << endl;
+    if (model->TPS()->hasStrange())
+      dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Parameters().V << endl;
+    if (model->TPS()->hasCharmed())
+      dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Parameters().V << endl;
     dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
     dbgstrm << "S/Nb\t\t= " << model->CalculateEntropyDensity() / model->CalculateBaryonDensity() << endl;
     dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
     dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
-    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
-    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
+    if (model->TPS()->hasStrange())
+      dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+    if (model->TPS()->hasCharmed())
+      dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
     dbgstrm << endl;
     dbgstrm << "chi2/ndf\t\t= " << result.chi2ndf * fitcopy->Ndf() << "/" << fitcopy->Ndf() << " = " << result.chi2ndf << endl;
     dbgstrm << endl;
@@ -1229,5 +1286,11 @@ void FitToExperimentTab::showValidityCheckLog() {
 		msgBox.setDetailedText(model->ValidityCheckLog().c_str());
 		msgBox.exec();
 	}
+}
+
+void FitToExperimentTab::updateFontSizes() {
+  QFont tmpf = QApplication::font();
+  tmpf.setPointSize(tmpf.pointSize() - 1);
+  labelHint->setFont(tmpf);
 }
 

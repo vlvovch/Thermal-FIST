@@ -58,6 +58,7 @@ class FitToExperimentTab : public QWidget
     QPushButton *buttonAddQuantity, *buttonRemoveQuantity;
     QPushButton *buttonLoadFromFile;
     QTableWidget *tableParameters;
+    QLabel *labelHint;
 
 		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
 		QRadioButton *radGCE, *radCE, *radSCE;
@@ -100,6 +101,8 @@ class FitToExperimentTab : public QWidget
     thermalfist::ThermalModelBase *model;
     thermalfist::ThermalModelFit *fitcopy;
 
+    ThermalModelConfig lastconfig;
+
     QTextEdit *teDebug;
 
     QuantitiesModel *myModel;
@@ -118,6 +121,8 @@ public:
     ~FitToExperimentTab();
 		ThermalModelConfig getConfig();
     thermalfist::ThermalModelFitParameters getFitParameters();
+    thermalfist::ThermalModelFit* Fit() const { return fitcopy; }
+    ThermalModelConfig LastUsedConfig() const { return lastconfig; }
 signals:
 
 private slots:
@@ -142,6 +147,7 @@ public slots:
     void resetTPS();
     void updateProgress();
     void finalize();
+    void updateFontSizes();
 };
 
 #endif // FITTOEXPERIMENTTAB_H
