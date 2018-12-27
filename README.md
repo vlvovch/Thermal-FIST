@@ -15,10 +15,14 @@ The package contains a fast thermal event generator, with Blast Wave model based
 
 The package also includes **QtThermalFIST** -- a Qt-based graphical user interface designed for a fast and convenient general-purpose thermal model analysis. 
 
-### Notes on the present version
-The package is not fully documented yet, but should be perfectly usable. See the [Quick Start Guide](docs/quickstart.md)
+See the [Quick Start Guide](docs/quickstart.md) to get started.
 
-Note that calculations may break down for excessive/overstressed parameters.
+<p align="center">
+  <img src="src/gui/QtThermalFIST/images/QtThermalFIST.png" alt="QtThermalFIST"/>
+</p>
+
+### Notes
+Calculations may break down for excessive/overstressed parameters.
 This should be carefully monitored.
 
 *Copyright (C) 2018  Volodymyr Vovchenko*
