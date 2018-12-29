@@ -247,6 +247,18 @@ namespace thermalfist {
       type = FittedQuantity::Ratio;
       ratio = op;
     }
+    double Value() const {
+      if (type == 0)
+        return mult.fValue;
+      else
+        return ratio.fValue;
+    }
+    double ValueError() const {
+      if (type == 0)
+        return mult.fError;
+      else
+        return ratio.fError;
+    }
   };
 
   class ThermalModelBase;

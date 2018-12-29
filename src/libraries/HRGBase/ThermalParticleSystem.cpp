@@ -1022,7 +1022,7 @@ namespace thermalfist {
   ThermalParticle & ThermalParticleSystem::Particle(int id)
   {
     if (id < 0 || id >= m_Particles.size()) {
-      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!");
+      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!\n");
       exit(1);
     }
     return m_Particles[id];
@@ -1031,7 +1031,7 @@ namespace thermalfist {
   ThermalParticle & ThermalParticleSystem::ParticleByPDG(int pdgid)
   {
     if (m_PDGtoID.count(pdgid) == 0) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(int pdgid): pdgid is unknown!");
+      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(int pdgid): pdgid %d is unknown\n", pdgid);
       exit(1);
     }
     return m_Particles[m_PDGtoID[pdgid]];
