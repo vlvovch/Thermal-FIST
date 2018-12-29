@@ -39,6 +39,7 @@ class QCustomPlot;
 class QCPColorMap;
 class QCPColorScale;
 class QStackedWidget;
+class QCPErrorBars;
 //class QMutex;
 
 class EventGeneratorWorker : public QThread
@@ -96,6 +97,7 @@ class EventGeneratorTab : public QWidget
     QCustomPlot *plot2D;
     QCPColorMap *colormap;
     QCPColorScale *colorScale;
+    QCPErrorBars *errorBars;
     std::map<QString, int> parammap;
     std::vector<QString> paramnames, paramnamesx;
 

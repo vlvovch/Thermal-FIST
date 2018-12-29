@@ -39,6 +39,7 @@
 #include "resultdialog.h"
 #include "chi2dialog.h"
 #include "chi2ProfileDialog.h"
+#include "thermalfitplots.h"
 
 using namespace thermalfist;
 
@@ -110,6 +111,25 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QLabel *labelParams = new QLabel(tr("Extracted parameters:"));
     tableParameters = new QTableWidget();
 
+    QHBoxLayout *layPlots = new QHBoxLayout();
+    layPlots->setAlignment(Qt::AlignLeft);
+
+    QLabel *labelPlots = new QLabel(tr("Plots: "));
+    buttonPlotYields = new QPushButton(tr("Yields"));
+    connect(buttonPlotYields, SIGNAL(clicked()), this, SLOT(plotYields()));
+    buttonPlotDeviations = new QPushButton(tr("Deviations"));
+    connect(buttonPlotDeviations, SIGNAL(clicked()), this, SLOT(plotDeviations()));
+    buttonPlotDataModel = new QPushButton(tr("Data/Model"));
+    connect(buttonPlotDataModel, SIGNAL(clicked()), this, SLOT(plotDataModel()));
+    buttonPlotDataVsModel = new QPushButton(tr("Data vs Model"));
+    connect(buttonPlotDataVsModel, SIGNAL(clicked()), this, SLOT(plotDataVsModel()));
+
+    layPlots->addWidget(labelPlots);
+    layPlots->addWidget(buttonPlotYields);
+    layPlots->addWidget(buttonPlotDeviations);
+    layPlots->addWidget(buttonPlotDataModel);
+    layPlots->addWidget(buttonPlotDataVsModel);
+
     QHBoxLayout *layMisc = new QHBoxLayout();
     layMisc->setAlignment(Qt::AlignLeft);
 
@@ -138,6 +158,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     dataLayv->addLayout(layEditQuantities);
     dataLayv->addWidget(labelParams);
     dataLayv->addWidget(tableParameters);
+    dataLayv->addLayout(layPlots);
     dataLayv->addLayout(layMisc);
 
    // QGroupBox *grEditor = new QGroupBox(tr("Editor"));
@@ -545,6 +566,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableQuantities->resizeColumnsToContents();
 
     lastconfig = getConfig();
+
+    modelChanged();
 }
 
 
@@ -1007,6 +1030,17 @@ void FitToExperimentTab::modelChanged()
 		CBPionsOnly->setEnabled(true);
 		CBQuadratures->setEnabled(true);
 	}
+
+  if (fitcopy != NULL && fitcopy->FittedQuantities().size() == fitcopy->ModelDataSize() && fitcopy->ModelDataSize() > 0) {
+    buttonPlotDeviations->setEnabled(true);
+    buttonPlotDataModel->setEnabled(true);
+    buttonPlotDataVsModel->setEnabled(true);
+  }
+  else {
+    buttonPlotDeviations->setEnabled(false);
+    buttonPlotDataModel->setEnabled(false);
+    buttonPlotDataVsModel->setEnabled(false);
+  }
 }
 
 void FitToExperimentTab::resetTPS() {
@@ -1277,6 +1311,8 @@ void FitToExperimentTab::finalize() {
 		labelValid->setVisible(true);
 
     fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
+
+    modelChanged();
 }
 
 void FitToExperimentTab::showValidityCheckLog() {
@@ -1292,5 +1328,58 @@ void FitToExperimentTab::updateFontSizes() {
   QFont tmpf = QApplication::font();
   tmpf.setPointSize(tmpf.pointSize() - 1);
   labelHint->setFont(tmpf);
+}
+
+void FitToExperimentTab::plotYields()
+{
+  if (fitcopy != NULL) {
+    fitcopy->SetQuantities(quantities);
+    PlotDialog *dialog = new PlotDialog(this, new YieldsPlot(0, fitcopy));
+    dialog->setWindowFlags(Qt::Window);
+    dialog->setMinimumSize(QSize(800, 600));
+    dialog->setModal(false);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+  }
+}
+
+void FitToExperimentTab::plotDeviations()
+{
+  if (fitcopy != NULL) {
+    PlotDialog *dialog = new PlotDialog(this, new DeviationsPlot(0, fitcopy));
+    dialog->setWindowFlags(Qt::Window);
+    dialog->setMinimumSize(QSize(800, 300));
+    dialog->setModal(false);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+  }
+}
+
+void FitToExperimentTab::plotDataModel()
+{
+  if (fitcopy != NULL) {
+    PlotDialog *dialog = new PlotDialog(this, new DataModelPlot(0, fitcopy));
+    dialog->setWindowFlags(Qt::Window);
+    dialog->setMinimumSize(QSize(800, 300));
+    dialog->setModal(false);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+  }
+}
+
+void FitToExperimentTab::plotDataVsModel()
+{
+  if (fitcopy != NULL) {
+    PlotDialog *dialog = new PlotDialog(this, new DataVsModelPlot(0, fitcopy));
+    dialog->setWindowFlags(Qt::Window);
+    dialog->setMinimumSize(QSize(800, 600));
+    dialog->setModal(false);
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+  }
 }
 

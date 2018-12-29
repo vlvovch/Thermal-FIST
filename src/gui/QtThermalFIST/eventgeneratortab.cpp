@@ -138,10 +138,18 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     plotDistr->graph(0)->setLineStyle(QCPGraph::lsNone);
     plotDistr->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
     plotDistr->graph(0)->setName("Monte Carlo");
-    plotDistr->graph(0)->setErrorType(QCPGraph::etValue);
+    //plotDistr->graph(0)->setErrorType(QCPGraph::etValue);
     plotDistr->addGraph();
     plotDistr->graph(1)->setName(comboDistr->currentText());
     plotDistr->graph(1)->setPen(QPen(Qt::blue, 2, Qt::DashLine));
+
+    errorBars = new QCPErrorBars(plotDistr->xAxis, plotDistr->yAxis);
+    errorBars->removeFromLegend();
+    errorBars->setErrorType(QCPErrorBars::etValueError);
+    errorBars->setPen(QPen(Qt::blue));
+    errorBars->setSymbolGap(5);
+    //errorBars->set
+    //errorBars->setDataPlottable(plotDistr->graph(0));
 
     plot2D = new QCustomPlot();
     plot2D->xAxis->setLabel(tr("y"));
@@ -149,7 +157,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     colormap = new QCPColorMap(plot2D->xAxis, plot2D->yAxis);
 
-    plot2D->addPlottable(colormap);
+    //plot2D->addPlottable(colormap);
 
     colorScale = new QCPColorScale(plot2D);
     plot2D->plotLayout()->addElement(0, 1, colorScale);
@@ -749,14 +757,14 @@ void EventGeneratorTab::replot() {
     if (id<0) id = 0;
     if (index>=0 && index<3 && id<spectra->fParticles.size()) {
 
-        double tmin = 0., tmax = 0.;
+        double tmin = 1.e5, tmax = 0.;
 				double tl = 0., tr = 2.;
 				if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
 					tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
 
-        plotDistr->graph(0)->clearData();
+        plotDistr->graph(0)->data()->clear();
         plotDistr->graph(0)->setName(paramnames[index]);
-        plotDistr->graph(1)->clearData();
+        plotDistr->graph(1)->data()->clear();
         plotDistr->graph(1)->setName(paramnames[index]);
 
         int ttype = comboDistr->currentIndex();
@@ -766,10 +774,15 @@ void EventGeneratorTab::replot() {
             y1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
             y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
             for(int i=0;i<x1.size();++i) {
+              if (y1[i] != 0.)
                 tmin = std::min(tmin, y1[i]);
-                tmax = std::max(tmax, y1[i]);
+              tmax = std::max(tmax, y1[i]);
             }
-            plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
+            plotDistr->graph(0)->setData(x1, y1);
+            //plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
+            errorBars->data()->clear();
+            errorBars->setData(y1err);
+            errorBars->setDataPlottable(plotDistr->graph(0));
         }
 
 
@@ -780,8 +793,9 @@ void EventGeneratorTab::replot() {
         x2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelX() );
         y2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelY() );
         for(int i=0;i<x2.size();++i) {
+          if (y2[i] != 0.)
             tmin = std::min(tmin, y2[i]);
-            tmax = std::max(tmax, y2[i]);
+          tmax = std::max(tmax, y2[i]);
         }
         plotDistr->graph(1)->setData(x2,y2);
 
@@ -789,21 +803,26 @@ void EventGeneratorTab::replot() {
         if (x2.size()>1) plotDistr->xAxis->setRange(x2[0]-0.5*(x2[1]-x2[0]), x2[x2.size()-1]+0.5*(x2[1]-x2[0]));
 
         if (comboDistr->currentIndex()==2) {
+            //plotDistr->yAxis->setScaleLogBase(100);
             plotDistr->yAxis->setScaleType(QCPAxis::stLogarithmic);
-            plotDistr->yAxis->setScaleLogBase(100);
+            QSharedPointer<QCPAxisTickerLog> ticker(new QCPAxisTickerLog);
+            ticker->setSubTickCount(10);
+            ticker->setLogBase(100);
+            plotDistr->yAxis->setTicker(ticker);
             plotDistr->yAxis->setRange(1.e-1*tmin, 1.e1*tmax);
-            plotDistr->yAxis->setNumberFormat("eb"); // e = exponential, b = beautiful decimal powers
             plotDistr->yAxis->setNumberPrecision(0); // makes sure "1*10^4" is displayed only as "10^4"
-            plotDistr->yAxis->setSubTickCount(10);
+            plotDistr->yAxis->setNumberFormat("eb"); // e = exponential, b = beautiful decimal powers
         }
         else {
             plotDistr->yAxis->setScaleType(QCPAxis::stLinear);
+            QSharedPointer<QCPAxisTicker> ticker(new QCPAxisTicker);
+            plotDistr->yAxis->setTicker(ticker);
             plotDistr->yAxis->setRange(0., 1.1*tmax);
             plotDistr->yAxis->setNumberFormat("g");
-            plotDistr->yAxis->setNumberPrecision(5); // makes sure "1*10^4" is displayed only as "10^4"
-            plotDistr->yAxis->setSubTickCount(5);
+            plotDistr->yAxis->setNumberPrecision(5);
         }
 
+        //plotDistr->xAxis->setRange(tl, tr);
         plot->setCurrentIndex(0);
         plotDistr->replot();
     }
@@ -843,46 +862,57 @@ void EventGeneratorTab::replot() {
 void EventGeneratorTab::replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
                                const QVector<double> &x2, const QVector<double> &y2, int index, double rightlimit)
 {
-        double tmin = 0., tmax = 0.;
+        double tmin = 1.e5, tmax = 0.;
         double tl = 0., tr = rightlimit;
 				//double tl = 0., tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
 
-        plotDistr->graph(0)->clearData();
+        plotDistr->graph(0)->data()->clear();
         plotDistr->graph(0)->setName(paramnames[index]);
-        plotDistr->graph(1)->clearData();
+        plotDistr->graph(1)->data()->clear();
         plotDistr->graph(1)->setName(paramnames[index]);
 
         for(int i=0;i<x1.size();++i) {
+          if (y1[i] != 0.)
             tmin = std::min(tmin, y1[i]);
-            tmax = std::max(tmax, y1[i]);
+          tmax = std::max(tmax, y1[i]);
         }
-        plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
+        plotDistr->graph(0)->setData(x1, y1);
+        errorBars->data()->clear();
+        errorBars->setData(y1err);
+        errorBars->setDataPlottable(plotDistr->graph(0));
 
         plotDistr->xAxis->setLabel(paramnamesx[index]);
         plotDistr->yAxis->setLabel(paramnames[index]);
         for(int i=0;i<x2.size();++i) {
+          if (y2[i] != 0.)
             tmin = std::min(tmin, y2[i]);
-            tmax = std::max(tmax, y2[i]);
+           tmax = std::max(tmax, y2[i]);
         }
         plotDistr->graph(1)->setData(x2,y2);
 
         if (comboDistr->currentIndex()==2) {
             plotDistr->yAxis->setScaleType(QCPAxis::stLogarithmic);
-            plotDistr->yAxis->setScaleLogBase(100);
+            QSharedPointer<QCPAxisTickerLog> ticker(new QCPAxisTickerLog);
+            ticker->setSubTickCount(10);
+            ticker->setLogBase(100);
+            plotDistr->yAxis->setTicker(ticker);
+            //plotDistr->yAxis->setScaleLogBase(100);
             plotDistr->yAxis->setRange(1.e-1*tmin, 1.e1*tmax);
-            plotDistr->yAxis->setNumberFormat("eb"); // e = exponential, b = beautiful decimal powers
             plotDistr->yAxis->setNumberPrecision(0);
-            plotDistr->yAxis->setSubTickCount(10);
+            plotDistr->yAxis->setNumberFormat("ebc"); // e = exponential, b = beautiful decimal powers
         }
         else {
             plotDistr->yAxis->setScaleType(QCPAxis::stLinear);
+            QSharedPointer<QCPAxisTicker> ticker(new QCPAxisTicker);
+            plotDistr->yAxis->setTicker(ticker);
             plotDistr->yAxis->setRange(0., 1.1*tmax);
             plotDistr->yAxis->setNumberFormat("g");
-            plotDistr->yAxis->setNumberPrecision(5); // makes sure "1*10^4" is displayed only as "10^4"
-            plotDistr->yAxis->setSubTickCount(5);
+            plotDistr->yAxis->setNumberPrecision(5); 
+            //plotDistr->yAxis->setSubTickCount(5);
         }
 
         plotDistr->xAxis->setRange(tl, tr);
+        if (x2.size()>1) plotDistr->xAxis->setRange(x2[0] - 0.5*(x2[1] - x2[0]), x2[x2.size() - 1] + 0.5*(x2[1] - x2[0]));
         plot->setCurrentIndex(0);
         plotDistr->replot();
 }
@@ -990,7 +1020,8 @@ void EventGeneratorTab::updateProgress() {
             y1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
             if (ttype<=2) y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
             else z1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetZVector(ttype) );
-            plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
+            plotDistr->graph(0)->setData(x1, y1);
+            //plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
         }
 
         x2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelX() );

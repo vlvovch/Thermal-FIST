@@ -72,7 +72,6 @@ QVariant QuantitiesModel::data(const QModelIndex &index, int role) const
     else if (col == 4 && fitcopy != NULL && row < fitcopy->ModelDataSize()) {
       if (quantity.type == FittedQuantity::Multiplicity) {
         return fitcopy->ModelData(row);
-
       }
       else {
         return fitcopy->ModelData(row);

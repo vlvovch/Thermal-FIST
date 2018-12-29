@@ -416,7 +416,7 @@ void chi2ProfileDialog::replot() {
 	if (cindex<0 || cindex>vecParams.size())
 		return;
 
-	plot->graph(0)->clearData();
+	plot->graph(0)->data()->clear();
 
 	int fCurrentSize = vecCurrentSize[cindex];
 	std::vector<double> &Avalues = vecAvalues[cindex];
@@ -442,7 +442,7 @@ void chi2ProfileDialog::replot() {
 		
 
 
-		plot->graph(1)->clearData();
+		plot->graph(1)->data()->clear();
 
 		if (!(chi2min != chi2min || Aco != Aco)) {
 
@@ -454,7 +454,7 @@ void chi2ProfileDialog::replot() {
 			}
 		}
 
-		plot->graph(2)->clearData();
+		plot->graph(2)->data()->clear();
 		if (!(chi2min != chi2min))
 			plot->graph(2)->addData(amin / mn, chi2min);
 	}

@@ -63,7 +63,12 @@ SpectralFunctionDialog::SpectralFunctionDialog(QWidget *parent, ThermalParticle 
 	layChannel->addWidget(labelChannel);
 	layChannel->addWidget(comboChannel);
 
+
   plot = new QCustomPlot;
+  plot->xAxis2->setVisible(true);
+  plot->xAxis2->setTickLabels(false);
+  plot->yAxis2->setVisible(true);
+  plot->yAxis2->setTickLabels(false);
 
 	layoutL->addWidget(comboView, 0, Qt::AlignLeft);
 	layoutL->addLayout(layChannel);
@@ -128,9 +133,16 @@ void SpectralFunctionDialog::replot()
 void SpectralFunctionDialog::replotSpectralFunctions()
 {
 	plot->xAxis->setLabel("M [GeV]");
+  plot->xAxis->setLabelFont(QFont("Arial", 14));
 	plot->yAxis->setLabel("rho(M) [GeV-1]");
+  plot->yAxis->setLabelFont(QFont("Arial", 14));
 
-	plot->yAxis->setScaleType(QCPAxis::stLinear);
+
+
+  plot->yAxis->setScaleType(QCPAxis::stLinear);
+  plot->yAxis2->setScaleType(QCPAxis::stLinear);
+  plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
+  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
 
 	plot->clearGraphs();
 	plot->clearItems();
@@ -139,7 +151,7 @@ void SpectralFunctionDialog::replotSpectralFunctions()
 	item->setPen(QPen(Qt::black, 1, Qt::DashLine));
 	item->point1->setCoords(particle->Mass(), 0.);
 	item->point2->setCoords(particle->Mass(), 1.);
-	plot->addItem(item);
+	//plot->addItem(item);
 
 	plot->addGraph();
 	plot->graph(0)->setName("Vacuum");
@@ -149,8 +161,10 @@ void SpectralFunctionDialog::replotSpectralFunctions()
 	plot->addGraph();
 	plot->graph(1)->setName("Thermal");
 	plot->graph(1)->setPen(QPen(Qt::red, 2, Qt::SolidLine));
+  plot->graph(1)->setBrush(QBrush(QColor(255, 0, 0, 10)));
 	plot->graph(1)->setLineStyle(QCPGraph::lsLine);
 
+  plot->legend->setFont(QFont("Arial", 12));
 	plot->legend->setVisible(true);
 	
 	double maxval = 0.;
@@ -160,11 +174,13 @@ void SpectralFunctionDialog::replotSpectralFunctions()
 	}
 
 	plot->xAxis->setRange(xleft, xright);
+  plot->xAxis2->setRange(xleft, xright);
 	plot->yAxis->setRange(0., 1.1*maxval);
+  plot->yAxis2->setRange(0., 1.1*maxval);
 
 	//// Fill static and thermal
-	plot->graph(0)->clearData();
-	plot->graph(1)->clearData();
+	plot->graph(0)->data()->clear();
+	plot->graph(1)->data()->clear();
 	for (int i = 0; i<BWm.size(); ++i) {
 		double mnozh = 1.;
 		if (comboChannel->currentIndex() != 0) {
@@ -178,6 +194,8 @@ void SpectralFunctionDialog::replotSpectralFunctions()
 		plot->graph(1)->addData(BWm[i], mnozh * BWTHval[i]);
 	}
 
+  
+
 	plot->replot();
 }
 
@@ -187,9 +205,14 @@ void SpectralFunctionDialog::replotBranchingRatios()
 	plot->yAxis->setLabel("BR");
 
 	plot->yAxis->setScaleType(QCPAxis::stLinear);
+  plot->yAxis2->setScaleType(QCPAxis::stLinear);
+  plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
+  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
 
-	plot->xAxis->setRange(xleft, xright);
-	plot->yAxis->setRange(0., 1.);
+  plot->xAxis->setRange(xleft, xright);
+  plot->xAxis2->setRange(xleft, xright);
+  plot->yAxis->setRange(0., 1.);
+  plot->yAxis2->setRange(0., 1.);
 
 	plot->clearGraphs();
 	plot->clearItems();
@@ -198,7 +221,7 @@ void SpectralFunctionDialog::replotBranchingRatios()
 	item->setPen(QPen(Qt::black, 1, Qt::DashLine));
 	item->point1->setCoords(particle->Mass(), 0.);
 	item->point2->setCoords(particle->Mass(), 1.);
-	plot->addItem(item);
+	//plot->addItem(item);
 
 	QVector<QColor> colors;
 	colors.push_back(QColor(Qt::black));
@@ -224,7 +247,7 @@ void SpectralFunctionDialog::replotBranchingRatios()
 	}
 
 	for (int ind = 0; ind < particle->Decays().size(); ++ind) {
-		plot->graph(ind)->clearData();
+		plot->graph(ind)->data()->clear();
 		for (int i = 0; i < BWm.size(); ++i) {
 			double BR = 1.;
 			if (WidthScheme == 0)
@@ -242,17 +265,22 @@ void SpectralFunctionDialog::replotBranchingRatios()
 void SpectralFunctionDialog::replotPartialWidths()
 {
 	plot->xAxis->setLabel("M [GeV]");
-	plot->yAxis->setLabel("Gamma_i");
+	plot->yAxis->setLabel("Gamma_i [GeV]");
 
 	plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
+  plot->yAxis2->setScaleType(QCPAxis::stLogarithmic);
+  plot->yAxis->setTicker(QSharedPointer<QCPAxisTickerLog>(new QCPAxisTickerLog));
+  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTickerLog>(new QCPAxisTickerLog));
 
 	plot->xAxis->setRange(xleft, xright);
+  plot->xAxis2->setRange(xleft, xright);
 
 	double MaxWidth = 1.1 * particle->ResonanceWidth();
 	if (WidthScheme != 0)
 		MaxWidth = 1.1 * particle->TotalWidtheBW(BWm[BWm.size() - 1]);
 
 	plot->yAxis->setRange(1.e-3, MaxWidth);
+  plot->yAxis2->setRange(1.e-3, MaxWidth);
 
 	plot->clearGraphs();
 	plot->clearItems();
@@ -261,13 +289,13 @@ void SpectralFunctionDialog::replotPartialWidths()
 	item->setPen(QPen(Qt::black, 1, Qt::DashLine));
 	item->point1->setCoords(particle->Mass(), 0.);
 	item->point2->setCoords(particle->Mass(), 1.);
-	plot->addItem(item);
+	//plot->addItem(item);
 
 	QCPItemStraightLine *itemGamma = new QCPItemStraightLine(plot);
 	itemGamma->setPen(QPen(Qt::black, 1, Qt::DashLine));
 	itemGamma->point1->setCoords(0., particle->ResonanceWidth());
 	itemGamma->point2->setCoords(1., particle->ResonanceWidth());
-	plot->addItem(itemGamma);
+	//plot->addItem(itemGamma);
 
 	QVector<QColor> colors;
 	colors.push_back(QColor(Qt::black));
@@ -310,7 +338,7 @@ void SpectralFunctionDialog::replotPartialWidths()
 
 
 	for (int ind = 0; ind < particle->Decays().size(); ++ind) {
-		plot->graph(ind + 1)->clearData();
+		plot->graph(ind + 1)->data()->clear();
 		for (int i = 0; i < BWm.size(); ++i) {
 			double BR = 1.;
 			if (WidthScheme == 0)
@@ -447,7 +475,7 @@ void SpectralFunctionDialog::calculate()
 		BWval.resize(0);
 		BWTHval.resize(0);
 		// Compute all values
-		int iters = 200;
+		int iters = 400;
 		double dM = (b - a) / (iters - 1);
 		for (int ind = 0; ind < iters; ++ind) {
 			double M = a + dM * ind;

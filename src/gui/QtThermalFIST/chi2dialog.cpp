@@ -28,7 +28,7 @@ chi2Dialog::chi2Dialog(QWidget *parent, ThermalModelFit *mod) :
 
     colormap = new QCPColorMap(plot->xAxis, plot->yAxis);
 
-    plot->addPlottable(colormap);
+    //plot->addPlottable(colormap);
 
     colorScale = new QCPColorScale(plot);
     plot->plotLayout()->addElement(0, 1, colorScale);

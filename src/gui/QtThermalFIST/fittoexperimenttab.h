@@ -67,6 +67,8 @@ class FitToExperimentTab : public QWidget
 		QCheckBox *CBBoseOnly, *CBPionsOnly;
 		QCheckBox *CBQuadratures;
 
+    QPushButton *buttonPlotYields, *buttonPlotDataModel, *buttonPlotDataVsModel, *buttonPlotDeviations;
+
     QPushButton *buttonResults;
     QPushButton *buttonChi2Map;
 		QPushButton *buttonChi2Profile;
@@ -148,6 +150,10 @@ public slots:
     void updateProgress();
     void finalize();
     void updateFontSizes();
+    void plotYields();
+    void plotDeviations();
+    void plotDataModel();
+    void plotDataVsModel();
 };
 
 #endif // FITTOEXPERIMENTTAB_H

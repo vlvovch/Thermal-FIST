@@ -332,7 +332,7 @@ void EnergyDependenceTab::finalize() {
 void EnergyDependenceTab::replot() {
     int index = comboQuantity->currentIndex();
     if (index>=0 && index<paramnames.size()) {
-        plotDependence->graph(0)->clearData();
+        plotDependence->graph(0)->data()->clear();
         plotDependence->graph(0)->setName(paramnames[index]);
         plotDependence->yAxis->setLabel(paramnames[index]);
         double tmin = 0., tmax = 0.;
