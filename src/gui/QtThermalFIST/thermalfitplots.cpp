@@ -607,7 +607,7 @@ DeviationsPlot::DeviationsPlot(QWidget * parent, thermalfist::ThermalModelFit * 
         + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID2))).c_str());
     }
 
-    tmax = std::max(tmax, abs(deviationsValues[i]));
+    tmax = std::max(tmax, fabs(deviationsValues[i]));
   }
 
   tmax = std::min(3., static_cast<int>(tmax) + 1.);
