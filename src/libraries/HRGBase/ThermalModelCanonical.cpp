@@ -741,13 +741,13 @@ Obtained: %lf\n\
       else m_wprim[i] = 1.;
     }
 
-    CalculateSusceptibilityMatrix();
-    CalculateTwoParticleFluctuationsDecays();
-    CalculateProxySusceptibilityMatrix();
   }
 
   void ThermalModelCanonical::CalculateFluctuations() {
     CalculateTwoParticleCorrelations();
+    CalculateSusceptibilityMatrix();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateProxySusceptibilityMatrix();
 
     m_FluctuationsCalculated = true;
 

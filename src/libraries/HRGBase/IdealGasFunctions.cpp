@@ -306,7 +306,7 @@ namespace thermalfist {
       for (int i = 0; i < 32; i++) {
         double tx = lagx32[i];
         double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + statistics) / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * 1. / (1. + statistics / Eexp) / (Eexp + statistics);
       }
 
       ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
@@ -419,8 +419,6 @@ namespace thermalfist {
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
         ret1 += lagw32[i] * T * tx * T * tx * T / (exp(sqrt(tx*tx + moverT * moverT) - muoverT) + 1.);
-        //ret += lagw32[i] * lagx32[i] * lagx32[i] / (exp(tMu*(sqrt(lagx32[i]*lagx32[i]+tMass*tMass) - 20.)) + fStatistics);
-        //std::cout << lagx32[i] * T * tMu << " " << sqrt(T*T*tMu*tMu*20.*20.-mass*mass*tMu*tMu*T*T*20.*20.) << "\n";
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
@@ -529,7 +527,8 @@ namespace thermalfist {
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
         double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * Eexp / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * 1. / (1. + 1./Eexp) / (Eexp + 1.);
+        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * Eexp / (Eexp + 1.) / (Eexp + 1.);
       }
 
       double moverT = m / T;
@@ -537,7 +536,8 @@ namespace thermalfist {
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
         double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * 1. / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + 1.) / (Eexp + 1.);
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
@@ -554,7 +554,8 @@ namespace thermalfist {
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
         double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (1. - 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
       }
 
       double moverT = m / T;
@@ -562,7 +563,8 @@ namespace thermalfist {
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
         double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * (1. - 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
@@ -579,7 +581,8 @@ namespace thermalfist {
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
         double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (1. - 4./Eexp + 1./Eexp / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
       }
 
       double moverT = m / T;
@@ -587,7 +590,8 @@ namespace thermalfist {
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
         double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * (1. - 4. / Eexp + 1. / Eexp / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();

@@ -565,15 +565,15 @@ namespace thermalfist {
       else m_wprim[i] = 1.;
     }
 
-    CalculateSusceptibilityMatrix();
-    CalculateTwoParticleFluctuationsDecays();
-    CalculateProxySusceptibilityMatrix();
+    
   }
 
   // TODO include correlations
   void ThermalModelEVCrossterms::CalculateFluctuations() {
-
     CalculateTwoParticleCorrelations();
+    CalculateSusceptibilityMatrix();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateProxySusceptibilityMatrix();
 
     m_FluctuationsCalculated = true;
 

@@ -138,12 +138,17 @@ namespace thermalfist {
 
     virtual void CalculateFluctuations();
 
+    virtual void CalculateTwoParticleFluctuationsDecays();
+    virtual void CalculateSusceptibilityMatrix();
+    virtual void CalculateProxySusceptibilityMatrix();
+
     // Calculates fluctuations of a charge, assigned to each species arbitrarily, GCE only
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 
-    virtual double CalculateHadronDensity();
     virtual double GetParticlePrimordialDensity(unsigned int);
     virtual double GetParticleTotalDensity(unsigned int);
+
+    virtual double CalculateHadronDensity();
     virtual double CalculateBaryonDensity();
     virtual double CalculateChargeDensity();
     virtual double CalculateStrangenessDensity();
@@ -167,6 +172,21 @@ namespace thermalfist {
     virtual double CalculateChargeScaledVariance(bool susc = false) { return 1.; }
     virtual double CalculateStrangenessScaledVariance(bool susc = false) { return 1.; }
     virtual double CalculateEigenvolumeFraction() { return 0.; }
+
+    // Equation of state etc.
+    double Pressure() { return CalculatePressure(); }
+    double EnergyDensity() { return CalculateEnergyDensity(); }
+    double EntropyDensity() { return CalculateEntropyDensity(); }
+    double HadronDensity() { return CalculateHadronDensity(); }
+    double BaryonDensity() { return CalculateBaryonDensity(); }
+    double ElectricChargeDensity() { return CalculateChargeDensity(); }
+    double StrangenessDensity() { return CalculateStrangenessDensity(); }
+    double CharmDensity() { return CalculateCharmDensity(); }
+    double AbsoluteBaryonDensity() { return CalculateAbsoluteBaryonDensity(); }
+    double AbsoluteElectricChargeDensity() { return CalculateAbsoluteChargeDensity(); }
+    double AbsoluteStrangenessDensity() { return CalculateAbsoluteStrangenessDensity(); }
+    double AbsoluteCharmDensity() { return CalculateAbsoluteCharmDensity(); }
+
     virtual double ParticleScalarDensity(int part) = 0;
 
     virtual double GetMaxDiff() const { return m_MaxDiff; }
@@ -181,6 +201,7 @@ namespace thermalfist {
 
     const std::vector<double>& Densities()        const { return m_densities; }
     const std::vector<double>& TotalDensities() const { return m_densitiestotal; }
+    const std::vector< std::vector<double> >& AllDensities()  const { return m_densitiesbyfeeddown; }
 
     const std::string& TAG() const { return m_TAG; }
     void setTAG(const std::string & tag) { m_TAG = tag; }
@@ -272,9 +293,7 @@ namespace thermalfist {
     ThermalModelEnsemble m_Ensemble;
     ThermalModelInteraction m_InteractionModel;
 
-    virtual void CalculateTwoParticleFluctuationsDecays();
-    virtual void CalculateSusceptibilityMatrix();
-    virtual void CalculateProxySusceptibilityMatrix();
+    
 
     // Shift in chemical potential due to interactions
     virtual double MuShift(int id) { return 0.; }

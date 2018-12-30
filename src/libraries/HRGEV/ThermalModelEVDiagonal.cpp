@@ -271,10 +271,7 @@ namespace thermalfist {
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
     }
-
-    CalculateSusceptibilityMatrix();
-    CalculateTwoParticleFluctuationsDecays();
-    CalculateProxySusceptibilityMatrix();
+    
   }
 
   // TODO include correlations
@@ -285,6 +282,9 @@ namespace thermalfist {
       m_kurtprim[i] = CalculateParticleKurtosis(i);
     }
     CalculateTwoParticleCorrelations();
+    CalculateSusceptibilityMatrix();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateProxySusceptibilityMatrix();
     m_FluctuationsCalculated = true;
 
     for (int i = 0; i < m_wtot.size(); ++i) {

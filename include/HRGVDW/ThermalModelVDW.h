@@ -87,7 +87,7 @@ namespace thermalfist {
     bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
 
     double GetMaxDiff() const { return m_MaxDiff; }
-    bool   IsLastSolutionOK() const { return m_LastBroydenSuccessFlag; }
+    bool   IsLastSolutionOK() const { return m_LastBroydenSuccessFlag && m_LastCalculationSuccessFlag; }
 
     double DensityId(int index) { return m_DensitiesId[index]; }
 

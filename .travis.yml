@@ -18,4 +18,4 @@ script:
   - make test
   - cd bin/routines
   - ./CalculationTmu
-  - ./BagModelFit
+  - ./BagModelFit 0.50 0.100 0.301 0.005

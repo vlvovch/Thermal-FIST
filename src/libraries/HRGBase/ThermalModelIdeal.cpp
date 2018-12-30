@@ -71,14 +71,15 @@ namespace thermalfist {
       else m_wprim[i] = 1.;
     }
 
-    CalculateSusceptibilityMatrix();
-    CalculateTwoParticleFluctuationsDecays();
-    CalculateProxySusceptibilityMatrix();
   }
 
 
   void ThermalModelIdeal::CalculateFluctuations() {
     CalculateTwoParticleCorrelations();
+    CalculateSusceptibilityMatrix();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateProxySusceptibilityMatrix();
+
     for (int i = 0; i < m_wprim.size(); ++i) {
       m_wprim[i] = CalculateParticleScaledVariance(i);
       m_skewprim[i] = CalculateParticleSkewness(i);

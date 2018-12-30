@@ -354,6 +354,7 @@ namespace thermalfist {
 
   void ThermalModelVDW::CalculateDensities() {
     CalculateDensitiesNew();
+    ValidateCalculation();
   }
 
   void ThermalModelVDW::CalculateDensitiesOld() {
@@ -835,15 +836,15 @@ namespace thermalfist {
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
     }
-
-    CalculateSusceptibilityMatrix();
-    CalculateTwoParticleFluctuationsDecays();
-    CalculateProxySusceptibilityMatrix();
+    
   }
 
   void ThermalModelVDW::CalculateFluctuations()
   {
     CalculateTwoParticleCorrelations();
+    CalculateSusceptibilityMatrix();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateProxySusceptibilityMatrix();
 
     for (int i = 0; i < m_wprim.size(); ++i) {
       m_skewprim[i] = 1.;
