@@ -65,10 +65,7 @@ SpectralFunctionDialog::SpectralFunctionDialog(QWidget *parent, ThermalParticle 
 
 
   plot = new QCustomPlot;
-  plot->xAxis2->setVisible(true);
-  plot->xAxis2->setTickLabels(false);
-  plot->yAxis2->setVisible(true);
-  plot->yAxis2->setTickLabels(false);
+  plot->axisRect()->setupFullAxesBox();
 
 	layoutL->addWidget(comboView, 0, Qt::AlignLeft);
 	layoutL->addLayout(layChannel);
@@ -106,8 +103,6 @@ SpectralFunctionDialog::SpectralFunctionDialog(QWidget *parent, ThermalParticle 
   layInterface->addLayout(layParams);
 
 
-	
-
 	layout->addLayout(layoutL, 1);
   layout->addLayout(layInterface);
 
@@ -133,16 +128,14 @@ void SpectralFunctionDialog::replot()
 void SpectralFunctionDialog::replotSpectralFunctions()
 {
 	plot->xAxis->setLabel("M [GeV]");
-  plot->xAxis->setLabelFont(QFont("Arial", 14));
+  plot->xAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
 	plot->yAxis->setLabel("rho(M) [GeV-1]");
-  plot->yAxis->setLabelFont(QFont("Arial", 14));
+  plot->yAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
 
 
 
   plot->yAxis->setScaleType(QCPAxis::stLinear);
-  plot->yAxis2->setScaleType(QCPAxis::stLinear);
   plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
-  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
 
 	plot->clearGraphs();
 	plot->clearItems();
@@ -164,7 +157,7 @@ void SpectralFunctionDialog::replotSpectralFunctions()
   plot->graph(1)->setBrush(QBrush(QColor(255, 0, 0, 10)));
 	plot->graph(1)->setLineStyle(QCPGraph::lsLine);
 
-  plot->legend->setFont(QFont("Arial", 12));
+  plot->legend->setFont(QFont("Arial", font().pointSize() + 2));
 	plot->legend->setVisible(true);
 	
 	double maxval = 0.;
@@ -174,9 +167,7 @@ void SpectralFunctionDialog::replotSpectralFunctions()
 	}
 
 	plot->xAxis->setRange(xleft, xright);
-  plot->xAxis2->setRange(xleft, xright);
 	plot->yAxis->setRange(0., 1.1*maxval);
-  plot->yAxis2->setRange(0., 1.1*maxval);
 
 	//// Fill static and thermal
 	plot->graph(0)->data()->clear();
@@ -205,14 +196,10 @@ void SpectralFunctionDialog::replotBranchingRatios()
 	plot->yAxis->setLabel("BR");
 
 	plot->yAxis->setScaleType(QCPAxis::stLinear);
-  plot->yAxis2->setScaleType(QCPAxis::stLinear);
   plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
-  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
 
   plot->xAxis->setRange(xleft, xright);
-  plot->xAxis2->setRange(xleft, xright);
   plot->yAxis->setRange(0., 1.);
-  plot->yAxis2->setRange(0., 1.);
 
 	plot->clearGraphs();
 	plot->clearItems();
@@ -268,19 +255,15 @@ void SpectralFunctionDialog::replotPartialWidths()
 	plot->yAxis->setLabel("Gamma_i [GeV]");
 
 	plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
-  plot->yAxis2->setScaleType(QCPAxis::stLogarithmic);
   plot->yAxis->setTicker(QSharedPointer<QCPAxisTickerLog>(new QCPAxisTickerLog));
-  plot->yAxis2->setTicker(QSharedPointer<QCPAxisTickerLog>(new QCPAxisTickerLog));
 
 	plot->xAxis->setRange(xleft, xright);
-  plot->xAxis2->setRange(xleft, xright);
 
 	double MaxWidth = 1.1 * particle->ResonanceWidth();
 	if (WidthScheme != 0)
 		MaxWidth = 1.1 * particle->TotalWidtheBW(BWm[BWm.size() - 1]);
 
 	plot->yAxis->setRange(1.e-3, MaxWidth);
-  plot->yAxis2->setRange(1.e-3, MaxWidth);
 
 	plot->clearGraphs();
 	plot->clearItems();

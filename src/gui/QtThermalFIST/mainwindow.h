@@ -23,6 +23,7 @@
 #include "eventgeneratortab.h"
 #include "energydependencetab.h"
 #include "contourplottab.h"
+#include "equationofstatetab.h"
 #include "listeditortab.h"
 
 #include "HRGBase/ThermalModelBase.h"
@@ -43,6 +44,7 @@ class MainWindow : public QMainWindow
     EnergyDependenceTab *tab3;
     ContourPlotTab *tab4;
     EventGeneratorTab *tab5;
+    EquationOfStateTab *tabEoS;
     ListEditorTab *tabEditor;
 
     QLineEdit *leDatabase;

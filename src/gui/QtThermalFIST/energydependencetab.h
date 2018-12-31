@@ -1,7 +1,3 @@
-#ifndef ENERGYDEPENDENCETAB_H
-#define ENERGYDEPENDENCETAB_H
-
-#include <QWidget>
 /*
  * Thermal-FIST package
  * 
@@ -9,6 +5,10 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
+#ifndef ENERGYDEPENDENCETAB_H
+#define ENERGYDEPENDENCETAB_H
+
+#include <QWidget>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QDoubleSpinBox>

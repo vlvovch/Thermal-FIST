@@ -41,7 +41,7 @@ Additionally, the `$(ThermalFIST)/input/list/` folder also contains particle lis
 
 The **QtThermalFIST** GUI program consists of four tabs:
 
-#### Thermal model tab
+#### *Thermal model* tab
 
 Performs a single thermal model calculation for a given set of thermal parameters.
 
@@ -72,39 +72,48 @@ Double-clicking on a particle in the list will open a window with additional use
 
 **Important notice:** Analytic calculations within the strangeness-canonical ensemble in the presence of the EV/vdW interactions are done approximately, assuming that strange particles are a very small part of the whole system. This is appropriate for low energies (e.g. HADES), but not for high energies (like LHC). Use with caution!
 
-#### Thermal fits tab
+#### *Thermal fits* tab
 
-Thermal fitting. HRG model specification same as in previous tab.
-If $mu_Q$ and $mu_S$ are not marked to be constrained, they are fitted as free parameters.
+Thermal fitting. HRG model specification is same as in the previous tab.
+If $mu_Q$ and $mu_S$ are not marked to be constrained, they are fitted as free parameters. Fitting is done using MINUIT2.
 
-The experimental data can be loaded from external file. Some samples are provided in the [$(ThermalFIST)/input/data](../input/data) folder. Possibility to input the data directly in GUI is provided as well (double-click on the yield in the table).
+The experimental data can be loaded from an external file. Some samples are provided in the [$(ThermalFIST)/input/data](../input/data) folder. Possibility to input the data directly in GUI is provided as well (double-click on the yield in the table).
+It is possible to view the fit results directly within the GUI in a form of thermal fit plots.
 Another useful feature is the analysis of the $chi^2$ profiles (the *Chi2 profile...* button), done in a separate window. Should be opened after a global fit was performed.
 
+#### *Equation of state* tab
 
-#### Event generator tab
+Offers a possibility to study the temperature dependence at a fixed $mu_B$ 
+of some common equation of state observables, conserved charges susceptibilities, and number densties (primordial or with feeddown). It is also possible to consider ratios of any pair of these observables.
+At finite $mu_B$ the chemical potentials $mu_Q$ and $mu_S$ can be fixed from a fixed $Q/B$ ratio and zero net strangeness, or set two zero otherwise.
+The thermal model specification is done similarly to the previous two tabs, except that here only the grand-canonical ensemble is considered.
+For a number of observables at $mu_B = 0$ the published lattice QCD data of the Wuppertal-Budapest and/or HotQCD collaborations is plotted along with the calculation results for convenience.
+
+#### *Event generator* tab
 
 A Monte Carlo generator which generates events with particle numbers distributed according to the corresponding multiplicity distribution in a HRG model, while momenta are distributed in accordance with the Blast-Wave model (spherically or cylindrically symmetric). Currently restricted to the case of the Maxwell-Boltzmann statistics.
 In theory provides the same yield, fluctuations etc. as analytic calculations (in case of EV/vdW interactions a sufficiently large volume is necessary), also applicable to study combined effect of EV/vdW interactions and exact charge conservation.
 
-#### Particle list editor tab
+#### *Particle list editor* tab
 
 Allows to edit the particle list and decay channels on the fly.
-Note that antiparticles are not listed, but are generated autmatically from particles is at least one of the quantum numbers (baryon number, electric charge, strangeness, charm) is non-zero.
+Note that antiparticles are not listed, but are generated autmatically from particles if at least one of the quantum numbers (baryon number, electric charge, strangeness, charm) is non-zero.
 All changes can be saved to file.
 
 ### Other notes
 
 - Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/routines](../src/routines) folder
 - An example of using the Thermal-FIST library as a submodule can be found [here](https://github.com/vlvovch/1807.02079)
+- The canonical ensemble calculations use the method from [this paper](https://arxiv.org/abs/nucl-th/0112021) to perform analytically the integration over the baryon number fugacity whenever this is possible. This allows to significantly speed up the calculations. This method cannot be used if quantum statisics is considered for baryons, if there are multi-baryons (light nuclei) in the particle list, or if particle number fluctuations are to be computed. In this case direct numerical integration is performed, which can make calculations very slow.
 
 ### Common issues
 
-- CMake cannot find Qt5 and therefore GUI cannot be built. Usually this type of message appears after running the `cmake` command: 
+- CMake cannot find Qt5 and therefore GUI cannot be built. Usually this type of   message appears after running the `cmake` command: 
 
-> By not providing "FindQt5Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt5Widgets", but CMake did not find one.
+  > By not providing "FindQt5Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt5Widgets", but CMake did not find one.
 
-Make sure that Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt5 directory explicitly
+  Please make sure that Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt5 directory to CMake explicitly
 
-```bash
-cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
-```
+  ```bash
+  cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
+  ```

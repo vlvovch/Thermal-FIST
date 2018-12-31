@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
 	tab2 = new FitToExperimentTab(NULL, model);
   tab1->setFitTab(tab2);
 
+  tabEoS = new EquationOfStateTab(NULL, model);
+
 	tab3 = new EnergyDependenceTab(NULL, model);
 	tab4 = new ContourPlotTab(NULL, model);
 	tab5 = new EventGeneratorTab(NULL, model);
@@ -75,6 +77,8 @@ MainWindow::MainWindow(QWidget *parent)
 	tabWidget->addTab(tab1, QString(tr("Thermal model")));
 
 	tabWidget->addTab(tab2, QString(tr("Thermal fits")));
+
+  tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
 
 	tabWidget->addTab(tab5, QString(tr("Event generator")));
 
@@ -229,6 +233,8 @@ void MainWindow::loadDatabase()
 		leDatabase->setText(path);
 		tab1->resetTPS();
 		tab2->resetTPS();
+
+    tabEoS->resetTPS();
 
 		tab5->resetTPS();
 

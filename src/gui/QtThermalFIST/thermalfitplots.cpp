@@ -386,9 +386,9 @@ DataVsModelPlot::DataVsModelPlot(QWidget * parent, thermalfist::ThermalModelFit 
   this->yAxis2->setTicker(ticker);
 
   this->xAxis->setLabel("Model");
-  this->xAxis->setLabelFont(QFont("Arial", 14));
+  this->xAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
   this->yAxis->setLabel("Data");
-  this->yAxis->setLabelFont(QFont("Arial", 14));
+  this->yAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
 
   this->addGraph();
   this->graph(0)->setLineStyle(QCPGraph::lsNone);

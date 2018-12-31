@@ -47,12 +47,22 @@ struct ThermalModelConfig {
 	bool ComputeFluctations;
 };
 
+struct Thermodynamics {
+  bool flag;
+  double T, muB, muQ, muS, muC;
+  double pT4, eT4, IT4, sT3;
+  double nhT3;
+  std::vector< std::vector<double> > densities;
+};
+
 struct ChargesFluctuations {
 	bool flag;
 	double chi1B, chi2B, chi3B, chi4B;
 	double chi1Q, chi2Q, chi3Q, chi4Q;
 	double chi1S, chi2S, chi3S, chi4S;
 	double chi1C, chi2C, chi3C, chi4C;
+  double chi11BQ, chi11BS, chi11QS;
+  double chi31BQ, chi31BS, chi31QS;
 };
 
 #endif

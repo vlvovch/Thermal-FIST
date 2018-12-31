@@ -161,11 +161,9 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     dataLayv->addLayout(layPlots);
     dataLayv->addLayout(layMisc);
 
-   // QGroupBox *grEditor = new QGroupBox(tr("Editor"));
 
     QVBoxLayout *editorLay = new QVBoxLayout();
     editorLay->setContentsMargins(15, 0, 0, 0);
-    //editorLay->setMargin(10);
     editorLay->setAlignment(Qt::AlignTop);
 
 
