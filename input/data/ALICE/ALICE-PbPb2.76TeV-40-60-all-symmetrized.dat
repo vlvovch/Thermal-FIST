@@ -1,0 +1,11 @@
+# ALICE Pb-Pb 2.76 TeV, 40-60% centrality
+# Yields are symmetrized between particles and antiparticles by taking the average
+#     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error
+              1            211              0              1              0          97.25           6.25   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1            321              0              1              0           14.2            1.1   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1            310              0              1              0             14              1   # Table 1 in https://arxiv.org/pdf/1307.5530v2.pdf
+              1            333              0              1              0           2.08           0.24   # Table 2 in https://arxiv.org/pdf/1404.0495v3.pdf
+              1           2212              0              1              0            4.9            0.4   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1           3122              0              1              0            3.8            0.4   # Table 1 in https://arxiv.org/pdf/1307.5530v2.pdf
+              1           3312              0              1              0          0.535           0.04   # Table 1 in https://arxiv.org/pdf/1307.5543v3.pdf
+              1           3334              0              1              0          0.085          0.015   # Table 1 in https://arxiv.org/pdf/1307.5543v3.pdf

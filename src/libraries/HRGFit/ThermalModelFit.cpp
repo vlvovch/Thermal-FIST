@@ -63,22 +63,34 @@ namespace thermalfist {
 
         m_THMFit->model()->SetVolumeRadius(par[3]);
 
-        if (m_THMFit->Parameters().Rc.toFit) m_THMFit->model()->SetStrangenessCanonicalVolumeRadius(par[4]);
-        else m_THMFit->model()->SetStrangenessCanonicalVolumeRadius(par[3]);
+        if (m_THMFit->FixVcOverV())
+          m_THMFit->model()->SetCanonicalVolume(m_THMFit->model()->Volume() * m_THMFit->VcOverV());
+        else
+          m_THMFit->model()->SetCanonicalVolumeRadius(par[4]);
+
+        //if (m_THMFit->Parameters().Rc.toFit) m_THMFit->model()->SetStrangenessCanonicalVolumeRadius(par[4]);
+       // else m_THMFit->model()->SetStrangenessCanonicalVolumeRadius(par[3]);
 
         m_THMFit->model()->SetGammaq(par[5]);
 
-        if (m_THMFit->Parameters().muQ.toFit == false)
+        m_THMFit->model()->SetGammaC(par[9]);
+
+        if (m_THMFit->model()->ConstrainMuQ())
           m_THMFit->model()->SetElectricChemicalPotential(-par[1] / 50.);
         else
           m_THMFit->model()->SetElectricChemicalPotential(par[6]);
-        m_THMFit->model()->ConstrainMuQ(!m_THMFit->Parameters().muQ.toFit);
+        //m_THMFit->model()->ConstrainMuQ(!m_THMFit->Parameters().muQ.toFit);
 
-        if (m_THMFit->Parameters().muS.toFit == false)
+        if (m_THMFit->model()->ConstrainMuS())
           m_THMFit->model()->SetStrangenessChemicalPotential(par[1] / 5.);
         else
           m_THMFit->model()->SetStrangenessChemicalPotential(par[7]);
-        m_THMFit->model()->ConstrainMuS(!m_THMFit->Parameters().muS.toFit);
+        //m_THMFit->model()->ConstrainMuS(!m_THMFit->Parameters().muS.toFit);
+
+        if (m_THMFit->model()->ConstrainMuC())
+          m_THMFit->model()->SetCharmChemicalPotential(par[1] / 5.);
+        else
+          m_THMFit->model()->SetCharmChemicalPotential(par[8]);
 
         m_THMFit->model()->SetParameters(m_THMFit->model()->Parameters());
 
@@ -158,7 +170,7 @@ namespace thermalfist {
 
         if (chi2!=chi2) {
           chi2 = 1.e12;
-          printf("**WARNING** Error calculating chi2\n");
+          printf("**WARNING** chi2 evaluated to NaN\n");
         }
 
         return chi2;
@@ -178,7 +190,7 @@ namespace thermalfist {
   #endif
 
   ThermalModelFit::ThermalModelFit(ThermalModelBase *model_):
-    m_model(model_), m_Parameters(model_->Parameters()), m_QBgoal(0.4)
+    m_model(model_), m_Parameters(model_->Parameters()), m_QBgoal(0.4), m_FixVcToV(true), m_VcOverV(1.)
   {
   }
 
@@ -191,9 +203,9 @@ namespace thermalfist {
   #ifdef USE_MINUIT
     m_ModelData.resize(m_Quantities.size(), 0.);
 
-    m_Parameters.Rc.value = m_Parameters.R.value;
-    m_Parameters.Rc.xmin  = m_Parameters.R.xmin;
-    m_Parameters.Rc.xmax  = m_Parameters.R.xmax;
+    //m_Parameters.Rc.value = m_Parameters.R.value;
+    //m_Parameters.Rc.xmin  = m_Parameters.R.xmin;
+    //m_Parameters.Rc.xmax  = m_Parameters.R.xmax;
 
     m_Parameters.B = m_model->Parameters().B;
     m_Parameters.Q = m_model->Parameters().Q;
@@ -202,7 +214,7 @@ namespace thermalfist {
 
     m_Iters = 0;
     FitFCN mfunc(this, verbose);
-    std::vector<double> params(8, 0.);
+    std::vector<double> params(10, 0.);
     params[0] = m_Parameters.T.value;
     params[1] = m_Parameters.muB.value;
     params[2] = m_Parameters.gammaS.value;
@@ -211,6 +223,8 @@ namespace thermalfist {
     params[5] = m_Parameters.gammaq.value;
     params[6] = m_Parameters.muQ.value;
     params[7] = m_Parameters.muS.value;
+    params[8] = m_Parameters.muC.value;
+    params[9] = m_Parameters.gammaC.value;
 
     MnUserParameters upar;
     upar.Add("T", m_Parameters.T.value, m_Parameters.T.error, m_Parameters.T.xmin, m_Parameters.T.xmax);
@@ -221,27 +235,62 @@ namespace thermalfist {
     upar.Add("gammaq", m_Parameters.gammaq.value, m_Parameters.gammaq.error, m_Parameters.gammaq.xmin, m_Parameters.gammaq.xmax);
     upar.Add("muQ", m_Parameters.muQ.value, m_Parameters.muQ.error, m_Parameters.muQ.xmin, m_Parameters.muQ.xmax);
     upar.Add("muS", m_Parameters.muS.value, m_Parameters.muS.error, m_Parameters.muS.xmin, m_Parameters.muS.xmax);
+    upar.Add("muC", m_Parameters.muC.value, m_Parameters.muC.error, m_Parameters.muC.xmin, m_Parameters.muC.xmax);
+    upar.Add("gammaC", m_Parameters.gammaC.value, m_Parameters.gammaC.error, m_Parameters.gammaC.xmin, m_Parameters.gammaC.xmax);
 
-    int nparams = 8;
-    if (m_model->Ensemble() == ThermalModelBase::CE) {
+    int nparams = 10;
+
+    // If GCE and only ratios fitted then volume drops out
+    if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
+      m_Parameters.SetParameterFitFlag("R", false);
+
+    // If GCE, or Vc fixed to V, then correlation volume drops out
+    if (m_model->Ensemble() == ThermalModelBase::GCE || this->FixVcOverV())
+      m_Parameters.SetParameterFitFlag("Rc", false);
+
+    // If CE, muB drops out
+    if (m_model->Ensemble() == ThermalModelBase::CE)
       m_Parameters.SetParameterFitFlag("muB", false);
-      //m_Parameters.R.xmax = 5.;
-    }
+
+    // If full CE, Q/B fixed, or no charged particles then muQ drops out
+    if (m_model->Ensemble() == ThermalModelBase::CE
+       || m_model->ConstrainMuQ()
+       || !m_model->TPS()->hasCharged())
+      m_Parameters.SetParameterFitFlag("muQ", false);
+
+    // If full CE, SCE, or S fixed to zero, or no strange particles then muS drops out
+    if (m_model->Ensemble() == ThermalModelBase::CE
+      || m_model->Ensemble() == ThermalModelBase::SCE
+      || m_model->ConstrainMuS()
+      || !m_model->TPS()->hasStrange())
+      m_Parameters.SetParameterFitFlag("muS", false);
+
+    // If not GCE, or C fixed to zero, or no charm particles then muC drops out
+    if (m_model->Ensemble() != ThermalModelBase::GCE
+      || m_model->ConstrainMuC()
+      || !m_model->TPS()->hasCharmed())
+      m_Parameters.SetParameterFitFlag("muC", false);
+
+    // If no strangeness, then gammaS drops out (but beware of neutral particles with strange quarks!)
+    if (!m_model->TPS()->hasStrange())
+      m_Parameters.SetParameterFitFlag("gammaS", false);
+
+    // If no charm, then gammaC drops out (but beware of neutral particles with charm quarks!)
+    if (!m_model->TPS()->hasCharmed())
+      m_Parameters.SetParameterFitFlag("gammaC", false);
+
     if (!m_Parameters.T.toFit) { upar.Fix("T"); nparams--; }
+    if (!m_Parameters.R.toFit) { upar.Fix("R"); nparams--; }
+    if (!m_Parameters.Rc.toFit) { upar.Fix("Rc"); nparams--; }
     if (!m_Parameters.muB.toFit) { upar.Fix("muB"); nparams--; }
-    if (!m_Parameters.gammaq.toFit) { upar.Fix("gammaq"); nparams--; }
-    if (!m_Parameters.gammaS.toFit) { upar.Fix("gammaS"); nparams--; }
-    if (!m_Parameters.R.toFit || 
-      (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) { m_Parameters.R.toFit = false; upar.Fix("R"); nparams--; }
-    if (!m_Parameters.Rc.toFit || 
-      (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE))
-      { 
-        m_Parameters.Rc.toFit = false; 
-        upar.Fix("Rc"); 
-        nparams--; 
-      }
     if (!m_Parameters.muQ.toFit) { upar.Fix("muQ"); nparams--; }
     if (!m_Parameters.muS.toFit) { upar.Fix("muS"); nparams--; }
+    if (!m_Parameters.muC.toFit) { upar.Fix("muC"); nparams--; }
+    if (!m_Parameters.gammaq.toFit) { upar.Fix("gammaq"); nparams--; }
+    if (!m_Parameters.gammaS.toFit) { upar.Fix("gammaS"); nparams--; }
+    if (!m_Parameters.gammaC.toFit) { upar.Fix("gammaC"); nparams--; }
+
+
 
     m_Ndf = GetNdf();
 
@@ -317,6 +366,10 @@ namespace thermalfist {
       ret.muQ.error = (min.UserParameters()).Errors()[6];
       ret.muS.value = (min.UserParameters()).Params()[7];
       ret.muS.error = (min.UserParameters()).Errors()[7];
+      ret.muC.value = (min.UserParameters()).Params()[8];
+      ret.muC.error = (min.UserParameters()).Errors()[8];
+      ret.gammaC.value = (min.UserParameters()).Params()[9];
+      ret.gammaC.error = (min.UserParameters()).Errors()[9];
 
       if (!m_Parameters.Rc.toFit) {
         ret.Rc = ret.R;
@@ -334,6 +387,8 @@ namespace thermalfist {
         upar.SetValue("gammaq", (min.UserParameters()).Params()[5]);
         upar.SetValue("muQ", (min.UserParameters()).Params()[6]);
         upar.SetValue("muS", (min.UserParameters()).Params()[7]);
+        upar.SetValue("muC", (min.UserParameters()).Params()[8]);
+        upar.SetValue("gammaC", (min.UserParameters()).Params()[9]);
 
         MnMigrad migradd(mfunc, upar);
         min = migradd();
@@ -355,6 +410,10 @@ namespace thermalfist {
         ret.muQ.error = (min.UserParameters()).Errors()[6];
         ret.muS.value = (min.UserParameters()).Params()[7];
         ret.muS.error = (min.UserParameters()).Errors()[7];
+        ret.muC.value = (min.UserParameters()).Params()[8];
+        ret.muC.error = (min.UserParameters()).Errors()[8];
+        ret.gammaC.value = (min.UserParameters()).Params()[9];
+        ret.gammaC.error = (min.UserParameters()).Errors()[9];
       }
     }
     else {
@@ -376,12 +435,12 @@ namespace thermalfist {
       ret.muQ.error = upar.Errors()[6];
       ret.muS.value = upar.Params()[7];
       ret.muS.error = upar.Errors()[7];
+      ret.muC.value = upar.Params()[8];
+      ret.muC.error = upar.Errors()[8];
+      ret.gammaC.value = upar.Params()[9];
+      ret.gammaC.error = upar.Errors()[9];
     }
 
-    ret.muC.value = m_model->Parameters().muC;
-    ret.muC.error = 0.;
-    ret.gammaC.value = m_model->Parameters().gammaC;
-    ret.gammaC.error = 0.;
 
     ThermalModelParameters parames = ret.GetThermalModelParameters();
 
@@ -400,6 +459,10 @@ namespace thermalfist {
       ret.muS.value = m_model->Parameters().muS;
       ret.muS.error = 0.;
     }
+    if (!ret.muC.toFit) {
+      ret.muC.value = m_model->Parameters().muC;
+      ret.muC.error = 0.;
+    }
     m_Parameters = ret;
 
     params[0] = ret.T.value;
@@ -410,6 +473,8 @@ namespace thermalfist {
     params[5] = ret.gammaq.value;
     params[6] = ret.muQ.value;
     params[7] = ret.muS.value;
+    params[8] = ret.muC.value;
+    params[9] = ret.gammaC.value;
 
 
     ret.chi2    = mfunc(params);
@@ -1165,23 +1230,21 @@ namespace thermalfist {
   }
 
   int ThermalModelFit::GetNdf() const {
-    int nparams = 8;
+    int nparams = 10;
     if (!m_Parameters.T.toFit) nparams--;
     if (!m_Parameters.muB.toFit) nparams--;
     if (!m_Parameters.muS.toFit) nparams--;
     if (!m_Parameters.muQ.toFit) nparams--;
+    if (!m_Parameters.muC.toFit) nparams--;
     if (!m_Parameters.gammaq.toFit) nparams--;
     if (!m_Parameters.gammaS.toFit) nparams--;
+    if (!m_Parameters.gammaC.toFit) nparams--;
     if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
-    if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
+    if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::CE && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CCE)) nparams--;
     int ndof = 0;
     for (int i = 0; i < m_Quantities.size(); ++i)
       if (m_Quantities[i].toFit) ndof++;
     return (ndof - nparams);
   }
-
-  //double ThermalModelFit::GetDensity(int PDGID, int feeddown) const {
-  //  return m_model->GetDensity(PDGID, feeddown);
-  //}
 
 } // namespace thermalfist

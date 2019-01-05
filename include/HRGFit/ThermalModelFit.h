@@ -16,8 +16,8 @@
 namespace thermalfist {
 
   /**
-  *  Structure for an arbitrary fit parameter.
-  */
+   *  Structure for an arbitrary fit parameter.
+   */
   struct FitParameter {
     double value;
     double error;
@@ -31,9 +31,9 @@ namespace thermalfist {
   };
 
   /**
-  *  Extended structure for calculating uncertainties in non-fit quantities resulting from
-  *  uncertanties in fit parameters.
-  */
+   *  Extended structure for calculating uncertainties in non-fit quantities resulting from
+   *  uncertanties in fit parameters.
+   */
   struct ThermalModelFitParametersExtended {
     FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
     double chi2ndf;
@@ -61,53 +61,92 @@ namespace thermalfist {
   };
 
   /**
-  *  Structure holding information about parameters of a thermal fit.
-  */
+   *  Structure holding information about parameters of a thermal fit.
+   */
   struct ThermalModelFitParameters {
+    static const int ParameterCount = 10;
     bool GCE;  // 0 - CE, 1 - GCE
     FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
+    std::vector<FitParameter*> ParameterList;
     int B, S, Q, C;
     double chi2, chi2ndf;
     int ndf;
-    double fR;
-    ThermalModelFitParameters(double T_ = 0.150, double muB_ = 0.200, double muS_ = 0.1, double muQ_ = -0.01, double gammaS_ = 1., double V_ = 4000., double Rc_ = 1.)
-    {
-      T = FitParameter("T", true, T_, 0.05, 0.02, 0.500);
-      muB = FitParameter("muB", true, muB_, 0.05, 0., 0.950);
-      muS = FitParameter("muS", false, muS_, 0.05, -0.450, 0.450);
-      muQ = FitParameter("muQ", false, muQ_, 0.05, -0.130, 0.130);
-      muC = FitParameter("muC", false, 0.);
-      gammaq = FitParameter("gammaq", false, 1.0, 0.5, 0.01, 3.);
-      gammaS = FitParameter("gammaS", false, gammaS_, 0.5, 0.01, 3.);
-      gammaC = FitParameter("gammaC", false, 1.0, 0.5, 0.01, 10.);
-      //V = FitParameter("V", true, V_, 2000., 1., 20000.);  // Volume no longer used
-      R = FitParameter("R", true, V_, 1.0, 0., 25.0);
-      Rc = FitParameter("Rc", true, Rc_, 1.0, 0., 10.0);
-      B = Q = 2;
-      S = C = 0;
-      //fR = Rc_;
-    }
-    ThermalModelFitParameters(const ThermalModelParameters &params)//:                                                                                                                                                             //T(T_), muB(muB_), muS(muS_), muQ(muQ_), gammaS(gammaS_), R(R_)  
+    ThermalModelFitParameters(const ThermalModelParameters &params = ThermalModelParameters())//:                                                                                                                                                             //T(T_), muB(muB_), muS(muS_), muQ(muQ_), gammaS(gammaS_), R(R_)  
     {
       T = FitParameter("T", true, params.T, 0.05, 0.02, 0.500);
-      muB = FitParameter("muB", true, params.muB, 0.05, 0., 0.950);
+      muB = FitParameter("muB", true, params.muB, 0.05, -0.100, 0.900);
       muS = FitParameter("muS", false, params.muS, 0.05, -0.450, 0.450);
       muQ = FitParameter("muQ", false, params.muQ, 0.05, -0.130, 0.130);
       muC = FitParameter("muC", false, params.muC);
       gammaq = FitParameter("gammaq", false, params.gammaq, 0.5, 0.01, 3.);
       gammaS = FitParameter("gammaS", false, params.gammaS, 0.5, 0.01, 3.);
-      gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 10.);
+      gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 50.);
       //V = FitParameter("V", true, V_, 2000., 1., 20000.);  // Volume no longer used
       R = FitParameter("R", true, pow(3. * params.V / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 25.0);
       Rc = FitParameter("Rc", true, pow(3. * params.SVc / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 10.0);
-      //fR = Rc_;
       B = params.B;
       Q = params.Q;
       S = params.S;
       C = params.C;
+
+      FillParameterList();
+    }
+    ThermalModelFitParameters(const ThermalModelFitParameters& op) : 
+      GCE(op.GCE), T(op.T), muB(op.muB), muS(op.muS), muQ(op.muQ), muC(op.muC),
+      gammaq(op.gammaq), gammaS(op.gammaS), gammaC(op.gammaC), R(op.R), Rc(op.Rc),
+      B(op.B), S(op.S), Q(op.Q), C(op.C), chi2(op.chi2), chi2ndf(op.chi2ndf),
+      ndf(op.ndf)
+    {
+      FillParameterList();
+    }
+    ThermalModelFitParameters& operator=(const ThermalModelFitParameters& op)
+    {
+      GCE = op.GCE;
+      T = op.T;
+      muB = op.muB;
+      muS = op.muS;
+      muQ = op.muQ;
+      muC = op.muC;
+      gammaq = op.gammaq;
+      gammaS = op.gammaS;
+      gammaC = op.gammaC;
+      R = op.R;
+      Rc = op.Rc;
+      B = op.B;
+      S = op.S;
+      Q = op.Q;
+      C = op.C;
+      chi2 = op.chi2;
+      chi2ndf = op.chi2ndf;
+      ndf = op.ndf;
+      FillParameterList();
+      return *this;
+    }
+    void FillParameterList() {
+      ParameterList.clear();
+      ParameterList.push_back(&T);
+      ParameterList.push_back(&R);
+      ParameterList.push_back(&Rc);
+      ParameterList.push_back(&muB);
+      ParameterList.push_back(&muQ);
+      ParameterList.push_back(&muS);
+      ParameterList.push_back(&muC);
+      ParameterList.push_back(&gammaq);
+      ParameterList.push_back(&gammaS);
+      ParameterList.push_back(&gammaC);
+    }
+    int IndexByName(const std::string& name) const {
+      int ret = -1;
+      for (int i = 0; i < ParameterList.size(); ++i)
+        if (ParameterList[i]->name == name)
+          ret = i;
+      return ret;
     }
     FitParameter GetParameter(const std::string& name) const {
-      if (T.name == name) return T;
+      for (int i = 0; i < ParameterList.size(); ++i)
+        if (ParameterList[i]->name == name)
+          return *ParameterList[i];
+      /*if (T.name == name) return T;
       if (muB.name == name) return muB;
       if (muS.name == name) return muS;
       if (muQ.name == name) return muQ;
@@ -117,11 +156,30 @@ namespace thermalfist {
       if (gammaC.name == name) return gammaC;
       //if (V.name==name) return V;
       if (R.name == name) return R;
-      if (Rc.name == name) return Rc;
+      if (Rc.name == name) return Rc;*/
+      return FitParameter();
+    }
+    FitParameter& GetParameter(const std::string& name) {
+      for (int i = 0; i < ParameterList.size(); ++i)
+        if (ParameterList[i]->name == name)
+          return *ParameterList[i];
+      /*if (T.name == name) return T;
+      if (muB.name == name) return muB;
+      if (muS.name == name) return muS;
+      if (muQ.name == name) return muQ;
+      if (muC.name == name) return muC;
+      if (gammaq.name == name) return gammaq;
+      if (gammaS.name == name) return gammaS;
+      if (gammaC.name == name) return gammaC;
+      //if (V.name==name) return V;
+      if (R.name == name) return R;
+      if (Rc.name == name) return Rc;*/
       return FitParameter();
     }
     FitParameter GetParameter(const int index) const {
-      if (index == 0) return T;
+      if (index >= 0 && index < ParameterList.size())
+        return *ParameterList[index];
+      /*if (index == 0) return T;
       if (index == 1) return muB;
       if (index == 2) return muS;
       if (index == 3) return muQ;
@@ -131,7 +189,23 @@ namespace thermalfist {
       if (index == 6) return Rc;
       if (index == 7) return gammaq;
       if (index == 8) return muC;
-      if (index == 9) return gammaC;
+      if (index == 9) return gammaC;*/
+      return FitParameter();
+    }
+    FitParameter& GetParameter(const int index) {
+      if (index >= 0 && index < ParameterList.size())
+        return *ParameterList[index];
+      /*if (index == 0) return T;
+      if (index == 1) return muB;
+      if (index == 2) return muS;
+      if (index == 3) return muQ;
+      if (index == 4) return gammaS;
+      //if (index==5) return V;
+      if (index == 5) return R;
+      if (index == 6) return Rc;
+      if (index == 7) return gammaq;
+      if (index == 8) return muC;
+      if (index == 9) return gammaC;*/
       return FitParameter();
     }
     void SetParameter(const std::string& name, const FitParameter& param) {
@@ -270,11 +344,8 @@ namespace thermalfist {
 
     ~ThermalModelFit(void);
 
-    //double GetDensity(int PDGID, int feeddown) const;
-
     void SetFitFlag(const std::string& name, bool flag) {
       m_Parameters.SetParameterFitFlag(name, flag);
-      //m_QBgoal = 0.4;
     }
 
     void SetQBConstraint(double QB) {
@@ -379,9 +450,9 @@ namespace thermalfist {
 
     double QoverB() const { return m_QBgoal; }
 
-    const std::vector<ExperimentMultiplicity>&    Multiplicities()  const { return m_Multiplicities; }
-    const std::vector<ExperimentRatio>&          Ratios()          const { return m_Ratios; }
-    const std::vector<FittedQuantity>&          FittedQuantities()          const { return m_Quantities; }
+    const std::vector<ExperimentMultiplicity>&    Multiplicities()   const { return m_Multiplicities; }
+    const std::vector<ExperimentRatio>&           Ratios()           const { return m_Ratios; }
+    const std::vector<FittedQuantity>&            FittedQuantities() const { return m_Quantities; }
 
     int& Iters() { return m_Iters; }
     double& Chi2() { return m_Chi2; }
@@ -393,6 +464,11 @@ namespace thermalfist {
     int ModelDataSize() const { return m_ModelData.size(); }
     void ClearModelData() { m_ModelData.clear(); }
     int& Ndf() { return m_Ndf; }
+
+    bool FixVcOverV() const { return m_FixVcToV; }
+    void FixVcOverV(bool fix) { m_FixVcToV = fix; }
+    double VcOverV() const { return m_VcOverV; }
+    void SetVcOverV(double VcOverV) { m_VcOverV = VcOverV; }
 
 
     static std::vector<FittedQuantity> loadExpDataFromFile(const std::string & filename);
@@ -408,14 +484,16 @@ namespace thermalfist {
     std::vector<ExperimentMultiplicity> m_Multiplicities;
     std::vector<ExperimentRatio> m_Ratios;
     std::vector<FittedQuantity> m_Quantities;
-    int      m_Iters;
+    int       m_Iters;
     double    m_Chi2;
     double    m_BT;
     double    m_QT;
     double    m_ST;
     double    m_CT;
     std::vector<double> m_ModelData;
-    int      m_Ndf;
+    int       m_Ndf;
+    bool      m_FixVcToV;
+    double    m_VcOverV;
   };
 
 } // namespace thermalfist

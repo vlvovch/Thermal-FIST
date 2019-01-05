@@ -21,8 +21,17 @@ using namespace std;
 
 namespace thermalfist {
 
-  namespace /*ThermalParticleSystemNameSpace*/ {
+  namespace {
+    /// For sorting particles by mass (default)
     bool cmpParticleMass(const ThermalParticle &a, const ThermalParticle &b) {
+      return (a.Mass() < b.Mass());
+    }
+    
+    /// For sorting particles by the quark content
+    bool cmpParticlePDG(const ThermalParticle &a, const ThermalParticle &b) {
+      if (abs(a.BaryonCharge()) != abs(b.BaryonCharge())) return (abs(a.BaryonCharge()) < abs(b.BaryonCharge()));
+      if (abs(a.Charm()) != abs(b.Charm())) return (abs(a.Charm()) < abs(b.Charm()));
+      if (abs(a.Strangeness()) != abs(b.Strangeness())) return (abs(a.Strangeness()) < abs(b.Strangeness()));
       return (a.Mass() < b.Mass());
     }
   }
@@ -370,8 +379,8 @@ namespace thermalfist {
           tret = tmp2;
 
           // Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
-          if (tret.size() > 1000) {
-            printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1000!\n",
+          if (tret.size() > 1500) {
+            printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
               m_Particles[ind].Name().c_str(),
               m_Particles[ind].PdgId());
             CuteHRGHelper::cutDecayDistributionsVector(tret);
@@ -386,8 +395,8 @@ namespace thermalfist {
     }
 
     // Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
-    if (ret.size() > 1000) {
-      printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1000!\n",
+    if (ret.size() > 1500) {
+      printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
         m_Particles[ind].Name().c_str(),
         m_Particles[ind].PdgId());
       CuteHRGHelper::cutDecayDistributionsVector(ret);
@@ -683,7 +692,7 @@ namespace thermalfist {
     if (fout.is_open()) {
       fout << "#"
         << std::setw(14) << "pdgid"
-        << std::setw(15) << "name"
+        << std::setw(20) << "name"
         << std::setw(15) << "stable"
         << std::setw(15) << "mass[GeV]"
         << std::setw(15) << "degeneracy"
@@ -704,7 +713,7 @@ namespace thermalfist {
           continue;
 
         fout << std::setw(15) << part.PdgId()
-          << std::setw(15) << part.Name()
+          << std::setw(20) << part.Name()
           << std::setw(15) << static_cast<int>(part.IsStable())
           << std::setw(15) << part.Mass()
           << std::setw(15) << part.Degeneracy()
@@ -1055,6 +1064,7 @@ namespace thermalfist {
   void ThermalParticleSystem::FinalizeList()
   {
     sort(m_Particles.begin(), m_Particles.end(), cmpParticleMass);
+    //sort(m_Particles.begin(), m_Particles.end(), cmpParticlePDG);
     FillPdgMap();
     for (int i = 0; i < m_Particles.size(); ++i) {
       if (m_Particles[i].DecayType() == ParticleDecay::Default)

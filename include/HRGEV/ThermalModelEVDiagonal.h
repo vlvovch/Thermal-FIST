@@ -104,6 +104,16 @@ namespace thermalfist {
 
     double CommonSuppressionFactor();
 
+    /// Differential treatment of pair interactions not applicable here
+    virtual void DisableMesonMesonVirial() {}
+    virtual void DisableMesonMesonAttraction() {}
+    virtual void DisableMesonBaryonVirial() {}
+    virtual void DisableMesonBaryonAttraction() {}
+    virtual void DisableBaryonBaryonVirial() {}
+    virtual void DisableBaryonBaryonAttraction() {}
+    virtual void DisableBaryonAntiBaryonVirial() {}
+    virtual void DisableBaryonAntiBaryonAttraction() {}
+
   protected:
     // TODO: test
     virtual double MuShift(int id);

@@ -57,8 +57,33 @@ namespace thermalfist {
 
     virtual void SetRadius(double rad) { }
     virtual void SetRadius(int i, double rad) { }
+
     virtual void SetVirial(int i, int j, double b) { }
     virtual void SetAttraction(int i, int j, double b) { }
+
+    /// Switches off eigenvolume terms for all meson-meson pairs
+    virtual void DisableMesonMesonVirial();
+    void DisableMesonMesonRepulsion() { return DisableMesonMesonVirial(); }
+    /// Switches off QvdW attraction terms for all meson-meson pairs
+    virtual void DisableMesonMesonAttraction();
+
+    /// Switches off eigenvolume terms for all meson-baryon pairs
+    virtual void DisableMesonBaryonVirial();
+    void DisableMesonBaryonRepulsion() { return DisableMesonBaryonVirial(); }
+    /// Switches off QvdW attraction terms for all meson-baryon pairs
+    virtual void DisableMesonBaryonAttraction();
+
+    /// Switches off eigenvolume terms for all baryon-baryon pairs
+    virtual void DisableBaryonBaryonVirial();
+    void DisableBaryonBaryonRepulsion() { return DisableBaryonBaryonVirial(); }
+    /// Switches off QvdW attraction terms for all baryon-baryon pairs
+    virtual void DisableBaryonBaryonAttraction();
+
+    /// Switches off eigenvolume terms for all baryon-baryon pairs
+    virtual void DisableBaryonAntiBaryonVirial();
+    void DisableBaryonAntiBaryonRepulsion() { return DisableBaryonAntiBaryonVirial(); }
+    /// Switches off QvdW attraction terms for all baryon-baryon pairs
+    virtual void DisableBaryonAntiBaryonAttraction();
 
     virtual void ReadInteractionParameters(const std::string &filename) { }
     virtual void WriteInteractionParameters(const std::string &filename) { }
@@ -110,12 +135,10 @@ namespace thermalfist {
 
     virtual void FixParameters();
     virtual void FixParametersNoReset();
-    //virtual void FixParameters(double QB);    // And zero net strangeness
 
     // Same as FixParameters but with a more clear name on what is actually does
     void ConstrainChemicalPotentials() { return FixParameters(); }
     void ConstrainChemicalPotentialsNoReset() { return FixParametersNoReset(); }
-    //void ConstrainChemicalPotentials(double QB) { return FixParameters(QB); }
 
     // Calculates and stores in m_Parameters the chemical potentials
     // which reproduce at given T, V, and gamma's the given total

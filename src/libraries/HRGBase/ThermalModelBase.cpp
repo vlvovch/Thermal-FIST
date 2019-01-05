@@ -189,6 +189,108 @@ namespace thermalfist {
     ResetCalculatedFlags();
   }
 
+  void ThermalModelBase::DisableMesonMesonVirial()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part1.BaryonCharge() == 0 && part2.BaryonCharge() == 0)
+          SetVirial(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableMesonMesonAttraction()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part1.BaryonCharge() == 0 && part2.BaryonCharge() == 0)
+          SetAttraction(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableMesonBaryonVirial()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() == 0 && part2.BaryonCharge() != 0)
+          || (part1.BaryonCharge() != 0 && part2.BaryonCharge() == 0))
+          SetVirial(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableMesonBaryonAttraction()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() == 0 && part2.BaryonCharge() != 0)
+          || (part1.BaryonCharge() != 0 && part2.BaryonCharge() == 0))
+          SetAttraction(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableBaryonBaryonVirial()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() > 0)
+          || (part1.BaryonCharge() < 0 && part2.BaryonCharge() < 0))
+          SetVirial(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableBaryonBaryonAttraction()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() > 0)
+          || (part1.BaryonCharge() < 0 && part2.BaryonCharge() < 0))
+          SetAttraction(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableBaryonAntiBaryonVirial()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() < 0)
+          || (part1.BaryonCharge() < 0 && part2.BaryonCharge() > 0))
+          SetVirial(i, j, 0.);
+      }
+    }
+  }
+
+  void ThermalModelBase::DisableBaryonAntiBaryonAttraction()
+  {
+    for (int i = 0; i < TPS()->Particles().size(); ++i) {
+      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+        const ThermalParticle &part1 = TPS()->Particles()[i];
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() < 0)
+          || (part1.BaryonCharge() < 0 && part2.BaryonCharge() > 0))
+          SetAttraction(i, j, 0.);
+      }
+    }
+  }
+
   void ThermalModelBase::SetGammaq(double gammaq)
   {
     m_Parameters.gammaq = gammaq;
