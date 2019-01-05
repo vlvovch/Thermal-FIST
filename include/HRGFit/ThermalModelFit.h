@@ -146,67 +146,27 @@ namespace thermalfist {
       for (int i = 0; i < ParameterList.size(); ++i)
         if (ParameterList[i]->name == name)
           return *ParameterList[i];
-      /*if (T.name == name) return T;
-      if (muB.name == name) return muB;
-      if (muS.name == name) return muS;
-      if (muQ.name == name) return muQ;
-      if (muC.name == name) return muC;
-      if (gammaq.name == name) return gammaq;
-      if (gammaS.name == name) return gammaS;
-      if (gammaC.name == name) return gammaC;
-      //if (V.name==name) return V;
-      if (R.name == name) return R;
-      if (Rc.name == name) return Rc;*/
-      return FitParameter();
+      // return T by default
+      return T;
     }
     FitParameter& GetParameter(const std::string& name) {
       for (int i = 0; i < ParameterList.size(); ++i)
         if (ParameterList[i]->name == name)
           return *ParameterList[i];
-      /*if (T.name == name) return T;
-      if (muB.name == name) return muB;
-      if (muS.name == name) return muS;
-      if (muQ.name == name) return muQ;
-      if (muC.name == name) return muC;
-      if (gammaq.name == name) return gammaq;
-      if (gammaS.name == name) return gammaS;
-      if (gammaC.name == name) return gammaC;
-      //if (V.name==name) return V;
-      if (R.name == name) return R;
-      if (Rc.name == name) return Rc;*/
-      return FitParameter();
+      // return T by default
+      return T;
     }
     FitParameter GetParameter(const int index) const {
       if (index >= 0 && index < ParameterList.size())
         return *ParameterList[index];
-      /*if (index == 0) return T;
-      if (index == 1) return muB;
-      if (index == 2) return muS;
-      if (index == 3) return muQ;
-      if (index == 4) return gammaS;
-      //if (index==5) return V;
-      if (index == 5) return R;
-      if (index == 6) return Rc;
-      if (index == 7) return gammaq;
-      if (index == 8) return muC;
-      if (index == 9) return gammaC;*/
-      return FitParameter();
+      // return T by default
+      return T;
     }
     FitParameter& GetParameter(const int index) {
       if (index >= 0 && index < ParameterList.size())
         return *ParameterList[index];
-      /*if (index == 0) return T;
-      if (index == 1) return muB;
-      if (index == 2) return muS;
-      if (index == 3) return muQ;
-      if (index == 4) return gammaS;
-      //if (index==5) return V;
-      if (index == 5) return R;
-      if (index == 6) return Rc;
-      if (index == 7) return gammaq;
-      if (index == 8) return muC;
-      if (index == 9) return gammaC;*/
-      return FitParameter();
+      // return T by default
+      return T;
     }
     void SetParameter(const std::string& name, const FitParameter& param) {
       if (T.name == name) T = param;
