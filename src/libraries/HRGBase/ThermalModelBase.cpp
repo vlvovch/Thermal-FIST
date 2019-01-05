@@ -33,6 +33,7 @@ namespace thermalfist {
     m_useOpenMP(0)
   {
     m_QBgoal = 0.4;
+    m_SBgoal = 50.;
     m_Chem.resize(m_TPS->Particles().size());
     m_Volume = params.V;
     m_densities.resize(m_TPS->Particles().size());
@@ -46,7 +47,8 @@ namespace thermalfist {
     m_kurtprim.resize(m_TPS->Particles().size());
     m_kurttot.resize(m_TPS->Particles().size());
 
-    m_ConstrainMuB = m_ConstrainMuC = m_ConstrainMuQ = m_ConstrainMuS = true;
+    m_ConstrainMuB = false;
+    m_ConstrainMuC = m_ConstrainMuQ = m_ConstrainMuS = true;
 
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
@@ -392,17 +394,19 @@ namespace thermalfist {
 
 
   void ThermalModelBase::FixParameters() {
-    if (fabs(m_Parameters.muB) < 1e-6) {
+    if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       if (m_ConstrainMuS)
         m_Parameters.muS = 0.;
       if (m_ConstrainMuQ)
         m_Parameters.muQ = 0.;
       if (m_ConstrainMuC)
         m_Parameters.muC = 0.;
-      //m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
       CalculateDensities();
       return;
+    }
+    if (m_ConstrainMuB) {
+      m_Parameters.muB = xMath::mnucleon() / 2.;
     }
     double suppr = 10;
     if (m_Parameters.muB > 0.150) suppr = 8.;
@@ -416,7 +420,6 @@ namespace thermalfist {
       m_Parameters.muS = m_Parameters.muB / suppr;
     if (m_ConstrainMuQ)
       m_Parameters.muQ = -m_Parameters.muB / suppr / 10.;
-    //m_Parameters.muC = 0.;
     if (m_ConstrainMuC)
       m_Parameters.muC = -m_Parameters.muS;
 
@@ -424,25 +427,28 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::FixParametersNoReset() {
-    if (fabs(m_Parameters.muB) < 1e-6) {
+    if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
       CalculateDensities();
       return;
     }
 
+    m_ConstrainMuB &= m_TPS->hasBaryons();
     m_ConstrainMuQ &= (m_TPS->hasCharged() && m_TPS->hasBaryons());
     m_ConstrainMuS &= m_TPS->hasStrange();
     m_ConstrainMuC &= m_TPS->hasCharmed();
 
-    vector<double> x22(3);
-    x22[0] = m_Parameters.muQ;
-    x22[1] = m_Parameters.muS;
-    x22[2] = m_Parameters.muC;
-    vector<double> x2(3), xinit(3);
-    xinit[0] = x2[0] = m_Parameters.muQ;
-    xinit[1] = x2[1] = m_Parameters.muS;
-    xinit[2] = x2[2] = m_Parameters.muC;
+    vector<double> x22(4);
+    x22[0] = m_Parameters.muB;
+    x22[1] = m_Parameters.muQ;
+    x22[2] = m_Parameters.muS;
+    x22[3] = m_Parameters.muC;
+    vector<double> x2(4), xinit(4);
+    xinit[0] = x2[0] = m_Parameters.muB;
+    xinit[1] = x2[1] = m_Parameters.muQ;
+    xinit[2] = x2[2] = m_Parameters.muS;
+    xinit[3] = x2[3] = m_Parameters.muC;
     int iter = 0, iterMAX = 2;
     while (iter < iterMAX) {
       BroydenEquationsChem eqs(this);
@@ -529,11 +535,6 @@ namespace thermalfist {
       //m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
     }
   }
-
-  //void ThermalModelBase::FixParameters(double QB) {
-  //  m_QBgoal = QB;
-  //  FixParameters();
-  //}
 
   double ThermalModelBase::GetParticlePrimordialDensity(unsigned int part) {
     if (!m_Calculated) CalculateDensities();
@@ -945,6 +946,7 @@ namespace thermalfist {
     std::vector<double> ret(m_N, 0.);
 
     int i1 = 0;
+    if (m_THM->ConstrainMuB()) { m_THM->SetBaryonChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuQ()) { m_THM->SetElectricChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
@@ -953,12 +955,24 @@ namespace thermalfist {
 
     i1 = 0;
 
+    // Baryon charge
+    if (m_THM->ConstrainMuB()) {
+      double fBd = m_THM->CalculateBaryonDensity();
+      double fSd = m_THM->CalculateEntropyDensity();
+
+      ret[i1] = (fBd / fSd - 1. / m_THM->SoverB()) * m_THM->SoverB();
+
+      i1++;
+    }
+
     // Electric charge
     if (m_THM->ConstrainMuQ()) {
       double fBd = m_THM->CalculateBaryonDensity();
       double fQd = m_THM->CalculateChargeDensity();
 
-      ret[i1] = (fQd / fBd - m_THM->QoverB()) / m_THM->QoverB();
+      // Update: remove division by Q/B to allow for charge neutrality
+      ret[i1] = (fQd / fBd - m_THM->QoverB());
+      //ret[i1] = (fQd / fBd - m_THM->QoverB()) / m_THM->QoverB();
 
       i1++;
     }
@@ -991,6 +1005,12 @@ namespace thermalfist {
   Eigen::MatrixXd ThermalModelBase::BroydenJacobianChem::Jacobian(const std::vector<double>& x)
   {
     int i1 = 0;
+    // Analytic calculations of Jacobian not yet supported if entropy per baryon is involved
+    if (m_THM->ConstrainMuB()) { 
+      printf("**ERROR** Constraining chemical potentials: analytic calculation of the Jacobian not supported if muB is constrained\n");
+      exit(1); 
+    }
+
     if (m_THM->ConstrainMuQ()) { m_THM->SetElectricChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
@@ -1033,7 +1053,9 @@ namespace thermalfist {
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * m_wprim[i];
         d2 /= m_THM->Parameters().T;
 
-        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+        // Update: remove division by Q/B to allow for charge neutrality
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
+        //ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
 
         i2++;
       }
@@ -1050,7 +1072,9 @@ namespace thermalfist {
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * m_wprim[i];
         d2 /= m_THM->Parameters().T;
 
-        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+        // Update: remove division by Q/B to allow for charge neutrality
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
+        //ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
 
         i2++;
       }
@@ -1067,7 +1091,9 @@ namespace thermalfist {
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * m_wprim[i];
         d2 /= m_THM->Parameters().T;
 
-        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
+        // Update: remove division by Q/B to allow for charge neutrality
+        ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
+        //ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2) / m_THM->QoverB();
 
         i2++;
       }
@@ -1207,9 +1233,10 @@ namespace thermalfist {
 
     int NNN = 0;
     std::vector<double> xcur;
-    if (m_THM->ConstrainMuQ()) { xcur.push_back(x0[0]); NNN++; }
-    if (m_THM->ConstrainMuS()) { xcur.push_back(x0[1]); NNN++; }
-    if (m_THM->ConstrainMuC()) { xcur.push_back(x0[2]); NNN++; }
+    if (m_THM->ConstrainMuB()) { xcur.push_back(x0[0]); NNN++; }
+    if (m_THM->ConstrainMuQ()) { xcur.push_back(x0[1]); NNN++; }
+    if (m_THM->ConstrainMuS()) { xcur.push_back(x0[2]); NNN++; }
+    if (m_THM->ConstrainMuC()) { xcur.push_back(x0[3]); NNN++; }
     if (NNN == 0) {
       m_THM->FillChemicalPotentials();
       return xcur;
@@ -1228,7 +1255,7 @@ namespace thermalfist {
 
     BroydenJacobian *JacobianInUse = m_Jacobian;
     bool UseDefaultJacobian = false;
-    if (JacobianInUse == NULL) {
+    if (JacobianInUse == NULL || m_THM->ConstrainMuB()) {
       JacobianInUse = new BroydenJacobian(m_Equations);
       UseDefaultJacobian = true;
     }
@@ -1247,11 +1274,20 @@ namespace thermalfist {
     MatrixXd Jac(N, N), Jinv(N, N);
     Jac = JacobianInUse->Jacobian(xcur);
 
+    bool constrmuB = m_THM->ConstrainMuB();
     bool constrmuQ = m_THM->ConstrainMuQ();
     bool constrmuS = m_THM->ConstrainMuS();
     bool constrmuC = m_THM->ConstrainMuC();
     bool repeat = false;
     NNN = 0;
+    if (m_THM->ConstrainMuB()) {
+      for (int j = 0; j < Jac.rows(); ++j)
+        if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuB(false); }
+      double  S = m_THM->CalculateEntropyDensity();
+      double nB = m_THM->CalculateBaryonDensity();
+      if (abs(S) < 1.e-25 || abs(nB) < 1.e-25) { repeat = true; m_THM->ConstrainMuB(false); }
+      NNN++;
+    }
     if (m_THM->ConstrainMuQ()) {
       for (int j = 0; j < Jac.rows(); ++j)
         if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuQ(false); }
@@ -1277,6 +1313,7 @@ namespace thermalfist {
     }
     if (repeat) {
       std::vector<double> ret = Solve(x0, solcrit, max_iterations);
+      m_THM->ConstrainMuQ(constrmuB);
       m_THM->ConstrainMuQ(constrmuQ);
       m_THM->ConstrainMuS(constrmuS);
       m_THM->ConstrainMuC(constrmuC);

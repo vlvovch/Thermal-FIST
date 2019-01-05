@@ -121,6 +121,9 @@ namespace thermalfist {
     double QoverB() const { return m_QBgoal; }
     void SetQoverB(double QB) { m_QBgoal = QB; }
 
+    double SoverB() const { return m_SBgoal; }
+    void SetSoverB(double SB) { m_SBgoal = SB; }
+
     double Volume() const { return m_Parameters.V; }
     void SetVolume(double Volume) { m_Volume = Volume; m_Parameters.V = Volume; }
     void SetVolumeRadius(double Radius) { m_Volume = 4. / 3.*xMath::Pi() * Radius * Radius * Radius; m_Parameters.V = m_Volume; }
@@ -266,6 +269,7 @@ namespace thermalfist {
     bool m_NormBratio;
     bool m_QuantumStats;
     double m_QBgoal;
+    double m_SBgoal;
     double m_Volume;
 
     bool m_ConstrainMuB;

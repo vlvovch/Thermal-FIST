@@ -156,6 +156,7 @@ namespace thermalfist {
       };
   };
 
+  /// For backward compatibility
   typedef ThermalModelVDW ThermalModelVDWFull;
 
 } // namespace thermalfist

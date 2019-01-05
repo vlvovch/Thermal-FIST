@@ -110,8 +110,8 @@ HRGEventGenerator/MomentumDistribution.cpp
 HRGEventGenerator/ParticleDecays.cpp
 HRGEventGenerator/RandomGenerators.cpp
 HRGEventGenerator/SimpleEvent.cpp
-HRGEventGenerator/SREventGenerator.cpp
-HRGEventGenerator/SSHEventGenerator.cpp
+HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
+HRGEventGenerator/CylindricalBlastWaveEventGenerator.cpp
 )
 
 source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
@@ -122,8 +122,8 @@ ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/EventGeneratorBase.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/MomentumDistribution.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/ParticleDecays.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/RandomGenerators.h
-${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SREventGenerator.h
-${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SSHEventGenerator.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SphericalBlastWaveEventGenerator.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CylindricalBlastWaveEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleEvent.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 )	

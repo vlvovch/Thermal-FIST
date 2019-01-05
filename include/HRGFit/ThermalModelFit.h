@@ -39,25 +39,7 @@ namespace thermalfist {
     double chi2ndf;
     FitParameter nH, rhoB, rhoQ, en, entropy, pressure;//, eta;
     ThermalModelFitParametersExtended() { }
-    ThermalModelFitParametersExtended(ThermalModelBase *model) {
-      T.value = model->Parameters().T;
-      muB.value = model->Parameters().muB;
-      muS.value = model->Parameters().muS;
-      muQ.value = model->Parameters().muQ;
-      muC.value = model->Parameters().muC;
-      gammaq.value = model->Parameters().gammaq;
-      gammaS.value = model->Parameters().gammaS;
-      gammaC.value = model->Parameters().gammaC;
-      //R.value = model->Parameters.R;
-      R.value = 0.;
-      Rc.value = 0.;
-      nH.value = model->CalculateHadronDensity();
-      rhoB.value = model->CalculateBaryonDensity();
-      rhoQ.value = model->CalculateChargeDensity();
-      en.value = model->CalculateEnergyDensity();
-      entropy.value = model->CalculateEntropyDensity();
-      pressure.value = model->CalculatePressure();
-    }
+    ThermalModelFitParametersExtended(ThermalModelBase *model);
   };
 
   /**
@@ -71,167 +53,37 @@ namespace thermalfist {
     int B, S, Q, C;
     double chi2, chi2ndf;
     int ndf;
-    ThermalModelFitParameters(const ThermalModelParameters &params = ThermalModelParameters())//:                                                                                                                                                             //T(T_), muB(muB_), muS(muS_), muQ(muQ_), gammaS(gammaS_), R(R_)  
-    {
-      T = FitParameter("T", true, params.T, 0.05, 0.02, 0.500);
-      muB = FitParameter("muB", true, params.muB, 0.05, -0.100, 0.900);
-      muS = FitParameter("muS", false, params.muS, 0.05, -0.450, 0.450);
-      muQ = FitParameter("muQ", false, params.muQ, 0.05, -0.130, 0.130);
-      muC = FitParameter("muC", false, params.muC);
-      gammaq = FitParameter("gammaq", false, params.gammaq, 0.5, 0.01, 3.);
-      gammaS = FitParameter("gammaS", false, params.gammaS, 0.5, 0.01, 3.);
-      gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 50.);
-      //V = FitParameter("V", true, V_, 2000., 1., 20000.);  // Volume no longer used
-      R = FitParameter("R", true, pow(3. * params.V / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 25.0);
-      Rc = FitParameter("Rc", true, pow(3. * params.SVc / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 10.0);
-      B = params.B;
-      Q = params.Q;
-      S = params.S;
-      C = params.C;
 
-      FillParameterList();
-    }
-    ThermalModelFitParameters(const ThermalModelFitParameters& op) : 
-      GCE(op.GCE), T(op.T), muB(op.muB), muS(op.muS), muQ(op.muQ), muC(op.muC),
-      gammaq(op.gammaq), gammaS(op.gammaS), gammaC(op.gammaC), R(op.R), Rc(op.Rc),
-      B(op.B), S(op.S), Q(op.Q), C(op.C), chi2(op.chi2), chi2ndf(op.chi2ndf),
-      ndf(op.ndf)
-    {
-      FillParameterList();
-    }
-    ThermalModelFitParameters& operator=(const ThermalModelFitParameters& op)
-    {
-      GCE = op.GCE;
-      T = op.T;
-      muB = op.muB;
-      muS = op.muS;
-      muQ = op.muQ;
-      muC = op.muC;
-      gammaq = op.gammaq;
-      gammaS = op.gammaS;
-      gammaC = op.gammaC;
-      R = op.R;
-      Rc = op.Rc;
-      B = op.B;
-      S = op.S;
-      Q = op.Q;
-      C = op.C;
-      chi2 = op.chi2;
-      chi2ndf = op.chi2ndf;
-      ndf = op.ndf;
-      FillParameterList();
-      return *this;
-    }
-    void FillParameterList() {
-      ParameterList.clear();
-      ParameterList.push_back(&T);
-      ParameterList.push_back(&R);
-      ParameterList.push_back(&Rc);
-      ParameterList.push_back(&muB);
-      ParameterList.push_back(&muQ);
-      ParameterList.push_back(&muS);
-      ParameterList.push_back(&muC);
-      ParameterList.push_back(&gammaq);
-      ParameterList.push_back(&gammaS);
-      ParameterList.push_back(&gammaC);
-    }
-    int IndexByName(const std::string& name) const {
-      int ret = -1;
-      for (int i = 0; i < ParameterList.size(); ++i)
-        if (ParameterList[i]->name == name)
-          ret = i;
-      return ret;
-    }
-    FitParameter GetParameter(const std::string& name) const {
-      for (int i = 0; i < ParameterList.size(); ++i)
-        if (ParameterList[i]->name == name)
-          return *ParameterList[i];
-      // return T by default
-      return T;
-    }
-    FitParameter& GetParameter(const std::string& name) {
-      for (int i = 0; i < ParameterList.size(); ++i)
-        if (ParameterList[i]->name == name)
-          return *ParameterList[i];
-      // return T by default
-      return T;
-    }
-    FitParameter GetParameter(const int index) const {
-      if (index >= 0 && index < ParameterList.size())
-        return *ParameterList[index];
-      // return T by default
-      return T;
-    }
-    FitParameter& GetParameter(const int index) {
-      if (index >= 0 && index < ParameterList.size())
-        return *ParameterList[index];
-      // return T by default
-      return T;
-    }
-    void SetParameter(const std::string& name, const FitParameter& param) {
-      if (T.name == name) T = param;
-      if (muB.name == name) muB = param;
-      if (muS.name == name) muS = param;
-      if (muQ.name == name) muQ = param;
-      if (muC.name == name) muC = param;
-      if (gammaq.name == name) gammaq = param;
-      if (gammaS.name == name) gammaS = param;
-      if (gammaC.name == name) gammaC = param;
-      //if (V.name==name) V = param;
-      if (R.name == name)  R = param;
-      if (Rc.name == name) Rc = param;
-    }
-    void SetParameter(const std::string& name, double val, double err, double xmin, double xmax) {
-      if (T.name == name) T = FitParameter(name, T.toFit, val, err, xmin, xmax);
-      if (muB.name == name) muB = FitParameter(name, muB.toFit, val, err, xmin, xmax);
-      if (muS.name == name) muS = FitParameter(name, muS.toFit, val, err, xmin, xmax);
-      if (muQ.name == name) muQ = FitParameter(name, muQ.toFit, val, err, xmin, xmax);
-      if (muC.name == name) muC = FitParameter(name, muC.toFit, val, err, xmin, xmax);
-      if (gammaq.name == name) gammaq = FitParameter(name, gammaq.toFit, val, err, xmin, xmax);
-      if (gammaS.name == name) gammaS = FitParameter(name, gammaS.toFit, val, err, xmin, xmax);
-      if (gammaC.name == name) gammaC = FitParameter(name, gammaC.toFit, val, err, xmin, xmax);
-      //if (V.name==name) V = FitParameter(name, true, val, err, xmin, xmax);
-      if (R.name == name) R = FitParameter(name, R.toFit, val, err, xmin, xmax);
-      if (Rc.name == name) Rc = FitParameter(name, Rc.toFit, val, err, xmin, xmax);
-    }
-    void SetParameterValue(const std::string& name, double value) {
-      if (T.name == name) T.value = value;
-      if (muB.name == name) muB.value = value;
-      if (muS.name == name) muS.value = value;
-      if (muQ.name == name) muQ.value = value;
-      if (muC.name == name) muC.value = value;
-      if (gammaq.name == name) gammaq.value = value;
-      if (gammaS.name == name) gammaS.value = value;
-      if (gammaC.name == name) gammaC.value = value;
-      //if (V.name==name) V.toFit = toFit;
-      if (R.name == name) R.value = value;
-      if (Rc.name == name) Rc.value = value;
-    }
-    void SetParameterFitFlag(const std::string& name, bool toFit) {
-      if (T.name == name) T.toFit = toFit;
-      if (muB.name == name) muB.toFit = toFit;
-      if (muS.name == name) muS.toFit = toFit;
-      if (muQ.name == name) muQ.toFit = toFit;
-      if (muC.name == name) muC.toFit = toFit;
-      if (gammaq.name == name) gammaq.toFit = toFit;
-      if (gammaS.name == name) gammaS.toFit = toFit;
-      if (gammaC.name == name) gammaC.toFit = toFit;
-      //if (V.name==name) V.toFit = toFit;
-      if (R.name == name) R.toFit = toFit;
-      if (Rc.name == name) Rc.toFit = toFit;
-    }
-    ThermalModelParameters GetThermalModelParameters() {
-      ThermalModelParameters ret(T.value, muB.value, muS.value, muQ.value, gammaS.value, 4. / 3. * xMath::Pi() * R.value * R.value * R.value);
-      ret.SVc = 4. / 3. * xMath::Pi() * Rc.value * Rc.value * Rc.value;
-      ret.gammaq = gammaq.value;
-      ret.muC = muC.value;
-      ret.gammaC = gammaC.value;
-      ret.B = B;
-      ret.Q = Q;
-      ret.S = S;
-      ret.C = C;
-      return ret;
-    }
+    // Default constructor
+    ThermalModelFitParameters(const ThermalModelParameters &params = ThermalModelParameters());
+
+    // Copy constructor
+    ThermalModelFitParameters(const ThermalModelFitParameters& op);
+
+    // Assignment operator
+    ThermalModelFitParameters& operator=(const ThermalModelFitParameters& op);
+
+    void FillParameterList();
+
+    int IndexByName(const std::string& name) const;
+
+    FitParameter GetParameter(const std::string& name) const;
+
+    FitParameter& GetParameter(const std::string& name);
+
+    FitParameter GetParameter(const int index) const;
+
+    FitParameter& GetParameter(const int index);
+
+    void SetParameter(const std::string& name, const FitParameter& param);
+
+    void SetParameter(const std::string& name, double val, double err, double xmin, double xmax);
+
+    void SetParameterValue(const std::string& name, double value);
+
+    void SetParameterFitFlag(const std::string& name, bool toFit);
+
+    ThermalModelParameters GetThermalModelParameters();
   };
 
   struct ExperimentMultiplicity {
@@ -308,8 +160,12 @@ namespace thermalfist {
       m_Parameters.SetParameterFitFlag(name, flag);
     }
 
+    void SetSBConstraint(double SB) {
+      if (m_model != NULL)
+        m_model->SetSoverB(SB);
+    }
+
     void SetQBConstraint(double QB) {
-      m_QBgoal = QB;
       if (m_model != NULL)
         m_model->SetQoverB(QB);
     }
@@ -408,7 +264,8 @@ namespace thermalfist {
     const ThermalModelFitParametersExtended& ExtendedParameters() const { return m_ExtendedParameters; }
     ThermalModelBase* model() { return m_model; }
 
-    double QoverB() const { return m_QBgoal; }
+    double SoverB() const { return m_model->SoverB(); }
+    double QoverB() const { return m_model->QoverB(); }
 
     const std::vector<ExperimentMultiplicity>&    Multiplicities()   const { return m_Multiplicities; }
     const std::vector<ExperimentRatio>&           Ratios()           const { return m_Ratios; }
@@ -440,7 +297,6 @@ namespace thermalfist {
     ThermalModelFitParameters m_Parameters;
     ThermalModelFitParametersExtended m_ExtendedParameters;
     ThermalModelBase *m_model;
-    double m_QBgoal;
     std::vector<ExperimentMultiplicity> m_Multiplicities;
     std::vector<ExperimentRatio> m_Ratios;
     std::vector<FittedQuantity> m_Quantities;

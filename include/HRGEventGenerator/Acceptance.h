@@ -18,9 +18,9 @@ namespace thermalfist {
   namespace Acceptance {
 
     /**
-    *  Structure which contains the binomial probabilties
-    *  for particle with given y and pt to be accepted.
-    */
+     *  Structure which contains the binomial probabilties
+     *  for particle with given y and pt to be accepted.
+     */
     struct AcceptanceFunction {
       bool init;
       double dy, dpt;
@@ -36,8 +36,8 @@ namespace thermalfist {
 
 
     /**
-    *  Read the acceptance function from file.
-    */
+     *  Read the acceptance function from file.
+     */
     int ReadAcceptanceFunction(AcceptanceFunction & func, std::string filename);
   }
 

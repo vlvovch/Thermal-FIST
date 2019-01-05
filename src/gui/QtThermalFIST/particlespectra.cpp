@@ -214,10 +214,10 @@ ParticlesSpectra::~ParticlesSpectra() {
 
 void ParticlesSpectra::ProcessEvent(const SimpleEvent &evt) {
     std::vector<int> netparts(fNetParticles.size(), 0);
-    std::vector<int> netcharges(3, 0);
-    std::vector<int> totalcharges(3, 0);
-    std::vector<int> positivecharges(3, 0);
-    std::vector<int> negativecharges(3, 0);
+    std::vector<int> netcharges(4, 0);
+    std::vector<int> totalcharges(4, 0);
+    std::vector<int> positivecharges(4, 0);
+    std::vector<int> negativecharges(4, 0);
 
     for(int i=0;i<evt.Particles.size();++i) {
         {
@@ -230,7 +230,7 @@ void ParticlesSpectra::ProcessEvent(const SimpleEvent &evt) {
                 netparts[fPDGtoIDnet[-evt.Particles[i].PDGID]]--;
 
             if (fPDGtoIDall.count(evt.Particles[i].PDGID)!=0) {
-                for(int ii=0;ii<3;++ii) {
+                for(int ii=0;ii<4;++ii) {
                     netcharges[ii] += fParticleCharges[fPDGtoIDall[evt.Particles[i].PDGID]][ii];
                     if (fParticleCharges[fPDGtoIDall[evt.Particles[i].PDGID]][ii]>0)
                         positivecharges[ii]++;
@@ -318,14 +318,18 @@ void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int
         fNetCharges.push_back(NumberStatistics("net-baryon"));
         fNetCharges.push_back(NumberStatistics("net-charge"));
         fNetCharges.push_back(NumberStatistics("net-strangeness"));
+        fNetCharges.push_back(NumberStatistics("net-charm"));
         fTotalCharges.push_back(NumberStatistics("baryonic hadrons"));
         fTotalCharges.push_back(NumberStatistics("charged hadrons"));
         fTotalCharges.push_back(NumberStatistics("strange hadrons"));
+        fTotalCharges.push_back(NumberStatistics("charmed hadrons"));
         fPositiveCharges.push_back(NumberStatistics("baryon+ hadrons"));
         fPositiveCharges.push_back(NumberStatistics("charge+ hadrons"));
         fPositiveCharges.push_back(NumberStatistics("strange+ hadrons"));
+        fPositiveCharges.push_back(NumberStatistics("charm+ hadrons"));
         fNegativeCharges.push_back(NumberStatistics("baryon- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("charge- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("strange- hadrons"));
+        fNegativeCharges.push_back(NumberStatistics("charm- hadrons"));
     }
 }
