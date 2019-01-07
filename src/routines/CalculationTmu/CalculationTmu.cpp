@@ -188,8 +188,8 @@ int main(int argc, char *argv[])
 		// pdgid -- PDG code for the desired particle species
 		// feeddown: 0 - primordial, 1 - final, 2 - final with additional feeddown from weak decays
 		// yield = density * volume
-		double yieldKplus  = model->GetDensity(321, 1) * model->Volume();
-		double yieldpiplus = model->GetDensity(211, 1) * model->Volume();
+		double yieldKplus  = model->GetDensity(321, Feeddown::StabilityFlag) * model->Volume();
+		double yieldpiplus = model->GetDensity(211, Feeddown::StabilityFlag) * model->Volume();
 
 		// Scaled variance of final state particle number fluctuations
 		double wKplus  = model->ScaledVarianceTotal( model->TPS()->PdgToId(321) );
