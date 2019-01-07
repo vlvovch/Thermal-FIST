@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2015-2018 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -43,7 +43,7 @@ namespace thermalfist {
     ThermalModelBase::ChangeTPS(TPS_);
   }
 
-  void ThermalModelCanonical::CalculateQuantumNumbersRange(bool doubleRange)
+  void ThermalModelCanonical::CalculateQuantumNumbersRange(bool computeFluctuations)
   {
     m_BMAX = 0;
     m_QMAX = 0;
@@ -82,7 +82,7 @@ namespace thermalfist {
     m_SMAX_list = m_SMAX;
     m_CMAX_list = m_CMAX;
 
-    if (doubleRange) {
+    if (computeFluctuations) {
       m_BMAX *= 2;
       m_QMAX *= 2;
       m_SMAX *= 2;
@@ -122,25 +122,6 @@ namespace thermalfist {
 
   }
 
-  void ThermalModelCanonical::SetParameters(double T, double gammaS, double V, int B, int Q, int S, int C) {
-    m_Parameters.T = T;
-    m_Parameters.gammaS = gammaS;
-    m_Parameters.V = V;
-    m_Parameters.SVc = V;
-    m_Parameters.B = B;
-    m_Parameters.Q = Q;
-    m_Parameters.S = S;
-    m_Parameters.C = C;
-    m_Volume = V;
-    m_Calculated = false;
-  }
-
-  void ThermalModelCanonical::SetParameters(const ThermalModelParameters& params) {
-    m_Parameters = params;
-    m_Volume = m_Parameters.V;
-    m_Calculated = false;
-  }
-
   void ThermalModelCanonical::SetStatistics(bool stats) {
     m_QuantumStats = stats;
     for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
@@ -173,7 +154,7 @@ namespace thermalfist {
   }
 
 
-  void ThermalModelCanonical::CalculateDensities() {
+  void ThermalModelCanonical::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
     if (m_PartialZ.size() == 0)
@@ -192,17 +173,9 @@ namespace thermalfist {
       m_Parameters.muQ = 0.0;
       m_Parameters.muS = 0.0;
       m_Parameters.muC = 0.0;
+
       //PrepareModelGCE(); // Plan B, may work better when quantum numbers are large
     }
-
-
-
-    //printf("muB = %lf\tmuQ = %lf\tmuS = %lf\tmuC = %lf\n", 
-    //  m_Parameters.muB,
-    //  m_Parameters.muQ,
-    //  m_Parameters.muS,
-    //  m_Parameters.muC);
-
 
     CalculatePartitionFunctions();
 
@@ -215,7 +188,6 @@ namespace thermalfist {
       }
       else if (tpart.Statistics() == 0
         || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
-        //|| (tpart.BaryonCharge() != 0 && m_OnlyBose))
       {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
 
@@ -230,8 +202,6 @@ namespace thermalfist {
         }
       }
     }
-
-    CalculateFeeddown();
 
     m_Calculated = true;
     ValidateCalculation();
@@ -592,7 +562,7 @@ Obtained: %lf\n\
     }
   }
 
-  double ThermalModelCanonical::CalculateParticleScaledVariance(int part)
+  double ThermalModelCanonical::ParticleScaledVariance(int part)
   {
     ThermalParticle &tpart = m_TPS->Particle(part);
     double ret1 = 0., ret2 = 0., ret3 = 0.;

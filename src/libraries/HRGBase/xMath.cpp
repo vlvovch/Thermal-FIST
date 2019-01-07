@@ -891,13 +891,4 @@ namespace thermalfist {
     return logGamma;
   }
 
-
-  double xMath::ParticleDensityBoltzmann(double deg, double m, double T, double mu) {
-    return BesselKexp(2, m / T) * exp(mu / T) * deg / 2. / Pi() / Pi() * m * m * T * GeVtoifm() * GeVtoifm() * GeVtoifm();
-  }
-
-  double xMath::PressureBoltzmann(double deg, double m, double T, double mu) {
-    return T * ParticleDensityBoltzmann(deg, m, T, mu);
-  }
-
 } // namespace thermalfist

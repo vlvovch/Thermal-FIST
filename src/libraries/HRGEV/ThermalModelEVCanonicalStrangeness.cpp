@@ -68,7 +68,7 @@ namespace thermalfist {
   }
 
 
-  void ThermalModelEVCanonicalStrangeness::CalculateDensities() {
+  void ThermalModelEVCanonicalStrangeness::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);
@@ -95,8 +95,6 @@ namespace thermalfist {
     double tP = CalculatePressure();
     printf("EV-SCE calculation: The following two parameters must be much smaller than unity. Otherwise we are in trouble...\n");
     printf("%20s%lf\n%20s%lf\n", "PS/P = ", (tP - m_PNS) / tP, "EVS/(V-EVNS) = ", m_EVS / (m_Parameters.SVc - m_EVNS));
-
-    CalculateFeeddown();
 
     m_Calculated = true;
     ValidateCalculation();

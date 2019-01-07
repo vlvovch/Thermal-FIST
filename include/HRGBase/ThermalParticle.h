@@ -1,18 +1,26 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
 #ifndef THERMALPARTICLE_H
 #define THERMALPARTICLE_H
 
-/** \file ThermalParticle.h
-*   Contains classes and methods for basic information and calculations
-*   involving a particle in ideal gas GCE.
-*   Also contains information about decays.
-*/
+
+/**
+ * \file ThermalParticle.h
+ * Contains classes and methods which 
+ * provide basic information about a
+ * particle species
+ * and perform calculations
+ * of various thermodynamic function
+ * in the grand canonical ensemble.
+ * Also contains information about decays.
+ * 
+ */
+
 
 #include <string>
 #include <vector>
@@ -24,9 +32,9 @@
 namespace thermalfist {
 
   /**
-  *   A structure containing all thermal parameters of the model.
-  *   Used in ThermalParticle class when calculating the ideal gas functions.
-  */
+   *   A structure containing all thermal parameters of the model.
+   *   Used in ThermalParticle class when calculating the ideal gas functions.
+   */
   struct ThermalModelParameters {
     double    T;        /**< Temperature [GeV] */
     double    muB;      /**< Baryon chemical potential [GeV] */
@@ -52,17 +60,64 @@ namespace thermalfist {
     }
   };
 
+  /**
+   * \brief An auxiliary struct containing the list of feeddown flags.
+   * 
+   */
   struct Feeddown {
-    enum Type { Primordial = 0, StabilityFlag = 1, Weak = 2, Electromagnetic = 3, Strong = 4 };
+    /**
+     * List of feeddown flags.
+     * 
+     */
+    enum Type { 
+      Primordial = 0,      ///< No feeddown.
+      StabilityFlag = 1,   ///< Feeddown from all particles markes as unstable.
+      Weak = 2,            ///< Feeddown from strong, electromagnetic, and weak decays.
+      Electromagnetic = 3, ///< Feeddown from strong and electromagnetic decays.
+      Strong = 4           ///< Feeddown from strong decays.
+      };
     static const int NumberOfTypes = 5;
   };
 
   /**
-  *   A structure containing information about a single decay channel of a particle.
-  */
+   * \brief An auxiliary struct containing the list of conserved charges.
+   * 
+   */
+  struct ConservedCharge {
+    /**
+     * Set of conserved charges included.
+     * 
+     */
+    enum Name { 
+      BaryonCharge = 0,      ///< Baryon number.
+      ElectricCharge = 1,    ///< Electric charge.
+      StrangenessCharge = 2, ///< Strangeness.
+      CharmCharge = 3        ///< Charm.
+      };
+    static const int NumberOfTypes = 5;
+  };
+
+  /**
+   * A structure containing information about a single decay channel of a particle.
+   */
   struct ParticleDecay
   {
-    enum DecayType { Stable = 0, Default = 1, Weak = 2, Electromagnetic = 3, Strong = 4 };
+    /**
+     * \brief Type of particle's decay.
+     * 
+     * Stable -- does not decay.
+     * Default -- not used.
+     * Weak -- weakly decaying.
+     * Electromagnetic -- electromagnetically decaying.
+     * Strong -- strongly decaying.
+     */
+    enum DecayType { 
+      Stable = 0,           ///< Does not decay.
+      Default = 1,          ///< Not used.
+      Weak = 2,             ///< Weakly decaying.
+      Electromagnetic = 3,  ///< Electromagnetically decaying.
+      Strong = 4            ///< Strongly decaying.
+      };
     static const int NumberOfDecayTypes = 5;
     
     double mBratio;                /**< Branching ratio */
@@ -74,17 +129,29 @@ namespace thermalfist {
     std::vector<double> mBratioVsM; /**< Mass-dependent branching ratios */
     double mBratioAverage;          /**< Average branching ratios after integrating with the Boltzmann factor*/
 
+    /// Name of the decay channel. Not used.
     std::string mChannelName;
 
-    /// Constructor.
     /**
-    *   Takes branching ratio and vector of PDG IDs of daughter particles.
-    */
+     * \brief Construct a new ParticleDecay object.
+     * 
+     * \param bratio Branching ratio of the decay. Between 0 and 1.
+     * \param daughters A vector of PDG ID numbers of all daughter products.
+     */
     ParticleDecay(double bratio = 0., const std::vector<int> &daughters = std::vector<int>(0)) :
       mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),
       mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio), mChannelName("decay1") {
     }
 
+    /**
+     * \brief Energy depedent modified branching ratio.
+     * 
+     * Energy dependent modification of the branching ratio.
+     * Used in the eBW scheme.
+     * 
+     * \param m Energy [GeV].
+     * \return Modification of the branching ratio.
+     */
     double ModifiedWidth(double m) const;
 
     bool operator==(const ParticleDecay &rhs) const; // TODO: improve
@@ -94,147 +161,551 @@ namespace thermalfist {
   
 
   /**
-  *   A class containing all information about a particle.
-  *   Also contains implementation of calculation of various quantities in ideal GCE gas.
+  * A class containing all information about a particle specie.
+  * Also contains implementation of calculation of various thermodynamic quantities 
+  * in an ideal gas in the grand canonical ensemble.
   */
   class ThermalParticle
   {
   public:
-    enum ResonanceWidthShape { RelativisticBreitWiger, NonRelativisticBreitWiger };
-    enum ResonanceWidthIntegration { ZeroWidth, BWTwoGamma, FullInterval, FullIntervalWeighted, eBW, eBWconstBR };
+    /**
+     * \brief Relativistic vs non-relativistic Breit-Wigner shape.
+     * 
+     */
+    enum ResonanceWidthShape { 
+      RelativisticBreitWigner, 
+      NonRelativisticBreitWigner 
+    };
 
-    ThermalParticle(bool Stable_ = true, std::string Name = "hadron", int PDGID = 0, double Deg = 1., int Stat = 0, double Mass = 0.,
-      int Strange = 0, int Baryon = 0, int Charge = 0, double AbsS = 0., double Width = 0., double Threshold = 0., int Charm = 0, double AbsC = 0., double radius = 0.5, int Quark = 0);
+    /**
+     * \brief Treatment of finite resonance widths.
+     * 
+     */
+    enum ResonanceWidthIntegration { 
+      ZeroWidth,             ///< Zero-width approximation
+      BWTwoGamma,            ///< Energy-independent Breit-Wigner in +-2\Gamma interval
+      FullInterval,          ///< Energy-independent Breit-Wigner in full energy interval
+      FullIntervalWeighted,  ///< Energy-independent Breit-Wigner in full energy interval with weighted branching ratios
+      eBW,                   ///< Energy-dependent Breit-Wigner scheme (eBW)
+      eBWconstBR             ///< Energy-dependent Breit-Wigner scheme (eBW) with constant branching ratios when evaluating feeddown
+      };
+
+    /**
+     * \brief Construct a new ThermalParticle object
+     * 
+     * \param Stable    Particle's stability flag
+     * \param Name      Particle's name
+     * \param PDGID     Particle's PDG ID
+     * \param Deg       Particle's internal degeneracy
+     * \param Stat      Statistics: 1 -- Fermi-Dirac, -1 -- Bose-Einstein, 0 - Maxwell-Boltzmann
+     * \param Mass      Particle's mass
+     * \param Strange   Particle's strangeness
+     * \param Baryon    Particle's baryon number
+     * \param Charge    Particle's electric charge
+     * \param AbsS      Particle's strange quark content
+     * \param Width     Particle's width
+     * \param Threshold Particle's decays threshold
+     * \param Charm     Particle's charm
+     * \param AbsC      Particle's charm quark content
+     * \param Quark     Particle's light quark content
+     */
+    ThermalParticle(bool Stable = true, std::string Name = "hadron", int PDGID = 0, double Deg = 1., int Stat = 0, double Mass = 0.,
+      int Strange = 0, int Baryon = 0, int Charge = 0, double AbsS = 0., double Width = 0., double Threshold = 0., int Charm = 0, double AbsC = 0., int Quark = 0);
     ~ThermalParticle(void);
 
-
+    /**
+     * \brief Fills coefficients for mass integration in the energy independent BW scheme
+     * 
+     */
     void FillCoefficients();
 
-    // Fill coefficients for mass integration in the eBW scheme
+    /// Fills coefficients for mass integration in the eBW scheme
     void FillCoefficientsDynamical();
 
-    // Total width (eBW scheme) at a given mass
+    /// Total width (eBW scheme) at a given mass
     double TotalWidtheBW(double M) const;
 
-    // Energy-dependent branching ratios
+    /**
+     * \brief (Energy-dependent) branching ratios
+     * 
+     * \param M Energy [GeV]
+     * \param eBW Whether branching ratios are energy-dependent or not
+     * \return std::vector<double> A vector of branching ratios for all decay channels
+     */
     std::vector<double> BranchingRatiosM(double M, bool eBW = true) const;
 
-    // Thermal mass distribution (not normalized!)
+    /**
+     * \brief Mass distribution of a resonance in a thermal environment
+     * 
+     * Mass distribution of a resonance in a thermal environment (not normalized!).
+     * Width is specified manually.
+     * 
+     * \param M Mass [GeV]
+     * \param T Temperature [GeV]
+     * \param Mu Chemical potential [GeV]
+     * \param width Resonance width [GeV]
+     * \return Mass distribution function 
+     */
     double ThermalMassDistribution(double M, double T, double Mu, double width);
+
+    /**
+     * \brief Mass distribution of a resonance in a thermal environment
+     * 
+     * Mass distribution of a resonance in a thermal environment (not normalized!).
+     * Energy-dependent width is computed automatically.
+     * 
+     * \param M Mass [GeV]
+     * \param T Temperature [GeV]
+     * \param Mu Chemical potential [GeV]
+     * \return Mass distribution function (not normalized!)
+     */
     double ThermalMassDistribution(double M, double T, double Mu);
 
+    /**
+     * \brief Normalizes all branching ratios such that
+     *        they sum up to 100%.
+     * 
+     */
     void NormalizeBranchingRatios();
-    void RestoreBranchingRatios();// { m_Decays = m_DecaysOrig; }
 
-    double Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type = IdealGasFunctions::ParticleDensity, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
+    /**
+     * \brief Restores all branching ratios to the original values.
+     * 
+     */
+    void RestoreBranchingRatios();
 
-    double DensityCluster(int n, const ThermalModelParameters &params, IdealGasFunctions::Quantity type = IdealGasFunctions::ParticleDensity, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
+    /**
+     * \brief Computes a specified ideal gas thermodynamic function.
+     * 
+     * Computes a specified ideal gas thermodynamic function.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     * 
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param type     The type of the thermodynamic function calculated.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed thermodynamic function.
+     */
+    double Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type = IdealGasFunctions::ParticleDensity, bool useWidth = 0, double mu = 0.) const;
 
-    double chi(int index, const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
+    /**
+     * Computes contribution of a single term in the cluster expansion
+     * to the quantity which is to be computed by the Density() method.
+     * 
+     * \param n        Number of the term.
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param type     The type of the thermodynamic function calculated.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed term.
+     */
+    double DensityCluster(int n, const ThermalModelParameters &params, IdealGasFunctions::Quantity type = IdealGasFunctions::ParticleDensity, bool useWidth = 0, double mu = 0.) const;
 
-    double ScaledVariance(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
-    double Skewness(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
-    double Kurtosis(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.) const;
+    /**
+     * \brief Computes the ideal gas generalized susceptibility \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$.
+     * 
+     * Computes the generalized susceptibility \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$
+     * of the corresponding ideal gas.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     * 
+     * \param index    Order of the susceptibility.
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed susceptility.
+     */
+    double chi(int index, const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.) const;
 
+    /**
+     * \brief Computes the scaled variance of particle number fluctuations
+     *        in the ideal gas.
+     * Computes the scaled variance (\chi_2 / \chi_1) of particle number fluctuations
+     * in the ideal gas.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     * 
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed scaled variance.
+     */
+    double ScaledVariance(const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.) const;
+
+    /**
+     * \brief Computes the normalized skewness of particle number fluctuations
+     *        in the ideal gas.
+     * 
+     * Computes the normalized skewness (\chi_3 / \chi_2) of particle number fluctuations
+     * in the ideal gas.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     * 
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed normalized skewness.
+     */
+    double Skewness(const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.) const;
+
+    /**
+     * \brief Computes the normalized excess kurtosis of particle number fluctuations
+     *        in the ideal gas.
+     * 
+     * Computes the normalized excess kurtosis (\chi_4 / \chi_2) of particle number fluctuations
+     * in the ideal gas.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     * 
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed normalized excess kurtosis.
+     */
+    double Kurtosis(const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.) const;
+
+    /**
+     * \brief Fermi-Dirac distribution function.
+     * 
+     * \param k  Momentum [GeV]
+     * \param T  Temperature [GeV]
+     * \param mu Chemical potential [GeV]
+     * \param m  Mass [GeV]
+     * \return   Computed Fermi-Dirac function.
+     */
     double FD(double k, double T, double mu, double m) const;
-
+    
+    /**
+     * Computes the light quark content as follows:
+     * |u,d| = 3 * |B| - |s| - |c|
+     * where |B| is the absolute baryon number
+     * and |s| and |c| is the stange and charm quark contents, respectively.
+     * 
+     * \return Computed light quark content.
+     */
     double GetAbsQ() const;
 
+    /**
+     * \brief Get the quantum number numbered by the index
+     * 
+     * \param index 0 -- baryon number, 1 -- electric charge, 
+     *              2 -- strangeness, 3 -- charm
+     * \return Particle's quantum number 
+     */
     double GetCharge(int index) const;
+
+    /**
+     * \brief Get the absolute value of a quantum number
+     * 
+     * \param index 0 -- absolute baryon number, 1 -- absolute electric charge, 
+     *              2 -- strange quark content, 3 -- charm quark content
+     * \return Particle's absolute value of a quantum number
+     */
     double GetAbsCharge(int index) const;
 
+    /**
+     * \brief Whether particle is neutral one.
+     * 
+     * \return true  Particle is neutral (all quantum numbers are zero).
+     * \return false Particle is not neutral (anti-particle exists).
+     */
     bool IsNeutral() const;
 
+    /// Return particle stability flag
     bool IsStable() const { return m_Stable; }
+
+    /// Sets particle stability flag
     void SetStable(bool stable = true) { m_Stable = stable; }
 
+    /// Whether particle is an antiparticle, i.e. its PDG ID is < 0
     bool IsAntiParticle() const { return m_AntiParticle; }
+
+    /// Set manually whether particle is an antiparticle
     void SetAntiParticle(bool antpar = true) { m_AntiParticle = antpar; }
 
+    /// Particle's name
     const std::string& Name() const { return m_Name; }
+
+    /// Set particle's name
     void SetName(const std::string &name) { m_Name = name; }
 
+    /// Particle's Particle Data Group (PDG) ID number
     int  PdgId() const { return m_PDGID; }
+
+    /// Set particle's particle's Particle Data Group (PDG) ID number
     void SetPdgId(int PdgId) { m_PDGID = PdgId; }
 
+    /// Particle's internal degeneracy factor
     double Degeneracy() const { return m_Degeneracy; }
+
+    /// Set particle's internal degeneracy factor
     void SetDegeneracy(double deg) { m_Degeneracy = deg; }
 
+    /**
+     * \brief Particle's statistics
+     * 
+     * 1 -- Fermi-Dirac,
+     * -1 -- Bose-Einstein,
+     * 0 - Maxwell-Boltzmann
+     * 
+     * \return Particle's statistics 
+     */
     int  Statistics() const { return m_Statistics; }
+
+    /**
+     * \brief Set particle's statistics
+     * 
+     * 1 -- Fermi-Dirac
+     * -1 -- Bose-Einstein
+     * 0 - Maxwell-Boltzmann
+     * 
+     * \param stat Statistics
+     */
     void SetStatistics(int stat) { m_Statistics = stat; }
+
+    /**
+     * \brief Use quantum statistics
+     * 
+     * \param enable true -- use quantum statistics
+     *               false -- use Maxwell-Boltzmann statistics
+     */
     void UseStatistics(bool enable);
 
+    /// Particle's mass [GeV]
     double Mass() const { return m_Mass; }
+
+    /// Set particle's mass [GeV]
     void SetMass(double mass);// { m_Mass = mass; }
 
+    /// Particle's baryon number
     int BaryonCharge() const { return m_Baryon; }
+
+    /// Set particle's baryon number
     void SetBaryonCharge(int chg) { m_Baryon = chg; SetAbsoluteQuark(GetAbsQ()); }
 
+    /// Particle's electric charge
     int ElectricCharge() const { return m_ElectricCharge; }
+
+    /// Set particle's electric charge
     void SetElectricCharge(int chg) { m_ElectricCharge = chg; }
 
+    /// Particle's strangeness
     int Strangeness() const { return m_Strangeness; }
+    /// Set particle's strangeness
     void SetStrangenessCharge(int chg) { m_Strangeness = chg; }
 
+    /// Particle's charm
     int Charm() const { return m_Charm; }
+
+    /// Set particle's charm
     void SetCharm(int chg) { m_Charm = chg; }
 
+    /**
+     * \brief Arbitrary (auxiliary) charge assigned to particle
+     * 
+     * \return Arbitrary (auxiliary) charge 
+     */
     double ArbitraryCharge() const { return m_ArbitraryCharge; }
+
+    /**
+     * \brief Assigns arbitrary (auxiliary) charge to particle
+     * 
+     * \param Arbitrary (auxiliary) charge 
+     */
     void SetArbitraryCharge(double arbchg) { m_ArbitraryCharge = arbchg; }
 
+    /// Absolute light quark content |u,d|
     double AbsoluteQuark() const { return m_AbsQuark; }
+
+    /// Set absolute light quark content |u,d|
     void SetAbsoluteQuark(double abschg) { m_AbsQuark = abschg; }
 
+    /// Absolute strange quark content |s|
     double AbsoluteStrangeness() const { return m_AbsS; }
+
+    /// Set absolute strange quark content |s|, light quark content then re-evaluted
     void SetAbsoluteStrangeness(double abschg) { m_AbsS = abschg; SetAbsoluteQuark(GetAbsQ()); }
 
+    /// Absolute charm quark content |s|
     double AbsoluteCharm() const { return m_AbsC; }
+
+    /// Set absolute charm quark content |s|, light quark content then re-evaluted
     void SetAbsoluteCharm(double abschg) { m_AbsC = abschg; SetAbsoluteQuark(GetAbsQ()); }
 
+    /// Particle's width at the pole mass (GeV)
     double ResonanceWidth() const { return m_Width; }
-    void SetResonanceWidth(double width);// { m_Width = width; }
 
+    /**
+     * \brief Sets the particle's width at the pole mass
+     * 
+     * If width is non-zero,
+     * the coefficients used for mass integration
+     * are re-evaluated
+     * 
+     * \param width Width (GeV)
+     */
+    void SetResonanceWidth(double width);
+
+    /**
+     * \brief The decays threshold mass
+     * 
+     * The threshold mass for calculation in the
+     * energy-independent Breit-Wigner scheme
+     * 
+     * \return Threshold mass 
+     */
     double DecayThresholdMass() const { return m_Threshold; }
-    void SetDecayThresholdMass(double threshold);// { m_Threshold = threshold; }
+    /**
+     * \brief Set the decays threshold mass
+     * 
+     * If width is non-zero,
+     * the coefficients used for mass integration
+     * in the energy independent scheme are re-evaluated
+     * 
+     * \param threshold Threshold mass (GeV)
+     */
+    void SetDecayThresholdMass(double threshold);
 
-    // Threshold calculated from daughter masses
+    /// Returns threshold mass as the minimum
+    /// threshold among all the decay channels
     double DecayThresholdMassDynamical() const { return m_ThresholdDynamical; }
+
+    /// Evaluate the threshold mass as the minimum
+    /// threshold among all the decay channels
     void CalculateAndSetDynamicalThreshold();
 
+    /**
+     * \brief Resonance width profile in use
+     * 
+     * Can be relativistic or non-relativistic Breit-Wigner
+     * 
+     * \return ResonanceWidthShape Width profile used
+     */
     ResonanceWidthShape GetResonanceWidthShape() const { return m_ResonanceWidthShape; }
-    void SetResonanceWidthShape(ResonanceWidthShape shape);// { m_ResonanceWidthShape = shape; }
 
+    /**
+     * \brief Set the resonance width profile to use
+     * 
+     * \param shape Relativistic or non-relativistic Breit-Wigner
+     */
+    void SetResonanceWidthShape(ResonanceWidthShape shape);
+
+    /**
+     * \brief Resonance width integration scheme used to treat
+     *        finite resonance widths
+     * 
+     * \return ResonanceWidthIntegration 
+     */
     ResonanceWidthIntegration GetResonanceWidthIntegrationType() const { return m_ResonanceWidthIntegrationType; }
-    void SetResonanceWidthIntegrationType(ResonanceWidthIntegration type);// { m_ResonanceWidthIntegrationType = type; }
+    
+    /**
+     * \brief Set the ResonanceWidthIntegration scheme used to treat
+     *        finite resonance widths
+     * 
+     * \param type ResonanceWidthIntegration scheme
+     */
+    void SetResonanceWidthIntegrationType(ResonanceWidthIntegration type);
 
-    // Resonance Mass Distribution: Relativistic or Non-relativistic Breit-Wigner
+    /**
+     * Resonance mass distribution: Relativistic or non-relativistic Breit-Wigner
+     * evaluated at the given mass m (GeV) and pole mass's width
+     * 
+     * \param m Mass (GeV)
+     * \return Mass distribution 
+     */
     double MassDistribution(double m) const;
 
-    // Resonance Mass Distribution with energy dependent width
+    // Resonance mass distribution with manually input width
     double MassDistribution(double m, double width) const;
 
+    /**
+     * \brief Particle's weight
+     * 
+     * Multiplies the degeneracy factor, equal to one by default.
+     * Currently not used.
+     * 
+     * \return Weight. 
+     */
     double Weight() const { return m_Weight; }
+
+    /// Set particle's weight factor
     void SetWeight(double weight) { m_Weight = weight; }
 
+    /**
+     * \brief Decay type of the particle.
+     * 
+     * \return Decay type of the particle.
+     */
     ParticleDecay::DecayType DecayType() const { return m_DecayType; }
+
+    /// Set particle's Decay Type
     void SetDecayType(ParticleDecay::DecayType type) { m_DecayType = type; }
 
+    /**
+     * \brief A vector of particle's decays
+     * 
+     * A vector of ParticleDecay objects corresponding to
+     * all decay channels of the particle.
+     * 
+     * \return const std::vector<ParticleDecay>& 
+     */
     const std::vector<ParticleDecay>& Decays() const { return m_Decays; }
+
+    /// Returns a non-const reference to Decays()
     std::vector<ParticleDecay>& Decays() { return m_Decays; }
+
+    /**
+     * \brief Set the Decays vector
+     * 
+     * Sets all decays of the particle
+     * 
+     * \param Decays ParticleDecay vector containing all particle decays 
+     */
     void SetDecays(const std::vector<ParticleDecay> &Decays) { m_Decays = Decays; }
+
+    /// Remove all decays
     void ClearDecays() { m_Decays.resize(0); }
 
+    //@{
+    /// A backup copy of particle's decays
     const std::vector<ParticleDecay>& DecaysOriginal() const { return m_DecaysOrig; }
     std::vector<ParticleDecay>& DecaysOriginal() { return m_DecaysOrig; }
     void SetDecaysOriginal(const std::vector<ParticleDecay> &DecaysOrig) { m_DecaysOrig = DecaysOrig; }
+    //@}
 
+    /// Read decays from a file and assign them to the particle
     void ReadDecays(std::string filename = "");
 
+    //@{
+      /**
+       * \brief Contribution to particle yield from decaying resonances
+       * 
+       * A vector containing information about the mean number
+       * of particles of this species which result from decays
+       * of various resonances.
+       * Each entry in the vector is a std::pair<double, int> and 
+       * corresponds to a single resonance.
+       * The first element of the pair is the mean number of
+       * particles result from a chain of decays of the given resonance,
+       * and the second element contains 0-based ID of the
+       * resonances in the ThermalParticleSystem object.
+       * This vector is populated in the ThermalParticleSystem object.
+       * Only decays of particles marked unstable are considered.
+       */
     const std::vector< std::pair<double, int> >&    DecayContributions() const { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
     std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
+    //@}
 
+    //@{
+      /**
+       * A vector of different DecayContributions(),
+       * each corresponding to a specific Feeddown::Type.
+       * 
+       */
     const std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown()    const { return m_DecayContributionsByFeeddown; }
     std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown() { return m_DecayContributionsByFeeddown; }
+    //@}
 
     const std::vector< std::pair<double, int> >& DecayContributionsSigmas() const { return m_DecayContributionsSigmas; }
     std::vector< std::pair<double, int> >& DecayContributionsSigmas() { return m_DecayContributionsSigmas; }
@@ -248,16 +719,46 @@ namespace thermalfist {
     const std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() const { return m_DecayDistributions; }
     std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() { return m_DecayDistributions; }
 
-    void CalculateThermalBranchingRatios(const ThermalModelParameters &params, bool useWidth = 0, double pMu = 0., double dMu = 0.);
+    /**
+     * \brief Computes average decay branching ratios
+     *        by integrating over the thermal mass distribution.
+     * 
+     * To be later used when evaluating feeddown contributions.
+     * 
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     */
+    void CalculateThermalBranchingRatios(const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.);
 
+    /**
+     * \brief Sets the CalculationType() method to evaluate quantum statistics.
+     * 
+     * \param type Method to evaluate quantum statistics.
+     */
     void SetCalculationType(IdealGasFunctions::QStatsCalculationType type) { m_QuantumStatisticsCalculationType = type; }
-    IdealGasFunctions::QStatsCalculationType CalculationType()                                const { return m_QuantumStatisticsCalculationType; }
+    
+    /**
+     * \brief Method to evaluate quantum statistics.
+     * 
+     * Cluster expansion or numerical integration
+     * using the quadratures.
+     * 
+     * \return IdealGasFunctions::QStatsCalculationType 
+     */
+    IdealGasFunctions::QStatsCalculationType CalculationType()       const { return m_QuantumStatisticsCalculationType; }
 
-    void SetClusterExpansionOrder(int order) { m_ClusterExpansionOrder = order; }
+    /**
+     * \brief Number of terms in the cluster expansion method.
+     * 
+     * \return Number of terms in the cluster expansion method.
+     */
     int ClusterExpansionOrder() const { return m_ClusterExpansionOrder; }
 
-    std::vector<double> BranchingRatioWeights(const std::vector<double> & ms) const;
+    /// Set ClusterExpansionOrder()
+    void SetClusterExpansionOrder(int order) { m_ClusterExpansionOrder = order; }
 
+    std::vector<double> BranchingRatioWeights(const std::vector<double> & ms) const;
 
     const std::vector<double>& Nch() const { return m_Nch; }
     std::vector<double>&  Nch() { return m_Nch; }
@@ -265,6 +766,15 @@ namespace thermalfist {
     const std::vector<double>& DeltaNch() const { return m_DeltaNch; }
     std::vector<double>&  DeltaNch() { return m_DeltaNch; }
 
+    /**
+     * \brief Generates the anti-particle to the current particle specie
+     * 
+     * Note: Decay channels of anti-particle 
+     * are NOT generated by this method and have to
+     * be set elsewhere.
+     * 
+     * \return ThermalParticle Antiparticle
+     */
     ThermalParticle GenerateAntiParticle(/*ThermalParticleSystem *TPS = NULL*/) const;
 
     bool operator==(const ThermalParticle &rhs) const; // TODO: improve

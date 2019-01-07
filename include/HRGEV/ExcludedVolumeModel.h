@@ -19,6 +19,7 @@ namespace thermalfist {
   *   needed for multi-component mean-field approach.
   *   Contains ``Diagonal'' van der Waals model (default, base class ExcludedVolumeModel) and
   *   ``Diagonal'' Carnahan-Starling model (class ExcludedVolumeModelCS, overrides base class).
+  *   There are not yet fully used in the package.
   */
 
   /**

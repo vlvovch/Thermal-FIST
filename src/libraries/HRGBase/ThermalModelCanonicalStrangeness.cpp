@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -94,28 +94,6 @@ namespace thermalfist {
     }
   }
 
-
-  void ThermalModelCanonicalStrangeness::CalculatefPhi(int iters) {
-    CalculateDensitiesGCE();
-    double dphi = 2 * xMath::Pi() / iters;
-    m_phiRe.clearall();
-    m_phiIm.clearall();
-    for (unsigned int i = 0; i < iters; ++i) {
-      double tphi = -xMath::Pi() + (i + 0.5) * dphi;
-      double tRe = 0., tIm = 0.;
-      for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j) {
-        if (m_TPS->Particles()[j].Strangeness() == 0) tRe += m_densitiesGCE[j];
-        else {
-          tRe += m_Volume * m_densitiesGCE[j] * cos(m_TPS->Particles()[j].Strangeness()*tphi);
-          tIm += m_Volume * m_densitiesGCE[j] * sin(m_TPS->Particles()[j].Strangeness()*tphi);
-        }
-      }
-      m_phiRe.add_val(tphi, exp(tRe) * cos(tIm));
-      m_phiIm.add_val(tphi, exp(tRe) * sin(tIm));
-    }
-  }
-
-
   void ThermalModelCanonicalStrangeness::CalculateSums(double Vc)
   {
     if (!m_GCECalculated)
@@ -159,7 +137,7 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelCanonicalStrangeness::CalculateDensities() {
+  void ThermalModelCanonicalStrangeness::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);
@@ -173,9 +151,6 @@ namespace thermalfist {
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         m_densities[i] = (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_densitiesGCE[i];
     }
-
-
-    CalculateFeeddown();
 
     m_Calculated = true;
     ValidateCalculation();

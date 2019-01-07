@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -32,15 +32,12 @@ namespace thermalfist {
   {
   }
 
-  void ThermalModelIdeal::CalculateDensities() {
+  void ThermalModelIdeal::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
-#pragma omp parallel for if(m_useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       m_densities[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
-
-    CalculateFeeddown();
 
     m_Calculated = true;
     ValidateCalculation();
@@ -51,8 +48,7 @@ namespace thermalfist {
     vector<double> tN(NN), tW(NN);
     for (int i = 0; i < NN; ++i) tN[i] = m_densities[i];
 
-    //#pragma omp parallel for if(m_useOpenMP)
-    for (int i = 0; i < NN; ++i) tW[i] = CalculateParticleScaledVariance(i);
+    for (int i = 0; i < NN; ++i) tW[i] = ParticleScaledVariance(i);
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
@@ -81,9 +77,9 @@ namespace thermalfist {
     CalculateProxySusceptibilityMatrix();
 
     for (int i = 0; i < m_wprim.size(); ++i) {
-      m_wprim[i] = CalculateParticleScaledVariance(i);
-      m_skewprim[i] = CalculateParticleSkewness(i);
-      m_kurtprim[i] = CalculateParticleKurtosis(i);
+      m_wprim[i] = ParticleScaledVariance(i);
+      m_skewprim[i] = ParticleSkewness(i);
+      m_kurtprim[i] = ParticleKurtosis(i);
     }
     for (int i = 0; i < m_wtot.size(); ++i) {
       double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
@@ -132,17 +128,17 @@ namespace thermalfist {
     if (order < 2) return ret;
 
     for (int i = 0; i < m_densities.size(); ++i)
-      ret[1] += chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+      ret[1] += chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_Chem[i]);
 
     if (order < 3) return ret;
 
     for (int i = 0; i < m_densities.size(); ++i)
-      ret[2] += chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+      ret[2] += chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_Chem[i]);
 
     if (order < 4) return ret;
 
     for (int i = 0; i < m_densities.size(); ++i)
-      ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i], 0.);
+      ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i]);
 
     return ret;
   }
@@ -150,7 +146,6 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculateEnergyDensity() {
     double ret = 0.;
 
-    //#pragma omp parallel for reduction(+:ret) if(m_useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
 
     return ret;
@@ -159,7 +154,6 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculateEntropyDensity() {
     double ret = 0.;
 
-    //#pragma omp parallel for reduction(+:ret) if(m_useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i]);
 
     return ret;
@@ -184,29 +178,20 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculatePressure() {
     double ret = 0.;
 
-    //#pragma omp parallel for reduction(+:ret) if(m_useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
 
     return ret;
   }
 
-  double ThermalModelIdeal::CalculateShearViscosity() {
-    return 0.;
-  }
-
-  double ThermalModelIdeal::CalculateHadronScaledVariance() {
-    return 1.;
-  }
-
-  double ThermalModelIdeal::CalculateParticleScaledVariance(int part) {
+  double ThermalModelIdeal::ParticleScaledVariance(int part) {
     return m_TPS->Particles()[part].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[part]);
   }
 
-  double ThermalModelIdeal::CalculateParticleSkewness(int part) {
+  double ThermalModelIdeal::ParticleSkewness(int part) {
     return m_TPS->Particles()[part].Skewness(m_Parameters, m_UseWidth, m_Chem[part]);
   }
 
-  double ThermalModelIdeal::CalculateParticleKurtosis(int part) {
+  double ThermalModelIdeal::ParticleKurtosis(int part) {
     return m_TPS->Particles()[part].Kurtosis(m_Parameters, m_UseWidth, m_Chem[part]);
   }
 

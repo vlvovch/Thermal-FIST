@@ -29,8 +29,8 @@ using namespace std;
 
 namespace thermalfist {
 
-  ThermalModelEVDiagonal::ThermalModelEVDiagonal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params, double RHad_, int mode) :
-    ThermalModelBase(TPS_, params)
+  ThermalModelEVDiagonal::ThermalModelEVDiagonal(ThermalParticleSystem *TPS, const ThermalModelParameters& params) :
+    ThermalModelBase(TPS, params)
   {
     m_densitiesid.resize(m_TPS->Particles().size());
     m_v.resize(m_TPS->Particles().size());
@@ -118,16 +118,9 @@ namespace thermalfist {
   }
 
 
-  void ThermalModelEVDiagonal::SetParameters(const ThermalModelParameters& params) {
-    m_Parameters = params;
-    m_Calculated = false;
-  }
-
-
-  void ThermalModelEVDiagonal::ChangeTPS(ThermalParticleSystem *TPS_) {
-    ThermalModelBase::ChangeTPS(TPS_);
+  void ThermalModelEVDiagonal::ChangeTPS(ThermalParticleSystem *TPS) {
+    ThermalModelBase::ChangeTPS(TPS);
     m_densitiesid.resize(m_TPS->Particles().size());
-    //m_Calculated = false;
   }
 
 
@@ -136,7 +129,7 @@ namespace thermalfist {
 
     double dMu = -m_v[i] * Pressure;
 
-    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], dMu);
+    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVDiagonal::PressureId(int i, double Pressure) {
@@ -144,7 +137,7 @@ namespace thermalfist {
 
     double dMu = -m_v[i] * Pressure;
 
-    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i], dMu);
+    return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVDiagonal::ScaledVarianceId(int i, double Pressure) {
@@ -152,7 +145,7 @@ namespace thermalfist {
 
     double dMu = -m_v[i] * Pressure;
 
-    return m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i], dMu);
+    return m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVDiagonal::Pressure(double P) {
@@ -161,7 +154,7 @@ namespace thermalfist {
 #pragma omp parallel for reduction(+:ret) if(useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       double dMu = -m_v[i] * P;
-      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i], dMu);
+      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] + dMu);
     }
 
     return ret;
@@ -203,7 +196,7 @@ namespace thermalfist {
     m_MaxDiff = broydn.MaxDifference();
   }
 
-  void ThermalModelEVDiagonal::CalculateDensities() {
+  void ThermalModelEVDiagonal::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
     SolvePressure();
@@ -219,11 +212,11 @@ namespace thermalfist {
 #pragma omp parallel for reduction(+:densityid) reduction(+:suppression) if(useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       double dMu = -m_v[i] * m_Pressure;
-      m_densitiesid[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], dMu);
+      m_densitiesid[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] + dMu);
       densityid += m_densitiesid[i];
       suppression += m_v[i] * m_densitiesid[i];
 
-      m_densitiesidnoshift[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], 0.);
+      m_densitiesidnoshift[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
 
     m_Densityid = densityid;
@@ -234,7 +227,7 @@ namespace thermalfist {
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       m_densities[i] = m_densitiesid[i] * m_Suppression;
       m_TotalDensity += m_densities[i];
-      m_wnSum += m_densities[i] * m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i], -m_v[i] * m_Pressure);
+      m_wnSum += m_densities[i] * m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
     }
 
     CalculateFeeddown();
@@ -277,9 +270,8 @@ namespace thermalfist {
   // TODO include correlations
   void ThermalModelEVDiagonal::CalculateFluctuations() {
     for (int i = 0; i < m_wprim.size(); ++i) {
-      //m_wprim[i] = CalculateParticleScaledVariance(i);
-      m_skewprim[i] = CalculateParticleSkewness(i);
-      m_kurtprim[i] = CalculateParticleKurtosis(i);
+      m_skewprim[i] = ParticleSkewness(i);
+      m_kurtprim[i] = ParticleKurtosis(i);
     }
     CalculateTwoParticleCorrelations();
     CalculateSusceptibilityMatrix();
@@ -347,8 +339,8 @@ namespace thermalfist {
 
     vector<double> DensitiesId(m_densities.size()), chi2id(m_densities.size());
     for (int i = 0; i < NN; ++i) {
-      DensitiesId[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, MuStar[i], 0.);
-      chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, MuStar[i], 0.);
+      DensitiesId[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, MuStar[i]);
+      chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, MuStar[i]);
     }
 
     for (int i = 0; i < NN; ++i)
@@ -404,7 +396,7 @@ namespace thermalfist {
 
     vector<double> chi3id(m_densities.size());
     for (int i = 0; i < NN; ++i)
-      chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, MuStar[i], 0.);
+      chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, MuStar[i]);
 
     for (int i = 0; i < NN; ++i) {
       xVector[i] = 0.;
@@ -448,7 +440,7 @@ namespace thermalfist {
 
     vector<double> chi4id(m_densities.size());
     for (int i = 0; i < NN; ++i)
-      chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, MuStar[i], 0.);
+      chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, MuStar[i]);
 
     vector<double> dnis(NN, 0.);
     for (int i = 0; i < NN; ++i) {
@@ -517,7 +509,7 @@ namespace thermalfist {
     double dMu = 0.;
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       dMu = -m_v[i] * m_Pressure;
-      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i], dMu);
+      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i] + dMu);
     }
     return ret * m_Suppression;
   }
@@ -528,19 +520,9 @@ namespace thermalfist {
     double dMu = 0.;
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       dMu = -m_v[i] * m_Pressure;
-      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i], dMu);
+      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i] + dMu);
     }
     return ret * m_Suppression;
-  }
-
-  // Dummy
-  double ThermalModelEVDiagonal::CalculateBaryonMatterEntropyDensity() {
-    double ret = 0.;
-    return ret;
-  }
-  double ThermalModelEVDiagonal::CalculateMesonMatterEntropyDensity() {
-    double ret = 0.;
-    return ret;
   }
 
   double ThermalModelEVDiagonal::CalculatePressure() {
@@ -548,46 +530,11 @@ namespace thermalfist {
     return m_Pressure;
   }
 
-  // TODO: Properly for multi-component
-  double ThermalModelEVDiagonal::CalculateHadronScaledVariance() {
-    return 1.;
-  }
-
-  // TODO: Properly for multi-component
-  double ThermalModelEVDiagonal::CalculateParticleScaledVariance(int part) {
-    return 1.;
-  }
-
-  // TODO: properly with excluded volume
-  double ThermalModelEVDiagonal::CalculateParticleSkewness(int part) {
-    double dMu = -m_v[part] * m_Pressure;
-    return m_TPS->Particles()[part].Skewness(m_Parameters, m_UseWidth, m_Chem[part], dMu);
-  }
-
-  // TODO: properly with excluded volume
-  double ThermalModelEVDiagonal::CalculateParticleKurtosis(int part) {
-    double dMu = -m_v[part] * m_Pressure;
-    return m_TPS->Particles()[part].Kurtosis(m_Parameters, m_UseWidth, m_Chem[part], dMu);
-  }
-
-
-  double ThermalModelEVDiagonal::CalculateBaryonScaledVariance(bool susc) {
-    return 1.;
-  }
-
-  double ThermalModelEVDiagonal::CalculateChargeScaledVariance(bool susc) {
-    return 1.;
-  }
-
-  double ThermalModelEVDiagonal::CalculateStrangenessScaledVariance(bool susc) {
-    return 1.;
-  }
-
   double ThermalModelEVDiagonal::ParticleScalarDensity(int part) {
     if (!m_Calculated) CalculateDensities();
 
     double dMu = -m_v[part] * m_Pressure;
-    double ret = m_TPS->Particles()[part].Density(m_Parameters, IdealGasFunctions::ScalarDensity, m_UseWidth, m_Chem[part], dMu);
+    double ret = m_TPS->Particles()[part].Density(m_Parameters, IdealGasFunctions::ScalarDensity, m_UseWidth, m_Chem[part] + dMu);
     return ret * m_Suppression;
   }
 
@@ -681,6 +628,6 @@ namespace thermalfist {
     for (int i = 0; i < x.size(); ++i) {
       maxdiff = std::max(maxdiff, fabs(f[i]) / m_THM->m_Pressure);
     }
-    return (maxdiff < m_RelativeError);
+    return (maxdiff < m_MaximumError);
   }
 } // namespace thermalfist

@@ -67,8 +67,6 @@ namespace thermalfist {
   void ThermalParticleSystem::ProcessDecays()
   {
     FillResonanceDecays(); 
-    //SeparateDecaysIntoWeakAndStrong(); 
-    //FillResonanceWeakDecays();
     FillResonanceDecaysByFeeddown();
   }
 
@@ -1189,7 +1187,7 @@ namespace thermalfist {
     }
     else {
       // if contains strangeness (or charm), not stable under weak decays
-      if (part.Strangeness() != 0 || part.Charm() != 0)
+      if (part.AbsoluteStrangeness() != 0 || part.AbsoluteCharm() != 0)
         return ParticleDecay::Weak;
 
       return ParticleDecay::Stable;

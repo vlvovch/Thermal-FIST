@@ -171,77 +171,13 @@ namespace thermalfist {
     return xcur;
   }
 
-  //std::vector<double> Broyden::NewtonSolve(const std::vector<double>& x0, double relative_error, int max_iterations)
-  //{
-  //  if (m_Equations == NULL) {
-  //    printf("**ERROR** Broyden::Solve: Equations to solve not specified!\n");
-  //    exit(1);
-  //  }
-
-  //  BroydenJacobian *JacobianInUse = m_Jacobian;
-  //  bool UseDefaultJacobian = false;
-  //  if (JacobianInUse == NULL) {
-  //    JacobianInUse = new BroydenJacobian(m_Equations);
-  //    UseDefaultJacobian = true;
-  //  }
-  //  m_Iterations = 0;
-  //  double &maxdiff = m_MaxDifference;
-  //  int N = m_Equations->Dimension();
-  //  std::vector<double> xcur = x0, tmpvec;
-  //  VectorXd xold(N), xnew(N), xdelta(N);
-  //  VectorXd fold(N), fnew(N), fdelta(N);
-
-  //  xold = VectorXd::Map(&xcur[0], xcur.size());
-
-  //  MatrixXd Jac(N, N), Jinv(N, N);
-  //  Jac = JacobianInUse->Jacobian(xcur);
-
-  //  if (Jac.determinant() == 0.0)
-  //  {
-  //    printf("**WARNING** Singular Jacobian in Broyden::SolveUsingJacobian\n");
-  //    return xcur;
-  //  }
-
-  //  Jinv = Jac.inverse();
-  //  tmpvec = m_Equations->Equations(xcur);
-  //  fold = VectorXd::Map(&tmpvec[0], tmpvec.size());
-
-  //  for (m_Iterations = 1; m_Iterations < max_iterations; ++m_Iterations) {
-  //    xnew = xold - Jinv * fold;
-
-  //    VectorXd::Map(&xcur[0], xcur.size()) = xnew;
-
-  //    tmpvec = m_Equations->Equations(xcur);
-  //    fnew = VectorXd::Map(&tmpvec[0], tmpvec.size());    
-
-  //    maxdiff = 0.;
-  //    for (int i = 0; i < xcur.size(); ++i) {
-  //      maxdiff = std::max(maxdiff, fabs(fnew[i]));
-  //      //if (xnew[i] > 0.0) maxdiff = std::max(maxdiff, fabs(fnew[i] / xnew[i]));
-  //    }
-  //    if (maxdiff < relative_error) break;
-
-  //    Jac = JacobianInUse->Jacobian(xcur);
-  //    Jinv = Jac.inverse();
-
-  //    xold = xnew;
-  //    fold = fnew;
-  //  }
-
-  //  if (UseDefaultJacobian) {
-  //    delete JacobianInUse;
-  //    JacobianInUse = NULL;
-  //  }
-  //  return xcur;
-  //}
-
   bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
   {
     double maxdiff = 0.;
     for (int i = 0; i < x.size(); ++i) {
       maxdiff = std::max(maxdiff, fabs(f[i]));
     }
-    return (maxdiff < m_RelativeError);
+    return (maxdiff < m_MaximumError);
   }
 
 } // namespace thermalfist

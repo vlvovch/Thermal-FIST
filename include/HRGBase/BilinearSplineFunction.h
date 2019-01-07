@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -42,6 +42,7 @@ namespace thermalfist {
       : m_xs(), m_xspls() {
       setData(x, y, vals);
     }
+
     /**
     * Method which sets the data from the provided vectors.
     * \param x A vector of x values.
@@ -69,6 +70,7 @@ namespace thermalfist {
         }
       }
     }
+
     /// Evaluates interpolated f(x,y)
     double Eval(double x, double y) const {
       if (m_xs.size() < 2) return -1.;
@@ -92,6 +94,7 @@ namespace thermalfist {
       double f2v = m_xspls[ind2].f(y);
       return f1v + (x - m_xs[ind1]) * (f2v - f1v) / (m_xs[ind2] - m_xs[ind1]);
     }
+
     /// Destructor.
     ~BilinearSplineFunction(void) { }
 

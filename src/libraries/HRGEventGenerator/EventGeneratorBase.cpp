@@ -535,15 +535,15 @@ namespace thermalfist {
       const std::vector<double>& densities = m_THM->Densities();
 
       // If Vc = V then just generate yields from a single ensemble
-      if (m_THM->Volume() == m_THM->StrangenessCanonicalVolume()) {
+      if (m_THM->Volume() == m_THM->CanonicalVolume()) {
         totals = GenerateTotalsSCESubVolume(m_THM->Volume());
       }
       // If Vc > V then generate yields from a single ensemble with volume Vc
       // particle from this ensemble is within a smaller volume V
       // with probability V/Vc
-      else if (m_THM->Volume() < m_THM->StrangenessCanonicalVolume()) {
-        std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->StrangenessCanonicalVolume());
-        double prob = m_THM->Volume() / m_THM->StrangenessCanonicalVolume();
+      else if (m_THM->Volume() < m_THM->CanonicalVolume()) {
+        std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
+        double prob = m_THM->Volume() / m_THM->CanonicalVolume();
         for (int i = 0; i < totalsaux.size(); ++i) {
           for (int j = 0; j < totalsaux[i]; ++j) {
             if (RandomGenerators::randgenMT.rand() < prob)
@@ -555,16 +555,16 @@ namespace thermalfist {
       // plus special treatment of one more ensemble if (V mod Vc) != 0
       else {
         // Number of normal SCE sub-ensembles
-        int multiples = static_cast<int>(m_THM->Volume() / m_THM->StrangenessCanonicalVolume());
+        int multiples = static_cast<int>(m_THM->Volume() / m_THM->CanonicalVolume());
 
         for (int iter = 0; iter < multiples; ++iter) {
-          std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->StrangenessCanonicalVolume());
+          std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
           for (int i = 0; i < totalsaux.size(); ++i)
             totals[i] += totalsaux[i];
         }
 
         // For (V mod Vc) != 0 there is one more subvolume Vsub < Vc
-        double fraction = (m_THM->Volume() - multiples * m_THM->StrangenessCanonicalVolume()) / m_THM->StrangenessCanonicalVolume();
+        double fraction = (m_THM->Volume() - multiples * m_THM->CanonicalVolume()) / m_THM->CanonicalVolume();
 
         if (fraction > 0.0) {
 
@@ -572,7 +572,7 @@ namespace thermalfist {
 
           while (!successflag) {
 
-            std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->StrangenessCanonicalVolume());
+            std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
             std::vector<int> totalsaux2(m_THM->TPS()->Particles().size(), 0);
             int netS = 0;
             for (int i = 0; i < totalsaux.size(); ++i) {
@@ -757,7 +757,7 @@ namespace thermalfist {
 
         while (!successflag) {
 
-          std::vector<int> totalsaux = GenerateTotalsCCESubVolume(m_THM->StrangenessCanonicalVolume());
+          std::vector<int> totalsaux = GenerateTotalsCCESubVolume(m_THM->CanonicalVolume());
           std::vector<int> totalsaux2(m_THM->TPS()->Particles().size(), 0);
           int netC = 0;
           for (int i = 0; i < totalsaux.size(); ++i) {

@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -25,6 +25,7 @@ namespace thermalfist {
     m_Parameters(params),
     m_UseWidth(false),
     m_Calculated(false),
+    m_FeeddownCalculated(false),
     m_FluctuationsCalculated(false),
     m_GCECalculated(false),
     m_NormBratio(false),
@@ -359,7 +360,7 @@ namespace thermalfist {
   void ThermalModelBase::CalculateFeeddown() {
     if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
       for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-        m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i], MuShift(i));
+        m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i] + MuShift(i));
       }
       m_TPS->ProcessDecays();
     }
@@ -390,6 +391,7 @@ namespace thermalfist {
       }
     }
 
+    m_FeeddownCalculated = true;
   }
 
 
@@ -516,6 +518,13 @@ namespace thermalfist {
     broydn.Solve(xinactual, &crit);
   }
 
+  void ThermalModelBase::CalculateDensities()
+  {
+    CalculatePrimordialDensities();
+
+    CalculateFeeddown();
+  }
+
   void ThermalModelBase::ValidateCalculation()
   {
     m_ValidityLog = "";
@@ -534,18 +543,6 @@ namespace thermalfist {
       }
       //m_LastCalculationSuccessFlag &= (m_densities[i] == m_densities[i]);
     }
-  }
-
-  double ThermalModelBase::GetParticlePrimordialDensity(unsigned int part) {
-    if (!m_Calculated) CalculateDensities();
-    if (part >= m_densities.size()) return 0.;
-    return m_densities[part];
-  }
-
-  double ThermalModelBase::GetParticleTotalDensity(unsigned int part) {
-    if (!m_Calculated) CalculateDensities();
-    if (part >= m_densitiestotal.size()) return 0.;
-    return m_densitiestotal[part];
   }
 
   std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
@@ -660,15 +657,6 @@ namespace thermalfist {
     return 0.;
   }
 
-  double ThermalModelBase::GetDensity(int PDGID, int feeddown) {
-    std::vector<double> *dens;
-    if (feeddown == 0) dens = &m_densities;
-    else if (feeddown == 1) dens = &m_densitiestotal;
-    else dens = &m_densitiesbyfeeddown[static_cast<int>(Feeddown::Weak)];
-
-    return GetDensity(PDGID, dens);
-  }
-
   double ThermalModelBase::GetDensity(int PDGID, Feeddown::Type feeddown)
   {
     std::vector<double> *dens;
@@ -681,6 +669,13 @@ namespace thermalfist {
     else {
       printf("**WARNING** %s: GetDensity: Unknown feeddown: %d\n", m_TAG.c_str(), static_cast<int>(feeddown));
     }
+
+    if (!m_Calculated)
+      CalculatePrimordialDensities();
+
+    if (feeddown != Feeddown::Primordial && !m_FeeddownCalculated)
+      CalculateFeeddown();
+
     return GetDensity(PDGID, dens);
   }
 
@@ -688,7 +683,7 @@ namespace thermalfist {
   std::vector<double> ThermalModelBase::GetIdealGasDensities() const {
     std::vector<double> ret = m_densities;
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      ret[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i], 0.);
+      ret[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
     return ret;
   }
@@ -696,6 +691,7 @@ namespace thermalfist {
   void ThermalModelBase::ResetCalculatedFlags()
   {
     m_Calculated = false;
+    m_FeeddownCalculated = false;
     m_FluctuationsCalculated = false;
     m_GCECalculated = false;
   }
@@ -951,7 +947,7 @@ namespace thermalfist {
     if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
     m_THM->FillChemicalPotentials();
-    m_THM->CalculateDensities();
+    m_THM->CalculatePrimordialDensities();
 
     i1 = 0;
 
@@ -1015,7 +1011,7 @@ namespace thermalfist {
     if (m_THM->ConstrainMuS()) { m_THM->SetStrangenessChemicalPotential(x[i1]); i1++; }
     if (m_THM->ConstrainMuC()) { m_THM->SetCharmChemicalPotential(x[i1]); i1++; }
     m_THM->FillChemicalPotentials();
-    m_THM->CalculateDensities();
+    m_THM->CalculatePrimordialDensities();
 
     double fBd  = m_THM->CalculateBaryonDensity();
     double fQd  = m_THM->CalculateChargeDensity();
@@ -1027,7 +1023,7 @@ namespace thermalfist {
     vector<double> m_wprim;
     m_wprim.resize(m_THM->Densities().size());
     for (int i = 0; i < m_wprim.size(); ++i)
-      m_wprim[i] = m_THM->CalculateParticleScaledVariance(i);
+      m_wprim[i] = m_THM->ParticleScaledVariance(i);
 
     int NNN = 0;
     if (m_THM->ConstrainMuQ()) NNN++;
@@ -1413,7 +1409,7 @@ namespace thermalfist {
       }
     }
     m_THM->FillChemicalPotentials();
-    m_THM->CalculateDensities();
+    m_THM->CalculatePrimordialDensities();
 
     vector<double> dens(4, 0.), absdens(4, 0.);
     if (m_Constr[0]) {
@@ -1472,7 +1468,7 @@ namespace thermalfist {
     tfug[3] = exp(m_THM->Parameters().muC / m_THM->Parameters().T);
 
     m_THM->FillChemicalPotentials();
-    m_THM->CalculateDensities();
+    m_THM->CalculatePrimordialDensities();
 
     vector<double> dens(4, 0.), absdens(4, 0.);
     if (m_Constr[0]) {
@@ -1494,7 +1490,7 @@ namespace thermalfist {
 
     vector<double> m_wprim;
     m_wprim.resize(m_THM->Densities().size());
-    for (int i = 0; i < m_wprim.size(); ++i) m_wprim[i] = m_THM->CalculateParticleScaledVariance(i);
+    for (int i = 0; i < m_wprim.size(); ++i) m_wprim[i] = m_THM->ParticleScaledVariance(i);
 
     vector< vector<double> > deriv(4, vector<double>(4)), derivabs(4, vector<double>(4));
     for (int i = 0; i < 4; ++i)

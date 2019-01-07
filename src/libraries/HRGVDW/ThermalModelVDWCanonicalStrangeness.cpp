@@ -34,7 +34,7 @@ namespace thermalfist {
 
   ThermalModelVDWCanonicalStrangeness::~ThermalModelVDWCanonicalStrangeness(void)
   {
-    CleanModelVDW();
+    ClearModelVDW();
   }
 
   void ThermalModelVDWCanonicalStrangeness::CalculateDensitiesGCE() {
@@ -113,7 +113,7 @@ namespace thermalfist {
   }
 
 
-  void ThermalModelVDWCanonicalStrangeness::CalculateDensities() {
+  void ThermalModelVDWCanonicalStrangeness::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);
@@ -209,7 +209,7 @@ namespace thermalfist {
 
   void ThermalModelVDWCanonicalStrangeness::PrepareModelVDW()
   {
-    CleanModelVDW();
+    ClearModelVDW();
 
     ThermalParticleSystem *TPSnew = new ThermalParticleSystem(*m_TPS);
 
@@ -253,7 +253,7 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelVDWCanonicalStrangeness::CleanModelVDW()
+  void ThermalModelVDWCanonicalStrangeness::ClearModelVDW()
   {
     if (m_modelVDW != NULL) {
       ThermalParticleSystem *TPSold = m_modelVDW->TPS();

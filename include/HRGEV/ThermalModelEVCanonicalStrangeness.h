@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2018-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -16,34 +16,70 @@
 
 namespace thermalfist {
 
+  /**
+   * \brief Class implementing the diagonal
+   *        excluded-volume model in the strangeness-canonical ensemble.
+   * 
+   * ---
+   * **NOTE**
+   * 
+   * The calculations are approximate and assume
+   * that strange particles form a small part of the
+   * total system, i.e. their contribution to the total
+   * density/pressure is close to negligible.
+   * Calculations may not be accurate if this condition
+   * is not fulfilled.
+   * 
+   * ---
+   * 
+   */
   class ThermalModelEVCanonicalStrangeness : public ThermalModelCanonicalStrangeness
   {
   public:
-    ThermalModelEVCanonicalStrangeness(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters());
+    /**
+     * \brief Construct a new Thermal ModelEVCanonicalStrangeness object
+     * 
+     * \param TPS A pointer to the ThermalParticleSystem object containing the particle list
+     * \param params ThermalModelParameters object with current thermal parameters
+     */
+    ThermalModelEVCanonicalStrangeness(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters());
 
+    /**
+     * \brief Destroy the ThermalModelEVCanonicalStrangeness object
+     * 
+     */
     virtual ~ThermalModelEVCanonicalStrangeness(void);
 
-    void PrepareModelEV();  /**< Creates the ThermalModelEV copy */
-
-    void CleanModelEV();    /**< Cleares the ThermalModelEV copy */
-
-    void SetRadius(double rad);
-    void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::FillVirialEV()
     void FillVirialEV(const std::vector<double> & vi = std::vector<double>(0));
 
-    virtual void ReadInteractionParameters(const std::string &filename);
-    virtual void WriteInteractionParameters(const std::string &filename);
-    double ExcludedVolume(int i) const;// { return m_v[i]; }
-    virtual double CalculateEigenvolumeFraction();
-    void SetRadius(int i, double rad);
-
-    virtual void CalculateDensitiesGCE();
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::ExcludedVolume(int)
+    double ExcludedVolume(int i) const;
 
     virtual void CalculateEnergyDensitiesGCE();
 
     virtual void CalculatePressuresGCE();
 
-    virtual void CalculateDensities();
+    // Override functions begin
+
+    void SetRadius(double rad);
+    
+    void SetRadius(int i, double rad);
+
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::FillVirial(const std::vector<double> &)
+    void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
+
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::ReadInteractionParameters(const std::string &)
+    virtual void ReadInteractionParameters(const std::string &filename);
+
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::WriteInteractionParameters(const std::string &)
+    virtual void WriteInteractionParameters(const std::string &filename);
+
+    virtual double CalculateEigenvolumeFraction();
+
+    virtual void CalculateDensitiesGCE();
+
+    virtual void CalculatePrimordialDensities();
 
     virtual double CalculateEnergyDensity();
 
@@ -51,16 +87,22 @@ namespace thermalfist {
 
     virtual double CalculatePressure();
 
+    // Override functions end
+
   protected:
-    // TODO: test
+    void PrepareModelEV();  /**< Creates the ThermalModelEVDiagonal copy */
+
+    void CleanModelEV();    /**< Clears the ThermalModelEVDiagonal copy */
+
+    /// \copydoc thermalfist::ThermalModelEVDiagonal::MuShift()
     virtual double MuShift(int id);
 
-    ThermalModelEVDiagonal *m_modelEV;
-    std::vector<double> m_v;                       /**< Vector of eigenvolumes of all hadrons */
-    double m_PNS;    /**< Pressure of all non-strange hadrons */
-    double m_Suppression;    /**< Common suppression factor, from non-strange hadrons */
-    double m_EVNS;    /**< Total eigenvolume of all non-strange hadrons */
-    double m_EVS;    /**< Total eigenvolume of all strange hadrons */
+    ThermalModelEVDiagonal *m_modelEV; /**< Pointer to the diagonal EV model in the GCE with non-strange particles only */
+    std::vector<double> m_v;   /**< Vector of eigenvolumes of all hadrons */
+    double m_PNS;              /**< Pressure of all non-strange hadrons */
+    double m_Suppression;      /**< Common suppression factor, from non-strange hadrons */
+    double m_EVNS;             /**< Total eigenvolume of all non-strange hadrons */
+    double m_EVS;              /**< Total eigenvolume of all strange hadrons */
   };
 
 } // namespace thermalfist

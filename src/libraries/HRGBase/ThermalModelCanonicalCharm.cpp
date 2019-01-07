@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -19,13 +19,13 @@ namespace thermalfist {
   {
     m_densitiesGCE.resize(m_TPS->Particles().size());
 
-    m_StrVals.resize(0);
-    m_StrVals.push_back(0);
-    m_StrVals.push_back(1);
-    m_StrVals.push_back(-1);
+    m_CharmValues.resize(0);
+    m_CharmValues.push_back(0);
+    m_CharmValues.push_back(1);
+    m_CharmValues.push_back(-1);
 
-    m_StrMap.clear();
-    for (unsigned int i = 0; i < m_StrVals.size(); ++i) m_StrMap[m_StrVals[i]] = i;
+    m_CharmMap.clear();
+    for (unsigned int i = 0; i < m_CharmValues.size(); ++i) m_CharmMap[m_CharmValues[i]] = i;
 
     m_Parameters.muC = 0.;
 
@@ -77,68 +77,46 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelCanonicalCharm::CalculatefPhi(int iters) {
-    CalculateDensitiesGCE();
-    double dphi = 2 * xMath::Pi() / iters;
-    m_phiRe.clearall();
-    m_phiIm.clearall();
-    for (unsigned int i = 0; i < iters; ++i) {
-      double tphi = -xMath::Pi() + (i + 0.5) * dphi;
-      double tRe = 0., tIm = 0.;
-      for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j) {
-        if (m_TPS->Particles()[j].Strangeness() == 0) tRe += m_densitiesGCE[j];
-        else {
-          tRe += m_Volume * m_densitiesGCE[j] * cos(m_TPS->Particles()[j].Strangeness()*tphi);
-          tIm += m_Volume * m_densitiesGCE[j] * sin(m_TPS->Particles()[j].Strangeness()*tphi);
-        }
-      }
-      m_phiRe.add_val(tphi, exp(tRe) * cos(tIm));
-      m_phiIm.add_val(tphi, exp(tRe) * sin(tIm));
-    }
-  }
-
   void ThermalModelCanonicalCharm::FixParameters()
   {
     m_ConstrainMuC = false;
     ThermalModelBase::FixParameters();
   }
 
-  void ThermalModelCanonicalCharm::CalculateDensities() {
+  void ThermalModelCanonicalCharm::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
     m_energydensitiesGCE.resize(0);
 
     CalculateDensitiesGCE();
 
-    m_Zsum.resize(m_StrVals.size());
+    m_Zsum.resize(m_CharmValues.size());
 
-    m_partialS.resize(m_StrVals.size());
+    m_partialZ.resize(m_CharmValues.size());
     vector<double> xi(1, 0.), yi(1, 0.);
 
-    for (unsigned int i = 0; i < m_StrVals.size(); ++i) {
-      m_partialS[i] = 0.;
+    for (unsigned int i = 0; i < m_CharmValues.size(); ++i) {
+      m_partialZ[i] = 0.;
       for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j)
-        if (m_StrVals[i] == m_TPS->Particles()[j].Charm()) m_partialS[i] += m_densitiesGCE[j] * m_Volume;
-      if (m_partialS[i] < 1.e-10) m_partialS[i] += 1e-10;
+        if (m_CharmValues[i] == m_TPS->Particles()[j].Charm()) m_partialZ[i] += m_densitiesGCE[j] * m_Volume;
+      if (m_partialZ[i] < 1.e-10) m_partialZ[i] += 1e-10;
     }
 
 
     for (int i = 0; i < 1; ++i) {
-      xi[i] = 2. * sqrt(m_partialS[m_StrMap[i + 1]] * m_partialS[m_StrMap[-(i + 1)]]);
-      yi[i] = sqrt(m_partialS[m_StrMap[i + 1]] / m_partialS[m_StrMap[-(i + 1)]]);
+      xi[i] = 2. * sqrt(m_partialZ[m_CharmMap[i + 1]] * m_partialZ[m_CharmMap[-(i + 1)]]);
+      yi[i] = sqrt(m_partialZ[m_CharmMap[i + 1]] / m_partialZ[m_CharmMap[-(i + 1)]]);
     }
 
-    for (unsigned int i = 0; i < m_StrVals.size(); ++i) {
+    for (unsigned int i = 0; i < m_CharmValues.size(); ++i) {
       double res = 0.;
 
-      res = xMath::BesselI(abs(-m_StrVals[i]), xi[0]) * pow(yi[0], m_StrVals[i]);
+      res = xMath::BesselI(abs(-m_CharmValues[i]), xi[0]) * pow(yi[0], m_CharmValues[i]);
       m_Zsum[i] = res;
     }
 
     for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
-      if (m_StrMap.count(-m_TPS->Particles()[i].Charm())) m_densities[i] = (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_StrMap[0]]) * m_densitiesGCE[i];
+      if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) m_densities[i] = (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_densitiesGCE[i];
     }
-
-    CalculateFeeddown();
 
     m_Calculated = true;
     ValidateCalculation();
@@ -159,21 +137,21 @@ namespace thermalfist {
     if (!m_Calculated) CalculateDensities();
     if (m_energydensitiesGCE.size() == 0) CalculateEnergyDensitiesGCE();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_StrMap[0]]) * m_energydensitiesGCE[i];
+    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_energydensitiesGCE[i];
     return ret;
   }
 
   double ThermalModelCanonicalCharm::CalculateEntropyDensity() {
-    double ret = m_partialS[0] + log(m_Zsum[m_StrMap[0]]);
+    double ret = m_partialZ[0] + log(m_Zsum[m_CharmMap[0]]);
     if (m_energydensitiesGCE.size() == 0) CalculateEnergyDensitiesGCE();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) if (m_StrMap.count(-m_TPS->Particles()[i].Charm())) ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_StrMap[0]]) * ((m_energydensitiesGCE[i] - (m_Parameters.muB * m_TPS->Particles()[i].BaryonCharge() + m_Parameters.muQ * m_TPS->Particles()[i].ElectricCharge() + m_Parameters.muS * m_TPS->Particles()[i].Strangeness()) * m_densitiesGCE[i]) / m_Parameters.T);
+    for (int i = 0; i < m_TPS->Particles().size(); ++i) if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * ((m_energydensitiesGCE[i] - (m_Parameters.muB * m_TPS->Particles()[i].BaryonCharge() + m_Parameters.muQ * m_TPS->Particles()[i].ElectricCharge() + m_Parameters.muS * m_TPS->Particles()[i].Strangeness()) * m_densitiesGCE[i]) / m_Parameters.T);
     return ret;
   }
 
 
   double ThermalModelCanonicalCharm::CalculatePressure() {
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_StrMap[0]]) * m_Parameters.T * m_densitiesGCE[i];
+    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_Parameters.T * m_densitiesGCE[i];
     return ret;
   }
 

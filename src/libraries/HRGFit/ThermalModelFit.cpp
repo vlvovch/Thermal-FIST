@@ -678,8 +678,8 @@ namespace thermalfist {
         const ExperimentRatio &ratio = m_Quantities[i].ratio;
         int ind1 = m_model->TPS()->PdgToId(ratio.PDGID1);
         int ind2 = m_model->TPS()->PdgToId(ratio.PDGID2);
-        double dens1 = m_model->GetDensity(ratio.PDGID1, 1);
-        double dens2 = m_model->GetDensity(ratio.PDGID2, 1);
+        double dens1 = m_model->GetDensity(ratio.PDGID1, ratio.fFeedDown1);
+        double dens2 = m_model->GetDensity(ratio.PDGID2, ratio.fFeedDown2);
         std::cout << m_model->TPS()->Particles()[ind1].Name() << "/" << m_model->TPS()->Particles()[ind2].Name() << " = " <<
           dens1 / dens2 << " " << ratio.fValue << " " << ratio.fError << "\n";
       }
@@ -1000,7 +1000,7 @@ namespace thermalfist {
         if (m_model->TPS()->PdgToId(pdgs[i]) == -1) continue;
 
         double dens1 = 0.;
-        dens1 = m_model->GetDensity(pdgs[i], 1);
+        dens1 = m_model->GetDensity(pdgs[i], Feeddown::StabilityFlag);
 
         if (isexp) dens1 = m_model->GetDensity(pdgs[i], m_Multiplicities[tj].fFeedDown);
 

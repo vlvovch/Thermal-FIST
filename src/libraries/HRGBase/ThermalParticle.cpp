@@ -25,11 +25,9 @@ namespace thermalfist {
   double ParticleDecay::ModifiedWidth(double m) const
   {
     if (m < mM0) return 0.;
-    //if (mM0 >= mPole) return mBratio;
     if (mM0 >= mPole)
       return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.);
     return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
-    //return mBratio * pow((m - mM0) / (mPole - mM0), 1. / 2.); // as in 1808.02106
   }
 
   bool ParticleDecay::operator==(const ParticleDecay & rhs) const
@@ -50,19 +48,18 @@ namespace thermalfist {
 
 
 
-  ThermalParticle::ThermalParticle(bool Stable_, std::string Name, int PDGID, double Deg, int Stat, double Mass,
-    int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, double radius, int Quark) :
-    m_Stable(Stable_), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
-    m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Radius(radius), m_Quark(Quark), m_Weight(1.)
+  ThermalParticle::ThermalParticle(bool Stable, std::string Name, int PDGID, double Deg, int Stat, double Mass,
+    int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
+    m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
+    m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.)
   {
-    //SetCalculationType(IdealGasFunctions::ClusterExpansion);
     SetCalculationType(IdealGasFunctions::Quadratures);
 
     SetClusterExpansionOrder(3);
     if (m_Mass < 1.000) SetClusterExpansionOrder(5);
     if (m_Mass < 0.200) SetClusterExpansionOrder(10);
 
-    SetResonanceWidthShape(RelativisticBreitWiger);
+    SetResonanceWidthShape(RelativisticBreitWigner);
     SetResonanceWidthIntegrationType(BWTwoGamma);
 
     m_DecayType = ParticleDecay::Default;
@@ -141,7 +138,7 @@ namespace thermalfist {
     //    return 0.;
     //}
 
-    if (m_ResonanceWidthShape == RelativisticBreitWiger)
+    if (m_ResonanceWidthShape == RelativisticBreitWigner)
       return m_Mass * width * m / ((m * m - m_Mass * m_Mass)*(m * m - m_Mass * m_Mass) + m_Mass * m_Mass*width*width);
     else
       return width / ((m - m_Mass)*(m - m_Mass) + width * width / 4.);
@@ -168,7 +165,7 @@ namespace thermalfist {
     }
   }
 
-  void ThermalParticle::CalculateThermalBranchingRatios(const ThermalModelParameters & params, bool useWidth, double pMu, double dMu)
+  void ThermalParticle::CalculateThermalBranchingRatios(const ThermalModelParameters & params, bool useWidth, double mu)
   {
     if (!useWidth || m_Width == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType != eBW) {
       for (int j = 0; j < m_Decays.size(); ++j) {
@@ -176,7 +173,6 @@ namespace thermalfist {
       }
     }
     else {
-      double mu = pMu + dMu;
       if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * GetAbsQ()  * params.T;
       if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
       if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
@@ -256,7 +252,8 @@ namespace thermalfist {
     ret.SetCharm(-Charm());
     ret.SetArbitraryCharge(-ArbitraryCharge());
     ret.SetAntiParticle(true);
-    // Decays to be done separately from ThermalParticleSystem instance
+    // Decays are to be done separately from ThermalParticleSystem instance
+    // The code below is deprecated
     /*if (TPS != NULL) {
       ret.SetDecays(TPS->GetDecaysFromAntiParticle(Decays()));
       ret.SetDecaysOriginal(ret.Decays());
@@ -599,8 +596,7 @@ namespace thermalfist {
   }
 
 
-  double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type, bool useWidth, double pMu, double dMu) const {
-    double mu = pMu + dMu;
+  double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type, bool useWidth, double mu) const {
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
@@ -654,13 +650,12 @@ namespace thermalfist {
     return ret1 / ret2;
   }
 
-  double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & params, IdealGasFunctions::Quantity type, bool useWidth, double pMu, double dMu) const
+  double ThermalParticle::DensityCluster(int n, const ThermalModelParameters & params, IdealGasFunctions::Quantity type, bool useWidth, double mu) const
   {
     double mn = 1.;
     if ((abs(BaryonCharge()) & 1) && !(n & 1))
       mn = -1.;
 
-    double mu = pMu + dMu;
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark /*GetAbsQ()*/  * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
@@ -714,34 +709,34 @@ namespace thermalfist {
   }
 
 
-  double ThermalParticle::ScaledVariance(const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const {
+  double ThermalParticle::ScaledVariance(const ThermalModelParameters &params, bool useWidth, double mu) const {
     if (m_Degeneracy == 0.0) return 1.;
     if (m_Statistics == 0) return 1.;
-    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu);
+    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(2, params, useWidth, pMu, dMu) / chi(1, params, useWidth, pMu, dMu);
+    double ret = chi(2, params, useWidth, mu) / chi(1, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
 
-  double ThermalParticle::Skewness(const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const
+  double ThermalParticle::Skewness(const ThermalModelParameters &params, bool useWidth, double mu) const
   {
     if (m_Degeneracy == 0) return 1.;
     if (m_Statistics == 0) return 1.;
-    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu);
+    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(3, params, useWidth, pMu, dMu) / chi(2, params, useWidth, pMu, dMu);
+    double ret = chi(3, params, useWidth, mu) / chi(2, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
 
-  double ThermalParticle::Kurtosis(const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const
+  double ThermalParticle::Kurtosis(const ThermalModelParameters &params, bool useWidth, double mu) const
   {
     if (m_Degeneracy == 0) return 1.;
     if (m_Statistics == 0) return 1.;
-    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu);
+    double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(4, params, useWidth, pMu, dMu) / chi(2, params, useWidth, pMu, dMu);
+    double ret = chi(4, params, useWidth, mu) / chi(2, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
@@ -772,12 +767,12 @@ namespace thermalfist {
     return 0.;
   }
 
-  double ThermalParticle::chi(int index, const ThermalModelParameters &params, bool useWidth, double pMu, double dMu) const {
-    if (index == 0) return Density(params, IdealGasFunctions::Pressure, useWidth, pMu, dMu) / pow(params.T, 4) / pow(xMath::GeVtoifm(), 3);
-    if (index == 1) return Density(params, IdealGasFunctions::ParticleDensity, useWidth, pMu, dMu) / pow(params.T, 3) / pow(xMath::GeVtoifm(), 3);
-    if (index == 2) return Density(params, IdealGasFunctions::chi2, useWidth, pMu, dMu);
-    if (index == 3) return Density(params, IdealGasFunctions::chi3, useWidth, pMu, dMu);
-    if (index == 4) return Density(params, IdealGasFunctions::chi4, useWidth, pMu, dMu);
+  double ThermalParticle::chi(int index, const ThermalModelParameters &params, bool useWidth, double mu) const {
+    if (index == 0) return Density(params, IdealGasFunctions::Pressure, useWidth, mu) / pow(params.T, 4) / pow(xMath::GeVtoifm(), 3);
+    if (index == 1) return Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu) / pow(params.T, 3) / pow(xMath::GeVtoifm(), 3);
+    if (index == 2) return Density(params, IdealGasFunctions::chi2, useWidth, mu);
+    if (index == 3) return Density(params, IdealGasFunctions::chi3, useWidth, mu);
+    if (index == 4) return Density(params, IdealGasFunctions::chi4, useWidth, mu);
     return 1.;
   }
 
