@@ -83,7 +83,7 @@ namespace thermalfist {
     }
 
     /// Same as SetData()
-    void SetQuantities(const std::vector<FittedQuantity> & inQuantities) { SetQuantities(inQuantities); }
+    void SetQuantities(const std::vector<FittedQuantity> & inQuantities) { SetData(inQuantities); }
 
     /// \brief Add more data to fit
     /// \param inData A vector of additional measurements to fit
