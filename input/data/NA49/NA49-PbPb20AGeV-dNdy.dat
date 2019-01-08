@@ -1,3 +1,4 @@
+# NA49 data (and references) at https://edms.cern.ch/document/1075059/4
 #     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error
               1            211              0              3              0           72.9            3.6
               1           -211              0              3              0           84.8            4.2

@@ -86,6 +86,7 @@ namespace thermalfist {
     void SetQuantities(const std::vector<FittedQuantity> & inQuantities) { SetData(inQuantities); }
 
     /// \brief Add more data to fit
+    ///
     /// \param inData A vector of additional measurements to fit
     void AddData(const std::vector<FittedQuantity> & inData) {
       for (int i = 0; i < inData.size(); ++i)
@@ -96,6 +97,7 @@ namespace thermalfist {
     void AddQuantities(const std::vector<FittedQuantity> & inQuantities) { AddData(inQuantities); }
 
     /// \brief Add one more data point to fit
+    ///
     /// \param inDataPoint Data point to fit
     void AddDataPoint(const FittedQuantity& inDataPoint) {
       m_Quantities.push_back(inDataPoint);
