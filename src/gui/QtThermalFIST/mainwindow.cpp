@@ -66,8 +66,6 @@ MainWindow::MainWindow(QWidget *parent)
 
   tabEoS = new EquationOfStateTab(NULL, model);
 
-	tab3 = new EnergyDependenceTab(NULL, model);
-	tab4 = new ContourPlotTab(NULL, model);
 	tab5 = new EventGeneratorTab(NULL, model);
   tabEditor = new ListEditorTab(NULL, model);
 
@@ -87,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
   currentTab = tabWidget->currentIndex();
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-	QLabel *labelCopyright = new QLabel(tr("© 2014-2018 Volodymyr Vovchenko"));
+	QLabel *labelCopyright = new QLabel(tr("© 2014-2019 Volodymyr Vovchenko"));
 
 	QVBoxLayout *mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(dataLay);

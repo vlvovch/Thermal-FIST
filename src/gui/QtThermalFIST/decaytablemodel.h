@@ -37,15 +37,15 @@ public:
   bool setData(const QModelIndex & index, const QVariant & value, int role);
   void addDecay() {
     beginInsertRows(QModelIndex(), fParticle->Decays().size(), fParticle->Decays().size());
-    std::vector<thermalfist::ParticleDecay> decays = fParticle->Decays();
-    decays.push_back(thermalfist::ParticleDecay());
+    thermalfist::ThermalParticle::ParticleDecaysVector decays = fParticle->Decays();
+    decays.push_back(thermalfist::ParticleDecayChannel());
     fParticle->SetDecays(decays);
     endInsertRows();
   }
   void removeDecay(int number) {
     if (number >= 0 && number < fParticle->Decays().size()) {
       beginRemoveRows(QModelIndex(), number, number);
-      std::vector<thermalfist::ParticleDecay> decays = fParticle->Decays();
+      thermalfist::ThermalParticle::ParticleDecaysVector decays = fParticle->Decays();
       decays.erase(decays.begin() + number);
       fParticle->SetDecays(decays);
       endRemoveRows();

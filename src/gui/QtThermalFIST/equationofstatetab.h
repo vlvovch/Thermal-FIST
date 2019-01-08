@@ -22,6 +22,7 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "QCustomPlot/qcustomplot.h"
 #include "BaseStructures.h"
+#include "configwidgets.h"
 #include "HRGBase/xMath.h"
 
 
@@ -91,27 +92,9 @@ class EquationOfStateTab : public QWidget
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;
 
-    QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
-
-    QRadioButton *radioBoltz, *radioQuant;
-    QCheckBox *CBBoseOnly, *CBPionsOnly;
-    QCheckBox *CBQuadratures;
-
-    QDoubleSpinBox *spinRadius;
-
-    QDoubleSpinBox *spinQBRatio;
-
-    QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
-
-    QComboBox *comboWidth;
-
-    QCheckBox *checkBratio;
-
-    QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
-    QString strEVPath;
-
-    QDoubleSpinBox *spinmuB;
     QDoubleSpinBox *spinTMin, *spinTMax, *spindT;
+    QDoubleSpinBox *spinmuB;
+    QLabel *labelConstr;
 
     QPushButton *buttonCalculate;
 
@@ -121,6 +104,8 @@ class EquationOfStateTab : public QWidget
     QTimer *calcTimer;
 
     QString cpath;
+
+    ModelConfigWidget *configWidget;
 
     // Wuppertal-Budapest lattice data
     QVector< QVector<double> > dataWBx, dataWBy, dataWByerrp, dataWByerrm;
@@ -143,7 +128,6 @@ public slots:
     void finalize();
     void modelChanged();
     void resetTPS();
-    void loadEVFromFile();
     void plotLatticeData();
     void fillParticleLists();
     void contextMenuRequest(QPoint pos);

@@ -88,8 +88,8 @@ YieldsPlot::YieldsPlot(QWidget * parent, thermalfist::ThermalModelFit * fit) :
       names.push_back(BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].mult.fPDGID)).c_str());
     }
     else {
-      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID1))
-      + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID2))).c_str());
+      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID1))
+      + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID2))).c_str());
     }
     tmin = std::min(tmin, dataValues[i]);
     //tmin = std::min(tmin, modelValues[i]);
@@ -211,8 +211,8 @@ DataModelPlot::DataModelPlot(QWidget * parent, thermalfist::ThermalModelFit * fi
       names.push_back(BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].mult.fPDGID)).c_str());
     }
     else {
-      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID1))
-        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID2))).c_str());
+      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID1))
+        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID2))).c_str());
     }
 
     tmin = std::min(tmin, datamodelValues[i] - 1.5 * datamodelErrors[i]);
@@ -344,9 +344,9 @@ DataVsModelPlot::DataVsModelPlot(QWidget * parent, thermalfist::ThermalModelFit 
       pdgs.push_back(fit->FittedQuantities()[indmap[i]].mult.fPDGID);
     }
     else {
-      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[indmap[i]].ratio.PDGID1))
-        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[indmap[i]].ratio.PDGID2))).c_str());
-      pdgs.push_back(fit->FittedQuantities()[indmap[i]].ratio.PDGID1);
+      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[indmap[i]].ratio.fPDGID1))
+        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[indmap[i]].ratio.fPDGID2))).c_str());
+      pdgs.push_back(fit->FittedQuantities()[indmap[i]].ratio.fPDGID1);
     }
     tmin = std::min(tmin, dataValues[i]);
     tmax = std::max(tmax, dataValues[i]);
@@ -603,8 +603,8 @@ DeviationsPlot::DeviationsPlot(QWidget * parent, thermalfist::ThermalModelFit * 
       names.push_back(BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].mult.fPDGID)).c_str());
     }
     else {
-      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID1))
-        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.PDGID2))).c_str());
+      names.push_back((BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID1))
+        + "/" + BeautifyName(fit->model()->TPS()->GetNameFromPDG(fit->FittedQuantities()[i].ratio.fPDGID2))).c_str());
     }
 
     tmax = std::max(tmax, fabs(deviationsValues[i]));

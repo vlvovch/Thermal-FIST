@@ -39,7 +39,7 @@ QVariant DecayTableModel::data(const QModelIndex &index, int role) const
 {
   int row = index.row();
   int col = index.column();
-  ParticleDecay decay;
+  ParticleDecayChannel decay;
   switch (role) {
   case Qt::DisplayRole:
     if (row >= fParticle->Decays().size()) return QVariant();

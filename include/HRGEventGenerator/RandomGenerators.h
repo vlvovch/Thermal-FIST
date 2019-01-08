@@ -229,26 +229,53 @@ namespace thermalfist {
     };
 
 
-    // Class for generating mass of resonance in accordance with the relativistic Breit-Wigner distribution
+    /// \brief Class for generating mass of resonance in accordance 
+    ///        with the relativistic Breit-Wigner distribution
     class BreitWignerGenerator
     {
     public:
+
       BreitWignerGenerator() { }
+
+      /**
+       * \brief Construct a new BreitWignerGenerator object
+       * 
+       * Currently not used.
+       * 
+       * \param M     Pole mass of the resonance (in GeV)
+       * \param gamma Width of the resonance (in GeV)
+       * \param mthr  The threshold mass of the resonance (in GeV)
+       */
       BreitWignerGenerator(double M, double gamma, double mthr) : m_M(M), m_Gamma(gamma), m_Mthr(mthr) { FixParameters(); }
+      
       ~BreitWignerGenerator() { }
 
+      /**
+       * \brief Set the Breit-Wigner spectral function parameters
+       * 
+       * \param M     Pole mass of the resonance (in GeV)
+       * \param gamma Width of the resonance (in GeV)
+       * \param mthr  The threshold mass of the resonance (in GeV)
+       */
       void SetParameters(double M, double gamma, double mthr);
 
-      // Unnormalized probability density of x
-      double f(double x) const;
-
-      // Finds the maximum of f(x) using the ternary search
-      void FixParameters();
-
       // Generates random resonance mass m from relativistic Breit-Wigner distribution
+      /**
+       * \brief Samples the resonance mass from a
+       *        relativistic Breit-Wigner distribution
+       *        with a constant width
+       * 
+       * \return The sampled mass (in GeV)
+       */
       double GetRandom() const;
 
     private:
+      /// Unnormalized probability density of x
+      double f(double x) const;
+
+      /// Finds the maximum of f(x) using the ternary search
+      void FixParameters();
+
       double m_M;
       double m_Gamma;
       double m_Mthr;
@@ -257,53 +284,104 @@ namespace thermalfist {
     };
 
 
-    // Class for generating mass of resonance in accordance with its fixed Breit-Wigner distribution multiplied by the Boltzmann factor
+    /// \brief Class for generating mass of resonance 
+    ///        in accordance with constant width Breit-Wigner distribution 
+    ///        multiplied by the thermal density.
+    ///
+    /// Samples
+
+    /**
+     * \brief Class for generating mass of resonance
+     *        in accordance with the constant width Breit-Wigner distribution
+     *        multiplied by the thermal density.
+     * 
+     * Sample the mass from the distribution
+     * \f[
+     *   \rho(M) \sim \rho_{\rm BW} (M) \, n_{\rm th}^{\rm id} (T,\mu;M)~.
+     * \f]
+     * 
+     */
     class ThermalBreitWignerGenerator
     {
     public:
       ThermalBreitWignerGenerator() { }
+
+      /**
+       * \brief Construct a new ThermalBreitWignerGenerator object
+       * 
+       * \param part A pointer to the ThermalParticle object representing
+       *             the species sampled.
+       * \param T    Tempeature (in GeV)
+       * \param Mu   Chemical potential of the sampled particle (in GeV)
+       */
       ThermalBreitWignerGenerator(ThermalParticle *part, double T, double Mu) : m_part(part), m_T(T), m_Mu(Mu) { FixParameters(); }
+      
       virtual ~ThermalBreitWignerGenerator() { }
 
+      /**
+       * \brief Sets the parameters of the distribution.
+       * 
+       * \param part A pointer to the ThermalParticle object representing
+       *             the species sampled.
+       * \param T    Tempeature (in GeV)
+       * \param Mu   Chemical potential of the sampled particle (in GeV)
+       */
       void SetParameters(ThermalParticle *part, double T, double Mu);
 
-
-      virtual void FixParameters();
-
-      // Unnormalized probability density of thermal resonance mass M
-      virtual double f(double M) const;
-
-      // Generates random resonance mass m from relativistic Breit-Wigner distribution
+      /**
+       * \brief Samples the mass.
+       * 
+       * \return double The sampled mass (in GeV)
+       */
       double GetRandom() const;
 
     protected:
+      /// Computes some auxiliary stuff needed for sampling
+      virtual void FixParameters();
+
+      /// Unnormalized resonance mass probability density
+      virtual double f(double M) const;
+
       ThermalParticle *m_part;
       double m_T, m_Mu;
       double m_Xmin, m_Xmax;
       double m_Max;
-
-      /*double m_M;
-      double m_Gamma;
-      double m_Mthr;
-      double m_Norm;
-      double m_Max;*/
     };
 
     // Class for generating mass of resonance in accordance with its fixed Breit-Wigner distribution multiplied by the Boltzmann factor
+    /**
+     * \brief Class for generating mass of resonance
+     *        in accordance with the energy-dependent Breit-Wigner distribution
+     *        multiplied by the thermal density.
+     * 
+     * Sample the mass from the distribution
+     * \f[
+     *   \rho(M) \sim \rho_{\rm eBW} (M) \, n_{\rm th}^{\rm id} (T,\mu;M)~.
+     * \f]
+     * 
+     */
     class ThermalEnergyBreitWignerGenerator
       : public ThermalBreitWignerGenerator
     {
     public:
+
       ThermalEnergyBreitWignerGenerator() : ThermalBreitWignerGenerator() { }
+
+      /**
+       * \brief Construct a new ThermalEnergyBreitWignerGenerator object
+       * 
+       * \copydetails ThermalBreitWignerGenerator(ThermalParticle*,double,double)
+       */
       ThermalEnergyBreitWignerGenerator(ThermalParticle *part, double T, double Mu) :
         ThermalBreitWignerGenerator(part, T, Mu) {
         FixParameters();
       }
+
       ~ThermalEnergyBreitWignerGenerator() { }
 
+    protected:
       virtual void FixParameters();
-
-      // Unnormalized probability density of thermal resonance mass M
+      
       virtual double f(double M) const;
     };
   }

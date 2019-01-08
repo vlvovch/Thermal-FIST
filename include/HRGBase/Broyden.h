@@ -21,8 +21,9 @@
 namespace thermalfist {
 
   /**
-   * Abstract class which defines the system of non-linear 
-   * equations to be solved by the Broyden's method.
+   * \brief Abstract class which defines the system of non-linear 
+   *        equations to be solved by the Broyden's method.
+   * 
    * It is presumed that all equations
    * are of the form 'l.h.s. == 0'.
    * Actual equations are to be specified
@@ -68,7 +69,8 @@ namespace thermalfist {
 
 
   /**
-   * Class which implements calculation of the Jacobian needed for the Broyden's method.
+   * \brief Class which implements calculation of the Jacobian needed for the Broyden's method.
+   * 
    * Here it is done numerically using the BroydenEquations instance and the finite difference method.
    * A derived class may implement an analytic calculation.
    */
@@ -91,7 +93,7 @@ namespace thermalfist {
     virtual ~BroydenJacobian(void) { }
 
     /**
-     * Evaluates the Jacobian for given values of the variables.
+     * \brief Evaluates the Jacobian for given values of the variables.
      * 
      * \param x Vector of the variables' values.
      * \return Eigen::MatrixXd Eigen Matrix object
@@ -104,8 +106,8 @@ namespace thermalfist {
     virtual Eigen::MatrixXd Jacobian(const std::vector<double> &x);
 
     /**
-     * Set the finite variable difference value 
-     * used for calculating the Jacobian numerically.
+     * \brief Set the finite variable difference value 
+     *        used for calculating the Jacobian numerically.
      * 
      * \param dx The finite difference value.
      */
@@ -124,16 +126,17 @@ namespace thermalfist {
   };
 
   /**
-   * A class implementing the Broyden method to solve a system of non-linear equations.
+   * \brief Class implementing the Broyden method to solve a system of non-linear equations.
    */
   class Broyden
   {
   public:
     /**
-     * A sub-class which determines whether
-     * the required accuracy is achieved
-     * in the Broyden's method.
-     * By defalut, the desired accuracy is achieved
+     * \brief Sub-class where it is determined whether
+     *        the required accuracy is achieved
+     *        in the Broyden's method.
+     * 
+     * By default, the desired accuracy is achieved
      * if all of the equations deviate from zero by less
      * than the specified accuracy.
      * A derived class may implement a different criterium.

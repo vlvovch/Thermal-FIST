@@ -21,13 +21,17 @@ ListTableModel::ListTableModel(QObject *parent)
     :QAbstractTableModel(parent)
 {
     RowToParticle.resize(0);
-    TPS = TPScopy = NULL;
+    //TPS = TPScopy = NULL;
+    TPS = new thermalfist::ThermalParticleSystem();
+    TPScopy = new thermalfist::ThermalParticleSystem();
 }
 
 ListTableModel::~ListTableModel()
 {
   if (TPS != NULL)
     delete TPS;
+  if (TPScopy != NULL)
+    delete TPScopy;
 }
 
 int ListTableModel::rowCount(const QModelIndex & /*parent*/) const
@@ -249,7 +253,7 @@ QVariant DecayEditorTableModel::data(const QModelIndex &index, int role) const
     }*/
     int row = index.row();
     int col = index.column();
-    ParticleDecay decay;
+    ParticleDecayChannel decay;
     switch(role){
         case Qt::DisplayRole:
             if (row>=fParticle->Decays().size()) return QVariant();
@@ -273,35 +277,6 @@ QVariant DecayEditorTableModel::data(const QModelIndex &index, int role) const
             }
             else return 0;
             break;
-        /*case Qt::FontRole:
-            if (TPS->fParticles[RowToParticle[row]].fStable) //change font only for cell(0,0)
-            {
-                QFont boldFont;
-                boldFont.setBold(true);
-                return boldFont;
-            }
-            break;
-        case Qt::BackgroundRole:
-
-            if (row == 1 && col == 2)  //change background only for cell(1,2)
-            {
-                QBrush redBackground(Qt::red);
-                return redBackground;
-            }
-            break;
-        case Qt::TextAlignmentRole:
-
-            if (col>=3 && col<=6) //add a checkbox to cell(1,0)
-            {
-                return Qt::AlignCenter;
-            }
-            break;
-        case Qt::CheckStateRole:
-
-            if (col>=3 && col<=6) //add a checkbox to cell(1,0)
-            {
-                //return Qt::Unchecked;
-            }*/
     }
     return QVariant();
 }
@@ -311,7 +286,6 @@ QVariant DecayEditorTableModel::headerData(int section, Qt::Orientation orientat
     if (role == Qt::DisplayRole)
     {
         if (orientation == Qt::Horizontal) {
-            //switch (section)
             {
                 if (section==0) return "Branching ratio (%)";
                 if (section==1) return "Normalized (%)";
@@ -327,7 +301,6 @@ bool DecayEditorTableModel::setData(const QModelIndex & index, const QVariant & 
 {
     int row = index.row();
     int col = index.column();
-    //qDebug() << value.toString();
     if (role==Qt::EditRole) {
         if (col==0) {
             fParticle->Decays()[row].mBratio = value.toDouble() / 100.;
@@ -340,7 +313,6 @@ bool DecayEditorTableModel::setData(const QModelIndex & index, const QVariant & 
             return true;
         }
         else if (col!=1 && (col-2)<fParticle->Decays()[row].mDaughters.size()) {
-            //qDebug() << col - 2 ;// << " " << distance(fParticle->fDecays[row].fDaughters.begin(), fParticle->fDecays[row].fDaughters.begin() + col - 2);
             if (value.toInt()!=0)
                 fParticle->Decays()[row].mDaughters[col-2] = value.toInt();
             else fParticle->Decays()[row].mDaughters.erase(fParticle->Decays()[row].mDaughters.begin() + (int)(col - 2));

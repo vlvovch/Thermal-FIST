@@ -70,9 +70,9 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
             }
 
             if (model->IsCalculated()) {
-                if (col==9) return model->GetParticlePrimordialDensity(RowToParticle[row]);
-                if (col==10) return model->GetParticlePrimordialDensity(RowToParticle[row]) * model->Volume();
-                if (col==11) return model->GetParticleTotalDensity(RowToParticle[row]) * model->Volume();
+                if (col==9) return model->Densities()[RowToParticle[row]];
+                if (col==10) return model->Densities()[RowToParticle[row]] * model->Volume();
+                if (col==11) return model->TotalDensities()[RowToParticle[row]] * model->Volume();
 								if (model->IsFluctuationsCalculated()) {
 									if (col == 12) return model->ScaledVariancePrimordial(RowToParticle[row]);
 									if (col == 13) return model->ScaledVarianceTotal(RowToParticle[row]);

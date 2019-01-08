@@ -68,7 +68,7 @@ namespace thermalfist {
   };
 
   /**
-   * Structure containing information about a single decay channel of a particle.
+   * \brief Structure containing information about a single decay channel of a particle.
    */
   struct ParticleDecayChannel {
     double mBratio;                /**< Branching ratio */

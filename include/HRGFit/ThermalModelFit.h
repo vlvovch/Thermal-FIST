@@ -8,6 +8,12 @@
 #ifndef THERMALMODELFIT_H
 #define THERMALMODELFIT_H
 
+/**
+ * \file ThermalModelFit.h
+ * \brief ThermalModelFit class
+ * 
+ */
+
 #include <string>
 
 #include "HRGFit/ThermalModelFitParameters.h"
@@ -25,7 +31,7 @@ namespace thermalfist {
    * \f[
    *   \chi^2 = \frac{\chi^2}{N_{\rm dof}}
        ~=~\frac{1}{N_{\rm dof}}\sum_{i=1}^N\frac{\left(N_i^{\rm exp}~-~N_i^{\rm HRG}\right)^2}{\sigma_i^2}
-   *   ]
+   * \f]
    * with MINUIT2. 
    * 
    * The actual HRG model to use is provided through a pointer to the
@@ -34,9 +40,9 @@ namespace thermalfist {
    * The fitted thermal parameters can be specified in a thermalfist::ThermalModelFitParameters
    * object and should be provided through the SetParameters() method.
    * 
-   * The data to fit can be specified as vector of FittedQuantity objects
+   * The data to fit can be specified as vector of FittedQuantity objects.
    * It can be provided through the SetQuantities() method,
-   * or read from file with loadExpDataFromFile(). 
+   * the data can be read from a file with loadExpDataFromFile(). 
    * 
    * Finally, the fit procedure is invoked through the PerformFit() method.
    * 

@@ -11,7 +11,8 @@
 namespace thermalfist {
 
   /**
-   *   A structure containing all thermal parameters of the model.
+   *   \brief Structure containing all thermal parameters of the model.
+   * 
    *   Used in ThermalParticle class when calculating the ideal gas functions.
    */
   struct ThermalModelParameters {

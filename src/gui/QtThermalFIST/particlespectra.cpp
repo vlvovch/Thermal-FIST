@@ -171,25 +171,30 @@ ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, double T, double bet
             }
             fPDGtoIDall[model->TPS()->Particles()[i].PdgId()] = i;
 
-            std::vector<int> tchr(3,0);
+            std::vector<int> tchr(4,0);
             tchr[0] = model->TPS()->Particles()[i].BaryonCharge();
             tchr[1] = model->TPS()->Particles()[i].ElectricCharge();
             tchr[2] = model->TPS()->Particles()[i].Strangeness();
+            tchr[3] = model->TPS()->Particles()[i].Charm();
             fParticleCharges.push_back(tchr);
         }
 
         fNetCharges.push_back(NumberStatistics("net-baryon"));
         fNetCharges.push_back(NumberStatistics("net-charge"));
         fNetCharges.push_back(NumberStatistics("net-strangeness"));
+        fNetCharges.push_back(NumberStatistics("net-charm"));
         fTotalCharges.push_back(NumberStatistics("baryonic hadrons"));
         fTotalCharges.push_back(NumberStatistics("charged hadrons"));
         fTotalCharges.push_back(NumberStatistics("strange hadrons"));
+        fTotalCharges.push_back(NumberStatistics("charmed hadrons"));
         fPositiveCharges.push_back(NumberStatistics("baryon+ hadrons"));
         fPositiveCharges.push_back(NumberStatistics("charge+ hadrons"));
         fPositiveCharges.push_back(NumberStatistics("strange+ hadrons"));
+        fPositiveCharges.push_back(NumberStatistics("charm+ hadrons"));
         fNegativeCharges.push_back(NumberStatistics("baryon- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("charge- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("strange- hadrons"));
+        fNegativeCharges.push_back(NumberStatistics("charm- hadrons"));
     }
     else {
         fParticles.resize(0);
@@ -309,10 +314,11 @@ void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int
 
             fPDGtoIDall[model->TPS()->Particles()[i].PdgId()] = i;
 
-            std::vector<int> tchr(3,0);
+            std::vector<int> tchr(4,0);
             tchr[0] = model->TPS()->Particles()[i].BaryonCharge();
             tchr[1] = model->TPS()->Particles()[i].ElectricCharge();
             tchr[2] = model->TPS()->Particles()[i].Strangeness();
+            tchr[3] = model->TPS()->Particles()[i].Charm();
             fParticleCharges.push_back(tchr);
         }
         fNetCharges.push_back(NumberStatistics("net-baryon"));

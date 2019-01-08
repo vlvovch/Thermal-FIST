@@ -21,8 +21,6 @@
 
 #include "modeltab.h"
 #include "eventgeneratortab.h"
-#include "energydependencetab.h"
-#include "contourplottab.h"
 #include "equationofstatetab.h"
 #include "listeditortab.h"
 
@@ -41,8 +39,6 @@ class MainWindow : public QMainWindow
 	
     FitToExperimentTab *tab2;
 
-    EnergyDependenceTab *tab3;
-    ContourPlotTab *tab4;
     EventGeneratorTab *tab5;
     EquationOfStateTab *tabEoS;
     ListEditorTab *tabEditor;

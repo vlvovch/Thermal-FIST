@@ -35,10 +35,7 @@ public:
         return TPScopy;
     }
     void setTPS(thermalfist::ThermalParticleSystem *TPSin) {
-      TPScopy = TPSin;
-      if (TPS == NULL)
-        TPS = new thermalfist::ThermalParticleSystem();
-      //*TPS = *TPSin;
+      *TPScopy = *TPSin;
       reset();
     }
     void applyChanges() {
@@ -58,10 +55,6 @@ public:
     void reset();
     void addParticle(const thermalfist::ThermalParticle &);
     void removeParticle(int number);
-    //void saveDatabaseAsOld(const QString & filename);
-    //void saveDatabaseAs(const QString & filename);
-    //void saveDecaysOld(const QString & filename);
-    //void saveDecays(const QString & filename);
 };
 
 class DecayEditorTableModel : public QAbstractTableModel
@@ -71,7 +64,6 @@ class DecayEditorTableModel : public QAbstractTableModel
     thermalfist::ThermalParticleSystem *fTPS;
     int columnNumber;
     double bratioSum;
-    //std::vector<int> RowToParticle;
 public:
     DecayEditorTableModel(QObject *parent, thermalfist::ThermalParticle *Particle = NULL, thermalfist::ThermalParticleSystem *TPS = NULL);
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
@@ -90,7 +82,7 @@ public:
     bool setData(const QModelIndex & index, const QVariant & value, int role);
     void addDecay() {
         beginInsertRows(QModelIndex(),fParticle->Decays().size(),fParticle->Decays().size());
-        fParticle->Decays().push_back(thermalfist::ParticleDecay());
+        fParticle->Decays().push_back(thermalfist::ParticleDecayChannel());
         endInsertRows();
     }
     void removeDecay(int number) {

@@ -40,7 +40,7 @@ namespace thermalfist {
    */
   struct ConservedCharge {
     /**
-     * Set of conserved charges included.
+     * \brief Set of all conserved charges considered.
      *
      */
     enum Name {
@@ -55,7 +55,8 @@ namespace thermalfist {
   
 
   /**
-   * A class containing all information about a particle specie.
+   * \brief Class containing all information about a particle specie.
+   * 
    * Also contains implementation of calculation of various thermodynamic quantities
    * in an ideal gas in the grand canonical ensemble.
    */

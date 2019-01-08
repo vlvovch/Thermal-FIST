@@ -46,15 +46,19 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
       if (row == spectra->fNames.size() + spectra->fNetParticles.size()) return QString("net-baryon");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + 1) return QString("net-charge");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + 2) return QString("net-strangeness");
+      if (row == spectra->fNames.size() + spectra->fNetParticles.size() + 3) return QString("net-charm");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size()) return QString("baryon hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + 1) return QString("charge hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + 2) return QString("strange hadrons");
+      if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + 3) return QString("charm hadrons"); 
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size()) return QString("baryon+ hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + 1) return QString("charge+ hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + 2) return QString("strange+ hadrons");
+      if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + 3) return QString("charm+ hadrons"); 
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size()) return QString("baryon- hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size() + 1) return QString("charge- hadrons");
       if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size() + 2) return QString("strange- hadrons");
+      if (row == spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size() + 3) return QString("charm- hadrons");
     }
     if (col == 1) {
       if (row < spectra->fParticles.size()) return spectra->fParticles[RowToParticle[row]].GetPDGID();
@@ -82,7 +86,7 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
         if (col == 6) return QString::number(spectra->fNetParticles[tind].GetSkewness(), 'f', 3) + " ± " + QString::number(spectra->fNetParticles[tind].GetSkewnessError(), 'f', 3);
         if (col == 7) return QString::number(spectra->fNetParticles[tind].GetKurtosis(), 'f', 3) + " ± " + QString::number(spectra->fNetParticles[tind].GetKurtosisError(), 'f', 3);
       }
-      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + 3) {
+      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size()) {
         int tind = row - spectra->fParticles.size() - spectra->fNetParticles.size();
         if (spectra->fNetCharges[tind].n == 0.) return QVariant();
         if (col == 3) return QString::number(spectra->fNetCharges[tind].GetMean(), 'f', 3) + " ± " + QString::number(spectra->fNetCharges[tind].GetMeanError(), 'f', 3);//QString("%1 ± %2").arg(spectra->fParticles[RowToParticle[row]].GetMean()).arg(spectra->fParticles[RowToParticle[row]].GetMeanError());
@@ -91,7 +95,7 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
         if (col == 6) return QString::number(spectra->fNetCharges[tind].GetSkewness(), 'f', 3) + " ± " + QString::number(spectra->fNetCharges[tind].GetSkewnessError(), 'f', 3);
         if (col == 7) return QString::number(spectra->fNetCharges[tind].GetKurtosis(), 'f', 3) + " ± " + QString::number(spectra->fNetCharges[tind].GetKurtosisError(), 'f', 3);
       }
-      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + 3) {
+      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size()) {
         int tind = row - spectra->fParticles.size() - spectra->fNetParticles.size() - spectra->fNetCharges.size();
         if (spectra->fTotalCharges[tind].n == 0.) return QVariant();
         if (col == 3) return QString::number(spectra->fTotalCharges[tind].GetMean(), 'f', 3) + " ± " + QString::number(spectra->fTotalCharges[tind].GetMeanError(), 'f', 3);//QString("%1 ± %2").arg(spectra->fParticles[RowToParticle[row]].GetMean()).arg(spectra->fParticles[RowToParticle[row]].GetMeanError());
@@ -100,7 +104,7 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
         if (col == 6) return QString::number(spectra->fTotalCharges[tind].GetSkewness(), 'f', 3) + " ± " + QString::number(spectra->fTotalCharges[tind].GetSkewnessError(), 'f', 3);
         if (col == 7) return QString::number(spectra->fTotalCharges[tind].GetKurtosis(), 'f', 3) + " ± " + QString::number(spectra->fTotalCharges[tind].GetKurtosisError(), 'f', 3);
       }
-      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + 3) {
+      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size()) {
         int tind = row - spectra->fParticles.size() - spectra->fNetParticles.size() - spectra->fNetCharges.size() - spectra->fTotalCharges.size();
         if (spectra->fPositiveCharges[tind].n == 0.) return QVariant();
         if (col == 3) return QString::number(spectra->fPositiveCharges[tind].GetMean(), 'f', 3) + " ± " + QString::number(spectra->fPositiveCharges[tind].GetMeanError(), 'f', 3);//QString("%1 ± %2").arg(spectra->fParticles[RowToParticle[row]].GetMean()).arg(spectra->fParticles[RowToParticle[row]].GetMeanError());
@@ -109,7 +113,7 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
         if (col == 6) return QString::number(spectra->fPositiveCharges[tind].GetSkewness(), 'f', 3) + " ± " + QString::number(spectra->fPositiveCharges[tind].GetSkewnessError(), 'f', 3);
         if (col == 7) return QString::number(spectra->fPositiveCharges[tind].GetKurtosis(), 'f', 3) + " ± " + QString::number(spectra->fPositiveCharges[tind].GetKurtosisError(), 'f', 3);
       }
-      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size() + 3) {
+      else if (row < spectra->fNames.size() + spectra->fNetParticles.size() + spectra->fNetCharges.size() + spectra->fTotalCharges.size() + spectra->fPositiveCharges.size() + spectra->fNegativeCharges.size()) {
         int tind = row - spectra->fParticles.size() - spectra->fNetParticles.size() - spectra->fNetCharges.size() - spectra->fTotalCharges.size() - spectra->fPositiveCharges.size();
         if (spectra->fNegativeCharges[tind].n == 0.) return QVariant();
         if (col == 3) return QString::number(spectra->fNegativeCharges[tind].GetMean(), 'f', 3) + " ± " + QString::number(spectra->fNegativeCharges[tind].GetMeanError(), 'f', 3);//QString("%1 ± %2").arg(spectra->fParticles[RowToParticle[row]].GetMean()).arg(spectra->fParticles[RowToParticle[row]].GetMeanError());

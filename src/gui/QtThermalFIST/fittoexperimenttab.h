@@ -24,8 +24,11 @@
 #include <QThread>
 
 #include "BaseStructures.h"
+#include "configwidgets.h"
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
+
+
 
 class FitWorker : public QThread
 {
@@ -60,42 +63,19 @@ class FitToExperimentTab : public QWidget
     QTableWidget *tableParameters;
     QLabel *labelHint;
 
-		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
-		QRadioButton *radGCE, *radCE, *radSCE;
-
-		QRadioButton *radioBoltz, *radioQuant;
-		QCheckBox *CBBoseOnly, *CBPionsOnly;
-		QCheckBox *CBQuadratures;
-
     QPushButton *buttonPlotYields, *buttonPlotDataModel, *buttonPlotDataVsModel, *buttonPlotDeviations;
 
     QPushButton *buttonResults;
-    QPushButton *buttonChi2Map;
 		QPushButton *buttonChi2Profile;
 		QPushButton *labelValid;
 
-    QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinVolumeR;
-    QCheckBox *CBTemperature, *CBmuB, *CBgammaq, *CBgammaS, *CBVolumeR;
-    QDoubleSpinBox *spinTmin, *spinTmax;
-    QDoubleSpinBox *spinmuBmin, *spinmuBmax;
-    QDoubleSpinBox *spingqmin, *spingqmax;
-    QDoubleSpinBox *spingsmin, *spingsmax;
-    QDoubleSpinBox *spinVRmin, *spinVRmax;
-    QSpinBox *spinB, *spinS, *spinQ;
-    QDoubleSpinBox *spinQBRatio;
-    QDoubleSpinBox *spinRadius;
+    QTableView *tableFitParameters;
 
-		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
+    QLabel *labelB, *labelS, *labelQ, *labelC;
+    QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
-		QComboBox *comboWidth;
-
-    QCheckBox *checkBratio;
-	QCheckBox *checkFitRc;
-
-    QCheckBox *checkOMP;
-
-    QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
-		QString strEVPath;
+	  QCheckBox *checkFixRc;
+    QDoubleSpinBox *spinVcV;
 
     QPushButton *buttonCalculate;
 
@@ -114,14 +94,18 @@ class FitToExperimentTab : public QWidget
 
 		QString cpath;
 
+    ModelConfigWidget *configWidget;
+
     int getCurrentRow();
 
     std::vector<thermalfist::FittedQuantity> quantities;
 
+    thermalfist::ThermalModelFitParameters m_FitParameters;
+
 public:
     FitToExperimentTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL);
     ~FitToExperimentTab();
-		ThermalModelConfig getConfig();
+    ThermalModelConfig getConfig();
     thermalfist::ThermalModelFitParameters getFitParameters();
     thermalfist::ThermalModelFit* Fit() const { return fitcopy; }
     ThermalModelConfig LastUsedConfig() const { return lastconfig; }
@@ -137,13 +121,11 @@ public slots:
     void calculate();
     void quantityDoubleClick(const QModelIndex &);
     void showResults();
-    void showChi2Map();
 		void showChi2Profile();
     void setModel(thermalfist::ThermalModelBase *model);
     void removeQuantityFromFit();
     void addQuantity();
     void loadFromFile();
-		void loadEVFromFile();
 		void saveToFile();
     void modelChanged();
     void resetTPS();

@@ -48,7 +48,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelVersion->setFont(fontDefault);
   layout->addWidget(labelVersion, 0, Qt::AlignCenter);
   layout->addSpacing(20);
-  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2018 Volodymyr Vovchenko"));
+  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2019 Volodymyr Vovchenko"));
   labelCC->setFont(fontDefault);
   layout->addWidget(labelCC, 0, Qt::AlignCenter);
   QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));

@@ -23,8 +23,8 @@ namespace thermalfist {
   */
 
   /**
-  *   Base class implementing auxiliary excluded-volume functions
-  *   needed for multi-component mean-field approach.
+  *   \brief Base class implementing auxiliary excluded-volume functions
+  *          needed for multi-component mean-field approach.
   *   Contains van der Waals functions.
   */
   class ExcludedVolumeModel
@@ -43,8 +43,8 @@ namespace thermalfist {
   };
 
   /**
-  *   Derived class implementing auxiliary excluded-volume functions
-  *   for multi-component mean-field approach from Carnahan-Starling model.
+  *   \brieaf Derived class implementing auxiliary excluded-volume functions
+  *           for multi-component mean-field approach from the Carnahan-Starling model.
   */
   class ExcludedVolumeModelCS : public ExcludedVolumeModel
   {

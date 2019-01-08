@@ -67,16 +67,16 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
 
     QLabel *labelPrimDensity = new QLabel(tr("Primordial density = "));
     if (model->IsCalculated()) labelPrimDensity->setText(labelPrimDensity->text() +
-                                                      QString::number(model->GetParticlePrimordialDensity(pid)) +
+                                                      QString::number(model->Densities()[pid]) +
                                                       " fm<sup>-3</sup>");
 
     QLabel *labelPrimMultiplicity = new QLabel(tr("Primordial yield = "));
     if (model->IsCalculated()) labelPrimMultiplicity->setText(labelPrimMultiplicity->text() +
-                                                      QString::number(model->GetParticlePrimordialDensity(pid) * model->Volume()));
+                                                      QString::number(model->Densities()[pid] * model->Volume()));
 
     QLabel *labelTotalMultiplicity = new QLabel(tr("Total yield = "));
     if (model->IsCalculated()) labelTotalMultiplicity->setText(labelTotalMultiplicity->text() +
-                                                      QString::number(model->GetParticleTotalDensity(pid) * model->Volume()));
+                                                      QString::number(model->TotalDensities()[pid] * model->Volume()));
 
     QLabel *labelStrongMultiplicity = new QLabel(tr("Primordial + strong decays = "));
     if (model->IsCalculated()) labelStrongMultiplicity->setText(labelStrongMultiplicity->text() +
@@ -92,7 +92,7 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
 
     tableSources = new QTableWidget();
     tableSources->setColumnCount(3);
-    tableSources->setRowCount(model->TPS()->Particles()[pid].DecayContributions().size()+1);
+    tableSources->setRowCount(model->TPS()->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][pid].size()+1);
     tableSources->verticalHeader()->hide();
     tableSources->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Source")));
     tableSources->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Multiplicity")));
@@ -100,14 +100,14 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
 
     if (model->IsCalculated()) {
 
-        std::vector< std::pair<double, int> > sources = model->TPS()->Particles()[pid].DecayContributions();
-        for(int i=0;i<sources.size();++i) sources[i].first *= model->GetParticlePrimordialDensity(sources[i].second);
+        std::vector< std::pair<double, int> > sources = model->TPS()->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][pid];
+        for(int i=0;i<sources.size();++i) sources[i].first *= model->Densities()[sources[i].second];
 
         qSort(sources.begin(), sources.end());
 
         tableSources->setItem(0, 0, new QTableWidgetItem(tr("Primordial")));
-        tableSources->setItem(0, 1, new QTableWidgetItem(QString::number(model->GetParticlePrimordialDensity(pid) * model->Volume())));
-        tableSources->setItem(0, 2, new QTableWidgetItem(QString::number(model->GetParticlePrimordialDensity(pid) / model->GetParticleTotalDensity(pid) * 100.)));
+        tableSources->setItem(0, 1, new QTableWidgetItem(QString::number(model->Densities()[pid] * model->Volume())));
+        tableSources->setItem(0, 2, new QTableWidgetItem(QString::number(model->Densities()[pid] / model->TotalDensities()[pid] * 100.)));
 
 				
 				for (int j = 0; j < 3; ++j) {
@@ -121,7 +121,7 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
                 int decaypartid = sources[tindex].second;
                 tableSources->setItem(i+1, 0, new QTableWidgetItem(tr("Decays from primordial ") + QString(model->TPS()->Particles()[decaypartid].Name().c_str())));
                 tableSources->setItem(i+1, 1, new QTableWidgetItem(QString::number(sources[tindex].first * model->Volume())));
-                tableSources->setItem(i+1, 2, new QTableWidgetItem(QString::number(sources[tindex].first / model->GetParticleTotalDensity(pid) * 100.)));
+                tableSources->setItem(i+1, 2, new QTableWidgetItem(QString::number(sources[tindex].first / model->TotalDensities()[pid] * 100.)));
 								
 								for (int j = 0; j < 3; ++j) {
 									QTableWidgetItem *item = tableSources->item(i+1, j);
@@ -181,10 +181,10 @@ QString ParticleDialog::GetParticleInfo() {
     //else ret += "No\r\n";
 
     ret += tr("Decay type").leftJustified(20) + " = ";
-    ParticleDecay::DecayType dtype = model->TPS()->Particles()[pid].DecayType();
-    if (dtype == ParticleDecay::Strong) ret += "Strong\r\n";
-    else if (dtype == ParticleDecay::Electromagnetic) ret += "Electromagnetic\r\n";
-    else if (dtype == ParticleDecay::Weak) ret += "Weak\r\n";
+    ParticleDecayType::DecayType dtype = model->TPS()->Particles()[pid].DecayType();
+    if (dtype == ParticleDecayType::Strong) ret += "Strong\r\n";
+    else if (dtype == ParticleDecayType::Electromagnetic) ret += "Electromagnetic\r\n";
+    else if (dtype == ParticleDecayType::Weak) ret += "Weak\r\n";
     else ret += "Stable\r\n";
 
     ret += tr("Neutral?").leftJustified(20) + " = ";

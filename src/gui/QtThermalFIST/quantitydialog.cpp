@@ -27,12 +27,12 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
     spinPDG1->setMinimum(-2000000000);
     spinPDG1->setMaximum(2000000000);
     if (!quant->type) spinPDG1->setValue(quant->mult.fPDGID);
-    else spinPDG1->setValue(quant->ratio.PDGID1);
+    else spinPDG1->setValue(quant->ratio.fPDGID1);
     spinPDG2 = new QSpinBox();
     spinPDG2->setMinimum(-2000000000);
     spinPDG2->setMaximum(2000000000);
     if (!quant->type) spinPDG2->setEnabled(false);
-    else spinPDG2->setValue(quant->ratio.PDGID2);
+    else spinPDG2->setValue(quant->ratio.fPDGID2);
     name1 = new QLabel();
     name2 = new QLabel();
     name1->setText(QString(model->TPS()->GetNameFromPDG(spinPDG1->value()).c_str()));
