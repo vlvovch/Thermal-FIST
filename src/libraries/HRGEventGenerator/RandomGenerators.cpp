@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2015-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -105,7 +105,7 @@ namespace thermalfist {
     }
 
 
-    double SiemensRasmussenGenerator::g(double x) const {
+    double SiemensRasmussenMomentumGenerator::g(double x) const {
       double tp = -log(x);
       double talpha = alpha(tp);
       double en = w(tp);
@@ -117,7 +117,7 @@ namespace thermalfist {
       return tp * tp * exp(-m_Gamma * en / m_T) * ((1. + m_T / m_Gamma / en)*shtalpha - m_T / m_Gamma / en * ch) / x;
     }
 
-    double SiemensRasmussenGenerator::g2(double x, double tp) const {
+    double SiemensRasmussenMomentumGenerator::g2(double x, double tp) const {
       double talpha = alpha(tp);
       double en = w(tp);
       double sh = sinh(talpha);
@@ -128,7 +128,7 @@ namespace thermalfist {
       return tp * tp * exp(-m_Gamma * en / m_T) * ((1. + m_T / m_Gamma / en)*shtalpha - m_T / m_Gamma / en * ch) / x;
     }
 
-    void SiemensRasmussenGenerator::FixParameters() {
+    void SiemensRasmussenMomentumGenerator::FixParameters() {
       double eps = 1e-8;
       double l = 0., r = 1.;
       double m1 = l + (r - l) / 3.;
@@ -149,7 +149,7 @@ namespace thermalfist {
       m_Max = g((m1 + m2) / 2.);
     }
 
-    double SiemensRasmussenGenerator::GetRandom() const {
+    double SiemensRasmussenMomentumGenerator::GetRandom() const {
       while (1) {
         double x0 = randgenMT.randDblExc();
         double y0 = m_Max * randgenMT.randDblExc();
@@ -158,7 +158,7 @@ namespace thermalfist {
       return 0.;
     }
 
-    std::vector<double> SiemensRasmussenGenerator::GetMomentum() const {
+    std::vector<double> SiemensRasmussenMomentumGenerator::GetMomentum() const {
       std::vector<double> ret(0);
       double tp = GetRandom();
       double tphi = 2. * xMath::Pi() * randgenMT.rand();
@@ -172,7 +172,7 @@ namespace thermalfist {
 
 
 
-    void SSHGenerator::FixParameters() {
+    void SSHMomentumGenerator::FixParameters() {
       {
         double eps = 1e-8;
         double l = 0., r = 1.;
@@ -236,7 +236,7 @@ namespace thermalfist {
       }
     }
 
-    void SSHGenerator::FixParameters2() {
+    void SSHMomentumGenerator::FixParameters2() {
       {
         double eps = 1e-8;
         double l = 0., r = 1.;
@@ -301,7 +301,7 @@ namespace thermalfist {
 
     }
 
-    void SSHGenerator::FindMaximumPt() {
+    void SSHMomentumGenerator::FindMaximumPt() {
 
       double eps = 1e-8;
       double l = 0., r = 1.;
@@ -329,7 +329,7 @@ namespace thermalfist {
       }
     }
 
-    void SSHGenerator::FindMaximumY(double pt) {
+    void SSHMomentumGenerator::FindMaximumY(double pt) {
       double eps = 1e-8;
       double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
       double m1 = l + (r - l) / 3.;
@@ -350,7 +350,7 @@ namespace thermalfist {
       m_MaxY = m_distr.dndy((m1 + m2) / 2., pt);
     }
 
-    void SSHGenerator::FindMaximumY2(double pt) {
+    void SSHMomentumGenerator::FindMaximumY2(double pt) {
       double eps = 1e-8;
       double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
       double m1 = l + (r - l) / 3.;
@@ -371,7 +371,7 @@ namespace thermalfist {
       m_MaxY = m_distr.dndysingle((m1 + m2) / 2., pt);
     }
 
-    std::pair<double, double> SSHGenerator::GetRandom() {
+    std::pair<double, double> SSHMomentumGenerator::GetRandom() {
       double tpt = 0., ty = 0.;
       while (1) {
         double x0 = randgenMT.randDblExc();
@@ -395,7 +395,7 @@ namespace thermalfist {
       return std::make_pair(tpt, ty);
     }
 
-    std::pair<double, double> SSHGenerator::GetRandom2() const {
+    std::pair<double, double> SSHMomentumGenerator::GetRandom2() const {
       double tpt = 0., ty = 0., teta = 0.;
       while (1) {
         double x0 = randgenMT.randDblExc();
@@ -421,7 +421,7 @@ namespace thermalfist {
       return std::make_pair(tpt, ty - teta);
     }
 
-    std::vector<double> SSHGenerator::GetMomentum() const {
+    std::vector<double> SSHMomentumGenerator::GetMomentum() const {
       std::vector<double> ret(0);
       std::pair<double, double> pty = GetRandom2();
       double tpt = pty.first;

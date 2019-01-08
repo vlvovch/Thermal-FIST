@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -29,182 +29,6 @@
 #include "HRGBase/ThermalModelBase.h"
 
 namespace thermalfist {
-
-  ThermalModelFitParametersExtended::ThermalModelFitParametersExtended(ThermalModelBase * model)
-  {
-    T.value = model->Parameters().T;
-    muB.value = model->Parameters().muB;
-    muS.value = model->Parameters().muS;
-    muQ.value = model->Parameters().muQ;
-    muC.value = model->Parameters().muC;
-    gammaq.value = model->Parameters().gammaq;
-    gammaS.value = model->Parameters().gammaS;
-    gammaC.value = model->Parameters().gammaC;
-    //R.value = model->Parameters.R;
-    R.value = 0.;
-    Rc.value = 0.;
-    nH.value = model->CalculateHadronDensity();
-    rhoB.value = model->CalculateBaryonDensity();
-    rhoQ.value = model->CalculateChargeDensity();
-    en.value = model->CalculateEnergyDensity();
-    entropy.value = model->CalculateEntropyDensity();
-    pressure.value = model->CalculatePressure();
-  }
-
-  ThermalModelFitParameters::ThermalModelFitParameters(const ThermalModelParameters & params)
-  {
-    T = FitParameter("T", true, params.T, 0.05, 0.02, 0.500);
-    muB = FitParameter("muB", true, params.muB, 0.05, -0.100, 0.900);
-    muS = FitParameter("muS", false, params.muS, 0.05, -0.450, 0.450);
-    muQ = FitParameter("muQ", false, params.muQ, 0.05, -0.130, 0.130);
-    muC = FitParameter("muC", false, params.muC);
-    gammaq = FitParameter("gammaq", false, params.gammaq, 0.5, 0.01, 3.);
-    gammaS = FitParameter("gammaS", false, params.gammaS, 0.5, 0.01, 3.);
-    gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 50.);
-    //V = FitParameter("V", true, V_, 2000., 1., 20000.);  // Volume no longer used
-    R = FitParameter("R", true, pow(3. * params.V / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 25.0);
-    Rc = FitParameter("Rc", true, pow(3. * params.SVc / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 10.0);
-    B = params.B;
-    Q = params.Q;
-    S = params.S;
-    C = params.C;
-
-    FillParameterList();
-  }
-
-  ThermalModelFitParameters::ThermalModelFitParameters(const ThermalModelFitParameters & op) :
-    GCE(op.GCE), T(op.T), muB(op.muB), muS(op.muS), muQ(op.muQ), muC(op.muC),
-    gammaq(op.gammaq), gammaS(op.gammaS), gammaC(op.gammaC), R(op.R), Rc(op.Rc),
-    B(op.B), S(op.S), Q(op.Q), C(op.C), chi2(op.chi2), chi2ndf(op.chi2ndf),
-    ndf(op.ndf)
-  {
-    FillParameterList();
-  }
-
-  ThermalModelFitParameters & ThermalModelFitParameters::operator=(const ThermalModelFitParameters & op)
-  {
-    GCE = op.GCE;
-    T = op.T;
-    muB = op.muB;
-    muS = op.muS;
-    muQ = op.muQ;
-    muC = op.muC;
-    gammaq = op.gammaq;
-    gammaS = op.gammaS;
-    gammaC = op.gammaC;
-    R = op.R;
-    Rc = op.Rc;
-    B = op.B;
-    S = op.S;
-    Q = op.Q;
-    C = op.C;
-    chi2 = op.chi2;
-    chi2ndf = op.chi2ndf;
-    ndf = op.ndf;
-    FillParameterList();
-    return *this;
-  }
-
-  void ThermalModelFitParameters::FillParameterList()
-  {
-    ParameterList.clear();
-    ParameterList.push_back(&T);
-    ParameterList.push_back(&R);
-    ParameterList.push_back(&Rc);
-    ParameterList.push_back(&muB);
-    ParameterList.push_back(&muQ);
-    ParameterList.push_back(&muS);
-    ParameterList.push_back(&muC);
-    ParameterList.push_back(&gammaq);
-    ParameterList.push_back(&gammaS);
-    ParameterList.push_back(&gammaC);
-  }
-
-  int ThermalModelFitParameters::IndexByName(const std::string & name) const
-  {
-    int ret = -1;
-    for (int i = 0; i < ParameterList.size(); ++i)
-      if (ParameterList[i]->name == name)
-        ret = i;
-    return ret;
-  }
-
-  FitParameter ThermalModelFitParameters::GetParameter(const std::string & name) const
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      return *ParameterList[ind];
-    // return T by default
-    return T;
-  }
-
-  FitParameter & ThermalModelFitParameters::GetParameter(const std::string & name)
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      return *ParameterList[ind];
-    // return T by default
-    return T;
-  }
-
-  FitParameter ThermalModelFitParameters::GetParameter(const int index) const
-  {
-    if (index >= 0 && index < ParameterList.size())
-      return *ParameterList[index];
-    // return T by default
-    return T;
-  }
-
-  FitParameter & ThermalModelFitParameters::GetParameter(const int index)
-  {
-    if (index >= 0 && index < ParameterList.size())
-      return *ParameterList[index];
-    // return T by default
-    return T;
-  }
-
-  void ThermalModelFitParameters::SetParameter(const std::string & name, const FitParameter & param)
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      *ParameterList[ind] = param;
-  }
-
-  void ThermalModelFitParameters::SetParameter(const std::string & name, double val, double err, double xmin, double xmax)
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      *ParameterList[ind] = FitParameter(name, ParameterList[ind]->toFit, val, err, xmin, xmax);
-  }
-
-  void ThermalModelFitParameters::SetParameterValue(const std::string & name, double value)
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      ParameterList[ind]->value = value;
-  }
-
-  void ThermalModelFitParameters::SetParameterFitFlag(const std::string & name, bool toFit)
-  {
-    int ind = IndexByName(name);
-    if (ind != -1)
-      ParameterList[ind]->toFit = toFit;
-  }
-
-  ThermalModelParameters ThermalModelFitParameters::GetThermalModelParameters()
-  {
-    ThermalModelParameters ret(T.value, muB.value, muS.value, muQ.value, gammaS.value, 4. / 3. * xMath::Pi() * R.value * R.value * R.value);
-    ret.SVc = 4. / 3. * xMath::Pi() * Rc.value * Rc.value * Rc.value;
-    ret.gammaq = gammaq.value;
-    ret.muC = muC.value;
-    ret.gammaC = gammaC.value;
-    ret.B = B;
-    ret.Q = Q;
-    ret.S = S;
-    ret.C = C;
-    return ret;
-  }
-
 
   #ifdef USE_MINUIT
 
@@ -274,8 +98,8 @@ namespace thermalfist {
         for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
           if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Ratio) {
             const ExperimentRatio &ratio = m_THMFit->FittedQuantities()[i].ratio;
-            double dens1 = m_THMFit->model()->GetDensity(ratio.PDGID1, ratio.fFeedDown1);
-            double dens2 = m_THMFit->model()->GetDensity(ratio.PDGID2, ratio.fFeedDown2);
+            double dens1 = m_THMFit->model()->GetDensity(ratio.fPDGID1, ratio.fFeedDown1);
+            double dens2 = m_THMFit->model()->GetDensity(ratio.fPDGID2, ratio.fFeedDown2);
             double ModelRatio = dens1 / dens2;
             m_THMFit->ModelData(i) = ModelRatio;
             if (m_THMFit->FittedQuantities()[i].toFit)
@@ -352,8 +176,6 @@ namespace thermalfist {
       bool   m_verbose;
     };
   }
-
-  //using namespace ThermalModelFitNamespace;
 
   #endif
 
@@ -676,10 +498,10 @@ namespace thermalfist {
     for (int i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Ratio) {
         const ExperimentRatio &ratio = m_Quantities[i].ratio;
-        int ind1 = m_model->TPS()->PdgToId(ratio.PDGID1);
-        int ind2 = m_model->TPS()->PdgToId(ratio.PDGID2);
-        double dens1 = m_model->GetDensity(ratio.PDGID1, ratio.fFeedDown1);
-        double dens2 = m_model->GetDensity(ratio.PDGID2, ratio.fFeedDown2);
+        int ind1 = m_model->TPS()->PdgToId(ratio.fPDGID1);
+        int ind2 = m_model->TPS()->PdgToId(ratio.fPDGID2);
+        double dens1 = m_model->GetDensity(ratio.fPDGID1, ratio.fFeedDown1);
+        double dens2 = m_model->GetDensity(ratio.fPDGID2, ratio.fFeedDown2);
         std::cout << m_model->TPS()->Particles()[ind1].Name() << "/" << m_model->TPS()->Particles()[ind2].Name() << " = " <<
           dens1 / dens2 << " " << ratio.fValue << " " << ratio.fError << "\n";
       }
@@ -767,17 +589,17 @@ namespace thermalfist {
     for (int i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Ratio) {
         const ExperimentRatio &ratio = m_Quantities[i].ratio;
-        double dens1 = m_model->GetDensity(ratio.PDGID1, ratio.fFeedDown1);
-        double dens2 = m_model->GetDensity(ratio.PDGID2, ratio.fFeedDown2);
-        std::string name1 = m_model->TPS()->GetNameFromPDG(ratio.PDGID1);
-        std::string name2 = m_model->TPS()->GetNameFromPDG(ratio.PDGID2);
-        if (ratio.PDGID1 == 1)
+        double dens1 = m_model->GetDensity(ratio.fPDGID1, ratio.fFeedDown1);
+        double dens2 = m_model->GetDensity(ratio.fPDGID2, ratio.fFeedDown2);
+        std::string name1 = m_model->TPS()->GetNameFromPDG(ratio.fPDGID1);
+        std::string name2 = m_model->TPS()->GetNameFromPDG(ratio.fPDGID2);
+        if (ratio.fPDGID1 == 1)
           name1 = "Npart";
-        if (ratio.PDGID2 == 1)
+        if (ratio.fPDGID2 == 1)
           name2 = "Npart";
-        if (ratio.PDGID1 == 33340)
+        if (ratio.fPDGID1 == 33340)
           name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
-        if (ratio.PDGID2 == 33340)
+        if (ratio.fPDGID2 == 33340)
           name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
         printf("%10s\t%11s\t%6lf %2s %lf\n", (std::string(name1 + "/" + name2)).c_str(), "Experiment:", 
           ratio.fValue, "+-", ratio.fError);
@@ -815,14 +637,14 @@ namespace thermalfist {
         m_Multiplicities[i].fError/(dens1 * m_model->Parameters().V));
     }
     for(int i=0;i<m_Ratios.size();++i) {
-      double dens1 = m_model->GetDensity(m_Ratios[i].PDGID1, m_Ratios[i].fFeedDown1);
-      double dens2 = m_model->GetDensity(m_Ratios[i].PDGID2, m_Ratios[i].fFeedDown2);
-      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID1);
-      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID2);
-      if (m_Ratios[i].PDGID1==1) name1 = "Npart";
-      if (m_Ratios[i].PDGID2==1) name2 = "Npart";
-      if (m_Ratios[i].PDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
-      if (m_Ratios[i].PDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
+      double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
+      double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
+      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID1);
+      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID2);
+      if (m_Ratios[i].fPDGID1==1) name1 = "Npart";
+      if (m_Ratios[i].fPDGID2==1) name2 = "Npart";
+      if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
+      if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
 
       fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1, 
         (std::string(name1 + "/" + name2)).c_str(),  m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, 
@@ -855,15 +677,15 @@ namespace thermalfist {
       fprintf(f, "%15lf\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1 + 0.3, tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError);
     }
     for(int i=0;i<m_Ratios.size();++i) {
-      double dens1 = m_model->GetDensity(m_Ratios[i].PDGID1, m_Ratios[i].fFeedDown1);
-      double dens2 = m_model->GetDensity(m_Ratios[i].PDGID2, m_Ratios[i].fFeedDown2);
+      double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
+      double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
-      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID1);
-      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID2);
-      if (m_Ratios[i].PDGID1==1) name1 = "Npart";
-      if (m_Ratios[i].PDGID2==1) name2 = "Npart";
-      if (m_Ratios[i].PDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
-      if (m_Ratios[i].PDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
+      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID1);
+      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID2);
+      if (m_Ratios[i].fPDGID1==1) name1 = "Npart";
+      if (m_Ratios[i].fPDGID2==1) name2 = "Npart";
+      if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
+      if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
 
       fprintf(f, "%15lf\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1 - 0.3, (std::string(name1 + "/" + name2)).c_str(),  m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError);
       fprintf(f, "%15lf\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1 + 0.3, (std::string(name1 + "/" + name2)).c_str(),  m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError);
@@ -894,17 +716,17 @@ namespace thermalfist {
       fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V-m_Multiplicities[i].fValue)/m_Multiplicities[i].fError);
     }
     for(int i=0;i<m_Ratios.size();++i) {
-      int ind1 = m_model->TPS()->PdgToId(m_Ratios[i].PDGID1);
-      int ind2 = m_model->TPS()->PdgToId(m_Ratios[i].PDGID2);
-      double dens1 = m_model->GetDensity(m_Ratios[i].PDGID1, m_Ratios[i].fFeedDown1);
-      double dens2 = m_model->GetDensity(m_Ratios[i].PDGID2, m_Ratios[i].fFeedDown2);
+      int ind1 = m_model->TPS()->PdgToId(m_Ratios[i].fPDGID1);
+      int ind2 = m_model->TPS()->PdgToId(m_Ratios[i].fPDGID2);
+      double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
+      double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
       std::string name1 = m_model->TPS()->Particles()[ind1].Name();
       std::string name2 = m_model->TPS()->Particles()[ind2].Name();
-      if (m_Ratios[i].PDGID1==1) name1 = "Npart";
-      if (m_Ratios[i].PDGID2==1) name2 = "Npart";
-      if (m_Ratios[i].PDGID1==33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
-      if (m_Ratios[i].PDGID2==33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      if (m_Ratios[i].fPDGID1==1) name1 = "Npart";
+      if (m_Ratios[i].fPDGID2==1) name2 = "Npart";
+      if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
       fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2 , (dens1 / dens2 - m_Ratios[i].fValue)/m_Ratios[i].fError);
     }
     fprintf(f, "\\hline\n");
@@ -1041,15 +863,15 @@ namespace thermalfist {
         fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V-m_Multiplicities[i].fValue)/m_Multiplicities[i].fError);
       }
       for(int i=0;i<m_Ratios.size();++i) {
-        double dens1 = m_model->GetDensity(m_Ratios[i].PDGID1, m_Ratios[i].fFeedDown1);
-        double dens2 = m_model->GetDensity(m_Ratios[i].PDGID2, m_Ratios[i].fFeedDown2);
+        double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
+        double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
-        std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID1);
-        std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID2);
-        if (m_Ratios[i].PDGID1==1) name1 = "Npart";
-        if (m_Ratios[i].PDGID2==1) name2 = "Npart";
-        if (m_Ratios[i].PDGID1==33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
-        if (m_Ratios[i].PDGID2==33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+        std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID1);
+        std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID2);
+        if (m_Ratios[i].fPDGID1==1) name1 = "Npart";
+        if (m_Ratios[i].fPDGID2==1) name2 = "Npart";
+        if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+        if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
         fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2 , (dens1 / dens2 - m_Ratios[i].fValue)/m_Ratios[i].fError);
       }
       fprintf(f, "\\hline\n");
@@ -1196,15 +1018,15 @@ namespace thermalfist {
     }
 
     for (int i = 0; i<m_Ratios.size(); ++i) {
-      double dens1 = m_model->GetDensity(m_Ratios[i].PDGID1, m_Ratios[i].fFeedDown1);
-      double dens2 = m_model->GetDensity(m_Ratios[i].PDGID2, m_Ratios[i].fFeedDown2);
+      double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
+      double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
-      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID1);
-      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].PDGID2);
-      if (m_Ratios[i].PDGID1 == 1) name1 = "Npart";
-      if (m_Ratios[i].PDGID2 == 1) name2 = "Npart";
-      if (m_Ratios[i].PDGID1 == 33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
-      if (m_Ratios[i].PDGID2 == 33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID1);
+      std::string name2 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID2);
+      if (m_Ratios[i].fPDGID1 == 1) name1 = "Npart";
+      if (m_Ratios[i].fPDGID2 == 1) name2 = "Npart";
+      if (m_Ratios[i].fPDGID1 == 33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      if (m_Ratios[i].fPDGID2 == 33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
       if (m_Ratios[i].fValue > 1.e-5 && m_Ratios[i].fError > 1.e-5)
         fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
       else
@@ -1352,8 +1174,8 @@ namespace thermalfist {
         }
         else {
           fout << std::setw(15) << static_cast<int>(outQuantities[i].toFit) 
-            << std::setw(15) << outQuantities[i].ratio.PDGID1
-            << std::setw(15) << outQuantities[i].ratio.PDGID2
+            << std::setw(15) << outQuantities[i].ratio.fPDGID1
+            << std::setw(15) << outQuantities[i].ratio.fPDGID2
             << std::setw(15) << outQuantities[i].ratio.fFeedDown1
             << std::setw(15) << outQuantities[i].ratio.fFeedDown2
             << std::setw(15) << outQuantities[i].ratio.fValue
@@ -1368,34 +1190,34 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelFit::chi2Ndf(double T, double muB) {
-  #ifdef USE_MINUIT
-    double Tinit = T, muBinit = muB;
-    FitFCN mfunc(this);
-    int nparams = 6;
-    if (!m_Parameters.T.toFit) nparams--;
-    if (!m_Parameters.muB.toFit) nparams--;
-    if (!m_Parameters.gammaq.toFit) nparams--;
-    if (!m_Parameters.gammaS.toFit) nparams--;
-    if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
-    if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
-    std::vector<double> params(6, 0.);
-    params[0] = T;
-    params[1] = muB;
-    params[2] = m_model->Parameters().gammaS;
-    params[3] = m_model->Parameters().V;
-    params[4] = m_model->Parameters().SVc;
-    params[5] = m_model->Parameters().gammaq;
-    m_model->SetStrangenessChemicalPotential(muB / 5.);
-    m_model->SetElectricChemicalPotential(-muB / 50.);
-    double ret = mfunc(params);
-    m_model->SetTemperature(Tinit);
-    m_model->SetBaryonChemicalPotential(muBinit);
-    return ret / (m_Multiplicities.size() + m_Ratios.size() - nparams);
-  #else
-    return -1.;
-  #endif
-  }
+  //double ThermalModelFit::chi2Ndf(double T, double muB) {
+  //#ifdef USE_MINUIT
+  //  double Tinit = T, muBinit = muB;
+  //  FitFCN mfunc(this);
+  //  int nparams = 6;
+  //  if (!m_Parameters.T.toFit) nparams--;
+  //  if (!m_Parameters.muB.toFit) nparams--;
+  //  if (!m_Parameters.gammaq.toFit) nparams--;
+  //  if (!m_Parameters.gammaS.toFit) nparams--;
+  //  if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
+  //  if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
+  //  std::vector<double> params(6, 0.);
+  //  params[0] = T;
+  //  params[1] = muB;
+  //  params[2] = m_model->Parameters().gammaS;
+  //  params[3] = m_model->Parameters().V;
+  //  params[4] = m_model->Parameters().SVc;
+  //  params[5] = m_model->Parameters().gammaq;
+  //  m_model->SetStrangenessChemicalPotential(muB / 5.);
+  //  m_model->SetElectricChemicalPotential(-muB / 50.);
+  //  double ret = mfunc(params);
+  //  m_model->SetTemperature(Tinit);
+  //  m_model->SetBaryonChemicalPotential(muBinit);
+  //  return ret / (m_Multiplicities.size() + m_Ratios.size() - nparams);
+  //#else
+  //  return -1.;
+  //#endif
+  //}
 
   int ThermalModelFit::GetNdf() const {
     int nparams = 10;

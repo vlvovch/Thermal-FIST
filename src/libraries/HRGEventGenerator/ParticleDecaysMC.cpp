@@ -5,16 +5,16 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#include "HRGEventGenerator/ParticleDecays.h"
+#include "HRGEventGenerator/ParticleDecaysMC.h"
 
 #include "HRGBase/xMath.h"
 #include "HRGEventGenerator/RandomGenerators.h"
 
 namespace thermalfist {
 
-  namespace ParticleDecays {
+  namespace ParticleDecaysMC {
 
-    // Square of probability density for m12 in 3-body decay
+    
     double ThreeBodym12F2(double m12, double M, double m1, double m2, double m3) {
       double m12k = m12 * m12;
       return (m12k - (m1 + m2)*(m1 + m2)) * (m12k - (m1 - m2)*(m1 - m2)) * (M*M - (m12 + m3)*(m12 + m3)) * (M*M - (m12 - m3)*(m12 - m3)) / m12k;

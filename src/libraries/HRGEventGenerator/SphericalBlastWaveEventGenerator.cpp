@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2019 Volodymyr Vovchenko
+ * Copyright (c) 2015-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -12,12 +12,19 @@
 #include "HRGBase/xMath.h"
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGEV/ExcludedVolumeModel.h"
-#include "HRGEventGenerator/ParticleDecays.h"
+#include "HRGEventGenerator/ParticleDecaysMC.h"
 
 namespace thermalfist {
 
   SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator() {
     m_THM = NULL;
+  }
+
+  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double beta) : m_T(T), m_Beta(beta)
+  {
+    SetConfiguration(TPS, config);
+
+    SetMomentumGenerators();
   }
 
 
@@ -31,28 +38,42 @@ namespace thermalfist {
     if (THM->Ensemble() == ThermalModelBase::CCE)
       ensemble = EventGeneratorConfiguration::CCE;
 
-    SetConfiguration(THM->Parameters(), ensemble, modeltype, THM->TPS(), THM, THMEVVDW);
+    EventGeneratorConfiguration config;
 
-    m_OnlyStable = onlyStable;
+    config.fEnsemble = ensemble;
+    config.fModelType = modeltype;
+    config.CFOParameters = THM->Parameters();
+    config.B = THM->Parameters().B;
+    config.Q = THM->Parameters().Q;
+    config.S = THM->Parameters().S;
+    config.C = THM->Parameters().C;
+
+    config.bij.resize(THMEVVDW->ComponentsNumber());
+    for (int i = 0; i < config.bij.size(); ++i) {
+      config.bij[i].resize(THMEVVDW->ComponentsNumber());
+      for (int j = 0; j < config.bij.size(); ++j) {
+        config.bij[i][j] = THMEVVDW->VirialCoefficient(i, j);
+      }
+    }
+
+    config.aij.resize(THMEVVDW->ComponentsNumber());
+    for (int i = 0; i < config.bij.size(); ++i) {
+      config.aij[i].resize(THMEVVDW->ComponentsNumber());
+      for (int j = 0; j < config.bij.size(); ++j) {
+        config.aij[i][j] = THMEVVDW->AttractionCoefficient(i, j);
+      }
+    }
+
+    SetConfiguration(THM->TPS(), config);
 
     SetMomentumGenerators();
-
-    if (m_THM != NULL)
-      m_acc.resize(m_THM->TPS()->Particles().size());
   }
 
-  void SphericalBlastWaveEventGenerator::SetParameters(double T, double beta) {
+  void SphericalBlastWaveEventGenerator::SetBlastWaveParameters(double T, double beta) {
     m_T = T;
     m_Beta = beta;
 
     SetMomentumGenerators();
-  }
-
-  void SphericalBlastWaveEventGenerator::SetThermalModel(ThermalModelBase *THM, bool regen) {
-    m_THM = THM;
-    if (regen) {
-      SetMomentumGenerators();
-    }
   }
 
   void SphericalBlastWaveEventGenerator::SetMomentumGenerators()
@@ -61,7 +82,7 @@ namespace thermalfist {
     m_BWGens.resize(0);
     if (m_THM != NULL) {
       for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        m_MomentumGens.push_back(new RandomGenerators::SiemensRasmussenGenerator(m_T, m_Beta, m_THM->TPS()->Particles()[i].Mass()));
+        m_MomentumGens.push_back(new RandomGenerators::SiemensRasmussenMomentumGenerator(m_T, m_Beta, m_THM->TPS()->Particles()[i].Mass()));
 
         double T = m_THM->Parameters().T;
         double Mu = m_THM->ChemicalPotential(i);

@@ -16,16 +16,41 @@
 
 namespace thermalfist {
 
+  /// \brief Class implementing the primordial 3-momentum distribution function
+  ///        of certain particle species.
+  ///
+  /// Assumes that the distribution is azimuthally symmetric
   class MomentumDistributionBase {
   public:
-    MomentumDistributionBase(int pdgid = 0, double mass = 0.) :m_PDGID(pdgid), m_Mass(mass), m_Normalized(false) { }
+    /**
+     * \param pdgid PDG code of particle
+     * \param mass  Mass of particle (in GeV)
+     */
+    MomentumDistributionBase(int pdgid = 0, double mass = 0.) : m_PDGID(pdgid), m_Mass(mass), m_Normalized(false) { }
+    
+    /// Destructor
     virtual ~MomentumDistributionBase() { }
+
+    /// Normalizes the momentum distribution to unity
     virtual void Normalize() = 0;
+
+    /// Distribution density over the absolute value of the 3-momentum
     virtual double dndp(double p) const = 0;
+
+    /// Distribution density over the longitudinal rapidity
     virtual double dndy(double y) const = 0;
+
+    /// Transverse mass distribution
     virtual double dnmtdmt(double mt) const = 0;
+
+    /// 2D distribution density in rapidity and transverse momentum
     virtual double d2ndptdy(double pt, double y) const = 0;
+
+    /// Whether the distribution has been normalized to unity
     bool isNormalized() const { return m_Normalized; }
+
+    /// Acceptance function in y-pT. If set, the y-pT distribution is
+    /// multiplied by the acceptance
     void SetAcceptance(Acceptance::AcceptanceFunction *acc_, double ycm_ = 0.) {
       m_acc = acc_;
       m_useacc = true;
@@ -33,21 +58,28 @@ namespace thermalfist {
     }
 
   protected:
-    int m_PDGID;
-    double m_Mass;
-    bool m_Normalized;
-    Acceptance::AcceptanceFunction *m_acc;
-    double m_ycm;
-    bool m_useacc;
+    int m_PDGID;       ///< PDG code of a particle
+    double m_Mass;     ///< Mass of a particle
+    bool m_Normalized; ///< \copydoc isNormalized()
+    Acceptance::AcceptanceFunction *m_acc; ///< Pointer to acceptance function
+    double m_ycm;      ///< Center-of-mass rapidity for the acceptance function
+    bool m_useacc;     ///< Whether the acceptance functions is used
   };
 
 
   /**
-  * Spherically symmetric Blast-Wave Model
-  * P. Siemens, J. Rasmussen, Phys. Rev. Lett. 42, 880 (1979)
-  */
+   * \brief Class implementing the momentum distribution 
+   *        in the spherically symmetric Blast-Wave model of Siemens and Rasmussen
+   * 
+   * Reference: P. Siemens, J. Rasmussen, Phys. Rev. Lett. 42, 880 (1979)
+   */
   class SiemensRasmussenDistribution : public MomentumDistributionBase {
   public:
+    /**
+     * \copydoc MomentumDistributionBase()
+     * \param T The kinetic temperature (in GeV)
+     * \param beta The radial flow velocity
+     */
     SiemensRasmussenDistribution(int pdgid = 0, double mass = 0., double T = 0.100, double beta = 0.5) :
       MomentumDistributionBase(pdgid, mass),
       m_T(T), m_Beta(beta)
@@ -56,8 +88,17 @@ namespace thermalfist {
       Normalize();
       m_useacc = false;
     }
+
     virtual ~SiemensRasmussenDistribution() { }
 
+    /**
+     * \brief Set the parameters of the Siemens-Rasmussen distribution
+     * 
+     * \param T     Kinetic temperature (in GeV)
+     * \param beta  Radial flow velocity
+     * \param mass  Particle mass (in GeV)
+     * \param pdgid Particle PDG code
+     */
     void SetParameters(double T, double beta, double mass, int pdgid = 0) {
       m_T = T;
       m_Beta = beta;
@@ -66,8 +107,22 @@ namespace thermalfist {
       m_Gamma = 1. / sqrt(1. - m_Beta * m_Beta);
       Normalize();
     }
+ 
+    // Override functions begin
 
+    void Normalize();
 
+    virtual double dndp(double p) const;
+
+    virtual double dndy(double y) const;
+
+    virtual double dnmtdmt(double mt) const;
+
+    virtual double d2ndptdy(double pt, double y) const;
+
+    // Override functions end
+
+  private:
     double w(double p) const {
       return sqrt(p*p + m_Mass * m_Mass);
     }
@@ -78,13 +133,6 @@ namespace thermalfist {
 
     double PAv() const;
 
-    void Normalize();
-
-    virtual double dndp(double p) const;
-    virtual double dndy(double y) const;
-    virtual double dnmtdmt(double mt) const;
-    virtual double d2ndptdy(double pt, double y) const;// { return 1.; }
-  private:
     double m_T;
     double m_Beta;
     double m_Gamma;
@@ -93,11 +141,21 @@ namespace thermalfist {
   };
 
   /**
-  * Longitudinally symmetric Blast-Wave Model
-  * E. Schnedermann, J. Sollfrank, U. Heinz, Phys. Rev. C 48, 2462 (1993)
-  */
+   * \brief Class implementing the momentum distribution 
+   *        in the longitudinally symmetric Blast-Wave model
+   * 
+   * Reference: E. Schnedermann, J. Sollfrank, U. Heinz, Phys. Rev. C 48, 2462 (1993)
+   */
   class SSHDistribution : public MomentumDistributionBase {
   public:
+    /**
+     * \copydoc MomentumDistributionBase()
+     * \param T      The kinetic temperature (in GeV)
+     * \param beta   The transverse flow velocity
+     * \param etamax The longitudinal space-time rapidity cut-off
+     * \param npow   The power in the transverse flow profile function
+     * \param norm   Whether the momentum distribution should be normalized to unity 
+     */
     SSHDistribution(int pdgid = 0, double mass = 0., double T = 0.100, double beta = 0.5, double etamax = 0.5, double npow = 1., bool norm = false) :
       MomentumDistributionBase(pdgid, mass),
       m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow)
@@ -107,8 +165,20 @@ namespace thermalfist {
       else Initialize();
       m_useacc = false;
     }
+
     virtual ~SSHDistribution() { }
 
+    /**
+     * \brief Set the parameters of the longitudinal blast-wave distribution
+     * 
+     * \param T      The kinetic temperature (in GeV)
+     * \param beta   The transverse flow velocity
+     * \param etamax The longitudinal space-time rapidity cut-off
+     * \param npow   The power in the transverse flow profile function
+     * \param mass   Particle mass (in GeV)
+     * \param pdgid  Particle PDG code
+     * \param norm   Whether the momentum distribution should be normalized to unity 
+     */
     void SetParameters(double T, double beta, double etamax, double npow, double mass, int pdgid = 0, bool norm = true) {
       m_T = T;
       m_Beta = beta;
@@ -121,6 +191,39 @@ namespace thermalfist {
       if (norm) Normalize();
       else Initialize();
     }
+
+    void Normalize();
+    
+    /// Rapidity distribution at fixed pT
+    virtual double dndy(double y, double pt) const;
+    
+    /// Rapidity distribution of a single fireball at fixed pT
+    virtual double dndysingle(double y, double pt) const;
+
+    /// The pT distribution function
+    virtual double dndpt(double pt) const;
+
+    // Override functions begin
+
+    virtual double dndp(double p) const { return 0.; }
+
+    virtual double dndy(double y) const;
+
+    virtual double dnmtdmt(double mt) const;
+    
+    virtual double d2ndptdy(double pt, double y) const;
+
+    // Override functions end
+
+  private:
+    void Initialize();
+
+    virtual double dndysingle(double y) const;
+    
+    virtual double dndptsingle(double pt, double y) const;
+    
+    
+    virtual double dndpt(double pt, double y) const;
 
     double w(double p) const {
       return sqrt(p*p + m_Mass * m_Mass);
@@ -143,30 +246,12 @@ namespace thermalfist {
         return pow(m_Beta * r, m_n);
     }
 
-    double rho(double r) const {
-      return atanh(betar(r));
-    }
-
-    void Initialize();
-    void Normalize();
-
-    virtual double dndp(double p) const {
-      return 0.;
-    }
-
-    virtual double dndy(double y) const;
-    virtual double dndysingle(double y) const;
-    virtual double dnmtdmt(double mt) const;
-    virtual double dndy(double y, double pt) const;
-    virtual double dndysingle(double y, double pt) const;
-    virtual double dndpt(double pt) const;
-    virtual double dndpt(double pt, double y) const;
-    virtual double dndptsingle(double pt, double y) const;
-    virtual double d2ndptdy(double pt, double y) const;
+    double rho(double r) const { return atanh(betar(r)); }
 
     double MtAv() const;
+
     double y2Av() const;
-  private:
+
     double m_T;
     double m_Beta, m_EtaMax;
     double m_NormY, m_NormPt, m_Norm;

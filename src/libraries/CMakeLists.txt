@@ -5,6 +5,7 @@ set(SRCS_HRGBase
 HRGBase/Broyden.cpp
 HRGBase/IdealGasFunctions.cpp
 HRGBase/NumericalIntegration.cpp
+HRGBase/ParticleDecay.cpp
 HRGBase/ThermalModelIdeal.cpp
 HRGBase/ThermalModelBase.cpp
 HRGBase/ThermalModelCanonical.cpp
@@ -22,6 +23,7 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/Broyden.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/IdealGasFunctions.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/BilinearSplineFunction.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/NumericalIntegration.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/ParticleDecay.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/SplineFunction.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelIdeal.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelBase.h
@@ -83,12 +85,15 @@ file (GLOB HRGFIT_HEADERS_MINUIT_MATH
 	  
 set(SRCS_HRGFit
 HRGFit/ThermalModelFit.cpp
+HRGFit/ThermalModelFitParameters.cpp
 )
 
 source_group("HRGFit\\Source Files" FILES ${SRCS_HRGFit})
 
 set(HEADERS_HRGFit
 ${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFit.h
+${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFitParameters.h
+${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFitQuantities.h
 )
 
 if (STANDALONE_MINUIT)
@@ -107,7 +112,7 @@ set(SRCS_HRGEventGenerator
 HRGEventGenerator/Acceptance.cpp
 HRGEventGenerator/EventGeneratorBase.cpp
 HRGEventGenerator/MomentumDistribution.cpp
-HRGEventGenerator/ParticleDecays.cpp
+HRGEventGenerator/ParticleDecaysMC.cpp
 HRGEventGenerator/RandomGenerators.cpp
 HRGEventGenerator/SimpleEvent.cpp
 HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
@@ -120,7 +125,7 @@ set(HEADERS_HRGEventGenerator
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/Acceptance.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/EventGeneratorBase.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/MomentumDistribution.h
-${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/ParticleDecays.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/ParticleDecaysMC.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/RandomGenerators.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SphericalBlastWaveEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CylindricalBlastWaveEventGenerator.h

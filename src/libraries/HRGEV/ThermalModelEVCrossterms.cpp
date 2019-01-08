@@ -535,38 +535,48 @@ namespace thermalfist {
     m_FluctuationsCalculated = true;
 
     for (int i = 0; i < m_wprim.size(); ++i) {
-      //m_wprim[i] = CalculateParticleScaledVariance(i);
-      m_skewprim[i] = 1.;//CalculateParticleSkewness(i);
-      m_kurtprim[i] = 1.;//CalculateParticleKurtosis(i);
+      m_skewprim[i] = 1.;
+      m_kurtprim[i] = 1.;
+      m_skewtot[i] = 1.;
+      m_kurttot[i] = 1.;
     }
-    for (int i = 0; i < m_wtot.size(); ++i) {
-      double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
-      tmp2 = m_densities[i] * m_wprim[i];
-      tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
-      tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
-      for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-        tmp2 += m_densities[m_TPS->Particles()[i].DecayContributions()[r].second] *
-          (m_wprim[m_TPS->Particles()[i].DecayContributions()[r].second] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r].first
-            + m_TPS->Particles()[i].DecayContributionsSigmas()[r].first);
 
-        int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-        double ni = m_TPS->Particles()[i].DecayContributions()[r].first;
-        tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]);
-        tmp3 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[2];
+    //for (int i = 0; i < m_wprim.size(); ++i) {
+    //  //m_wprim[i] = CalculateParticleScaledVariance(i);
+    //  m_skewprim[i] = 1.;//CalculateParticleSkewness(i);
+    //  m_kurtprim[i] = 1.;//CalculateParticleKurtosis(i);
+    //}
+    //for (int i = 0; i < m_wtot.size(); ++i) {
+    //  double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
+    //  tmp2 = m_densities[i] * m_wprim[i];
+    //  tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
+    //  tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
+    //  const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
+    //  for (int r = 0; r < decayContributions.size(); ++r) {
+    //    const ThermalParticleSystem::SingleDecayContribution& decayContrib = decayContrib;
+    //    const ThermalParticleSystem::SingleDecayCumulantsContribution& decayCumulantsSingle = m_TPS->DecayCumulants()[i][r];
+    //    tmp2 += m_densities[decayContrib.second] *
+    //      (m_wprim[decayContrib.second] * decayContrib.first * decayContrib.first
+    //        + decayCumulantsSingle.first[1]);
 
-        tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
-          + 6. * m_skewprim[rr] * ni * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-          + 3. * m_TPS->Particles()[i].DecayCumulants()[r].first[1] * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-          + 4. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[2]);
+    //    int rr = decayContrib.second;
+    //    double ni = decayContrib.first;
+    //    tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * decayCumulantsSingle.first[1]);
+    //    tmp3 += m_densities[rr] * decayCumulantsSingle.first[2];
 
-        tmp4 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[3];
-      }
+    //    tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
+    //      + 6. * m_skewprim[rr] * ni * ni * decayCumulantsSingle.first[1]
+    //      + 3. * decayCumulantsSingle.first[1] * decayCumulantsSingle.first[1]
+    //      + 4. * ni * decayCumulantsSingle.first[2]);
 
-      tmp1 = m_densitiestotal[i];
+    //    tmp4 += m_densities[rr] * decayCumulantsSingle.first[3];
+    //  }
 
-      m_skewtot[i] = tmp3 / tmp2;
-      m_kurttot[i] = tmp4 / tmp2;
-    }
+    //  tmp1 = m_densitiestotal[i];
+
+    //  m_skewtot[i] = tmp3 / tmp2;
+    //  m_kurttot[i] = tmp4 / tmp2;
+    //}
   }
 
   std::vector<double> ThermalModelEVCrossterms::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)

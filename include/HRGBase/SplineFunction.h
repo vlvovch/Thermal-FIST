@@ -14,7 +14,7 @@
 
 namespace thermalfist {
 
-  /// A class implementing a simple linear spline.
+  /// Class implementing a simple linear spline.
   class SplineFunction
   {
   public:
@@ -108,7 +108,7 @@ namespace thermalfist {
       m_vals.push_back(std::make_pair(1., val));
     }
 
-    /// TODO: Read (x,y) pairs from file.
+    // TODO: Read (x,y) pairs from file.
     //void loadFromFile(const char *file);
 
   private:

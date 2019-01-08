@@ -1,6 +1,6 @@
 /*
  * Thermal-FIST package
- * 
+ *
  * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
@@ -17,7 +17,6 @@
  * and perform calculations
  * of various thermodynamic function
  * in the grand canonical ensemble.
- * Also contains information about decays.
  * 
  */
 
@@ -26,173 +25,71 @@
 #include <vector>
 #include <cmath>
 
-#include "HRGBase/xMath.h"
+#include "HRGBase/ParticleDecay.h"
+#include "HRGBase/ThermalModelParameters.h"
 #include "HRGBase/IdealGasFunctions.h"
+#include "HRGBase/xMath.h"
 
 namespace thermalfist {
 
-  /**
-   *   A structure containing all thermal parameters of the model.
-   *   Used in ThermalParticle class when calculating the ideal gas functions.
-   */
-  struct ThermalModelParameters {
-    double    T;        /**< Temperature [GeV] */
-    double    muB;      /**< Baryon chemical potential [GeV] */
-    double    muS;      /**< Strangeness chemical potential [GeV] */
-    double    muQ;      /**< Electric charge chemical potential [GeV] */
-    double    muC;      /**< Charm chemical potential [GeV] */
-    double    gammaq;   /**< Chemical non-equilibirum fugacity of light quarks */
-    double    gammaS;   /**< Chemical non-equilibirum fugacity of strange quarks */
-    double    gammaC;   /**< Chemical non-equilibirum fugacity of charm quarks */
-    double    V;        /**< Total system volume [fm^3] */
-    double    SVc;      /**< Canonical correlation volume [fm^3] */
-    int       B;        /**< Total baryon charge (CE) */
-    int       Q;        /**< Total electric charge (CE) */
-    int       S;        /**< Total strangeness charge (CE) */
-    int       C;        /**< Total charm charge (CE) */
-
-    ThermalModelParameters(double pT = 0.155, double pmuB = 0.000, double pmuS = 0., double pmuQ = 0., double pgammaS = 1., double pV = 4000., double pSVc = 30., int pB = 2, int pQ = 2, int pS = 0, int pC = 0) :
-      T(pT), muB(pmuB), muS(pmuS), muQ(pmuQ), muC(0.), gammaq(1.), gammaS(pgammaS), gammaC(1.), V(pV), SVc(pSVc), B(pB), Q(pQ), S(pS), C(pC) {
-    }
-
-    ThermalModelParameters(double pT, double pgammaS, double pV, int pB, int pQ, int pS, int pC = 0) :
-      T(pT), gammaq(1.), gammaS(pgammaS), gammaC(1.), V(pV), SVc(pV), B(pB), Q(pQ), S(pS), C(pC) {
-    }
-  };
-
-  /**
-   * \brief An auxiliary struct containing the list of feeddown flags.
-   * 
-   */
-  struct Feeddown {
-    /**
-     * List of feeddown flags.
-     * 
-     */
-    enum Type { 
-      Primordial = 0,      ///< No feeddown.
-      StabilityFlag = 1,   ///< Feeddown from all particles markes as unstable.
-      Weak = 2,            ///< Feeddown from strong, electromagnetic, and weak decays.
-      Electromagnetic = 3, ///< Feeddown from strong and electromagnetic decays.
-      Strong = 4           ///< Feeddown from strong decays.
-      };
-    static const int NumberOfTypes = 5;
-  };
+  
 
   /**
    * \brief An auxiliary struct containing the list of conserved charges.
-   * 
+   *
    */
   struct ConservedCharge {
     /**
      * Set of conserved charges included.
-     * 
+     *
      */
-    enum Name { 
-      BaryonCharge = 0,      ///< Baryon number.
-      ElectricCharge = 1,    ///< Electric charge.
-      StrangenessCharge = 2, ///< Strangeness.
-      CharmCharge = 3        ///< Charm.
-      };
+    enum Name {
+      BaryonCharge = 0,      ///< Baryon number
+      ElectricCharge = 1,    ///< Electric charge
+      StrangenessCharge = 2, ///< Strangeness
+      CharmCharge = 3        ///< Charm
+    };
     static const int NumberOfTypes = 5;
-  };
-
-  /**
-   * A structure containing information about a single decay channel of a particle.
-   */
-  struct ParticleDecay
-  {
-    /**
-     * \brief Type of particle's decay.
-     * 
-     * Stable -- does not decay.
-     * Default -- not used.
-     * Weak -- weakly decaying.
-     * Electromagnetic -- electromagnetically decaying.
-     * Strong -- strongly decaying.
-     */
-    enum DecayType { 
-      Stable = 0,           ///< Does not decay.
-      Default = 1,          ///< Not used.
-      Weak = 2,             ///< Weakly decaying.
-      Electromagnetic = 3,  ///< Electromagnetically decaying.
-      Strong = 4            ///< Strongly decaying.
-      };
-    static const int NumberOfDecayTypes = 5;
-    
-    double mBratio;                /**< Branching ratio */
-    std::vector<int> mDaughters;   /**< PDGID numbers of daughter particles */
-    double mM0;                    /**< Sum of masses of decay products */
-
-    double mPole;
-    double mL;                      /**< Orbital angular momentum for decay, used in the eBW scheme */
-    std::vector<double> mBratioVsM; /**< Mass-dependent branching ratios */
-    double mBratioAverage;          /**< Average branching ratios after integrating with the Boltzmann factor*/
-
-    /// Name of the decay channel. Not used.
-    std::string mChannelName;
-
-    /**
-     * \brief Construct a new ParticleDecay object.
-     * 
-     * \param bratio Branching ratio of the decay. Between 0 and 1.
-     * \param daughters A vector of PDG ID numbers of all daughter products.
-     */
-    ParticleDecay(double bratio = 0., const std::vector<int> &daughters = std::vector<int>(0)) :
-      mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),
-      mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio), mChannelName("decay1") {
-    }
-
-    /**
-     * \brief Energy depedent modified branching ratio.
-     * 
-     * Energy dependent modification of the branching ratio.
-     * Used in the eBW scheme.
-     * 
-     * \param m Energy [GeV].
-     * \return Modification of the branching ratio.
-     */
-    double ModifiedWidth(double m) const;
-
-    bool operator==(const ParticleDecay &rhs) const; // TODO: improve
-    bool operator!=(const ParticleDecay &rhs) const { return !(*this == rhs); }
   };
 
   
 
   /**
-  * A class containing all information about a particle specie.
-  * Also contains implementation of calculation of various thermodynamic quantities 
-  * in an ideal gas in the grand canonical ensemble.
-  */
+   * A class containing all information about a particle specie.
+   * Also contains implementation of calculation of various thermodynamic quantities
+   * in an ideal gas in the grand canonical ensemble.
+   */
   class ThermalParticle
   {
   public:
+    /// Vector of all decay channels of a particle.
+    typedef std::vector<ParticleDecayChannel> ParticleDecaysVector;
+
     /**
      * \brief Relativistic vs non-relativistic Breit-Wigner shape.
-     * 
+     *
      */
-    enum ResonanceWidthShape { 
-      RelativisticBreitWigner, 
-      NonRelativisticBreitWigner 
+    enum ResonanceWidthShape {
+      RelativisticBreitWigner,
+      NonRelativisticBreitWigner
     };
 
     /**
      * \brief Treatment of finite resonance widths.
-     * 
+     *
      */
-    enum ResonanceWidthIntegration { 
+    enum ResonanceWidthIntegration {
       ZeroWidth,             ///< Zero-width approximation
       BWTwoGamma,            ///< Energy-independent Breit-Wigner in +-2\Gamma interval
       FullInterval,          ///< Energy-independent Breit-Wigner in full energy interval
       FullIntervalWeighted,  ///< Energy-independent Breit-Wigner in full energy interval with weighted branching ratios
       eBW,                   ///< Energy-dependent Breit-Wigner scheme (eBW)
       eBWconstBR             ///< Energy-dependent Breit-Wigner scheme (eBW) with constant branching ratios when evaluating feeddown
-      };
+    };
 
     /**
      * \brief Construct a new ThermalParticle object
-     * 
+     *
      * \param Stable    Particle's stability flag
      * \param Name      Particle's name
      * \param PDGID     Particle's PDG ID
@@ -503,8 +400,8 @@ namespace thermalfist {
 
     /**
      * \brief Arbitrary (auxiliary) charge assigned to particle
-     * 
-     * \return Arbitrary (auxiliary) charge 
+     *
+     * \return Arbitrary (auxiliary) charge
      */
     double ArbitraryCharge() const { return m_ArbitraryCharge; }
 
@@ -637,10 +534,10 @@ namespace thermalfist {
      * 
      * \return Decay type of the particle.
      */
-    ParticleDecay::DecayType DecayType() const { return m_DecayType; }
+    ParticleDecayType::DecayType DecayType() const { return m_DecayType; }
 
     /// Set particle's Decay Type
-    void SetDecayType(ParticleDecay::DecayType type) { m_DecayType = type; }
+    void SetDecayType(ParticleDecayType::DecayType type) { m_DecayType = type; }
 
     /**
      * \brief A vector of particle's decays
@@ -650,10 +547,10 @@ namespace thermalfist {
      * 
      * \return const std::vector<ParticleDecay>& 
      */
-    const std::vector<ParticleDecay>& Decays() const { return m_Decays; }
+    const ParticleDecaysVector& Decays() const { return m_Decays; }
 
     /// Returns a non-const reference to Decays()
-    std::vector<ParticleDecay>& Decays() { return m_Decays; }
+    ParticleDecaysVector& Decays() { return m_Decays; }
 
     /**
      * \brief Set the Decays vector
@@ -662,16 +559,16 @@ namespace thermalfist {
      * 
      * \param Decays ParticleDecay vector containing all particle decays 
      */
-    void SetDecays(const std::vector<ParticleDecay> &Decays) { m_Decays = Decays; }
+    void SetDecays(const ParticleDecaysVector &Decays) { m_Decays = Decays; }
 
     /// Remove all decays
     void ClearDecays() { m_Decays.resize(0); }
 
     //@{
     /// A backup copy of particle's decays
-    const std::vector<ParticleDecay>& DecaysOriginal() const { return m_DecaysOrig; }
-    std::vector<ParticleDecay>& DecaysOriginal() { return m_DecaysOrig; }
-    void SetDecaysOriginal(const std::vector<ParticleDecay> &DecaysOrig) { m_DecaysOrig = DecaysOrig; }
+    const ParticleDecaysVector& DecaysOriginal() const { return m_DecaysOrig; }
+    ParticleDecaysVector& DecaysOriginal() { return m_DecaysOrig; }
+    void SetDecaysOriginal(const ParticleDecaysVector &DecaysOrig) { m_DecaysOrig = DecaysOrig; }
     //@}
 
     /// Read decays from a file and assign them to the particle
@@ -693,8 +590,8 @@ namespace thermalfist {
        * This vector is populated in the ThermalParticleSystem object.
        * Only decays of particles marked unstable are considered.
        */
-    const std::vector< std::pair<double, int> >&    DecayContributions() const { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
-    std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
+    //const std::vector< std::pair<double, int> >&    DecayContributions() const { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
+    //std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
     //@}
 
     //@{
@@ -703,21 +600,21 @@ namespace thermalfist {
        * each corresponding to a specific Feeddown::Type.
        * 
        */
-    const std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown()    const { return m_DecayContributionsByFeeddown; }
-    std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown() { return m_DecayContributionsByFeeddown; }
+    //const std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown()    const { return m_DecayContributionsByFeeddown; }
+    //std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown() { return m_DecayContributionsByFeeddown; }
     //@}
 
-    const std::vector< std::pair<double, int> >& DecayContributionsSigmas() const { return m_DecayContributionsSigmas; }
-    std::vector< std::pair<double, int> >& DecayContributionsSigmas() { return m_DecayContributionsSigmas; }
+    //const std::vector< std::pair<double, int> >& DecayContributionsSigmas() const { return m_DecayContributionsSigmas; }
+    //std::vector< std::pair<double, int> >& DecayContributionsSigmas() { return m_DecayContributionsSigmas; }
 
-    const std::vector< std::pair< std::vector<double>, int> >& DecayCumulants()      const { return m_DecayCumulants; }
-    std::vector< std::pair< std::vector<double>, int> >& DecayCumulants() { return m_DecayCumulants; }
+    //const std::vector< std::pair< std::vector<double>, int> >& DecayCumulants()      const { return m_DecayCumulants; }
+    //std::vector< std::pair< std::vector<double>, int> >& DecayCumulants() { return m_DecayCumulants; }
 
-    const std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() const { return m_DecayProbabilities; }
-    std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() { return m_DecayProbabilities; }
+    //const std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() const { return m_DecayProbabilities; }
+    //std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() { return m_DecayProbabilities; }
 
-    const std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() const { return m_DecayDistributions; }
-    std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() { return m_DecayDistributions; }
+    //const std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() const { return m_DecayDistributions; }
+    //std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() { return m_DecayDistributions; }
 
     /**
      * \brief Computes average decay branching ratios
@@ -801,90 +698,89 @@ namespace thermalfist {
 
 
     bool m_Stable;                /**< Flag whether particle is marked stable. */
-    ParticleDecay::DecayType m_DecayType;        /**< Type wrt to decay: Stable, Default (placeholder), Weak, Electromagnetic, Strong */
+    ParticleDecayType::DecayType m_DecayType;        /**< Type wrt to decay: Stable, Default (placeholder), Weak, Electromagnetic, Strong */
 
     bool m_AntiParticle;          /**< Whether particle was created as an antiparticle to another one. */
-    std::string m_Name;          /**< Particle name. */
+    std::string m_Name;           /**< Particle name. */
     int m_PDGID;                  /**< PDG (HEP) ID of a particle. */
     double m_Degeneracy;          /**< (Spin) Degeneracy factor. */
-    int m_Statistics;            /**< Statistics used (Bolzmann or Quantum). */
-    int m_StatisticsOrig;        /**< Particle's original Fermi/Bose statistics. */
+    int m_Statistics;             /**< Statistics used (Bolzmann or Quantum). */
+    int m_StatisticsOrig;         /**< Particle's original Fermi/Bose statistics. */
     double m_Mass;                /**< Mass (GeV) */
 
     /**
-    *   0 - Cluster expansion (default), 1 - Numerical integration
-    */
+     *   0 - Cluster expansion (default), 1 - Numerical integration
+     */
     IdealGasFunctions::QStatsCalculationType m_QuantumStatisticsCalculationType;
+
     /**
-    *   Number of terms in cluster expansion.
-    *   Default is 10 for m < 200 MeV (pions), 5 for m < 1000 MeV, and 3 otherwise
-    *
-    */
+     *   Number of terms in cluster expansion.
+     *   Default is 10 for m < 200 MeV (pions), 5 for m < 1000 MeV, and 3 otherwise
+     *
+     */
     int m_ClusterExpansionOrder;
 
-    int m_Baryon;                /**< Baryon charge */
-    int m_ElectricCharge;        /**< Electric charge */
+    int m_Baryon;                 /**< Baryon charge */
+    int m_ElectricCharge;         /**< Electric charge */
     int m_Strangeness;            /**< Strangeness charge */
     int m_Charm;                  /**< Charm charge */
     int m_Quark;                  /**< Absolute quarks content */
 
-    double m_ArbitraryCharge;    /**< Arbitrary charge associated with particle (external) */
+    double m_ArbitraryCharge;     /**< Arbitrary charge associated with particle (external) */
     double m_AbsQuark;            /**< Absolute light quark content */
     double m_AbsS;                /**< Absolute strangeness content */
     double m_AbsC;                /**< Absolute charm content */
 
-    double m_Width;              /**< Resonance width (GeV) */
-    double m_Threshold;          /**< Lower decay threshold (GeV) */
-    double m_ThresholdDynamical; /**< Lower decay threshold (GeV) calculated from daughter masses */
+    double m_Width;               /**< Resonance width (GeV) */
+    double m_Threshold;           /**< Lower decay threshold (GeV) */
+    double m_ThresholdDynamical;  /**< Lower decay threshold (GeV) calculated from daughter masses */
     ResonanceWidthShape m_ResonanceWidthShape;                  /**< Either relativistic or non-relativitic Breit-Wigner */
     ResonanceWidthIntegration m_ResonanceWidthIntegrationType;  /**< Plus-minus TwoGamma or from m0 to infty */
     double m_Radius;              /**< Hard-core radius (fm) */
     double m_Vo;                  /**< Eigenvolume parameter (fm^3). Obsolete. To be removed. */
     double m_Weight;              /**< Weight of a given particle. Default is 1 */
 
-    //int m_DecayType;                          /**< 0 - stable, 1 - strong, 2 - weak  */
-    std::vector<ParticleDecay> m_Decays;      /**< All decay channels currently in use.  */
-
-                                            /**
-                                            *   All original decay channels. Needed to switch between renormalizing decay branching ratios and not.
-                                            */
-    std::vector<ParticleDecay> m_DecaysOrig;
+    ParticleDecaysVector m_Decays;      /**< All decay channels currently in use.  */
 
     /**
-    *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-    *   Contains indexes (0-based) and average yields resulting from corresponding decay chains.
-    */
+     *   All original decay channels. Needed to switch between renormalizing decay branching ratios and not.
+     */
+    ParticleDecaysVector m_DecaysOrig;
+
+    /**
+     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
+     *   Contains indexes (0-based) and average yields resulting from corresponding decay chains.
+     */
     //std::vector< std::pair<double, int> > m_DecayContributions;
 
     /**
-    *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-    *   Contains indexes (0-based) and variance of yields resulting from corresponding decay chains.
-    */
-    std::vector< std::pair<double, int> > m_DecayContributionsSigmas;
+     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
+     *   Contains indexes (0-based) and variance of yields resulting from corresponding decay chains.
+     */
+    //std::vector< std::pair<double, int> > m_DecayContributionsSigmas;
 
     /**
-    *   Contains information about decay chains of heavier particles including strong, strong/electromagnetic, or strong/electromagnetic/weak decay feeddown resulting in production of a present particle.
-    *   For each feeddown type contains indexes (0-based) and average yields resulting from corresponding decay chains.
-    */
-    std::vector< std::vector< std::pair<double, int> > > m_DecayContributionsByFeeddown;
-    //std::vector< std::pair<double, int> > m_WeakDecayContributions;
+     *   Contains information about decay chains of heavier particles including strong, strong/electromagnetic, or strong/electromagnetic/weak decay feeddown resulting in production of a present particle.
+     *   For each feeddown type contains indexes (0-based) and average yields resulting from corresponding decay chains.
+     */
+    //std::vector< std::vector< std::pair<double, int> > > m_DecayContributionsByFeeddown;
 
     /**
-    *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-    *   Contains indexes (0-based) and first 4 moments (cumulants) of yields resulting from corresponding decay chains.
-    */
-    std::vector< std::pair< std::vector<double>, int> > m_DecayCumulants;
-    std::vector< std::pair< std::vector<double>, int> > m_DecayProbabilities;
+     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
+     *   Contains indexes (0-based) and first 4 moments (cumulants) of yields resulting from corresponding decay chains.
+     */
+    //std::vector< std::pair< std::vector<double>, int> > m_DecayCumulants;
+    //std::vector< std::pair< std::vector<double>, int> > m_DecayProbabilities;
 
     /**
-    *   Contains all possible configurations which result from decays of a particle
-    */
+     *   Contains all possible configurations which result from decays of a particle
+     */
     std::vector< std::pair<double, std::vector<int> > > m_DecayDistributions;
 
     /**
-    *   For calculating final state charged particle multiplicities
-    *   Arrays contain Nch, N+, N-
-    */
+     *   For calculating final state charged particle multiplicities
+     *   Arrays contain Nch, N+, N-
+     */
     std::vector<double> m_Nch;
     std::vector<double> m_DeltaNch;
   };

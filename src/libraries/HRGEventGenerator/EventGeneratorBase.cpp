@@ -19,7 +19,7 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGEventGenerator/ParticleDecays.h"
+#include "HRGEventGenerator/ParticleDecaysMC.h"
 
 namespace thermalfist {
 
@@ -47,81 +47,90 @@ namespace thermalfist {
     m_BWGens.resize(0);
   }
 
-  void EventGeneratorBase::SetConfiguration(const ThermalModelParameters& params, EventGeneratorConfiguration::Ensemble ensemble, EventGeneratorConfiguration::ModelType modeltype, ThermalParticleSystem *TPS, ThermalModelBase *original, ThermalModelBase *THMEVVDW)
+  //void EventGeneratorBase::SetConfiguration(const ThermalModelParameters& params, EventGeneratorConfiguration::Ensemble ensemble, EventGeneratorConfiguration::ModelType modeltype, ThermalParticleSystem *TPS, ThermalModelBase *THMEVVDW)
+  void EventGeneratorBase::SetConfiguration(ThermalParticleSystem *TPS,
+      const EventGeneratorConfiguration& config)
   {
-    ThermalModelParameters params2 = params;
+    m_Config = config;
+    
+    //ThermalModelParameters params2 = params;
 
-    m_Config.fEnsemble = ensemble;
-    m_Config.fModelType = modeltype;
-    m_Config.muB = params2.muB;
-    m_Config.muS = params2.muS;
-    m_Config.muQ = params2.muQ;
-    m_Config.muC = params2.muC;
-    m_Config.gammaS = params2.gammaS;
-    m_Config.gammaq = params2.gammaq;
-    m_Config.gammaC = params2.gammaC;
-    m_Config.R = 3. * pow(params2.V, 1. / 3.) / 4. / xMath::Pi();
-    m_Config.B = params2.B;
-    m_Config.S = params2.S;
-    m_Config.Q = params2.Q;
-    m_Config.C = params2.C;
+    //m_Config.fEnsemble = ensemble;
+    //m_Config.fModelType = modeltype;
+    //m_Config.CFOParameters.muB = params2.muB;
+    //m_Config.CFOParameters.muS = params2.muS;
+    //m_Config.CFOParameters.muQ = params2.muQ;
+    //m_Config.CFOParameters.muC = params2.muC;
+    //m_Config.CFOParameters.gammaS = params2.gammaS;
+    //m_Config.CFOParameters.gammaq = params2.gammaq;
+    //m_Config.CFOParameters.gammaC = params2.gammaC;
+    //m_Config.CFOParameters.V = params2.V;// 3. * pow(params2.V, 1. / 3.) / 4. / xMath::Pi();
+    //m_Config.B = params2.B;
+    //m_Config.S = params2.S;
+    //m_Config.Q = params2.Q;
+    //m_Config.C = params2.C;
 
 
 
-    if (ensemble == EventGeneratorConfiguration::CCE) {
-      m_Config.muC = 0.;
-      params2.muC = 0.;
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
+      m_Config.CFOParameters.muC = 0.;
+      //params2.muC = 0.;
     }
-    else if (ensemble == EventGeneratorConfiguration::SCE) {
-      m_Config.muS = 0.;
-      m_Config.muC = 0.;
-      params2.muS = 0.;
-      params2.muC = 0.;
+    else if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE) {
+      m_Config.CFOParameters.muS = 0.;
+      m_Config.CFOParameters.muC = 0.;
+      //params2.muS = 0.;
+      //params2.muC = 0.;
     }
-    else if (ensemble == EventGeneratorConfiguration::CE) {
-      m_Config.muB = 0.;
-      m_Config.muS = 0.;
-      m_Config.muQ = 0.;
-      m_Config.muC = 0.;
-      params2.muB = 0.;
-      params2.muS = 0.;
-      params2.muQ = 0.;
-      params2.muC = 0.;
-    }
-
-    if (modeltype == EventGeneratorConfiguration::PointParticle) {
-      m_THM = new ThermalModelIdeal(TPS, params2);
-    }
-    else if (modeltype == EventGeneratorConfiguration::DiagonalEV) {
-      m_THM = new ThermalModelEVDiagonal(TPS, params2);
-    }
-    else if (modeltype == EventGeneratorConfiguration::CrosstermsEV) {
-      m_THM = new ThermalModelEVCrossterms(TPS, params2);
-    }
-    else if (modeltype == EventGeneratorConfiguration::QvdW) {
-      m_THM = new ThermalModelVDWFull(TPS, params2);
+    else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
+      m_Config.CFOParameters.muB = 0.;
+      m_Config.CFOParameters.muS = 0.;
+      m_Config.CFOParameters.muQ = 0.;
+      m_Config.CFOParameters.muC = 0.;
+      //params2.muB = 0.;
+      //params2.muS = 0.;
+      //params2.muQ = 0.;
+      //params2.muC = 0.;
     }
 
-    m_THM->SetUseWidth(original->TPS()->ResonanceWidthIntegrationType());
-    m_THM->SetStatistics(original->QuantumStatistics());
-    m_THM->SetNormBratio(original->NormBratio());
+    if (m_Config.fModelType == EventGeneratorConfiguration::PointParticle) {
+      m_THM = new ThermalModelIdeal(TPS, m_Config.CFOParameters);
+    }
+    else if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV) {
+      m_THM = new ThermalModelEVDiagonal(TPS, m_Config.CFOParameters);
+    }
+    else if (m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV) {
+      m_THM = new ThermalModelEVCrossterms(TPS, m_Config.CFOParameters);
+    }
+    else if (m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
+      m_THM = new ThermalModelVDWFull(TPS, m_Config.CFOParameters);
+    }
 
-    m_THM->ConstrainMuB(original->ConstrainMuB());
-    m_THM->ConstrainMuQ(original->ConstrainMuQ());
-    m_THM->ConstrainMuS(original->ConstrainMuS());
-    m_THM->ConstrainMuC(original->ConstrainMuC());
+    m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
+    m_THM->SetStatistics(false);
+    //m_THM->SetNormBratio(THMEVVDW->NormBratio());
+
+    m_THM->ConstrainMuB(false);
+    m_THM->ConstrainMuQ(false);
+    m_THM->ConstrainMuS(false);
+    m_THM->ConstrainMuC(false);
     m_THM->FillChemicalPotentials();
 
-    if (modeltype != EventGeneratorConfiguration::PointParticle) {
+    if (m_Config.fModelType != EventGeneratorConfiguration::PointParticle) {
       for (int i = 0; i < m_THM->Densities().size(); ++i) {
         for (int j = 0; j < m_THM->Densities().size(); ++j) {
-          m_THM->SetVirial(i, j, THMEVVDW->VirialCoefficient(i, j));
-          m_THM->SetAttraction(i, j, THMEVVDW->AttractionCoefficient(i, j));
+          if (m_Config.bij.size() == m_THM->Densities().size()
+            && m_Config.bij[i].size() == m_THM->Densities().size())
+            m_THM->SetVirial(i, j, m_Config.bij[i][j]);
+
+          if (m_Config.aij.size() == m_THM->Densities().size()
+            && m_Config.aij[i].size() == m_THM->Densities().size())
+            m_THM->SetAttraction(i, j, m_Config.aij[i][j]);
         }
       }
     }
 
-    if (ensemble == EventGeneratorConfiguration::CE) {
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
       // The following procedure currently not used, but can be considered if SolveChemicalPotentials routine fails
       if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0)) {
         if (m_Config.S == 0 && !(m_Config.Q == 0 || m_Config.B == 0)) {
@@ -167,12 +176,9 @@ namespace thermalfist {
           m_THM->SetQoverB(QBrat);
           m_THM->FixParameters();
 
-          m_Config.muB = m_THM->Parameters().muB;
-          m_Config.muS = m_THM->Parameters().muS;
-          m_Config.muQ = m_THM->Parameters().muQ;
-          params2.muB = m_THM->Parameters().muB;
-          params2.muS = m_THM->Parameters().muS;
-          params2.muQ = m_THM->Parameters().muQ;
+          m_Config.CFOParameters.muB = m_THM->Parameters().muB;
+          m_Config.CFOParameters.muS = m_THM->Parameters().muS;
+          m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
 
           m_THM->FillChemicalPotentials();
         }
@@ -191,16 +197,16 @@ namespace thermalfist {
         m_THM->SetCharmChemicalPotential(0.);
         m_THM->FillChemicalPotentials();
       }
-      m_Config.muB = m_THM->Parameters().muB;
-      m_Config.muS = m_THM->Parameters().muS;
-      m_Config.muQ = m_THM->Parameters().muQ;
-      m_Config.muC = m_THM->Parameters().muC;
+      m_Config.CFOParameters.muB = m_THM->Parameters().muB;
+      m_Config.CFOParameters.muS = m_THM->Parameters().muS;
+      m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
+      m_Config.CFOParameters.muC = m_THM->Parameters().muC;
 
       std::cout << "Chemical potentials constrained!\n" << "muB = " 
-        << m_Config.muB << " muQ = " 
-        << m_Config.muQ << " muS = " 
-        << m_Config.muS << " muC = " 
-        << m_Config.muC << "\n";
+        << m_Config.CFOParameters.muB << " muQ = " 
+        << m_Config.CFOParameters.muQ << " muS = " 
+        << m_Config.CFOParameters.muS << " muC = " 
+        << m_Config.CFOParameters.muC << "\n";
 
       std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V 
         << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V 
@@ -209,29 +215,31 @@ namespace thermalfist {
         << "\n";
     }
 
-    if (ensemble == EventGeneratorConfiguration::SCE) {
-      m_THM->SetQoverB(original->QoverB());
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE) {
+      //m_THM->SetQoverB(original->QoverB());
       m_THM->ConstrainMuS(true);
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
       m_THM->FillChemicalPotentials();
-      m_Config.muS = m_THM->Parameters().muS;
-      m_Config.muC = m_THM->Parameters().muC;
+      m_Config.CFOParameters.muS = m_THM->Parameters().muS;
+      m_Config.CFOParameters.muC = m_THM->Parameters().muC;
     }
 
-    if (ensemble == EventGeneratorConfiguration::CCE) {
-      m_THM->SetQoverB(original->QoverB());
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
+      //m_THM->SetQoverB(original->QoverB());
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
       m_THM->FillChemicalPotentials();
-      m_Config.muC = m_THM->Parameters().muC;
+      m_Config.CFOParameters.muC = m_THM->Parameters().muC;
     }
 
     m_THM->CalculateDensitiesGCE();
     m_DensitiesIdeal = m_THM->GetIdealGasDensities();
 
-    if (ensemble != EventGeneratorConfiguration::GCE)
+    if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
       PrepareMultinomials();
+
+    m_acc.resize(m_THM->ComponentsNumber());
   }
 
   void EventGeneratorBase::ReadAcceptance(std::string accfolder)
@@ -356,7 +364,7 @@ namespace thermalfist {
       if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE)
         totals = GenerateTotalsCCE();
       else if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE)
-        totals = GenerateTotalsSCEnew();
+        totals = GenerateTotalsSCE();
       else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE)
         totals = GenerateTotalsCE();
       else
@@ -468,62 +476,7 @@ namespace thermalfist {
     return totals;
   }
 
-  std::vector<int> EventGeneratorBase::GenerateTotalsSCE() const {
-    if (!m_THM->IsGCECalculated())
-      m_THM->CalculateDensitiesGCE();
-
-    std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
-
-    std::vector< std::pair<double, int> > fStrangeMesonsc = m_StrangeMesons;
-    std::vector< std::pair<double, int> > fAntiStrangeMesonsc = m_AntiStrangeMesons;
-
-    while (true) {
-      const std::vector<double>& densities = m_THM->Densities();
-
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
-      int netS = 0;
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        if (m_THM->TPS()->Particles()[i].BaryonCharge() != 0 && m_THM->TPS()->Particles()[i].Strangeness() != 0) {
-          double mean = densities[i] * m_THM->Volume();
-          int total = RandomGenerators::RandomPoisson(mean);
-          totals[i] = total;
-          netS += totals[i] * m_THM->TPS()->Particles()[i].Strangeness();
-        }
-      }
-      int tSM = RandomGenerators::RandomPoisson(m_MeanSM);
-      int tASM = RandomGenerators::RandomPoisson(m_MeanASM);
-
-      if (netS != tASM - tSM) continue;
-
-      for (int i = 0; i < tSM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fStrangeMesonsc.begin(), fStrangeMesonsc.end(), std::make_pair(m_MeanSM*RandomGenerators::randgenMT.rand(), 0));
-        int tind = std::distance(fStrangeMesonsc.begin(), it);
-        if (tind < 0) tind = 0;
-        if (tind >= fStrangeMesonsc.size()) tind = fStrangeMesonsc.size() - 1;
-        totals[fStrangeMesonsc[tind].second]++;
-      }
-      for (int i = 0; i < tASM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiStrangeMesonsc.begin(), fAntiStrangeMesonsc.end(), std::make_pair(m_MeanASM*RandomGenerators::randgenMT.rand(), 0));
-        int tind = std::distance(fAntiStrangeMesonsc.begin(), it);
-        if (tind < 0) tind = 0;
-        if (tind >= fAntiStrangeMesonsc.size()) tind = fAntiStrangeMesonsc.size() - 1;
-        totals[fAntiStrangeMesonsc[tind].second]++;
-      }
-
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        if (m_THM->TPS()->Particles()[i].Strangeness() == 0) {
-          double mean = densities[i] * m_THM->Volume();
-          int total = RandomGenerators::RandomPoisson(mean);
-          totals[i] = total;
-        }
-      }
-
-      return totals;
-    }
-    return totals;
-  }
-
-  std::vector<int> EventGeneratorBase::GenerateTotalsSCEnew() const
+  std::vector<int> EventGeneratorBase::GenerateTotalsSCE() const
   {
     if (!m_THM->IsGCECalculated())
       m_THM->CalculateDensitiesGCE();
@@ -1058,102 +1011,80 @@ namespace thermalfist {
     ret.weight = m_LastWeight;
     ret.logweight = m_LastLogWeight;
 
-    // Do not perform decay, to be deprecated
-    if (m_OnlyStable) 
-    {
-      for (int i = m_THM->TPS()->Particles().size() - 1; i >= 0; --i) {
-        if (m_THM->TPS()->Particles()[i].IsStable()) {
-          int total = totals[i];
-          for (int part = 0; part < total; ++part) {
-            std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
-            SimpleParticle prt = SimpleParticle(momentum[0], momentum[1], momentum[2], m_THM->TPS()->Particles()[i].Mass(), m_THM->TPS()->Particles()[i].PdgId());
+    std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
+    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      {
+        primParticles[i].resize(0);
+        int total = totals[i];
+        for (int part = 0; part < total; ++part) {
+          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
 
-            double tpt = prt.GetPt();
-            double ty = prt.GetY();
-            if (m_acc.size() < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand())
-              ret.Particles.push_back(prt);
-          }
+          double tmass = m_THM->TPS()->Particles()[i].Mass();
+          if (m_THM->UseWidth() && !(m_THM->TPS()->Particles()[i].ResonanceWidth() / m_THM->TPS()->Particles()[i].Mass() < 0.01))
+            tmass = m_BWGens[i]->GetRandom();
+
+          primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
         }
       }
     }
-    // Generate all primordial hadrons and optionally perform decays of resonances
-    else 
-    {
-      std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        {
-          primParticles[i].resize(0);
-          int total = totals[i];
-          for (int part = 0; part < total; ++part) {
-            std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
 
-            double tmass = m_THM->TPS()->Particles()[i].Mass();
-            if (m_THM->UseWidth() && !(m_THM->TPS()->Particles()[i].ResonanceWidth() / m_THM->TPS()->Particles()[i].Mass() < 0.01))
-              tmass = m_BWGens[i]->GetRandom();
-
-            primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
-          }
-        }
-      }
-
-      bool flag_repeat = true;
-      while (flag_repeat) {
-        flag_repeat = false;
-        for (int i = primParticles.size() - 1; i >= 0; --i) {
-          if (!PerformDecays || m_THM->TPS()->Particles()[i].IsStable()) {
-            for (int j = 0; j < primParticles[i].size(); ++j) {
-              if (!primParticles[i][j].processed) {
-                SimpleParticle prt = primParticles[i][j];
-                double tpt = prt.GetPt();
-                double ty = prt.GetY();
-                if (m_acc.size() < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) ret.Particles.push_back(prt);
-                primParticles[i][j].processed = true;
-              }
+    bool flag_repeat = true;
+    while (flag_repeat) {
+      flag_repeat = false;
+      for (int i = primParticles.size() - 1; i >= 0; --i) {
+        if (!PerformDecays || m_THM->TPS()->Particles()[i].IsStable()) {
+          for (int j = 0; j < primParticles[i].size(); ++j) {
+            if (!primParticles[i][j].processed) {
+              SimpleParticle prt = primParticles[i][j];
+              double tpt = prt.GetPt();
+              double ty = prt.GetY();
+              if (m_acc.size() < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) ret.Particles.push_back(prt);
+              primParticles[i][j].processed = true;
             }
           }
-          else {
-            for (int j = 0; j < primParticles[i].size(); ++j) {
-              if (!primParticles[i][j].processed) {
-                flag_repeat = true;
-                double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+        }
+        else {
+          for (int j = 0; j < primParticles[i].size(); ++j) {
+            if (!primParticles[i][j].processed) {
+              flag_repeat = true;
+              double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
 
-                std::vector<double> Bratios;
-                if (primParticles[i][j].MotherPDGID != 0 ||
-                  m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
-                  Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
-                }
-                else {
-                  Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
-                }
+              std::vector<double> Bratios;
+              if (primParticles[i][j].MotherPDGID != 0 ||
+                m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+                Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+              }
+              else {
+                Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+              }
 
-                int DecayIndex = 0;
-                for (DecayIndex = 0; DecayIndex < Bratios.size(); ++DecayIndex) {
-                  tsum += Bratios[DecayIndex];
-                  if (tsum > DecParam) break;
-                }
-                if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {
-                  std::vector<double> masses(0);
-                  std::vector<int> pdgids(0);
-                  for (int di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
-                    int dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
-                    if (m_THM->TPS()->PdgToId(dpdg) == -1) {
-                      continue;
-                    }
-                    masses.push_back(m_THM->TPS()->ParticleByPDG(dpdg).Mass());
-                    pdgids.push_back(dpdg);
+              int DecayIndex = 0;
+              for (DecayIndex = 0; DecayIndex < Bratios.size(); ++DecayIndex) {
+                tsum += Bratios[DecayIndex];
+                if (tsum > DecParam) break;
+              }
+              if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {
+                std::vector<double> masses(0);
+                std::vector<int> pdgids(0);
+                for (int di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
+                  int dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
+                  if (m_THM->TPS()->PdgToId(dpdg) == -1) {
+                    continue;
                   }
-                  std::vector<SimpleParticle> decres = ParticleDecays::ManyBodyDecay(primParticles[i][j], masses, pdgids);
-                  for (int ind = 0; ind < decres.size(); ind++) {
-                    decres[ind].processed = false;
-                    if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
-                      primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
-                  }
-                  primParticles[i][j].processed = true;
+                  masses.push_back(m_THM->TPS()->ParticleByPDG(dpdg).Mass());
+                  pdgids.push_back(dpdg);
                 }
-                else {
-                  // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
-                  primParticles[i][j].processed = true;
+                std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
+                for (int ind = 0; ind < decres.size(); ind++) {
+                  decres[ind].processed = false;
+                  if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
+                    primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
                 }
+                primParticles[i][j].processed = true;
+              }
+              else {
+                // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
+                primParticles[i][j].processed = true;
               }
             }
           }

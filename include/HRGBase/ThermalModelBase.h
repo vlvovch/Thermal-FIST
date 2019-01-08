@@ -62,6 +62,9 @@ namespace thermalfist {
 
     virtual ~ThermalModelBase(void) { }
 
+    /// Number of different particle species in the list
+    int ComponentsNumber() const { return m_densities.size(); }
+
     /**
      * \brief Fills the excluded volume coefficients \f$ \tilde{b}_{ij} \f$ based on the 
      *        provided radii parameters for all species.

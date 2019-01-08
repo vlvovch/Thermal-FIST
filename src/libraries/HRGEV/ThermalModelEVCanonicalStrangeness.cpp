@@ -32,7 +32,7 @@ namespace thermalfist {
 
   ThermalModelEVCanonicalStrangeness::~ThermalModelEVCanonicalStrangeness(void)
   {
-    CleanModelEV();
+    ClearModelEV();
   }
 
   void ThermalModelEVCanonicalStrangeness::CalculateDensitiesGCE() {
@@ -155,7 +155,7 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::PrepareModelEV()
   {
-    CleanModelEV();
+    ClearModelEV();
 
     ThermalParticleSystem *TPSnew = new ThermalParticleSystem(*m_TPS);
 
@@ -183,7 +183,7 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelEVCanonicalStrangeness::CleanModelEV()
+  void ThermalModelEVCanonicalStrangeness::ClearModelEV()
   {
     if (m_modelEV != NULL) {
       ThermalParticleSystem *TPSold = m_modelEV->TPS();

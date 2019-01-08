@@ -29,17 +29,6 @@ namespace thermalfist {
   {
   public:
     /**
-     * \brief Set of conserved charges included.
-     * 
-     */
-    enum ConservedCharge { 
-      BaryonCharge = 0,      ///< Baryon number.
-      ElectricCharge = 1,    ///< Electric charge.
-      StrangenessCharge = 2, ///< Strangeness.
-      CharmCharge = 3        ///< Charm.
-      };
-
-    /**
      * \brief Construct a new ThermalParticleSystem object
      * 
      * The list is read from the specified file with LoadTable() method.
@@ -63,7 +52,7 @@ namespace thermalfist {
      * \param Decays The decay channels of a particle.
      * \return std::vector<ParticleDecay> The generated  decay channels of an antiparticle.
      */
-    std::vector<ParticleDecay> GetDecaysFromAntiParticle(const std::vector<ParticleDecay> &Decays);
+    ThermalParticle::ParticleDecaysVector GetDecaysFromAntiParticle(const ThermalParticle::ParticleDecaysVector& Decays);
 
     /**
      * \brief Computes the decay contributions of decaying resonances
@@ -100,11 +89,83 @@ namespace thermalfist {
     void FillResonanceDecays();
 
     /**
-     * \brief Same as FillResonanceDecays() but for all
-     *        Feeddown::Type flags.
+     * \brief Same as FillResonanceDecays() but separately for
+     *        weak, electromagnetic, and strong decay feeddowns.
      * 
      */
     void FillResonanceDecaysByFeeddown();
+
+
+    /// Construction to hold mean number of certain species which results from a decay of a certain resonance.  
+    ///
+    /// The First element is the mean number of particles and the second element is the 0-based index of a resonance.
+    typedef std::pair<double, int> SingleDecayContribution;
+
+    /// A vector of SingleDecayContribution where each element corresponds to a certain resonance species.
+    typedef std::vector<SingleDecayContribution> DecayContributionsToParticle;
+
+    /// A vector of DecayContributionsToParticle where each
+    /// element corresponds to a certain particle species resulting from decay.
+    typedef std::vector<DecayContributionsToParticle> DecayContributionsToAllParticles;
+
+    /// Holds cumulants of the particle number distribution of certain species which appear in a decay of a certain resonance.  
+    ///
+    /// The First element contains the leading four cumulants and the second element is the 0-based index of a resonance.
+    typedef std::pair< std::vector<double>, int> SingleDecayCumulantsContribution;
+
+    /// A vector of SingleDecayCumulantsContribution where each element corresponds to a certain resonance species.
+    typedef std::vector<SingleDecayCumulantsContribution> DecayCumulantsContributionsToParticle;
+
+    /// A vector of DecayCumulantsContributionsToParticle where each
+    /// element corresponds to a certain particle species resulting from decay.
+    typedef std::vector<DecayCumulantsContributionsToParticle> DecayCumulantsContributionsToAllParticles;
+
+    /// Construction to hold the probability distribution of the number of
+    /// certain species which appear in a decay of a certain resonance.  
+    ///
+    /// The first element contains the probability distribution
+    /// and the second element is the 0-based index of a resonance.
+    typedef std::pair< std::vector<double>, int> SingleDecayProbabilityDistribution;
+
+    /// A vector of SingleDecayProbabilityDistribution where each element corresponds to a certain resonance species.
+    typedef std::vector<SingleDecayProbabilityDistribution> DecayProbabilityDistributionsToParticle;
+
+    /// A vector of DecayProbabilityDistributionsToParticle where each
+    /// element corresponds to a certain particle species resulting from decay.
+    typedef std::vector<DecayProbabilityDistributionsToParticle> DecayProbabilityDistributionsToAllParticles;
+
+    /// A vector of final state particle number distributions for the final state (after decays)
+    /// of each particle species.  
+    /// One element per each particle species in the list.
+    /// Each element is a std::pair where the first element the probability of a specific final state
+    /// and the second element contains the numbers of all particle species in this final state 
+    typedef std::vector< std::pair<double, std::vector<int> > > ResonanceFinalStatesDistribution;
+
+    /**
+     *   Returns information about decay chains of heavier particles including strong, strong/electromagnetic, or strong/electromagnetic/weak decay feeddown 
+     *   resulting in production of of all the particles.
+     *   
+     *   Each element corresponds to a specific Feeddown::Type.
+     */
+    const std::vector<DecayContributionsToAllParticles>& DecayContributionsByFeeddown() const { return m_DecayContributionsByFeeddown; }
+
+    /**
+     * \brief Cumulants of particle number distributions of from decays.
+     * 
+     * Used to calculate effects of probabilistic decays on the final state
+     * fluctuations.
+     * 
+     * \return const DecayCumulantsContributionsToAllParticles& 
+     */
+    const DecayCumulantsContributionsToAllParticles& DecayCumulants() const { return m_DecayCumulants; }
+
+    /**
+     * \brief Final state particle number distributions for resonance decays.
+     * 
+     * \return const std::vector<ResonanceFinalStatesDistribution>& -- a vector of final state distributions, 
+     *         one element per each resonance.
+     */
+    const std::vector<ResonanceFinalStatesDistribution>& ResonanceFinalStatesDistributions() const { return m_ResonanceFinalStatesDistributions; }
 
     /**
      * \brief Loads the particle list from file.
@@ -240,6 +301,9 @@ namespace thermalfist {
     /// particles with a non-zero charm.
     bool hasCharmed() const { return (m_NumCharmed > 0); }
 
+    /// Number of different particle species in the list
+    int ComponentsNumber() const { return m_Particles.size(); }
+
     /**
      * \brief Returns the vector of all particle species.
      * 
@@ -340,7 +404,7 @@ namespace thermalfist {
      * \param part ThermalParticle object of a given particle specie.
      * \return ParticleDecay::DecayType The decay type of a given particle.
      */
-    static ParticleDecay::DecayType DecayTypeByParticleType(const ThermalParticle &part);
+    static ParticleDecayType::DecayType DecayTypeByParticleType(const ThermalParticle &part);
 
   private:
     void GoResonance(int ind, int startind, double BR);
@@ -351,7 +415,7 @@ namespace thermalfist {
 
     std::vector<double> GoResonanceDecayProbsCharge(int ind, int nch, bool firstdecay = false);
 
-    std::vector< std::pair<double, std::vector<int> > > GoResonanceDecayDistributions(int ind, bool firstdecay = false);
+    ResonanceFinalStatesDistribution GoResonanceDecayDistributions(int ind, bool firstdecay = false);
 
     void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
 
@@ -360,8 +424,6 @@ namespace thermalfist {
     void ReadDecays_OldFormat(std::ifstream &fin);
 
     void ReadDecays_NewFormat(std::ifstream &fin);
-
-    
 
   private:
     std::vector<ThermalParticle>    m_Particles;
@@ -377,9 +439,16 @@ namespace thermalfist {
 
     IdealGasFunctions::QStatsCalculationType m_QStatsCalculationType;
 
+    std::vector<DecayContributionsToAllParticles> m_DecayContributionsByFeeddown;
+
+    DecayCumulantsContributionsToAllParticles m_DecayCumulants;
+
+    DecayProbabilityDistributionsToAllParticles m_DecayProbabilities;
+
+    std::vector<ResonanceFinalStatesDistribution> m_ResonanceFinalStatesDistributions;
 
     // Map for DP-based calculations of decay distributions
-    std::vector< std::vector< std::pair<double, std::vector<int> > > > m_DecayDistributionsMap;
+    std::vector<ResonanceFinalStatesDistribution> m_DecayDistributionsMap;
   };
 
   namespace CuteHRGHelper {

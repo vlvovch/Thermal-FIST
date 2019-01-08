@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -10,187 +10,106 @@
 
 #include <string>
 
-#include "HRGBase/ThermalModelBase.h"
+#include "HRGFit/ThermalModelFitParameters.h"
+#include "HRGFit/ThermalModelFitQuantities.h"
 #include "HRGBase/xMath.h"
 
 namespace thermalfist {
 
   /**
-   *  Structure for an arbitrary fit parameter.
+   * \brief Class implementing the thermal model fit procedure.
+   * 
+   * Performs a fit within a generic HRG model to
+   * a set of measured multiplicities and/or yield ratios.
+   * This is achieved by minimizing
+   * \f[
+   *   \chi^2 = \frac{\chi^2}{N_{\rm dof}}
+       ~=~\frac{1}{N_{\rm dof}}\sum_{i=1}^N\frac{\left(N_i^{\rm exp}~-~N_i^{\rm HRG}\right)^2}{\sigma_i^2}
+   *   ]
+   * with MINUIT2. 
+   * 
+   * The actual HRG model to use is provided through a pointer to the
+   * corresponding thermalfist::ThermalModelBase object in the constructor.
+   * 
+   * The fitted thermal parameters can be specified in a thermalfist::ThermalModelFitParameters
+   * object and should be provided through the SetParameters() method.
+   * 
+   * The data to fit can be specified as vector of FittedQuantity objects
+   * It can be provided through the SetQuantities() method,
+   * or read from file with loadExpDataFromFile(). 
+   * 
+   * Finally, the fit procedure is invoked through the PerformFit() method.
+   * 
    */
-  struct FitParameter {
-    double value;
-    double error;
-    double errp, errm;
-    double xmin, xmax;
-    bool toFit;
-    std::string name;
-    FitParameter(std::string name_ = "", bool toFit_ = true, double val = 1., double err = 0., double vmin = -2., double vmax = 2.) :
-      toFit(toFit_), value(val), error(err), errp(err), errm(-err), xmin(vmin), xmax(vmax), name(name_) {
-    }
-  };
-
-  /**
-   *  Extended structure for calculating uncertainties in non-fit quantities resulting from
-   *  uncertanties in fit parameters.
-   */
-  struct ThermalModelFitParametersExtended {
-    FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
-    double chi2ndf;
-    FitParameter nH, rhoB, rhoQ, en, entropy, pressure;//, eta;
-    ThermalModelFitParametersExtended() { }
-    ThermalModelFitParametersExtended(ThermalModelBase *model);
-  };
-
-  /**
-   *  Structure holding information about parameters of a thermal fit.
-   */
-  struct ThermalModelFitParameters {
-    static const int ParameterCount = 10;
-    bool GCE;  // 0 - CE, 1 - GCE
-    FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
-    std::vector<FitParameter*> ParameterList;
-    int B, S, Q, C;
-    double chi2, chi2ndf;
-    int ndf;
-
-    // Default constructor
-    ThermalModelFitParameters(const ThermalModelParameters &params = ThermalModelParameters());
-
-    // Copy constructor
-    ThermalModelFitParameters(const ThermalModelFitParameters& op);
-
-    // Assignment operator
-    ThermalModelFitParameters& operator=(const ThermalModelFitParameters& op);
-
-    void FillParameterList();
-
-    int IndexByName(const std::string& name) const;
-
-    FitParameter GetParameter(const std::string& name) const;
-
-    FitParameter& GetParameter(const std::string& name);
-
-    FitParameter GetParameter(const int index) const;
-
-    FitParameter& GetParameter(const int index);
-
-    void SetParameter(const std::string& name, const FitParameter& param);
-
-    void SetParameter(const std::string& name, double val, double err, double xmin, double xmax);
-
-    void SetParameterValue(const std::string& name, double value);
-
-    void SetParameterFitFlag(const std::string& name, bool toFit);
-
-    ThermalModelParameters GetThermalModelParameters();
-  };
-
-  struct ExperimentMultiplicity {
-    int fPDGID;
-    double fValue, fError;
-    Feeddown::Type fFeedDown; /// 0 - primordial, 1 - stability flags, 2 - strong + EM + weak, 3 - strong + EM, 4 - strong
-    //int fFeedDown; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
-    ExperimentMultiplicity(int PDGID = -211, double value = 300., double error = 20., Feeddown::Type fd = Feeddown::StabilityFlag) :
-      fPDGID(PDGID), fValue(value), fError(error), fFeedDown(fd) { }
-    void addSystematicError(double percent) {
-      fError = sqrt(fError*fError + percent * percent*fValue*fValue);
-    }
-  };
-
-  struct ExperimentRatio {
-    int PDGID1, PDGID2;
-    double fValue, fError;
-    Feeddown::Type fFeedDown1, fFeedDown2; /// 0 - primordial, 1 - stability flags, 2 - strong + EM + weak, 3 - strong + EM, 4 - strong
-    //int fFeedDown1, fFeedDown2; /// 0 - primordial, 1 - +decays from unstable, 2 - +weak decays
-    ExperimentRatio(int PDGID1_ = 211, int PDGID2_ = -211, double value_ = 1., double error_ = 0.1, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
-      PDGID1(PDGID1_), PDGID2(PDGID2_), fValue(value_), fError(error_), fFeedDown1(fd1), fFeedDown2(fd2) { }
-    ExperimentRatio(int PDGID1_, int PDGID2_, double value1, double error1, double value2, double error2, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
-      PDGID1(PDGID1_), PDGID2(PDGID2_), fFeedDown1(fd1), fFeedDown2(fd2) {
-      fValue = value1 / value2;
-      fError = sqrt(error1*error1 / value2 / value2 + value1 * value1 / value2 / value2 / value2 / value2 * error2 * error2);
-    }
-  };
-
-  struct FittedQuantity {
-    enum FittedQuantityType { Multiplicity = 0, Ratio = 1 };
-    FittedQuantityType type; // 0 - Multiplicity, 1 - Ratio
-    bool toFit;
-    ExperimentMultiplicity mult;
-    ExperimentRatio ratio;
-    FittedQuantity() {
-      toFit = true;
-      type = FittedQuantity::Multiplicity;
-      mult = ExperimentMultiplicity(-211, 10., 1.);
-    }
-    FittedQuantity(const ExperimentMultiplicity & op) {
-      toFit = true;
-      type = FittedQuantity::Multiplicity;
-      mult = op;
-    }
-    FittedQuantity(const ExperimentRatio & op) {
-      toFit = true;
-      type = FittedQuantity::Ratio;
-      ratio = op;
-    }
-    double Value() const {
-      if (type == 0)
-        return mult.fValue;
-      else
-        return ratio.fValue;
-    }
-    double ValueError() const {
-      if (type == 0)
-        return mult.fError;
-      else
-        return ratio.fError;
-    }
-  };
-
-  class ThermalModelBase;
-
   class ThermalModelFit
   {
   public:
-    ThermalModelFit(ThermalModelBase *model_);
+    /**
+     * \brief Construct a new ThermalModelFit object
+     * 
+     * \param model Pointer to the ThermalModelBase object
+     *              which implements the HRG model to use in fits
+     */
+    ThermalModelFit(ThermalModelBase *model);
 
+    /// \brief Destroy the Thermal Model Fit object
     ~ThermalModelFit(void);
 
+    /**
+     * \brief Set whether FitParameter with a given name should be fitted.
+     * 
+     * \param name FitParameter name
+     * \param flag true -- fitted, false -- not fitted
+     */
     void SetFitFlag(const std::string& name, bool flag) {
       m_Parameters.SetParameterFitFlag(name, flag);
     }
 
-    void SetSBConstraint(double SB) {
-      if (m_model != NULL)
-        m_model->SetSoverB(SB);
-    }
 
-    void SetQBConstraint(double QB) {
-      if (m_model != NULL)
-        m_model->SetQoverB(QB);
-    }
 
-    void SetQuantities(const std::vector<FittedQuantity> & inQuantities) {
+    /// \brief Sets the data to fit
+    /// \param inData A vector of measurements to fit
+    void SetData(const std::vector<FittedQuantity> & inData) {
       m_Quantities.resize(0);
       m_Ratios.resize(0);
       m_Multiplicities.resize(0);
-      AddQuantities(inQuantities);
+      AddData(inData);
     }
 
-    void AddQuantities(const std::vector<FittedQuantity> & inQuantities) {
-      for (int i = 0; i < inQuantities.size(); ++i)
-        AddQuantity(inQuantities[i]);
+    /// Same as SetData()
+    void SetQuantities(const std::vector<FittedQuantity> & inQuantities) { SetQuantities(inQuantities); }
+
+    /// \brief Add more data to fit
+    /// \param inData A vector of additional measurements to fit
+    void AddData(const std::vector<FittedQuantity> & inData) {
+      for (int i = 0; i < inData.size(); ++i)
+        AddDataPoint(inData[i]);
     }
 
-    void AddQuantity(const FittedQuantity& inQuantity) {
-      m_Quantities.push_back(inQuantity);
-      if (inQuantity.type == FittedQuantity::Ratio)
-        m_Ratios.push_back(inQuantity.ratio);
+    /// Same as AddData()
+    void AddQuantities(const std::vector<FittedQuantity> & inQuantities) { AddData(inQuantities); }
+
+    /// \brief Add one more data point to fit
+    /// \param inDataPoint Data point to fit
+    void AddDataPoint(const FittedQuantity& inDataPoint) {
+      m_Quantities.push_back(inDataPoint);
+      if (inDataPoint.type == FittedQuantity::Ratio)
+        m_Ratios.push_back(inDataPoint.ratio);
       else
-        m_Multiplicities.push_back(inQuantity.mult);
+        m_Multiplicities.push_back(inDataPoint.mult);
     }
 
-    // To be deprecated
+    /// Same as AddDataPoint()
+    void AddQuantity(const FittedQuantity& inQuantity) { AddDataPoint(inQuantity); }
+
+    /// Clear the fitted data
+    void ClearData() { m_Quantities.resize(0); }
+
+    /// Same as ClearData()
+    void ClearQuantities() { ClearData(); }
+
+    //@{
+    /// \deprecated Use SetQuantities(), AddQuantities(), and AddQuantity() instead
     void SetRatios(const std::vector<ExperimentRatio> & inRatios) {
       m_Ratios = inRatios;
     }
@@ -211,7 +130,6 @@ namespace thermalfist {
 
     void PrintRatios();
 
-    // To be deprecated
     void SetMultiplicities(const std::vector<ExperimentMultiplicity> & inMultiplicities) {
       m_Multiplicities = inMultiplicities;
     }
@@ -229,7 +147,10 @@ namespace thermalfist {
     }
 
     void ClearMultiplicities() { m_Multiplicities.resize(0); }
+    //@}
 
+    //@{
+    /// Print function 
     void PrintParameters();
 
     void PrintMultiplicities();
@@ -243,57 +164,146 @@ namespace thermalfist {
     void PrintYieldsLatex(std::string filename = "Yield.dat", std::string name = "A+A");
 
     void PrintYieldsLatexAll(std::string filename = "Yield.dat", std::string name = "A+A", bool asymm = false);
+    //@}
 
-    static std::string GetCurrentTime();
+    /// Prints the result of the fitting procedure to a file
     void PrintFitLog(std::string filename = "", std::string comment = "Thermal fit", bool asymm = false);
 
-    double chi2Ndf(double T, double muB);
+    //double chi2Ndf(double T, double muB);
 
+    /**
+     * \brief The thermal fit procedure.
+     * 
+     * Performs a thermal fit of thermal parameters, specified by SetParameters(),
+     * to the experimental data, provided through SetQuantities(),
+     * within a HRG model provided by a pointer to thermalfist::ThermalModelBase in constructor.
+     * 
+     * Returns a thermalfist::ThermalModelFitParameters parameters object containing
+     * the values and errors of the fitted thermal parameters resulting from
+     * \f$ \chi^2 \f$ minimization.
+     * 
+     * \param verbose     If true, additional output is shown on screen during the fitting
+     * \param AsymmErrors If true, asymmetric error bars are computed
+     * \return ThermalModelFitParameters The fitted parameters
+     */
     ThermalModelFitParameters PerformFit(bool verbose = true, bool AsymmErrors = false);
 
+    /// Number of degrees of freedom in the fit
     int GetNdf() const;
 
+    /// Used by MINUIT
     void Increment() { m_Iters++; }
 
+    /// Current fit parameters.
+    /// Contains the fit result after PerformFit() was called. 
     const ThermalModelFitParameters& Parameters() const { return m_Parameters; }
+
+    /// Sets the fit parameters
     void SetParameters(const ThermalModelFitParameters& params) { m_Parameters = params; }
+
+    /// Sets the fit parameter with a given name
     void SetParameter(const std::string & name, const FitParameter & param) { m_Parameters.SetParameter(name, param); }
+    
+    /// Sets the fit parameter with a given name
     void SetParameter(const std::string & name, double val, double err, double xmin, double xmax) { m_Parameters.SetParameter(name, val, err, xmin, xmax); }
+    
+    /// Sets the (initial) value for the fit parameter with a given name
     void SetParameterValue(const std::string & name, double value) { m_Parameters.SetParameterValue(name, value); }
+    
+    /// Sets whether the fit parameter with a given name is fitted
     void SetParameterFitFlag(const std::string & name, bool toFit) { m_Parameters.SetParameterFitFlag(name, toFit); }
+    
+
     const ThermalModelFitParametersExtended& ExtendedParameters() const { return m_ExtendedParameters; }
+    
+    /// Pointer to a ThermalModelBase object implementing
+    /// the HRG model used
     ThermalModelBase* model() { return m_model; }
 
+    /// Set the entropy per baryon constraint for \f$\mu_B \f$
+    /// \deprecated Entropy per baryon constraint should be set directly on a ThermalModelBase object
+    void SetSBConstraint(double SB) {
+      if (m_model != NULL)
+        m_model->SetSoverB(SB);
+      m_model->ConstrainMuB(true);
+    }
+
+    /// Set the electric-to-baryon charge ratio constraint for \f$\mu_Q \f$
+    /// \deprecated Electric-to-baryon charge ratio constraint should be set directly on a ThermalModelBase object
+    void SetQBConstraint(double QB) {
+      if (m_model != NULL)
+        m_model->SetQoverB(QB);
+      m_model->ConstrainMuQ(true);
+    }
+    
+    /// \deprecated
     double SoverB() const { return m_model->SoverB(); }
+    /// \deprecated
     double QoverB() const { return m_model->QoverB(); }
 
+    /// Return a vector of the fitted multiplicities (yields)
+    /// Ignores the ratios
     const std::vector<ExperimentMultiplicity>&    Multiplicities()   const { return m_Multiplicities; }
+    
+    /// Return a vector of the fitted yield ratios
+    /// Ignores the multiplicities
     const std::vector<ExperimentRatio>&           Ratios()           const { return m_Ratios; }
+
+    /// Return a vector of the fitted quantities (data)
     const std::vector<FittedQuantity>&            FittedQuantities() const { return m_Quantities; }
 
+    /**@{ 
+     * Used for real-time monitoring in the GUI.
+     */
     int& Iters() { return m_Iters; }
+
     double& Chi2() { return m_Chi2; }
+
     double& BT() { return m_BT; }
+
     double& QT() { return m_QT; }
+
     double& ST() { return m_ST; }
+
     double& CT() { return m_CT; }
+
     double& ModelData(int index) { return m_ModelData[index]; }
+
     int ModelDataSize() const { return m_ModelData.size(); }
+
     void ClearModelData() { m_ModelData.clear(); }
+
     int& Ndf() { return m_Ndf; }
+    /**@} */
 
-    bool FixVcOverV() const { return m_FixVcToV; }
+    //@{
+    /// Whether the correlation volume is tied to the total volume
+    /// or an independent parameter.
     void FixVcOverV(bool fix) { m_FixVcToV = fix; }
-    double VcOverV() const { return m_VcOverV; }
+    bool FixVcOverV() const { return m_FixVcToV; }
+    //@}
+
+    //@{
+    /// The value of the correlation volume over the total volume
+    /// ratio, \f$ V_c / V \f$.
+    /// If FixVcOverV() is set to true this value is
+    /// used fix \f$ V_c \f$ by the total volume.
     void SetVcOverV(double VcOverV) { m_VcOverV = VcOverV; }
+    double VcOverV() const { return m_VcOverV; }
+    //@}
 
-
+    /// Load the experimental data from a file.
     static std::vector<FittedQuantity> loadExpDataFromFile(const std::string & filename);
-    static std::vector<FittedQuantity> loadExpDataFromFile_OldFormat(std::fstream & fin);
-    static std::vector<FittedQuantity> loadExpDataFromFile_NewFormat(std::fstream & fin);
+
     static void saveExpDataToFile(const std::vector<FittedQuantity> & outQuantities, const std::string & filename);
 
   private:
+    static std::string GetCurrentTime();
+    
+    static std::vector<FittedQuantity> loadExpDataFromFile_OldFormat(std::fstream & fin);
+
+    static std::vector<FittedQuantity> loadExpDataFromFile_NewFormat(std::fstream & fin);
+
     ThermalModelFitParameters m_Parameters;
     ThermalModelFitParametersExtended m_ExtendedParameters;
     ThermalModelBase *m_model;

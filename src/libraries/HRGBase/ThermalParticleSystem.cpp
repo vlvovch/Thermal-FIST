@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -41,7 +41,8 @@ namespace thermalfist {
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
     m_PDGtoID.clear();
-    //m_IDtoPDG.resize(0);
+
+    m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
     SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
     SetCalculationType(IdealGasFunctions::Quadratures);
@@ -54,8 +55,8 @@ namespace thermalfist {
   {
   }
 
-  std::vector<ParticleDecay> ThermalParticleSystem::GetDecaysFromAntiParticle(const std::vector<ParticleDecay> &Decays) {
-    std::vector<ParticleDecay> ret = Decays;
+  ThermalParticle::ParticleDecaysVector ThermalParticleSystem::GetDecaysFromAntiParticle(const ThermalParticle::ParticleDecaysVector& Decays) {
+    ThermalParticle::ParticleDecaysVector ret = Decays;
     for (unsigned int i = 0; i < ret.size(); ++i) {
       for (unsigned int j = 0; j < ret[i].mDaughters.size(); ++j) {
         if (m_PDGtoID.count(-ret[i].mDaughters[j]) > 0) ret[i].mDaughters[j] = -ret[i].mDaughters[j];
@@ -127,11 +128,13 @@ namespace thermalfist {
   }
 
   void ThermalParticleSystem::FillResonanceDecays() {
+    m_DecayContributionsByFeeddown[Feeddown::StabilityFlag].resize(m_Particles.size());
+    m_DecayCumulants.resize(m_Particles.size());
+    m_DecayProbabilities.resize(m_Particles.size());
     for (int i = 0; i < m_Particles.size(); ++i) {
-      m_Particles[i].DecayContributions().resize(0);
-      m_Particles[i].DecayContributionsSigmas().resize(0);
-      m_Particles[i].DecayProbabilities().resize(0);
-      m_Particles[i].DecayCumulants().resize(0);
+      m_DecayContributionsByFeeddown[Feeddown::StabilityFlag][i].resize(0);
+      m_DecayProbabilities[i].resize(0);
+      m_DecayCumulants[i].resize(0);
     }
     for (int i = m_Particles.size() - 1; i >= 0; i--)
       if (!m_Particles[i].IsStable()) {
@@ -139,39 +142,40 @@ namespace thermalfist {
       }
 
     for (int i = 0; i < m_Particles.size(); ++i) {
-      for (int j = 0; j < m_Particles[i].DecayContributions().size(); ++j) {
-        vector<double> tmp = GoResonanceDecayProbs(m_Particles[i].DecayContributions()[j].second, i, true);
-        if (tmp.size() > 1) m_Particles[i].DecayProbabilities().push_back(make_pair(tmp, m_Particles[i].DecayContributions()[j].second));
+      for (int j = 0; j < m_DecayContributionsByFeeddown[Feeddown::StabilityFlag][i].size(); ++j) {
+        SingleDecayContribution &DecayContrib = m_DecayContributionsByFeeddown[Feeddown::StabilityFlag][i][j];
+        vector<double> tmp = GoResonanceDecayProbs(DecayContrib.second, i, true);
+        if (tmp.size() > 1) m_DecayProbabilities[i].push_back(make_pair(tmp, DecayContrib.second));
       }
-      for (int j = 0; j < m_Particles[i].DecayProbabilities().size(); ++j) {
+      for (int j = 0; j < m_DecayProbabilities[i].size(); ++j) {
         double tmp = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
-        for (int jj = 0; jj < m_Particles[i].DecayProbabilities()[j].first.size(); ++jj) {
-          tmp += m_Particles[i].DecayProbabilities()[j].first[jj] * jj;
-          tmp2 += m_Particles[i].DecayProbabilities()[j].first[jj] * jj * jj;
-          tmp3 += m_Particles[i].DecayProbabilities()[j].first[jj] * jj * jj * jj;
-          tmp4 += m_Particles[i].DecayProbabilities()[j].first[jj] * jj * jj * jj * jj;
+        for (int jj = 0; jj < m_DecayProbabilities[i][j].first.size(); ++jj) {
+          tmp += m_DecayProbabilities[i][j].first[jj] * jj;
+          tmp2 += m_DecayProbabilities[i][j].first[jj] * jj * jj;
+          tmp3 += m_DecayProbabilities[i][j].first[jj] * jj * jj * jj;
+          tmp4 += m_DecayProbabilities[i][j].first[jj] * jj * jj * jj * jj;
         }
         double n2 = 0., n3 = 0., n4 = 0.;
         n2 = tmp2 - tmp * tmp;
         n3 = tmp3 - 3. * tmp2 * tmp + 2. * tmp * tmp * tmp;
         n4 = tmp4 - 4. * tmp3 * tmp + 6. * tmp2 * tmp * tmp - 3. * tmp * tmp * tmp * tmp - 3. * n2 * n2;
-        m_Particles[i].DecayContributionsSigmas().push_back(make_pair(tmp2 - tmp * tmp, m_Particles[i].DecayProbabilities()[j].second));
         vector<double> moments(0);
         moments.push_back(tmp);
         moments.push_back(n2);
         moments.push_back(n3);
         moments.push_back(n4);
-        m_Particles[i].DecayCumulants().push_back(make_pair(moments, m_Particles[i].DecayProbabilities()[j].second));
+        m_DecayCumulants[i].push_back(make_pair(moments, m_DecayProbabilities[i][j].second));
       }
     }
 
     m_DecayDistributionsMap.resize(m_Particles.size());
+    m_ResonanceFinalStatesDistributions.resize(m_Particles.size());
     for (int i = 0; i < m_Particles.size(); ++i) {
-      m_Particles[i].DecayDistributions().resize(0);
+      m_ResonanceFinalStatesDistributions[i].resize(0);
       m_DecayDistributionsMap[i].resize(0);
     }
     for (int i = 0; i < m_Particles.size(); ++i) {
-      m_Particles[i].DecayDistributions() = GoResonanceDecayDistributions(i, true);
+      m_ResonanceFinalStatesDistributions[i] = GoResonanceDecayDistributions(i, true);
     }
     // Clear m_DecayDistributionsMap and memory it occupies
     std::vector< std::vector< std::pair<double, std::vector<int> > > >().swap(m_DecayDistributionsMap);
@@ -207,21 +211,25 @@ namespace thermalfist {
 
 
   void ThermalParticleSystem::GoResonance(int ind, int startind, double BR) {
-    if (ind != startind && m_Particles[ind].DecayContributions().size() > 0 && m_Particles[ind].DecayContributions()[m_Particles[ind].DecayContributions().size() - 1].second == startind)
+    DecayContributionsToParticle& DecayContrib = m_DecayContributionsByFeeddown[Feeddown::StabilityFlag][ind];
+    if (ind != startind && DecayContrib.size() > 0 && DecayContrib[DecayContrib.size() - 1].second == startind)
     {
-      m_Particles[ind].DecayContributions()[m_Particles[ind].DecayContributions().size() - 1].first += BR;
+      DecayContrib[DecayContrib.size() - 1].first += BR;
     }
-    else if (ind != startind) m_Particles[ind].DecayContributions().push_back(make_pair(BR, startind));
+    else if (ind != startind) 
+      DecayContrib.push_back(make_pair(BR, startind));
+
     if (!m_Particles[ind].IsStable()) {
       for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
-        double tbr = m_Particles[ind].Decays()[i].mBratio;
+        const ParticleDecayChannel& decaychannel = m_Particles[ind].Decays()[i];
+        double tbr = decaychannel.mBratio;
 
         if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
-          tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+          tbr = decaychannel.mBratioAverage;
 
-        for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
-          if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0)
-            GoResonance(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr);
+        for (int j = 0; j < decaychannel.mDaughters.size(); ++j) {
+          if (m_PDGtoID.count(decaychannel.mDaughters[j]) != 0)
+            GoResonance(m_PDGtoID[decaychannel.mDaughters[j]], startind, BR*tbr);
         }
       }
     }
@@ -334,7 +342,7 @@ namespace thermalfist {
     return ret;
   }
 
-  std::vector<std::pair<double, std::vector<int>>> ThermalParticleSystem::GoResonanceDecayDistributions(int ind, bool firstdecay)
+  ThermalParticleSystem::ResonanceFinalStatesDistribution ThermalParticleSystem::GoResonanceDecayDistributions(int ind, bool firstdecay)
   {
     if (!firstdecay && m_DecayDistributionsMap[ind].size() != 0)
       return m_DecayDistributionsMap[ind];
@@ -350,7 +358,7 @@ namespace thermalfist {
     ThermalParticle &tpart = m_Particles[ind];
 
     if (tpart.IsStable()) {
-      tpart.DecayDistributions() = retorig;
+      m_ResonanceFinalStatesDistributions[ind] = retorig;
       return retorig;
     }
 
@@ -376,7 +384,7 @@ namespace thermalfist {
           }
           tret = tmp2;
 
-          // Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
+          // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
           if (tret.size() > 1500) {
             printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
               m_Particles[ind].Name().c_str(),
@@ -392,7 +400,7 @@ namespace thermalfist {
       }
     }
 
-    // Restrict maximum number of channels to 1000, otherwise memory is an issue, relevant for the THERMUS-3.0 table
+    // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
     if (ret.size() > 1500) {
       printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
         m_Particles[ind].Name().c_str(),
@@ -415,7 +423,7 @@ namespace thermalfist {
     if (!firstdecay)
       m_DecayDistributionsMap[ind] = ret;
 
-    //tpart.DecayDistributions() = ret;
+    // Debugging
 
     //if (tpart.BaryonCharge() == 1) {
     //  printf("Checking baryon number conservation in decays for %d\n", tpart.PdgId());
@@ -779,7 +787,7 @@ namespace thermalfist {
 
   void ThermalParticleSystem::ReadDecays_NewFormat(std::ifstream & fin)
   {
-    vector< vector<ParticleDecay> > decays(0);
+    vector< ThermalParticle::ParticleDecaysVector > decays(0);
     map<int, int> decaymap;
     decaymap.clear();
 
@@ -795,7 +803,7 @@ namespace thermalfist {
           continue;
 
         int tpdgid, tdecaysnumber = 0;
-        vector<ParticleDecay> tdecays(0);
+        ThermalParticle::ParticleDecaysVector tdecays(0);
 
         istringstream iss(elems[0]);
         if (!(iss >> tpdgid)) continue;
@@ -827,7 +835,7 @@ namespace thermalfist {
             if (elems.size() < 1 || elems[0].size() == 0)
               continue;
 
-            ParticleDecay tdecay;
+            ParticleDecayChannel tdecay;
             istringstream issdec(elems[0]);
             if (!(issdec >> tdecay.mBratio)) continue;
             int tmpid;
@@ -908,7 +916,7 @@ namespace thermalfist {
 
   void ThermalParticleSystem::ReadDecays_OldFormat(std::ifstream & fin)
   {
-    vector< vector<ParticleDecay> > decays(0);
+    vector< ThermalParticle::ParticleDecaysVector > decays(0);
     vector<int> pdgids(0);
     map<int, int> decaymap;
     decaymap.clear();
@@ -923,10 +931,10 @@ namespace thermalfist {
         double bratio;
         fin >> pdgid >> decaysnumber;
         decaymap[pdgid] = i;
-        decays.push_back(vector<ParticleDecay>(0));
+        decays.push_back(ThermalParticle::ParticleDecaysVector(0));
         pdgids.push_back(pdgid);
         for (unsigned int j = 0; j < decaysnumber; ++j) {
-          ParticleDecay decay;
+          ParticleDecayChannel decay;
           fin >> bratio;
           decay.mBratio = bratio / 100.;
           fin >> daughters;
@@ -998,25 +1006,6 @@ namespace thermalfist {
       ProcessDecays();
   }
 
-  /*void ThermalParticleSystem::SeparateDecaysIntoWeakAndStrong() {
-    set<int> weakPDG;
-    weakPDG.insert(310);
-    weakPDG.insert(3122); weakPDG.insert(-3122);
-    weakPDG.insert(3222); weakPDG.insert(-3222);
-    weakPDG.insert(3112); weakPDG.insert(-3112);
-    weakPDG.insert(3322); weakPDG.insert(-3322);
-    weakPDG.insert(3312); weakPDG.insert(-3312);
-    weakPDG.insert(3334); weakPDG.insert(-3334);
-
-    for (int i = 0; i < m_Particles.size(); ++i) {
-      if (weakPDG.count(m_Particles[i].PdgId()) > 0) {
-        m_Particles[i].SetDecayType(2);
-      }
-      else if (!m_Particles[i].IsStable()) m_Particles[i].SetDecayType(1);
-      else m_Particles[i].SetDecayType(0);
-    }
-  }*/
-
   const ThermalParticle & ThermalParticleSystem::Particle(int id) const
   {
     if (id < 0 || id >= m_Particles.size()) {
@@ -1057,6 +1046,9 @@ namespace thermalfist {
       if (m_Particles[i].Charm() != 0)           m_NumCharmed++;
       if (m_Particles[i].PdgId() > 0)            m_NumberOfParticles++;
     }
+
+    for (int i = 0; i < m_DecayContributionsByFeeddown.size(); ++i)
+      m_DecayContributionsByFeeddown[i].resize(m_Particles.size());
   }
 
   void ThermalParticleSystem::FinalizeList()
@@ -1065,7 +1057,7 @@ namespace thermalfist {
     //sort(m_Particles.begin(), m_Particles.end(), cmpParticlePDG);
     FillPdgMap();
     for (int i = 0; i < m_Particles.size(); ++i) {
-      if (m_Particles[i].DecayType() == ParticleDecay::Default)
+      if (m_Particles[i].DecayType() == ParticleDecayType::Default)
         m_Particles[i].SetDecayType( DecayTypeByParticleType(m_Particles[i]) );
     }
   }
@@ -1130,7 +1122,7 @@ namespace thermalfist {
     return ret;
   }
 
-  ParticleDecay::DecayType ThermalParticleSystem::DecayTypeByParticleType(const ThermalParticle &part)
+  ParticleDecayType::DecayType ThermalParticleSystem::DecayTypeByParticleType(const ThermalParticle &part)
   {
     // Check if it's a known stable (wrt to any time scale of relevance) particle
     set<int> stablePDG;
@@ -1142,7 +1134,7 @@ namespace thermalfist {
     stablePDG.insert(1000020040); stablePDG.insert(-1000020040); // He4
 
     if (stablePDG.count(part.PdgId()) > 0) {
-      return ParticleDecay::Stable;
+      return ParticleDecayType::Stable;
     }
     
     // Check if it's a known weakly decaying particle
@@ -1167,7 +1159,7 @@ namespace thermalfist {
     weakPDG.insert(4332); weakPDG.insert(-4332);  // Omegac
 
     if (weakPDG.count(part.PdgId()) > 0) {
-      return ParticleDecay::Weak;
+      return ParticleDecayType::Weak;
     }
 
     // Check if it's a known electromagnetically decaying particle
@@ -1178,33 +1170,36 @@ namespace thermalfist {
     emPDG.insert(3212); emPDG.insert(-3212); // Sigma0
 
     if (emPDG.count(part.PdgId()) > 0) {
-      return ParticleDecay::Electromagnetic;
+      return ParticleDecayType::Electromagnetic;
     }
 
     if (!part.IsStable()) // if particle not marked as stable assume it at least decays strongly
     {
-      return ParticleDecay::Strong;
+      return ParticleDecayType::Strong;
     }
     else {
       // if contains strangeness (or charm), not stable under weak decays
       if (part.AbsoluteStrangeness() != 0 || part.AbsoluteCharm() != 0)
-        return ParticleDecay::Weak;
+        return ParticleDecayType::Weak;
 
-      return ParticleDecay::Stable;
+      return ParticleDecayType::Stable;
     }
 
 
-    return ParticleDecay::Default;
+    return ParticleDecayType::Default;
   }
 
   void ThermalParticleSystem::FillResonanceDecaysByFeeddown() {
+    m_DecayContributionsByFeeddown[Feeddown::Weak].resize(m_Particles.size());
+    m_DecayContributionsByFeeddown[Feeddown::Electromagnetic].resize(m_Particles.size());
+    m_DecayContributionsByFeeddown[Feeddown::Strong].resize(m_Particles.size());
     for (int i = 0; i < m_Particles.size(); ++i) {
-      m_Particles[i].DecayContributionsByFeeddown()[static_cast<int>(Feeddown::Weak)].resize(0);
-      m_Particles[i].DecayContributionsByFeeddown()[static_cast<int>(Feeddown::Electromagnetic)].resize(0);
-      m_Particles[i].DecayContributionsByFeeddown()[static_cast<int>(Feeddown::Strong)].resize(0);
+      m_DecayContributionsByFeeddown[Feeddown::Weak][i].resize(0);
+      m_DecayContributionsByFeeddown[Feeddown::Electromagnetic][i].resize(0);
+      m_DecayContributionsByFeeddown[Feeddown::Strong][i].resize(0);
     }
     for (int i = m_Particles.size() - 1; i >= 0; i--)
-      if (m_Particles[i].DecayType() != ParticleDecay::Stable && m_Particles[i].DecayType() != ParticleDecay::Default) {
+      if (m_Particles[i].DecayType() != ParticleDecayType::Stable && m_Particles[i].DecayType() != ParticleDecayType::Default) {
         GoResonanceByFeeddown(i, i, 1., Feeddown::Type(static_cast<int>(m_Particles[i].DecayType())));
       }
   }
@@ -1212,7 +1207,8 @@ namespace thermalfist {
   void ThermalParticleSystem::GoResonanceByFeeddown(int ind, int startind, double BR, Feeddown::Type feeddown) {
     for (int feed_index = static_cast<int>(Feeddown::Weak); feed_index <= static_cast<int>(Feeddown::Strong); ++feed_index) {
       if (static_cast<int>(feeddown) < feed_index) continue;
-      std::vector< std::pair<double, int> >& decayContributions = m_Particles[ind].DecayContributionsByFeeddown()[feed_index];
+      //std::vector< std::pair<double, int> >& decayContributions = m_Particles[ind].DecayContributionsByFeeddown()[feed_index];
+      DecayContributionsToParticle& decayContributions = m_DecayContributionsByFeeddown[feed_index][ind];
       if (ind != startind && decayContributions.size() > 0 && decayContributions[decayContributions.size() - 1].second == startind)
       {
         decayContributions[decayContributions.size() - 1].first += BR;
@@ -1223,16 +1219,17 @@ namespace thermalfist {
     }
 
    
-    if (m_Particles[ind].DecayType() != ParticleDecay::Stable && m_Particles[ind].DecayType() != ParticleDecay::Default) {
+    if (m_Particles[ind].DecayType() != ParticleDecayType::Stable && m_Particles[ind].DecayType() != ParticleDecayType::Default) {
       for (int i = 0; i < m_Particles[ind].Decays().size(); ++i) {
-        double tbr = m_Particles[ind].Decays()[i].mBratio;
+        const ParticleDecayChannel& decaychannel = m_Particles[ind].Decays()[i];
+        double tbr = decaychannel.mBratio;
 
         if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && ind == startind)
-          tbr = m_Particles[ind].Decays()[i].mBratioAverage;
+          tbr = decaychannel.mBratioAverage;
 
-        for (int j = 0; j < m_Particles[ind].Decays()[i].mDaughters.size(); ++j) {
-          if (m_PDGtoID.count(m_Particles[ind].Decays()[i].mDaughters[j]) != 0)
-            GoResonanceByFeeddown(m_PDGtoID[m_Particles[ind].Decays()[i].mDaughters[j]], startind, BR*tbr, Feeddown::Type(static_cast<int>(m_Particles[ind].DecayType())));
+        for (int j = 0; j < decaychannel.mDaughters.size(); ++j) {
+          if (m_PDGtoID.count(decaychannel.mDaughters[j]) != 0)
+            GoResonanceByFeeddown(m_PDGtoID[decaychannel.mDaughters[j]], startind, BR*tbr, Feeddown::Type(static_cast<int>(m_Particles[ind].DecayType())));
         }
       }
     }

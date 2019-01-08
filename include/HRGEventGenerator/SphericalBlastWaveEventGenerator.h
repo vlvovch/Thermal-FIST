@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2015-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -16,20 +16,41 @@
 namespace thermalfist {
 
 
-  // Class for generating events from Thermal Model with Siemens-Rasmussen momentum distribution
+  /// \brief Class implementing the Thermal Event Generator for
+  ///        the isotropic blast-wave scenario
+  ///
+  /// Momentum distribution is based on the Siemens-Rasmussen formula
+  ///        
   class SphericalBlastWaveEventGenerator : public EventGeneratorBase
   {
   public:
+
     SphericalBlastWaveEventGenerator();
+
+    /**
+     * \brief Construct a new SphericalBlastWaveEventGenerator object
+     * 
+     * \param TPS    A pointer to the particle list
+     * \param config Event generator configuration
+     * \param Tkin   The kinetic freeze-out temperature (in GeV)      
+     * \param beta   Radial flow velocity
+     */
+    SphericalBlastWaveEventGenerator(ThermalParticleSystem *TPS, 
+                                     const EventGeneratorConfiguration& config,
+                                     double Tkin = 0.120, 
+                                     double beta = 0.5);
+
+    /// \deprecated
+    /// \brief Old constructor. Included for backward compatibility.
     SphericalBlastWaveEventGenerator(ThermalModelBase *THM, double T = 0.120, double beta = 0.5, bool onlyStable = false, EventGeneratorConfiguration::ModelType EV = EventGeneratorConfiguration::PointParticle, ThermalModelBase *THMEVVDW = NULL);
+    
     ~SphericalBlastWaveEventGenerator() { }
 
-    void SetParameters(double T, double beta);
+    /// Sets the momentum distribution parameters
+    void SetBlastWaveParameters(double Tkin, double beta);
 
-    void SetThermalModel(ThermalModelBase *THM, bool regen = true);
-
-    void SetMode(bool OnlyStable) { m_OnlyStable = OnlyStable; }
-
+    /// Sets up the random generators of particle momenta
+    /// and resonances masses
     void SetMomentumGenerators();
 
   private:

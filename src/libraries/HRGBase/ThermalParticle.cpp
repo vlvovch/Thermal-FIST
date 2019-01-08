@@ -22,32 +22,6 @@ using namespace std;
 
 namespace thermalfist {
 
-  double ParticleDecay::ModifiedWidth(double m) const
-  {
-    if (m < mM0) return 0.;
-    if (mM0 >= mPole)
-      return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.);
-    return mBratio * pow(1. - (mM0 / m)*(mM0 / m), mL + 1. / 2.) / pow(1. - (mM0 / mPole)*(mM0 / mPole), mL + 1. / 2.);
-  }
-
-  bool ParticleDecay::operator==(const ParticleDecay & rhs) const
-  {
-    bool ret = true;
-
-    ret &= mBratio == rhs.mBratio;
-    ret &= mDaughters == rhs.mDaughters;
-    ret &= mM0 == rhs.mM0;
-    ret &= mPole == rhs.mPole;
-    ret &= mL == rhs.mL;
-    ret &= mBratioVsM == rhs.mBratioVsM;
-    ret &= mBratioAverage == rhs.mBratioAverage;
-    ret &= mChannelName == rhs.mChannelName;
-
-    return ret;
-  }
-
-
-
   ThermalParticle::ThermalParticle(bool Stable, std::string Name, int PDGID, double Deg, int Stat, double Mass,
     int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
@@ -62,12 +36,7 @@ namespace thermalfist {
     SetResonanceWidthShape(RelativisticBreitWigner);
     SetResonanceWidthIntegrationType(BWTwoGamma);
 
-    m_DecayType = ParticleDecay::Default;
-
-    //m_DecayContributions.resize(0);
-    m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
-    m_DecayContributionsSigmas.resize(0);
-    m_DecayProbabilities.resize(0);
+    m_DecayType = ParticleDecayType::Default;
 
     FillCoefficients();
 
@@ -151,7 +120,7 @@ namespace thermalfist {
       char cc[400];
       double tmpbr;
       while (fin >> tmpbr) {
-        ParticleDecay decay;
+        ParticleDecayChannel decay;
         decay.mBratio = tmpbr / 100.;
         fin.getline(cc, 350);
         stringstream ss;
@@ -496,23 +465,23 @@ namespace thermalfist {
     }
 
 
-    // Output to file for debugging
-    /*{
-      char cc[300];
-      sprintf(cc, "%d_width.dat", PdgId());
-      FILE *f = fopen(cc, "w");
+    // // Output to file for debugging
+    // {
+    //   char cc[300];
+    //   sprintf(cc, "%d_width.dat", PdgId());
+    //   FILE *f = fopen(cc, "w");
 
-      for (int j = 0; j < m_xlegpdyn.size(); ++j)
-        fprintf(f, "%15lf%15E\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
+    //   for (int j = 0; j < m_xlegpdyn.size(); ++j)
+    //     fprintf(f, "%15lf%15E\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
 
-      for (int j = 0; j < m_xlegdyn.size(); ++j)
-        fprintf(f, "%15lf%15E\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
+    //   for (int j = 0; j < m_xlegdyn.size(); ++j)
+    //     fprintf(f, "%15lf%15E\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
 
-      for (int j = 0; j < m_xlagdyn.size(); ++j)
-        fprintf(f, "%15lf%15E\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
+    //   for (int j = 0; j < m_xlagdyn.size(); ++j)
+    //     fprintf(f, "%15lf%15E\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
 
-      fclose(f);
-    }*/
+    //   fclose(f);
+    // }
 
   }
 
@@ -560,15 +529,6 @@ namespace thermalfist {
 
   double ThermalParticle::ThermalMassDistribution(double M, double T, double Mu, double width)
   {
-    //if (m_ResonanceWidthIntegrationType == BWTwoGamma) {
-    //  double a = max(m_Threshold, m_Mass - 2.*m_Width);
-    //  double b = m_Mass + 2.*m_Width;
-    //  if (M < a || M > b)
-    //    return 0.;
-    //}
-    //ThermalModelParameters params;
-    //params.T = T;
-    //return Density(params, IdealGasFunctions::ParticleDensity, false, Mu) * MassDistribution(M, width);
     return IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, T, Mu, M, m_Degeneracy, m_ClusterExpansionOrder) * MassDistribution(M, width);
   }
 

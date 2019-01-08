@@ -39,7 +39,7 @@ namespace thermalfist {
     m_Volume = params.V;
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecayType::NumberOfDecayTypes, m_densitiestotal);
 
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
@@ -306,7 +306,7 @@ namespace thermalfist {
     m_Chem.resize(m_TPS->Particles().size());
     m_densities.resize(m_TPS->Particles().size());
     m_densitiestotal.resize(m_TPS->Particles().size());
-    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecay::NumberOfDecayTypes, m_densitiestotal);
+    m_densitiesbyfeeddown = std::vector< std::vector<double> >(ParticleDecayType::NumberOfDecayTypes, m_densitiestotal);
     m_wprim.resize(m_TPS->Particles().size());
     m_wtot.resize(m_TPS->Particles().size());
     m_skewprim.resize(m_TPS->Particles().size());
@@ -372,7 +372,8 @@ namespace thermalfist {
     int feed_index = static_cast<int>(Feeddown::StabilityFlag);
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       m_densitiestotal[i] = m_densities[i];
-      const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+      //const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+      const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[feed_index][i];
       for (int j = 0; j < decayContributions.size(); ++j)
         if (i != decayContributions[j].second) 
           m_densitiestotal[i] += decayContributions[j].first * m_densities[decayContributions[j].second];
@@ -384,7 +385,8 @@ namespace thermalfist {
     for (feed_index = static_cast<int>(Feeddown::Weak); feed_index <= static_cast<int>(Feeddown::Strong); ++feed_index) {
       for (int i = 0; i < m_TPS->Particles().size(); ++i) {
         m_densitiesbyfeeddown[feed_index][i] = m_densities[i];
-        const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+        //const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
+        const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[feed_index][i];
         for (int j = 0; j < decayContributions.size(); ++j)
           if (i != decayContributions[j].second)
             m_densitiesbyfeeddown[feed_index][i] += decayContributions[j].first * m_densities[decayContributions[j].second];
@@ -801,16 +803,19 @@ namespace thermalfist {
       //for(int j=0;j<NN;++j) 
     {
       m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
-      for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-        int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+      //for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
+      const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
+      for (int r = 0; r < decayContributions.size(); ++r) {
+        int rr = decayContributions[r].second;
       
-        m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
+        m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->DecayCumulants()[i][r].first[1];
+        //m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
       
-        m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+        m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * decayContributions[r].first;
       
-        for (int r2 = 0; r2 < m_TPS->Particles()[i].DecayContributions().size(); ++r2) {
-          int rr2 = m_TPS->Particles()[i].DecayContributions()[r2].second;
-          m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r2].first;
+        for (int r2 = 0; r2 < decayContributions.size(); ++r2) {
+          int rr2 = decayContributions[r2].second;
+          m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * decayContributions[r].first * decayContributions[r2].first;
         }
       }
     }
@@ -823,22 +828,25 @@ namespace thermalfist {
           if (j != i && m_TPS->Particles()[j].IsStable()) {
             m_TotalCorrel[i][j] = m_PrimCorrel[i][j];
 
-            for (int r = 0; r < m_TPS->Particles()[j].DecayContributions().size(); ++r) {
-              int rr = m_TPS->Particles()[j].DecayContributions()[r].second;
-              m_TotalCorrel[i][j] += m_PrimCorrel[i][rr] * m_TPS->Particles()[j].DecayContributions()[r].first;
+            const ThermalParticleSystem::DecayContributionsToParticle& decayContributionsI = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
+            const ThermalParticleSystem::DecayContributionsToParticle& decayContributionsJ = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][j];
+            
+            for (int r = 0; r < decayContributionsJ.size(); ++r) {
+              int rr = decayContributionsJ[r].second;
+              m_TotalCorrel[i][j] += m_PrimCorrel[i][rr] * decayContributionsJ[r].first;
             }
 
-            for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-              int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-              m_TotalCorrel[i][j] += m_PrimCorrel[j][rr] * m_TPS->Particles()[i].DecayContributions()[r].first;
+            for (int r = 0; r < decayContributionsI.size(); ++r) {
+              int rr = decayContributionsI[r].second;
+              m_TotalCorrel[i][j] += m_PrimCorrel[j][rr] * decayContributionsI[r].first;
             }
 
-            for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-              int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
+            for (int r = 0; r < decayContributionsI.size(); ++r) {
+              int rr = decayContributionsI[r].second;
 
-              for (int r2 = 0; r2 < m_TPS->Particles()[j].DecayContributions().size(); ++r2) {
-                int rr2 = m_TPS->Particles()[j].DecayContributions()[r2].second;
-                m_TotalCorrel[i][j] += m_PrimCorrel[rr][rr2] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[j].DecayContributions()[r2].first;
+              for (int r2 = 0; r2 < decayContributionsJ.size(); ++r2) {
+                int rr2 = decayContributionsJ[r2].second;
+                m_TotalCorrel[i][j] += m_PrimCorrel[rr][rr2] * decayContributionsI[r].first * decayContributionsJ[r2].first;
               }
             }
 
@@ -847,10 +855,11 @@ namespace thermalfist {
               if (r != i && r != j) { // && !m_TPS->Particles()[r].IsStable()) {
                 double nij = 0., ni = 0., nj = 0., dnij = 0.;
                 const ThermalParticle &tpart = m_TPS->Particle(r);
-                for (int br = 0; br < tpart.DecayDistributions().size(); ++br) {
-                  nij += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[i] * tpart.DecayDistributions()[br].second[j];
-                  ni  += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[i];
-                  nj  += tpart.DecayDistributions()[br].first * tpart.DecayDistributions()[br].second[j];
+                const ThermalParticleSystem::ResonanceFinalStatesDistribution &decayDistributions = m_TPS->ResonanceFinalStatesDistributions()[r];
+                for (int br = 0; br < decayDistributions.size(); ++br) {
+                  nij += decayDistributions[br].first * decayDistributions[br].second[i] * decayDistributions[br].second[j];
+                  ni  += decayDistributions[br].first * decayDistributions[br].second[i];
+                  nj  += decayDistributions[br].first * decayDistributions[br].second[j];
                 }
                 dnij = nij - ni * nj;
                 m_TotalCorrel[i][j] += m_densities[r] / m_Parameters.T * dnij;

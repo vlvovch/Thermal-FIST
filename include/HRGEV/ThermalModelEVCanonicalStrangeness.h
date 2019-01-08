@@ -90,9 +90,13 @@ namespace thermalfist {
     // Override functions end
 
   protected:
-    void PrepareModelEV();  /**< Creates the ThermalModelEVDiagonal copy */
+    /// Calculates the necessary auxiliary quantities
+    /// in the Diagonal EV model in the GCE consisting
+    /// of non-strange particles
+    void PrepareModelEV(); 
 
-    void CleanModelEV();    /**< Clears the ThermalModelEVDiagonal copy */
+    /// Clears m_modelEV
+    void ClearModelEV();    
 
     /// \copydoc thermalfist::ThermalModelEVDiagonal::MuShift()
     virtual double MuShift(int id);

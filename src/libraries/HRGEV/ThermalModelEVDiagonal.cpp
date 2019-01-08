@@ -279,35 +279,41 @@ namespace thermalfist {
     CalculateProxySusceptibilityMatrix();
     m_FluctuationsCalculated = true;
 
-    for (int i = 0; i < m_wtot.size(); ++i) {
-      double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
-      tmp2 = m_densities[i] * m_wprim[i];
-      tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
-      tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
-      for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
-        tmp2 += m_densities[m_TPS->Particles()[i].DecayContributions()[r].second] *
-          (m_wprim[m_TPS->Particles()[i].DecayContributions()[r].second] * m_TPS->Particles()[i].DecayContributions()[r].first * m_TPS->Particles()[i].DecayContributions()[r].first
-            + m_TPS->Particles()[i].DecayContributionsSigmas()[r].first);
-
-        int rr = m_TPS->Particles()[i].DecayContributions()[r].second;
-        double ni = m_TPS->Particles()[i].DecayContributions()[r].first;
-        tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]);
-        tmp3 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[2];
-
-        tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
-          + 6. * m_skewprim[rr] * ni * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-          + 3. * m_TPS->Particles()[i].DecayCumulants()[r].first[1] * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-          + 4. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[2]);
-
-        tmp4 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[3];
-      }
-
-      tmp1 = m_densitiestotal[i];
-
-      //m_wtot[i] = tmp2 / tmp1;
-      m_skewtot[i] = tmp3 / tmp2;
-      m_kurttot[i] = tmp4 / tmp2;
+    for (int i = 0; i < m_wprim.size(); ++i) {
+      m_skewtot[i] = 1.;
+      m_kurttot[i] = 1.;
     }
+
+    //for (int i = 0; i < m_wtot.size(); ++i) {
+    //  double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
+    //  tmp2 = m_densities[i] * m_wprim[i];
+    //  tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
+    //  tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
+    //  const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
+    //  for (int r = 0; r < decayContributions.size(); ++r) {
+    //    tmp2 += m_densities[decayContributions[r].second] *
+    //      (m_wprim[decayContributions[r].second] * decayContributions[r].first * decayContributions[r].first
+    //        + m_TPS->Particles()[i].DecayContributionsSigmas()[r].first);
+
+    //    int rr = decayContributions[r].second;
+    //    double ni = decayContributions[r].first;
+    //    tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]);
+    //    tmp3 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[2];
+
+    //    tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
+    //      + 6. * m_skewprim[rr] * ni * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
+    //      + 3. * m_TPS->Particles()[i].DecayCumulants()[r].first[1] * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
+    //      + 4. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[2]);
+
+    //    tmp4 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[3];
+    //  }
+
+    //  tmp1 = m_densitiestotal[i];
+
+    //  //m_wtot[i] = tmp2 / tmp1;
+    //  m_skewtot[i] = tmp3 / tmp2;
+    //  m_kurttot[i] = tmp4 / tmp2;
+    //}
   }
 
 

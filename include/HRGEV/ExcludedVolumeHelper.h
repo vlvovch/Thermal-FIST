@@ -9,6 +9,7 @@
 #define EXCLUDEDVOLUMEHELPER_H
 
 #include "HRGBase/xMath.h"
+#include "HRGBase/ThermalModelBase.h"
 #include <cmath>
 
 /**
@@ -49,6 +50,20 @@ namespace thermalfist {
      * \return double  Virial coefficient (fm\f$^3\f$)
      */
     inline double brr(double r1, double r2) { return (2. * xMath::Pi() / 3.) * pow(r1 + r2, 3); }
+
+    /**
+     * \brief Returns the matrix of excluded volume
+     *        coefficients \f$ \tilde{b}_{ij} \f$
+     *        of an HRG model
+     */
+    std::vector< std::vector<double> > bijMatrix(const ThermalModelBase* model);
+
+    /**
+     * \brief Returns the matrix of van der Waals attraction
+     *        coefficients \f$ a_{ij} \f$
+     *        of an HRG model
+     */
+    std::vector< std::vector<double> > aijMatrix(const ThermalModelBase* model);
 
   }
 
