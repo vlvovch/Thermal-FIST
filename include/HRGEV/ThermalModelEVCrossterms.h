@@ -220,7 +220,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianCRS(ThermalModelEVCrossterms *model) : BroydenJacobian(), m_THM(model) { }
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
     private:
       ThermalModelEVCrossterms *m_THM;
     };

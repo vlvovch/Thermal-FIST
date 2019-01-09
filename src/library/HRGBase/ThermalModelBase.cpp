@@ -1007,7 +1007,7 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelBase::BroydenJacobianChem::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelBase::BroydenJacobianChem::Jacobian(const std::vector<double>& x)
   {
     int i1 = 0;
     // Analytic calculations of Jacobian not yet supported if entropy per baryon is involved
@@ -1226,7 +1226,13 @@ namespace thermalfist {
       i1++;
     }
 
-    return ret;
+    std::vector<double> retVec(NNN*NNN, 0);
+    for (int i = 0; i < NNN; ++i)
+      for (int j = 0; j < NNN; ++j)
+        retVec[i*NNN + j] = ret(i, j);
+
+
+    return retVec;
   }
 
   std::vector<double> ThermalModelBase::BroydenChem::Solve(const std::vector<double>& x0, BroydenSolutionCriterium * solcrit, int max_iterations)
@@ -1276,8 +1282,7 @@ namespace thermalfist {
 
     xold = VectorXd::Map(&xcur[0], xcur.size());
 
-    MatrixXd Jac(N, N), Jinv(N, N);
-    Jac = JacobianInUse->Jacobian(xcur);
+    MatrixXd Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
 
     bool constrmuB = m_THM->ConstrainMuB();
     bool constrmuQ = m_THM->ConstrainMuQ();
@@ -1331,7 +1336,7 @@ namespace thermalfist {
       return xcur;
     }
 
-    Jinv = Jac.inverse();
+    MatrixXd Jinv = Jac.inverse();
     tmpvec = m_Equations->Equations(xcur);
     fold = VectorXd::Map(&tmpvec[0], tmpvec.size());
 
@@ -1371,7 +1376,7 @@ namespace thermalfist {
       }
       else // Use Newton's method
       {
-        Jac = JacobianInUse->Jacobian(xcur);
+        Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
         Jinv = Jac.inverse();
       }
 
@@ -1453,7 +1458,7 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelBase::BroydenJacobianChemTotals::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelBase::BroydenJacobianChemTotals::Jacobian(const std::vector<double>& x)
   {
     int NNN = 0;
     for (int i = 0; i < 4; ++i) NNN += m_Constr[i];
@@ -1536,7 +1541,13 @@ namespace thermalfist {
       }
     }
 
-    return ret;
+    std::vector<double> retVec(NNN*NNN, 0);
+    for (int i = 0; i < NNN; ++i)
+      for (int j = 0; j < NNN; ++j)
+        retVec[i*NNN + j] = ret(i, j);
+
+
+    return retVec;
   }
 
 } // namespace thermalfist

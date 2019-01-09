@@ -540,43 +540,6 @@ namespace thermalfist {
       m_skewtot[i] = 1.;
       m_kurttot[i] = 1.;
     }
-
-    //for (int i = 0; i < m_wprim.size(); ++i) {
-    //  //m_wprim[i] = CalculateParticleScaledVariance(i);
-    //  m_skewprim[i] = 1.;//CalculateParticleSkewness(i);
-    //  m_kurtprim[i] = 1.;//CalculateParticleKurtosis(i);
-    //}
-    //for (int i = 0; i < m_wtot.size(); ++i) {
-    //  double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
-    //  tmp2 = m_densities[i] * m_wprim[i];
-    //  tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
-    //  tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
-    //  const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
-    //  for (int r = 0; r < decayContributions.size(); ++r) {
-    //    const ThermalParticleSystem::SingleDecayContribution& decayContrib = decayContrib;
-    //    const ThermalParticleSystem::SingleDecayCumulantsContribution& decayCumulantsSingle = m_TPS->DecayCumulants()[i][r];
-    //    tmp2 += m_densities[decayContrib.second] *
-    //      (m_wprim[decayContrib.second] * decayContrib.first * decayContrib.first
-    //        + decayCumulantsSingle.first[1]);
-
-    //    int rr = decayContrib.second;
-    //    double ni = decayContrib.first;
-    //    tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * decayCumulantsSingle.first[1]);
-    //    tmp3 += m_densities[rr] * decayCumulantsSingle.first[2];
-
-    //    tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
-    //      + 6. * m_skewprim[rr] * ni * ni * decayCumulantsSingle.first[1]
-    //      + 3. * decayCumulantsSingle.first[1] * decayCumulantsSingle.first[1]
-    //      + 4. * ni * decayCumulantsSingle.first[2]);
-
-    //    tmp4 += m_densities[rr] * decayCumulantsSingle.first[3];
-    //  }
-
-    //  tmp1 = m_densitiestotal[i];
-
-    //  m_skewtot[i] = tmp3 / tmp2;
-    //  m_kurttot[i] = tmp4 / tmp2;
-    //}
   }
 
   std::vector<double> ThermalModelEVCrossterms::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
@@ -806,7 +769,7 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelEVCrossterms::BroydenJacobianCRS::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelEVCrossterms::BroydenJacobianCRS::Jacobian(const std::vector<double>& x)
   {
     int N = x.size();
 
@@ -815,16 +778,16 @@ namespace thermalfist {
       tN[i] = m_THM->DensityId(i, x);
     }
 
-    MatrixXd Jac(N, N), Jinv(N, N);
+    vector<double> ret(N*N, 0.);
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
-        Jac(i, j) = 0.;
-        if (i == j) Jac(i, j) += 1.;
-        Jac(i, j) += m_THM->VirialCoefficient(i, j) * tN[i];
+        if (i == j) 
+          ret[i*N + j] += 1.;
+        ret[i*N + j] += m_THM->VirialCoefficient(i, j) * tN[i];
       }
     }
 
-    return Jac;
+    return ret;
   }
 
   bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const

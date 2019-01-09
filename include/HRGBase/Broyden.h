@@ -16,8 +16,6 @@
 
 #include <vector>
 
-#include <Eigen/Dense>
-
 namespace thermalfist {
 
   /**
@@ -96,14 +94,15 @@ namespace thermalfist {
      * \brief Evaluates the Jacobian for given values of the variables.
      * 
      * \param x Vector of the variables' values.
-     * \return Eigen::MatrixXd Eigen Matrix object
-     * with the computed Jacobian.
+     * \return std::vector<double> The computed Jacobian matrix. 
+     *         Returns a vector of matrix elements stored in a RowMajor ordering.
+     * 
      * Here finite differences are used to approximates
      * the derivatives. This method can be overriden in
      * a derived class e.g. to implement analytic
      * calculations for a specific system of equations. 
      */
-    virtual Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+    virtual std::vector<double> Jacobian(const std::vector<double> &x);
 
     /**
      * \brief Set the finite variable difference value 

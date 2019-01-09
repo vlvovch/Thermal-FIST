@@ -961,7 +961,7 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelVDW::BroydenJacobianVDW::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelVDW::BroydenJacobianVDW::Jacobian(const std::vector<double>& x)
   {
     int NN = m_THM->m_densities.size();
     int NNdmu = m_THM->m_MapFromdMuStar.size();
@@ -980,7 +980,7 @@ namespace thermalfist {
     MatrixXd densMatrix(NNdmu, NNdmu);
     VectorXd solVector(NNdmu), xVector(NNdmu);
 
-    MatrixXd Jac(NNdmu, NNdmu), Jinv(NNdmu, NNdmu);
+    std::vector<double> ret(NNdmu*NNdmu, 0.);
     {
       vector<double> Ps(NN, 0.);
       for (int i = 0; i<NN; ++i)
@@ -1083,17 +1083,16 @@ namespace thermalfist {
 
 
         for (int k = 0; k < NNdmu; ++k) {
-          Jac(k, kp) = 0.;
           if (k == kp)
-            Jac(k, kp) += 1.;
+            ret[k*NNdmu + kp] += 1.;
           for (int m = 0; m < m_THM->m_dMuStarIndices[kp].size(); ++m) {
             int tj = m_THM->m_dMuStarIndices[kp][m];
-            Jac(k, kp) += m_THM->m_Virial[m_THM->m_MapFromdMuStar[k]][tj] * ns[tj];
+            ret[k*NNdmu + kp] += m_THM->m_Virial[m_THM->m_MapFromdMuStar[k]][tj] * ns[tj];
           }
 
           if (attrfl) {
             for (int j = 0; j < NN; ++j) {
-              Jac(k, kp) += -(m_THM->m_Attr[m_THM->m_MapFromdMuStar[k]][j] + m_THM->m_Attr[j][m_THM->m_MapFromdMuStar[k]]) * dnjdmukp[j];
+              ret[k*NNdmu + kp] += -(m_THM->m_Attr[m_THM->m_MapFromdMuStar[k]][j] + m_THM->m_Attr[j][m_THM->m_MapFromdMuStar[k]]) * dnjdmukp[j];
             }
           }
         }
@@ -1101,7 +1100,7 @@ namespace thermalfist {
       }
     }
 
-    return Jac;
+    return ret;
   }
 
   bool ThermalModelVDW::BroydenSolutionCriteriumVDW::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const

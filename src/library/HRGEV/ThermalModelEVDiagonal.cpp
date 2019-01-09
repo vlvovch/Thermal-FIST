@@ -269,10 +269,6 @@ namespace thermalfist {
 
   // TODO include correlations
   void ThermalModelEVDiagonal::CalculateFluctuations() {
-    for (int i = 0; i < m_wprim.size(); ++i) {
-      m_skewprim[i] = ParticleSkewness(i);
-      m_kurtprim[i] = ParticleKurtosis(i);
-    }
     CalculateTwoParticleCorrelations();
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
@@ -280,40 +276,14 @@ namespace thermalfist {
     m_FluctuationsCalculated = true;
 
     for (int i = 0; i < m_wprim.size(); ++i) {
+      m_skewprim[i] = ParticleSkewness(i);
+      m_kurtprim[i] = ParticleKurtosis(i);
+    }
+
+    for (int i = 0; i < m_wprim.size(); ++i) {
       m_skewtot[i] = 1.;
       m_kurttot[i] = 1.;
     }
-
-    //for (int i = 0; i < m_wtot.size(); ++i) {
-    //  double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
-    //  tmp2 = m_densities[i] * m_wprim[i];
-    //  tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
-    //  tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
-    //  const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
-    //  for (int r = 0; r < decayContributions.size(); ++r) {
-    //    tmp2 += m_densities[decayContributions[r].second] *
-    //      (m_wprim[decayContributions[r].second] * decayContributions[r].first * decayContributions[r].first
-    //        + m_TPS->Particles()[i].DecayContributionsSigmas()[r].first);
-
-    //    int rr = decayContributions[r].second;
-    //    double ni = decayContributions[r].first;
-    //    tmp3 += m_densities[rr] * m_wprim[rr] * (m_skewprim[rr] * ni * ni * ni + 3. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]);
-    //    tmp3 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[2];
-
-    //    tmp4 += m_densities[rr] * m_wprim[rr] * (m_kurtprim[rr] * ni * ni * ni * ni
-    //      + 6. * m_skewprim[rr] * ni * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-    //      + 3. * m_TPS->Particles()[i].DecayCumulants()[r].first[1] * m_TPS->Particles()[i].DecayCumulants()[r].first[1]
-    //      + 4. * ni * m_TPS->Particles()[i].DecayCumulants()[r].first[2]);
-
-    //    tmp4 += m_densities[rr] * m_TPS->Particles()[i].DecayCumulants()[r].first[3];
-    //  }
-
-    //  tmp1 = m_densitiestotal[i];
-
-    //  //m_wtot[i] = tmp2 / tmp1;
-    //  m_skewtot[i] = tmp3 / tmp2;
-    //  m_kurttot[i] = tmp4 / tmp2;
-    //}
   }
 
 
@@ -594,18 +564,17 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelEVDiagonal::BroydenJacobianDEV::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelEVDiagonal::BroydenJacobianDEV::Jacobian(const std::vector<double>& x)
   {
     double pressure = m_mnc * exp(x[0]);
 
-    MatrixXd Jac(1, 1);
-    Jac(0, 0) = 0.;
+    double ret = 0.;
     for (int i = 0; i < m_THM->Densities().size(); ++i)
-      Jac(0, 0) += m_THM->VirialCoefficient(i, i) * m_THM->DensityId(i, pressure);
-    Jac(0, 0) += 1.;
-    Jac(0, 0) *= pressure;
+      ret += m_THM->VirialCoefficient(i, i) * m_THM->DensityId(i, pressure);
+    ret += 1.;
+    ret *= pressure;
 
-    return Jac;
+    return std::vector<double>(1, ret);
   }
 
   std::vector<double> ThermalModelEVDiagonal::BroydenEquationsDEVOrig::Equations(const std::vector<double>& x)
@@ -615,17 +584,16 @@ namespace thermalfist {
     return ret;
   }
 
-  Eigen::MatrixXd ThermalModelEVDiagonal::BroydenJacobianDEVOrig::Jacobian(const std::vector<double>& x)
+  std::vector<double> ThermalModelEVDiagonal::BroydenJacobianDEVOrig::Jacobian(const std::vector<double>& x)
   {
     const double &pressure = x[0];
 
-    MatrixXd Jac(1, 1);
-    Jac(0, 0) = 0.;
+    double ret = 0.;
     for (int i = 0; i < m_THM->Densities().size(); ++i)
-      Jac(0, 0) += m_THM->VirialCoefficient(i, i) * m_THM->DensityId(i, pressure);
-    Jac(0, 0) += 1.;
+      ret += m_THM->VirialCoefficient(i, i) * m_THM->DensityId(i, pressure);
+    ret += 1.;
 
-    return Jac;
+    return std::vector<double>(1, ret);
   }
 
   bool ThermalModelEVDiagonal::BroydenSolutionCriteriumDEV::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const

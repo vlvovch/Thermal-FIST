@@ -1116,7 +1116,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianChem(ThermalModelBase *model) : BroydenJacobian(), m_THM(model) { }
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
     private:
       ThermalModelBase *m_THM;
     };
@@ -1148,7 +1148,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianChemTotals(const std::vector<int> & vConstr, const std::vector<int> & vType, const std::vector<double> & vTotals, ThermalModelBase *model) : BroydenJacobian(), m_Constr(vConstr), m_Type(vType), m_Totals(vTotals), m_THM(model) { }
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
     private:
       std::vector<int> m_Constr;
       std::vector<int> m_Type;

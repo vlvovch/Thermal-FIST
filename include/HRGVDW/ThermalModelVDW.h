@@ -312,7 +312,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianVDW(ThermalModelVDW *model) : BroydenJacobian(), m_THM(model) { }
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
     private:
       ThermalModelVDW *m_THM;
     };

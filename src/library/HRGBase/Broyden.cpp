@@ -9,6 +9,9 @@
 
 #include <cmath>
 
+#include <Eigen/Dense>
+
+
 using namespace Eigen;
 
 using namespace std;
@@ -20,18 +23,16 @@ namespace thermalfist {
   const int    Broyden::MAX_ITERS   = 200;
 
 
-  MatrixXd BroydenJacobian::Jacobian(const std::vector<double>& x)
+  std::vector<double> BroydenJacobian::Jacobian(const std::vector<double>& x)
   {
     if (m_Equations == NULL) {
       printf("**ERROR** BroydenJacobian::Jacobian: Equations to solve not specified!\n");
       exit(1);
-      //return MatrixXd();
     }
 
     if (m_Equations->Dimension() != x.size()) {
       printf("**ERROR** BroydenJacobian::Jacobian: Equations dimension does not match that of input!\n");
       exit(1);
-      //return MatrixXd();
     }
 
     int N = m_Equations->Dimension();
@@ -56,7 +57,7 @@ namespace thermalfist {
       }
     }
 
-    MatrixXd Jac(N,N);
+    std::vector<double> Jac(N*N);
 
     std::vector<double> fx = m_Equations->Equations(x);
 
@@ -64,7 +65,7 @@ namespace thermalfist {
       std::vector<double> dfdxj = m_Equations->Equations(xh[j]);
       for (int i = 0; i < dfdxj.size(); ++i) {
         dfdxj[i] = (dfdxj[i] - fx[i]) / h[j];
-        Jac(i, j) = dfdxj[i];
+        Jac[i*N + j] = dfdxj[i];
       }
     }
     
@@ -102,8 +103,7 @@ namespace thermalfist {
 
     xold = VectorXd::Map(&xcur[0], xcur.size());
 
-    MatrixXd Jac(N, N), Jinv(N, N);
-    Jac = JacobianInUse->Jacobian(xcur);
+    MatrixXd Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
 
     if (Jac.determinant() == 0.0)
     {
@@ -111,7 +111,7 @@ namespace thermalfist {
       return xcur;
     }
 
-    Jinv   = Jac.inverse();
+    MatrixXd Jinv = Jac.inverse();
     tmpvec = m_Equations->Equations(xcur);
     fold   = VectorXd::Map(&tmpvec[0], tmpvec.size());
 
@@ -152,7 +152,7 @@ namespace thermalfist {
       }
       else // Use Newton's method
       {
-        Jac = JacobianInUse->Jacobian(xcur);
+        Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
         Jinv = Jac.inverse();
       }
 

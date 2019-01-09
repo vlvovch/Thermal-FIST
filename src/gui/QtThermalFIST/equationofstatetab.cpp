@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 
 #include <QLayout>
 #include <QGroupBox>

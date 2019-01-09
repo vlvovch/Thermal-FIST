@@ -275,7 +275,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianDEV(ThermalModelEVDiagonal *model) : BroydenJacobian(), m_THM(model) { m_mnc = 1.; }
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
       void SetMnc(double mnc) { m_mnc = mnc; }
     private:
       ThermalModelEVDiagonal *m_THM;
@@ -304,7 +304,7 @@ namespace thermalfist {
     {
     public:
       BroydenJacobianDEVOrig(ThermalModelEVDiagonal *model) : BroydenJacobian(), m_THM(model) {}
-      Eigen::MatrixXd Jacobian(const std::vector<double> &x);
+      std::vector<double> Jacobian(const std::vector<double> &x);
     private:
       ThermalModelEVDiagonal *m_THM;
     };
