@@ -11,9 +11,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-#include_directories ("${PROJECT_SOURCE_DIR}/HRGlib/include;${PROJECT_SOURCE_DIR}/EVHRGlib/include;${PROJECT_SOURCE_DIR}/HRGEventGeneratorlib/include;${PROJECT_SOURCE_DIR}/ThermalModelFitlib/include")
-#include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
-
 file (GLOB QTHRG_SOURCES 
       "*.h" , 
       "*.cxx" , 
@@ -42,8 +39,10 @@ endif()
 
 # Use the Widgets module from Qt 5.
 target_link_libraries(QtThermalFIST ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
-set_property(TARGET QtThermalFIST PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+target_include_directories(QtThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot")
+
+set_property(TARGET QtThermalFIST PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 set_property(TARGET QtThermalFIST PROPERTY FOLDER "GUI")
 

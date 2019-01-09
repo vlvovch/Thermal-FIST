@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 
 # Maps to Visual Studio solution file (Tutorial.sln)
 # The solution will have all targets (exe, lib, dll) 
@@ -28,6 +28,12 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+if (NOT EIGEN3_INCLUDE_DIR)
+   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Eigen3" CACHE STRING
+      "Choose the location (include directory) of the Eigen3 library to use."
+      FORCE)
+endif(NOT EIGEN3_INCLUDE_DIR)
+
 if(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
    message(STATUS "WARNING! It seems you are compiling without optimization. Please set CMAKE_BUILD_TYPE=Release for optimization.")
 endif(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
@@ -50,23 +56,6 @@ else(MSVC)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif(MSVC)
 
-if(MSVC)
-else(MSVC)
-#set(CMAKE_BUILD_TYPE Release)
-endif(MSVC)
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-#list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-#message ( ${CMAKE_PREFIX_PATH} )
-#list(APPEND CMAKE_MODULE_PATH $ENV{ROOTSYS}/etc/cmake)
-
-#find_package(ROOT COMPONENTS Core MathCore Matrix Minuit2)
-
-#if(NOT STANDALONE_MINUIT)
-#   set(STANDALONE_MINUIT 0)
-#endif(NOT STANDALONE_MINUIT)
 
 option (STANDALONE_MINUIT 
         "Build Minuit2 within project instead of linking one from ROOT distribution" OFF) 
@@ -83,16 +72,15 @@ else(result)
   endif()
 endif(result)
 
-#set(USE_MINUIT 1)
 add_definitions(-DUSE_MINUIT)
 
-#message (${ROOT_FOUND})
-
-if (ROOT_FOUND)
+if(NOT STANDALONE_MINUIT)
 add_definitions(-DUSE_ROOT)
-else (ROOT_FOUND)
-message(WARNING "ROOT not found! Minuit2 will be built as a standalone package")
-endif (ROOT_FOUND)
+message(STATUS "Minuit2 from ROOT installation will be used")
+else(NOT STANDALONE_MINUIT)
+message(STATUS "Minuit2 library will be built as a standalone package")
+add_subdirectory(thirdparty/Minuit2)
+endif(NOT STANDALONE_MINUIT)
 
 OPTION (USE_OpenMP "Use OpenMP" OFF)
 if(USE_OpenMP)

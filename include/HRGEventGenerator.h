@@ -7,7 +7,6 @@
  */
 #include "HRGEventGenerator/Acceptance.h"
 #include "HRGEventGenerator/EventGeneratorBase.h"
-#include "MersenneTwister/MersenneTwister.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 #include "HRGEventGenerator/RandomGenerators.h"

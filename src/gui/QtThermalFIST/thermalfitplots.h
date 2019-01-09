@@ -8,7 +8,7 @@
 #ifndef THERMALFITPLOTS_H
 #define THERMALFITPLOTS_H
 
-#include "QCustomPlot/qcustomplot.h"
+#include "qcustomplot.h"
 #include "HRGFit/ThermalModelFit.h"
 
 std::string BeautifyName(std::string name);

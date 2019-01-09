@@ -1,5 +1,12 @@
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
+
+# Properties->C/C++->General->Additional Include Directories
+include_directories ("${PROJECT_SOURCE_DIR}/include" 
+"${PROJECT_BINARY_DIR}/include" 
+"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister" 
+"${EIGEN3_INCLUDE_DIR}")
+
 # Base part of the library  
 set(SRCS_HRGBase
 HRGBase/Broyden.cpp
@@ -73,15 +80,6 @@ ${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWCanonicalStrangeness.h
 source_group("HRGVDW\\Header Files" FILES ${HEADERS_HRGVDW})
 
 # Fitter
-file (GLOB HRGFIT_SOURCES_MINUIT
-      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/src/*.cpp"
-      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/src/*.cxx")
-
-file (GLOB HRGFIT_HEADERS_MINUIT
-      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include/Minuit2/*.h")
-
-file (GLOB HRGFIT_HEADERS_MINUIT_MATH
-      "${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include/Math/*.h")
 	  
 set(SRCS_HRGFit
 HRGFit/ThermalModelFit.cpp
@@ -95,14 +93,6 @@ ${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFit.h
 ${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFitParameters.h
 ${PROJECT_SOURCE_DIR}/include/HRGFit/ThermalModelFitQuantities.h
 )
-
-if (STANDALONE_MINUIT)
-  set(SRCS_HRGFit
-      ${SRCS_HRGFit}
-      ${HRGFIT_SOURCES_MINUIT}
-  )
-  source_group("HRGFit\\Minuit2" FILES ${HRGFIT_SOURCES_MINUIT})
-endif()
 
 
 source_group("HRGFit\\Header Files" FILES ${HEADERS_HRGFit})	  
@@ -135,40 +125,32 @@ ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 
 source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator})
 
-# Create named folders for the sources within the .vcproj
-# Empty name lists them directly under the .vcproj
-# source_group("HRG" FILES ${HRG_SOURCES})
 
-# Properties->C/C++->General->Additional Include Directories
-include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/thirdparty")
-if (STANDALONE_MINUIT)
-  include_directories("${PROJECT_SOURCE_DIR}/thirdparty/Minuit/include")
-endif()
 
-if (ROOT_FOUND AND NOT STANDALONE_MINUIT)
+if (NOT STANDALONE_MINUIT)
 include_directories ("$ENV{ROOTSYS}/include/root") 
 include_directories ("$ENV{ROOTSYS}/include") 
-endif (ROOT_FOUND AND NOT STANDALONE_MINUIT)
+endif (NOT STANDALONE_MINUIT)
 
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
 add_library(ThermalFIST ${SRCS_HRGBase} ${HEADERS_HRGBase} ${SRCS_HRGEV} ${HEADERS_HRGEV} ${SRCS_HRGVDW} ${HEADERS_HRGVDW} ${SRCS_HRGFit} ${HEADERS_HRGFit} ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator})
 
-if (ROOT_FOUND AND NOT STANDALONE_MINUIT)
+if (NOT STANDALONE_MINUIT)
 find_library (MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
 message (${MINUIT2_LIB})
 target_link_libraries(ThermalFIST ${MINUIT2_LIB})
-endif (ROOT_FOUND AND NOT STANDALONE_MINUIT)
+else (NOT STANDALONE_MINUIT)
+target_link_libraries(ThermalFIST Minuit2)
+endif (NOT STANDALONE_MINUIT)
 
 set_property(TARGET ThermalFIST PROPERTY FOLDER "libraries")
 
-# Creates folder "libraries" and adds target project (math.vcproj)
-# set_property(TARGET libHRG PROPERTY FOLDER "libraries")
-
-#set_property(TARGET CuteHRG PROPERTY CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-
-target_include_directories(ThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/thirdparty")
+target_include_directories(ThermalFIST PUBLIC 
+"${PROJECT_SOURCE_DIR}/include" 
+"${PROJECT_BINARY_DIR}/include"
+"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister")
 
 install (TARGETS ThermalFIST
          ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)

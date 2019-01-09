@@ -25,7 +25,7 @@
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
-#include "QCustomPlot/qcustomplot.h"
+#include "qcustomplot.h"
 
 using namespace thermalfist;
 

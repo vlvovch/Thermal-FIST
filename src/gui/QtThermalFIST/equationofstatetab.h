@@ -20,7 +20,7 @@
 #include <map>
 
 #include "HRGBase/ThermalModelBase.h"
-#include "QCustomPlot/qcustomplot.h"
+#include "qcustomplot.h"
 #include "BaseStructures.h"
 #include "configwidgets.h"
 #include "HRGBase/xMath.h"

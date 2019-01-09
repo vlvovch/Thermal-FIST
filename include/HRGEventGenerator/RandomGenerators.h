@@ -10,7 +10,7 @@
 
 #include <cmath>
 
-#include "MersenneTwister/MersenneTwister.h"
+#include "MersenneTwister.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGBase/ThermalParticle.h"
 
