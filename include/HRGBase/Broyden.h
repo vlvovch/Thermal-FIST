@@ -14,6 +14,7 @@
 #ifndef BROYDEN_H
 #define BROYDEN_H
 
+#include <cstddef>
 #include <vector>
 
 namespace thermalfist {

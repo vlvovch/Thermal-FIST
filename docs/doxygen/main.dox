@@ -21,7 +21,7 @@ Some examples of using the library in a C++ program can be found in [**Examples*
 The package also includes the graphical user interface frontend -- **QtThermalFIST**.
 Some of the typical thermal model analysis, such as calculating
 the equation of state properties or performing the thermal fits,
-can be done in GUI. Using the can therefore be a good starting point. 
+can be done in GUI. Using the GUI can therefore be a good starting point. 
 See the <a href="https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"><b>Quick Start Guide</b></a> to get started.
 
 An example of using the Thermal-FIST library as a git submodule can be found
