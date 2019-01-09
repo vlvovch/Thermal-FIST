@@ -1,4 +1,4 @@
-## Thermal-FIST: Quick start guide
+# Thermal-FIST: Quick start guide
 
 ### External dependencies
 

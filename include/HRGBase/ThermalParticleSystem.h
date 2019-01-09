@@ -451,6 +451,7 @@ namespace thermalfist {
     std::vector<ResonanceFinalStatesDistribution> m_DecayDistributionsMap;
   };
 
+  /// Contains several helper routines.
   namespace CuteHRGHelper {
     std::vector<std::string> split(const std::string &s, char delim);
     void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 1000);

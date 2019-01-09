@@ -15,10 +15,9 @@ target_link_libraries (BagModelFit ThermalFIST)
 
 # Creates a folder "executables" and adds target 
 # project (app.vcproj) under it
-set_property(TARGET BagModelFit PROPERTY FOLDER "routines")
-#set_property(TARGET BagModelFit PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/routines")
+set_property(TARGET BagModelFit PROPERTY FOLDER "examples")
 
 # Adds logic to INSTALL.vcproj to copy app.exe to destination directory
 install (TARGETS BagModelFit
-         RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin/routines)
+         RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin/examples)
 		 

@@ -19,6 +19,8 @@
 
 namespace thermalfist {
 
+  /// \brief Contains various Gauss-Legendre and Gauss-Laguerre quadratures
+  ///        used in numerical integrations.
   namespace NumericalIntegration {
 
     /**

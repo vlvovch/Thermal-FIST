@@ -107,12 +107,10 @@ namespace thermalfist {
       ret[0].MotherPDGID = Mother.PDGID;
       ret[1].MotherPDGID = Mother.PDGID;
 
-#ifdef DEBUGDECAYS
       for (int i = 0; i < ret.size(); ++i)
         if (ret[i].px != ret[i].px) {
-          std::cout << "2BodyBug!\n";
+          printf("**WARNING** Issue in a two-body decay!\n");
         }
-#endif
 
       return ret;
     }

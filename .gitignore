@@ -14,3 +14,6 @@ local*/*
 .vs/*
 
 .vscode/*
+
+# Doxygen
+docs/doxygen/html*

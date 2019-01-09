@@ -8,8 +8,6 @@
 #ifndef PARTICLEDECAYS_H
 #define PARTICLEDECAYS_H
 
-#define DEBUGDECAYS
-
 #include <cmath>
 #include <vector>
 #include <map>

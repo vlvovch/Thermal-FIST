@@ -24,9 +24,9 @@ using namespace std;
 using namespace thermalfist;
 #endif
 
-// Fits within Bag Model, as in 1512.08046
-// First the global fit
-// Then, the chi2 profile
+// Fits within the excluded-volume HRG in a bag model scaling, as in 1512.08046
+// First does the global fit
+// Then computes the chi2 profile
 // Usage: BagModelFit <rp> <Tmin> <Tmax> <dT>
 int main(int argc, char *argv[])
 {
@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 	// Create the EV-HRG ThermalModel instance
 	ThermalModelEVDiagonal model(&TPS);
 
-	// Use finite resonance width
-	model.SetUseWidth(true);
+	// Use finite resonance widths (energy-independent Breit-Wigner)
+	model.SetUseWidth(ThermalParticle::BWTwoGamma);
 
 	// Include quantum statistics
 	model.SetStatistics(true);
@@ -117,3 +117,30 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+
+/**
+ * \example BagModel.cpp
+ * 
+ * An example of doing the thermal fits to hadron yield data.
+ * 
+ * Performs thermal fits to ALICE Pb-Pb 0-10% data with the 
+ * HRG model with excluded-volume corrections with a bag model
+ * scaling of hadron eigenvolumes.
+ * 
+ * These calculations reproduce the results published in
+ * [arXiv:1512.08046](https://arxiv.org/abs/1512.08046)
+ * 
+ * Calculation proceeds in two steps:
+ *   1. The global fit is performed obtaining the temperature and volume that
+ *      minimize the \f$\chi^2\f$.
+ *   2. The temperature profile of \f$\chi^2\f$ by minimizing it a different fixed
+ *      temperature values in a loop.
+ * 
+ * Usage:
+ * ~~~.bash
+ * BagModelFit <rp> <Tmin> <Tmax> <dT>
+ * ~~~
+ * 
+ * <rp> is the proton radius parameter (in fm)
+ */

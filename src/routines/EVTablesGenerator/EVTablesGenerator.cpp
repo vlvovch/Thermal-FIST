@@ -216,7 +216,7 @@ void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329,
 	model.WriteInteractionParameters(filename);
 }
 
-// Temperature dependence of EV-HRG thermodynamics at zero chemical potential
+
 int main(int argc, char *argv[])
 {
 	string directory = string(INPUT_FOLDER) + "/list/PDG2014/";

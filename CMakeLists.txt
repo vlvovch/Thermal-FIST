@@ -122,14 +122,17 @@ set (HRGFit_INCLUDE             "${PROJECT_SOURCE_DIR}/include/HRGFit")
 
 #SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-# Main library
-add_subdirectory(src/libraries)
+# The main library
+add_subdirectory(src/library)
 
-# Gui
+# GUI
 add_subdirectory(src/gui/QtThermalFIST)
 
-# Sample routines
+# Routines
 add_subdirectory(src/routines)
+
+# Examples
+add_subdirectory(src/examples)
 
 # build a CPack driven installer package
 #include (InstallRequiredSystemLibraries)

@@ -294,3 +294,32 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/**
+ * \example CalculationTmu.cpp
+ * 
+ * An example of calculating various thermodynamic quantities at fixed
+ * T and \f$\mu_B\f$.
+ * 
+ * For each specified value of a \f$T-\mu_B\f$ pair does the following.
+ * 
+ *   1. Constrains the chemical potentials \f$\mu_Q\f$ and \f$\mu_S\f$ from
+ *      the conditions Q/B = 0.4 and S = 0
+ *   2. Calculates the following quantities:
+ *      - Pressure
+ *      - Energy density
+ *      - Entropy density
+ *      - K+ yield (with feeddown)
+ *      - pi+ yield (with feeddown)
+ *      - K+/pi+ ratio (with feeddown)
+ *      - Scaled variances of K+ and pi+
+ *      - Multiplicity and scaled variance of negatively charged particles
+ *      - Skewness and kurtosis of net baryon, charge, and strangeness fluctuations
+ * 
+ * Usage:
+ * ~~~.bash
+ * CalculationTmu <ModelType>
+ * ~~~
+ * 
+ * Where <ModelType> is 0 for Ideal HRG, and 1 for QvdW-HRG (from [arXiv:1609.03975](https://arxiv.org/abs/1609.03975))
+ */

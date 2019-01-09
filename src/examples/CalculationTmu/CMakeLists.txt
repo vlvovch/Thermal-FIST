@@ -15,10 +15,10 @@ target_link_libraries (CalculationTmu ThermalFIST)
 
 # Creates a folder "executables" and adds target 
 # project (app.vcproj) under it
-set_property(TARGET CalculationTmu PROPERTY FOLDER "routines")
-#set_property(TARGET BagModelFit PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/routines")
+set_property(TARGET CalculationTmu PROPERTY FOLDER "examples")
+#set_property(TARGET BagModelFit PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/examples")
 
 # Adds logic to INSTALL.vcproj to copy app.exe to destination directory
 install (TARGETS CalculationTmu
-         RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin/routines)
+         RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin/examples)
 		 

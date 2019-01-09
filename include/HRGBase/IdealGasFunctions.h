@@ -20,6 +20,9 @@
 
 namespace thermalfist {
 
+  /// \brief Contains implementation of the thermodynamic functions
+  ///        corresponding to an ideal gas of particles in the grand-canonical
+  ///        ensemble.
   namespace IdealGasFunctions {
     /**
      * \brief Identifies the thermodynamic function.

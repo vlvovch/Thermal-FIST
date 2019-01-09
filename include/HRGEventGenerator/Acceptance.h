@@ -15,6 +15,7 @@
 
 namespace thermalfist {
 
+  /// \brief Routines used for modeling the acceptance effects.
   namespace Acceptance {
 
     /**

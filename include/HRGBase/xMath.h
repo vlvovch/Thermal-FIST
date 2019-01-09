@@ -17,6 +17,7 @@
 
 namespace thermalfist {
 
+  /// \brief Contains some extra mathematical functions used in the code.
   namespace xMath {
 
     /// Pi constant
