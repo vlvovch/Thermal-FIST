@@ -112,7 +112,11 @@ double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<do
 // Comparison of analytic and Monte Carlo calculations
 int main(int argc, char *argv[])
 {
-	string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
+  int withMonteCarlo = 1;
+  if (argc > 1)
+    withMonteCarlo = atoi(argv[1]);
+  
+  string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
 	ThermalParticleSystem parts(listname);
 
 	// Disable K0 and K0bar decays to avoid strangeness non-conservation
@@ -272,6 +276,9 @@ int main(int argc, char *argv[])
 	printf("%30s %lf s\n", "Time per single calculation:", (wt2 - wt1) / iters);
 
 	printf("\n\n");
+
+  if (!withMonteCarlo)
+    return 0;
 
 	printf("Monte Carlo\n");
 

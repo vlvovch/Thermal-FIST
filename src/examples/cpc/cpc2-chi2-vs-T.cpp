@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 	{
 		model = new ThermalModelIdeal(&TPS);
 
-		printf("#Fitting 2.76 TeV ALICE data at \mu = 0 in Id-HRG model\n");
+		printf("#Fitting 2.76 TeV ALICE data at \\mu = 0 in Id-HRG model\n");
 
 		modeltype = "Id-HRG";
 	}
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 			else model->SetRadius(i, rad);
 		}
 
-		printf("#Fitting 2.76 TeV ALICE data at \mu = 0 in EV-HRG model with r = %lf fm for baryons, and r = 0 for mesons\n", rad);
+		printf("#Fitting 2.76 TeV ALICE data at \\mu = 0 in EV-HRG model with r = %lf fm for baryons, and r = 0 for mesons\n", rad);
 
 		modeltype = "EV-HRG-TwoComponent";
 	}
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 			model->SetRadius(i, radProton * pow(model->TPS()->Particle(i).Mass() / 0.938, 1/3.));
 		}
 
-		printf("#Fitting 2.76 TeV ALICE data at \mu = 0 in Bag Model EV-HRG model with proton r = %lf fm\n", radProton);
+		printf("#Fitting 2.76 TeV ALICE data at \\mu = 0 in Bag Model EV-HRG model with proton r = %lf fm\n", radProton);
 
 		modeltype = "EV-HRG-BagModel";
 	}
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		printf("#Fitting 2.76 TeV ALICE data at \mu = 0 in QvdW-HRG model\n");
+		printf("#Fitting 2.76 TeV ALICE data at \\mu = 0 in QvdW-HRG model\n");
 
 		modeltype = "QvdW-HRG";
 	}
@@ -213,9 +213,9 @@ int main(int argc, char *argv[])
 	// Prepare for output
 
 	// To write output to file uncomment the three lines below, or use fprintf
-	char tmpc[1000];
-	sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
-	freopen(tmpc, "w", stdout);
+	//char tmpc[1000];
+	//sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
+	//freopen(tmpc, "w", stdout);
 
 	printf("%15s%15s%15s%15s\n",
 		"T[MeV]",   // Temperature in MeV

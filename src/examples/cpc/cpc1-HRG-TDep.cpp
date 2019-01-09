@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 	{
 		model = new ThermalModelIdeal(&TPS);
 		
-		printf("#Calculating thermodynamics at \mu = 0 in Id-HRG model\n");
+		printf("#Calculating thermodynamics at \\mu = 0 in Id-HRG model\n");
 
 		modeltype = "Id-HRG";
 	}
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < model->TPS()->Particles().size(); ++i)
 			model->SetRadius(i, rad);
 
-		printf("#Calculating thermodynamics at \mu = 0 in EV-HRG model with r = %lf fm\n", rad);
+		printf("#Calculating thermodynamics at \\mu = 0 in EV-HRG model with r = %lf fm\n", rad);
 
 		modeltype = "EV-HRG";
 	}
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		printf("#Calculating thermodynamics at \mu = 0 in QvdW-HRG model\n");
+		printf("#Calculating thermodynamics at \\mu = 0 in QvdW-HRG model\n");
 
 		modeltype = "QvdW-HRG";
 	}
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 	// Temperature interval, in GeV
 	double Tmin = 0.020;
 	double Tmax = 0.2001;
-	double dT   = 0.001;
+	double dT   = 0.005;
 
 	for (double T = Tmin; T <= Tmax; T += dT) {
 		model->SetTemperature(T);
