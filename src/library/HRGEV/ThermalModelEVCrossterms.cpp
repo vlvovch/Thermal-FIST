@@ -96,12 +96,22 @@ namespace thermalfist {
   void ThermalModelEVCrossterms::WriteInteractionParameters(const std::string & filename)
   {
     ofstream fout(filename);
+    fout << "# List of crossterms parameters to be used in the Crossterms excluded-volume HRG model"
+      << std::endl;
+    fout << "# Only particle pairs with a non-zero eigenvolume parameter are listed here"
+      << std::endl;
+    fout << "#" << std::setw(14) << "pdg_i"
+      << std::setw(15) << "pdg_j"
+      << std::setw(15) << "b_{ij}[fm^3]"
+      << std::endl;
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       for (int j = 0; j < m_TPS->Particles().size(); ++j) {
-        fout << std::setw(15) << m_TPS->Particle(i).PdgId();
-        fout << std::setw(15) << m_TPS->Particle(j).PdgId();
-        fout << std::setw(15) << m_Virial[i][j];
-        fout << std::endl;
+        if (m_Virial[i][j] != 0.) {
+          fout << std::setw(15) << m_TPS->Particle(i).PdgId();
+          fout << std::setw(15) << m_TPS->Particle(j).PdgId();
+          fout << std::setw(15) << m_Virial[i][j];
+          fout << std::endl;
+        }
       }
     }
     fout.close();

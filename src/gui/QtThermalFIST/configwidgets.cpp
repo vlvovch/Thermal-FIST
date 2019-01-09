@@ -692,7 +692,7 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(par
   leFilePath->setReadOnly(true);
   leFilePath->setText(QString::fromStdString(m_parent->currentConfig.InteractionInput));
   leFilePath->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-  buttonChooseFile = new QPushButton(tr("Choose path..."));
+  buttonChooseFile = new QPushButton(tr("Choose file..."));
   connect(buttonChooseFile, SIGNAL(clicked()), this, SLOT(chooseInputFile()));
   layFile->addWidget(leFilePath);
   layFile->addWidget(buttonChooseFile);

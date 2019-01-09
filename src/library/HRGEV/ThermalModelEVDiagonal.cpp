@@ -102,10 +102,19 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::WriteInteractionParameters(const std::string & filename)
   {
     ofstream fout(filename);
+    fout << "# List of eigenvolume parameters to be used in the Diagonal excluded-volume HRG model"
+      << std::endl;
+    fout << "# Only particles with a non-zero eigenvolume parameter are listed here"
+      << std::endl;
+    fout << "#" << std::setw(14) << "pdg"
+      << std::setw(15) << "v_i[fm^3]"
+      << std::endl;
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      fout << std::setw(15) << m_TPS->Particle(i).PdgId();
-      fout << std::setw(15) << m_v[i];
-      fout << std::endl;
+      if (m_v[i] != 0.) {
+        fout << std::setw(15) << m_TPS->Particle(i).PdgId();
+        fout << std::setw(15) << m_v[i];
+        fout << std::endl;
+      }
     }
     fout.close();
   }

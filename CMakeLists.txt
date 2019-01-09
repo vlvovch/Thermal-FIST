@@ -8,7 +8,7 @@ project (ThermalFIST)
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 0)
 set (ThermalFIST_VERSION_MINOR 8)
-set (ThermalFIST_VERSION_DEVEL 7)
+set (ThermalFIST_VERSION_DEVEL 8)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -121,14 +121,6 @@ add_subdirectory(src/routines)
 
 # Examples
 add_subdirectory(src/examples)
-
-# build a CPack driven installer package
-#include (InstallRequiredSystemLibraries)
-#set (CPACK_RESOURCE_FILE_LICENSE  
-#     "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
-#set (CPACK_PACKAGE_VERSION_MAJOR "${CuteHRG_VERSION_MAJOR}")
-#set (CPACK_PACKAGE_VERSION_MINOR "${CuteHRG_VERSION_MINOR}")
-#include (CPack)
 
 
 
