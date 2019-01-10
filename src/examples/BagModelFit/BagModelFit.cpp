@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	// Maximum temperature for chi2 profile calculation [GeV]
 	double Tmax = 0.301;
 	if (argc>3)
-		Tmin = atof(argv[3]);
+		Tmax = atof(argv[3]);
 
 	// Step in temperature for chi2 profile calculation [GeV]
 	double dT = 0.001;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
 
 
 /**
- * \example BagModel.cpp
+ * \example BagModelFit.cpp
  * 
  * An example of doing the thermal fits to hadron yield data.
  * 

@@ -2,7 +2,7 @@
 include_directories ("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
 
 set(SRCS
-BagModel.cpp
+BagModelFit.cpp
 )
 
 # Set Properties->General->Configuration Type to Application(.exe)

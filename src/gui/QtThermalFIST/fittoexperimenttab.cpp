@@ -728,7 +728,15 @@ void FitToExperimentTab::finalize() {
   dbgstrm << endl;
   dbgstrm << "chi2/ndf\t\t= " << result.chi2ndf * fitcopy->Ndf() << "/" << fitcopy->Ndf() << " = " << result.chi2ndf << endl;
   dbgstrm << endl;
-  dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
+
+  qint64 elapsedTime = timer.elapsed();
+  if (elapsedTime < 1000)
+    dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
+  else if (elapsedTime < 10000)
+    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 2) << " s" << endl;
+  else
+    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 1) << " s" << endl;
+
   dbgstrm << "----------------------------------------------------------" << endl;
   teDebug->clear();
   teDebug->append(dbgstr);

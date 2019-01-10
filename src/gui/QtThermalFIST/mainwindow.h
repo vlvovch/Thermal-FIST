@@ -66,6 +66,7 @@ private slots:
   void loadDecays();
   void tabChanged(int newIndex);
   void about();
+  void documentation();
   void quickstartguide();
   void increaseFontSize();
   void decreaseFontSize();

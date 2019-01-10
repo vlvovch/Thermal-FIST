@@ -107,14 +107,6 @@ MainWindow::~MainWindow()
 	delete TPS;
 }
 
-//#ifndef QT_NO_CONTEXTMENU
-//void MainWindow::contextMenuEvent(QContextMenuEvent *event)
-//{
-//  QMenu menu(this);
-//  menu.exec(event->globalPos());
-//}
-//#endif // QT_NO_CONTEXTMENU
-
 void MainWindow::createMenus()
 {
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
@@ -150,6 +142,10 @@ void MainWindow::createMenus()
   QAction *guideAct = new QAction(tr("Quick start guide"), this);
   connect(guideAct, &QAction::triggered, this, &MainWindow::quickstartguide);
   helpMenu->addAction(guideAct);
+
+  QAction *docAct = new QAction(tr("Documentation"), this);
+  connect(docAct, &QAction::triggered, this, &MainWindow::documentation);
+  helpMenu->addAction(docAct);
 }
 
 void MainWindow::loadDecays()
@@ -192,6 +188,11 @@ void MainWindow::about()
 void MainWindow::quickstartguide()
 {
   QDesktopServices::openUrl(QUrl("https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"));
+}
+
+void MainWindow::documentation()
+{
+  QDesktopServices::openUrl(QUrl("https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/"));
 }
 
 void MainWindow::increaseFontSize()
