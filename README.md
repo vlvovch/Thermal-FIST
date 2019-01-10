@@ -34,7 +34,8 @@ This should be carefully monitored.
 
 - [**Eigen**](http://eigen.tuxfamily.org) C++ template library for linear algebra. ([MPL2](http://www.mozilla.org/MPL/2.0))
 - [**MINUIT2**](http://seal.web.cern.ch/seal/snapshot/work-packages/mathlibs/minuit/) function minimization package from CERN-ROOT toolkit ([LGPL2.1](https://root.cern/license))
-- [**Mersenne Twister**](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html) random number generator by M. Matsutomo and T. Nishimura ([implementation](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/MersenneTwister.h) of R. J. Wagner)
+- [**Mersenne Twister**](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html) random number generator by M. Matsutomo and T. Nishimura ([implementation](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/MersenneTwister.h) by R. J. Wagner)
 - [**Qt5 framework**](https://www.qt.io) for the GUI frontend ([LGPL3](http://doc.qt.io/qt-5/lgpl.html))
+- [**QCustomPlot**](https://www.qcustomplot.com/) Qt C++ widget for plotting and data visualzation by Emanuel Eichhammer ([GPL](https://www.gnu.org/licenses/gpl.html))
 
-*Copyright (C) 2019  Volodymyr Vovchenko*
+*Copyright (C) 2018-2019  Volodymyr Vovchenko*
