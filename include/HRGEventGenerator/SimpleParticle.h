@@ -11,31 +11,43 @@
 #include <cmath>
 
 namespace thermalfist {
-
+  /// Structure holding information about a single particle in the event generator.
   struct SimpleParticle {
-    double px, py, pz;
-    double m;
-    double p0;
-    int PDGID;
-    int MotherPDGID;
-    bool processed;
+    double px, py, pz; ///< 3-momentum components (in GeV)
+    double m;          ///< Mass (in GeV)
+    double p0;         ///< Energy (in GeV)
+    int PDGID;         ///< PDG code
+    int MotherPDGID;   ///< PDG code of a mother particle, if applicable
+    bool processed;    ///< Used in event generator
+
+    /// Default constructor
     SimpleParticle() { processed = false; }
-    SimpleParticle(double px_, double py_, double pz_, double m_, int PDGID_, int MotherPDGID_ = 0) :
-      px(px_),
-      py(py_),
-      pz(pz_),
-      m(m_),
+
+    /// Constructs a particle from provided three-momentum, mass, and PDG code
+    SimpleParticle(double inPx, double inPy, double inPz, double inM, int inPDGID, int inMotherPDGID = 0) :
+      px(inPx),
+      py(inPy),
+      pz(inPz),
+      m(inM),
       p0(sqrt(m*m + px * px + py * py + pz * pz)),
-      PDGID(PDGID_), MotherPDGID(MotherPDGID_), processed(false) { }
+      PDGID(inPDGID), MotherPDGID(inMotherPDGID), processed(false) { }
+
+    /// Absolute value of the 3-momentum (in GeV)
     double GetP() const {
       return sqrt(p0*p0 - m * m);
     }
+
+    /// Transverse momentum (in GeV)
     double GetPt() const {
       return sqrt(px*px + py * py);
     }
+
+    /// Transverse mass (in GeV)
     double GetMt() const {
       return sqrt(m*m + px * px + py * py);
     }
+
+    /// The longitudinal rapidity
     double GetY() const {
       return 0.5*log((p0 + pz) / (p0 - pz));
     }

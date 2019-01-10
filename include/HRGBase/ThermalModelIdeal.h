@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -12,14 +12,30 @@
 
 namespace thermalfist {
 
+  /**
+   * \brief Class implementing the Ideal HRG model.
+   * 
+   */
   class ThermalModelIdeal : public ThermalModelBase
   {
   public:
-    ThermalModelIdeal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params = ThermalModelParameters());
+    /**
+    * \brief Construct a new ThermalModelIdeal object.
+    *
+    * \param TPS A pointer to the ThermalParticleSystem object containing the particle list
+    * \param params ThermalModelParameters object with current thermal parameters
+    */
+    ThermalModelIdeal(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters());
 
+    /**
+     * \brief Destroy the ThermalModelIdeal object
+     * 
+     */
     virtual ~ThermalModelIdeal(void);
 
-    virtual void CalculateDensities();
+    // Override functions begin
+
+    virtual void CalculatePrimordialDensities();
 
     virtual void CalculateTwoParticleCorrelations();
 
@@ -37,17 +53,15 @@ namespace thermalfist {
 
     virtual double CalculatePressure();
 
-    virtual double CalculateShearViscosity();
+    virtual double ParticleScaledVariance(int part);
 
-    virtual double CalculateHadronScaledVariance();
+    virtual double ParticleSkewness(int part);
 
-    virtual double CalculateParticleScaledVariance(int part);
-
-    virtual double CalculateParticleSkewness(int part);
-
-    virtual double CalculateParticleKurtosis(int part);
+    virtual double ParticleKurtosis(int part);
 
     virtual double ParticleScalarDensity(int part);
+
+    // Override functions end
   };
 
 } // namespace thermalfist

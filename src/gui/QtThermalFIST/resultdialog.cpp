@@ -244,105 +244,105 @@ QString ResultDialog::GetResults() {
 
 		sprintf(cc, "%-25s = ", "\\chi2B");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::BaryonCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi2Q");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::ElectricCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi2S");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		if (model->TPS()->hasCharmed()) {
 			sprintf(cc, "%-25s = ", "\\chi2C");
 			ret += QString(cc);
-			ret += QString::number(model->Susc(ThermalParticleSystem::CharmCharge, ThermalParticleSystem::CharmCharge)) + "\r\n";
+			ret += QString::number(model->Susc(ConservedCharge::CharmCharge, ConservedCharge::CharmCharge)) + "\r\n";
 		}
 
 		sprintf(cc, "%-25s = ", "\\chi11BQ");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::ElectricCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge)) + "\r\n";
 
 		
 		sprintf(cc, "%-25s = ", "\\chi11QS");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11BS");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 			
 		if (model->TPS()->hasStrange()) {
 			sprintf(cc, "%-25s = ", "CBS");
 			ret += QString(cc);
-			ret += QString::number(-3. * model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+			ret += QString::number(-3. * model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge) / model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 		}
 
 		sprintf(cc, "%-25s = ", "\\chi11BS/\\chi2S");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge) / model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11QS/\\chi2S");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge) / model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge) / model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 		
 		sprintf(cc, "%-25s = ", "\\chi11QB/\\chi2B");
 		ret += QString(cc);
-		ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::BaryonCharge) / model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::BaryonCharge)) + "\r\n";
+		ret += QString::number(model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge) / model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
 
 		if (model->TPS()->hasCharmed()) {
 			sprintf(cc, "%-25s = ", "\\chi11BC");
 			ret += QString(cc);
-			ret += QString::number(model->Susc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::CharmCharge)) + "\r\n";
+			ret += QString::number(model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::CharmCharge)) + "\r\n";
 
 			sprintf(cc, "%-25s = ", "\\chi11QC");
 			ret += QString(cc);
-			ret += QString::number(model->Susc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::CharmCharge)) + "\r\n";
+			ret += QString::number(model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::CharmCharge)) + "\r\n";
 
 			sprintf(cc, "%-25s = ", "\\chi11SC");
 			ret += QString(cc);
-			ret += QString::number(model->Susc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::CharmCharge)) + "\r\n";
+			ret += QString::number(model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::CharmCharge)) + "\r\n";
 		}
 
 		ret += "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi2prot");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::BaryonCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi2Q");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::ElectricCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi2kaon");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 
 		sprintf(cc, "%-25s = ", "\\chi11Q,p");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::ElectricCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11Q,k");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11p,k");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11p,k/\\chi2k");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::StrangenessCharge) / model->ProxySusc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge) / model->ProxySusc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11Q,k/\\chi2k");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::StrangenessCharge) / model->ProxySusc(ThermalParticleSystem::StrangenessCharge, ThermalParticleSystem::StrangenessCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge) / model->ProxySusc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
 
 		sprintf(cc, "%-25s = ", "\\chi11Q,p/\\chi2p");
 		ret += QString(cc);
-		ret += QString::number(model->ProxySusc(ThermalParticleSystem::ElectricCharge, ThermalParticleSystem::BaryonCharge) / model->ProxySusc(ThermalParticleSystem::BaryonCharge, ThermalParticleSystem::BaryonCharge)) + "\r\n";
+		ret += QString::number(model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge) / model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
 
 
 		ret += "\r\n";

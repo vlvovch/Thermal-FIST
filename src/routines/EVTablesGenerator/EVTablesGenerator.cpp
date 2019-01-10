@@ -96,15 +96,10 @@ void Crossterms(std::string filename, ThermalParticleSystem *TPS, int mode = 0, 
 			radii[i] = r1;
 		}
 		if (mode >= 1 && mode <= 3) {
-			//if (tpart.BaryonCharge() == 0)
-			//	radii[i] = r2;
-			//else
-			//	radii[i] = r1 * pow(abs(tpart.BaryonCharge()), 1. / 3.);
 			int N = TPS->Particles().size();
 			for (int j = 0; j < N; ++j) {
 				ThermalParticle &tpart2 = TPS->Particle(j);
 				double tr1 = r1, tr2 = r2;
-				//bool mes1 = (tpart.BaryonCharge() == 0), mes2 = (tpart2.BaryonCharge() == 0);
 
 				if (tpart.BaryonCharge() == 0)
 					tr1 = r2;
@@ -169,7 +164,7 @@ void Crossterms(std::string filename, ThermalParticleSystem *TPS, int mode = 0, 
 
 
 void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329, double b = 3.42) {
-	ThermalModelVDWFull model(TPS);
+	ThermalModelVDW model(TPS);
 
 	for (int i1 = 0; i1 < model.TPS()->Particles().size(); ++i1) {
 		for (int i2 = 0; i2 < model.TPS()->Particles().size(); ++i2) {
@@ -216,11 +211,16 @@ void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329,
 	model.WriteInteractionParameters(filename);
 }
 
-// Temperature dependence of EV-HRG thermodynamics at zero chemical potential
+
 int main(int argc, char *argv[])
 {
-	string directory = string(INPUT_FOLDER) + "/list/PDG2014/";
-	ThermalParticleSystem TPS(directory + "list-withnuclei.dat");
+	string inputlist = string(INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
+  if (argc > 1)
+    inputlist = string(argv[1]);
+
+	ThermalParticleSystem TPS(inputlist);
+
+  string directory = "./";
 	
 	// arXiv:1512.08046
 	Diagonal(directory + "1512.08046.DiagonalEV.Rm00Rb03.dat", &TPS, 1, 0.3);

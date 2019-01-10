@@ -50,12 +50,12 @@ QVariant QuantitiesModel::data(const QModelIndex &index, int role) const
       else {
         QString name1, name2;
         if (fitcopy != NULL) {
-          name1 = QString::fromStdString(fitcopy->model()->TPS()->GetNameFromPDG(quantity.ratio.PDGID1));
-          name2 = QString::fromStdString(fitcopy->model()->TPS()->GetNameFromPDG(quantity.ratio.PDGID2));
+          name1 = QString::fromStdString(fitcopy->model()->TPS()->GetNameFromPDG(quantity.ratio.fPDGID1));
+          name2 = QString::fromStdString(fitcopy->model()->TPS()->GetNameFromPDG(quantity.ratio.fPDGID2));
         }
         else {
-          name1 = QString::number(quantity.ratio.PDGID1);
-          name2 = QString::number(quantity.ratio.PDGID2);
+          name1 = QString::number(quantity.ratio.fPDGID1);
+          name2 = QString::number(quantity.ratio.fPDGID2);
         }
 
         return name1 + "/" + name2;
@@ -72,7 +72,6 @@ QVariant QuantitiesModel::data(const QModelIndex &index, int role) const
     else if (col == 4 && fitcopy != NULL && row < fitcopy->ModelDataSize()) {
       if (quantity.type == FittedQuantity::Multiplicity) {
         return fitcopy->ModelData(row);
-
       }
       else {
         return fitcopy->ModelData(row);

@@ -15,11 +15,21 @@
 #include "HRGEventGenerator/SimpleParticle.h"
 
 namespace thermalfist {
-
+  /// Structure holding information about a single event in the event generator.
   struct SimpleEvent {
-    double weight, logweight;
+    /// Event weight factor
+    double weight;
+
+    /// Log of the event weight factor
+    double logweight;
+
+    /// Vector of all particles in the event
     std::vector<SimpleParticle> Particles;
+
+    /// Default constructor, empty event
     SimpleEvent() { Particles.resize(0); weight = 1.; }
+
+    /// Writes the event to an output file stream
     void writeToFile(std::ofstream & fout, int eventnumber = 1);
   };
 

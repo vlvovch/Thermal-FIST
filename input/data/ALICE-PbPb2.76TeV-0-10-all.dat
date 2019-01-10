@@ -1,27 +1,37 @@
-# File with ALICE 0-10% data for thermal fits, each line corresponds to one entry
+# File with ALICE 0-10% data for thermal fits 
+#
+# Each line corresponds to one entry
 # If pdg2 == 0, then entry is a yield of particle with pdg1, otherwise it is a ratio pdg1/pdg2
-# feeddown1/feeddown2: 0 - primordial, 1 - primordial + decays of particles marked unstable, 2 - primordial + unstable decays + weak decays
+#
+# feeddown1/feeddown2: 0 - primordial, 1 - primordial + decays of particles marked unstable, 
+# 2 - primordial + strong + electromagnetic + weak decays, 
+# 3 - primordial + strong + electromagnetic decays, 4 - primordial + strong decays
+# Note: if options 2, 3, or 4 for feeddown are used, make sure that the particle list
+# consains correct particle data groups ids for all weakly and electromagnetically
+# decaying particles, and that all strongly decaying particles are marked unstable
+#
 # flag is_fitted determines whether given yield contributes to chi2
+#
 #     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error
-              1            211              0              1              0          669.5             48
-              1           -211              0              1              0            668             47
-              1            321              0              1              0            100              8
-              1           -321              0              1              0           99.5            8.5
-              1           2212              0              1              0           31.5            2.5
-              1          -2212              0              1              0           30.5            2.5
-              1           3122              0              1              0             24            2.5
-              1          -3122              0              1              0          24.27           2.46
-              1           3312              0              1              0           3.34         0.2474
-              1          -3312              0              1              0           3.28         0.2377
-              1           3334              0              1              0           0.58         0.0985
-              1          -3334              0              1              0            0.6          0.103
-              1            310              0              1              0            100              8
-              1            333              0              1              0          12.75           1.59
-              1     1000010020              0              1              0         0.0982         0.0158
-              1    -1000010020              0              1              0       0.096236         0.0201
-              1     1000020030              0              1              0       0.000311       7.06e-05
-              1    -1000020030              0              1              0       0.000258        8.1e-05
-              1     1010010030              0              1              0       0.000154       4.11e-05
-              1    -1010010030              0              1              0       0.000139       4.26e-05
-              1     1000020040              0              1              0          8e-07          5e-07
-              1    -1000020040              0              1              0        1.1e-06        4.5e-07
+              1            211              0              3              0          669.5             48
+              1           -211              0              3              0            668             47
+              1            321              0              3              0            100              8
+              1           -321              0              3              0           99.5            8.5
+              1           2212              0              3              0           31.5            2.5
+              1          -2212              0              3              0           30.5            2.5
+              1           3122              0              3              0             24            2.5
+              1          -3122              0              3              0          24.27           2.46
+              1           3312              0              3              0           3.34         0.2474
+              1          -3312              0              3              0           3.28         0.2377
+              1           3334              0              3              0           0.58         0.0985
+              1          -3334              0              3              0            0.6          0.103
+              1            310              0              3              0            100              8
+              1            333              0              3              0          12.75           1.59
+              1     1000010020              0              3              0         0.0982         0.0158
+              1    -1000010020              0              3              0       0.096236         0.0201
+              1     1000020030              0              3              0       0.000311       7.06e-05
+              1    -1000020030              0              3              0       0.000258        8.1e-05
+              1     1010010030              0              3              0       0.000154       4.11e-05
+              1    -1010010030              0              3              0       0.000139       4.26e-05
+              1     1000020040              0              3              0          8e-07          5e-07
+              1    -1000020040              0              3              0        1.1e-06        4.5e-07

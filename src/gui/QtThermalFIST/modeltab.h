@@ -23,7 +23,8 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
 #include "BaseStructures.h"
-//#include "fittoexperimenttab.h"
+#include "configwidgets.h"
+
 
 class TableModel;
 class FitToExperimentTab;
@@ -34,38 +35,21 @@ class ModelTab : public QWidget
 
     QTableView *tableParticles;
 
-		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
-		QRadioButton *radGCE, *radCE, *radSCE;
-
-    QRadioButton *radioBoltz, *radioQuant;
-		QCheckBox *CBBoseOnly, *CBPionsOnly;
-		QCheckBox *CBQuadratures;
-
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
 		QPushButton *labelValid;
     QLabel *labelHint;
 
 		QLabel *labelmuS, *labelmuC;
-    QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
+    QLabel *labelgammaS, *labelgammaC;
+    QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
 		QDoubleSpinBox *spinVolumeRSC;
 		QLabel *labelB, *labelQ, *labelS, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
-    QDoubleSpinBox *spinQBRatio;
-    QDoubleSpinBox *spinRadius;
-		
 
-		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
-
-		QComboBox *comboWidth;
-    QCheckBox *checkBratio;
 		QCheckBox *checkFluctuations;
 
     QCheckBox *checkOMP;
-
-    QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
-		QString strEVPath;
-
 
     QPushButton *buttonCalculate;
     QPushButton *buttonWriteToFile;
@@ -82,12 +66,14 @@ class ModelTab : public QWidget
 
     const FitToExperimentTab *tabFit;
 
+    ModelConfigWidget *configWidget;
+
     int getCurrentRow();
 
 public:
     ModelTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~ModelTab();
-		ThermalModelConfig getConfig();
+    ThermalModelConfig getConfig();
     ThermalModelConfig getConfigFromFit(thermalfist::ThermalModelFit *fit, const ThermalModelConfig & configfit);
     void setFitTab(const FitToExperimentTab *tab) { tabFit = tab; }
     void updateControlsWithConfig(const ThermalModelConfig & config);
@@ -100,7 +86,6 @@ private slots:
     void benchmark();
     void particleInfoDoubleClick(const QModelIndex &);
     void switchStability(bool);
-		void loadEVFromFile();
     void showResults();
     void setModel(thermalfist::ThermalModelBase *model);
     void modelChanged();

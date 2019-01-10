@@ -29,6 +29,7 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGEventGenerator/EventGeneratorBase.h"
 #include "BaseStructures.h"
+#include "configwidgets.h"
 
 #include <cmath>
 #include <fstream>
@@ -39,7 +40,7 @@ class QCustomPlot;
 class QCPColorMap;
 class QCPColorScale;
 class QStackedWidget;
-//class QMutex;
+class QCPErrorBars;
 
 class EventGeneratorWorker : public QThread
 {
@@ -96,24 +97,16 @@ class EventGeneratorTab : public QWidget
     QCustomPlot *plot2D;
     QCPColorMap *colormap;
     QCPColorScale *colorScale;
+    QCPErrorBars *errorBars;
     std::map<QString, int> parammap;
     std::vector<QString> paramnames, paramnamesx;
 
-		QRadioButton *radIdeal, *radEVD, *radEVCRS, *radQVDW;
-		QRadioButton *radGCE, *radCE, *radSCE;
 
-    QRadioButton *radioUniform, *radioBaglike, *radioMesons, *radioCustomEV;
-		QString strEVPath;
-
-    //QRadioButton *radioBoltz, *radioQuant;
-		QLabel *labelmuS, *labelmuC;
-		QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
+		QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
+		QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
 		QDoubleSpinBox *spinVolumeRSC;
-		QSpinBox *spinB, *spinS, *spinQ;
-		QDoubleSpinBox *spinQBRatio;
-		QDoubleSpinBox *spinRadius;
-
-		QCheckBox *checkFixMuQ, *checkFixMuS, *checkFixMuC;
+    QLabel *labelB, *labelQ, *labelS, *labelC;
+		QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
     QRadioButton *radioSR, *radioSSH;
 
@@ -121,16 +114,9 @@ class EventGeneratorTab : public QWidget
     QDoubleSpinBox *spinBeta;
     QDoubleSpinBox *spinBetat, *spinEtaMax, *spinn;
 
-    QDoubleSpinBox *spinEnergy;
-
     QSpinBox *spinEvents;
 
-		QComboBox *comboWidth;
-
-    QCheckBox *checkBratio;
     QCheckBox *checkDecays;
-
-    QCheckBox *checkOMP;
 
     QPushButton *buttonCalculate;
 
@@ -166,32 +152,16 @@ class EventGeneratorTab : public QWidget
 		QCheckBox *checkFile;
 		QLineEdit *leFilePath;
 		QPushButton *buttonChooseFile;
+
+    ModelConfigWidget *configWidget;
 public:
     EventGeneratorTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EventGeneratorTab();
-		ThermalModelConfig getConfig();
+    ThermalModelConfig getConfig();
 signals:
-
-private:
-    double muBss(double ss) {
-        return 1.308 / (1. + 0.273 * ss);
-    }
-
-
-    double Tss(double ss) {
-        double tmpmuB = muBss(ss);
-        return 0.166 - 0.139 * tmpmuB * tmpmuB - 0.053 * tmpmuB * tmpmuB * tmpmuB * tmpmuB;
-    }
-
-		double gammaSss(double ss) {
-			double tmpmuB = muBss(ss);
-			double tmpT = Tss(ss);
-			return 1. - 0.396 * exp(-1.23 * tmpT / tmpmuB);
-		}
 
 public slots:
     void changedRow();
-		void loadEVFromFile();
     void calculate();
     void replot();
 		void replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
@@ -206,7 +176,6 @@ public slots:
     void resetTPS();
     void loadAcceptance();
 		void chooseOutputFile();
-    void updateThermalParameters();
 		void changeVolumeRSC(double);
 		void changeTkin(double);
 

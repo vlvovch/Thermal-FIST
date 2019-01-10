@@ -1,0 +1,99 @@
+/**
+\mainpage Thermal-FIST library documentation
+
+<span style="font-size:larger;">
+This documentation details the classes, structures, and functions of the Thermal-FIST library
+as well as some usage examples.
+It should be useful for using the library in C++ macros for performing various HRG model calculations, or for making modifications to the library code.
+
+## Downloading and building the package
+
+The library itself is available on GitHub at [**https://github.com/vlvovch/Thermal-FIST**](https://github.com/vlvovch/Thermal-FIST)
+
+See the [**building instructions**](install.html)
+
+## [**Structure of the library**](usergroup0.html)
+
+## Usage examples
+
+Some examples of using the library in a C++ program can be found in [**Examples**](examples.html)
+
+The package also includes the graphical user interface frontend -- **QtThermalFIST**.
+Some of the typical thermal model analysis, such as calculating
+the equation of state properties or performing the thermal fits,
+can be done in GUI. Using the GUI can therefore be a good starting point. 
+See the <a href="https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"><b>Quick Start Guide</b></a> to get started.
+
+An example of using the Thermal-FIST library as a git submodule can be found
+in the following repository [**https://github.com/vlvovch/1807.02079**](https://github.com/vlvovch/1807.02079)
+
+</span>
+*/
+
+/**
+\page install
+# Installation
+
+### External dependencies
+
+The external dependencies are minimal.
+The core library has no external dependencies.
+The thermal fitting routines use MINUIT2 from CERN ROOT which
+is included here as a standalone package. If a ROOT installation with MINUIT2 
+is found in the system, it is used in place of a standalone distribution.
+
+The QtThermalFIST GUI frontend requires the open source [**Qt5 framework**](http://qt-project.org)
+to be installed. Otherwise the GUI frontend is not built.
+
+### Building
+
+The preferred way is to use **cmake**.
+
+For example, to download and build the package on a Linux-like system 
+run the following commands in a bash shell:
+~~~.bash
+git clone https://github.com/vlvovch/Thermal-FIST.git
+cd Thermal-FIST
+mkdir build
+cd build
+cmake ../
+make
+~~~
+
+This will build the libraries in `build/lib`, the QtThermalFIST GUI in `build/bin`,
+and a couple of sample macros in `build/bin/routines`.
+
+Then, e.g., running
+~~~.bash
+./bin/QtThermalFIST
+~~~
+will start the GUI frontend for HRG model analysis.
+
+See the <a href="https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"><b>Quick Start Guide</b></a>
+and [**Examples**](examples.html) for more details
+
+### Common issues
+
+- CMake cannot find Qt5 and therefore GUI cannot be built. Usually this type of message appears after running the `cmake` command: 
+
+> By not providing "FindQt5Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt5Widgets", but CMake did not find one.
+
+Make sure that Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt5 directory explicitly
+
+~~~.bash
+cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
+~~~
+
+*/
+
+/**
+\namespace thermalfist \brief The main namespace where all classes and functions of the Thermal-FIST library reside.
+
+It may therefore be convenient to include the 
+
+~~~.cpp
+using namespace thermalfist;
+~~~
+
+directive in a C++ macro which uses the library.
+*/

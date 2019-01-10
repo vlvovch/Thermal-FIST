@@ -1,13 +1,15 @@
 /*
  * Thermal-FIST package
  *
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
 #ifndef BASESTRUCTURES_H
 #define BASESTRUCTURES_H
 #include <string>
+
+#include "HRGBase/ThermalModelBase.h"
 
 /**
 *   A structure containing the current thermal model configuration.
@@ -24,9 +26,17 @@ struct ThermalModelConfig {
 	int QuantumStatistics; /**< 0 - Boltzmann, 1 - Quantum */
 	int QuantumStatisticsType; /**< 0 - Cluster Expansion, 1 - Quadratures */
 	int QuantumStatisticsInclude; /**< 0 - All, 1 - Only mesons, 2 - Only pions */
-	int Interaction; /**< 0 - constant EV, 1 - bag model EV, 2 - two-component EV, 3 - from file */
-	double EVRadius;
+
+
+	int InteractionScaling; /**< 0 - constant EV, 1 - bag model EV, 2 - two-component EV, 3 - from file */
+	//double EVRadius;
+  double vdWA; /// QvdW attraction (in MeV * fm3)
+  double vdWB; /// QvdW repulsion (in fm3)
 	std::string InteractionInput;
+  int DisableMM;
+  int DisableMB;
+  int DisableBB;
+  int DisableBantiB;
 
 	/// Thermal parameters
 	double T;
@@ -36,7 +46,9 @@ struct ThermalModelConfig {
 	int B, S, Q, C;
 
 	/// Constraints on mu's
+  double SoverB;
 	double QoverB;
+  bool ConstrainMuB;
 	bool ConstrainMuQ;
 	bool ConstrainMuS;
 	bool ConstrainMuC;
@@ -45,6 +57,16 @@ struct ThermalModelConfig {
 	int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
 	bool RenormalizeBR;
 	bool ComputeFluctations;
+
+  static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
+};
+
+struct Thermodynamics {
+  bool flag;
+  double T, muB, muQ, muS, muC;
+  double pT4, eT4, IT4, sT3;
+  double nhT3;
+  std::vector< std::vector<double> > densities;
 };
 
 struct ChargesFluctuations {
@@ -53,6 +75,11 @@ struct ChargesFluctuations {
 	double chi1Q, chi2Q, chi3Q, chi4Q;
 	double chi1S, chi2S, chi3S, chi4S;
 	double chi1C, chi2C, chi3C, chi4C;
+  double chi11BQ, chi11BS, chi11QS;
+  double chi31BQ, chi31BS, chi31QS;
 };
+
+void SetThermalModelConfiguration(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
+void SetThermalModelInteraction(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 
 #endif

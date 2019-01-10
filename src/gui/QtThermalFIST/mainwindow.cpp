@@ -64,8 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
 	tab2 = new FitToExperimentTab(NULL, model);
   tab1->setFitTab(tab2);
 
-	tab3 = new EnergyDependenceTab(NULL, model);
-	tab4 = new ContourPlotTab(NULL, model);
+  tabEoS = new EquationOfStateTab(NULL, model);
+
 	tab5 = new EventGeneratorTab(NULL, model);
   tabEditor = new ListEditorTab(NULL, model);
 
@@ -76,6 +76,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	tabWidget->addTab(tab2, QString(tr("Thermal fits")));
 
+  tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
+
 	tabWidget->addTab(tab5, QString(tr("Event generator")));
 
   tabWidget->addTab(tabEditor, QString(tr("Particle list editor")));
@@ -83,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
   currentTab = tabWidget->currentIndex();
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-	QLabel *labelCopyright = new QLabel(tr("© 2014-2018 Volodymyr Vovchenko"));
+	QLabel *labelCopyright = new QLabel(tr("© 2014-2019 Volodymyr Vovchenko"));
 
 	QVBoxLayout *mainLayout = new QVBoxLayout;
 	mainLayout->addLayout(dataLay);
@@ -104,14 +106,6 @@ MainWindow::~MainWindow()
 	delete model;
 	delete TPS;
 }
-
-//#ifndef QT_NO_CONTEXTMENU
-//void MainWindow::contextMenuEvent(QContextMenuEvent *event)
-//{
-//  QMenu menu(this);
-//  menu.exec(event->globalPos());
-//}
-//#endif // QT_NO_CONTEXTMENU
 
 void MainWindow::createMenus()
 {
@@ -148,6 +142,10 @@ void MainWindow::createMenus()
   QAction *guideAct = new QAction(tr("Quick start guide"), this);
   connect(guideAct, &QAction::triggered, this, &MainWindow::quickstartguide);
   helpMenu->addAction(guideAct);
+
+  QAction *docAct = new QAction(tr("Documentation"), this);
+  connect(docAct, &QAction::triggered, this, &MainWindow::documentation);
+  helpMenu->addAction(docAct);
 }
 
 void MainWindow::loadDecays()
@@ -192,6 +190,11 @@ void MainWindow::quickstartguide()
   QDesktopServices::openUrl(QUrl("https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"));
 }
 
+void MainWindow::documentation()
+{
+  QDesktopServices::openUrl(QUrl("https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/"));
+}
+
 void MainWindow::increaseFontSize()
 {
   QFont font = QApplication::font();
@@ -229,6 +232,8 @@ void MainWindow::loadDatabase()
 		leDatabase->setText(path);
 		tab1->resetTPS();
 		tab2->resetTPS();
+
+    tabEoS->resetTPS();
 
 		tab5->resetTPS();
 

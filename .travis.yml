@@ -16,6 +16,11 @@ script:
   - cmake -DINCLUDE_TESTS=ON ../
   - make -j$(nproc)
   - make test
-  - cd bin/routines
+  - cd bin/examples
   - ./CalculationTmu
-  - ./BagModelFit
+  - ./BagModelFit 0.50 0.100 0.301 0.005
+  - ./cpc1HRGTDep 0
+  - ./cpc1HRGTDep 1
+  - ./cpc1HRGTDep 2
+  - ./cpc3chi2NEQ
+  - ./cpc4mcHRG 0

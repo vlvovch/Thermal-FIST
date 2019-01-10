@@ -210,33 +210,6 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   layAllQuant->addLayout(layAbsQuant);
   grQuant->setLayout(layAllQuant);
 
-
-  //QGroupBox *grQuark = new QGroupBox(tr("Absolute quark content:"));
-
-  //QHBoxLayout *layQuark = new QHBoxLayout();
-  //layQuark->setAlignment(Qt::AlignLeft);
-  //QLabel *labelAbsoluteStrangeness = new QLabel(tr("Absolute strangeness:"));
-  //spinAbsoluteStrangeness = new QDoubleSpinBox();
-  //spinAbsoluteStrangeness->setDecimals(3);
-  //spinAbsoluteStrangeness->setMinimum(0.);
-  ////spinAbsoluteStrangeness->setMaximum(10);
-  //connect(spinAbsoluteStrangeness, SIGNAL(editingFinished()), this, SLOT(ChargeEdited()));
-
-  //QLabel *labelAbsoluteCharm = new QLabel(tr("Absolute charm:"));
-  //spinAbsoluteCharm = new QDoubleSpinBox();
-  //spinAbsoluteCharm->setDecimals(3);
-  //spinAbsoluteCharm->setMinimum(0.);
-  ////spinAbsoluteStrangeness->setMaximum(10);
-  //connect(spinAbsoluteCharm, SIGNAL(editingFinished()), this, SLOT(ChargeEdited()));
-
-  //layQuark->addWidget(labelAbsoluteStrangeness);
-  //layQuark->addWidget(spinAbsoluteStrangeness);
-  //layQuark->addSpacing(15);
-  //layQuark->addWidget(labelAbsoluteCharm);
-  //layQuark->addWidget(spinAbsoluteCharm);
-
-  //grQuark->setLayout(layQuark);
-
   checkBoxStable = new QCheckBox(tr("Stable"));
   connect(checkBoxStable, SIGNAL(toggled(bool)), this, SLOT(StableEdited()));
 
@@ -370,10 +343,6 @@ void ListEditorTab::applyChanges()
 
   msgBox.exec();
   
-  //QMessageBox::StandardButton reply;
-  //reply = QMessageBox::information(this, tr("Apply changes ot particle list"), 
-  //  tr("Do you want to apply changes to the particle list to use in the current session?"));
-  
   if (msgBox.clickedButton() == abortButton || !myModel->haveChanges())
     return;
 
@@ -382,7 +351,7 @@ void ListEditorTab::applyChanges()
   
   myModel->applyChanges();
 
-
+  *model->TPS() = *myModel->GetTPS();
   model->ChangeTPS(model->TPS());
 
   resetTPS();

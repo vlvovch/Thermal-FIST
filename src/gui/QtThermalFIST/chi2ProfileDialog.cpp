@@ -25,7 +25,7 @@
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
-#include "QCustomPlot/qcustomplot.h"
+#include "qcustomplot.h"
 
 using namespace thermalfist;
 
@@ -269,7 +269,7 @@ void chi2ProfileDialog::setModel()
 	model->SetGammaS(config.gS);
 	model->SetGammaC(config.gC);
 	model->SetVolumeRadius(config.VolumeR);
-	model->SetStrangenessCanonicalVolumeRadius(config.VolumeRSC);
+	model->SetCanonicalVolumeRadius(config.VolumeRSC);
 
 	model->SetUseWidth(config.FiniteWidth != 0);
 	if (config.FiniteWidth == 1)
@@ -307,41 +307,7 @@ void chi2ProfileDialog::setModel()
 		}
 	}
 
-	std::vector<double> radii(model->TPS()->Particles().size(), 0.);
-
-	// Uniform EV
-	if (config.Interaction == 0) {
-		model->SetRadius(config.EVRadius);
-		std::fill(radii.begin(), radii.end(), config.EVRadius);
-	}
-
-	// Bag model EV
-	if (config.Interaction == 1) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			ThermalParticle &part = model->TPS()->Particle(i);
-			radii[i] = config.EVRadius * pow(part.Mass() / xMath::mnucleon(), 1. / 3.);
-		}
-		model->FillVirial(radii);
-	}
-
-	// Two-component EV
-	if (config.Interaction == 2) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			ThermalParticle &part = model->TPS()->Particle(i);
-			if (part.BaryonCharge() != 0)
-				radii[i] = config.EVRadius * pow(abs(part.BaryonCharge()), 1. / 3.);
-			else
-				radii[i] = 0.;
-		}
-		model->FillVirial(radii);
-	}
-
-	model->FillVirial(radii); // Just in case
-
-  // Read from file
-	if (config.Interaction == 3) {
-		model->ReadInteractionParameters(config.InteractionInput);
-	}
+  SetThermalModelInteraction(model, config);
 
 	if (config.ModelType == ThermalModelConfig::CE) {
 		static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(false);
@@ -416,7 +382,7 @@ void chi2ProfileDialog::replot() {
 	if (cindex<0 || cindex>vecParams.size())
 		return;
 
-	plot->graph(0)->clearData();
+	plot->graph(0)->data()->clear();
 
 	int fCurrentSize = vecCurrentSize[cindex];
 	std::vector<double> &Avalues = vecAvalues[cindex];
@@ -442,7 +408,7 @@ void chi2ProfileDialog::replot() {
 		
 
 
-		plot->graph(1)->clearData();
+		plot->graph(1)->data()->clear();
 
 		if (!(chi2min != chi2min || Aco != Aco)) {
 
@@ -454,7 +420,7 @@ void chi2ProfileDialog::replot() {
 			}
 		}
 
-		plot->graph(2)->clearData();
+		plot->graph(2)->data()->clear();
 		if (!(chi2min != chi2min))
 			plot->graph(2)->addData(amin / mn, chi2min);
 	}
