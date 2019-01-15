@@ -66,13 +66,13 @@ double get_cpu_time(){
 #endif
 
 double muBss(double ss) {
-	return 1.308 / (1. + 0.273 * ss);
+  return 1.308 / (1. + 0.273 * ss);
 }
 
 
 double Tss(double ss) {
-	double tmpmuB = muBss(ss);
-	return 0.166 - 0.139 * tmpmuB * tmpmuB - 0.053 * tmpmuB * tmpmuB * tmpmuB * tmpmuB;
+  double tmpmuB = muBss(ss);
+  return 0.166 - 0.139 * tmpmuB * tmpmuB - 0.053 * tmpmuB * tmpmuB * tmpmuB * tmpmuB;
 }
 
 
@@ -81,31 +81,31 @@ double Tss(double ss) {
 // ch1,2 -- vector of charges that all final state hadrons contribute to the observable 1,2
 double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<double> & ch1, const std::vector<double> & ch2)
 {
-	double ret = 0.;
-	for (int r = 0; r < model->TPS()->Particles().size(); ++r) {
-		const ThermalParticle &part_r = model->TPS()->Particle(r);
+  double ret = 0.;
+  for (int r = 0; r < model->TPS()->Particles().size(); ++r) {
+    const ThermalParticle &part_r = model->TPS()->Particle(r);
 
     const ThermalParticleSystem::ResonanceFinalStatesDistribution& decayDistributions = model->TPS()->ResonanceFinalStatesDistributions()[r];
 
-		double mn1 = model->ScaledVariancePrimordial(r) * model->Densities()[r] / pow(model->Parameters().T, 3) / pow(xMath::GeVtoifm(), 3);
+    double mn1 = model->ScaledVariancePrimordial(r) * model->Densities()[r] / pow(model->Parameters().T, 3) / pow(xMath::GeVtoifm(), 3);
 
-		double mn2 = 0., mn3 = 0.;
-		for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
-			const ThermalParticle &part_j = model->TPS()->Particle(j);
+    double mn2 = 0., mn3 = 0.;
+    for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
+      const ThermalParticle &part_j = model->TPS()->Particle(j);
 
-			double njavr = 0.;
+      double njavr = 0.;
       for (int i = 0; i < decayDistributions.size(); ++i) {
         njavr += decayDistributions[i].first * decayDistributions[i].second[j];
       }
 
-			mn2 += ch1[j] * njavr;
-			mn3 += ch2[j] * njavr;
-		}
+      mn2 += ch1[j] * njavr;
+      mn3 += ch2[j] * njavr;
+    }
 
-		ret += mn1 * mn2 * mn3;
-	}
+    ret += mn1 * mn2 * mn3;
+  }
 
-	return ret;
+  return ret;
 }
 
 // Temperature dependence of (EV-)HRG thermodynamics at zero chemical potential
@@ -117,300 +117,305 @@ int main(int argc, char *argv[])
     withMonteCarlo = atoi(argv[1]);
   
   string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
-	ThermalParticleSystem parts(listname);
+  ThermalParticleSystem parts(listname);
 
-	// Disable K0 and K0bar decays to avoid strangeness non-conservation
-	parts.ParticleByPDG(311).SetStable(true);
-	parts.ParticleByPDG(-311).SetStable(true);
-
-
-
-	ThermalModelParameters params;
-	params.V   = 1000.;
-	
-	ThermalModelBase *model;
-
-	model = new ThermalModelIdeal(&parts);
-
-	model->SetParameters(params);
-	model->SetStatistics(false);
-
-	//model->SetUseWidth(true);
-	//model->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
-	model->SetUseWidth(false);
-
-	// Normalize branching ratios to avoid charge non-conservation in decays
-	model->SetNormBratio(true);
-	
-
-	// For calculating net-kaon scaled variance using "average decays"
-	vector<double> coefsk(parts.Particles().size(), 0.);
-	coefsk[parts.PdgToId(321)]  =  1.;
-	coefsk[parts.PdgToId(-321)] = -1.;
+  // Disable K0 and K0bar decays to avoid strangeness non-conservation
+  parts.ParticleByPDG(311).SetStable(true);
+  parts.ParticleByPDG(-311).SetStable(true);
 
 
-	double smin = 3.;
-	double smax = 3000.;
-	int iterss = 100;
 
-	double wt1 = get_wall_time();
-	int iters = 0;
+  ThermalModelParameters params;
+  params.V   = 1000.;
+  
+  ThermalModelBase *model;
 
-	double musp = 0., muqp = 0., mucp = 0.;
+  model = new ThermalModelIdeal(&parts);
 
-	// First analytic calculations
-	printf("Analytic\n");
+  model->SetParameters(params);
+  model->SetStatistics(false);
 
-	FILE *f = fopen("cpc4.analyt.zw.dat", "w");
+  model->SetUseWidth(ThermalParticle::BWTwoGamma);
+  //model->SetUseWidth(ThermalParticle::ZeroWidth);
 
-	fprintf(f, "%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s\n",
-		"sqrts[GeV]",
-		"T[MeV]",
-		"muB[MeV]",
-		"muQ[MeV]",
-		"muS[MeV]",
-		"c2k/c1k",
-		"C_B,S",
-		"C_p,k_fd",
-		"C_Q,S",
-		"C_Q,k_fd",
-		"C_B,Q",
-		"C_p,Q_fd",
-		"c2k_av/c1k"
-	);
+  // Normalize branching ratios to avoid charge non-conservation in decays
+  model->SetNormBratio(true);
+  
 
-	vector<double> ens, Ts, muBs, muQs, muSs;
-
-	double logSmin = log(smin);
-	double logSmax = log(smax);
-	double dlogS = (logSmax - logSmin) / iterss;
-	//for (double logS = smin; logS <= smax; logS += dlogS) {
-	for (int is = 0; is <= iterss; ++is) {
-		double ss = exp(logSmin + is * dlogS);
-		double T = Tss(ss);
-		double muB = muBss(ss);
-
-		model->SetTemperature(T);
-		model->ConstrainMuS(true);
-		model->ConstrainMuQ(true);
-		model->ConstrainMuC(true);
-		//model->Parameters().muB = model->Parameters().muS = model->Parameters().muQ = model->Parameters().muC = 0.;
-		model->SetBaryonChemicalPotential(muB);
-		model->SetStrangenessChemicalPotential(musp);
-		model->SetElectricChemicalPotential(muqp);
-		model->SetCharmChemicalPotential(mucp);
-		//model->FixParameters();
-		model->ConstrainChemicalPotentials();
-
-		musp = model->Parameters().muS;
-		muqp = model->Parameters().muQ;
-		mucp = model->Parameters().muC;
-
-		ens.push_back(ss);
-		Ts.push_back(T);
-		muBs.push_back(muB);
-		muQs.push_back(muqp);
-		muSs.push_back(musp);
-
-		model->CalculateFluctuations();
+  // For calculating net-kaon scaled variance using "average decays"
+  vector<double> coefsk(parts.Particles().size(), 0.);
+  coefsk[parts.PdgToId(321)]  =  1.;
+  coefsk[parts.PdgToId(-321)] = -1.;
 
 
-		double chi1B = model->CalculateBaryonDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
-		double chi1Q = model->CalculateChargeDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
-		double chi1S = model->CalculateStrangenessDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+  double smin = 3.;
+  double smax = 3000.;
+  int iterss = 100;
 
-		double chi1p = (model->GetDensity(2212, Feeddown::StabilityFlag) - model->GetDensity(-2212, Feeddown::StabilityFlag)) / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
-		double chi1k = (model->GetDensity(321, Feeddown::StabilityFlag) - model->GetDensity(-321, Feeddown::StabilityFlag)) / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+  double wt1 = get_wall_time();
+  int iters = 0;
 
-		double chi2B   = model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge);
-		double chi2Q   = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
-		double chi2S   = model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge);
-		double chi11BS = model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge);
-		double chi11QS = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge);
-		double chi11BQ = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge);
+  double musp = 0., muqp = 0., mucp = 0.;
 
-		double chi2p   = model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge);
-		double chi2k   = model->ProxySusc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge);
-		double chi11pk = model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge);
-		double chi11Qk = model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge);
-		double chi11pQ = model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge);
+  // First analytic calculations
+  printf("Analytic\n");
 
-		double chi2kav = CalculateAveragedDecaysChi2(model, coefsk, coefsk);
+  FILE *f = fopen("cpc4.analyt.dat", "w");
 
-		printf("%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n", 
-			ss, 
-			chi11BS / chi2S, 
-			chi11QS / chi2S, 
-			chi11BQ / chi2B, 
-			chi11pk / chi2k, 
-			chi11Qk / chi2k, 
-			chi11pQ / chi2p);
+  fprintf(f, "%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s\n",
+    "sqrts[GeV]",
+    "T[MeV]",
+    "muB[MeV]",
+    "muQ[MeV]",
+    "muS[MeV]",
+    "c2k/c1k",
+    "C_B,S",
+    "C_p,k_fd",
+    "C_Q,S",
+    "C_Q,k_fd",
+    "C_B,Q",
+    "C_p,Q_fd",
+    "c2k_av/c1k"
+  );
 
-		fprintf(f, "%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n",
-			ss,
-			T * 1.e3,
-			muB * 1.e3,
-			muqp * 1.e3,
-			musp * 1.e3,
-			chi2k / chi1k,
-			chi11BS / chi2S,
-			chi11pk / chi2k,
-			chi11QS / chi2S,
-			chi11Qk / chi2k,
-			chi11BQ / chi2B,
-			chi11pQ / chi2p,
-			chi2kav / chi1k);
+  vector<double> ens, Ts, muBs, muQs, muSs;
 
-		fflush(f);
+  double logSmin = log(smin);
+  double logSmax = log(smax);
+  double dlogS = (logSmax - logSmin) / iterss;
+  //for (double logS = smin; logS <= smax; logS += dlogS) {
+  for (int is = 0; is <= iterss; ++is) {
+    double ss = exp(logSmin + is * dlogS);
+    double T = Tss(ss);
+    double muB = muBss(ss);
 
-		iters++;
-	}
+    model->SetTemperature(T);
+    model->ConstrainMuS(true);
+    model->ConstrainMuQ(true);
+    model->ConstrainMuC(true);
+    //model->Parameters().muB = model->Parameters().muS = model->Parameters().muQ = model->Parameters().muC = 0.;
+    model->SetBaryonChemicalPotential(muB);
+    model->SetStrangenessChemicalPotential(musp);
+    model->SetElectricChemicalPotential(muqp);
+    model->SetCharmChemicalPotential(mucp);
+    //model->FixParameters();
+    model->ConstrainChemicalPotentials();
 
-	//delete model;
+    musp = model->Parameters().muS;
+    muqp = model->Parameters().muQ;
+    mucp = model->Parameters().muC;
 
-	fclose(f);
+    ens.push_back(ss);
+    Ts.push_back(T);
+    muBs.push_back(muB);
+    muQs.push_back(muqp);
+    muSs.push_back(musp);
 
-	double wt2 = get_wall_time();
+    model->CalculateFluctuations();
 
-	printf("%30s %lf s\n", "Running time:", (wt2 - wt1));
-	printf("%30s %lf s\n", "Time per single calculation:", (wt2 - wt1) / iters);
 
-	printf("\n\n");
+    double chi1B = model->CalculateBaryonDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+    double chi1Q = model->CalculateChargeDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+    double chi1S = model->CalculateStrangenessDensity() / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+
+    double chi1p = (model->GetDensity(2212, Feeddown::StabilityFlag) - model->GetDensity(-2212, Feeddown::StabilityFlag)) / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+    double chi1k = (model->GetDensity(321, Feeddown::StabilityFlag) - model->GetDensity(-321, Feeddown::StabilityFlag)) / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
+
+    double chi2B   = model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge);
+    double chi2Q   = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    double chi2S   = model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge);
+    double chi11BS = model->Susc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge);
+    double chi11QS = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge);
+    double chi11BQ = model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge);
+
+    double chi2p   = model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge);
+    double chi2k   = model->ProxySusc(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge);
+    double chi11pk = model->ProxySusc(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge);
+    double chi11Qk = model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge);
+    double chi11pQ = model->ProxySusc(ConservedCharge::ElectricCharge, ConservedCharge::BaryonCharge);
+
+    double chi2kav = CalculateAveragedDecaysChi2(model, coefsk, coefsk);
+
+    printf("%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n", 
+      ss, 
+      chi11BS / chi2S, 
+      chi11QS / chi2S, 
+      chi11BQ / chi2B, 
+      chi11pk / chi2k, 
+      chi11Qk / chi2k, 
+      chi11pQ / chi2p);
+
+    fprintf(f, "%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n",
+      ss,
+      T * 1.e3,
+      muB * 1.e3,
+      muqp * 1.e3,
+      musp * 1.e3,
+      chi2k / chi1k,
+      chi11BS / chi2S,
+      chi11pk / chi2k,
+      chi11QS / chi2S,
+      chi11Qk / chi2k,
+      chi11BQ / chi2B,
+      chi11pQ / chi2p,
+      chi2kav / chi1k);
+
+    fflush(f);
+
+    iters++;
+  }
+
+  //delete model;
+
+  fclose(f);
+
+  double wt2 = get_wall_time();
+
+  printf("%30s %lf s\n", "Running time:", (wt2 - wt1));
+  printf("%30s %lf s\n", "Time per single calculation:", (wt2 - wt1) / iters);
+
+  printf("\n\n");
 
   if (!withMonteCarlo)
     return 0;
 
-	printf("Monte Carlo\n");
+  printf("Monte Carlo\n");
 
-	f = fopen("cpc4.montecarlo.dat", "w");
+  f = fopen("cpc4.montecarlo.dat", "w");
 
-	fprintf(f, "%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s\n",
-		"sqrts[GeV]",
-		"T[MeV]",
-		"muB[MeV]",
-		"muQ[MeV]",
-		"muS[MeV]",
-		"c2k/c1k",
-		"C_B,S",
-		"C_p,k_fd",
-		"C_Q,S",
-		"C_Q,k_fd",
-		"C_B,Q",
-		"C_p,Q_fd"
-	);
+  fprintf(f, "%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s\n",
+    "sqrts[GeV]",
+    "T[MeV]",
+    "muB[MeV]",
+    "muQ[MeV]",
+    "muS[MeV]",
+    "c2k/c1k",
+    "C_B,S",
+    "C_p,k_fd",
+    "C_Q,S",
+    "C_Q,k_fd",
+    "C_B,Q",
+    "C_p,Q_fd"
+  );
 
-	// Now Monte Carlo
-	iters = 0;
-	wt1 = get_wall_time();
+  // Now Monte Carlo
+  iters = 0;
+  wt1 = get_wall_time();
 
-	for (int ind = 0; ind < ens.size(); ind++) {
-		model->SetTemperature(Ts[ind]);
-		model->SetBaryonChemicalPotential(muBs[ind]);
-		model->SetElectricChemicalPotential(muQs[ind]);
-		model->SetStrangenessChemicalPotential(muSs[ind]);
+  for (int ind = 0; ind < ens.size(); ind++) {
+    model->SetTemperature(Ts[ind]);
+    model->SetBaryonChemicalPotential(muBs[ind]);
+    model->SetElectricChemicalPotential(muQs[ind]);
+    model->SetStrangenessChemicalPotential(muSs[ind]);
 
-		double mc_B = 0., mc_Q = 0., mc_S = 0., mc_p = 0., mc_k = 0.;
-		double mc_B2 = 0., mc_Q2 = 0., mc_S2 = 0., mc_BQ = 0., mc_QS = 0., mc_BS = 0.;
-		double mc_p2 = 0., mc_k2 = 0., mc_pk = 0., mc_pQ = 0., mc_Qk = 0.;
+    double mc_B = 0., mc_Q = 0., mc_S = 0., mc_p = 0., mc_k = 0.;
+    double mc_B2 = 0., mc_Q2 = 0., mc_S2 = 0., mc_BQ = 0., mc_QS = 0., mc_BS = 0.;
+    double mc_p2 = 0., mc_k2 = 0., mc_pk = 0., mc_pQ = 0., mc_Qk = 0.;
 
-		SphericalBlastWaveEventGenerator generator(model, 0.100, 0.5);
-		int nevents = 100000;
-		double wsum = 0.;
-		for (int i = 0; i < nevents; ++i) {
-			SimpleEvent ev = generator.GetEvent();
-			int mcev_B = 0., mcev_Q = 0., mcev_S = 0., mcev_p = 0., mcev_k = 0.;
-			//int mcev_B2 = 0., mcev_Q2 = 0., mcev_S2 = 0., mcev_BQ = 0., mcev_QS = 0., mcev_BS = 0.;
-			//int mcev_p2 = 0., mcev_k2 = 0., mcev_pk = 0., mcev_pQ = 0., mcev_Qk = 0.;
+    // Setup the configuration for event generator
+    EventGeneratorConfiguration config;
+    config.fEnsemble = EventGeneratorConfiguration::GCE;
+    config.fModelType = EventGeneratorConfiguration::PointParticle;
+    config.CFOParameters = model->Parameters();
 
-			for (int part = 0; part < ev.Particles.size(); ++part) {
-				int pdgid = ev.Particles[part].PDGID;
-				const ThermalParticle &thermpart = parts.ParticleByPDG(pdgid);
-				mcev_B += thermpart.BaryonCharge();
-				mcev_Q += thermpart.ElectricCharge();
-				mcev_S += thermpart.Strangeness();
+    SphericalBlastWaveEventGenerator generator(model->TPS(), config, 0.100, 0.5);
+    int nevents = 100000;
+    double wsum = 0.;
+    for (int i = 0; i < nevents; ++i) {
+      SimpleEvent ev = generator.GetEvent();
+      int mcev_B = 0., mcev_Q = 0., mcev_S = 0., mcev_p = 0., mcev_k = 0.;
+      //int mcev_B2 = 0., mcev_Q2 = 0., mcev_S2 = 0., mcev_BQ = 0., mcev_QS = 0., mcev_BS = 0.;
+      //int mcev_p2 = 0., mcev_k2 = 0., mcev_pk = 0., mcev_pQ = 0., mcev_Qk = 0.;
 
-				if (pdgid == 2212)
-					mcev_p += 1.;
-				else if (pdgid == -2212)
-					mcev_p += (-1.);
+      for (int part = 0; part < ev.Particles.size(); ++part) {
+        int pdgid = ev.Particles[part].PDGID;
+        const ThermalParticle &thermpart = parts.ParticleByPDG(pdgid);
+        mcev_B += thermpart.BaryonCharge();
+        mcev_Q += thermpart.ElectricCharge();
+        mcev_S += thermpart.Strangeness();
 
-				if (pdgid == 321)
-					mcev_k += ev.weight;
-				else if (pdgid == -321)
-					mcev_k += (-1.);
-			}
+        if (pdgid == 2212)
+          mcev_p += 1.;
+        else if (pdgid == -2212)
+          mcev_p += (-1.);
 
-			mc_B += ev.weight * mcev_B;
-			mc_Q += ev.weight * mcev_Q;
-			mc_S += ev.weight * mcev_S;
-			mc_p += ev.weight * mcev_p;
-			mc_k += ev.weight * mcev_k;
+        if (pdgid == 321)
+          mcev_k += ev.weight;
+        else if (pdgid == -321)
+          mcev_k += (-1.);
+      }
 
-			mc_B2 += ev.weight * mcev_B * mcev_B;
-			mc_Q2 += ev.weight * mcev_Q * mcev_Q;
-			mc_S2 += ev.weight * mcev_S * mcev_S;
-			mc_p2 += ev.weight * mcev_p * mcev_p;
-			mc_k2 += ev.weight * mcev_k * mcev_k;
+      mc_B += ev.weight * mcev_B;
+      mc_Q += ev.weight * mcev_Q;
+      mc_S += ev.weight * mcev_S;
+      mc_p += ev.weight * mcev_p;
+      mc_k += ev.weight * mcev_k;
 
-			mc_BQ += ev.weight * mcev_B * mcev_Q;
-			mc_QS += ev.weight * mcev_Q * mcev_S;
-			mc_BS += ev.weight * mcev_B * mcev_S;
-			mc_pQ += ev.weight * mcev_p * mcev_Q;
-			mc_pk += ev.weight * mcev_p * mcev_k;
-			mc_Qk += ev.weight * mcev_Q * mcev_k;
+      mc_B2 += ev.weight * mcev_B * mcev_B;
+      mc_Q2 += ev.weight * mcev_Q * mcev_Q;
+      mc_S2 += ev.weight * mcev_S * mcev_S;
+      mc_p2 += ev.weight * mcev_p * mcev_p;
+      mc_k2 += ev.weight * mcev_k * mcev_k;
 
-			wsum += ev.weight;
-		}
+      mc_BQ += ev.weight * mcev_B * mcev_Q;
+      mc_QS += ev.weight * mcev_Q * mcev_S;
+      mc_BS += ev.weight * mcev_B * mcev_S;
+      mc_pQ += ev.weight * mcev_p * mcev_Q;
+      mc_pk += ev.weight * mcev_p * mcev_k;
+      mc_Qk += ev.weight * mcev_Q * mcev_k;
 
-		double chi1B = mc_B / wsum;
-		double chi1Q = mc_Q / wsum;
-		double chi1S = mc_S / wsum;
+      wsum += ev.weight;
+    }
 
-		double chi1p = mc_p / wsum;
-		double chi1k = mc_k / wsum;
+    double chi1B = mc_B / wsum;
+    double chi1Q = mc_Q / wsum;
+    double chi1S = mc_S / wsum;
 
-		double chi2B = mc_B2 / wsum - mc_B / wsum * mc_B / wsum;
-		double chi2Q = mc_Q2 / wsum - mc_Q / wsum * mc_Q / wsum;
-		double chi2S = mc_S2 / wsum - mc_S / wsum * mc_S / wsum;
-		double chi11BS = mc_BS / wsum - mc_B / wsum * mc_S / wsum;
-		double chi11QS = mc_QS / wsum - mc_Q / wsum * mc_S / wsum;
-		double chi11BQ = mc_BQ / wsum - mc_B / wsum * mc_Q / wsum;
+    double chi1p = mc_p / wsum;
+    double chi1k = mc_k / wsum;
 
-		double chi2p = mc_p2 / wsum - mc_p / wsum * mc_p / wsum;
-		double chi2k = mc_k2 / wsum - mc_k / wsum * mc_k / wsum;
-		double chi11pk = mc_pk / wsum - mc_p / wsum * mc_k / wsum;
-		double chi11Qk = mc_Qk / wsum - mc_Q / wsum * mc_k / wsum;
-		double chi11pQ = mc_pQ / wsum - mc_p / wsum * mc_Q / wsum;
+    double chi2B = mc_B2 / wsum - mc_B / wsum * mc_B / wsum;
+    double chi2Q = mc_Q2 / wsum - mc_Q / wsum * mc_Q / wsum;
+    double chi2S = mc_S2 / wsum - mc_S / wsum * mc_S / wsum;
+    double chi11BS = mc_BS / wsum - mc_B / wsum * mc_S / wsum;
+    double chi11QS = mc_QS / wsum - mc_Q / wsum * mc_S / wsum;
+    double chi11BQ = mc_BQ / wsum - mc_B / wsum * mc_Q / wsum;
 
-		printf("%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n", ens[ind], chi11BS / chi2S, chi11QS / chi2S, chi11BQ / chi2B, chi11pk / chi2k, chi11Qk / chi2k, chi11pQ / chi2p);
-	
+    double chi2p = mc_p2 / wsum - mc_p / wsum * mc_p / wsum;
+    double chi2k = mc_k2 / wsum - mc_k / wsum * mc_k / wsum;
+    double chi11pk = mc_pk / wsum - mc_p / wsum * mc_k / wsum;
+    double chi11Qk = mc_Qk / wsum - mc_Q / wsum * mc_k / wsum;
+    double chi11pQ = mc_pQ / wsum - mc_p / wsum * mc_Q / wsum;
 
-		fprintf(f, "%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n",
-			ens[ind],
-			Ts[ind] * 1.e3,
-			muBs[ind] * 1.e3,
-			muQs[ind] * 1.e3,
-			muSs[ind] * 1.e3,
-			chi2k / chi1k,
-			chi11BS / chi2S,
-			chi11pk / chi2k,
-			chi11QS / chi2S,
-			chi11Qk / chi2k,
-			chi11BQ / chi2B,
-			chi11pQ / chi2p);
+    printf("%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n", ens[ind], chi11BS / chi2S, chi11QS / chi2S, chi11BQ / chi2B, chi11pk / chi2k, chi11Qk / chi2k, chi11pQ / chi2p);
+  
 
-		fflush(f);
-		iters++;
-	}
+    fprintf(f, "%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf%15lf\n",
+      ens[ind],
+      Ts[ind] * 1.e3,
+      muBs[ind] * 1.e3,
+      muQs[ind] * 1.e3,
+      muSs[ind] * 1.e3,
+      chi2k / chi1k,
+      chi11BS / chi2S,
+      chi11pk / chi2k,
+      chi11QS / chi2S,
+      chi11Qk / chi2k,
+      chi11BQ / chi2B,
+      chi11pQ / chi2p);
 
-	fclose(f);
+    fflush(f);
+    iters++;
+  }
 
-	wt2 = get_wall_time();
+  fclose(f);
 
-	printf("%30s %lf s\n", "Running time:", (wt2 - wt1));
-	printf("%30s %lf s\n", "Time per single calculation:", (wt2 - wt1) / iters);
+  wt2 = get_wall_time();
 
-	delete model;
+  printf("%30s %lf s\n", "Running time:", (wt2 - wt1));
+  printf("%30s %lf s\n", "Time per single calculation:", (wt2 - wt1) / iters);
 
-	return 0;
+  delete model;
+
+  return 0;
 }

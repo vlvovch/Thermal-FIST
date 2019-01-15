@@ -17,6 +17,8 @@
 #include <cmath>
 #include <cstdlib>
 
+#include "HRGBase/Utility.h"
+
 using namespace std;
 
 namespace thermalfist {
@@ -38,6 +40,9 @@ namespace thermalfist {
 
   ThermalParticleSystem::ThermalParticleSystem(std::string InputFile, bool GenAntiP, double mcut)
   {
+    if (!Disclaimer::DisclaimerPrinted) 
+      Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
+    
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
     m_PDGtoID.clear();

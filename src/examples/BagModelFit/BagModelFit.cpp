@@ -12,6 +12,7 @@
 #include <ctime>
 #include <cstdio>
 
+#include "HRGBase/Utility.h"
 #include "HRGBase.h"
 #include "HRGEV.h"
 #include "HRGFit.h"
@@ -30,7 +31,7 @@ using namespace thermalfist;
 // Usage: BagModelFit <rp> <Tmin> <Tmax> <dT>
 int main(int argc, char *argv[])
 {
-	// Proton radius
+  // Proton radius
 	double radProton = 0.50;
 	if (argc>1) 
 		radProton = atof(argv[1]);

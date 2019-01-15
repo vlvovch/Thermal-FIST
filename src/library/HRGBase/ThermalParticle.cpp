@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "HRGBase/Utility.h"
 #include "HRGBase/xMath.h"
 #include "HRGBase/NumericalIntegration.h"
 #include "HRGBase/ThermalParticleSystem.h"
@@ -27,6 +28,9 @@ namespace thermalfist {
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
     m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.)
   {
+    if (!Disclaimer::DisclaimerPrinted) 
+      Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
+    
     SetCalculationType(IdealGasFunctions::Quadratures);
 
     SetClusterExpansionOrder(3);
