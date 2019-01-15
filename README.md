@@ -20,7 +20,7 @@ the equation of state properties or performing the thermal fits,
 can be done in GUI. Using the GUI can therefore be a good starting point.
 Please see the [**Quick Start Guide**](docs/quickstart.md) to get started.
 
-For more details please see [**Thermal-FIST documentation**](https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/)
+For more details please see the [**Thermal-FIST documentation**](https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/)
 
 <p align="center">
   <img src="src/gui/QtThermalFIST/images/QtThermalFIST.png" alt="QtThermalFIST"/>
