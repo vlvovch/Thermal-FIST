@@ -951,7 +951,7 @@ namespace thermalfist {
         sunit = "[MeV]";
         tmn   = 1.e3;
       }
-      else if (param[0] == "R") {
+      else if (param.name == "R" || param.name == "Rc") {
         sunit = "[fm]";
       }
       tname = param.name + sunit;

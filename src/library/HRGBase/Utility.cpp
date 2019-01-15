@@ -17,6 +17,24 @@ using namespace std;
 
 namespace thermalfist {
 
+  namespace {
+    string NumberToString(int num) {
+      stringstream strs;
+      strs << num;
+      return strs.str();
+    }
+
+    string OutputString(const string &strin) {
+      string ret = "";
+      ret += "# ";
+      ret += strin;
+      while (ret.size() < 78)
+        ret += " ";
+      ret += "#";
+      return ret;
+    }
+  }
+
   bool Disclaimer::PrintDisclaimer()
   {
     for (int i = 0; i < 79; ++i)
@@ -29,22 +47,19 @@ namespace thermalfist {
     cout << "#";
     cout << endl;
 
-    ostringstream sstr;
+    string tmpstr = "";
 
-    sstr << "# "
-         << "This is Thermal-FIST version "
-         << ThermalFIST_VERSION_MAJOR
-         << "." 
-         << ThermalFIST_VERSION_MINOR;
+    tmpstr += "This is Thermal-FIST version ";
+    tmpstr += NumberToString(ThermalFIST_VERSION_MAJOR);
+    tmpstr += ".";
+    tmpstr += NumberToString(ThermalFIST_VERSION_MINOR);
 
-    if (ThermalFIST_VERSION_DEVEL != 0)
-      sstr << "." 
-         << ThermalFIST_VERSION_DEVEL;
+    if (ThermalFIST_VERSION_DEVEL != 0) {
+      tmpstr += ".";
+      tmpstr += NumberToString(ThermalFIST_VERSION_DEVEL);
+    }
 
-    string tmpstr = sstr.str();
-    while (tmpstr.size() < 78)
-      tmpstr += " ";
-    tmpstr += "#";
+    tmpstr = OutputString(tmpstr);
 
     cout << tmpstr << endl;
 
@@ -71,16 +86,9 @@ namespace thermalfist {
     email += ".";
     email += "uni-frankfurt.de";
 
-    sstr = ostringstream();
+    tmpstr = "Copyright (c) 2019 Volodymyr Vovchenko <" + email + ">";
 
-    sstr << "# "
-      << "Copyright (c) 2019 Volodymyr Vovchenko "
-      << "<" << email << ">";
-
-    tmpstr = sstr.str();
-    while (tmpstr.size() < 78)
-      tmpstr += " ";
-    tmpstr += "#";
+    tmpstr = OutputString(tmpstr);
 
     cout << tmpstr << endl;
 
@@ -90,15 +98,9 @@ namespace thermalfist {
     cout << "#";
     cout << endl;
 
-    sstr = ostringstream();
+    tmpstr = "Distributed under the GNU General Public License 3.0 (GPLv3 or later)";
 
-    sstr << "# "
-      << "Distributed under the GNU General Public License 3.0 (GPLv3 or later)";
-
-    tmpstr = sstr.str();
-    while (tmpstr.size() < 78)
-      tmpstr += " ";
-    tmpstr += "#";
+    tmpstr = OutputString(tmpstr);
 
     cout << tmpstr << endl;
 
@@ -108,16 +110,9 @@ namespace thermalfist {
     cout << "#";
     cout << endl;
 
-    sstr = ostringstream();
+    tmpstr = "The latest version is available at https://github.com/vlvovch/Thermal-FIST";
 
-    sstr << "# "
-      << "The latest version is available at "
-      << "https://github.com/vlvovch/Thermal-FIST";
-
-    tmpstr = sstr.str();
-    while (tmpstr.size() < 78)
-      tmpstr += " ";
-    tmpstr += "#";
+    tmpstr = OutputString(tmpstr);
 
     cout << tmpstr << endl;
 
