@@ -15,6 +15,6 @@ add_executable (cpc3chi2NEQ cpc3-chi2NEQ.cpp)
 target_link_libraries (cpc3chi2NEQ ThermalFIST)
 set_property(TARGET cpc3chi2NEQ PROPERTY FOLDER "examples/cpc")
 
-add_executable (cpc4mcHRG cpc4-mcHRGp.cpp)
+add_executable (cpc4mcHRG cpc4-mcHRG.cpp)
 target_link_libraries (cpc4mcHRG ThermalFIST)
 set_property(TARGET cpc4mcHRG PROPERTY FOLDER "examples/cpc")
