@@ -15,6 +15,10 @@ namespace thermalfist {
 
     MTRand randgenMT;
 
+    void SetSeed(const unsigned int seed) {
+      randgenMT.seed(seed);
+    }
+
     int RandomPoisson(double mean) {
       int n;
       if (mean <= 0) return 0;
