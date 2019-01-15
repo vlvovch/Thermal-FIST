@@ -947,11 +947,11 @@ namespace thermalfist {
       std::string sunit = "";
       std::string tname = "";
       double tmn = 1.;
-      if ((i >= 0 && i <= 3) || i == 8) {
+      if (param.name == "T" || param.name.substr(0, 2) == "mu") {
         sunit = "[MeV]";
         tmn   = 1.e3;
       }
-      else if (i == 5 || i == 6) {
+      else if (param[0] == "R") {
         sunit = "[fm]";
       }
       tname = param.name + sunit;
