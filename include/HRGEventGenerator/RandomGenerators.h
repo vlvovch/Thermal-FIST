@@ -23,6 +23,9 @@ namespace thermalfist {
     /// \brief The Mersenne Twister random number generator
     extern MTRand randgenMT;
 
+    /// \brief Set the seed of the random number generator randgenMT
+    void SetSeed(const unsigned int seed);
+
     /// \brief Generates random integer distributed by Poisson with specified mean
     /// Uses randgenMT
     /// \param mean Mean of the Poisson distribution

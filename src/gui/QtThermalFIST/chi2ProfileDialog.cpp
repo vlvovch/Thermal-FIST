@@ -76,8 +76,14 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
 				ParameterName == "muC")
 				mn = 1.e3;
 
-			vecAleft.push_back(fitParams.GetParameter(paramNames[i]).xmin * mn);
-			vecAright.push_back(fitParams.GetParameter(paramNames[i]).xmax * mn);
+      const FitParameter& param = modelFitInput->Parameters().GetParameter(paramNames[i]);
+
+      
+      vecAleft.push_back((param.value - 4. * param.errm) * mn);
+      vecAright.push_back((param.value + 4. * param.errp) * mn);
+
+			//vecAleft.push_back(fitParams.GetParameter(paramNames[i]).xmin * mn);
+			//vecAright.push_back(fitParams.GetParameter(paramNames[i]).xmax * mn);
 
 			vecAvalues.push_back(std::vector<double>(0));
 			vecParams.push_back(std::vector<double>(0));

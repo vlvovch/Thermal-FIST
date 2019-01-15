@@ -423,9 +423,6 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 	else
 		modelnew = new ThermalModelIdeal(model->TPS());
 
-	if (model != NULL) 
-		modelnew->SetNormBratio(config.RenormalizeBR);
-
 	myModel->setModel(modelnew);
   configWidget->setModel(modelnew);
 	if (model != NULL) 
@@ -452,7 +449,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   SetThermalModelConfiguration(model, config);
 
-  SetThermalModelInteraction(model, config);
+  if (config.InteractionModel != ThermalModelConfig::InteractionIdeal)
+    SetThermalModelInteraction(model, config);
 
 
 	// If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
@@ -466,9 +464,15 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	model->ConstrainChemicalPotentials();
 
-	model->CalculateDensities();
+	model->CalculatePrimordialDensities();
 
 	printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+
+  timerc.restart();
+
+  model->CalculateFeeddown();
+
+	printf("Feeddown time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
 	timerc.restart();
 

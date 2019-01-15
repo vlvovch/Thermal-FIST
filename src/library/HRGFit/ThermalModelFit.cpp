@@ -230,8 +230,9 @@ namespace thermalfist {
 
     int nparams = 10;
 
-    // If GCE and only ratios fitted then volume drops out
-    if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
+    // If only ratios fitted then volume drops out
+    //if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
+    if (m_Multiplicities.size() == 0)
       m_Parameters.SetParameterFitFlag("R", false);
 
     // If GCE, or Vc fixed to V, then correlation volume drops out
@@ -476,8 +477,17 @@ namespace thermalfist {
 
     ret.chi2ndf = ret.chi2 / ndf;
     ret.ndf = ndf;
+
+    if (!AsymmErrors) {
+      for (int i = 0; i < ret.ParameterList.size(); ++i) {
+        ret.GetParameter(i).errm = ret.GetParameter(i).errp = ret.GetParameter(i).error;
+      }
+    }
+
+
     m_Parameters = ret;
 
+    
     m_ExtendedParameters = ThermalModelFitParametersExtended(m_model);
 
   
@@ -937,14 +947,17 @@ namespace thermalfist {
       std::string sunit = "";
       std::string tname = "";
       double tmn = 1.;
-      if ((i >= 0 && i <= 3) || i == 8) {
+      if (param.name == "T" || param.name.substr(0, 2) == "mu") {
         sunit = "[MeV]";
         tmn   = 1.e3;
       }
-      else if (i == 5 || i == 6) {
+      else if (param.name == "R" || param.name == "Rc") {
         sunit = "[fm]";
       }
       tname = param.name + sunit;
+
+      if (param.name == "Rc" && m_model->Ensemble() == ThermalModelBase::GCE)
+        continue;
 
       if (param.name == "muS" && (m_model->Ensemble() == ThermalModelBase::SCE || m_model->Ensemble() == ThermalModelBase::CE))
         continue;
@@ -965,7 +978,7 @@ namespace thermalfist {
       if (param.toFit) {
         double tval = param.value, terr = param.error, terrp = param.errp, terrm = param.errm;
       
-        if (i != 5 && i != 6) {
+        if (param.name != "R" && param.name != "Rc") {
           if (!asymm)
             fprintf(f, "%15s = %15lf +- %-15lf\n", tname.c_str(), tval * tmn, terr * tmn);
           else
@@ -975,14 +988,14 @@ namespace thermalfist {
           if (!asymm) {
             fprintf(f, "%15s = %15lf +- %-15lf\t", tname.c_str(), tval * tmn, terr * tmn);
             std::string tname2 = "V[fm3]";
-            if (i == 6)
+            if (param.name == "Rc")
               tname2 = "Vc[fm3]";
             fprintf(f, "%15s = %15lf +- %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terr * tmn);
           }
           else {
             fprintf(f, "%15s = %15lf + %-15lf - %-15lf\t", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
             std::string tname2 = "V[fm3]";
-            if (i == 6)
+            if (param.name == "Rc")
               tname2 = "Vc[fm3]";
             fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terrp * tmn, 4. * xMath::Pi() * pow(tval * tmn, 2) * terrm * tmn);
           }
@@ -990,12 +1003,12 @@ namespace thermalfist {
       }
       else {
         double tval = param.value;
-        if (i != 5 && i != 6)
+        if (param.name != "R" && param.name != "Rc")
           fprintf(f, "%15s = %15lf (FIXED)\n", tname.c_str(), tval * tmn);
         else {
           fprintf(f, "%15s = %15lf (FIXED)\t", tname.c_str(), tval * tmn);
           std::string tname2 = "V[fm3]";
-          if (i == 6)
+          if (param.name == "Rc")
             tname2 = "Vc[fm3]";
           fprintf(f, "%15s = %15lf (FIXED)\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3));
         }
@@ -1189,35 +1202,6 @@ namespace thermalfist {
       printf("**WARNING** ThermalModelFit::saveExpDataToFile: Cannot open file for writing data!");
     }
   }
-
-  //double ThermalModelFit::chi2Ndf(double T, double muB) {
-  //#ifdef USE_MINUIT
-  //  double Tinit = T, muBinit = muB;
-  //  FitFCN mfunc(this);
-  //  int nparams = 6;
-  //  if (!m_Parameters.T.toFit) nparams--;
-  //  if (!m_Parameters.muB.toFit) nparams--;
-  //  if (!m_Parameters.gammaq.toFit) nparams--;
-  //  if (!m_Parameters.gammaS.toFit) nparams--;
-  //  if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
-  //  if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)) nparams--;
-  //  std::vector<double> params(6, 0.);
-  //  params[0] = T;
-  //  params[1] = muB;
-  //  params[2] = m_model->Parameters().gammaS;
-  //  params[3] = m_model->Parameters().V;
-  //  params[4] = m_model->Parameters().SVc;
-  //  params[5] = m_model->Parameters().gammaq;
-  //  m_model->SetStrangenessChemicalPotential(muB / 5.);
-  //  m_model->SetElectricChemicalPotential(-muB / 50.);
-  //  double ret = mfunc(params);
-  //  m_model->SetTemperature(Tinit);
-  //  m_model->SetBaryonChemicalPotential(muBinit);
-  //  return ret / (m_Multiplicities.size() + m_Ratios.size() - nparams);
-  //#else
-  //  return -1.;
-  //#endif
-  //}
 
   int ThermalModelFit::GetNdf() const {
     int nparams = 10;

@@ -50,15 +50,10 @@ namespace thermalfist {
     m_SMAX = 0;
     m_CMAX = 0;
 
-    //m_OnlyBose = true;
 
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       ThermalParticle &part = m_TPS->Particle(i);
 
-      //if (part.Statistics() != 0 && IsParticleCanonical(part))
-      //  part.SetCalculationType(IdealGasFunctions::ClusterExpansion);
-
-      //if (part.Statistics() != 0 && part.CalculationType() == IdealGasFunctions::ClusterExpansion) {
       if (part.Statistics() != 0 && IsParticleCanonical(part)) {
         part.SetCalculationType(IdealGasFunctions::ClusterExpansion);
 
@@ -66,8 +61,6 @@ namespace thermalfist {
         m_QMAX = max(m_QMAX, abs(part.ElectricCharge() * part.ClusterExpansionOrder()));
         m_SMAX = max(m_SMAX, abs(part.Strangeness() * part.ClusterExpansionOrder()));
         m_CMAX = max(m_CMAX, abs(part.Charm() * part.ClusterExpansionOrder()));
-        //if (abs(part.BaryonCharge()) > 1 || (abs(part.BaryonCharge()) & 1))
-        //  m_OnlyBose = false;
       }
       else {
         m_BMAX = max(m_BMAX, abs(part.BaryonCharge()));
@@ -306,7 +299,6 @@ Obtained: %lf\n\
       }
     }
 
-    //vector<double> Ns(m_PartialZ.size(), 0.);
     vector<double> Nsx(m_PartialZ.size(), 0.);
     vector<double> Nsy(m_PartialZ.size(), 0.);
 
@@ -329,14 +321,11 @@ Obtained: %lf\n\
           double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.);
           Nsx[ind] += tdens * cosh(m_Chem[i] / m_Parameters.T);
           Nsy[ind] += tdens * sinh(m_Chem[i] / m_Parameters.T);
-          //Ns[ind] += tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
         }
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
           int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
-          //if (ind < Ns.size())
-          //  Ns[ind] += tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]) / static_cast<double>(n); // TODO: Check
           if (ind < Nsx.size()) {
             double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.) / static_cast<double>(n); // TODO: Check
             Nsx[ind] += tdens * cosh(n * m_Chem[i] / m_Parameters.T);
@@ -347,7 +336,6 @@ Obtained: %lf\n\
     }
 
     for (int i = 0; i < Nsx.size(); ++i) {
-      //Ns[i] *= Vc;
       Nsx[i] *= Vc;
       Nsy[i] *= Vc;
       m_PartialZ[i] = 0.;
@@ -376,10 +364,6 @@ Obtained: %lf\n\
 
     double dphi = xMath::Pi() / nmax;
 
-    //int nmaxB = nmax;
-    //double dphiB = xMath::Pi() / nmaxB;
-
-    //int maxB = 2 * nmax;
     double dphiB = xMath::Pi() / nmaxB;
     int maxB = 2 * nmaxB;
     if (m_BMAX == 0 || m_Banalyt)
@@ -403,7 +387,6 @@ Obtained: %lf\n\
       }
 
 
-      //int maxS = 2 * nmax;
       double dphiS = xMath::Pi() / nmaxS;
       int maxS = 2 * nmaxS;
       if (m_SMAX == 0)
@@ -425,7 +408,6 @@ Obtained: %lf\n\
           wlegS[0] = 1.;
         }
 
-        //int maxQ = nmax;
         double dphiQ = xMath::Pi() / nmaxQ;
         int maxQ = nmaxQ;
         if (m_QMAX == 0)
@@ -446,7 +428,6 @@ Obtained: %lf\n\
             wlegQ[0] = 1.;
           }
 
-          //int maxC = 2 * nmax;
           double dphiC = xMath::Pi() / nmaxC;
           int maxC = 2 * nmaxC;
           if (m_CMAX == 0)
@@ -474,10 +455,10 @@ Obtained: %lf\n\
                     vector<double> cosph(m_PartialZ.size(), 0.), sinph(m_PartialZ.size(), 0.);
                     double wx = 0., wy = 0., mx = 0., my = 0.;
                     for (int i = 0; i < m_PartialZ.size(); ++i) {
-                      int tB = m_QNvec[i].B;// GetB(m_BSQinv[i]);
-                      int tQ = m_QNvec[i].Q;// GetQ(m_BSQinv[i]);
-                      int tS = m_QNvec[i].S;// GetS(m_BSQinv[i]);
-                      int tC = m_QNvec[i].C;// GetS(m_BSQinv[i]);
+                      int tB = m_QNvec[i].B;
+                      int tQ = m_QNvec[i].Q;
+                      int tS = m_QNvec[i].S;
+                      int tC = m_QNvec[i].C;
 
                       if (m_Banalyt) {
                         cosph[i] = cos(tS*xlegS[iSt] + tQ * xlegQ[iQt] + tC * xlegC[iCt]);
@@ -535,14 +516,12 @@ Obtained: %lf\n\
 
             int cind = iB * maxS * maxQ * maxC + iS * maxQ * maxC + iQ * maxC + iC;
             int tot = maxB * maxS * maxQ * maxC;
-            //printf("Progress: %d/%d\n", cind + 1, tot);
           }
         }
       }
     }
 
     for (int iN = 0; iN < m_PartialZ.size(); ++iN) {
-      //m_PartialZ[iN] /= pow(2. * xMath::Pi(), 3) * 2.;
       if (m_BMAX != 0 && m_BMAX != 1)
         m_PartialZ[iN] /= 2. * xMath::Pi();
       if (m_QMAX != 0) {
@@ -572,7 +551,6 @@ Obtained: %lf\n\
     }
     else if (tpart.Statistics() == 0
       || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
-      //|| (tpart.BaryonCharge() != 0 && m_OnlyBose))
     {
       int ind = m_QNMap[QuantumNumbers(m_BCE*tpart.BaryonCharge(), m_QCE*tpart.ElectricCharge(), m_SCE*tpart.Strangeness(), m_CCE*tpart.Charm())];
       int ind2 = m_QNMap[QuantumNumbers(m_BCE * 2 * tpart.BaryonCharge(), m_QCE * 2 * tpart.ElectricCharge(), m_SCE * 2 * tpart.Strangeness(), m_CCE * 2 * tpart.Charm())];
@@ -632,7 +610,6 @@ Obtained: %lf\n\
       }
       else if (tpart.Statistics() == 0
         || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
-        //|| (tpart.BaryonCharge() != 0 && m_OnlyBose))
       {
         ret1num[i] = yld[i];
       }
@@ -657,10 +634,8 @@ Obtained: %lf\n\
         int n2max = tpart2.ClusterExpansionOrder();
 
         if (tpart1.Statistics() == 0 || tpart1.CalculationType() != IdealGasFunctions::ClusterExpansion)
-          //|| (tpart1.BaryonCharge() != 0 && m_OnlyBose))
           n1max = 1;
         if (tpart2.Statistics() == 0 || tpart2.CalculationType() != IdealGasFunctions::ClusterExpansion)
-          //|| (tpart2.BaryonCharge() != 0 && m_OnlyBose))
           n2max = 1;
 
         if (!IsParticleCanonical(tpart1) || !IsParticleCanonical(tpart2)) {
@@ -741,7 +716,6 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          //|| (tpart.BaryonCharge() != 0 && m_OnlyBose)) {
           int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
 
           if (ind < m_Corr.size())
@@ -772,7 +746,6 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          //|| (tpart.BaryonCharge() != 0 && m_OnlyBose)) {
           int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
 
           if (ind < m_Corr.size())
@@ -817,8 +790,6 @@ Obtained: %lf\n\
       ret += -m_Parameters.muC * CalculateCharmDensity() / m_Parameters.T;
 
     return ret;
-
-    //return (CalculateEnergyDensity() / m_Parameters.T) + (m_MultExp + log(m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]])) / m_Parameters.SVc;
   }
 
   double ThermalModelCanonical::GetGCEDensity(int i) const

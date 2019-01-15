@@ -12,6 +12,7 @@
 
 #include <Eigen/Dense>
 
+#include "HRGBase/Utility.h"
 #include "HRGBase/ThermalParticleSystem.h"
 
 using namespace Eigen;
@@ -33,6 +34,9 @@ namespace thermalfist {
     m_MaxDiff(0.),
     m_useOpenMP(0)
   {
+    if (!Disclaimer::DisclaimerPrinted) 
+      Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
+    
     m_QBgoal = 0.4;
     m_SBgoal = 50.;
     m_Chem.resize(m_TPS->Particles().size());
@@ -406,7 +410,7 @@ namespace thermalfist {
       if (m_ConstrainMuC)
         m_Parameters.muC = 0.;
       FillChemicalPotentials();
-      CalculateDensities();
+      CalculatePrimordialDensities();
       return;
     }
     if (m_ConstrainMuB) {
@@ -434,7 +438,7 @@ namespace thermalfist {
     if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
-      CalculateDensities();
+      CalculatePrimordialDensities();
       return;
     }
 

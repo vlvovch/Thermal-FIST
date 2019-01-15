@@ -20,6 +20,7 @@ HRGBase/ThermalModelCanonicalCharm.cpp
 HRGBase/ThermalModelCanonicalStrangeness.cpp
 HRGBase/ThermalParticle.cpp
 HRGBase/ThermalParticleSystem.cpp
+HRGBase/Utility.cpp
 HRGBase/xMath.cpp
 )
 
@@ -40,6 +41,7 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelCanonicalStrangeness.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticle.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticleSystem.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/Utility.h
 )	  
 
 source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})

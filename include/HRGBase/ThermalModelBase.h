@@ -817,8 +817,12 @@ namespace thermalfist {
     /// were successfull 
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
 
-
-    //double GetDensity(int PDGID, int feeddown);
+    /*
+     * \brief Same as GetDensity(int,Feeddown::Type)
+     * 
+     * \deprecated
+     */
+    double GetDensity(int PDGID, int feeddown) { return GetDensity(PDGID, static_cast<Feeddown::Type>(feeddown)); }
     
     /**
      * \brief Particle number density of species

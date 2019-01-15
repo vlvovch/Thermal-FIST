@@ -32,7 +32,7 @@ namespace thermalfist {
      * \brief Construct a new FitParameter object
      */
     FitParameter(std::string namep = "", bool toFitp = true, double val = 1., double err = 0., double vmin = -2., double vmax = 2.) :
-      toFit(toFitp), value(val), error(err), errp(err), errm(-err), xmin(vmin), xmax(vmax), name(namep) {
+      toFit(toFitp), value(val), error(err), errp(err), errm(err), xmin(vmin), xmax(vmax), name(namep) {
     }
   };
 

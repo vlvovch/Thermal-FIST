@@ -1875,3 +1875,91 @@
 1                                    # 1 decay channel
 1               3324 -321            # Omega(2250) -> Ksi(1530)0 + K-
 
+423                                  # D*(2007)0
+2                                    # 2 decay channels
+0.619           421 111              # D*(2007)0 -> D0 + pi0
+0.381           421                  # D*(2007)0 -> D0
+
+413                                  # Dstar+
+3                                    # 3 decay channels
+0.677           421 211              # Dstar+ -> D0 + pi+
+0.307           411 111              # Dstar+ -> D+ + pi0
+0.016           411                  # Dstar+ -> D+
+
+14122                                # Lambda_c+(2595)
+3                                    # 3 decay channels
+0.24            4222 -211            # Lambda_c+(2595) -> Sigma_c++ + pi-
+0.24            4112 211             # Lambda_c+(2595) -> Sigma_c0 + pi+
+0.18            4122 211 -211        # Lambda_c+(2595) -> Lambda_c+ + pi+ + pi-
+
+4212                                 # Sigma_c+
+1                                    # 1 decay channel
+1               4122 111             # Sigma_c+ -> Lambda_c+ + pi0
+
+4112                                 # Sigma_c0
+1                                    # 1 decay channel
+1               4122 -211            # Sigma_c0 -> Lambda_c+ + pi-
+
+4222                                 # Sigma_c++
+1                                    # 1 decay channel
+1               4122 211             # Sigma_c++ -> Lambda_c+ + pi+
+
+4214                                 # Sigma_c+(2520)
+1                                    # 1 decay channel
+1               4122 111             # Sigma_c+(2520) -> Lambda_c+ + pi0
+
+4114                                 # Sigma_c0(2520)
+1                                    # 1 decay channel
+1               4122 -211             # Sigma_c0(2520) -> Lambda_c+ + pi-
+
+4224                                 # Sigma_c++(2520)
+1                                    # 1 decay channel
+1               4122 211             # Sigma_c++(2520) -> Lambda_c+ + pi+
+
+4322                                 # Ksi'_c+
+1                                    # 1 decay channel
+1               4232                 # Ksi'_c+ -> Ksi_c+
+
+4312                                 # Ksi'_c0
+1                                    # 1 decay channel
+1               4132                 # Ksi'_c0 -> Ksi_c0
+
+4124                                 # Lambda_c+(2625)
+3                                    # 3 decay channels
+0.05            4222 -211            # Lambda_c+(2625) -> Sigma_c++ + pi-
+0.05            4112 211             # Lambda_c+(2625) -> Sigma_c0 + pi+
+0.57            4112 211 -211        # Lambda_c+(2625) -> Sigma_c0 + pi+ + pi-
+
+4324                                 # Ksi_c+(2645)
+1                                    # 1 decay channel
+0.5             4132 211             # Ksi_c+(2645) -> Ksi_c0 + pi+
+
+4314                                 # Ksi_c0(2645)
+1                                    # 1 decay channel
+0.5             4232 -211            # Ksi_c0(2645) -> Ksi_c+ + pi-
+
+4334                                 # Omega_c0(2770)
+1                                    # 1 decay channel
+1               4332                 # Omega_c0(2770) -> Omega_c0
+
+10441                                # chi_c0(1P)
+1                                    # 1 decay channel
+0.0116          443                  # chi_c0(1P) -> J/Psi(1S)
+
+20443                                # chi_c1(1P)
+1                                    # 1 decay channel
+0.344           443                  # chi_c1(1P) -> J/Psi(1S)
+
+445                                  # chi_c2(1P)
+1                                    # 1 decay channel
+0.195           443                  # chi_c2(1P) -> J/Psi(1S)
+
+100443                               # psi(2S)
+1                                    # 1 decay channel
+0.595           443                  # psi(2S) -> J/Psi(1S)
+
+30443                                # psi(3770)
+2                                    # 2 decay channels
+0.52            421 -421             # psi(3770) -> D0 + anti-D0
+0.41            411 -411             # psi(3770) -> D+ + D-
+
