@@ -214,7 +214,7 @@ void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329,
 
 int main(int argc, char *argv[])
 {
-	string inputlist = string(INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
+	string inputlist = string(INPUT_FOLDER) + "/list/PDG2014/list-withnuclei-withcharm.dat";
   if (argc > 1)
     inputlist = string(argv[1]);
 

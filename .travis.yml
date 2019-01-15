@@ -22,5 +22,6 @@ script:
   - ./cpc1HRGTDep 0
   - ./cpc1HRGTDep 1
   - ./cpc1HRGTDep 2
-  - ./cpc3chi2NEQ
+  - ./cpc3chi2NEQ 0
+  - ./cpc3chi2NEQ 1
   - ./cpc4mcHRG 0

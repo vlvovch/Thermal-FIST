@@ -172,19 +172,19 @@ int main(int argc, char *argv[])
 	vector<string> filenames;
 
 	names.push_back("NA49-30GeV-4pi");
-	filenames.push_back("C:\\Users\\volodya\\Documents\\Programming\\ResearchWork\\HRG\\Thermal-FIST-Extended\\input\\data\\NA49-PbPb30GeV-4pi.dat");
+	filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb30AGeV-4pi.dat");
 
 	names.push_back("NA49-40GeV-4pi");
-	filenames.push_back("C:\\Users\\volodya\\Documents\\Programming\\ResearchWork\\HRG\\Thermal-FIST-Extended\\input\\data\\NA49-PbPb40GeV-4pi.dat");
+	filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb40AGeV-4pi.dat");
 
 	names.push_back("NA49-80GeV-4pi");
-	filenames.push_back("C:\\Users\\volodya\\Documents\\Programming\\ResearchWork\\HRG\\Thermal-FIST-Extended\\input\\data\\NA49-PbPb80GeV-4pi.dat");
+	filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb80AGeV-4pi.dat");
 
 	names.push_back("NA49-158GeV-4pi");
-	filenames.push_back("C:\\Users\\volodya\\Documents\\Programming\\ResearchWork\\HRG\\Thermal-FIST-Extended\\input\\data\\NA49-PbPb158GeV-4pi.dat");
+	filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb158AGeV-4pi.dat");
 
 	names.push_back("ALICE-2_76-0-5");
-	filenames.push_back("C:\\Users\\volodya\\Documents\\Programming\\ResearchWork\\HRG\\Thermal-FIST-Extended\\input\\data\\ALICE-PbPb2.76TeV-0-5-symm4.dat");
+	filenames.push_back(string(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
 
 
 
