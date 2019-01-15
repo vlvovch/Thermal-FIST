@@ -230,8 +230,9 @@ namespace thermalfist {
 
     int nparams = 10;
 
-    // If GCE and only ratios fitted then volume drops out
-    if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
+    // If only ratios fitted then volume drops out
+    //if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
+    if (m_Multiplicities.size() == 0)
       m_Parameters.SetParameterFitFlag("R", false);
 
     // If GCE, or Vc fixed to V, then correlation volume drops out
@@ -476,8 +477,17 @@ namespace thermalfist {
 
     ret.chi2ndf = ret.chi2 / ndf;
     ret.ndf = ndf;
+
+    if (!AsymmErrors) {
+      for (int i = 0; i < ret.ParameterList.size(); ++i) {
+        ret.GetParameter(i).errm = ret.GetParameter(i).errp = ret.GetParameter(i).error;
+      }
+    }
+
+
     m_Parameters = ret;
 
+    
     m_ExtendedParameters = ThermalModelFitParametersExtended(m_model);
 
   

@@ -28,7 +28,7 @@ namespace thermalfist {
     m_Attr = m_Virial;
     m_TAG = "ThermalModelVDWCanonicalStrangeness";
 
-    m_Ensemble = GCE;
+    m_Ensemble = SCE;
     m_InteractionModel = QvdW;
   }
 

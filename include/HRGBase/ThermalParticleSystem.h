@@ -179,7 +179,14 @@ namespace thermalfist {
      * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
      * \param mcut      Discard particles with mass > mcut (in GeV).
      */
-    void LoadTable(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9);
+    void LoadList(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9);
+
+    /**
+     * \brief Same as LoadList()
+     *
+     * \deprecated
+     */
+    void LoadTable(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9) { LoadList(InputFile, GenerateAntiParticles, mcut); }
     
     /**
      * \brief Sets the particle list from a

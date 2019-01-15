@@ -575,48 +575,7 @@ namespace thermalfist {
     /// Read decays from a file and assign them to the particle
     void ReadDecays(std::string filename = "");
 
-    //@{
-      /**
-       * \brief Contribution to particle yield from decaying resonances
-       * 
-       * A vector containing information about the mean number
-       * of particles of this species which result from decays
-       * of various resonances.
-       * Each entry in the vector is a std::pair<double, int> and 
-       * corresponds to a single resonance.
-       * The first element of the pair is the mean number of
-       * particles result from a chain of decays of the given resonance,
-       * and the second element contains 0-based ID of the
-       * resonances in the ThermalParticleSystem object.
-       * This vector is populated in the ThermalParticleSystem object.
-       * Only decays of particles marked unstable are considered.
-       */
-    //const std::vector< std::pair<double, int> >&    DecayContributions() const { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
-    //std::vector< std::pair<double, int> >&          DecayContributions() { return m_DecayContributionsByFeeddown[static_cast<int>(Feeddown::StabilityFlag)]; }
-    //@}
-
-    //@{
-      /**
-       * A vector of different DecayContributions(),
-       * each corresponding to a specific Feeddown::Type.
-       * 
-       */
-    //const std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown()    const { return m_DecayContributionsByFeeddown; }
-    //std::vector< std::vector< std::pair<double, int> > >& DecayContributionsByFeeddown() { return m_DecayContributionsByFeeddown; }
-    //@}
-
-    //const std::vector< std::pair<double, int> >& DecayContributionsSigmas() const { return m_DecayContributionsSigmas; }
-    //std::vector< std::pair<double, int> >& DecayContributionsSigmas() { return m_DecayContributionsSigmas; }
-
-    //const std::vector< std::pair< std::vector<double>, int> >& DecayCumulants()      const { return m_DecayCumulants; }
-    //std::vector< std::pair< std::vector<double>, int> >& DecayCumulants() { return m_DecayCumulants; }
-
-    //const std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() const { return m_DecayProbabilities; }
-    //std::vector< std::pair< std::vector<double>, int> >& DecayProbabilities() { return m_DecayProbabilities; }
-
-    //const std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() const { return m_DecayDistributions; }
-    //std::vector< std::pair<double, std::vector<int> > >& DecayDistributions() { return m_DecayDistributions; }
-
+    
     /**
      * \brief Computes average decay branching ratios
      *        by integrating over the thermal mass distribution.
@@ -748,35 +707,6 @@ namespace thermalfist {
      */
     ParticleDecaysVector m_DecaysOrig;
 
-    /**
-     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-     *   Contains indexes (0-based) and average yields resulting from corresponding decay chains.
-     */
-    //std::vector< std::pair<double, int> > m_DecayContributions;
-
-    /**
-     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-     *   Contains indexes (0-based) and variance of yields resulting from corresponding decay chains.
-     */
-    //std::vector< std::pair<double, int> > m_DecayContributionsSigmas;
-
-    /**
-     *   Contains information about decay chains of heavier particles including strong, strong/electromagnetic, or strong/electromagnetic/weak decay feeddown resulting in production of a present particle.
-     *   For each feeddown type contains indexes (0-based) and average yields resulting from corresponding decay chains.
-     */
-    //std::vector< std::vector< std::pair<double, int> > > m_DecayContributionsByFeeddown;
-
-    /**
-     *   Contains information about decay chains of heavier particles resulting in production of a present particle.
-     *   Contains indexes (0-based) and first 4 moments (cumulants) of yields resulting from corresponding decay chains.
-     */
-    //std::vector< std::pair< std::vector<double>, int> > m_DecayCumulants;
-    //std::vector< std::pair< std::vector<double>, int> > m_DecayProbabilities;
-
-    /**
-     *   Contains all possible configurations which result from decays of a particle
-     */
-    std::vector< std::pair<double, std::vector<int> > > m_DecayDistributions;
 
     /**
      *   For calculating final state charged particle multiplicities

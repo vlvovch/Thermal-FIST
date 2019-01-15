@@ -406,7 +406,7 @@ namespace thermalfist {
       if (m_ConstrainMuC)
         m_Parameters.muC = 0.;
       FillChemicalPotentials();
-      CalculateDensities();
+      CalculatePrimordialDensities();
       return;
     }
     if (m_ConstrainMuB) {
@@ -434,7 +434,7 @@ namespace thermalfist {
     if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
-      CalculateDensities();
+      CalculatePrimordialDensities();
       return;
     }
 

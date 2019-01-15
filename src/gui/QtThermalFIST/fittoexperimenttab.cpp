@@ -573,13 +573,13 @@ void FitToExperimentTab::modelChanged()
 
   // If full CE, S/B fixed, or no baryons then muB drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muB"),
-    (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleGCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
     || (configWidget->currentConfig.ConstrainMuB)
     || !(model->TPS()->hasBaryons()));
 
   // If full CE, Q/B fixed, or no charged particles then muQ drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muQ"),
-    (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleGCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
     || (configWidget->currentConfig.ConstrainMuQ)
     || !(model->TPS()->hasCharged()));
 
@@ -592,7 +592,9 @@ void FitToExperimentTab::modelChanged()
 
   // If not GCE, or C fixed to zero, or no charm particles then muC drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muC"),
-    (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleGCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleGCE)
+    || (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleSCE)
+    || (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCCE)
     || (configWidget->currentConfig.ConstrainMuC)
     || !(model->TPS()->hasCharmed()));
 

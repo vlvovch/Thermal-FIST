@@ -474,7 +474,7 @@ namespace thermalfist {
     }
   }
 
-  void ThermalParticleSystem::LoadTable(std::string InputFile, bool GenAntiP, double mcut) {
+  void ThermalParticleSystem::LoadList(std::string InputFile, bool GenAntiP, double mcut) {
 
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
