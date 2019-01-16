@@ -15,4 +15,5 @@
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalParticle.h"
 #include "HRGBase/ThermalParticleSystem.h"
+#include "HRGBase/Utility.h"
 #include "HRGBase/xMath.h"

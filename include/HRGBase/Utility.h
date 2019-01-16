@@ -15,6 +15,7 @@
  * 
  */
 
+
 namespace thermalfist {
 
   class Disclaimer {
@@ -25,6 +26,10 @@ namespace thermalfist {
     static bool DisclaimerPrinted;
   
   };
+
+  double get_wall_time();
+
+  double get_cpu_time();
 
 } // namespace thermalfist
 
