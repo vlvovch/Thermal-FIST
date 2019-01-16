@@ -12,7 +12,6 @@
 #include <ctime>
 #include <cstdio>
 
-#include "HRGBase/Utility.h"
 #include "HRGBase.h"
 #include "HRGEV.h"
 #include "HRGFit.h"
@@ -134,7 +133,7 @@ int main(int argc, char *argv[])
  * 
  * Calculation proceeds in two steps:
  *   1. The global fit is performed obtaining the temperature and volume that
- *      minimize the \f$\chi^2\f$.
+ *      minimize \f$\chi^2\f$.
  *   2. The temperature profile of \f$\chi^2\f$ by minimizing it a different fixed
  *      temperature values in a loop.
  * 

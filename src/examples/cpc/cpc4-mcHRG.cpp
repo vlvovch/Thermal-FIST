@@ -31,7 +31,7 @@ double Tss(double ss) {
 
 
 // Calculates the (mixed) susceptibility using the average decay procedure of 1402.1238
-// by introducing auxialiary chemical potential for all decaying resonances
+// by introducing auxiliary chemical potential for all decaying resonances
 // ch1,2 -- vector of charges that all final state hadrons contribute to the observable 1,2
 double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<double> & ch1, const std::vector<double> & ch2)
 {
@@ -62,7 +62,9 @@ double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<do
   return ret;
 }
 
-// Temperature dependence of (EV-)HRG thermodynamics at zero chemical potential
+// Collision energy dependence of 2nd order susceptibilities of
+// (proxy) conserved charges, computed within the Ideal HRG model 
+// along the phenomenological chemical freeze-out curve
 // Comparison of analytic and Monte Carlo calculations
 // Usage: cpc4mcHRG <withMonteCarlo> <nevents>
 // where <withMonteCarlo> flag determines whether Monte Carlo calculations
@@ -373,3 +375,27 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+/**
+ * \example cpc4-mcHRG.cpp
+ * 
+ * Calculates the collision energy dependence of 2nd order susceptibilities of
+ * (proxy) conserved charges, computed within the Ideal HRG model 
+ * along the phenomenological chemical freeze-out curve.
+ * 
+ * Calculations are done in two steps:
+ *   1. Analytically
+ *   2. With Monte Carlo (if <withMonteCarlo> = 1)
+ * 
+ * 
+ * 
+ * Usage:
+ * ~~~.bash
+ * cpc4mcHRG <withMonteCarlo> <nevents>
+ * ~~~
+ * 
+ * where <withMonteCarlo> flag determines whether Monte Carlo calculations
+ * are performed and <nevents> is the number of Monte Carlo events per
+ * single collision energy
+ * 
+ */
