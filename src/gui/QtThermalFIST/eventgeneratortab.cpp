@@ -808,7 +808,7 @@ void EventGeneratorTab::finalize() {
 
     dbgstrm << "Generated " << fCurrentSize << " events" << endl;
     dbgstrm << "Effective event number = " << nE << endl;
-    dbgstrm << "CE acceptance rate " << EventGeneratorBase::fCEAccepted / (double)(EventGeneratorBase::fCETotal) << " events" << endl;
+    dbgstrm << "CE acceptance rate: " << EventGeneratorBase::fCEAccepted / (double)(EventGeneratorBase::fCETotal) << endl;
     dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
     dbgstrm << "Per event = " << timer.elapsed()/(double)(fCurrentSize) << " ms" << endl;
     dbgstrm << "----------------------------------------------------------" << endl;

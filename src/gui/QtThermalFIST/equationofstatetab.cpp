@@ -33,9 +33,9 @@ void EoSWorker::run() {
       model->SetTemperature(T * 1.e-3);
 
       if (T == Tmin)
-        model->ConstrainChemicalPotentials();
+        model->ConstrainChemicalPotentials(true);
       else
-        model->ConstrainChemicalPotentialsNoReset();
+        model->ConstrainChemicalPotentials(false);
       model->CalculateDensities();
 
       varvalues->operator [](i) = T;
@@ -452,6 +452,7 @@ ThermalModelConfig EquationOfStateTab::getConfig()
   ret.C = 0;
 
   ret.ComputeFluctations = false; //checkFluctuations->isChecked();
+  ret.ResetMus = true;
 
   return ret;
 }

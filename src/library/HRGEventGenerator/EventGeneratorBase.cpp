@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2015-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -52,45 +52,21 @@ namespace thermalfist {
       const EventGeneratorConfiguration& config)
   {
     m_Config = config;
-    
-    //ThermalModelParameters params2 = params;
-
-    //m_Config.fEnsemble = ensemble;
-    //m_Config.fModelType = modeltype;
-    //m_Config.CFOParameters.muB = params2.muB;
-    //m_Config.CFOParameters.muS = params2.muS;
-    //m_Config.CFOParameters.muQ = params2.muQ;
-    //m_Config.CFOParameters.muC = params2.muC;
-    //m_Config.CFOParameters.gammaS = params2.gammaS;
-    //m_Config.CFOParameters.gammaq = params2.gammaq;
-    //m_Config.CFOParameters.gammaC = params2.gammaC;
-    //m_Config.CFOParameters.V = params2.V;// 3. * pow(params2.V, 1. / 3.) / 4. / xMath::Pi();
-    //m_Config.B = params2.B;
-    //m_Config.S = params2.S;
-    //m_Config.Q = params2.Q;
-    //m_Config.C = params2.C;
 
 
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
       m_Config.CFOParameters.muC = 0.;
-      //params2.muC = 0.;
     }
     else if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE) {
       m_Config.CFOParameters.muS = 0.;
       m_Config.CFOParameters.muC = 0.;
-      //params2.muS = 0.;
-      //params2.muC = 0.;
     }
     else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
       m_Config.CFOParameters.muB = 0.;
       m_Config.CFOParameters.muS = 0.;
       m_Config.CFOParameters.muQ = 0.;
       m_Config.CFOParameters.muC = 0.;
-      //params2.muB = 0.;
-      //params2.muS = 0.;
-      //params2.muQ = 0.;
-      //params2.muC = 0.;
     }
 
     if (m_Config.fModelType == EventGeneratorConfiguration::PointParticle) {
@@ -108,7 +84,6 @@ namespace thermalfist {
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
     m_THM->SetStatistics(false);
-    //m_THM->SetNormBratio(THMEVVDW->NormBratio());
 
     m_THM->ConstrainMuB(false);
     m_THM->ConstrainMuQ(false);
@@ -216,7 +191,6 @@ namespace thermalfist {
     }
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE) {
-      //m_THM->SetQoverB(original->QoverB());
       m_THM->ConstrainMuS(true);
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
@@ -226,7 +200,6 @@ namespace thermalfist {
     }
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
-      //m_THM->SetQoverB(original->QoverB());
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
       m_THM->FillChemicalPotentials();
@@ -370,8 +343,6 @@ namespace thermalfist {
       else
         totals = GenerateTotalsGCE();
 
-      fCETotal++;
-
       // Then take into account EV/vdW interactions using importance sampling
       std::vector<double> *densitiesid = NULL;
       std::vector<double> tmpdens;
@@ -463,6 +434,8 @@ namespace thermalfist {
 
   std::vector<int> EventGeneratorBase::GenerateTotalsGCE() const
   {
+    fCETotal++;
+
     if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
@@ -618,6 +591,7 @@ namespace thermalfist {
     double fMeanASMc = m_MeanASM * VolumeSC / m_THM->Volume();
 
     while (1) {
+      fCETotal++;
       const std::vector<double>& densities = m_THM->Densities();
 
       for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
@@ -802,10 +776,13 @@ namespace thermalfist {
     double fMeanCharmc = m_MeanCHRM * VolumeSC / m_THM->Volume();
     double fMeanAntiCharmc = m_MeanACHRM * VolumeSC / m_THM->Volume();
 
+    fCETotal++;
+
     int netC = 0;
     int tC = RandomGenerators::RandomPoisson(fMeanCharmc);
     int tAC = RandomGenerators::RandomPoisson(fMeanAntiCharmc);
     while (tC - tAC != m_THM->Parameters().C - netC) {
+      fCETotal++;
       tC = RandomGenerators::RandomPoisson(fMeanCharmc);
       tAC = RandomGenerators::RandomPoisson(fMeanAntiCharmc);
     }
@@ -865,6 +842,8 @@ namespace thermalfist {
 
     // Multi-step procedure as described in F. Becattini, L. Ferroni, hep-ph/0307061
     while (1) {
+      fCETotal++;
+
       const std::vector<double>& densities = m_THM->Densities();
 
       for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;

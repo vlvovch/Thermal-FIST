@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2016-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -15,4 +15,5 @@
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalParticle.h"
 #include "HRGBase/ThermalParticleSystem.h"
+#include "HRGBase/Utility.h"
 #include "HRGBase/xMath.h"

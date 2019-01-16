@@ -250,8 +250,12 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 		checkFluctuations->setChecked(false);
     checkFluctuations->setToolTip(tr("Compute fluctuation observables (viewable in \"Equation of state\" dialog)"));
 
-		layFlags->addWidget(checkFluctuations);
+    checkMuInitials = new QCheckBox(tr("Reset mu's"));
+		checkMuInitials->setChecked(true);
+    checkMuInitials->setToolTip(tr("Whether current values of chemical potentials are used as initial conditions for conservation laws or they are reset"));
 
+		layFlags->addWidget(checkFluctuations);
+    layFlags->addWidget(checkMuInitials);
 
     QHBoxLayout *layButtons = new QHBoxLayout();
     layButtons->setAlignment(Qt::AlignLeft);
@@ -347,6 +351,7 @@ ThermalModelConfig ModelTab::getConfig()
   ret.C = spinC->value();
 
   ret.ComputeFluctations = checkFluctuations->isChecked();
+  ret.ResetMus = checkMuInitials->isChecked();
 
   return ret;
 }
@@ -367,6 +372,7 @@ ThermalModelConfig ModelTab::getConfigFromFit(thermalfist::ThermalModelFit * fit
   ret.VolumeRSC = fit->Parameters().Rc.value;
 
   ret.ComputeFluctations = checkFluctuations->isChecked();
+  ret.ResetMus = false;
 
   return ret;
 }
@@ -462,7 +468,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
 	timerc.restart();
 
-	model->ConstrainChemicalPotentials();
+	model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
 
 	model->CalculatePrimordialDensities();
 
@@ -562,7 +568,7 @@ void ModelTab::calculate() {
   ThermalModelConfig config = getConfig();
   performCalculation(config);
 
-	if (!config.Ensemble == ThermalModelConfig::EnsembleCE) {
+	if (!(config.Ensemble == ThermalModelConfig::EnsembleCE)) {
     spinmuB->setValue(model->Parameters().muB * 1.e3);
 		spinmuQ->setValue(model->Parameters().muQ * 1.e3);
     if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE))

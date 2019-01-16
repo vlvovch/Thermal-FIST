@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 project (ThermalFIST)
 
 # The version number.
-set (ThermalFIST_VERSION_MAJOR 0)
-set (ThermalFIST_VERSION_MINOR 9)
-set (ThermalFIST_VERSION_DEVEL 1)
+set (ThermalFIST_VERSION_MAJOR 1)
+set (ThermalFIST_VERSION_MINOR 0)
+set (ThermalFIST_VERSION_DEVEL 0)
 
 # configure a header file to pass some of the CMake settings
 # to the source code

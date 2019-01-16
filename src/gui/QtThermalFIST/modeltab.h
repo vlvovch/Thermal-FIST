@@ -48,6 +48,7 @@ class ModelTab : public QWidget
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
 		QCheckBox *checkFluctuations;
+    QCheckBox *checkMuInitials;
 
     QCheckBox *checkOMP;
 

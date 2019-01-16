@@ -19,52 +19,6 @@ using namespace std;
 using namespace thermalfist;
 #endif
 
-//  Windows
-#ifdef _WIN32
-#include <Windows.h>
-double get_wall_time(){
-    LARGE_INTEGER time,freq;
-    if (!QueryPerformanceFrequency(&freq)){
-        //  Handle error
-        return 0;
-    }
-    if (!QueryPerformanceCounter(&time)){
-        //  Handle error
-        return 0;
-    }
-    return (double)time.QuadPart / freq.QuadPart;
-}
-double get_cpu_time(){
-    FILETIME a,b,c,d;
-    if (GetProcessTimes(GetCurrentProcess(),&a,&b,&c,&d) != 0){
-        //  Returns total user time.
-        //  Can be tweaked to include kernel times as well.
-        return
-            (double)(d.dwLowDateTime |
-            ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
-    }else{
-        //  Handle error
-        return 0;
-    }
-}
-
-//  Posix/Linux
-#else
-#include <time.h>
-#include <sys/time.h>
-double get_wall_time(){
-    struct timeval time;
-    if (gettimeofday(&time,NULL)){
-        //  Handle error
-        return 0;
-    }
-    return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
-double get_cpu_time(){
-    return (double)clock() / CLOCKS_PER_SEC;
-}
-#endif
-
 double muBss(double ss) {
   return 1.308 / (1. + 0.273 * ss);
 }
@@ -77,7 +31,7 @@ double Tss(double ss) {
 
 
 // Calculates the (mixed) susceptibility using the average decay procedure of 1402.1238
-// by introducing auxialiary chemical potential for all decaying resonances
+// by introducing auxiliary chemical potential for all decaying resonances
 // ch1,2 -- vector of charges that all final state hadrons contribute to the observable 1,2
 double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<double> & ch1, const std::vector<double> & ch2)
 {
@@ -108,13 +62,23 @@ double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<do
   return ret;
 }
 
-// Temperature dependence of (EV-)HRG thermodynamics at zero chemical potential
+// Collision energy dependence of 2nd order susceptibilities of
+// (proxy) conserved charges, computed within the Ideal HRG model 
+// along the phenomenological chemical freeze-out curve
 // Comparison of analytic and Monte Carlo calculations
+// Usage: cpc4mcHRG <withMonteCarlo> <nevents>
+// where <withMonteCarlo> flag determines whether Monte Carlo calculations
+// are performed and <nevents> is the number of Monte Carlo events per
+// single collision energy
 int main(int argc, char *argv[])
 {
   int withMonteCarlo = 1;
   if (argc > 1)
     withMonteCarlo = atoi(argv[1]);
+
+  int nevents = 100000;
+  if (argc >2)
+    nevents = atoi(argv[2]);
   
   string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
   ThermalParticleSystem parts(listname);
@@ -183,7 +147,6 @@ int main(int argc, char *argv[])
   double logSmin = log(smin);
   double logSmax = log(smax);
   double dlogS = (logSmax - logSmin) / iterss;
-  //for (double logS = smin; logS <= smax; logS += dlogS) {
   for (int is = 0; is <= iterss; ++is) {
     double ss = exp(logSmin + is * dlogS);
     double T = Tss(ss);
@@ -193,12 +156,10 @@ int main(int argc, char *argv[])
     model->ConstrainMuS(true);
     model->ConstrainMuQ(true);
     model->ConstrainMuC(true);
-    //model->Parameters().muB = model->Parameters().muS = model->Parameters().muQ = model->Parameters().muC = 0.;
     model->SetBaryonChemicalPotential(muB);
     model->SetStrangenessChemicalPotential(musp);
     model->SetElectricChemicalPotential(muqp);
     model->SetCharmChemicalPotential(mucp);
-    //model->FixParameters();
     model->ConstrainChemicalPotentials();
 
     musp = model->Parameters().muS;
@@ -265,8 +226,6 @@ int main(int argc, char *argv[])
     iters++;
   }
 
-  //delete model;
-
   fclose(f);
 
   double wt2 = get_wall_time();
@@ -319,13 +278,10 @@ int main(int argc, char *argv[])
     config.CFOParameters = model->Parameters();
 
     SphericalBlastWaveEventGenerator generator(model->TPS(), config, 0.100, 0.5);
-    int nevents = 100000;
     double wsum = 0.;
     for (int i = 0; i < nevents; ++i) {
       SimpleEvent ev = generator.GetEvent();
       int mcev_B = 0., mcev_Q = 0., mcev_S = 0., mcev_p = 0., mcev_k = 0.;
-      //int mcev_B2 = 0., mcev_Q2 = 0., mcev_S2 = 0., mcev_BQ = 0., mcev_QS = 0., mcev_BS = 0.;
-      //int mcev_p2 = 0., mcev_k2 = 0., mcev_pk = 0., mcev_pQ = 0., mcev_Qk = 0.;
 
       for (int part = 0; part < ev.Particles.size(); ++part) {
         int pdgid = ev.Particles[part].PDGID;
@@ -419,3 +375,27 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+/**
+ * \example cpc4-mcHRG.cpp
+ * 
+ * Calculates the collision energy dependence of 2nd order susceptibilities of
+ * (proxy) conserved charges, computed within the Ideal HRG model 
+ * along the phenomenological chemical freeze-out curve.
+ * 
+ * Calculations are done in two steps:
+ *   1. Analytically
+ *   2. With Monte Carlo (if <withMonteCarlo> = 1)
+ * 
+ * 
+ * 
+ * Usage:
+ * ~~~.bash
+ * cpc4mcHRG <withMonteCarlo> <nevents>
+ * ~~~
+ * 
+ * where <withMonteCarlo> flag determines whether Monte Carlo calculations
+ * are performed and <nevents> is the number of Monte Carlo events per
+ * single collision energy
+ * 
+ */

@@ -327,6 +327,7 @@ ThermalModelConfig FitToExperimentTab::getConfig()
   ret.C = spinC->value();
 
   ret.ComputeFluctations = false;
+  ret.ResetMus = true;
 
   return ret;
 }

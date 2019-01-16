@@ -524,29 +524,22 @@ namespace thermalfist {
 
     // Same as FixParameters but with a more clear name on what is actually does
     /**
-     * \brief Constrains the chemical potentials \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_Q \f$ 
+     * \brief Constrains the chemical potentials \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_C \f$ 
      *        by the conservation laws imposed.
      * 
      * This procedure uses the Broyden's method to solve
      * the system of equations corresponding to the
      * conservation laws.
-     * The initial values of \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_Q \f$ 
-     * used in the Broyden's method are reset.
      * The actual implementation of the procedure
-     * is in FixParameters().
+     * is in FixParameters() and FixParametersNoReset() methods.
+     *
+     * \param resetInitialValues Whether initial guess values for 
+     *        \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_C \f$ 
+     *        are reset or current values will be used
      * 
      */
-    void ConstrainChemicalPotentials() { return FixParameters(); }
+    void ConstrainChemicalPotentials(bool resetInitialValues = true);
 
-    /**
-     * \brief Same as ConstrainChemicalPotentials()
-     *        but uses the current values of \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_Q \f$ 
-     *        as the initial guess for the Broyden's method.
-     * 
-     * The actual implementation of the procedure
-     * is in FixParametersNoReset().
-     */
-    void ConstrainChemicalPotentialsNoReset() { return FixParametersNoReset(); }
     
     /**
      * \brief Method which actually implements ConstrainChemicalPotentials()
@@ -787,8 +780,6 @@ namespace thermalfist {
 
     /// The fraction of entropy carried by mesons (Ideal GCE only)
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
-    
-    //virtual double HadronScaledVariance() { return 1.; }
 
     /// Scaled variance of primordial particle number fluctuations for species i
     virtual double ParticleScaledVariance(int) { return 1.; }
@@ -798,10 +789,6 @@ namespace thermalfist {
 
     /// Kurtosis of primordial particle number fluctuations for species i
     virtual double ParticleKurtosis(int) { return 1.; }
-
-    //virtual double CalculateBaryonScaledVariance(bool susc = false) { return 1.; }
-    //virtual double CalculateChargeScaledVariance(bool susc = false) { return 1.; }
-    //virtual double CalculateStrangenessScaledVariance(bool susc = false) { return 1.; }
 
     /// Fraction of the total volume occupied by the finite-sizes particles 
     /// (Diagonal excluded volume model only)
@@ -817,7 +804,7 @@ namespace thermalfist {
     /// were successfull 
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
 
-    /*
+    /**
      * \brief Same as GetDensity(int,Feeddown::Type)
      * 
      * \deprecated

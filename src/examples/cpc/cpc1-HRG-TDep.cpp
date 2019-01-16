@@ -18,52 +18,6 @@ using namespace std;
 using namespace thermalfist;
 #endif
 
-// Time keeping
-// Windows
-#ifdef _WIN32
-#include <Windows.h>
-double get_wall_time(){
-    LARGE_INTEGER time,freq;
-    if (!QueryPerformanceFrequency(&freq)){
-        //  Handle error
-        return 0;
-    }
-    if (!QueryPerformanceCounter(&time)){
-        //  Handle error
-        return 0;
-    }
-    return (double)time.QuadPart / freq.QuadPart;
-}
-double get_cpu_time(){
-    FILETIME a,b,c,d;
-    if (GetProcessTimes(GetCurrentProcess(),&a,&b,&c,&d) != 0){
-        //  Returns total user time.
-        //  Can be tweaked to include kernel times as well.
-        return
-            (double)(d.dwLowDateTime |
-            ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
-    }else{
-        //  Handle error
-        return 0;
-    }
-}
-
-//  Posix/Linux
-#else
-#include <time.h>
-#include <sys/time.h>
-double get_wall_time(){
-    struct timeval time;
-    if (gettimeofday(&time,NULL)){
-        //  Handle error
-        return 0;
-    }
-    return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
-double get_cpu_time(){
-    return (double)clock() / CLOCKS_PER_SEC;
-}
-#endif
 
 // Temperature dependence of HRG thermodynamics at \mu = 0
 // Three variants of the HRG model: 
@@ -264,3 +218,25 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+/**
+ * \example cpc1-HRG-TDep.cpp
+ * 
+ * Calculates the temperature dependence of HRG thermodynamics
+ * at zero chemical potentials.
+ * 
+ * The calculated quantities include scaled pressure, scaled energy density,
+ * scaled entropy density, the 2nd and 4th order baryon number susceptibilities.
+ * 
+ * Calculations can be done within three different models:
+ * - <config> = 0: Ideal HRG model
+ * - <config> = 1: EV-HRG model with a constant radius parameter r = 0.3 fm for all hadrons (as in 1412.5478) 
+ * - <config> = 2: QvdW-HRG with QvdW interactions between baryons only,
+ *   with parameters being fixed to the nuclear ground state (as in 1609.03975) 
+ * 
+ * Usage:
+ * ~~~.bash
+ * cpc1HRGTDep <config>
+ * ~~~
+ * 
+ */

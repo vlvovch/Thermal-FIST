@@ -18,61 +18,12 @@ using namespace std;
 using namespace thermalfist;
 #endif
 
-// Time keeping
-// Windows
-#ifdef _WIN32
-#include <Windows.h>
-double get_wall_time() {
-  LARGE_INTEGER time, freq;
-  if (!QueryPerformanceFrequency(&freq)) {
-    //  Handle error
-    return 0;
-  }
-  if (!QueryPerformanceCounter(&time)) {
-    //  Handle error
-    return 0;
-  }
-  return (double)time.QuadPart / freq.QuadPart;
-}
-double get_cpu_time() {
-  FILETIME a, b, c, d;
-  if (GetProcessTimes(GetCurrentProcess(), &a, &b, &c, &d) != 0) {
-    //  Returns total user time.
-    //  Can be tweaked to include kernel times as well.
-    return
-      (double)(d.dwLowDateTime |
-      ((unsigned long long)d.dwHighDateTime << 32)) * 0.0000001;
-  }
-  else {
-    //  Handle error
-    return 0;
-  }
-}
 
-//  Posix/Linux
-#else
-#include <time.h>
-#include <sys/time.h>
-double get_wall_time() {
-  struct timeval time;
-  if (gettimeofday(&time, NULL)) {
-    //  Handle error
-    return 0;
-  }
-  return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
-double get_cpu_time() {
-  return (double)clock() / CLOCKS_PER_SEC;
-}
-#endif
-
-// Temperature dependence of the fit to ALICE 2.76 TeV data, 0-5% centrality, as in 1512.08046
-// Three variants of HRG model: 
-// 1. Ideal HRG: <config> = 0
-// 2. Diagonal EV-HRG with bag model parametrization r = r_p * (m/m_p)^1/3, where r_p = 0.5 is proton radius parameter (as in 1512.08046): <config> = 1
-// 3. Diagonal EV-HRG with constant radius parameter r = 0.3 fm for all baryons and r = 0 for all mesons (as in 1201.0693): <config> = 2
-// 4. QvdW-HRG with a and b for baryons only, fixed to nuclear ground state (as in 1609.03975): <config> = 3
-// Usage: cpc1HRGTDep <config>
+// Thermal fits to NA49 and LHC data within the Ideal HRG model in
+// 1. Chemical equilibrium scenario (<config> = 0);
+// 2. Chemical non-equilibrium scenario (<config> = 1).
+// 
+// Usage: cpc3chi2NEQ <config>
 int main(int argc, char *argv[])
 {
   // Particle list file
@@ -304,3 +255,17 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+/**
+ * \example cpc3-chi2NEQ.cpp
+ * 
+ * Thermal fits to NA49 and LHC data within the Ideal HRG model in  
+ *   1. Chemical equilibrium scenario (<config> = 0)
+ *   2. Chemical non-equilibrium scenario (<config> = 1)
+ * 
+ * Usage:
+ * ~~~.bash
+ * cpc3chi2NEQ <config>
+ * ~~~
+ * 
+ */
