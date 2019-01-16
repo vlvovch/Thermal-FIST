@@ -57,6 +57,7 @@ struct ThermalModelConfig {
 	int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
 	bool RenormalizeBR;
 	bool ComputeFluctations;
+  bool ResetMus;
 
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };

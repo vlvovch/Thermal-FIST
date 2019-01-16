@@ -401,6 +401,14 @@ namespace thermalfist {
   }
 
 
+  void ThermalModelBase::ConstrainChemicalPotentials(bool resetInitialValues)
+  {
+    if (resetInitialValues)
+      FixParameters();
+    else
+      FixParametersNoReset();
+  }
+
   void ThermalModelBase::FixParameters() {
     if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       if (m_ConstrainMuS)

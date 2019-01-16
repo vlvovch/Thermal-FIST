@@ -37,15 +37,9 @@ namespace thermalfist {
 
   bool Disclaimer::PrintDisclaimer()
   {
-    for (int i = 0; i < 79; ++i)
-      cout << "#";
-    cout << endl;
+    cout << string(79, '#') << endl;
 
-    cout << "#";
-    for (int i = 0; i < 77; ++i)
-      cout << " ";
-    cout << "#";
-    cout << endl;
+    cout << "#" << string(77, ' ') << "#" << endl;
 
     string tmpstr = "";
 
@@ -63,11 +57,7 @@ namespace thermalfist {
 
     cout << tmpstr << endl;
 
-    cout << "#";
-    for (int i = 0; i < 77; ++i)
-      cout << " ";
-    cout << "#";
-    cout << endl;
+    cout << "#" << string(77, ' ') << "#" << endl;
 
     // e-mail obfuscation (just in case)
     string email = "";
@@ -92,11 +82,7 @@ namespace thermalfist {
 
     cout << tmpstr << endl;
 
-    cout << "#";
-    for (int i = 0; i < 77; ++i)
-      cout << " ";
-    cout << "#";
-    cout << endl;
+    cout << "#" << string(77, ' ') << "#" << endl;
 
     tmpstr = "Distributed under the GNU General Public License 3.0 (GPLv3 or later)";
 
@@ -104,11 +90,7 @@ namespace thermalfist {
 
     cout << tmpstr << endl;
 
-    cout << "#";
-    for (int i = 0; i < 77; ++i)
-      cout << " ";
-    cout << "#";
-    cout << endl;
+    cout << "#" << string(77, ' ') << "#" << endl;
 
     tmpstr = "The latest version is available at https://github.com/vlvovch/Thermal-FIST";
 
@@ -116,15 +98,9 @@ namespace thermalfist {
 
     cout << tmpstr << endl;
 
-    cout << "#";
-    for (int i = 0; i < 77; ++i)
-      cout << " ";
-    cout << "#";
-    cout << endl;
+    cout << "#" << string(77, ' ') << "#" << endl;
 
-    for (int i = 0; i < 79; ++i)
-      cout << "#";
-    cout << endl;
+    cout << string(79, '#') << endl;
 
     cout << endl;
 

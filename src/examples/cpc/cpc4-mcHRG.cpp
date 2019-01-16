@@ -110,11 +110,19 @@ double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<do
 
 // Temperature dependence of (EV-)HRG thermodynamics at zero chemical potential
 // Comparison of analytic and Monte Carlo calculations
+// Usage: cpc4mcHRG <withMonteCarlo> <nevents>
+// where <withMonteCarlo> flag determines whether Monte Carlo calculations
+// are performed and <nevents> is the number of Monte Carlo events per
+// single collision energy
 int main(int argc, char *argv[])
 {
   int withMonteCarlo = 1;
   if (argc > 1)
     withMonteCarlo = atoi(argv[1]);
+
+  int nevents = 100000;
+  if (argc >2)
+    nevents = atoi(argv[2]);
   
   string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
   ThermalParticleSystem parts(listname);
@@ -183,7 +191,6 @@ int main(int argc, char *argv[])
   double logSmin = log(smin);
   double logSmax = log(smax);
   double dlogS = (logSmax - logSmin) / iterss;
-  //for (double logS = smin; logS <= smax; logS += dlogS) {
   for (int is = 0; is <= iterss; ++is) {
     double ss = exp(logSmin + is * dlogS);
     double T = Tss(ss);
@@ -193,12 +200,10 @@ int main(int argc, char *argv[])
     model->ConstrainMuS(true);
     model->ConstrainMuQ(true);
     model->ConstrainMuC(true);
-    //model->Parameters().muB = model->Parameters().muS = model->Parameters().muQ = model->Parameters().muC = 0.;
     model->SetBaryonChemicalPotential(muB);
     model->SetStrangenessChemicalPotential(musp);
     model->SetElectricChemicalPotential(muqp);
     model->SetCharmChemicalPotential(mucp);
-    //model->FixParameters();
     model->ConstrainChemicalPotentials();
 
     musp = model->Parameters().muS;
@@ -265,8 +270,6 @@ int main(int argc, char *argv[])
     iters++;
   }
 
-  //delete model;
-
   fclose(f);
 
   double wt2 = get_wall_time();
@@ -319,13 +322,10 @@ int main(int argc, char *argv[])
     config.CFOParameters = model->Parameters();
 
     SphericalBlastWaveEventGenerator generator(model->TPS(), config, 0.100, 0.5);
-    int nevents = 100000;
     double wsum = 0.;
     for (int i = 0; i < nevents; ++i) {
       SimpleEvent ev = generator.GetEvent();
       int mcev_B = 0., mcev_Q = 0., mcev_S = 0., mcev_p = 0., mcev_k = 0.;
-      //int mcev_B2 = 0., mcev_Q2 = 0., mcev_S2 = 0., mcev_BQ = 0., mcev_QS = 0., mcev_BS = 0.;
-      //int mcev_p2 = 0., mcev_k2 = 0., mcev_pk = 0., mcev_pQ = 0., mcev_Qk = 0.;
 
       for (int part = 0; part < ev.Particles.size(); ++part) {
         int pdgid = ev.Particles[part].PDGID;
