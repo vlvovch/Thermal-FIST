@@ -102,6 +102,17 @@ namespace thermalfist {
 
     cout << "#" << string(77, ' ') << "#" << endl;
 
+    tmpstr = "Please cite when using this code:";
+    tmpstr = OutputString(tmpstr);
+    cout << tmpstr << endl;
+
+    tmpstr = "V. Vovchenko, H. Stoecker, arXiv:1901.05249 [nucl-th]";
+    tmpstr = OutputString(tmpstr);
+    cout << tmpstr << endl;
+
+    cout << "#" << string(77, ' ') << "#" << endl;
+
+
     tmpstr = "The latest version is available at https://github.com/vlvovch/Thermal-FIST";
 
     tmpstr = OutputString(tmpstr);

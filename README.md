@@ -38,4 +38,11 @@ This should be carefully monitored.
 - [**Qt5 framework**](https://www.qt.io) for the GUI frontend ([LGPL3](http://doc.qt.io/qt-5/lgpl.html))
 - [**QCustomPlot**](https://www.qcustomplot.com/) Qt C++ widget for plotting and data visualization by Emanuel Eichhammer ([GPL](https://www.gnu.org/licenses/gpl.html))
 
+## Attribution
+Please cite the following paper when using this code:
+
+- V. Vovchenko, H. Stoecker, *Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state*, [arXiv:1901.05249 [nucl-th]](https://arxiv.org/abs/1901.05249)
+
+It is expected that changes to the code are documented.
+
 *Copyright (C) 2018-2019  Volodymyr Vovchenko*
