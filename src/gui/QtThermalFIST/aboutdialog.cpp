@@ -54,17 +54,31 @@ AboutDialog::AboutDialog(QWidget *parent) :
   QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));
   labelLic->setFont(fontDefault);
   layout->addWidget(labelLic, 0, Qt::AlignCenter);
+
+  QFont fontSmaller = QApplication::font();
+  fontSmaller.setPointSize(QApplication::font().pointSize() - 1);
+
+  QLabel *labelAttrib = new QLabel(tr("Publication of results obtained using this code should include a reference to:"));
+  QLabel *labelAttrib2 = new QLabel(tr("V. Vovchenko, H. Stoecker, <a href=\"https://arxiv.org/abs/1901.05249\">arXiv:1901.05249 [nucl-th]</a>"));
+  labelAttrib2->setTextFormat(Qt::RichText);
+  labelAttrib2->setTextInteractionFlags(Qt::TextBrowserInteraction);
+  labelAttrib2->setOpenExternalLinks(true);
+  labelAttrib->setFont(fontSmaller);
+  labelAttrib2->setFont(fontSmaller);
+
+  layout->addSpacing(20);
+  layout->addWidget(labelAttrib);
+  layout->addWidget(labelAttrib2);
   
 
   QLabel *labelLatest = new QLabel(tr("The latest version of the program is available at <a href=\"https://github.com/vlvovch/Thermal-FIST\">https://github.com/vlvovch/Thermal-FIST</a>"));
   labelLatest->setTextFormat(Qt::RichText);
   labelLatest->setTextInteractionFlags(Qt::TextBrowserInteraction);
   labelLatest->setOpenExternalLinks(true);
-  QFont fontSmaller = QApplication::font();
-  fontSmaller.setPointSize(QApplication::font().pointSize() - 1);
   labelLatest->setFont(fontSmaller);
+  
 
-  layout->addSpacing(20);
+  layout->addSpacing(10);
   layout->addWidget(labelLatest);
 
   // contact by e-mail
