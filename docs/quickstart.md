@@ -149,7 +149,7 @@ All changes can be saved to file.
 
 ### Other notes
 
-- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/routines](../src/routines) folder
+- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/examples](../src/examples) folder
 - An example of using the Thermal-FIST library as a submodule is provided by [this repository](https://github.com/vlvovch/1807.02079)
 - The canonical ensemble calculations use the method from [this paper](https://arxiv.org/abs/nucl-th/0112021) to perform analytically the integration over the baryon number fugacity whenever this is possible. This allows to significantly speed up the calculations. This method cannot be used if quantum statisics is considered for baryons, or if there are multi-baryons (light nuclei) in the particle list. In this case direct numerical integration is performed, which can make calculations very slow.
 
