@@ -658,12 +658,15 @@ namespace thermalfist {
     // 1 - Npart
     if (PDGID == 1) return CalculateBaryonDensity();
 
-    // 33340 - \Omega + \Omegabar
-    if (PDGID == 33340 && m_TPS->PdgToId(3334) != -1 && m_TPS->PdgToId(-3334) != -1)
-      return dens->operator[](m_TPS->PdgToId(3334)) + dens->operator[](m_TPS->PdgToId(-3334));
+    // Id Pdg code has a trailing zero, try to construct a particle + anti-particle yield
+    if (PDGID % 10 == 0) {
+      int tpdgid = PDGID / 10;
+      if (m_TPS->PdgToId(tpdgid) != -1 && m_TPS->PdgToId(-tpdgid) != -1)
+      return dens->operator[](m_TPS->PdgToId(tpdgid)) + dens->operator[](m_TPS->PdgToId(-tpdgid));
+    }
 
-    // 22120 - nucleons
-    if (PDGID == 22120 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
+    // 22122112 - nucleons
+    if (PDGID == 22122112 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
       return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
     printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);

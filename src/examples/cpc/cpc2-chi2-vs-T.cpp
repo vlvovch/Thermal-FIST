@@ -163,12 +163,6 @@ int main(int argc, char *argv[])
   vector<FittedQuantity> quantities = ThermalModelFit::loadExpDataFromFile(string(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
   fitter.SetQuantities(quantities);
 
-  // Prepare for output
-
-  // To write output to file uncomment the three lines below, or use fprintf
-  //char tmpc[1000];
-  //sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
-  //freopen(tmpc, "w", stdout);
 
   printf("%15s%15s%15s%15s\n",
     "T[MeV]",   // Temperature in MeV
@@ -177,6 +171,18 @@ int main(int argc, char *argv[])
     "chi2_dof"  // Reduced chi2
   );
 
+  
+  // Prepare for output to file
+  char tmpc[1000];
+  sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
+  FILE *fout = fopen(tmpc, "w");
+
+  fprintf(fout, "%15s%15s%15s%15s\n",
+    "T[MeV]",   // Temperature in MeV
+    "R[fm]",    // System radius in fm
+    "chi2",     // chi_2
+    "chi2_dof"  // Reduced chi2
+  );
 
   double wt1 = get_wall_time(); // Timing
 
@@ -198,15 +204,17 @@ int main(int argc, char *argv[])
     double chi2 = result.chi2;
     double chi2dof = result.chi2ndf;
 
-    printf("%15lf%15lf%15lf%15lf", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
+    printf("%15lf%15lf%15lf%15lf\n", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
 
-    printf("\n");
+    fprintf(fout, "%15lf%15lf%15lf%15lf\n", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
 
     iters++;
 
     fflush(stdout);
 
   }
+
+  fclose(fout);
 
   delete model;
 

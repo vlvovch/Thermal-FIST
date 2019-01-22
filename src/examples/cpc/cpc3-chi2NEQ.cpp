@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
       gSfit,
       gSerr,
       chi2, 
-      chi2 / (result.ndf - 1.));
+      chi2dof);
 
     printf("\n");
 
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
       gqfit,
       gSfit,
       chi2,
-      chi2 / (result.ndf - 1.),
+      chi2dof,
       model->CalculateChargeDensity() / model->CalculateBaryonDensity(),
       model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity());
 

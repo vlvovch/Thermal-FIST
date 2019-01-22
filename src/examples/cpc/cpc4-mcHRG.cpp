@@ -260,6 +260,7 @@ int main(int argc, char *argv[])
   // Now Monte Carlo
   iters = 0;
   wt1 = get_wall_time();
+  RandomGenerators::SetSeed(1);
 
   for (int ind = 0; ind < ens.size(); ind++) {
     model->SetTemperature(Ts[ind]);

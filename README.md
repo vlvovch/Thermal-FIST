@@ -28,7 +28,8 @@ For more details please see the [**Thermal-FIST documentation**](https://fias.un
 
 ### Notes
 Calculations may break down for excessive/overstressed parameters.
-This should be carefully monitored.
+This should be carefully monitored, and the accuracy of the output assessed.
+If in doubt, contact the program author(s).
 
 ### Third-party code used
 

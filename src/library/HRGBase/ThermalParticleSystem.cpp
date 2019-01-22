@@ -961,11 +961,16 @@ namespace thermalfist {
   }
 
   std::string ThermalParticleSystem::GetNameFromPDG(int pdgid) {
+    if (m_PDGtoID.count(pdgid) != 0)
+      return m_Particles[m_PDGtoID[pdgid]].Name();
     if (pdgid == 1) return string("Npart");
-    if (pdgid == 33340) return string("Omega+Omegabar");
-    if (pdgid == 22120) return string("p+n");
-    if (m_PDGtoID.count(pdgid) == 0) return string("???");
-    else return m_Particles[m_PDGtoID[pdgid]].Name();
+    if (pdgid % 10 == 0) {
+      int tpdgid = pdgid / 10;
+      if (PdgToId(tpdgid) != -1 && PdgToId(-tpdgid) != -1)
+        return m_Particles[PdgToId(tpdgid)].Name() + "+" + m_Particles[PdgToId(-tpdgid)].Name();
+    }
+    if (pdgid == 22122112) return string("p+n");
+    return string("???");
   }
 
   void ThermalParticleSystem::NormalizeBranchingRatios() {

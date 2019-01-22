@@ -127,14 +127,24 @@ int main(int argc, char *argv[])
   model->FillChemicalPotentials();
 
   
-  // Prepare for output
+  // Prepare output
+  char tmpc[1000];
+  sprintf(tmpc, "%s.TDep.out", modeltype.c_str());
+  FILE *fout = fopen(tmpc, "w");
 
-  // To write output to file uncomment the three lines below, or use fprintf
-  //char tmpc[1000];
-  //sprintf(tmpc, "%s.TDep.out", modeltype.c_str());
-  //freopen(tmpc, "w", stdout);
-
+  // Output to screen
   printf("%15s%15s%15s%15s%15s%15s%15s\n",
+    "T[MeV]", // Temperature
+    "p/T^4",  // Scaled pressure
+    "e/T^4",  // Scaled energy density
+    "s/T^3",   // Scaled entropy density
+    "chi2B",   // Baryon number susceptibility
+    "chi4B",   // 4th order baryon cumulant
+    "chi2B-chi4B"   // Difference of 2nd and 4th order baryon susceptibilities
+  );
+
+  // Output to file
+  fprintf(fout, "%15s%15s%15s%15s%15s%15s%15s\n",
     "T[MeV]", // Temperature
     "p/T^4",  // Scaled pressure
     "e/T^4",  // Scaled energy density
@@ -162,22 +172,26 @@ int main(int argc, char *argv[])
 
     // Output temperature, scale to get the unit of MeV
     printf("%15lf", T * 1000.);
+    fprintf(fout, "%15lf", T * 1000.);
 
     // Pressure, in [GeV/fm3]
     double p = model->CalculatePressure();
     // Scaled pressure, pow(xMath::GeVtoifm(), 3) needed to make it dimensionless
     double pT4 = p / pow(T, 4) / pow(xMath::GeVtoifm(), 3);
     printf("%15lf", pT4);
+    fprintf(fout, "%15lf", pT4);
 
     // Energy density
     double e = model->CalculateEnergyDensity();
     double eT4 = e / pow(T, 4) / pow(xMath::GeVtoifm(), 3);
     printf("%15lf", eT4);
+    fprintf(fout, "%15lf", eT4);
 
     // Entropy density
     double s = model->CalculateEntropyDensity();
     double sT3 = s / pow(T, 3) / pow(xMath::GeVtoifm(), 3);
     printf("%15lf", sT3);
+    fprintf(fout, "%15lf", sT3);
 
 
     // Baryon number fluctuations
@@ -194,19 +208,25 @@ int main(int argc, char *argv[])
     if (chiB.size() >= 4) {
       // chi2B
       printf("%15E", chiB[1]);
+      fprintf(fout, "%15E", chiB[1]);
 
       // chi4B
       printf("%15E", chiB[3]);
+      fprintf(fout, "%15E", chiB[3]);
 
       // chi2B - chi4B
       printf("%15E", chiB[1] - chiB[3]);
+      fprintf(fout, "%15E", chiB[1] - chiB[3]);
     }
 
     printf("\n");
+    fprintf(fout, "\n");
 
     iters++;
 
   }
+
+  fclose(fout);
 
   delete model;
   
