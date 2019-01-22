@@ -67,8 +67,6 @@ int main(int argc, char *argv[])
   //model->SetUseWidth(ThermalParticle::ZeroWidth);
 
   // Prepare for output
-
-  // To write output to file uncomment the three lines below, or use fprintf
   char tmpc[1000];
   sprintf(tmpc, "%s.chi2.out", fittype.c_str());
   FILE *fout = fopen(tmpc, "w");
@@ -94,7 +92,7 @@ int main(int argc, char *argv[])
     "gammaS",    // gamma_S
     "gammaS_err",    // gamma_S
     "chi2",     // chi_2
-    "chi2_dof"  // Reduced chi2
+    "chi2/dof"  // Reduced chi2
   );
 
   fprintf(fout, "%15s%15s%15s%15s%15s%15s%15s%15s%15s%15s\n",
@@ -105,7 +103,7 @@ int main(int argc, char *argv[])
     "gammaq",    // gamma_q
     "gammaS",    // gamma_S
     "chi2",     // chi_2
-    "chi2_dof",  // Reduced chi2
+    "chi2/dof",  // Reduced chi2
     "Q/B",      // Electric-to-baryon charge ratio, must be 0.4
     "S/|S|"     // Strangeness-to-absolutestrangeness ratio, must be very close to 0
   );
@@ -194,7 +192,7 @@ int main(int argc, char *argv[])
     }
 
 
-    ThermalModelFitParameters result = fitter.PerformFit(false);  // The argument suppresses the output during minimization  
+    ThermalModelFitParameters result = fitter.PerformFit(true);  // The argument suppresses the output during minimization  
 
     double Tfit = result.T.value;
     double Terr = result.T.error;

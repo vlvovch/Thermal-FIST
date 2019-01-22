@@ -88,9 +88,21 @@ namespace thermalfist {
         m_THMFit->model()->SetParameters(m_THMFit->model()->Parameters());
 
         //m_THMFit->model()->SetQoverB(m_THMFit->QoverB());
+
+        IdealGasFunctions::calculationHadBECIssue = false;
+
         m_THMFit->model()->ConstrainChemicalPotentials();
 
         m_THMFit->model()->CalculateDensities();
+
+        // If current chemical potentials lead to
+        // Bose-Einstein function divergence (\mu > m),
+        // then effectively discard parameter of the current iteration by setting chi^2 to 10^12
+        if (IdealGasFunctions::calculationHadBECIssue) {
+          printf("%15d ", m_THMFit->Iters());
+          printf("Issue with Bose-Einstein condensation, discarding this iteration...\n");
+          return m_THMFit->Chi2() = chi2 = 1.e12;
+        }
 
         double Npart = m_THMFit->model()->CalculateBaryonDensity() * m_THMFit->model()->Parameters().V;
 
@@ -120,28 +132,28 @@ namespace thermalfist {
         }
 
         if (m_verbose) {
-          printf("%15d", m_THMFit->Iters());
-          printf("%15lf", chi2);
+          printf("%15d ", m_THMFit->Iters());
+          printf("%15lf ", chi2);
           if (m_THMFit->Parameters().T.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().T);
+            printf("%15lf ", m_THMFit->model()->Parameters().T);
           if (m_THMFit->Parameters().muB.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muB);
+            printf("%15lf ", m_THMFit->model()->Parameters().muB);
           if (m_THMFit->Parameters().muQ.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muQ);
+            printf("%15lf ", m_THMFit->model()->Parameters().muQ);
           if (m_THMFit->Parameters().muS.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muS);
+            printf("%15lf ", m_THMFit->model()->Parameters().muS);
           if (m_THMFit->Parameters().muC.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muC);
+            printf("%15lf ", m_THMFit->model()->Parameters().muC);
           if (m_THMFit->Parameters().R.toFit)
-            printf("%15lf", par[3]);
+            printf("%15lf ", par[3]);
           if (m_THMFit->Parameters().Rc.toFit)
-            printf("%15lf", par[4]);
+            printf("%15lf ", par[4]);
           if (m_THMFit->Parameters().gammaq.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaq);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaq);
           if (m_THMFit->Parameters().gammaS.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaS);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaS);
           if (m_THMFit->Parameters().gammaC.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaC);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaC);
           printf("\n");
 
           if (m_THMFit->model()->Ensemble() == ThermalModelBase::CE)
@@ -192,10 +204,6 @@ namespace thermalfist {
   ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmErrors) {
   #ifdef USE_MINUIT
     m_ModelData.resize(m_Quantities.size(), 0.);
-
-    //m_Parameters.Rc.value = m_Parameters.R.value;
-    //m_Parameters.Rc.xmin  = m_Parameters.R.xmin;
-    //m_Parameters.Rc.xmax  = m_Parameters.R.xmax;
 
     m_Parameters.B = m_model->Parameters().B;
     m_Parameters.Q = m_model->Parameters().Q;
@@ -295,28 +303,28 @@ namespace thermalfist {
 
       if (verbose) {
         printf("Starting a thermal fit...\n\n");
-        printf("%15s", "Iteration");
-        printf("%15s", "chi2");
+        printf("%15s ", "Iteration");
+        printf("%15s ", "chi2");
         if (m_Parameters.T.toFit)
-          printf("%15s", "T [GeV]");
+          printf("%15s ", "T [GeV]");
         if (m_Parameters.muB.toFit)
-          printf("%15s", "muB [GeV]");
+          printf("%15s ", "muB [GeV]");
         if (m_Parameters.muQ.toFit)
-          printf("%15s", "muQ [GeV]");
+          printf("%15s ", "muQ [GeV]");
         if (m_Parameters.muS.toFit)
-          printf("%15s", "muS [GeV]");
+          printf("%15s ", "muS [GeV]");
         if (m_Parameters.muC.toFit)
-          printf("%15s", "muC [GeV]");
+          printf("%15s ", "muC [GeV]");
         if (m_Parameters.R.toFit)
-          printf("%15s", "R [fm]");
+          printf("%15s ", "R [fm]");
         if (m_Parameters.Rc.toFit)
-          printf("%15s", "Rc [fm]");
+          printf("%15s ", "Rc [fm]");
         if (m_Parameters.gammaq.toFit)
-          printf("%15s", "gammaq");
+          printf("%15s ", "gammaq");
         if (m_Parameters.gammaS.toFit)
-          printf("%15s", "gammaS");
+          printf("%15s ", "gammaS");
         if (m_Parameters.gammaC.toFit)
-          printf("%15s", "gammaC");
+          printf("%15s ", "gammaC");
         printf("\n");
       }
 
@@ -364,9 +372,9 @@ namespace thermalfist {
       ret.gammaC.value = (min.UserParameters()).Params()[9];
       ret.gammaC.error = (min.UserParameters()).Errors()[9];
 
-      if (!m_Parameters.Rc.toFit) {
-        ret.Rc = ret.R;
-        ret.Rc.name = "Rc";
+      if (!m_Parameters.Rc.toFit && FixVcOverV()) {
+        ret.Rc.value = ret.R.value * pow(VcOverV(), 1./3.);
+        ret.Rc.error = 0.;
       }
 
       if (repeat) {
@@ -443,15 +451,15 @@ namespace thermalfist {
     parames.C = m_model->Parameters().C;
     m_model->SetParameters(parames);
     m_model->FixParameters();
-    if (!ret.muQ.toFit) {
+    if (!ret.muQ.toFit && m_model->ConstrainMuQ()) {
       ret.muQ.value = m_model->Parameters().muQ;
       ret.muQ.error = 0.;
     }
-    if (!ret.muS.toFit) {
+    if (!ret.muS.toFit && m_model->ConstrainMuS()) {
       ret.muS.value = m_model->Parameters().muS;
       ret.muS.error = 0.;
     }
-    if (!ret.muC.toFit) {
+    if (!ret.muC.toFit && m_model->ConstrainMuC()) {
       ret.muC.value = m_model->Parameters().muC;
       ret.muC.error = 0.;
     }
@@ -468,8 +476,7 @@ namespace thermalfist {
     params[8] = ret.muC.value;
     params[9] = ret.gammaC.value;
 
-
-    ret.chi2    = mfunc(params);
+    ret.chi2  = mfunc(params);
     int ndf = 0;
     for (int i = 0; i < m_Quantities.size(); ++i)
       if (m_Quantities[i].toFit) ndf++;

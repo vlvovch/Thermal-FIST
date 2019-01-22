@@ -285,7 +285,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     modelChanged();
 
 		QString datapathprefix = QString(INPUT_FOLDER) + "/data";
-		quantities = ThermalModelFit::loadExpDataFromFile((QString(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat").toStdString());
+		quantities = ThermalModelFit::loadExpDataFromFile((QString(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-10-all.dat").toStdString());
     myModel->setQuantities(&quantities);
     tableQuantities->resizeColumnsToContents();
 

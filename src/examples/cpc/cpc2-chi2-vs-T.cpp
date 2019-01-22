@@ -229,11 +229,13 @@ int main(int argc, char *argv[])
  * scaled entropy density, the 2nd and 4th order baryon number susceptibilities.
  * 
  * Calculations can be done within four variants of the HRG model:
- * - <config> = 0: Ideal HRG model
- * - <config> = 1: Diagonal EV-HRG model with the bag model radii parametrization r = r_p * (m/m_p)^1/3, 
- *   where r_p = 0.5 is proton radius parameter (as in 1512.08046) 
- * - <config> = 2: QvdW-HRG with QvdW interactions between baryons only,
- *   with parameters being fixed to the nuclear ground state (as in 1609.03975) 
+ *   - <config> = 0: Ideal HRG model
+ *   - <config> = 1: Diagonal EV-HRG model with the bag model radii parametrization r = r_p * (m/m_p)^1/3, 
+ *     where r_p = 0.5 is proton radius parameter (as in 1512.08046) 
+ *   - <config> = 2: Diagonal EV-HRG model with a constant radius parameter r = 0.3 fm for all baryons 
+ *     and r = 0 for all mesons (as in 1201.0693)
+ *   - <config> = 3: QvdW-HRG with QvdW interactions between baryons only,
+ *     with parameters being fixed to the nuclear ground state (as in 1609.03975) 
  * 
  * Usage:
  * ~~~.bash

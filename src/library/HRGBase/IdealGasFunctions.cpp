@@ -22,6 +22,8 @@ namespace thermalfist {
 
   namespace IdealGasFunctions {
 
+    bool calculationHadBECIssue = false;
+
     double BoltzmannDensity(double T, double mu, double m, double deg) {
       if (m == 0.)
         return deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2. * exp(mu/ T) * xMath::GeVtoifm3();
@@ -202,6 +204,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -224,6 +227,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -248,6 +252,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -275,6 +280,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuScalarDensity(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -297,6 +303,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT1dn1dmu1(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -320,6 +327,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT2dn2dmu2(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -344,6 +352,7 @@ namespace thermalfist {
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuT3dn3dmu3(T, mu, m, deg);
       if (statistics == -1 && mu > m) {
         printf("**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
         return 0.;
       }
 
@@ -370,6 +379,7 @@ namespace thermalfist {
     {
       if (N < 0 || N>3) {
         printf("**WARNING** QuantumNumericalIntegrationTdndmu: N must be between 0 and 3!\n");
+        calculationHadBECIssue = true;
         exit(1);
       }
       if (N == 0)

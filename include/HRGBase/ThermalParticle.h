@@ -714,6 +714,9 @@ namespace thermalfist {
      */
     std::vector<double> m_Nch;
     std::vector<double> m_DeltaNch;
+
+    /// Whether BEC was encountered
+    bool m_LastDensityOk;
   };
 
 } // namespace thermalfist
