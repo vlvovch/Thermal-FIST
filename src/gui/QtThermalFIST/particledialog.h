@@ -37,7 +37,7 @@ class ParticleDialog : public QDialog
     QPushButton *buttonAddDaughterColumn;
     QPushButton *buttonRemoveDaughterColumn;
 
-		QPushButton *buttonSpectralFunction;
+    QPushButton *buttonSpectralFunction;
 
     QString GetParticleInfo();
 
@@ -52,7 +52,7 @@ public slots:
     void removeDecay();
     void addColumn();
     void removeColumn();
-		void showSpectralFunction();
+    void showSpectralFunction();
 };
 
 #endif // DECAYSEDITOR_H

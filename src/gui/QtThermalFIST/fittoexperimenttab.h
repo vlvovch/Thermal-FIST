@@ -66,15 +66,15 @@ class FitToExperimentTab : public QWidget
     QPushButton *buttonPlotYields, *buttonPlotDataModel, *buttonPlotDataVsModel, *buttonPlotDeviations;
 
     QPushButton *buttonResults;
-		QPushButton *buttonChi2Profile;
-		QPushButton *labelValid;
+    QPushButton *buttonChi2Profile;
+    QPushButton *labelValid;
 
     QTableView *tableFitParameters;
 
     QLabel *labelB, *labelS, *labelQ, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
-	  QCheckBox *checkFixRc;
+    QCheckBox *checkFixRc;
     QDoubleSpinBox *spinVcV;
 
     QPushButton *buttonCalculate;
@@ -92,7 +92,7 @@ class FitToExperimentTab : public QWidget
     QElapsedTimer timer;
     QTimer *calcTimer;
 
-		QString cpath;
+    QString cpath;
 
     ModelConfigWidget *configWidget;
 
@@ -117,16 +117,16 @@ private slots:
 
 public slots:
     void changedRow();
-		void performFit(const ThermalModelConfig & config, const thermalfist::ThermalModelFitParameters & params);
+    void performFit(const ThermalModelConfig & config, const thermalfist::ThermalModelFitParameters & params);
     void calculate();
     void quantityDoubleClick(const QModelIndex &);
     void showResults();
-		void showChi2Profile();
+    void showChi2Profile();
     void setModel(thermalfist::ThermalModelBase *model);
     void removeQuantityFromFit();
     void addQuantity();
     void loadFromFile();
-		void saveToFile();
+    void saveToFile();
     void modelChanged();
     void resetTPS();
     void updateProgress();

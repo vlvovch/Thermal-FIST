@@ -53,14 +53,14 @@ void EventGeneratorWorker::run()
              spectra->ProcessEvent(ev);
              (*eventsProcessed)++;
 
-						 if (fout.is_open())
-							 ev.writeToFile(fout, (*eventsProcessed));
+             if (fout.is_open())
+               ev.writeToFile(fout, (*eventsProcessed));
 
              mutex->unlock();
          }
      }
-		 if (fout.is_open())
-			fout.close();
+     if (fout.is_open())
+      fout.close();
      *nE = wsum * wsum / w2sum;
      emit calculated();
  }
@@ -205,35 +205,35 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     QGroupBox *grParameters = new QGroupBox(tr("Thermal model parameters:"));
 
-		QGridLayout *layParameters = new QGridLayout();
-		layParameters->setAlignment(Qt::AlignLeft);
-		//layQuant->setHorizontalSpacing(15);
-		QLabel *labelTemperature = new QLabel(tr("T<sub>ch</sub> (MeV):"));
-		spinTemperature = new QDoubleSpinBox();
-		spinTemperature->setMinimum(1.);
-		spinTemperature->setMaximum(10000.);
-		spinTemperature->setValue(model->Parameters().T * 1e3);
+    QGridLayout *layParameters = new QGridLayout();
+    layParameters->setAlignment(Qt::AlignLeft);
+    //layQuant->setHorizontalSpacing(15);
+    QLabel *labelTemperature = new QLabel(tr("T<sub>ch</sub> (MeV):"));
+    spinTemperature = new QDoubleSpinBox();
+    spinTemperature->setMinimum(1.);
+    spinTemperature->setMaximum(10000.);
+    spinTemperature->setValue(model->Parameters().T * 1e3);
     spinTemperature->setToolTip(tr("Chemical freeze-out temperature (fixes the yields)"));
     connect(spinTemperature, SIGNAL(valueChanged(double)), this, SLOT(changeTkin(double)));
-		QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
-		spinmuB = new QDoubleSpinBox();
-		spinmuB->setMinimum(-1000.);
-		spinmuB->setMaximum(1000.);
-		spinmuB->setValue(model->Parameters().muB * 1e3);
+    QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
+    spinmuB = new QDoubleSpinBox();
+    spinmuB->setMinimum(-1000.);
+    spinmuB->setMaximum(1000.);
+    spinmuB->setValue(model->Parameters().muB * 1e3);
     spinmuB->setToolTip(tr("Baryochemical potential"));
     QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
-		spingammaq = new QDoubleSpinBox();
-		spingammaq->setMinimum(0.);
-		spingammaq->setMaximum(10.);
-		spingammaq->setDecimals(4);
-		spingammaq->setValue(model->Parameters().gammaq);
+    spingammaq = new QDoubleSpinBox();
+    spingammaq->setMinimum(0.);
+    spingammaq->setMaximum(10.);
+    spingammaq->setDecimals(4);
+    spingammaq->setValue(model->Parameters().gammaq);
     spingammaq->setToolTip(tr("Chemical non-equilibrium factor for light quarks"));
     labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
-		spingammaS = new QDoubleSpinBox();
-		spingammaS->setMinimum(0.);
-		spingammaS->setMaximum(10.);
-		spingammaS->setDecimals(4);
-		spingammaS->setValue(model->Parameters().gammaS);
+    spingammaS = new QDoubleSpinBox();
+    spingammaS->setMinimum(0.);
+    spingammaS->setMaximum(10.);
+    spingammaS->setDecimals(4);
+    spingammaS->setValue(model->Parameters().gammaS);
     spingammaS->setToolTip(tr("Chemical non-equilibrium factor for strange quarks"));
     labelgammaC = new QLabel(tr("γ<sub>C</sub>:"));
     spingammaC = new QDoubleSpinBox();
@@ -243,48 +243,48 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spingammaC->setValue(model->Parameters().gammaC);
     spingammaC->setToolTip(tr("Chemical non-equilibrium factor for charm quarks"));
 
-		labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
-		spinmuS = new QDoubleSpinBox();
-		spinmuS->setMinimum(-1000.);
-		spinmuS->setMaximum(1000.);
-		spinmuS->setValue(model->Parameters().muS * 1e3);
+    labelmuS = new QLabel(tr("μ<sub>S</sub> (MeV):"));
+    spinmuS = new QDoubleSpinBox();
+    spinmuS->setMinimum(-1000.);
+    spinmuS->setMaximum(1000.);
+    spinmuS->setValue(model->Parameters().muS * 1e3);
     spinmuS->setToolTip(tr("Strangeness chemical potential"));
     QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
-		spinmuQ = new QDoubleSpinBox();
-		spinmuQ->setMinimum(-1000.);
-		spinmuQ->setMaximum(1000.);
-		spinmuQ->setValue(model->Parameters().muQ * 1e3);
+    spinmuQ = new QDoubleSpinBox();
+    spinmuQ->setMinimum(-1000.);
+    spinmuQ->setMaximum(1000.);
+    spinmuQ->setValue(model->Parameters().muQ * 1e3);
     spinmuQ->setToolTip(tr("Electric charge chemical potential"));
     labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
-		spinmuC = new QDoubleSpinBox();
-		spinmuC->setMinimum(-1000.);
-		spinmuC->setMaximum(1000.);
-		spinmuC->setValue(model->Parameters().muC * 1e3);
+    spinmuC = new QDoubleSpinBox();
+    spinmuC->setMinimum(-1000.);
+    spinmuC->setMaximum(1000.);
+    spinmuC->setValue(model->Parameters().muC * 1e3);
     spinmuC->setToolTip(tr("Charm chemical potential"));
     QLabel *labelVolume = new QLabel(tr("R (fm):"));
-		spinVolumeR = new QDoubleSpinBox();
-		spinVolumeR->setMinimum(0.);
-		spinVolumeR->setMaximum(25.);
-		spinVolumeR->setDecimals(4);
-		spinVolumeR->setValue(8.);
+    spinVolumeR = new QDoubleSpinBox();
+    spinVolumeR->setMinimum(0.);
+    spinVolumeR->setMaximum(25.);
+    spinVolumeR->setDecimals(4);
+    spinVolumeR->setValue(8.);
     spinVolumeR->setToolTip(tr("System radius: the system volume is a sphere of this radius"));
     connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
 
-		labelB = new QLabel(tr("B:"));
-		spinB = new QSpinBox();
-		spinB->setMinimum(-1000);
-		spinB->setMaximum(1000);
-		spinB->setValue(2);
-		labelS = new QLabel(tr("S:"));
-		spinS = new QSpinBox();
-		spinS->setMinimum(-1000);
-		spinS->setMaximum(1000);
-		spinS->setValue(0);
-		labelQ = new QLabel(tr("Q:"));
-		spinQ = new QSpinBox();
-		spinQ->setMinimum(-1000);
-		spinQ->setMaximum(1000);
-		spinQ->setValue(2);
+    labelB = new QLabel(tr("B:"));
+    spinB = new QSpinBox();
+    spinB->setMinimum(-1000);
+    spinB->setMaximum(1000);
+    spinB->setValue(2);
+    labelS = new QLabel(tr("S:"));
+    spinS = new QSpinBox();
+    spinS->setMinimum(-1000);
+    spinS->setMaximum(1000);
+    spinS->setValue(0);
+    labelQ = new QLabel(tr("Q:"));
+    spinQ = new QSpinBox();
+    spinQ->setMinimum(-1000);
+    spinQ->setMaximum(1000);
+    spinQ->setValue(2);
     labelC = new QLabel(tr("C:"));
     spinC = new QSpinBox();
     spinC->setMinimum(-1000);
@@ -361,11 +361,11 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     QHBoxLayout *layMom2 = new QHBoxLayout();
     layMom2->setAlignment(Qt::AlignLeft);
 
-		QLabel *labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
-		spinTkin = new QDoubleSpinBox();
-		spinTkin->setMinimum(1.);
-		spinTkin->setMaximum(10000.);
-		spinTkin->setValue(model->Parameters().T * 1e3);
+    QLabel *labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
+    spinTkin = new QDoubleSpinBox();
+    spinTkin->setMinimum(1.);
+    spinTkin->setMaximum(10000.);
+    spinTkin->setValue(model->Parameters().T * 1e3);
     spinTkin->setToolTip(tr("Kinetic freeze-out temperature which fixes the momentum spectrum"));
     QLabel *labelBeta = new QLabel(tr("β:"));
     spinBeta = new QDoubleSpinBox();
@@ -388,17 +388,17 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinEtaMax->setDecimals(3);
     spinEtaMax->setValue(1.);
     spinEtaMax->setToolTip(tr("Longitudinal space-time rapidity cut-off"));
-		QLabel *labeln = new QLabel(tr("n:"));
-		spinn = new QDoubleSpinBox();
-		spinn->setMinimum(0.);
-		spinn->setMaximum(10.);
-		spinn->setDecimals(3);
-		spinn->setValue(1.);
+    QLabel *labeln = new QLabel(tr("n:"));
+    spinn = new QDoubleSpinBox();
+    spinn->setMinimum(0.);
+    spinn->setMaximum(10.);
+    spinn->setDecimals(3);
+    spinn->setValue(1.);
     spinn->setToolTip(tr("Transverse radial flow profile"));
 
-		layMom2->addWidget(labelTkin);
-		layMom2->addWidget(spinTkin);
-		layMom2->addSpacing(20);
+    layMom2->addWidget(labelTkin);
+    layMom2->addWidget(spinTkin);
+    layMom2->addSpacing(20);
     layMom2->addWidget(labelBeta);
     layMom2->addWidget(spinBeta);
     layMom2->addSpacing(20);
@@ -407,7 +407,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     layMom2->addSpacing(5);
     layMom2->addWidget(labeln);
     layMom2->addWidget(spinn);
-		layMom2->addSpacing(5);
+    layMom2->addSpacing(5);
     layMom2->addWidget(labelEtaMax);
     layMom2->addWidget(spinEtaMax);
 
@@ -419,13 +419,13 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
 
-		checkDecays = new QCheckBox(tr("Perform decays"));
-		checkDecays->setChecked(false);
+    checkDecays = new QCheckBox(tr("Perform decays"));
+    checkDecays->setChecked(false);
     checkDecays->setToolTip(tr("Perform chain of decays of all unstable particles"));
 
-		layFlags->addWidget(checkDecays);
+    layFlags->addWidget(checkDecays);
     
-		
+    
     
 
 
@@ -474,7 +474,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     //teDebug->setFixedHeight(200);
     teDebug->setReadOnly(true);
 
-		//editorLay->addLayout(layModelEnsemble);
+    //editorLay->addLayout(layModelEnsemble);
     //editorLay->addWidget(grEV);
     editorLay->addWidget(grModelConfig);
     editorLay->addWidget(grParameters);
@@ -501,14 +501,14 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     modelChanged();
 
-		spinTemperature->setValue(155.0);
-		spinmuB->setValue(0.0);
-		spinmuQ->setValue(0.0);
-		spinmuS->setValue(0.0);
-		spinmuC->setValue(0.0);
-		spingammaS->setValue(1.0);
-		spingammaq->setValue(1.0);
-		spinVolumeR->setValue(8.0);
+    spinTemperature->setValue(155.0);
+    spinmuB->setValue(0.0);
+    spinmuQ->setValue(0.0);
+    spinmuS->setValue(0.0);
+    spinmuC->setValue(0.0);
+    spingammaS->setValue(1.0);
+    spingammaq->setValue(1.0);
+    spinVolumeR->setValue(8.0);
 }
 
 
@@ -567,8 +567,8 @@ void EventGeneratorTab::changedRow()
             double tl = 0.;
             if (ttype==1) tl = -3.;
             double tr = 2.;
-						if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-							tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+            if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+              tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
             if (ttype==1) tr = 3.;
             if (ttype==1 && spectra->fDistributionType==1) {
                 tl = -3. - spectra->fEtaMax;
@@ -588,9 +588,9 @@ void EventGeneratorTab::replot() {
     if (index>=0 && index<3 && id<spectra->fParticles.size()) {
 
         double tmin = 1.e5, tmax = 0.;
-				double tl = 0., tr = 2.;
-				if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-					tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+        double tl = 0., tr = 2.;
+        if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+          tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
 
         plotDistr->graph(0)->data()->clear();
         plotDistr->graph(0)->setName(paramnames[index]);
@@ -694,7 +694,7 @@ void EventGeneratorTab::replot(const QVector<double> &x1, const QVector<double> 
 {
         double tmin = 1.e5, tmax = 0.;
         double tl = 0., tr = rightlimit;
-				//double tl = 0., tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+        //double tl = 0., tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
 
         plotDistr->graph(0)->data()->clear();
         plotDistr->graph(0)->setName(paramnames[index]);
@@ -752,11 +752,11 @@ void EventGeneratorTab::replot2D(const QVector<double> &xv, const QVector<double
     plot2D->xAxis->setRange(-3., 3.);
     //if (spectra->fDistributionType==1) plot2D->xAxis->setRange(-3. - spectra->fEtaMax, 3. + spectra->fEtaMax);
     plot2D->yAxis->setRange( 0., rightlimit);
-		
+    
     int id = getCurrentRow();
     if (id<0) id = 0;
 
-		plot2D->yAxis->setRange(0., TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.);
+    plot2D->yAxis->setRange(0., TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.);
 
 
     QCPColorMapData *data = new QCPColorMapData(spectra->fParticles[id].d2ndptdy.szx,
@@ -785,7 +785,7 @@ void EventGeneratorTab::replot2D(const QVector<double> &xv, const QVector<double
 
 void EventGeneratorTab::calculate() {
     if (!fRunning) {
-			generateEvents(getConfig());
+      generateEvents(getConfig());
     }
     else {
         fStop = 1;
@@ -862,17 +862,17 @@ void EventGeneratorTab::updateProgress() {
 
 
     if (index>=0 && index<3 && id<spectra->fParticles.size()) {
-			double tr = 2.;
-			if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-				tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
-			//printf("%lf\n", tr);
+      double tr = 2.;
+      if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+        tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+      //printf("%lf\n", tr);
       replot(x1,y1,y1err,x2,y2,index, tr);
     }
 
     if (index==3 && id<spectra->fParticles.size()) {
-			double tr = 2.;
-			if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-				tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+      double tr = 2.;
+      if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+        tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
       replot2D(x1,y1,z1,index, tr);
     }
 
@@ -890,8 +890,8 @@ void EventGeneratorTab::quantityDoubleClick(const QModelIndex & index) {
 }
 
 void EventGeneratorTab::chooseOutputFile() {
-	QString path = QFileDialog::getSaveFileName(this, tr("Choose file to write events"), leFilePath->text());
-	if (path.length()>0) leFilePath->setText(path);
+  QString path = QFileDialog::getSaveFileName(this, tr("Choose file to write events"), leFilePath->text());
+  if (path.length()>0) leFilePath->setText(path);
 }
 
 void EventGeneratorTab::loadAcceptance() {
@@ -910,8 +910,8 @@ void EventGeneratorTab::changePlot() {
             double tl = 0.;
             if (ttype==1) tl = -3.;
             double tr = 2.;
-						if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-							tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+            if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+              tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
             if (ttype==1) tr = 3.;
             //if (ttype==2) tr = 2.;
             spectra->fParticles[id].FillModelDistribution(tl, tr, 100, ttype);
@@ -1009,102 +1009,102 @@ void EventGeneratorTab::resetTPS() {
 
 void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 {
-		ThermalModelBase *modelnew;
+    ThermalModelBase *modelnew;
 
-		if (config.Ensemble == ThermalModelConfig::EnsembleGCE) modelnew = new ThermalModelIdeal(model->TPS());
-		else if (config.Ensemble == ThermalModelConfig::EnsembleCE) {
-			modelnew = new ThermalModelCanonical(model->TPS());
-			ThermalModelParameters params;
-			params.T = 0.100;
+    if (config.Ensemble == ThermalModelConfig::EnsembleGCE) modelnew = new ThermalModelIdeal(model->TPS());
+    else if (config.Ensemble == ThermalModelConfig::EnsembleCE) {
+      modelnew = new ThermalModelCanonical(model->TPS());
+      ThermalModelParameters params;
+      params.T = 0.100;
       params.gammaC = 1.;
-			params.gammaS = 1.;
-			params.gammaq = 1.;
-			params.V = 20.;
-			params.B = config.B;
-			params.Q = config.Q;
-			params.S = config.S;
-			params.C = config.C;
-			modelnew->SetParameters(params);
-		}
-		else if (config.Ensemble == ThermalModelConfig::EnsembleSCE) modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
-		else modelnew = new ThermalModelCanonicalCharm(model->TPS());
+      params.gammaS = 1.;
+      params.gammaq = 1.;
+      params.V = 20.;
+      params.B = config.B;
+      params.Q = config.Q;
+      params.S = config.S;
+      params.C = config.C;
+      modelnew->SetParameters(params);
+    }
+    else if (config.Ensemble == ThermalModelConfig::EnsembleSCE) modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
+    else modelnew = new ThermalModelCanonicalCharm(model->TPS());
 
-		myModel->setSpectra(NULL);
+    myModel->setSpectra(NULL);
 
     configWidget->setModel(modelnew);
 
-		if (model != NULL) delete model;
-		model = modelnew;
+    if (model != NULL) delete model;
+    model = modelnew;
 
     SetThermalModelConfiguration(model, config);
 
 
-		model->SetTemperature(config.T);
-		model->SetBaryonChemicalPotential(config.muB);
-		model->SetElectricChemicalPotential(config.muQ);
-		model->SetStrangenessChemicalPotential(config.muS);
-		model->SetCharmChemicalPotential(config.muC);
-		model->SetGammaq(config.gq);
-		model->SetGammaS(config.gS);
-		model->SetGammaC(config.gC);
-		model->SetVolumeRadius(config.VolumeR);
-		model->SetCanonicalVolumeRadius(config.VolumeRSC);
+    model->SetTemperature(config.T);
+    model->SetBaryonChemicalPotential(config.muB);
+    model->SetElectricChemicalPotential(config.muQ);
+    model->SetStrangenessChemicalPotential(config.muS);
+    model->SetCharmChemicalPotential(config.muC);
+    model->SetGammaq(config.gq);
+    model->SetGammaS(config.gS);
+    model->SetGammaC(config.gC);
+    model->SetVolumeRadius(config.VolumeR);
+    model->SetCanonicalVolumeRadius(config.VolumeRSC);
 
 
-		ThermalModelBase *modelEVVDW;
-		ThermalParticleSystem TPSt = *model->TPS();
-		if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
-			modelEVVDW = new ThermalModelVDW(&TPSt);
+    ThermalModelBase *modelEVVDW;
+    ThermalParticleSystem TPSt = *model->TPS();
+    if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
+      modelEVVDW = new ThermalModelVDW(&TPSt);
     else if (config.InteractionModel == ThermalModelConfig::InteractionEVCrossterms)
       modelEVVDW = new ThermalModelEVCrossterms(&TPSt);
-		else if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
-			modelEVVDW = new ThermalModelEVDiagonal(&TPSt);
-		else
-			modelEVVDW = new ThermalModelIdeal(&TPSt);
+    else if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
+      modelEVVDW = new ThermalModelEVDiagonal(&TPSt);
+    else
+      modelEVVDW = new ThermalModelIdeal(&TPSt);
 
     SetThermalModelInteraction(modelEVVDW, config);
 
 
-		model->CalculateDensitiesGCE();
+    model->CalculateDensitiesGCE();
 
 
 
-		if (radioSR->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
-		else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBetat->value(), 1, spinEtaMax->value(), spinn->value());
+    if (radioSR->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
+    else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBetat->value(), 1, spinEtaMax->value(), spinn->value());
 
-		int id = getCurrentRow();
-		if (id<0) id = 0;
-		if (id<spectra->fParticles.size()) {
-			int ttype = comboDistr->currentIndex();
-			if (ttype >= 0 && ttype <= 2) {
-				double tl = 0.;
-				if (ttype == 1) tl = -3.;
-				double tr = 2.;
-				if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
-					tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
-				if (ttype == 1) tr = 3.;
-				if (ttype == 1 && spectra->fDistributionType == 1) {
-					tl = -3. - spectra->fEtaMax;
-					tr = 3. + spectra->fEtaMax;
-				}
-				//if (ttype==2) tr = 2.;
-				spectra->fParticles[id].FillModelDistribution(tl, tr, 100, ttype);
-			}
-		}
+    int id = getCurrentRow();
+    if (id<0) id = 0;
+    if (id<spectra->fParticles.size()) {
+      int ttype = comboDistr->currentIndex();
+      if (ttype >= 0 && ttype <= 2) {
+        double tl = 0.;
+        if (ttype == 1) tl = -3.;
+        double tr = 2.;
+        if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
+          tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
+        if (ttype == 1) tr = 3.;
+        if (ttype == 1 && spectra->fDistributionType == 1) {
+          tl = -3. - spectra->fEtaMax;
+          tr = 3. + spectra->fEtaMax;
+        }
+        //if (ttype==2) tr = 2.;
+        spectra->fParticles[id].FillModelDistribution(tl, tr, 100, ttype);
+      }
+    }
 
-		replot();
+    replot();
 
-		myModel->setSpectra(spectra);
+    myModel->setSpectra(spectra);
 
     EventGeneratorConfiguration configMC;
     configMC.fModelType = EventGeneratorConfiguration::PointParticle;
 
-		if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
-			configMC.fModelType = EventGeneratorConfiguration::DiagonalEV;
+    if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
+      configMC.fModelType = EventGeneratorConfiguration::DiagonalEV;
     if (config.InteractionModel == ThermalModelConfig::InteractionEVCrossterms)
       configMC.fModelType = EventGeneratorConfiguration::CrosstermsEV;
-		if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
-			configMC.fModelType = EventGeneratorConfiguration::QvdW;
+    if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
+      configMC.fModelType = EventGeneratorConfiguration::QvdW;
 
     configMC.fEnsemble = EventGeneratorConfiguration::GCE;
     if (model->Ensemble() == ThermalModelBase::CE)
@@ -1126,57 +1126,57 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     if (radioSR->isChecked())
       generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
-		else 
+    else 
       generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value());
 
 
-		//if (radioSR->isChecked()) generator = new SphericalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBeta->value(), false, EV, modelEVVDW);
-		//else generator = new CylindricalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value(), false, EV, modelEVVDW);
+    //if (radioSR->isChecked()) generator = new SphericalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBeta->value(), false, EV, modelEVVDW);
+    //else generator = new CylindricalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value(), false, EV, modelEVVDW);
 
-		delete modelEVVDW;
-		
-		std::vector<Acceptance::AcceptanceFunction>& tacc = generator->GetAcceptance();
-		for (int i = 0; i<spectra->fParticles.size(); ++i) {
-			int tind = model->TPS()->PdgToId(spectra->fParticles[i].GetPDGID());
-			if (tacc.size()>tind && tacc[tind].init) spectra->fParticles[i].SetAcceptance(true);
-			else spectra->fParticles[i].SetAcceptance(false);
-		}
-
-
-
-		timer.start();
-
-		fTotalSize = spinEvents->value();
-		fCurrentSize = 0;
-		fStop = 0;
+    delete modelEVVDW;
+    
+    std::vector<Acceptance::AcceptanceFunction>& tacc = generator->GetAcceptance();
+    for (int i = 0; i<spectra->fParticles.size(); ++i) {
+      int tind = model->TPS()->PdgToId(spectra->fParticles[i].GetPDGID());
+      if (tacc.size()>tind && tacc[tind].init) spectra->fParticles[i].SetAcceptance(true);
+      else spectra->fParticles[i].SetAcceptance(false);
+    }
 
 
-		std::string filepath = "";
-		if (checkFile->isChecked())
-			filepath = leFilePath->text().toStdString();
 
-		EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath);
+    timer.start();
 
-		connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
-		connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
+    fTotalSize = spinEvents->value();
+    fCurrentSize = 0;
+    fStop = 0;
 
-		progBar->setFormat("");
 
-		wrk->start();
+    std::string filepath = "";
+    if (checkFile->isChecked())
+      filepath = leFilePath->text().toStdString();
 
-		buttonCalculate->setText(tr("Stop"));
-		fRunning = true;
-		progBar->setVisible(true);
+    EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath);
 
-		calcTimer->start(150);
+    connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+    connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
+
+    progBar->setFormat("");
+
+    wrk->start();
+
+    buttonCalculate->setText(tr("Stop"));
+    fRunning = true;
+    progBar->setVisible(true);
+
+    calcTimer->start(150);
 }
 
 void EventGeneratorTab::changeVolumeRSC(double VRSC)
 {
-	spinVolumeRSC->setValue(VRSC);
+  spinVolumeRSC->setValue(VRSC);
 }
 
 void EventGeneratorTab::changeTkin(double Tch)
 {
-	spinTkin->setValue(Tch);
+  spinTkin->setValue(Tch);
 }

@@ -73,16 +73,16 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
                 if (col==9) return model->Densities()[RowToParticle[row]];
                 if (col==10) return model->Densities()[RowToParticle[row]] * model->Volume();
                 if (col==11) return model->TotalDensities()[RowToParticle[row]] * model->Volume();
-								if (model->IsFluctuationsCalculated()) {
-									if (col == 12) return model->ScaledVariancePrimordial(RowToParticle[row]);
-									if (col == 13) return model->ScaledVarianceTotal(RowToParticle[row]);
-									if (model->Ensemble() == ThermalModelBase::GCE && model->InteractionModel() == ThermalModelBase::Ideal) {
-										if (col == 14) return model->SkewnessPrimordial(RowToParticle[row]);
-										if (col == 15) return model->SkewnessTotal(RowToParticle[row]);
-										if (col == 16) return model->KurtosisPrimordial(RowToParticle[row]);
-										if (col == 17) return model->KurtosisTotal(RowToParticle[row]);
-									}
-								}
+                if (model->IsFluctuationsCalculated()) {
+                  if (col == 12) return model->ScaledVariancePrimordial(RowToParticle[row]);
+                  if (col == 13) return model->ScaledVarianceTotal(RowToParticle[row]);
+                  if (model->Ensemble() == ThermalModelBase::GCE && model->InteractionModel() == ThermalModelBase::Ideal) {
+                    if (col == 14) return model->SkewnessPrimordial(RowToParticle[row]);
+                    if (col == 15) return model->SkewnessTotal(RowToParticle[row]);
+                    if (col == 16) return model->KurtosisPrimordial(RowToParticle[row]);
+                    if (col == 17) return model->KurtosisTotal(RowToParticle[row]);
+                  }
+                }
             }
             break;
         case Qt::FontRole:

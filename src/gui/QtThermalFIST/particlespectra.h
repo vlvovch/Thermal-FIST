@@ -23,11 +23,11 @@ struct stval {
     double sum;
     double sumsqr;
     int nev;
-		double wsum, w2sum;
-		stval() { sum = sumsqr = 0.; nev = 0; wsum = w2sum = 0.; }
+    double wsum, w2sum;
+    stval() { sum = sumsqr = 0.; nev = 0; wsum = w2sum = 0.; }
     //double getAv() const { return sum / nev; }
-		double getAv() const { return sum / wsum; }
-		double getSigma() const { return sqrt((sumsqr / wsum - getAv() * getAv()) / (wsum * wsum / w2sum - 1.)); }
+    double getAv() const { return sum / wsum; }
+    double getSigma() const { return sqrt((sumsqr / wsum - getAv() * getAv()) / (wsum * wsum / w2sum - 1.)); }
     //double getSigma() const { return sqrt((sumsqr - sum*sum/nev)/(nev-1.)/nev); }
     double getSigma2() const { return sqrt(sum) / nev; }
 };
@@ -74,8 +74,8 @@ struct density
             data[i].sum    += weight * tsum[i];
             data[i].sumsqr += weight * tsum[i] * tsum[i];
             data[i].nev++;
-						data[i].wsum  += weight;
-						data[i].w2sum += weight*weight;
+            data[i].wsum  += weight;
+            data[i].w2sum += weight*weight;
             tsum[i] = 0.;
         }
         events++;
@@ -166,8 +166,8 @@ struct density2d
             data[i].sum += weight * tsum[i];
             data[i].sumsqr += weight * tsum[i] * tsum[i];
             data[i].nev++;
-						data[i].wsum += weight;
-						data[i].w2sum += weight*weight;
+            data[i].wsum += weight;
+            data[i].w2sum += weight*weight;
             tsum[i] = 0.;
         }
         events++;

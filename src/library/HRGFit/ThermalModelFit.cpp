@@ -27,6 +27,7 @@
 #endif
 
 #include "HRGBase/ThermalModelBase.h"
+#include "HRGBase/Utility.h"
 
 namespace thermalfist {
 
@@ -784,7 +785,7 @@ namespace thermalfist {
     //m_model->CalculateDensities();
 
     std::vector<std::string> prt(0);
-    std::vector<int> pdgs(0);
+    std::vector<long long> pdgs(0);
     std::vector<int> fl(m_Multiplicities.size(), 0);
     prt.push_back("\\pi^+");   pdgs.push_back(211);
     prt.push_back("\\pi^-");   pdgs.push_back(-211);
@@ -1100,11 +1101,13 @@ namespace thermalfist {
         vector<string> fields = CuteHRGHelper::split(tmp, ';');
         if (fields.size()<4) break;
         int type = atoi(fields[0].c_str());
-        int pdgid1 = atoi(fields[1].c_str()), pdgid2 = 0;
+        //int pdgid1 = atoi(fields[1].c_str()), pdgid2 = 0;
+        long long pdgid1 = stringToLongLong(fields[1]), pdgid2 = 0;
         double value, error, error2;
         int feeddown1 = 1, feeddown2 = 1;
         if (type) {
-          pdgid2 = atoi(fields[2].c_str());
+          //pdgid2 = atoi(fields[2].c_str());
+          pdgid2 = stringToLongLong(fields[2]);
           value = atof(fields[3].c_str());
           if (fields.size() >= 5) error = atof(fields[4].c_str());
           if (fields.size() >= 6) {
@@ -1150,7 +1153,7 @@ namespace thermalfist {
         istringstream iss(elems[0]);
 
         int fitflag;
-        int pdgid1, pdgid2;
+        long long pdgid1, pdgid2;
         int feeddown1, feeddown2;
         double value, error;
       

@@ -8,7 +8,6 @@
 #include "HRGBase/Utility.h"
 
 #include <iostream>
-#include <string>
 #include <sstream>
 
 #include "ThermalFISTConfig.h"
@@ -130,6 +129,16 @@ namespace thermalfist {
 
   bool Disclaimer::DisclaimerPrinted = PrintDisclaimer();
 
+  long long stringToLongLong(const string &str) {
+    long long ret = 0;
+    for (int i = 0; i < str.size(); ++i) {
+      if (str[i] >= '0' && str[i] <= '9') {
+        ret *= 10;
+        ret += static_cast<long long>(str[i] - '0');
+      }
+    }
+    return ret;
+  }
 
   // Time keeping
   // Windows

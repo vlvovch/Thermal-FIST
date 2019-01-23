@@ -71,9 +71,9 @@ namespace thermalfist {
    * \brief Structure containing information about a single decay channel of a particle.
    */
   struct ParticleDecayChannel {
-    double mBratio;                /**< Branching ratio */
-    std::vector<int> mDaughters;   /**< PDGID numbers of daughter particles */
-    double mM0;                    /**< Sum of masses of decay products */
+    double mBratio;                      /**< Branching ratio */
+    std::vector<long long> mDaughters;   /**< PDGID numbers of daughter particles */
+    double mM0;                          /**< Sum of masses of decay products */
 
     double mPole;
     double mL;                      /**< Orbital angular momentum for decay, used in the eBW scheme */
@@ -89,7 +89,7 @@ namespace thermalfist {
      * \param bratio Branching ratio of the decay. Between 0 and 1.
      * \param daughters A vector of PDG ID numbers of all daughter products.
      */
-    ParticleDecayChannel(double bratio = 0., const std::vector<int> &daughters = std::vector<int>(0)) :
+    ParticleDecayChannel(double bratio = 0., const std::vector<long long> &daughters = std::vector<long long>(0)) :
       mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),
       mBratioVsM(std::vector<double>(0)), mBratioAverage(bratio), mChannelName("decay1") {
     }

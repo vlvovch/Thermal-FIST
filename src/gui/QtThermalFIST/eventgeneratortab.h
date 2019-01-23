@@ -54,10 +54,10 @@ class EventGeneratorWorker : public QThread
     int *eventsProcessed;
     int *stop;
     double *nE;
-		bool performDecays;
+    bool performDecays;
 
 
-		std::ofstream fout;
+    std::ofstream fout;
 
     void run() Q_DECL_OVERRIDE;
 
@@ -70,16 +70,16 @@ public:
            int *evproc = NULL,
            int *stopo = NULL,
            double *nEp = NULL,
-					 bool pDecays = false,
-				   std::string fileout = "",
+           bool pDecays = false,
+           std::string fileout = "",
            QObject * parent = 0) :
         QThread(parent), generator(gen), spectra(spec), mutex(mut),
             events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)
     {
         wsum = w2sum = 0.;
-				fout.clear();
-				if (fileout != "")
-					fout.open(fileout.c_str());
+        fout.clear();
+        if (fileout != "")
+          fout.open(fileout.c_str());
     }
 signals:
     void calculated();
@@ -102,15 +102,15 @@ class EventGeneratorTab : public QWidget
     std::vector<QString> paramnames, paramnamesx;
 
 
-		QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
-		QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
-		QDoubleSpinBox *spinVolumeRSC;
+    QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
+    QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
+    QDoubleSpinBox *spinVolumeRSC;
     QLabel *labelB, *labelQ, *labelS, *labelC;
-		QSpinBox *spinB, *spinS, *spinQ, *spinC;
+    QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
     QRadioButton *radioSR, *radioSSH;
 
-		QDoubleSpinBox *spinTkin;
+    QDoubleSpinBox *spinTkin;
     QDoubleSpinBox *spinBeta;
     QDoubleSpinBox *spinBetat, *spinEtaMax, *spinn;
 
@@ -149,9 +149,9 @@ class EventGeneratorTab : public QWidget
     QCheckBox *checkAcceptance;
     QLineEdit *leAcceptancePath;
 
-		QCheckBox *checkFile;
-		QLineEdit *leFilePath;
-		QPushButton *buttonChooseFile;
+    QCheckBox *checkFile;
+    QLineEdit *leFilePath;
+    QPushButton *buttonChooseFile;
 
     ModelConfigWidget *configWidget;
 public:
@@ -164,8 +164,8 @@ public slots:
     void changedRow();
     void calculate();
     void replot();
-		void replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
-								const QVector<double> &x2, const QVector<double> &y2, int index, double rightlimit = 2.);
+    void replot(const QVector<double> &x1, const QVector<double> &y1, const QVector<double> &y1err,
+                const QVector<double> &x2, const QVector<double> &y2, int index, double rightlimit = 2.);
     void replot2D(const QVector<double> &xv, const QVector<double> &yv, const QVector<double> &zv, int index, double rightlimit = 2.);
     void quantityDoubleClick(const QModelIndex &);
     void setModel(thermalfist::ThermalModelBase *model);
@@ -175,11 +175,11 @@ public slots:
     void modelChanged();
     void resetTPS();
     void loadAcceptance();
-		void chooseOutputFile();
-		void changeVolumeRSC(double);
-		void changeTkin(double);
+    void chooseOutputFile();
+    void changeVolumeRSC(double);
+    void changeTkin(double);
 
-		void generateEvents(const ThermalModelConfig & config);
+    void generateEvents(const ThermalModelConfig & config);
 };
 
 #endif // FITTOEXPERIMENTTAB_H

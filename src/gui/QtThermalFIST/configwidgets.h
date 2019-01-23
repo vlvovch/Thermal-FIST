@@ -59,7 +59,7 @@ public:
 
   ModelConfigWidget(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL, bool eventGeneratorMode = false);
   ~ModelConfigWidget();
-	ThermalModelConfig updatedConfig();
+  ThermalModelConfig updatedConfig();
 private slots:
   void conservationLawsDialog();
   void interactionsDialog();

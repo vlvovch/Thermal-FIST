@@ -37,44 +37,44 @@ class SpectralFunctionDialog : public QDialog
     //int fCurrentSize;
     //int fTotalSize;
 
-		std::vector< std::vector<double> > vecParams;
-		std::vector< std::vector<double> > vecAvalues;
-		std::vector< double > vecAleft, vecAright;
-		//std::vector< int > vecPreviousSize;
-		std::vector< int > vecCurrentSize;
-		std::vector< int > vecTotalSize;
+    std::vector< std::vector<double> > vecParams;
+    std::vector< std::vector<double> > vecAvalues;
+    std::vector< double > vecAleft, vecAright;
+    //std::vector< int > vecPreviousSize;
+    std::vector< int > vecCurrentSize;
+    std::vector< int > vecTotalSize;
 
     bool fRunning;
     int fStop;
 
     thermalfist::ThermalParticle *particle;
-		
-		double T;
-		double Mu;
-		int WidthScheme; // 0 - BWTwoGamma, 1 - eBW
+    
+    double T;
+    double Mu;
+    int WidthScheme; // 0 - BWTwoGamma, 1 - eBW
 
 
-		QLabel *labelAmin, *labelAmax, *labelAiter;
+    QLabel *labelAmin, *labelAmax, *labelAiter;
 
-		QComboBox *comboView;
-		QComboBox *comboChannel;
-		QCustomPlot *plot;
-		
+    QComboBox *comboView;
+    QComboBox *comboChannel;
+    QCustomPlot *plot;
+    
     //QCPColorMap *colormap;
     //QCPColorScale *colorScale;
 
-		QComboBox *comboScheme;
+    QComboBox *comboScheme;
 
-		QDoubleSpinBox *spinT;
-		QDoubleSpinBox *spinMu;
+    QDoubleSpinBox *spinT;
+    QDoubleSpinBox *spinMu;
 
-		double xleft, xright;
-		double norm, normTH;
-		std::vector<double> BWm;
-		std::vector<double> BWval;
-		std::vector<double> BWTHval;
-		//std::vector<double> eBWm;
-		//std::vector<double> eBWval;
+    double xleft, xright;
+    double norm, normTH;
+    std::vector<double> BWm;
+    std::vector<double> BWval;
+    std::vector<double> BWTHval;
+    //std::vector<double> eBWm;
+    //std::vector<double> eBWval;
 
 public:
     explicit  SpectralFunctionDialog(QWidget *parent, thermalfist::ThermalParticle *part, double Temp, double Chem = 0., int scheme = 0);
@@ -82,10 +82,10 @@ public:
 signals:
 public slots:
     void calculate();
-	  void replot();
-		void replotSpectralFunctions();
-		void replotBranchingRatios();
-		void replotPartialWidths();
+    void replot();
+    void replotSpectralFunctions();
+    void replotBranchingRatios();
+    void replotPartialWidths();
 };
 
 #endif // SPECTRALFUNCTIONDIALOG_H

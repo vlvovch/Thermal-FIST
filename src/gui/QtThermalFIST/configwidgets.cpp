@@ -215,7 +215,7 @@ ModelConfigWidget::~ModelConfigWidget()
 
 ThermalModelConfig ModelConfigWidget::updatedConfig()
 {
-	ThermalModelConfig ret = currentConfig;
+  ThermalModelConfig ret = currentConfig;
   
   ret.ModelType = ThermalModelConfig::Ideal;
   if (comboEnsemble->currentText() == tr("Grand-canonical")) {

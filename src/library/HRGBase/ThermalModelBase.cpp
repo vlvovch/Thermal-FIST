@@ -550,7 +550,7 @@ namespace thermalfist {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
-        sprintf(cc, "**WARNING** Density for particle %d (%s) is NaN!\n\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+        sprintf(cc, "**WARNING** Density for particle %lld (%s) is NaN!\n\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
         printf("%s", cc);
 
         m_ValidityLog.append(cc);
@@ -650,7 +650,7 @@ namespace thermalfist {
   }
 
 
-  double ThermalModelBase::GetDensity(int PDGID, const std::vector<double> *dens)
+  double ThermalModelBase::GetDensity(long long PDGID, const std::vector<double> *dens)
   {
     if (m_TPS->PdgToId(PDGID) != -1)
       return dens->operator[](m_TPS->PdgToId(PDGID));
@@ -660,7 +660,7 @@ namespace thermalfist {
 
     // Id Pdg code has a trailing zero, try to construct a particle + anti-particle yield
     if (PDGID % 10 == 0) {
-      int tpdgid = PDGID / 10;
+      long long tpdgid = PDGID / 10;
       if (m_TPS->PdgToId(tpdgid) != -1 && m_TPS->PdgToId(-tpdgid) != -1)
       return dens->operator[](m_TPS->PdgToId(tpdgid)) + dens->operator[](m_TPS->PdgToId(-tpdgid));
     }
@@ -669,12 +669,12 @@ namespace thermalfist {
     if (PDGID == 22122112 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
       return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
-    printf("**WARNING** %s: Density with PDG ID %d not found!\n", m_TAG.c_str(), PDGID);
+    printf("**WARNING** %s: Density with PDG ID %lld not found!\n", m_TAG.c_str(), PDGID);
 
     return 0.;
   }
 
-  double ThermalModelBase::GetDensity(int PDGID, Feeddown::Type feeddown)
+  double ThermalModelBase::GetDensity(long long PDGID, Feeddown::Type feeddown)
   {
     std::vector<double> *dens;
     if (feeddown == Feeddown::Primordial) 

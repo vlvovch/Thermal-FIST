@@ -31,7 +31,7 @@ class ListEditorTab : public QWidget
   QPushButton *buttonRemovePart;
   QPushButton *buttonResetAll;
 
-  QSpinBox       *spinPDGID;
+  QLineEdit      *lePDGID;
   QLineEdit      *leName;
   QDoubleSpinBox *spinMass;
   QDoubleSpinBox *spinDegeneracy;
@@ -64,7 +64,6 @@ private slots:
   void editDecays();
   void PDGEdited();
   void SpinEdited();
-  //void RadiusEdited();
   void NameEdited();
   void MassEdited();
   void ChargeEdited();

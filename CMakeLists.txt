@@ -8,7 +8,7 @@ project (ThermalFIST)
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 1)
 set (ThermalFIST_VERSION_MINOR 0)
-set (ThermalFIST_VERSION_DEVEL 1)
+set (ThermalFIST_VERSION_DEVEL 2)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -71,6 +71,15 @@ else(result)
     set(STANDALONE_MINUIT 1)
   endif()
 endif(result)
+
+# Check whether the size of int is at least 32-bit
+INCLUDE (CheckTypeSize)
+check_type_size("int" SIZEOFINT BUILTIN_TYPES_ONLY)
+if (${SIZEOFINT} LESS "4")
+message(FATAL_ERROR "Size of int of at least 4 bytes is required. Your compiler has " ${SIZEOFINT} " bytes. Please get \
+a different compiler.")
+endif()
+message(STATUS "Size of int is " ${SIZEOFINT} " bytes")
 
 add_definitions(-DUSE_MINUIT)
 

@@ -76,11 +76,14 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   QHBoxLayout *edBaseLay = new QHBoxLayout();
   edBaseLay->setAlignment(Qt::AlignLeft);
   QLabel *labelPDGID = new QLabel(tr("PDG ID:"));
-  spinPDGID = new QSpinBox();
-  //spinPDGID->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  spinPDGID->setMinimum(0);
-  spinPDGID->setMaximum(2000000000);
-  connect(spinPDGID, SIGNAL(editingFinished()), this, SLOT(PDGEdited()));
+
+  lePDGID = new QLineEdit();
+  QRegExp rx("-?\\d{1,15}");
+  QValidator *validator = new QRegExpValidator(rx, this);
+  lePDGID->setValidator(validator);
+  lePDGID->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  connect(lePDGID, SIGNAL(editingFinished()), this, SLOT(PDGEdited()));
+
   QLabel *labelName = new QLabel(tr("Name:"));
   leName = new QLineEdit();
   leName->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -88,7 +91,8 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   connect(leName, SIGNAL(editingFinished()), this, SLOT(NameEdited()));
   
   edBaseLay->addWidget(labelPDGID);
-  edBaseLay->addWidget(spinPDGID);
+  //edBaseLay->addWidget(spinPDGID);
+  edBaseLay->addWidget(lePDGID, 0);
   edBaseLay->addSpacing(15);
   edBaseLay->addWidget(labelName);
   edBaseLay->addWidget(leName);
@@ -367,7 +371,8 @@ void ListEditorTab::changedRow()
     int row = selectedList.at(i).row();
     ThermalParticleSystem *TPS = myModel->GetTPS();
     int index = myModel->GetRowToParticle()[row];
-    spinPDGID->setValue(TPS->Particles()[index].PdgId());
+    //spinPDGID->setValue(TPS->Particles()[index].PdgId());
+    lePDGID->setText(QString::number(TPS->Particles()[index].PdgId()));
     leName->setText(TPS->Particles()[index].Name().c_str());
     spinMass->setValue(TPS->Particles()[index].Mass());
     spinDegeneracy->setValue(TPS->Particles()[index].Degeneracy());
@@ -399,23 +404,20 @@ void ListEditorTab::PDGEdited()
 {
   int row = getCurrentRow();
   if (row >= 0) {
-    if (myModel->GetTPS()->PdgToId(spinPDGID->value()) == -1) {
+    long long pdgedit = lePDGID->text().toLongLong();
+    if (myModel->GetTPS()->PdgToId(pdgedit) == -1) {
       int index = myModel->GetRowToParticle()[row];
 
       ThermalParticle &part = myModel->GetTPS()->Particle(index);
 
       int oldPDGID = part.PdgId();
-      //myModel->GetTPS()->PdgToId().erase(oldPDGID);
-      part.SetPdgId(spinPDGID->value());
-      //myModel->GetTPS()->PdgToId()[spinPDGID->value()] = index;
-
-      //myModel->GetTPS()->IDtoPDG[index] = spinPDGID->value();
+      part.SetPdgId(pdgedit);
 
       if (!part.IsNeutral()) {
         int indexa = myModel->GetTPS()->PdgToId(-oldPDGID);
         if (indexa != -1) {
           ThermalParticle &partanti = myModel->GetTPS()->Particle(indexa);
-          partanti.SetPdgId(-spinPDGID->value());
+          partanti.SetPdgId(-pdgedit);
         }
       }
 
@@ -435,16 +437,6 @@ void ListEditorTab::SpinEdited()
     myModel->updateParticle(row);
   }
 }
-
-/*void ListEditorTab::RadiusEdited()
-{
-  int row = getCurrentRow();
-  if (row >= 0) {
-    int index = myModel->GetRowToParticle()[row];
-    myModel->GetTPS()->Particles()[index].fRadius = spinRadius->value();
-    myModel->updateParticle(row);
-  }
-}*/
 
 void ListEditorTab::NameEdited()
 {
@@ -542,10 +534,7 @@ void ListEditorTab::ChargeEdited()
           part.DecayThresholdMass(),
           -part.Charm(),
           part.AbsoluteCharm()));
-        //myModel->GetTPS()->IDtoPDG.push_back(-pdgid);
-        //myModel->GetTPS()->PdgToId()[-pdgid] = myModel->GetTPS()->IDtoPDG.size() - 1;
 
-        //myModel->GetTPS()->Particles()[indexa].Name() = tname;
         myModel->GetTPS()->FillPdgMap();
       }
     }

@@ -27,7 +27,7 @@ namespace thermalfist {
    */
   struct ExperimentMultiplicity {
     /// PDG code of the particle yield
-    int fPDGID;
+    long long fPDGID;
 
     /// Experimental value
     double fValue;
@@ -46,7 +46,7 @@ namespace thermalfist {
      * \param error \copydoc fError
      * \param fd    \copydoc fFeedDown
      */
-    ExperimentMultiplicity(int PDGID = -211, double value = 300., double error = 20., Feeddown::Type fd = Feeddown::StabilityFlag) :
+    ExperimentMultiplicity(long long PDGID = -211, double value = 300., double error = 20., Feeddown::Type fd = Feeddown::StabilityFlag) :
       fPDGID(PDGID), fValue(value), fError(error), fFeedDown(fd) { }
 
     /// Adds a relative systematic error as a fraction of the total yield
@@ -62,10 +62,10 @@ namespace thermalfist {
    */
   struct ExperimentRatio {
     /// PDG code of the particle yield in the numerator
-    int fPDGID1;
+    long long fPDGID1;
 
     /// PDG code of the particle yield in the denominator
-    int fPDGID2;
+    long long fPDGID2;
 
     /// Experimental value of the yield ratio
     double fValue;
@@ -89,7 +89,7 @@ namespace thermalfist {
      * \param fd1    \copydoc fFeedDown1
      * \param fd2    \copydoc fFeedDown2
      */
-    ExperimentRatio(int PDGID1 = 211, int PDGID2 = -211, double value = 1., double error = 0.1, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
+    ExperimentRatio(long long PDGID1 = 211, long long PDGID2 = -211, double value = 1., double error = 0.1, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
       fPDGID1(PDGID1), fPDGID2(PDGID2), fValue(value), fError(error), fFeedDown1(fd1), fFeedDown2(fd2) { }
     
     /**
@@ -107,7 +107,7 @@ namespace thermalfist {
      * \param fd1    \copydoc fFeedDown1
      * \param fd2    \copydoc fFeedDown2
      */
-    ExperimentRatio(int PDGID1, int PDGID2, double value1, double error1, double value2, double error2, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
+    ExperimentRatio(long long PDGID1, long long PDGID2, double value1, double error1, double value2, double error2, Feeddown::Type fd1 = Feeddown::StabilityFlag, Feeddown::Type fd2 = Feeddown::StabilityFlag) :
       fPDGID1(PDGID1), fPDGID2(PDGID2), fFeedDown1(fd1), fFeedDown2(fd2) {
       fValue = value1 / value2;
       fError = sqrt(error1*error1 / value2 / value2 + value1 * value1 / value2 / value2 / value2 / value2 * error2 * error2);

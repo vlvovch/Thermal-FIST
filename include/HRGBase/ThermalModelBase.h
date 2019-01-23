@@ -809,7 +809,7 @@ namespace thermalfist {
      * 
      * \deprecated
      */
-    double GetDensity(int PDGID, int feeddown) { return GetDensity(PDGID, static_cast<Feeddown::Type>(feeddown)); }
+    double GetDensity(long long PDGID, int feeddown) { return GetDensity(PDGID, static_cast<Feeddown::Type>(feeddown)); }
     
     /**
      * \brief Particle number density of species
@@ -819,7 +819,7 @@ namespace thermalfist {
      * \param feeddown Which decay feeddown contributions to take into account
      * \return Particle number density
      */
-    double GetDensity(int PDGID, Feeddown::Type feeddown);
+    double GetDensity(long long PDGID, Feeddown::Type feeddown);
 
     std::vector<double> GetIdealGasDensities() const;
 
@@ -1092,7 +1092,7 @@ namespace thermalfist {
   private:
     void ResetChemicalPotentials();
 
-    double GetDensity(int PDGID, const std::vector<double> *dens);
+    double GetDensity(long long PDGID, const std::vector<double> *dens);
 
     class BroydenEquationsChem : public BroydenEquations
     {

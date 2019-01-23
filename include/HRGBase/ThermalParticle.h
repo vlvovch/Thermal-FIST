@@ -107,7 +107,7 @@ namespace thermalfist {
      * \param AbsC      Particle's charm quark content
      * \param Quark     Particle's light quark content
      */
-    ThermalParticle(bool Stable = true, std::string Name = "hadron", int PDGID = 0, double Deg = 1., int Stat = 0, double Mass = 0.,
+    ThermalParticle(bool Stable = true, std::string Name = "hadron", long long PDGID = 0, double Deg = 1., int Stat = 0, double Mass = 0.,
       int Strange = 0, int Baryon = 0, int Charge = 0, double AbsS = 0., double Width = 0., double Threshold = 0., int Charm = 0, double AbsC = 0., int Quark = 0);
     ~ThermalParticle(void);
 
@@ -329,10 +329,10 @@ namespace thermalfist {
     void SetName(const std::string &name) { m_Name = name; }
 
     /// Particle's Particle Data Group (PDG) ID number
-    int  PdgId() const { return m_PDGID; }
+    long long  PdgId() const { return m_PDGID; }
 
     /// Set particle's particle's Particle Data Group (PDG) ID number
-    void SetPdgId(int PdgId) { m_PDGID = PdgId; }
+    void SetPdgId(long long PdgId) { m_PDGID = PdgId; }
 
     /// Particle's internal degeneracy factor
     double Degeneracy() const { return m_Degeneracy; }
@@ -662,7 +662,7 @@ namespace thermalfist {
 
     bool m_AntiParticle;          /**< Whether particle was created as an antiparticle to another one. */
     std::string m_Name;           /**< Particle name. */
-    int m_PDGID;                  /**< PDG (HEP) ID of a particle. */
+    long long m_PDGID;            /**< PDG (HEP) ID of a particle. */
     double m_Degeneracy;          /**< (Spin) Degeneracy factor. */
     int m_Statistics;             /**< Statistics used (Bolzmann or Quantum). */
     int m_StatisticsOrig;         /**< Particle's original Fermi/Bose statistics. */

@@ -391,7 +391,7 @@ namespace thermalfist {
 
           // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
           if (tret.size() > 1500) {
-            printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
+            printf("**WARNING** %s (%lld) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
               m_Particles[ind].Name().c_str(),
               m_Particles[ind].PdgId());
             CuteHRGHelper::cutDecayDistributionsVector(tret);
@@ -407,7 +407,7 @@ namespace thermalfist {
 
     // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
     if (ret.size() > 1500) {
-      printf("**WARNING** %s (%d) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
+      printf("**WARNING** %s (%lld) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
         m_Particles[ind].Name().c_str(),
         m_Particles[ind].PdgId());
       CuteHRGHelper::cutDecayDistributionsVector(ret);
@@ -539,12 +539,14 @@ namespace thermalfist {
       while (1) {
         vector<string> fields = CuteHRGHelper::split(tmp, ';');
         if (fields.size() < 14) break;
-        int stable, pdgid, spin, stat, str, bary, chg, charm;
+        int stable, spin, stat, str, bary, chg, charm;
+        long long pdgid;
         double mass, width, threshold, abss, absc, radius = 0.5;
         string name, decayname = "";
         stable = atoi(fields[0].c_str());
         name = fields[1];
-        pdgid = atoi(fields[2].c_str());
+        //pdgid = atoi(fields[2].c_str());
+        pdgid = stringToLongLong(fields[2]);
         spin = atoi(fields[3].c_str());
         stat = atoi(fields[4].c_str());
         mass = atof(fields[5].c_str());
@@ -611,7 +613,8 @@ namespace thermalfist {
 
         istringstream iss(elems[0]);
 
-        int stable, pdgid, stat, str, bary, chg, charm;
+        int stable, stat, str, bary, chg, charm;
+        long long pdgid;
         double mass, degeneracy, width, threshold, abss, absc;
         string name;
 
@@ -793,7 +796,7 @@ namespace thermalfist {
   void ThermalParticleSystem::ReadDecays_NewFormat(std::ifstream & fin)
   {
     vector< ThermalParticle::ParticleDecaysVector > decays(0);
-    map<int, int> decaymap;
+    map<long long, int> decaymap;
     decaymap.clear();
 
     
@@ -807,7 +810,8 @@ namespace thermalfist {
         if (elems.size() < 1 || elems[0].size() == 0)
           continue;
 
-        int tpdgid, tdecaysnumber = 0;
+        int tdecaysnumber = 0;
+        long long tpdgid = 0;
         ThermalParticle::ParticleDecaysVector tdecays(0);
 
         istringstream iss(elems[0]);
@@ -843,7 +847,7 @@ namespace thermalfist {
             ParticleDecayChannel tdecay;
             istringstream issdec(elems[0]);
             if (!(issdec >> tdecay.mBratio)) continue;
-            int tmpid;
+            long long tmpid;
             while (issdec >> tmpid) {
               tdecay.mDaughters.push_back(tmpid);
             }
@@ -922,8 +926,8 @@ namespace thermalfist {
   void ThermalParticleSystem::ReadDecays_OldFormat(std::ifstream & fin)
   {
     vector< ThermalParticle::ParticleDecaysVector > decays(0);
-    vector<int> pdgids(0);
-    map<int, int> decaymap;
+    vector<long long> pdgids(0);
+    map<long long, int> decaymap;
     decaymap.clear();
 
     if (fin.is_open()) {
@@ -932,7 +936,8 @@ namespace thermalfist {
       decays.reserve(decaypartnumber);
 
       for (unsigned int i = 0; i < decaypartnumber; ++i) {
-        int pdgid, decaysnumber, tmpid, daughters;
+        int decaysnumber, daughters;
+        long long pdgid, tmpid;
         double bratio;
         fin >> pdgid >> decaysnumber;
         decaymap[pdgid] = i;
@@ -960,12 +965,12 @@ namespace thermalfist {
 
   }
 
-  std::string ThermalParticleSystem::GetNameFromPDG(int pdgid) {
+  std::string ThermalParticleSystem::GetNameFromPDG(long long pdgid) {
     if (m_PDGtoID.count(pdgid) != 0)
       return m_Particles[m_PDGtoID[pdgid]].Name();
     if (pdgid == 1) return string("Npart");
     if (pdgid % 10 == 0) {
-      int tpdgid = pdgid / 10;
+      long long tpdgid = pdgid / 10;
       if (PdgToId(tpdgid) != -1 && PdgToId(-tpdgid) != -1)
         return m_Particles[PdgToId(tpdgid)].Name() + "+" + m_Particles[PdgToId(-tpdgid)].Name();
     }
@@ -1034,10 +1039,10 @@ namespace thermalfist {
     return m_Particles[id];
   }
 
-  ThermalParticle & ThermalParticleSystem::ParticleByPDG(int pdgid)
+  ThermalParticle & ThermalParticleSystem::ParticleByPDG(long long pdgid)
   {
     if (m_PDGtoID.count(pdgid) == 0) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(int pdgid): pdgid %d is unknown\n", pdgid);
+      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(int pdgid): pdgid %lld is unknown\n", pdgid);
       exit(1);
     }
     return m_Particles[m_PDGtoID[pdgid]];
@@ -1094,12 +1099,12 @@ namespace thermalfist {
     int goalS = part.Strangeness();
     int goalC = part.Charm();
 
-    std::map<int, int> tPDGtoID = m_PDGtoID;
+    std::map<long long, int> tPDGtoID = m_PDGtoID;
 
     for (int i = 0; i < part.Decays().size(); ++i) {
       int decB = 0, decQ = 0, decS = 0, decC = 0;
       for (int j = 0; j < part.Decays()[i].mDaughters.size(); ++j) {
-        int tpdg = part.Decays()[i].mDaughters[j];
+        long long tpdg = part.Decays()[i].mDaughters[j];
         if (tPDGtoID.count(tpdg) != 0) {
           int tid = tPDGtoID[tpdg];
           decB += Particles()[tid].BaryonCharge();
@@ -1135,7 +1140,7 @@ namespace thermalfist {
   ParticleDecayType::DecayType ThermalParticleSystem::DecayTypeByParticleType(const ThermalParticle &part)
   {
     // Check if it's a known stable (wrt to any time scale of relevance) particle
-    set<int> stablePDG;
+    set<long long> stablePDG;
     stablePDG.insert(2212); stablePDG.insert(-2212); // proton
     stablePDG.insert(2112); stablePDG.insert(-2112); // neutron
     stablePDG.insert(1000010020); stablePDG.insert(-1000010020); // deuteron
@@ -1148,7 +1153,7 @@ namespace thermalfist {
     }
     
     // Check if it's a known weakly decaying particle
-    set<int> weakPDG;
+    set<long long> weakPDG;
     weakPDG.insert(310); // K0S
     weakPDG.insert(130); // K0L
     weakPDG.insert(211); weakPDG.insert(-211);    // pi+-
@@ -1173,7 +1178,7 @@ namespace thermalfist {
     }
 
     // Check if it's a known electromagnetically decaying particle
-    set<int> emPDG;
+    set<long long> emPDG;
     emPDG.insert(111); // pi0
     emPDG.insert(221); // eta
     emPDG.insert(331); // eta'

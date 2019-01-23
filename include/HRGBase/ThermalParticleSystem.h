@@ -290,7 +290,7 @@ namespace thermalfist {
      * \param pdgid The requested PDG ID.
      * \return std::string Particle name.
      */
-    std::string GetNameFromPDG(int pdgid);
+    std::string GetNameFromPDG(long long pdgid);
 
     /// Whether the particle list contains
     /// particles with a non-zero baryon charge.
@@ -340,7 +340,7 @@ namespace thermalfist {
      * \param pdgid PDG ID of a particle specie.
      * \return ThermalParticle& ThermalParticle object reference.
      */
-    ThermalParticle& ParticleByPDG(int pdgid);
+    ThermalParticle& ParticleByPDG(long long pdgid);
 
     /**
      * \brief Transforms PDG ID to a 0-based particle id number.
@@ -350,7 +350,7 @@ namespace thermalfist {
      * \param pdgid PDG ID.
      * \return int  0-based particle id number.
      */
-    int    PdgToId(int pdgid)    /*const*/ { return (m_PDGtoID.count(pdgid) > 0) ? m_PDGtoID[pdgid] : -1; }
+    int  PdgToId(long long pdgid)    /*const*/ { return (m_PDGtoID.count(pdgid) > 0) ? m_PDGtoID[pdgid] : -1; }
     
     /**
      * \brief Transforms 0-based particle id number to a PDG ID.
@@ -360,7 +360,7 @@ namespace thermalfist {
      * \param id   0-based particle id number.
      * \return int PDG ID.
      */
-    int    IdToPdg(int id)      const { return (id >= 0 && id < m_Particles.size()) ? m_Particles[id].PdgId() : 0; }
+    long long IdToPdg(int id)      const { return (id >= 0 && id < m_Particles.size()) ? m_Particles[id].PdgId() : 0; }
 
     /**
      * \brief Adds a new particle specie to the list.
@@ -434,7 +434,7 @@ namespace thermalfist {
 
   private:
     std::vector<ThermalParticle>    m_Particles;
-    std::map<int, int>              m_PDGtoID;
+    std::map<long long, int>              m_PDGtoID;
     int m_NumBaryons;
     int m_NumCharged;
     int m_NumStrange;
