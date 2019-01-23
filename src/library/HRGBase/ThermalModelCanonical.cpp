@@ -362,8 +362,6 @@ Obtained: %lf\n\
       if (!m_Banalyt || m_QNvec[i].B == 0)
         m_MultExp += Nsx[i];
 
-    double dphi = xMath::Pi() / nmax;
-
     double dphiB = xMath::Pi() / nmaxB;
     int maxB = 2 * nmaxB;
     if (m_BMAX == 0 || m_Banalyt)
@@ -514,8 +512,8 @@ Obtained: %lf\n\
               }
             }
 
-            int cind = iB * maxS * maxQ * maxC + iS * maxQ * maxC + iQ * maxC + iC;
-            int tot = maxB * maxS * maxQ * maxC;
+            //int cind = iB * maxS * maxQ * maxC + iS * maxQ * maxC + iQ * maxC + iC;
+            //int tot = maxB * maxS * maxQ * maxC;
           }
         }
       }
@@ -828,7 +826,10 @@ Obtained: %lf\n\
 
     m_modelgce->SolveChemicalPotentials(m_Parameters.B, m_Parameters.Q, m_Parameters.S, m_Parameters.C,
       m_Parameters.muB, m_Parameters.muQ, m_Parameters.muS, m_Parameters.muC,
-      m_BCE, m_QCE, m_SCE, m_CCE);
+      static_cast<bool>(m_BCE), 
+      static_cast<bool>(m_QCE), 
+      static_cast<bool>(m_SCE), 
+      static_cast<bool>(m_CCE));
 
     m_Parameters.muB = m_modelgce->Parameters().muB;
     m_Parameters.muQ = m_modelgce->Parameters().muQ;

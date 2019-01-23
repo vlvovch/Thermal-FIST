@@ -572,7 +572,7 @@ namespace thermalfist {
         if (str != 0)   m_NumStrange++;
         if (charm != 0) m_NumCharmed++;
 
-        m_Particles.push_back(ThermalParticle((bool)stable, name, pdgid, spin, stat, mass, str, bary, chg, abss, width, threshold, charm, absc, radius));
+        m_Particles.push_back(ThermalParticle(static_cast<bool>(stable), name, pdgid, static_cast<double>(spin), stat, mass, str, bary, chg, abss, width, threshold, charm, absc));
         m_NumberOfParticles++;
 
         if (GenerateAntiParticles && !(bary == 0 && chg == 0 && str == 0 && charm == 0)) {
@@ -588,7 +588,7 @@ namespace thermalfist {
             name[name.size() - 1] = '+';
           else
             name = "anti-" + name;
-          m_Particles.push_back(ThermalParticle((bool)stable, name, -pdgid, spin, stat, mass, -str, -bary, -chg, abss, width, threshold, -charm, absc, radius));
+          m_Particles.push_back(ThermalParticle(static_cast<bool>(stable), name, -pdgid, static_cast<double>(spin), stat, mass, -str, -bary, -chg, abss, width, threshold, -charm, absc));
           m_Particles[m_Particles.size() - 1].SetAntiParticle(true);
         }
 
@@ -817,21 +817,23 @@ namespace thermalfist {
         istringstream iss(elems[0]);
         if (!(iss >> tpdgid)) continue;
 
-        bool fl = false;
-        while (!fl) {
-          if (fin.eof()) break;
-          fin.getline(cc, 500);
-          tmp = string(cc);
-          elems = CuteHRGHelper::split(tmp, '#');
-          if (elems.size() < 1 || elems[0].size() == 0)
-            continue;
+        {
+          bool fl = false;
+          while (!fl) {
+            if (fin.eof()) break;
+            fin.getline(cc, 500);
+            tmp = string(cc);
+            elems = CuteHRGHelper::split(tmp, '#');
+            if (elems.size() < 1 || elems[0].size() == 0)
+              continue;
 
-          istringstream isstnum(elems[0]);
-          if (!(isstnum >> tdecaysnumber)) {
-            tdecaysnumber = 0;
-            continue;
+            istringstream isstnum(elems[0]);
+            if (!(isstnum >> tdecaysnumber)) {
+              tdecaysnumber = 0;
+              continue;
+            }
+            fl = true;
           }
-          fl = true;
         }
 
         for (int i = 0; i < tdecaysnumber; ++i) {

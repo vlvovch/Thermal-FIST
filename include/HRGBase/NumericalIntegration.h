@@ -207,7 +207,7 @@ namespace thermalfist {
      * \param [out] xleg Gauss-Legendre nodes for the variable y. 
      * \param [out] wleg Gauss-Legendre weights for the variable y. 
      */
-    void GetCoefs2DLegendre32Legendre32(double ax, double bx, double ay, double by, std::vector<double> *xlag, std::vector<double> *wlag, std::vector<double> *xleg, std::vector<double> *wleg);
+    void GetCoefs2DLegendre32Legendre32(double ax, double bx, double ay, double by, std::vector<double> *xleg1, std::vector<double> *wleg1, std::vector<double> *xleg2, std::vector<double> *wleg2);
 
     /**
      * Populates the nodes and weights for integrating

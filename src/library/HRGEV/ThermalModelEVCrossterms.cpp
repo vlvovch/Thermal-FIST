@@ -140,8 +140,6 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::DensityId(int i, const std::vector<double>& pstars)
   {
-    double ret = 0.;
-
     double dMu = 0.;
     if (pstars.size() == m_TPS->Particles().size())
       for (int j = 0; j < m_TPS->Particles().size(); ++j) 
@@ -155,8 +153,6 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::Pressure(int i, const std::vector<double>& pstars)
   {
-    double ret = 0.;
-
     double dMu = 0.;
     if (pstars.size() == m_TPS->Particles().size())
       for (int j = 0; j < m_TPS->Particles().size(); ++j) 
@@ -169,8 +165,6 @@ namespace thermalfist {
   }
 
   double ThermalModelEVCrossterms::ScaledVarianceId(int i) {
-    double ret = 0.;
-
     double dMu = 0.;
     for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
 
@@ -178,8 +172,6 @@ namespace thermalfist {
   }
 
   double ThermalModelEVCrossterms::PartialPressureDiagonal(int i, double P) {
-    double ret = 0.;
-
     double dMu = 0.;
     dMu += -m_Virial[i][i] * P;
 

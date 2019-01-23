@@ -594,7 +594,7 @@ void ModelTab::writetofile() {
             FILE *f = fopen(path.toStdString().c_str(), "w");
             fprintf(f, "%20s%15s%8s%8s%8s%8s%8s%15s%15s\n", "Name", "PDGID", "Stable", "B", "Q", "S", "C", "Primary yield", "Total yield");
             for(int i=0;i<model->TPS()->Particles().size();++i) {
-                fprintf(f, "%20s%15d%8d%8d%8d%8d%8d%15E%15E\n",
+                fprintf(f, "%20s%15lld%8d%8d%8d%8d%8d%15E%15E\n",
                         model->TPS()->Particles()[i].Name().c_str(),
                         model->TPS()->Particles()[i].PdgId(),
                         model->TPS()->Particles()[i].IsStable(),

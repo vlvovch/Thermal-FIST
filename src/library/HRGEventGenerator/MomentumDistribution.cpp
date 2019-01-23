@@ -345,7 +345,7 @@ namespace thermalfist {
           double tpt = xpt[ipt] * m_T;
           double tmp = wy[iy] * wpt[ipt] * d2ndptdy(tpt, ty);
           if (tmp <= 0. || tmp != tmp) continue;
-          double tmt = sqrt(tpt*tpt + m_Mass * m_Mass);
+          //double tmt = sqrt(tpt*tpt + m_Mass * m_Mass);
           tmp1 += tmp * ty * ty;
           tmp2 += tmp;
         }

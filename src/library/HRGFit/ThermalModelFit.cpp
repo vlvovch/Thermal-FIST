@@ -104,9 +104,7 @@ namespace thermalfist {
           printf("Issue with Bose-Einstein condensation, discarding this iteration...\n");
           return m_THMFit->Chi2() = chi2 = 1.e12;
         }
-
-        double Npart = m_THMFit->model()->CalculateBaryonDensity() * m_THMFit->model()->Parameters().V;
-
+        
         // Ratios first
         for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
           if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Ratio) {
@@ -855,9 +853,9 @@ namespace thermalfist {
             int step = 0;
             char valst[6];
             char stepst[6];
-            for(int i=0;i<4;++i) valst[i] = tnum[i];
+            for(int ii=0;ii<4;++ii) valst[ii] = tnum[ii];
             valst[4] = 0;
-            for(int i=0;i<4;++i) stepst[i] = tnum[5+i];
+            for(int ii=0;ii<4;++ii) stepst[ii] = tnum[5+ii];
             stepst[4] = 0;
             val = atof(valst);
             step = atoi(stepst);
@@ -1101,12 +1099,10 @@ namespace thermalfist {
         vector<string> fields = CuteHRGHelper::split(tmp, ';');
         if (fields.size()<4) break;
         int type = atoi(fields[0].c_str());
-        //int pdgid1 = atoi(fields[1].c_str()), pdgid2 = 0;
         long long pdgid1 = stringToLongLong(fields[1]), pdgid2 = 0;
-        double value, error, error2;
+        double value = 0., error = 0., error2 = 0.;
         int feeddown1 = 1, feeddown2 = 1;
         if (type) {
-          //pdgid2 = atoi(fields[2].c_str());
           pdgid2 = stringToLongLong(fields[2]);
           value = atof(fields[3].c_str());
           if (fields.size() >= 5) error = atof(fields[4].c_str());

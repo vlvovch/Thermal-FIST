@@ -109,8 +109,6 @@ namespace thermalfist {
       // The following procedure currently not used, but can be considered if SolveChemicalPotentials routine fails
       if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0)) {
         if (m_Config.S == 0 && !(m_Config.Q == 0 || m_Config.B == 0)) {
-          double tmuB = 0., tmuQ = 0., tmuS = 0.;
-
           double QBrat = (double)(m_Config.Q) / m_Config.B;
 
           double left = 0.000, right = 0.900, center;
@@ -1044,9 +1042,9 @@ namespace thermalfist {
               }
               if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {
                 std::vector<double> masses(0);
-                std::vector<int> pdgids(0);
+                std::vector<long long> pdgids(0);
                 for (int di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
-                  int dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
+                  long long dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
                   if (m_THM->TPS()->PdgToId(dpdg) == -1) {
                     continue;
                   }

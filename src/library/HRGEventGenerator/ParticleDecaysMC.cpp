@@ -74,7 +74,7 @@ namespace thermalfist {
       return ret;
     }
 
-    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, int pdg1, double m2, int pdg2) {
+    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, long long pdg1, double m2, long long pdg2) {
       std::vector<SimpleParticle> ret(0);
       ret.push_back(Mother);
       ret.push_back(Mother);
@@ -115,7 +115,7 @@ namespace thermalfist {
       return ret;
     }
 
-    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs) {
+    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<long long> pdgs) {
       std::vector<SimpleParticle> ret(0);
       if (masses.size() < 1) return ret;
 

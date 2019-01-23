@@ -271,9 +271,9 @@ namespace thermalfist {
     double dmu = (muBmax - muBmin) / iters;
     vector<double> curmust(m_densities.size(), 0.);
     double maxdif = 0.;
-    for(int i=0; i<iters; ++i) {
-      double tmu = muBmin + (0.5 + i) * dmu;
-      for(int j=0; j<curmust.size(); ++j) {
+    for(int isol = 0; isol < iters; ++isol) {
+      double tmu = muBmin + (0.5 + isol) * dmu;
+      for(int j = 0; j < curmust.size(); ++j) {
         curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
         if (m_TPS->Particles()[j].Statistics()==-1 && curmust[j] > m_TPS->Particles()[j].Mass()) 
           curmust[j] = 0.98 * m_TPS->Particles()[j].Mass();
@@ -281,12 +281,12 @@ namespace thermalfist {
 
       vector<double> sol = SearchSingleSolution(curmust);
       bool fl = true;
-      for(int i=0; i<sol.size(); ++i)
+      for(int i = 0; i < sol.size(); ++i)
         if (sol[i]!=sol[i]) fl = false;
       fl &= m_LastBroydenSuccessFlag;
       if (!fl) continue;
 
-      for(int i=0;i<m_TPS->Particles().size();++i) 
+      for(int i = 0; i < m_TPS->Particles().size(); ++i) 
         m_DensitiesId[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, sol[i]);
 
       int NN = m_densities.size();

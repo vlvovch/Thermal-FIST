@@ -82,7 +82,7 @@ namespace thermalfist {
      * \param pdg2   Pdg code of the second daughter
      * \return std::vector<SimpleParticle> Two-component vector of decay products
      */
-    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, int pdg1, double m2, int pdg2);
+    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, long long pdg1, double m2, long long pdg2);
     
     /**
      * \brief Samples the decay products of a many-body decay.
@@ -101,7 +101,7 @@ namespace thermalfist {
      * \param pdgs   Pdg codes of the decay products
      * \return std::vector<SimpleParticle> 
      */
-    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs); // TODO: proper implementation for 4+ - body decays
+    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<long long> pdgs); // TODO: proper implementation for 4+ - body decays
   }
 
 } // namespace thermalfist

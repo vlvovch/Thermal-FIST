@@ -197,7 +197,7 @@ namespace thermalfist {
 
     for (int i = 0; i < ms.size(); ++i) {
       double tw = 0.;
-      for (int j = 0.; j < br.size(); ++j) {
+      for (int j = 0; j < br.size(); ++j) {
         if (mthr[j] <= ms[i])
           tw += br[j];
       }

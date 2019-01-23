@@ -134,24 +134,18 @@ namespace thermalfist {
 
 
   double ThermalModelEVDiagonal::DensityId(int i, double Pressure) {
-    double ret = 0.;
-
     double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVDiagonal::PressureId(int i, double Pressure) {
-    double ret = 0.;
-
     double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVDiagonal::ScaledVarianceId(int i, double Pressure) {
-    double ret = 0.;
-
     double dMu = -m_v[i] * Pressure;
 
     return m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i] + dMu);
@@ -160,7 +154,6 @@ namespace thermalfist {
   double ThermalModelEVDiagonal::Pressure(double P) {
     double ret = 0.;
 
-#pragma omp parallel for reduction(+:ret) if(useOpenMP)
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       double dMu = -m_v[i] * P;
       ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] + dMu);
@@ -184,11 +177,12 @@ namespace thermalfist {
 
     x = broydn.Solve(x, &crit);
 
-    double current_precision = Broyden::TOL;
+    
 
     double PressureNew = mnc * exp(x[0]);
 
     // UPDATE: Currently not used
+    //double current_precision = Broyden::TOL;
     //// If pressures are too small we may need additional iterations with higher accuracy
     //while (abs(PressureNew) < current_precision && current_precision > 1.e-50 && abs(PressureNew /m_Pressure) < 1.e-5) {
     //  current_precision *= 1.e-10;
