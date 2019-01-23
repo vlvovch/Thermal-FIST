@@ -353,12 +353,12 @@ namespace thermalfist {
       return m_DecayDistributionsMap[ind];
 
 
-    std::vector<std::pair<double, std::vector<int>>> retorig(1);
+    std::vector< std::pair<double, std::vector<int> > > retorig(1);
     retorig[0].first = 1.;
     retorig[0].second = std::vector<int>(m_Particles.size(), 0);
     retorig[0].second[ind] = 1;
 
-    std::vector<std::pair<double, std::vector<int>>> ret(0);
+    std::vector< std::pair<double, std::vector<int> > > ret(0);
 
     ThermalParticle &tpart = m_Particles[ind];
 
@@ -372,13 +372,13 @@ namespace thermalfist {
       if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
         tbr = m_Particles[ind].Decays()[i].mBratioAverage;
 
-      std::vector<std::pair<double, std::vector<int> > > tret = retorig;
+      std::vector< std::pair<double, std::vector<int> > > tret = retorig;
 
       for (int j = 0; j < tpart.Decays()[i].mDaughters.size(); ++j) {
         if (m_PDGtoID.count(tpart.Decays()[i].mDaughters[j]) != 0) {
 
-          std::vector<std::pair<double, std::vector<int> > > tmp = GoResonanceDecayDistributions(m_PDGtoID[tpart.Decays()[i].mDaughters[j]]);
-          std::vector<std::pair<double, std::vector<int> > > tmp2(tret.size() * tmp.size());
+          std::vector< std::pair<double, std::vector<int> > > tmp = GoResonanceDecayDistributions(m_PDGtoID[tpart.Decays()[i].mDaughters[j]]);
+          std::vector< std::pair<double, std::vector<int> > > tmp2(tret.size() * tmp.size());
           for (int i1 = 0; i1 < tret.size(); ++i1) {
             for (int i2 = 0; i2 < tmp.size(); ++i2) {
               tmp2[i1*tmp.size() + i2].first = tret[i1].first * tmp[i2].first;
@@ -469,7 +469,7 @@ namespace thermalfist {
       return elems;
     }
 
-    void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int>>>& vect, int maxsize)
+    void cutDecayDistributionsVector(std::vector< std::pair<double, std::vector<int> > >& vect, int maxsize)
     {
       if (vect.size() > maxsize) {
         std::sort(vect.begin(), vect.end());

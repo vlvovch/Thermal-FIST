@@ -7,6 +7,7 @@
  */
 #include "HRGBase/Broyden.h"
 
+#include <stdio.h>
 #include <cmath>
 
 #include <Eigen/Dense>

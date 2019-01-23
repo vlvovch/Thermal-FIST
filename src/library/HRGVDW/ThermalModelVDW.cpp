@@ -115,7 +115,7 @@ namespace thermalfist {
     m_Virial = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
     m_Attr   = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -142,7 +142,7 @@ namespace thermalfist {
 
   void ThermalModelVDW::WriteInteractionParameters(const string & filename)
   {
-    ofstream fout(filename);
+    ofstream fout(filename.c_str());
     fout << "# List of the van dar Waals interaction parameters to be used in the QvdW-HRG model"
       << std::endl;
     fout << "# Only particle pairs with a non-zero QvdW interaction are listed here"

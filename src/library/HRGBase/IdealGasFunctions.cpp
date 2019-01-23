@@ -7,6 +7,7 @@
  */
 #include "HRGBase/IdealGasFunctions.h"
 
+#include <stdio.h>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>

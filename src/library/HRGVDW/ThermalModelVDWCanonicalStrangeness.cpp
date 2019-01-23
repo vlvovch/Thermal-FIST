@@ -309,7 +309,7 @@ namespace thermalfist {
     m_Virial = std::vector< std::vector<double> >(m_TPS->Particles().size(), std::vector<double>(m_TPS->Particles().size(), 0.));
     m_Attr = std::vector< std::vector<double> >(m_TPS->Particles().size(), std::vector<double>(m_TPS->Particles().size(), 0.));
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -336,7 +336,7 @@ namespace thermalfist {
 
   void ThermalModelVDWCanonicalStrangeness::WriteInteractionParameters(const std::string & filename)
   {
-    ofstream fout(filename);
+    ofstream fout(filename.c_str());
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       for (int j = 0; j < m_TPS->Particles().size(); ++j) {
         fout << std::setw(15) << m_TPS->Particle(i).PdgId();

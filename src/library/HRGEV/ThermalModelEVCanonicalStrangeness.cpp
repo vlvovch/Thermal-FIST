@@ -227,7 +227,7 @@ namespace thermalfist {
   {
     m_v = std::vector<double>(m_TPS->Particles().size(), 0.);
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -249,7 +249,7 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::WriteInteractionParameters(const std::string & filename)
   {
-    ofstream fout(filename);
+    ofstream fout(filename.c_str());
     for (int i = 0; i < m_TPS->Particles().size(); ++i) {
       fout << std::setw(15) << m_TPS->Particle(i).PdgId();
       fout << std::setw(15) << m_v[i];

@@ -103,7 +103,7 @@ QVariant ListTableModel::data(const QModelIndex &index, int role) const
                 if (fabs(bratiosum - 1.) > 1.e-8) {
                     if (ret != "")
                         ret += " / ";
-                    ret += "Not 100\%!";
+                    ret += "Not 100%!";
                 }
 
                 return ret;
