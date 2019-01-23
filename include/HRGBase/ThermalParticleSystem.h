@@ -360,7 +360,7 @@ namespace thermalfist {
      * \param id   0-based particle id number.
      * \return int PDG ID.
      */
-    long long IdToPdg(int id)      const { return (id >= 0 && id < m_Particles.size()) ? m_Particles[id].PdgId() : 0; }
+    long long IdToPdg(int id)      const { return (id >= 0 && id < static_cast<int>(m_Particles.size())) ? m_Particles[id].PdgId() : 0; }
 
     /**
      * \brief Adds a new particle specie to the list.

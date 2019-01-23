@@ -66,7 +66,7 @@ namespace thermalfist {
      * \param j    0-based index of the second particle species
      * \param dbdT \f$ d \tilde{b}_{ij} / dT \f$ in the units of fm\f$^3\f$ GeV\f$^{-1}\f$
      */
-    void SetVirialdT(int i, int j, double dbdT) { if (i >= 0 && i < m_VirialdT.size() && j >= 0 && j < m_VirialdT[i].size()) m_VirialdT[i][j] = dbdT; }
+    void SetVirialdT(int i, int j, double dbdT) { if (i >= 0 && i < static_cast<int>(m_VirialdT.size()) && j >= 0 && j < static_cast<int>(m_VirialdT[i].size())) m_VirialdT[i][j] = dbdT; }
     
     /**
      * \brief Set the temperature derivative
@@ -76,7 +76,7 @@ namespace thermalfist {
      * \param j    0-based index of the second particle species
      * \param dadT \f$ d a_{ij} / dT \f$ in the units of fm\f$^3\f$
      */
-    void SetAttractiondT(int i, int j, double dadT) { if (i >= 0 && i < m_AttrdT.size() && j >= 0 && j < m_AttrdT[i].size())     m_AttrdT[i][j] = dadT; }
+    void SetAttractiondT(int i, int j, double dadT) { if (i >= 0 && i < static_cast<int>(m_AttrdT.size()) && j >= 0 && j < static_cast<int>(m_AttrdT[i].size()))     m_AttrdT[i][j] = dadT; }
 
     /**
      * \brief The temperature derivative
@@ -161,9 +161,9 @@ namespace thermalfist {
 
     virtual void WriteInteractionParameters(const std::string &filename);
 
-    void SetVirial(int i, int j, double b) { if (i >= 0 && i < m_Virial.size() && j >= 0 && j < m_Virial[i].size()) m_Virial[i][j] = b; }
+    void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; }
     
-    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < m_Attr.size() && j >= 0 && j < m_Attr[i].size())     m_Attr[i][j] = a; }
+    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; }
 
     double VirialCoefficient(int i, int j) const;
 

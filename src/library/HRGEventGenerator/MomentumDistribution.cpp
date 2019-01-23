@@ -100,9 +100,9 @@ namespace thermalfist {
       std::vector<double> xpt, wpt;
       NumericalIntegration::GetCoefsIntegrateLaguerre32(&xpt, &wpt);
       double tmp1 = 0., tmp2 = 0.;
-      for (int iy = 0; iy < xy.size(); ++iy) {
+      for (size_t iy = 0; iy < xy.size(); ++iy) {
         double ty = xy[iy];
-        for (int ipt = 0; ipt < xpt.size(); ++ipt) {
+        for (size_t ipt = 0; ipt < xpt.size(); ++ipt) {
           double tpt = xpt[ipt] * m_T;
           double tmp = wy[iy] * wpt[ipt] * d2ndptdy(tpt, ty);
           if (tmp <= 0. || tmp != tmp) continue;
@@ -170,7 +170,7 @@ namespace thermalfist {
     }
 
     tmp = 0.;
-    for (int i = 0; i < m_xlag.size(); i++) {
+    for (size_t i = 0; i < m_xlag.size(); i++) {
       tmp += m_wlag[i] * dndpt(m_xlag[i] * m_T);
     }
     tmp *= m_T;
@@ -185,7 +185,7 @@ namespace thermalfist {
     double tmp2 = 0.;
     for (double yy = -4.; yy < 4.; yy += dy) {
       tmp = 0.;
-      for (int j = 0; j < m_xlag.size(); j++) {
+      for (size_t j = 0; j < m_xlag.size(); j++) {
         tmp += m_wlag[j] * dndptsingle(m_xlag[j] * m_T, yy) * m_T;
       }
       tmp2 += tmp * dy;
@@ -221,7 +221,7 @@ namespace thermalfist {
   double SSHDistribution::dnmtdmt(double mt) const {
     double ret = 0.;
     double pt = sqrt(mt*mt - m_Mass * m_Mass);
-    for (int i = 0; i < m_xlegT.size(); i++) {
+    for (size_t i = 0; i < m_xlegT.size(); i++) {
       double tmp = m_wlegT[i] * m_xlegT[i] * mt * xMath::BesselI0(pt * sinh(rho(m_xlegT[i])) / m_T) * xMath::BesselK1(mt*cosh(rho(m_xlegT[i])) / m_T);
       if (tmp != tmp) break;
       ret += tmp;
@@ -233,8 +233,8 @@ namespace thermalfist {
     double ret = 0.;
     double mt = sqrt(pt*pt + m_Mass * m_Mass);
 
-    for (int i = 0; i < m_xlegeta.size(); i++) {
-      for (int j = 0; j < m_xlegT.size(); j++) {
+    for (size_t i = 0; i < m_xlegeta.size(); i++) {
+      for (size_t j = 0; j < m_xlegT.size(); j++) {
         double tmp = mt * m_wlegeta[i] * m_wlegT[j] * cosh(y - m_xlegeta[i]) * m_xlegT[j] * exp(-mt * cosh(rho(m_xlegT[j])) * cosh(y - m_xlegeta[i]) / m_T) *
           xMath::BesselI0(pt * sinh(rho(m_xlegT[j])) / m_T);
         ret += tmp;
@@ -248,7 +248,7 @@ namespace thermalfist {
     double ret = 0.;
     double mt = sqrt(pt*pt + m_Mass * m_Mass);
 
-    for (int j = 0; j < m_xlegT.size(); j++) {
+    for (size_t j = 0; j < m_xlegT.size(); j++) {
       double tmp = mt * m_wlegT[j] * cosh(y) * m_xlegT[j] * exp(-mt * cosh(rho(m_xlegT[j])) * cosh(y) / m_T) *
         xMath::BesselI0(pt * sinh(rho(m_xlegT[j])) / m_T);
       ret += tmp;
@@ -265,8 +265,8 @@ namespace thermalfist {
     double ret = 0.;
     double mt = sqrt(pt*pt + m_Mass * m_Mass);
 
-    for (int i = 0; i < m_xlegeta.size(); i++) {
-      for (int j = 0; j < m_xlegT.size(); j++) {
+    for (size_t i = 0; i < m_xlegeta.size(); i++) {
+      for (size_t j = 0; j < m_xlegT.size(); j++) {
         double tmp = mt * m_wlegeta[i] * m_wlegT[j] * cosh(y - m_xlegeta[i]) * m_xlegT[j] * exp(-mt * cosh(rho(m_xlegT[j])) * cosh(y - m_xlegeta[i]) / m_T) *
           xMath::BesselI0(pt * sinh(rho(m_xlegT[j])) / m_T);
         ret += tmp;
@@ -280,7 +280,7 @@ namespace thermalfist {
     double ret = 0.;
     double mt = sqrt(pt*pt + m_Mass * m_Mass);
 
-    for (int j = 0; j < m_xlegT.size(); j++) {
+    for (size_t j = 0; j < m_xlegT.size(); j++) {
       double tmp = mt * m_wlegT[j] * cosh(y) * m_xlegT[j] * exp(-mt * cosh(rho(m_xlegT[j])) * cosh(y) / m_T) *
         xMath::BesselI0(pt * sinh(rho(m_xlegT[j])) / m_T);
       ret += tmp;
@@ -307,9 +307,9 @@ namespace thermalfist {
       std::vector<double> xpt, wpt;
       NumericalIntegration::GetCoefsIntegrateLaguerre32(&xpt, &wpt);
       double tmp1 = 0., tmp2 = 0.;
-      for (int iy = 0; iy < xy.size(); ++iy) {
+      for (size_t iy = 0; iy < xy.size(); ++iy) {
         double ty = xy[iy];
-        for (int ipt = 0; ipt < xpt.size(); ++ipt) {
+        for (size_t ipt = 0; ipt < xpt.size(); ++ipt) {
           double tpt = xpt[ipt] * m_T;
           double tmp = wy[iy] * wpt[ipt] * d2ndptdy(tpt, ty);
           if (tmp <= 0. || tmp != tmp) continue;
@@ -339,9 +339,9 @@ namespace thermalfist {
       std::vector<double> xpt, wpt;
       NumericalIntegration::GetCoefsIntegrateLaguerre32(&xpt, &wpt);
       double tmp1 = 0., tmp2 = 0.;
-      for (int iy = 0; iy < xy.size(); ++iy) {
+      for (size_t iy = 0; iy < xy.size(); ++iy) {
         double ty = xy[iy];
-        for (int ipt = 0; ipt < xpt.size(); ++ipt) {
+        for (size_t ipt = 0; ipt < xpt.size(); ++ipt) {
           double tpt = xpt[ipt] * m_T;
           double tmp = wy[iy] * wpt[ipt] * d2ndptdy(tpt, ty);
           if (tmp <= 0. || tmp != tmp) continue;
@@ -358,8 +358,8 @@ namespace thermalfist {
     double ret = 0.;
     double mt = sqrt(pt*pt + m_Mass * m_Mass);
 
-    for (int i = 0; i < m_xlegeta.size(); i++) {
-      for (int j = 0; j < m_xlegT.size(); j++) {
+    for (size_t i = 0; i < m_xlegeta.size(); i++) {
+      for (size_t j = 0; j < m_xlegT.size(); j++) {
         double tmp = mt * m_wlegeta[i] * m_wlegT[j] * cosh(y - m_xlegeta[i]) * m_xlegT[j] * exp(-mt * cosh(rho(m_xlegT[j])) * cosh(y - m_xlegeta[i]) / m_T) *
           xMath::BesselI0(pt * sinh(rho(m_xlegT[j])) / m_T);
         ret += tmp;

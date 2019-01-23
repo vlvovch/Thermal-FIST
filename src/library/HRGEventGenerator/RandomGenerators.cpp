@@ -388,7 +388,7 @@ namespace thermalfist {
       while (1) {
         int ind = (int)(exp(-tpt) / m_dPt);
         if (ind < 0) ind = 0;
-        if (ind >= m_dndy.size()) ind = m_dndy.size() - 1;
+        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
         double x0 = -4. - m_EtaMax + (8. + 2. * m_EtaMax) * randgenMT.randDblExc();
         double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
         if (y0 < m_dndy[ind].f(x0)) {
@@ -412,7 +412,7 @@ namespace thermalfist {
       while (1) {
         int ind = (int)(exp(-tpt) / m_dPt);
         if (ind < 0) ind = 0;
-        if (ind >= m_dndy.size()) ind = m_dndy.size() - 1;
+        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
         double x0 = -4. + (8.) * randgenMT.randDblExc();
         double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
 

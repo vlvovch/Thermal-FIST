@@ -89,7 +89,7 @@ namespace thermalfist {
     ///
     /// \param inData A vector of additional measurements to fit
     void AddData(const std::vector<FittedQuantity> & inData) {
-      for (int i = 0; i < inData.size(); ++i)
+      for (size_t i = 0; i < inData.size(); ++i)
         AddDataPoint(inData[i]);
     }
 
@@ -124,7 +124,7 @@ namespace thermalfist {
 
     void AddRatios(const std::vector<ExperimentRatio> & inRatios) {
       m_Ratios.insert(m_Ratios.end(), inRatios.begin(), inRatios.end());
-      for (int i = 0; i < inRatios.size(); i++) {
+      for (size_t i = 0; i < inRatios.size(); i++) {
         m_Quantities.push_back(FittedQuantity(inRatios[i]));
       }
     }
@@ -144,7 +144,7 @@ namespace thermalfist {
 
     void AddMultiplicities(const std::vector<ExperimentMultiplicity> & inMultiplicities) {
       m_Multiplicities.insert(m_Multiplicities.end(), inMultiplicities.begin(), inMultiplicities.end());
-      for (int i = 0; i < inMultiplicities.size(); i++) {
+      for (size_t i = 0; i < inMultiplicities.size(); i++) {
         m_Quantities.push_back(FittedQuantity(inMultiplicities[i]));
       }
     }

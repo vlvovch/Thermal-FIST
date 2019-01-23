@@ -34,13 +34,13 @@ namespace thermalfist {
 
   void EventGeneratorBase::ClearMomentumGenerators()
   {
-    for (int i = 0; i < m_MomentumGens.size(); ++i) {
+    for (size_t i = 0; i < m_MomentumGens.size(); ++i) {
       if (m_MomentumGens[i] != NULL)
         delete m_MomentumGens[i];
     }
     m_MomentumGens.resize(0);
 
-    for (int i = 0; i < m_BWGens.size(); ++i) {
+    for (size_t i = 0; i < m_BWGens.size(); ++i) {
       if (m_BWGens[i] != NULL)
         delete m_BWGens[i];
     }
@@ -92,8 +92,8 @@ namespace thermalfist {
     m_THM->FillChemicalPotentials();
 
     if (m_Config.fModelType != EventGeneratorConfiguration::PointParticle) {
-      for (int i = 0; i < m_THM->Densities().size(); ++i) {
-        for (int j = 0; j < m_THM->Densities().size(); ++j) {
+      for (size_t i = 0; i < m_THM->Densities().size(); ++i) {
+        for (size_t j = 0; j < m_THM->Densities().size(); ++j) {
           if (m_Config.bij.size() == m_THM->Densities().size()
             && m_Config.bij[i].size() == m_THM->Densities().size())
             m_THM->SetVirial(i, j, m_Config.bij[i][j]);
@@ -216,7 +216,7 @@ namespace thermalfist {
   void EventGeneratorBase::ReadAcceptance(std::string accfolder)
   {
     m_acc.resize(m_THM->TPS()->Particles().size());
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       std::string filename = accfolder + "pty_acc_" + to_string_fix(m_THM->TPS()->Particles()[i].PdgId()) + ".txt";
       Acceptance::ReadAcceptanceFunction(m_acc[i], filename);
     }
@@ -249,10 +249,10 @@ namespace thermalfist {
 
     std::vector<double> densities = m_THM->Densities();
 
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       densities[i] *= m_THM->Volume();
 
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == 1) {
         m_Baryons.push_back(std::make_pair(densities[i], i));
         m_MeanB += densities[i];
@@ -311,16 +311,16 @@ namespace thermalfist {
     std::sort(m_CharmAll.begin(), m_CharmAll.end(), std::greater< std::pair<double, int> >());
     std::sort(m_AntiCharmAll.begin(), m_AntiCharmAll.end(), std::greater< std::pair<double, int> >());
 
-    for (int i = 1; i < m_Baryons.size(); ++i)            m_Baryons[i].first += m_Baryons[i - 1].first;
-    for (int i = 1; i < m_AntiBaryons.size(); ++i)        m_AntiBaryons[i].first += m_AntiBaryons[i - 1].first;
-    for (int i = 1; i < m_StrangeMesons.size(); ++i)      m_StrangeMesons[i].first += m_StrangeMesons[i - 1].first;
-    for (int i = 1; i < m_AntiStrangeMesons.size(); ++i)  m_AntiStrangeMesons[i].first += m_AntiStrangeMesons[i - 1].first;
-    for (int i = 1; i < m_ChargeMesons.size(); ++i)       m_ChargeMesons[i].first += m_ChargeMesons[i - 1].first;
-    for (int i = 1; i < m_AntiChargeMesons.size(); ++i)   m_AntiChargeMesons[i].first += m_AntiChargeMesons[i - 1].first;
-    for (int i = 1; i < m_CharmMesons.size(); ++i)        m_CharmMesons[i].first += m_CharmMesons[i - 1].first;
-    for (int i = 1; i < m_AntiCharmMesons.size(); ++i)    m_AntiCharmMesons[i].first += m_AntiCharmMesons[i - 1].first;
-    for (int i = 1; i < m_CharmAll.size(); ++i)           m_CharmAll[i].first += m_CharmAll[i - 1].first;
-    for (int i = 1; i < m_AntiCharmAll.size(); ++i)       m_AntiCharmAll[i].first += m_AntiCharmAll[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_Baryons.size()); ++i)            m_Baryons[i].first += m_Baryons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_AntiBaryons.size()); ++i)        m_AntiBaryons[i].first += m_AntiBaryons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_StrangeMesons.size()); ++i)      m_StrangeMesons[i].first += m_StrangeMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_AntiStrangeMesons.size()); ++i)  m_AntiStrangeMesons[i].first += m_AntiStrangeMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_ChargeMesons.size()); ++i)       m_ChargeMesons[i].first += m_ChargeMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_AntiChargeMesons.size()); ++i)   m_AntiChargeMesons[i].first += m_AntiChargeMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_CharmMesons.size()); ++i)        m_CharmMesons[i].first += m_CharmMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_AntiCharmMesons.size()); ++i)    m_AntiCharmMesons[i].first += m_AntiCharmMesons[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_CharmAll.size()); ++i)           m_CharmAll[i].first += m_CharmAll[i - 1].first;
+    for (int i = 1; i < static_cast<int>(m_AntiCharmAll.size()); ++i)       m_AntiCharmAll[i].first += m_AntiCharmAll[i - 1].first;
   }
 
   std::vector<int> EventGeneratorBase::GenerateTotals() const {
@@ -354,13 +354,13 @@ namespace thermalfist {
         ThermalModelEVDiagonal *model = static_cast<ThermalModelEVDiagonal*>(m_THM);
         double VVN = m_THM->Volume();
 
-        for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
           VVN -= model->ExcludedVolume(i) * totals[i];
 
         if (VVN < 0.) continue;
         double weight = 1.;
         double logweight = 0.;
-        for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
           if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
             logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
@@ -376,10 +376,10 @@ namespace thermalfist {
         double weight = 1.;
         double logweight = 0.;
         bool fl = 1;
-        for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           double VVN = m_THM->Volume();
 
-          for (int j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
             VVN -= model->VirialCoefficient(j, i) * totals[j];
 
           if (VVN < 0.) { fl = false; break; }
@@ -398,10 +398,10 @@ namespace thermalfist {
         double weight = 1.;
         double logweight = 0.;
         bool fl = 1;
-        for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           double VVN = m_THM->Volume();
 
-          for (int j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
             VVN -= model->VirialCoefficient(j, i) * totals[j];
 
           if (VVN < 0.) { fl = false; break; }
@@ -410,7 +410,7 @@ namespace thermalfist {
           if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
             logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
 
-          for (int j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
             double aij = model->AttractionCoefficient(i, j);
             weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
             logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
@@ -438,7 +438,7 @@ namespace thermalfist {
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
     const std::vector<double>& densities = m_THM->Densities();
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       double mean = densities[i] * m_THM->Volume();
       int total = RandomGenerators::RandomPoisson(mean);
       totals[i] = total;
@@ -468,7 +468,7 @@ namespace thermalfist {
       else if (m_THM->Volume() < m_THM->CanonicalVolume()) {
         std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
         double prob = m_THM->Volume() / m_THM->CanonicalVolume();
-        for (int i = 0; i < totalsaux.size(); ++i) {
+        for (size_t i = 0; i < totalsaux.size(); ++i) {
           for (int j = 0; j < totalsaux[i]; ++j) {
             if (RandomGenerators::randgenMT.rand() < prob)
               totals[i]++;
@@ -483,7 +483,7 @@ namespace thermalfist {
 
         for (int iter = 0; iter < multiples; ++iter) {
           std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
-          for (int i = 0; i < totalsaux.size(); ++i)
+          for (size_t i = 0; i < totalsaux.size(); ++i)
             totals[i] += totalsaux[i];
         }
 
@@ -499,7 +499,7 @@ namespace thermalfist {
             std::vector<int> totalsaux = GenerateTotalsSCESubVolume(m_THM->CanonicalVolume());
             std::vector<int> totalsaux2(m_THM->TPS()->Particles().size(), 0);
             int netS = 0;
-            for (int i = 0; i < totalsaux.size(); ++i) {
+            for (size_t i = 0; i < totalsaux.size(); ++i) {
               if (m_THM->TPS()->Particles()[i].Strangeness() > 0) {
                 for (int j = 0; j < totalsaux[i]; ++j) {
                   if (RandomGenerators::randgenMT.rand() < fraction) {
@@ -514,7 +514,7 @@ namespace thermalfist {
             // If S = 1 then must be at least one S = -1 hadron
             if (netS == 1) {
               bool fl = false;
-              for (int i = 0; i < totalsaux.size(); ++i) {
+              for (size_t i = 0; i < totalsaux.size(); ++i) {
                 if (m_THM->TPS()->Particles()[i].Strangeness() < 0 && totalsaux[i] > 0) {
                   fl = true;
                   break;
@@ -530,7 +530,7 @@ namespace thermalfist {
             int repeat = 0;
             while (true) {
               int netS2 = netS;
-              for (int i = 0; i < totalsaux.size(); ++i) {
+              for (size_t i = 0; i < totalsaux.size(); ++i) {
                 if (m_THM->TPS()->Particles()[i].Strangeness() < 0) {
                   totalsaux2[i] = 0;
                   for (int j = 0; j < totalsaux[i]; ++j) {
@@ -542,7 +542,7 @@ namespace thermalfist {
                 }
               }
               if (netS2 == 0) {
-                for (int i = 0; i < totalsaux2.size(); ++i)
+                for (size_t i = 0; i < totalsaux2.size(); ++i)
                   totals[i] += totalsaux2[i];
                 successflag = true;
                 break;
@@ -557,7 +557,7 @@ namespace thermalfist {
         }
       }
 
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (m_THM->TPS()->Particles()[i].Strangeness() == 0) {
           double mean = densities[i] * m_THM->Volume();
           int total = RandomGenerators::RandomPoisson(mean);
@@ -579,10 +579,10 @@ namespace thermalfist {
     std::vector< std::pair<double, int> > fStrangeMesonsc = m_StrangeMesons;
     std::vector< std::pair<double, int> > fAntiStrangeMesonsc = m_AntiStrangeMesons;
 
-    for (int i = 0; i < fStrangeMesonsc.size(); ++i)
+    for (size_t i = 0; i < fStrangeMesonsc.size(); ++i)
       fStrangeMesonsc[i].first *= VolumeSC / m_THM->Volume();
 
-    for (int i = 0; i < fAntiStrangeMesonsc.size(); ++i)
+    for (size_t i = 0; i < fAntiStrangeMesonsc.size(); ++i)
       fAntiStrangeMesonsc[i].first *= VolumeSC / m_THM->Volume();
 
     double fMeanSMc = m_MeanSM * VolumeSC / m_THM->Volume();
@@ -592,9 +592,9 @@ namespace thermalfist {
       fCETotal++;
       const std::vector<double>& densities = m_THM->Densities();
 
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
       int netS = 0;
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (m_THM->TPS()->Particles()[i].BaryonCharge() != 0 && m_THM->TPS()->Particles()[i].Strangeness() != 0) {
           double mean = densities[i] * VolumeSC;
           int total = RandomGenerators::RandomPoisson(mean);
@@ -611,14 +611,14 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fStrangeMesonsc.begin(), fStrangeMesonsc.end(), std::make_pair(fMeanSMc*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fStrangeMesonsc.size()) tind = fStrangeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fStrangeMesonsc.size())) tind = fStrangeMesonsc.size() - 1;
         totals[fStrangeMesonsc[tind].second]++;
       }
       for (int i = 0; i < tASM; ++i) {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiStrangeMesonsc.begin(), fAntiStrangeMesonsc.end(), std::make_pair(fMeanASMc*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fAntiStrangeMesonsc.size()) tind = fAntiStrangeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fAntiStrangeMesonsc.size())) tind = fAntiStrangeMesonsc.size() - 1;
         totals[fAntiStrangeMesonsc[tind].second]++;
       }
       return totals;
@@ -632,7 +632,7 @@ namespace thermalfist {
       m_THM->CalculateDensitiesGCE();
 
     // Check there are no multi-charmed particles, otherwise error
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (abs(m_THM->TPS()->Particles()[i].Charm()) > 1) {
         printf("**ERROR** CCE Event generator does not support lists with multi-charmed particles\n");
         exit(1);
@@ -654,7 +654,7 @@ namespace thermalfist {
     else if (m_THM->Volume() < m_THM->CanonicalVolume()) {
       std::vector<int> totalsaux = GenerateTotalsCCESubVolume(m_THM->CanonicalVolume());
       double prob = m_THM->Volume() / m_THM->CanonicalVolume();
-      for (int i = 0; i < totalsaux.size(); ++i) {
+      for (size_t i = 0; i < totalsaux.size(); ++i) {
         for (int j = 0; j < totalsaux[i]; ++j) {
           if (RandomGenerators::randgenMT.rand() < prob)
             totals[i]++;
@@ -669,7 +669,7 @@ namespace thermalfist {
 
       for (int iter = 0; iter < multiples; ++iter) {
         std::vector<int> totalsaux = GenerateTotalsCCESubVolume(m_THM->CanonicalVolume());
-        for (int i = 0; i < totalsaux.size(); ++i)
+        for (size_t i = 0; i < totalsaux.size(); ++i)
           totals[i] += totalsaux[i];
       }
 
@@ -685,7 +685,7 @@ namespace thermalfist {
           std::vector<int> totalsaux = GenerateTotalsCCESubVolume(m_THM->CanonicalVolume());
           std::vector<int> totalsaux2(m_THM->TPS()->Particles().size(), 0);
           int netC = 0;
-          for (int i = 0; i < totalsaux.size(); ++i) {
+          for (size_t i = 0; i < totalsaux.size(); ++i) {
             if (m_THM->TPS()->Particles()[i].Strangeness() > 0) {
               for (int j = 0; j < totalsaux[i]; ++j) {
                 if (RandomGenerators::randgenMT.rand() < fraction) {
@@ -700,7 +700,7 @@ namespace thermalfist {
           // If C = 1 then must be at least one C = -1 hadron
           if (netC == 1) {
             bool fl = false;
-            for (int i = 0; i < totalsaux.size(); ++i) {
+            for (size_t i = 0; i < totalsaux.size(); ++i) {
               if (m_THM->TPS()->Particles()[i].Charm() < 0 && totalsaux[i] > 0) {
                 fl = true;
                 break;
@@ -716,7 +716,7 @@ namespace thermalfist {
           int repeat = 0;
           while (true) {
             int netC2 = netC;
-            for (int i = 0; i < totalsaux.size(); ++i) {
+            for (size_t i = 0; i < totalsaux.size(); ++i) {
               if (m_THM->TPS()->Particles()[i].Charm() < 0) {
                 totalsaux2[i] = 0;
                 for (int j = 0; j < totalsaux[i]; ++j) {
@@ -728,7 +728,7 @@ namespace thermalfist {
               }
             }
             if (netC2 == 0) {
-              for (int i = 0; i < totalsaux2.size(); ++i)
+              for (size_t i = 0; i < totalsaux2.size(); ++i)
                 totals[i] += totalsaux2[i];
               successflag = true;
               break;
@@ -743,7 +743,7 @@ namespace thermalfist {
       }
     }
 
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (m_THM->TPS()->Particles()[i].Charm() == 0) {
         double mean = densities[i] * m_THM->Volume();
         int total = RandomGenerators::RandomPoisson(mean);
@@ -764,10 +764,10 @@ namespace thermalfist {
     std::vector< std::pair<double, int> > fCharmAllc = m_CharmAll;
     std::vector< std::pair<double, int> > fAntiCharmAllc = m_AntiCharmAll;
 
-    for (int i = 0; i < fCharmAllc.size(); ++i)
+    for (size_t i = 0; i < fCharmAllc.size(); ++i)
       fCharmAllc[i].first *= VolumeSC / m_THM->Volume();
 
-    for (int i = 0; i < fAntiCharmAllc.size(); ++i)
+    for (size_t i = 0; i < fAntiCharmAllc.size(); ++i)
       fAntiCharmAllc[i].first *= VolumeSC / m_THM->Volume();
 
     // Assuming no multi-charmed particles
@@ -789,14 +789,14 @@ namespace thermalfist {
       std::vector< std::pair<double, int> >::iterator it = lower_bound(fCharmAllc.begin(), fCharmAllc.end(), std::make_pair(fMeanCharmc*RandomGenerators::randgenMT.rand(), 0));
       int tind = std::distance(fCharmAllc.begin(), it);
       if (tind < 0) tind = 0;
-      if (tind >= fCharmAllc.size()) tind = fCharmAllc.size() - 1;
+      if (tind >= static_cast<int>(fCharmAllc.size())) tind = fCharmAllc.size() - 1;
       totals[fCharmAllc[tind].second]++;
     }
     for (int i = 0; i < tAC; ++i) {
       std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiCharmAllc.begin(), fAntiCharmAllc.end(), std::make_pair(fMeanAntiCharmc*RandomGenerators::randgenMT.rand(), 0));
       int tind = std::distance(fAntiCharmAllc.begin(), it);
       if (tind < 0) tind = 0;
-      if (tind >= fAntiCharmAllc.size()) tind = fAntiCharmAllc.size() - 1;
+      if (tind >= static_cast<int>(fAntiCharmAllc.size())) tind = fAntiCharmAllc.size() - 1;
       totals[fAntiCharmAllc[tind].second]++;
     }
     return totals;
@@ -820,7 +820,7 @@ namespace thermalfist {
     while (0) {
       fCETotal++;
       int netB = 0, netS = 0, netQ = 0, netC = 0;
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         double mean = m_THM->Densities()[i] * m_THM->Volume();
         int total = RandomGenerators::RandomPoisson(mean);
         totals[i] = total;
@@ -844,13 +844,13 @@ namespace thermalfist {
 
       const std::vector<double>& densities = m_THM->Densities();
 
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) totals[i] = 0;
       int netB = 0, netS = 0, netQ = 0, netC = 0;
 
 
       // Light nuclei first
 
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (abs(m_THM->TPS()->Particles()[i].BaryonCharge()) > 1) {
           double mean = densities[i] * m_THM->Volume();
           int total = RandomGenerators::RandomPoisson(mean);
@@ -874,7 +874,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fBaryonsc.begin(), fBaryonsc.end(), std::make_pair(m_MeanB*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fBaryonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fBaryonsc.size()) tind = fBaryonsc.size() - 1;
+        if (tind >= static_cast<int>(fBaryonsc.size())) tind = fBaryonsc.size() - 1;
         totals[fBaryonsc[tind].second]++;
         netS += m_THM->TPS()->Particles()[fBaryonsc[tind].second].Strangeness();
         netQ += m_THM->TPS()->Particles()[fBaryonsc[tind].second].ElectricCharge();
@@ -884,7 +884,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiBaryonsc.begin(), fAntiBaryonsc.end(), std::make_pair(m_MeanAB*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiBaryonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fAntiBaryonsc.size()) tind = fAntiBaryonsc.size() - 1;
+        if (tind >= static_cast<int>(fAntiBaryonsc.size())) tind = fAntiBaryonsc.size() - 1;
         totals[fAntiBaryonsc[tind].second]++;
         netS += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].Strangeness();
         netQ += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].Charm();
@@ -901,7 +901,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fStrangeMesonsc.begin(), fStrangeMesonsc.end(), std::make_pair(m_MeanSM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fStrangeMesonsc.size()) tind = fStrangeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fStrangeMesonsc.size())) tind = fStrangeMesonsc.size() - 1;
         totals[fStrangeMesonsc[tind].second]++;
         netQ += m_THM->TPS()->Particles()[fStrangeMesonsc[tind].second].ElectricCharge();
         netC += m_THM->TPS()->Particles()[fStrangeMesonsc[tind].second].Charm();
@@ -910,7 +910,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiStrangeMesonsc.begin(), fAntiStrangeMesonsc.end(), std::make_pair(m_MeanASM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fAntiStrangeMesonsc.size()) tind = fAntiStrangeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fAntiStrangeMesonsc.size())) tind = fAntiStrangeMesonsc.size() - 1;
         totals[fAntiStrangeMesonsc[tind].second]++;
         netQ += m_THM->TPS()->Particles()[fAntiStrangeMesonsc[tind].second].ElectricCharge();
         netC += m_THM->TPS()->Particles()[fAntiStrangeMesonsc[tind].second].Charm();
@@ -927,7 +927,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fChargeMesonsc.begin(), fChargeMesonsc.end(), std::make_pair(m_MeanCM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fChargeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fChargeMesonsc.size()) tind = fChargeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fChargeMesonsc.size())) tind = fChargeMesonsc.size() - 1;
         totals[fChargeMesonsc[tind].second]++;
         netC += m_THM->TPS()->Particles()[fChargeMesonsc[tind].second].Charm();
       }
@@ -935,7 +935,7 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiChargeMesonsc.begin(), fAntiChargeMesonsc.end(), std::make_pair(m_MeanACM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiChargeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fAntiChargeMesonsc.size()) tind = fAntiChargeMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fAntiChargeMesonsc.size())) tind = fAntiChargeMesonsc.size() - 1;
         totals[fAntiChargeMesonsc[tind].second]++;
         netC += m_THM->TPS()->Particles()[fAntiChargeMesonsc[tind].second].Charm();
       }
@@ -951,19 +951,19 @@ namespace thermalfist {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fCharmMesonsc.begin(), fCharmMesonsc.end(), std::make_pair(m_MeanCHRMM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fCharmMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fCharmMesonsc.size()) tind = fCharmMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fCharmMesonsc.size())) tind = fCharmMesonsc.size() - 1;
         totals[fCharmMesonsc[tind].second]++;
       }
       for (int i = 0; i < tACHRNMM; ++i) {
         std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiCharmMesonsc.begin(), fAntiCharmMesonsc.end(), std::make_pair(m_MeanACHRMM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiCharmMesonsc.begin(), it);
         if (tind < 0) tind = 0;
-        if (tind >= fAntiCharmMesonsc.size()) tind = fAntiCharmMesonsc.size() - 1;
+        if (tind >= static_cast<int>(fAntiCharmMesonsc.size())) tind = fAntiCharmMesonsc.size() - 1;
         totals[fAntiCharmMesonsc[tind].second]++;
       }
 
       // Poisson distribution for all neutral particles
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 
           && m_THM->TPS()->Particles()[i].Strangeness() == 0 
           && m_THM->TPS()->Particles()[i].ElectricCharge() == 0
@@ -989,7 +989,7 @@ namespace thermalfist {
     ret.logweight = m_LastLogWeight;
 
     std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       {
         primParticles[i].resize(0);
         int total = totals[i];
@@ -1010,18 +1010,18 @@ namespace thermalfist {
       flag_repeat = false;
       for (int i = primParticles.size() - 1; i >= 0; --i) {
         if (!PerformDecays || m_THM->TPS()->Particles()[i].IsStable()) {
-          for (int j = 0; j < primParticles[i].size(); ++j) {
+          for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
               SimpleParticle prt = primParticles[i][j];
               double tpt = prt.GetPt();
               double ty = prt.GetY();
-              if (m_acc.size() < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) ret.Particles.push_back(prt);
+              if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) ret.Particles.push_back(prt);
               primParticles[i][j].processed = true;
             }
           }
         }
         else {
-          for (int j = 0; j < primParticles[i].size(); ++j) {
+          for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
               flag_repeat = true;
               double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
@@ -1036,14 +1036,14 @@ namespace thermalfist {
               }
 
               int DecayIndex = 0;
-              for (DecayIndex = 0; DecayIndex < Bratios.size(); ++DecayIndex) {
+              for (DecayIndex = 0; DecayIndex < static_cast<int>(Bratios.size()); ++DecayIndex) {
                 tsum += Bratios[DecayIndex];
                 if (tsum > DecParam) break;
               }
-              if (DecayIndex < m_THM->TPS()->Particles()[i].Decays().size()) {
+              if (DecayIndex < static_cast<int>(m_THM->TPS()->Particles()[i].Decays().size())) {
                 std::vector<double> masses(0);
                 std::vector<long long> pdgids(0);
-                for (int di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
+                for (size_t di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
                   long long dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
                   if (m_THM->TPS()->PdgToId(dpdg) == -1) {
                     continue;
@@ -1052,7 +1052,7 @@ namespace thermalfist {
                   pdgids.push_back(dpdg);
                 }
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
-                for (int ind = 0; ind < decres.size(); ind++) {
+                for (size_t ind = 0; ind < decres.size(); ind++) {
                   decres[ind].processed = false;
                   if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
                     primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);

@@ -67,13 +67,13 @@ namespace thermalfist {
 
   void ThermalModelCanonicalStrangeness::SetStatistics(bool stats) {
     m_QuantumStats = stats;
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() == 0) m_TPS->Particle(i).UseStatistics(stats);
       else m_TPS->Particle(i).UseStatistics(false);
   }
 
   void ThermalModelCanonicalStrangeness::CalculateDensitiesGCE() {
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
     m_GCECalculated = true;
@@ -81,7 +81,7 @@ namespace thermalfist {
 
   void ThermalModelCanonicalStrangeness::CalculateEnergyDensitiesGCE() {
     m_energydensitiesGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_energydensitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
     }
   }
@@ -89,7 +89,7 @@ namespace thermalfist {
   void ThermalModelCanonicalStrangeness::CalculatePressuresGCE()
   {
     m_pressuresGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_pressuresGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
     }
   }
@@ -104,9 +104,9 @@ namespace thermalfist {
     m_partialS.resize(m_StrVals.size());
     vector<double> xi(3, 0.), yi(3, 0.);
 
-    for (unsigned int i = 0; i < m_StrVals.size(); ++i) {
+    for (size_t i = 0; i < m_StrVals.size(); ++i) {
       m_partialS[i] = 0.;
-      for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         if (m_StrVals[i] == m_TPS->Particles()[j].Strangeness())
           m_partialS[i] += m_densitiesGCE[j] * Vc;
     }
@@ -147,7 +147,7 @@ namespace thermalfist {
 
     CalculateSums(m_Parameters.SVc);
 
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         m_densities[i] = (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_densitiesGCE[i];
     }
@@ -160,7 +160,7 @@ namespace thermalfist {
   void ThermalModelCanonicalStrangeness::CalculateFluctuations() {
     m_wprim.resize(m_densities.size());
     m_wtot.resize(m_densities.size());
-    for (int i = 0; i < m_wprim.size(); ++i) {
+    for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_wprim[i] = 1.;
       m_wtot[i] = 1.;
       m_skewprim[i] = 1.;
@@ -175,7 +175,7 @@ namespace thermalfist {
     if (m_energydensitiesGCE.size() == 0)
       CalculateEnergyDensitiesGCE();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_energydensitiesGCE[i];
     return ret;
@@ -186,7 +186,7 @@ namespace thermalfist {
     double ret = log(m_Zsum[m_StrMap[0]]) / m_Parameters.SVc;
     if (m_energydensitiesGCE.size() == 0)
       CalculateEnergyDensitiesGCE();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() != 0) {
         if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
           ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * ((m_energydensitiesGCE[i] - m_Chem[i] * m_densitiesGCE[i]) / m_Parameters.T);
@@ -202,7 +202,7 @@ namespace thermalfist {
     double ret = 0.;
     if (m_pressuresGCE.size() == 0)
       CalculatePressuresGCE();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_pressuresGCE[i];
     return ret;

@@ -878,7 +878,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Scaled variance
      */
-    double ScaledVariancePrimordial(int id) const { return (id >= 0 && id < m_wprim.size()) ? m_wprim[id] : 1.; }
+    double ScaledVariancePrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_wprim.size())) ? m_wprim[id] : 1.; }
     
     /**
      * \brief Scaled variance of final particle
@@ -890,7 +890,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Scaled variance
      */
-    double ScaledVarianceTotal(int id) const { return (id >= 0 && id < m_wtot.size()) ? m_wtot[id] : 1.; }
+    double ScaledVarianceTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_wtot.size())) ? m_wtot[id] : 1.; }
     
     /**
      * \brief Normalized skewness of primordial particle
@@ -899,7 +899,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized skewness
      */
-    double SkewnessPrimordial(int id) const { return (id >= 0 && id < m_skewprim.size()) ? m_skewprim[id] : 1.; }
+    double SkewnessPrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_skewprim.size())) ? m_skewprim[id] : 1.; }
     
     /**
      * \brief Normalized skewness of final particle
@@ -911,7 +911,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized skewness
      */
-    double SkewnessTotal(int id) const { return (id >= 0 && id < m_skewtot.size()) ? m_skewtot[id] : 1.; }
+    double SkewnessTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_skewtot.size())) ? m_skewtot[id] : 1.; }
     
     /**
      * \brief Normalized excess kurtosis of primordial particle
@@ -920,7 +920,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized excess kurtosis
      */
-    double KurtosisPrimordial(int id) const { return (id >= 0 && id < m_kurtprim.size()) ? m_kurtprim[id] : 1.; }
+    double KurtosisPrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_kurtprim.size())) ? m_kurtprim[id] : 1.; }
     
     /**
      * \brief Normalized excess kurtosis of final particle
@@ -932,7 +932,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized excess kurtosis
      */
-    double KurtosisTotal(int id) const { return (id >= 0 && id < m_kurttot.size()) ? m_kurttot[id] : 1.; }
+    double KurtosisTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_kurttot.size())) ? m_kurttot[id] : 1.; }
 
     /**
      * \brief A 2nd order susceptibility of conserved charges

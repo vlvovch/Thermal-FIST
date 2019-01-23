@@ -131,7 +131,7 @@ namespace thermalfist {
 
   long long stringToLongLong(const string &str) {
     long long ret = 0;
-    for (int i = 0; i < str.size(); ++i) {
+    for (size_t i = 0; i < str.size(); ++i) {
       if (str[i] >= '0' && str[i] <= '9') {
         ret *= 10;
         ret += static_cast<long long>(str[i] - '0');

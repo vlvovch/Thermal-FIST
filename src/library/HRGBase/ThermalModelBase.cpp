@@ -60,9 +60,9 @@ namespace thermalfist {
 
     m_NormBratio = false;
   
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       const ThermalParticle &tpart = m_TPS->Particles()[i];
-      for (int j = 0; j < tpart.Decays().size(); ++j) {
+      for (size_t j = 0; j < tpart.Decays().size(); ++j) {
         if (tpart.Decays()[j].mBratio != tpart.DecaysOriginal()[j].mBratio)
           m_NormBratio = true;
       }
@@ -198,8 +198,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableMesonMesonVirial()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if (part1.BaryonCharge() == 0 && part2.BaryonCharge() == 0)
@@ -210,8 +210,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableMesonMesonAttraction()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if (part1.BaryonCharge() == 0 && part2.BaryonCharge() == 0)
@@ -222,8 +222,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableMesonBaryonVirial()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() == 0 && part2.BaryonCharge() != 0)
@@ -235,8 +235,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableMesonBaryonAttraction()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() == 0 && part2.BaryonCharge() != 0)
@@ -248,8 +248,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableBaryonBaryonVirial()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() > 0)
@@ -261,8 +261,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableBaryonBaryonAttraction()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() > 0)
@@ -274,8 +274,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableBaryonAntiBaryonVirial()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() < 0)
@@ -287,8 +287,8 @@ namespace thermalfist {
 
   void ThermalModelBase::DisableBaryonAntiBaryonAttraction()
   {
-    for (int i = 0; i < TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < TPS()->ComponentsNumber(); ++j) {
         const ThermalParticle &part1 = TPS()->Particles()[i];
         const ThermalParticle &part2 = TPS()->Particles()[j];
         if ((part1.BaryonCharge() > 0 && part2.BaryonCharge() < 0)
@@ -322,7 +322,7 @@ namespace thermalfist {
 
   void ThermalModelBase::SetStatistics(bool stats) {
     m_QuantumStats = stats;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       m_TPS->Particle(i).UseStatistics(stats);
   }
 
@@ -338,7 +338,7 @@ namespace thermalfist {
 
   void ThermalModelBase::FillChemicalPotentials() {
     m_Chem.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       m_Chem[i] = m_TPS->Particles()[i].BaryonCharge() * m_Parameters.muB + m_TPS->Particles()[i].Strangeness() * m_Parameters.muS + m_TPS->Particles()[i].ElectricCharge() * m_Parameters.muQ + m_TPS->Particles()[i].Charm() * m_Parameters.muC;
   }
 
@@ -353,7 +353,7 @@ namespace thermalfist {
 
   double ThermalModelBase::ChemicalPotential(int i) const
   {
-    if (i < 0 || i >= m_Chem.size()) {
+    if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
       printf("**ERROR** ThermalModelBase::ChemicalPotential(int i): i is out of bounds!");
       exit(1);
     }
@@ -363,7 +363,7 @@ namespace thermalfist {
 
   void ThermalModelBase::CalculateFeeddown() {
     if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
-      for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+      for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
         m_TPS->Particle(i).CalculateThermalBranchingRatios(m_Parameters, m_UseWidth, m_Chem[i] + MuShift(i));
       }
       m_TPS->ProcessDecays();
@@ -374,11 +374,11 @@ namespace thermalfist {
 
     // According to stability flags
     int feed_index = static_cast<int>(Feeddown::StabilityFlag);
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densitiestotal[i] = m_densities[i];
       //const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
       const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[feed_index][i];
-      for (int j = 0; j < decayContributions.size(); ++j)
+      for (size_t j = 0; j < decayContributions.size(); ++j)
         if (i != decayContributions[j].second) 
           m_densitiestotal[i] += decayContributions[j].first * m_densities[decayContributions[j].second];
     }
@@ -387,11 +387,11 @@ namespace thermalfist {
 
     // Weak, EM, strong
     for (feed_index = static_cast<int>(Feeddown::Weak); feed_index <= static_cast<int>(Feeddown::Strong); ++feed_index) {
-      for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+      for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
         m_densitiesbyfeeddown[feed_index][i] = m_densities[i];
         //const std::vector< std::pair<double, int> >& decayContributions = m_TPS->Particles()[i].DecayContributionsByFeeddown()[feed_index];
         const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[feed_index][i];
-        for (int j = 0; j < decayContributions.size(); ++j)
+        for (size_t j = 0; j < decayContributions.size(); ++j)
           if (i != decayContributions[j].second)
             m_densitiesbyfeeddown[feed_index][i] += decayContributions[j].first * m_densities[decayContributions[j].second];
       }
@@ -546,7 +546,7 @@ namespace thermalfist {
     char cc[1000];
 
     m_LastCalculationSuccessFlag = true;
-    for (int i = 0; i < m_densities.size(); ++i) {
+    for (size_t i = 0; i < m_densities.size(); ++i) {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
@@ -568,7 +568,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateHadronDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_densities[i];
 
     return ret;
@@ -577,7 +577,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateBaryonDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].BaryonCharge() * m_densities[i];
 
     return ret;
@@ -586,7 +586,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateChargeDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].ElectricCharge() * m_densities[i];
 
     return ret;
@@ -595,7 +595,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateStrangenessDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].Strangeness() * m_densities[i];
 
     return ret;
@@ -604,7 +604,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateCharmDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].Charm() * m_densities[i];
     return ret;
   }
@@ -612,7 +612,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateAbsoluteBaryonDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += fabs((double)m_TPS->Particles()[i].BaryonCharge()) * m_densities[i];
     return ret;
   }
@@ -620,7 +620,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateAbsoluteChargeDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += fabs((double)m_TPS->Particles()[i].ElectricCharge()) * m_densities[i];
     return ret;
   }
@@ -628,7 +628,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateAbsoluteStrangenessDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].AbsoluteStrangeness() * m_densities[i];
     return ret;
   }
@@ -636,7 +636,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateAbsoluteCharmDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].AbsoluteCharm() * m_densities[i];
     return ret;
   }
@@ -644,7 +644,7 @@ namespace thermalfist {
   double ThermalModelBase::CalculateArbitraryChargeDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].ArbitraryCharge() * m_densities[i];
     return ret;
   }
@@ -681,7 +681,7 @@ namespace thermalfist {
       dens = &m_densities;
     else if (feeddown == Feeddown::StabilityFlag) 
       dens = &m_densitiestotal;
-    else if (static_cast<int>(feeddown) < m_densitiesbyfeeddown.size()) 
+    else if (static_cast<size_t>(feeddown) < m_densitiesbyfeeddown.size()) 
       dens = &m_densitiesbyfeeddown[static_cast<int>(feeddown)];
     else {
       printf("**WARNING** %s: GetDensity: Unknown feeddown: %d\n", m_TAG.c_str(), static_cast<int>(feeddown));
@@ -700,7 +700,7 @@ namespace thermalfist {
 
   std::vector<double> ThermalModelBase::GetIdealGasDensities() const {
     std::vector<double> ret = m_densities;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       ret[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
     return ret;
@@ -718,7 +718,7 @@ namespace thermalfist {
   {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.0;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       int tQ = m_TPS->Particles()[i].ElectricCharge();
       bool fl = false;
       if (type == 0  && tQ != 0)
@@ -740,7 +740,7 @@ namespace thermalfist {
       return 1.;
     }
     double ret = 0.0;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       int tQ = m_TPS->Particles()[i].ElectricCharge();
       bool fl = false;
       if (type == 0 && tQ != 0)
@@ -750,7 +750,7 @@ namespace thermalfist {
       if (type == -1 && tQ < 0)
         fl = true;
       if (fl) {
-        for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+        for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
           int tQ2 = m_TPS->Particles()[j].ElectricCharge();
           bool fl2 = false;
           if (type == 0 && tQ2 != 0)
@@ -778,7 +778,7 @@ namespace thermalfist {
       op = 2;
 
     double ret = 0.0;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       ret += m_densities[i] * m_TPS->Particles()[i].Nch()[op];
     }
     return ret * Volume();
@@ -794,9 +794,9 @@ namespace thermalfist {
     if (type == -1)
       op = 2;
     double ret = 0.0;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       ret += m_densities[i] * Volume() * m_TPS->Particles()[i].DeltaNch()[op];
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         ret += m_PrimCorrel[i][j] * m_Parameters.T * Volume() * m_TPS->Particles()[i].Nch()[op] * m_TPS->Particles()[j].Nch()[op];
       }
     }
@@ -821,7 +821,7 @@ namespace thermalfist {
       m_TotalCorrel[i][i] = m_PrimCorrel[i][i];
       //for (int r = 0; r < m_TPS->Particles()[i].DecayContributions().size(); ++r) {
       const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
-      for (int r = 0; r < decayContributions.size(); ++r) {
+      for (size_t r = 0; r < decayContributions.size(); ++r) {
         int rr = decayContributions[r].second;
       
         m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->DecayCumulants()[i][r].first[1];
@@ -829,7 +829,7 @@ namespace thermalfist {
       
         m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * decayContributions[r].first;
       
-        for (int r2 = 0; r2 < decayContributions.size(); ++r2) {
+        for (size_t r2 = 0; r2 < decayContributions.size(); ++r2) {
           int rr2 = decayContributions[r2].second;
           m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * decayContributions[r].first * decayContributions[r2].first;
         }
@@ -847,32 +847,32 @@ namespace thermalfist {
             const ThermalParticleSystem::DecayContributionsToParticle& decayContributionsI = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
             const ThermalParticleSystem::DecayContributionsToParticle& decayContributionsJ = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][j];
             
-            for (int r = 0; r < decayContributionsJ.size(); ++r) {
+            for (size_t r = 0; r < decayContributionsJ.size(); ++r) {
               int rr = decayContributionsJ[r].second;
               m_TotalCorrel[i][j] += m_PrimCorrel[i][rr] * decayContributionsJ[r].first;
             }
 
-            for (int r = 0; r < decayContributionsI.size(); ++r) {
+            for (size_t r = 0; r < decayContributionsI.size(); ++r) {
               int rr = decayContributionsI[r].second;
               m_TotalCorrel[i][j] += m_PrimCorrel[j][rr] * decayContributionsI[r].first;
             }
 
-            for (int r = 0; r < decayContributionsI.size(); ++r) {
+            for (size_t r = 0; r < decayContributionsI.size(); ++r) {
               int rr = decayContributionsI[r].second;
 
-              for (int r2 = 0; r2 < decayContributionsJ.size(); ++r2) {
+              for (size_t r2 = 0; r2 < decayContributionsJ.size(); ++r2) {
                 int rr2 = decayContributionsJ[r2].second;
                 m_TotalCorrel[i][j] += m_PrimCorrel[rr][rr2] * decayContributionsI[r].first * decayContributionsJ[r2].first;
               }
             }
 
           
-            for (int r = 0; r < m_TPS->Particles().size(); ++r) {
+            for (int r = 0; r < m_TPS->ComponentsNumber(); ++r) {
               if (r != i && r != j) { // && !m_TPS->Particles()[r].IsStable()) {
                 double nij = 0., ni = 0., nj = 0., dnij = 0.;
                 //const ThermalParticle &tpart = m_TPS->Particle(r);
                 const ThermalParticleSystem::ResonanceFinalStatesDistribution &decayDistributions = m_TPS->ResonanceFinalStatesDistributions()[r];
-                for (int br = 0; br < decayDistributions.size(); ++br) {
+                for (size_t br = 0; br < decayDistributions.size(); ++br) {
                   nij += decayDistributions[br].first * decayDistributions[br].second[i] * decayDistributions[br].second[j];
                   ni  += decayDistributions[br].first * decayDistributions[br].second[i];
                   nj  += decayDistributions[br].first * decayDistributions[br].second[j];
@@ -902,13 +902,13 @@ namespace thermalfist {
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
         m_Susc[i][j] = 0.;
-        for (int k = 0; k < m_PrimCorrel.size(); ++k) {
+        for (size_t k = 0; k < m_PrimCorrel.size(); ++k) {
           int c1 = 0;
           if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
           if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
           if (i == 2) c1 = m_TPS->Particles()[k].Strangeness();
           if (i == 3) c1 = m_TPS->Particles()[k].Charm();
-          for (int kp = 0; kp < m_PrimCorrel.size(); ++kp) {
+          for (size_t kp = 0; kp < m_PrimCorrel.size(); ++kp) {
             int c2 = 0;
             if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
             if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
@@ -932,7 +932,7 @@ namespace thermalfist {
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         m_ProxySusc[i][j] = 0.;
-        for (int k = 0; k < m_TotalCorrel.size(); ++k) {
+        for (size_t k = 0; k < m_TotalCorrel.size(); ++k) {
           if (m_TPS->Particles()[k].IsStable()) {
             int c1 = 0;
             //if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
@@ -940,7 +940,7 @@ namespace thermalfist {
             if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
             if (i == 2) c1 = 1 * (m_TPS->Particles()[k].PdgId() == 321) - 1 * (m_TPS->Particles()[k].PdgId() == -321);
             if (i == 3) c1 = m_TPS->Particles()[k].Charm();
-            for (int kp = 0; kp < m_TotalCorrel.size(); ++kp) {
+            for (size_t kp = 0; kp < m_TotalCorrel.size(); ++kp) {
               if (m_TPS->Particles()[kp].IsStable()) {
                 int c2 = 0;
                 //if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
@@ -1047,7 +1047,7 @@ namespace thermalfist {
     
     vector<double> wprim;
     wprim.resize(m_THM->Densities().size());
-    for (int i = 0; i < wprim.size(); ++i)
+    for (size_t i = 0; i < wprim.size(); ++i)
       wprim[i] = m_THM->ParticleScaledVariance(i);
 
     int NNN = 0;
@@ -1065,12 +1065,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1084,12 +1084,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1103,12 +1103,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1131,12 +1131,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1148,12 +1148,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1165,12 +1165,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1191,12 +1191,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1208,12 +1208,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1225,12 +1225,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d1 /= m_THM->Parameters().T;
 
         d2 = 0.;
-        for (int i = 0; i < wprim.size(); ++i)
+        for (size_t i = 0; i < wprim.size(); ++i)
           d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
         d2 /= m_THM->Parameters().T;
 
@@ -1366,7 +1366,7 @@ namespace thermalfist {
 
 
       maxdiff = 0.;
-      for (int i = 0; i < xcur.size(); ++i) {
+      for (size_t i = 0; i < xcur.size(); ++i) {
         maxdiff = std::max(maxdiff, fabs(fnew[i]));
       }
 
@@ -1420,7 +1420,7 @@ namespace thermalfist {
     BroydenEquations(), m_Constr(vConstr), m_Type(vType), m_Totals(vTotals), m_THM(model)
   {
     m_N = 0;
-    for (int i = 0; i < m_Constr.size(); ++i)
+    for (size_t i = 0; i < m_Constr.size(); ++i)
       m_N += m_Constr[i];
   }
 
@@ -1520,18 +1520,18 @@ namespace thermalfist {
 
     vector<double> wprim;
     wprim.resize(m_THM->Densities().size());
-    for (int i = 0; i < wprim.size(); ++i) wprim[i] = m_THM->ParticleScaledVariance(i);
+    for (size_t i = 0; i < wprim.size(); ++i) wprim[i] = m_THM->ParticleScaledVariance(i);
 
     vector< vector<double> > deriv(4, vector<double>(4)), derivabs(4, vector<double>(4));
     for (int i = 0; i < 4; ++i)
       for (int j = 0; j < 4; ++j) {
         deriv[i][j] = 0.;
-        for (int part = 0; part < wprim.size(); ++part)
+        for (size_t part = 0; part < wprim.size(); ++part)
           deriv[i][j] += m_THM->TPS()->Particles()[part].GetCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * wprim[part];
         deriv[i][j] /= m_THM->Parameters().T;
 
         derivabs[i][j] = 0.;
-        for (int part = 0; part < wprim.size(); ++part)
+        for (size_t part = 0; part < wprim.size(); ++part)
           derivabs[i][j] += m_THM->TPS()->Particles()[part].GetAbsCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * wprim[part];
         derivabs[i][j] /= m_THM->Parameters().T;
       }

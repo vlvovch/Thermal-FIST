@@ -137,12 +137,14 @@ bool FitParametersModel::setData(const QModelIndex & index, const QVariant & val
       param.xmax = value.toDouble() / mn;
       return true;
     }
+    else return false;
   }
   else if (role == Qt::CheckStateRole) {
     if (col == 1) {
       fParameters->GetParameter(row).toFit = value.toBool();
       return true;
     }
+    else return false;
   }
   else return true;
 }
