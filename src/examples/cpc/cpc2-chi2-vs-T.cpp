@@ -188,10 +188,18 @@ int main(int argc, char *argv[])
 
   int iters = 0; // Number of data points
 
-                 // Temperature interval, in GeV
+  // Temperature interval, in GeV
   double Tmin = 0.100;
-  double Tmax = 0.4001;
-  double dT   = 0.001;
+  double Tmax = 0.2501;
+  double dT   = 0.002;
+
+  if (config == 0)
+    dT = 0.001;
+
+  if (config == 2) {
+    dT = 0.005;
+    Tmax = 0.4001;
+  }
 
   for (double T = Tmin; T <= Tmax; T += dT) {
     // We also do not fit T, but fix it at each iteration to a given value
