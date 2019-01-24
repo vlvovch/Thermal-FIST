@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
   // Prepare for output
   char tmpc[1000];
-  sprintf(tmpc, "%s.chi2.out", fittype.c_str());
+  sprintf(tmpc, "cpc3.%s.chi2.out", fittype.c_str());
   FILE *fout = fopen(tmpc, "w");
 
 

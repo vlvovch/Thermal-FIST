@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
   
   // Prepare output
   char tmpc[1000];
-  sprintf(tmpc, "%s.TDep.out", modeltype.c_str());
+  sprintf(tmpc, "cpc1.%s.TDep.out", modeltype.c_str());
   FILE *fout = fopen(tmpc, "w");
 
   // Output to screen
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
   // Temperature interval, in GeV
   double Tmin = 0.020;
   double Tmax = 0.2001;
-  double dT   = 0.005;
+  double dT   = 0.001;
 
   for (double T = Tmin; T <= Tmax; T += dT) {
     model->SetTemperature(T);

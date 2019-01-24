@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
   
   // Prepare for output to file
   char tmpc[1000];
-  sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
+  sprintf(tmpc, "cpc2.%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
   FILE *fout = fopen(tmpc, "w");
 
   fprintf(fout, "%15s%15s%15s%15s\n",
@@ -227,14 +227,12 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+
 /**
  * \example cpc2-chi2-vs-T.cpp
  * 
  * Calculates the temperature profile of \f$ \chi^2 \f$ of a fit to
  * the ALICE 2.76 TeV data, 0-5% centrality, as in 1512.08046
- * 
- * The calculated quantities include scaled pressure, scaled energy density,
- * scaled entropy density, the 2nd and 4th order baryon number susceptibilities.
  * 
  * Calculations can be done within four variants of the HRG model:
  *   - <config> = 0: Ideal HRG model

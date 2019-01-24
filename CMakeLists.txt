@@ -8,7 +8,7 @@ project (ThermalFIST)
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 1)
 set (ThermalFIST_VERSION_MINOR 0)
-set (ThermalFIST_VERSION_DEVEL 2)
+set (ThermalFIST_VERSION_DEVEL 3)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -44,9 +44,9 @@ CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c99 -pedantic")
 if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
 #        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
@@ -54,7 +54,7 @@ endif()
 if(MSVC)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else(MSVC)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif(MSVC)
 
 

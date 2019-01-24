@@ -643,7 +643,7 @@ namespace thermalfist {
       std::string tname =  m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
       if (m_Multiplicities[i].fPDGID==1) tname =  "Npart";
       else if (m_Multiplicities[i].fPDGID==33340) tname =  m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
-      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1, 
+      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", static_cast<int>(i)+1, 
         tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, 
         (m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError,
         -(m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError,
@@ -662,7 +662,7 @@ namespace thermalfist {
       if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
       if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
 
-      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1, 
+      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", static_cast<int>(i)+1, 
         (std::string(name1 + "/" + name2)).c_str(),  m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, 
         (m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError,
         -(m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError,
