@@ -16,15 +16,15 @@ namespace thermalfist {
     double px, py, pz; ///< 3-momentum components (in GeV)
     double m;          ///< Mass (in GeV)
     double p0;         ///< Energy (in GeV)
-    int PDGID;         ///< PDG code
-    int MotherPDGID;   ///< PDG code of a mother particle, if applicable
-    bool processed;    ///< Used in event generator
+    long long PDGID;         ///< PDG code
+    long long MotherPDGID;   ///< PDG code of a mother particle, if applicable
+    bool processed;          ///< Used in event generator
 
     /// Default constructor
     SimpleParticle() { processed = false; }
 
     /// Constructs a particle from provided three-momentum, mass, and PDG code
-    SimpleParticle(double inPx, double inPy, double inPz, double inM, int inPDGID, int inMotherPDGID = 0) :
+    SimpleParticle(double inPx, double inPy, double inPz, double inM, long long inPDGID, long long inMotherPDGID = 0) :
       px(inPx),
       py(inPy),
       pz(inPz),

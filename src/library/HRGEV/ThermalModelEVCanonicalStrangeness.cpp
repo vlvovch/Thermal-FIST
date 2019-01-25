@@ -39,7 +39,7 @@ namespace thermalfist {
     if (m_modelEV == NULL)
       PrepareModelEV();
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densitiesGCE[i] = /*m_Suppression **/ m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] - m_v[i] * m_PNS);
     }
 
@@ -51,7 +51,7 @@ namespace thermalfist {
       PrepareModelEV();
 
     m_energydensitiesGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_energydensitiesGCE[i] = /*m_Suppression **/ m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i] - m_v[i] * m_PNS);
     }
   }
@@ -62,7 +62,7 @@ namespace thermalfist {
       PrepareModelEV();
 
     m_pressuresGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_pressuresGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] - m_v[i] * m_PNS);
     }
   }
@@ -80,13 +80,13 @@ namespace thermalfist {
 
     CalculateSums(m_Parameters.SVc - m_EVNS);
 
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         m_densities[i] = m_Suppression * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_densitiesGCE[i];
     }
 
     m_EVS = 0.;
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       if (m_TPS->Particles()[i].Strangeness() != 0)
         m_EVS += m_v[i] * m_densities[i] * m_Parameters.SVc;
     }
@@ -111,7 +111,7 @@ namespace thermalfist {
       CalculateEnergyDensitiesGCE();
 
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_Suppression * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_energydensitiesGCE[i];
     return ret;
   }
@@ -123,7 +123,7 @@ namespace thermalfist {
     if (m_energydensitiesGCE.size() == 0)
       CalculateEnergyDensitiesGCE();
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() != 0) {
         if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
           ret += m_Suppression * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * ((m_energydensitiesGCE[i] - (m_Chem[i] - m_v[i] * m_PNS) * m_densitiesGCE[i]) / m_Parameters.T);
@@ -139,14 +139,14 @@ namespace thermalfist {
     double ret = 0.;
     if (m_pressuresGCE.size() == 0)
       CalculatePressuresGCE();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_pressuresGCE[i];
     return ret;
   }
 
   double ThermalModelEVCanonicalStrangeness::MuShift(int id)
   {
-    if (id >= 0. && id < m_v.size())
+    if (id >= 0. && id < static_cast<int>(m_v.size()))
       return -m_v[id] * m_PNS;
     else
       return 0.0;
@@ -160,7 +160,7 @@ namespace thermalfist {
     ThermalParticleSystem *TPSnew = new ThermalParticleSystem(*m_TPS);
 
     // "Switch off" all strange particles
-    for (int i = 0; i < TPSnew->Particles().size(); ++i) {
+    for (size_t i = 0; i < TPSnew->Particles().size(); ++i) {
       ThermalParticle &part = TPSnew->Particle(i);
       if (part.Strangeness() != 0)
         part.SetDegeneracy(0.);
@@ -178,7 +178,7 @@ namespace thermalfist {
     m_PNS = m_modelEV->CalculatePressure();
     m_Suppression = m_modelEV->CommonSuppressionFactor();
     m_EVNS = 0.;
-    for (int i = 0; i < m_modelEV->Densities().size(); ++i) {
+    for (size_t i = 0; i < m_modelEV->Densities().size(); ++i) {
       m_EVNS += m_v[i] * m_modelEV->Densities()[i] * m_Parameters.SVc;
     }
   }
@@ -196,9 +196,9 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::SetRadius(double rad)
   {
-    if (m_v.size() != m_TPS->Particles().size())
+    if (static_cast<int>(m_v.size()) != m_TPS->ComponentsNumber())
       m_v.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_v[i] = CuteHRGHelper::vr(rad);
     }
   }
@@ -210,7 +210,7 @@ namespace thermalfist {
       return;
     }
     m_v.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       m_v[i] = CuteHRGHelper::vr(ri[i]);
   }
 
@@ -227,7 +227,7 @@ namespace thermalfist {
   {
     m_v = std::vector<double>(m_TPS->Particles().size(), 0.);
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -249,8 +249,8 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::WriteInteractionParameters(const std::string & filename)
   {
-    ofstream fout(filename);
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    ofstream fout(filename.c_str());
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       fout << std::setw(15) << m_TPS->Particle(i).PdgId();
       fout << std::setw(15) << m_v[i];
       fout << std::endl;
@@ -260,7 +260,7 @@ namespace thermalfist {
 
   double ThermalModelEVCanonicalStrangeness::ExcludedVolume(int i) const
   {
-    if (i < 0 || i >= m_v.size())
+    if (i < 0 || i >= static_cast<int>(m_v.size()))
       return 0.;
     return m_v[i];
   }
@@ -268,7 +268,7 @@ namespace thermalfist {
   double ThermalModelEVCanonicalStrangeness::CalculateEigenvolumeFraction()
   {
     double tEV = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       tEV += m_v[i] * m_densities[i] / 4.;
     }
     return tEV;
@@ -276,7 +276,7 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::SetRadius(int i, double rad)
   {
-    if (i >= 0 && i < m_v.size())
+    if (i >= 0 && i < static_cast<int>(m_v.size()))
       m_v[i] = CuteHRGHelper::vr(rad);
   }
 

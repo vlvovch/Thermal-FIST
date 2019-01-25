@@ -41,7 +41,7 @@ namespace thermalfist {
     if (m_modelVDW == NULL)
       PrepareModelVDW();
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
     }
 
@@ -53,7 +53,7 @@ namespace thermalfist {
       PrepareModelVDW();
 
     m_energydensitiesGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_energydensitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_MuStar[i]);
     }
   }
@@ -64,7 +64,7 @@ namespace thermalfist {
       PrepareModelVDW();
 
     m_pressuresGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_pressuresGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
     }
   }
@@ -79,9 +79,9 @@ namespace thermalfist {
     m_partialS.resize(m_StrVals.size());
     vector<double> xi(3, 0.), yi(3, 0.);
 
-    for (unsigned int i = 0; i < m_StrVals.size(); ++i) {
+    for (size_t i = 0; i < m_StrVals.size(); ++i) {
       m_partialS[i] = 0.;
-      for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         if (m_StrVals[i] == m_TPS->Particles()[j].Strangeness())
           m_partialS[i] += m_densitiesGCE[j] * Vcs[j];
     }
@@ -124,12 +124,12 @@ namespace thermalfist {
     CalculateDensitiesGCE();
 
     std::vector<double> Vcs(m_TPS->Particles().size(), 0.);
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       Vcs[i] = m_Parameters.SVc * m_Suppression[i];
 
     CalculateSums(Vcs);
 
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
         m_densities[i] = m_Suppression[i] * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_densitiesGCE[i];
     }
@@ -157,7 +157,7 @@ namespace thermalfist {
 
     ret += m_modelVDW->CalculateEnergyDensity();
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() != 0)
         if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
           ret += m_Suppression[i] * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_energydensitiesGCE[i];
@@ -175,7 +175,7 @@ namespace thermalfist {
 
     ret += log(m_Zsum[m_StrMap[0]]) / m_Parameters.SVc;
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() != 0)
         if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
           ret += m_Suppression[i] * (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * ((m_energydensitiesGCE[i] - (m_MuStar[i]) * m_densitiesGCE[i]) / m_Parameters.T);
@@ -191,7 +191,7 @@ namespace thermalfist {
 
     ret += m_modelVDW->CalculatePressure();
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Strangeness() != 0)
         if (m_StrMap.count(-m_TPS->Particles()[i].Strangeness()))
           ret += (m_Zsum[m_StrMap[-m_TPS->Particles()[i].Strangeness()]] / m_Zsum[m_StrMap[0]]) * m_pressuresGCE[i];
@@ -200,7 +200,7 @@ namespace thermalfist {
 
   double ThermalModelVDWCanonicalStrangeness::MuShift(int id)
   {
-    if (id >= 0. && id < m_Virial.size())
+    if (id >= 0. && id < static_cast<int>(m_Virial.size()))
       return m_MuStar[id] - m_Chem[id];
     else
       return 0.0;
@@ -214,7 +214,7 @@ namespace thermalfist {
     ThermalParticleSystem *TPSnew = new ThermalParticleSystem(*m_TPS);
 
     // "Switch off" all strange particles
-    for (int i = 0; i < TPSnew->Particles().size(); ++i) {
+    for (size_t i = 0; i < TPSnew->Particles().size(); ++i) {
       ThermalParticle &part = TPSnew->Particle(i);
       if (part.Strangeness() != 0)
         part.SetDegeneracy(0.);
@@ -231,7 +231,7 @@ namespace thermalfist {
     m_modelVDW->CalculateDensities();
 
     std::vector<double> PidNS(m_modelVDW->Densities().size(), 0.);
-    for (int j = 0; j < m_modelVDW->Densities().size(); ++j) {
+    for (size_t j = 0; j < m_modelVDW->Densities().size(); ++j) {
       PidNS[j] = m_modelVDW->TPS()->Particles()[j].Density(m_modelVDW->Parameters(), IdealGasFunctions::Pressure, m_modelVDW->UseWidth(), m_modelVDW->MuStar(j));
     }
 
@@ -239,14 +239,14 @@ namespace thermalfist {
 
     m_Suppression.resize(TPS()->Particles().size());
     m_MuStar.resize(TPS()->Particles().size());
-    for (int i = 0; i < m_Suppression.size(); ++i) {
+    for (size_t i = 0; i < m_Suppression.size(); ++i) {
       m_Suppression[i] = 1.0;
-      for (int j = 0; j < m_modelVDW->Densities().size(); ++j) {
+      for (size_t j = 0; j < m_modelVDW->Densities().size(); ++j) {
         m_Suppression[i] += -m_Virial[j][i] * m_modelVDW->Densities()[j];
       }
 
       m_MuStar[i] = m_Chem[i];
-      for (int j = 0; j < m_modelVDW->Densities().size(); ++j) {
+      for (size_t j = 0; j < m_modelVDW->Densities().size(); ++j) {
         m_MuStar[i] += -m_Virial[i][j] * PidNS[j];
         m_MuStar[i] += (m_Attr[i][j] + m_Attr[j][i]) * m_modelVDW->Densities()[j];
       }
@@ -271,16 +271,16 @@ namespace thermalfist {
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_Virial[i].resize(m_TPS->Particles().size());
-      for (int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         m_Virial[i][j] = CuteHRGHelper::brr(ri[i], ri[j]);
     }
 
     // Correct R1=R2 and R2=0
     std::vector< std::vector<double> > fVirialTmp = m_Virial;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         if (i == j) m_Virial[i][j] = fVirialTmp[i][j];
         else if ((fVirialTmp[i][i] + fVirialTmp[j][j]) > 0.0) m_Virial[i][j] = 2. * fVirialTmp[i][j] * fVirialTmp[i][i] / (fVirialTmp[i][i] + fVirialTmp[j][j]);
       }
@@ -309,7 +309,7 @@ namespace thermalfist {
     m_Virial = std::vector< std::vector<double> >(m_TPS->Particles().size(), std::vector<double>(m_TPS->Particles().size(), 0.));
     m_Attr = std::vector< std::vector<double> >(m_TPS->Particles().size(), std::vector<double>(m_TPS->Particles().size(), 0.));
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -336,9 +336,9 @@ namespace thermalfist {
 
   void ThermalModelVDWCanonicalStrangeness::WriteInteractionParameters(const std::string & filename)
   {
-    ofstream fout(filename);
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+    ofstream fout(filename.c_str());
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         fout << std::setw(15) << m_TPS->Particle(i).PdgId();
         fout << std::setw(15) << m_TPS->Particle(j).PdgId();
         fout << std::setw(15) << m_Virial[i][j];
@@ -351,14 +351,14 @@ namespace thermalfist {
 
   double ThermalModelVDWCanonicalStrangeness::VirialCoefficient(int i, int j) const
   {
-    if (i < 0 || i >= m_Virial.size() || j < 0 || j >= m_Virial.size())
+    if (i < 0 || i >= static_cast<int>(m_Virial.size()) || j < 0 || j >= static_cast<int>(m_Virial.size()))
       return 0.;
     return m_Virial[i][j];
   }
 
   double ThermalModelVDWCanonicalStrangeness::AttractionCoefficient(int i, int j) const
   {
-    if (i < 0 || i >= m_Attr.size() || j < 0 || j >= m_Attr.size())
+    if (i < 0 || i >= static_cast<int>(m_Attr.size()) || j < 0 || j >= static_cast<int>(m_Attr.size()))
       return 0.;
     return m_Attr[i][j];
   }

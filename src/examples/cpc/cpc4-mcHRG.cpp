@@ -36,19 +36,19 @@ double Tss(double ss) {
 double CalculateAveragedDecaysChi2(ThermalModelBase *model, const std::vector<double> & ch1, const std::vector<double> & ch2)
 {
   double ret = 0.;
-  for (int r = 0; r < model->TPS()->Particles().size(); ++r) {
-    const ThermalParticle &part_r = model->TPS()->Particle(r);
+  for (int r = 0; r < model->TPS()->ComponentsNumber(); ++r) {
+    //const ThermalParticle &part_r = model->TPS()->Particle(r);
 
     const ThermalParticleSystem::ResonanceFinalStatesDistribution& decayDistributions = model->TPS()->ResonanceFinalStatesDistributions()[r];
 
     double mn1 = model->ScaledVariancePrimordial(r) * model->Densities()[r] / pow(model->Parameters().T, 3) / pow(xMath::GeVtoifm(), 3);
 
     double mn2 = 0., mn3 = 0.;
-    for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
-      const ThermalParticle &part_j = model->TPS()->Particle(j);
+    for (int j = 0; j < model->TPS()->ComponentsNumber(); ++j) {
+      //const ThermalParticle &part_j = model->TPS()->Particle(j);
 
       double njavr = 0.;
-      for (int i = 0; i < decayDistributions.size(); ++i) {
+      for (size_t i = 0; i < decayDistributions.size(); ++i) {
         njavr += decayDistributions[i].first * decayDistributions[i].second[j];
       }
 
@@ -260,8 +260,9 @@ int main(int argc, char *argv[])
   // Now Monte Carlo
   iters = 0;
   wt1 = get_wall_time();
+  RandomGenerators::SetSeed(1);
 
-  for (int ind = 0; ind < ens.size(); ind++) {
+  for (size_t ind = 0; ind < ens.size(); ind++) {
     model->SetTemperature(Ts[ind]);
     model->SetBaryonChemicalPotential(muBs[ind]);
     model->SetElectricChemicalPotential(muQs[ind]);
@@ -281,24 +282,24 @@ int main(int argc, char *argv[])
     double wsum = 0.;
     for (int i = 0; i < nevents; ++i) {
       SimpleEvent ev = generator.GetEvent();
-      int mcev_B = 0., mcev_Q = 0., mcev_S = 0., mcev_p = 0., mcev_k = 0.;
+      int mcev_B = 0, mcev_Q = 0, mcev_S = 0, mcev_p = 0, mcev_k = 0;
 
-      for (int part = 0; part < ev.Particles.size(); ++part) {
-        int pdgid = ev.Particles[part].PDGID;
+      for (size_t part = 0; part < ev.Particles.size(); ++part) {
+        long long pdgid = ev.Particles[part].PDGID;
         const ThermalParticle &thermpart = parts.ParticleByPDG(pdgid);
         mcev_B += thermpart.BaryonCharge();
         mcev_Q += thermpart.ElectricCharge();
         mcev_S += thermpart.Strangeness();
 
         if (pdgid == 2212)
-          mcev_p += 1.;
+          mcev_p += 1;
         else if (pdgid == -2212)
-          mcev_p += (-1.);
+          mcev_p += (-1);
 
         if (pdgid == 321)
-          mcev_k += ev.weight;
+          mcev_k += 1;
         else if (pdgid == -321)
-          mcev_k += (-1.);
+          mcev_k += (-1);
       }
 
       mc_B += ev.weight * mcev_B;

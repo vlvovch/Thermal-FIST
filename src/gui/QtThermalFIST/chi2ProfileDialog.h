@@ -35,30 +35,30 @@ class chi2ProfileWorker : public QThread
     int *currentSize;
     int *stop;
 
-		std::string ParameterName;
+    std::string ParameterName;
     std::vector< double > *params;
     std::vector<double> *Avalues;
 
     void run() Q_DECL_OVERRIDE {
         for(int i=0;i<Avalues->size() && !(*stop);++i) {
             double tmpParam = Avalues->operator [](i);
-						if (ParameterName == "T" || ParameterName == "muB" ||
-							ParameterName == "muQ" || ParameterName == "muS" ||
-							ParameterName == "muC")
-							tmpParam /= 1.e3; // MeV to GeV
+            if (ParameterName == "T" || ParameterName == "muB" ||
+              ParameterName == "muQ" || ParameterName == "muS" ||
+              ParameterName == "muC")
+              tmpParam /= 1.e3; // MeV to GeV
 
-						modelFit->SetParameterFitFlag(ParameterName, false);
-						modelFit->SetParameter(ParameterName, tmpParam, 0.1, Avalues->operator [](0), Avalues->operator [](Avalues->size() - 1));
+            modelFit->SetParameterFitFlag(ParameterName, false);
+            modelFit->SetParameter(ParameterName, tmpParam, 0.1, Avalues->operator [](0), Avalues->operator [](Avalues->size() - 1));
             thermalfist::ThermalModelFitParameters res = modelFit->PerformFit();
-						params->operator[](i) = res.chi2;
+            params->operator[](i) = res.chi2;
             (*currentSize)++;
         }
         emit calculated();
     }
 
 public:
-	chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
-					 std::string inParameterName = "T",
+  chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
+           std::string inParameterName = "T",
            std::vector<double> *Avalueso = NULL,
            std::vector<double> *paramso = NULL,
            int *currentSizeo = NULL,
@@ -67,7 +67,7 @@ public:
         QThread(parent) {
             modelFit = mod;
             params = paramso;
-						ParameterName = inParameterName;
+            ParameterName = inParameterName;
             Avalues = Avalueso;
             currentSize = currentSizeo;
             stop = stopo;
@@ -80,11 +80,11 @@ class chi2ProfileDialog : public QDialog
 {
     Q_OBJECT
 
-		std::vector< std::vector<double> > vecParams;
-		std::vector< std::vector<double> > vecAvalues;
-		std::vector< double > vecAleft, vecAright;
-		std::vector< int > vecCurrentSize;
-		std::vector< int > vecTotalSize;
+    std::vector< std::vector<double> > vecParams;
+    std::vector< std::vector<double> > vecAvalues;
+    std::vector< double > vecAleft, vecAright;
+    std::vector< int > vecCurrentSize;
+    std::vector< int > vecTotalSize;
 
     bool fRunning;
     int fStop;
@@ -93,16 +93,16 @@ class chi2ProfileDialog : public QDialog
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelFit *modelFit, *modelFitInput;
     thermalfist::ThermalModelFitParameters fitParams;
-		ThermalModelConfig config;
-		std::map <int, std::string> paramNamesMap;
+    ThermalModelConfig config;
+    std::map <int, std::string> paramNamesMap;
 
-		std::vector<thermalfist::FittedQuantity> quantities;
+    std::vector<thermalfist::FittedQuantity> quantities;
 
-		QLabel *labelAmin, *labelAmax, *labelAiter;
+    QLabel *labelAmin, *labelAmax, *labelAiter;
 
     QCustomPlot *plot;
 
-		QComboBox *comboParameter;
+    QComboBox *comboParameter;
 
     QDoubleSpinBox *spinAmin, *spinAmax;
     QSpinBox *spinAiter;
@@ -111,7 +111,7 @@ class chi2ProfileDialog : public QDialog
 
     QPushButton *buttonCalculate;
     QPushButton *buttonReplot;
-		QPushButton *buttonToFile;
+    QPushButton *buttonToFile;
 
     QProgressBar *progBar;
     QTimer *calcTimer;
@@ -119,7 +119,7 @@ class chi2ProfileDialog : public QDialog
     //QString GetParameters();
     //QString GetResults();
 
-		QString lastFilePath;
+    QString lastFilePath;
 public:
     explicit  chi2ProfileDialog(QWidget *parent, thermalfist::ThermalParticleSystem *inTPS, const ThermalModelConfig & inConfig, const thermalfist::ThermalModelFitParameters & inParams, const std::vector<thermalfist::FittedQuantity> & inQuantities, thermalfist::ThermalModelFit *inFit = NULL);
 
@@ -129,11 +129,11 @@ public slots:
     void replot();
     void finalize();
     void updateProgress();
-		void parameterChanged(int index);
-		void limitsChanged();
-		void writetoFile();
+    void parameterChanged(int index);
+    void limitsChanged();
+    void writetoFile();
 private:
-	void setModel();
+  void setModel();
 };
 
 #endif // CHI2PROFILEDIALOG_H

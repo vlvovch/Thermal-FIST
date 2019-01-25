@@ -57,9 +57,6 @@ namespace thermalfist {
       const double *xlago = coefficients_xlag32;
       const double *wlago = coefficients_wlag32;
 
-
-      double sum = 0.;
-
       for (int j = 0; j < 32; j++) {
         xleg[j] = (by - ay) / 2.*xlego[j] + (by + ay) / 2.;
         wleg[j] = (by - ay) / 2.*wlego[j];
@@ -69,30 +66,26 @@ namespace thermalfist {
     }
 
     void GetCoefs2DLegendre32Legendre32(double ay, double by, double a2y, double b2y,
-      std::vector<double> *xlagp, std::vector<double> *wlagp,
-      std::vector<double> *xlegp, std::vector<double> *wlegp) {
-      std::vector<double> &xlag = *xlagp;
-      std::vector<double> &wlag = *wlagp;
-      std::vector<double> &xleg = *xlegp;
-      std::vector<double> &wleg = *wlegp;
+      std::vector<double> *xlegp1, std::vector<double> *wlegp1,
+      std::vector<double> *xlegp2, std::vector<double> *wlegp2) {
+      std::vector<double> &xleg1 = *xlegp1;
+      std::vector<double> &wleg1 = *wlegp1;
+      std::vector<double> &xleg2 = *xlegp2;
+      std::vector<double> &wleg2 = *wlegp2;
 
-      xlag.resize(32);
-      wlag.resize(32);
-      xleg.resize(32);
-      wleg.resize(32);
+      xleg1.resize(32);
+      wleg1.resize(32);
+      xleg2.resize(32);
+      wleg2.resize(32);
 
       const double *xlego = coefficients_xleg32;
       const double *wlego = coefficients_wleg32;
-      const double *xlago = coefficients_xlag32;
-      const double *wlago = coefficients_wlag32;
-
-      double sum = 0.;
 
       for (int j = 0; j < 32; j++) {
-        xlag[j] = (by - ay) / 2.*xlego[j] + (by + ay) / 2.;
-        wlag[j] = (by - ay) / 2.*wlego[j];
-        xleg[j] = (b2y - a2y) / 2.*xlego[j] + (b2y + a2y) / 2.;
-        wleg[j] = (b2y - a2y) / 2.*wlego[j];
+        xleg1[j] = (by - ay) / 2.*xlego[j] + (by + ay) / 2.;
+        wleg1[j] = (by - ay) / 2.*wlego[j];
+        xleg2[j] = (b2y - a2y) / 2.*xlego[j] + (b2y + a2y) / 2.;
+        wleg2[j] = (b2y - a2y) / 2.*wlego[j];
       }
     }
 

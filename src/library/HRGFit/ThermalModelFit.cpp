@@ -27,6 +27,7 @@
 #endif
 
 #include "HRGBase/ThermalModelBase.h"
+#include "HRGBase/Utility.h"
 
 namespace thermalfist {
 
@@ -88,14 +89,24 @@ namespace thermalfist {
         m_THMFit->model()->SetParameters(m_THMFit->model()->Parameters());
 
         //m_THMFit->model()->SetQoverB(m_THMFit->QoverB());
+
+        IdealGasFunctions::calculationHadBECIssue = false;
+
         m_THMFit->model()->ConstrainChemicalPotentials();
 
         m_THMFit->model()->CalculateDensities();
 
-        double Npart = m_THMFit->model()->CalculateBaryonDensity() * m_THMFit->model()->Parameters().V;
-
+        // If current chemical potentials lead to
+        // Bose-Einstein function divergence (\mu > m),
+        // then effectively discard parameter of the current iteration by setting chi^2 to 10^12
+        if (IdealGasFunctions::calculationHadBECIssue) {
+          printf("%15d ", m_THMFit->Iters());
+          printf("Issue with Bose-Einstein condensation, discarding this iteration...\n");
+          return m_THMFit->Chi2() = chi2 = 1.e12;
+        }
+        
         // Ratios first
-        for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
+        for (size_t i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
           if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Ratio) {
             const ExperimentRatio &ratio = m_THMFit->FittedQuantities()[i].ratio;
             double dens1 = m_THMFit->model()->GetDensity(ratio.fPDGID1, ratio.fFeedDown1);
@@ -108,7 +119,7 @@ namespace thermalfist {
         }
 
         // Yields second
-        for (int i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
+        for (size_t i = 0; i < m_THMFit->FittedQuantities().size(); ++i) {
           if (m_THMFit->FittedQuantities()[i].type == FittedQuantity::Multiplicity) {
             const ExperimentMultiplicity &multiplicity = m_THMFit->FittedQuantities()[i].mult;
             double dens = m_THMFit->model()->GetDensity(multiplicity.fPDGID, multiplicity.fFeedDown);
@@ -120,28 +131,28 @@ namespace thermalfist {
         }
 
         if (m_verbose) {
-          printf("%15d", m_THMFit->Iters());
-          printf("%15lf", chi2);
+          printf("%15d ", m_THMFit->Iters());
+          printf("%15lf ", chi2);
           if (m_THMFit->Parameters().T.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().T);
+            printf("%15lf ", m_THMFit->model()->Parameters().T);
           if (m_THMFit->Parameters().muB.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muB);
+            printf("%15lf ", m_THMFit->model()->Parameters().muB);
           if (m_THMFit->Parameters().muQ.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muQ);
+            printf("%15lf ", m_THMFit->model()->Parameters().muQ);
           if (m_THMFit->Parameters().muS.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muS);
+            printf("%15lf ", m_THMFit->model()->Parameters().muS);
           if (m_THMFit->Parameters().muC.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().muC);
+            printf("%15lf ", m_THMFit->model()->Parameters().muC);
           if (m_THMFit->Parameters().R.toFit)
-            printf("%15lf", par[3]);
+            printf("%15lf ", par[3]);
           if (m_THMFit->Parameters().Rc.toFit)
-            printf("%15lf", par[4]);
+            printf("%15lf ", par[4]);
           if (m_THMFit->Parameters().gammaq.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaq);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaq);
           if (m_THMFit->Parameters().gammaS.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaS);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaS);
           if (m_THMFit->Parameters().gammaC.toFit)
-            printf("%15lf", m_THMFit->model()->Parameters().gammaC);
+            printf("%15lf ", m_THMFit->model()->Parameters().gammaC);
           printf("\n");
 
           if (m_THMFit->model()->Ensemble() == ThermalModelBase::CE)
@@ -192,10 +203,6 @@ namespace thermalfist {
   ThermalModelFitParameters ThermalModelFit::PerformFit(bool verbose, bool AsymmErrors) {
   #ifdef USE_MINUIT
     m_ModelData.resize(m_Quantities.size(), 0.);
-
-    //m_Parameters.Rc.value = m_Parameters.R.value;
-    //m_Parameters.Rc.xmin  = m_Parameters.R.xmin;
-    //m_Parameters.Rc.xmax  = m_Parameters.R.xmax;
 
     m_Parameters.B = m_model->Parameters().B;
     m_Parameters.Q = m_model->Parameters().Q;
@@ -295,28 +302,28 @@ namespace thermalfist {
 
       if (verbose) {
         printf("Starting a thermal fit...\n\n");
-        printf("%15s", "Iteration");
-        printf("%15s", "chi2");
+        printf("%15s ", "Iteration");
+        printf("%15s ", "chi2");
         if (m_Parameters.T.toFit)
-          printf("%15s", "T [GeV]");
+          printf("%15s ", "T [GeV]");
         if (m_Parameters.muB.toFit)
-          printf("%15s", "muB [GeV]");
+          printf("%15s ", "muB [GeV]");
         if (m_Parameters.muQ.toFit)
-          printf("%15s", "muQ [GeV]");
+          printf("%15s ", "muQ [GeV]");
         if (m_Parameters.muS.toFit)
-          printf("%15s", "muS [GeV]");
+          printf("%15s ", "muS [GeV]");
         if (m_Parameters.muC.toFit)
-          printf("%15s", "muC [GeV]");
+          printf("%15s ", "muC [GeV]");
         if (m_Parameters.R.toFit)
-          printf("%15s", "R [fm]");
+          printf("%15s ", "R [fm]");
         if (m_Parameters.Rc.toFit)
-          printf("%15s", "Rc [fm]");
+          printf("%15s ", "Rc [fm]");
         if (m_Parameters.gammaq.toFit)
-          printf("%15s", "gammaq");
+          printf("%15s ", "gammaq");
         if (m_Parameters.gammaS.toFit)
-          printf("%15s", "gammaS");
+          printf("%15s ", "gammaS");
         if (m_Parameters.gammaC.toFit)
-          printf("%15s", "gammaC");
+          printf("%15s ", "gammaC");
         printf("\n");
       }
 
@@ -364,9 +371,9 @@ namespace thermalfist {
       ret.gammaC.value = (min.UserParameters()).Params()[9];
       ret.gammaC.error = (min.UserParameters()).Errors()[9];
 
-      if (!m_Parameters.Rc.toFit) {
-        ret.Rc = ret.R;
-        ret.Rc.name = "Rc";
+      if (!m_Parameters.Rc.toFit && FixVcOverV()) {
+        ret.Rc.value = ret.R.value * pow(VcOverV(), 1./3.);
+        ret.Rc.error = 0.;
       }
 
       if (repeat) {
@@ -443,15 +450,15 @@ namespace thermalfist {
     parames.C = m_model->Parameters().C;
     m_model->SetParameters(parames);
     m_model->FixParameters();
-    if (!ret.muQ.toFit) {
+    if (!ret.muQ.toFit && m_model->ConstrainMuQ()) {
       ret.muQ.value = m_model->Parameters().muQ;
       ret.muQ.error = 0.;
     }
-    if (!ret.muS.toFit) {
+    if (!ret.muS.toFit && m_model->ConstrainMuS()) {
       ret.muS.value = m_model->Parameters().muS;
       ret.muS.error = 0.;
     }
-    if (!ret.muC.toFit) {
+    if (!ret.muC.toFit && m_model->ConstrainMuC()) {
       ret.muC.value = m_model->Parameters().muC;
       ret.muC.error = 0.;
     }
@@ -468,10 +475,9 @@ namespace thermalfist {
     params[8] = ret.muC.value;
     params[9] = ret.gammaC.value;
 
-
-    ret.chi2    = mfunc(params);
+    ret.chi2  = mfunc(params);
     int ndf = 0;
-    for (int i = 0; i < m_Quantities.size(); ++i)
+    for (size_t i = 0; i < m_Quantities.size(); ++i)
       if (m_Quantities[i].toFit) ndf++;
     ndf = ndf - nparams;
 
@@ -479,7 +485,7 @@ namespace thermalfist {
     ret.ndf = ndf;
 
     if (!AsymmErrors) {
-      for (int i = 0; i < ret.ParameterList.size(); ++i) {
+      for (size_t i = 0; i < ret.ParameterList.size(); ++i) {
         ret.GetParameter(i).errm = ret.GetParameter(i).errp = ret.GetParameter(i).error;
       }
     }
@@ -505,7 +511,7 @@ namespace thermalfist {
     m_model->FixParameters();
     m_model->CalculateDensities();
 
-    for (int i = 0; i < m_Quantities.size(); ++i) {
+    for (size_t i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Ratio) {
         const ExperimentRatio &ratio = m_Quantities[i].ratio;
         int ind1 = m_model->TPS()->PdgToId(ratio.fPDGID1);
@@ -542,7 +548,7 @@ namespace thermalfist {
     //m_model->FixParameters();
     //m_model->CalculateDensities();
 
-    for (int i = 0; i < m_Quantities.size(); ++i) {
+    for (size_t i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Multiplicity) {
         const ExperimentMultiplicity &mult = m_Quantities[i].mult;
 
@@ -573,7 +579,7 @@ namespace thermalfist {
     //m_model->FixParameters();
     //m_model->CalculateDensities();
 
-    for (int i = 0; i < m_Quantities.size(); ++i) {
+    for (size_t i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Multiplicity) {
         const ExperimentMultiplicity &mult = m_Quantities[i].mult;
 
@@ -596,7 +602,7 @@ namespace thermalfist {
       }
     }
 
-    for (int i = 0; i < m_Quantities.size(); ++i) {
+    for (size_t i = 0; i < m_Quantities.size(); ++i) {
       if (m_Quantities[i].type == FittedQuantity::Ratio) {
         const ExperimentRatio &ratio = m_Quantities[i].ratio;
         double dens1 = m_model->GetDensity(ratio.fPDGID1, ratio.fFeedDown1);
@@ -631,13 +637,13 @@ namespace thermalfist {
     //m_model->SetQoverB(m_QBgoal);
     //m_model->FixParameters();
     //m_model->CalculateDensities();
-    for(int i=0;i<m_Multiplicities.size();++i) {
+    for(size_t i=0;i<m_Multiplicities.size();++i) {
       double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
       std::string tname =  m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
       if (m_Multiplicities[i].fPDGID==1) tname =  "Npart";
       else if (m_Multiplicities[i].fPDGID==33340) tname =  m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
-      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1, 
+      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", static_cast<int>(i)+1, 
         tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, 
         (m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError,
         -(m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError,
@@ -646,7 +652,7 @@ namespace thermalfist {
         m_Multiplicities[i].fValue/(dens1 * m_model->Parameters().V),
         m_Multiplicities[i].fError/(dens1 * m_model->Parameters().V));
     }
-    for(int i=0;i<m_Ratios.size();++i) {
+    for(size_t i=0;i<m_Ratios.size();++i) {
       double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
       double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
       std::string name1 = m_model->TPS()->GetNameFromPDG(m_Ratios[i].fPDGID1);
@@ -656,7 +662,7 @@ namespace thermalfist {
       if (m_Ratios[i].fPDGID1==33340) name1 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
       if (m_Ratios[i].fPDGID2==33340) name2 = m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
 
-      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1, 
+      fprintf(f, "%15d\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\t%15lf\n", static_cast<int>(i)+1, 
         (std::string(name1 + "/" + name2)).c_str(),  m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, 
         (m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError,
         -(m_Ratios[i].fValue - dens1 / dens2)/m_Ratios[i].fError,
@@ -677,7 +683,7 @@ namespace thermalfist {
     //m_model->SetQoverB(m_QBgoal);
     //m_model->FixParameters();
     //m_model->CalculateDensities();
-    for(int i=0;i<m_Multiplicities.size();++i) {
+    for(size_t i=0;i<m_Multiplicities.size();++i) {
 
       double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
       std::string tname =  m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
@@ -686,7 +692,7 @@ namespace thermalfist {
       fprintf(f, "%15lf\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1 - 0.3, tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError);
       fprintf(f, "%15lf\t%25s\t%15lf\t%15lf\t%15lf\t%15lf\n", i+1 + 0.3, tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (m_Multiplicities[i].fValue-dens1 * m_model->Parameters().V)/m_Multiplicities[i].fError);
     }
-    for(int i=0;i<m_Ratios.size();++i) {
+    for(size_t i=0;i<m_Ratios.size();++i) {
       double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
       double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
@@ -716,7 +722,7 @@ namespace thermalfist {
     //m_model->SetQoverB(m_QBgoal);
     //m_model->FixParameters();
     //m_model->CalculateDensities();
-    for(int i=0;i<m_Multiplicities.size();++i) {
+    for(size_t i=0;i<m_Multiplicities.size();++i) {
       double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
       std::string tname =  m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
@@ -725,7 +731,7 @@ namespace thermalfist {
       else if (m_Multiplicities[i].fPDGID==33340) tname =  m_model->TPS()->ParticleByPDG(3334).Name() + " + " + m_model->TPS()->ParticleByPDG(-3334).Name();
       fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V-m_Multiplicities[i].fValue)/m_Multiplicities[i].fError);
     }
-    for(int i=0;i<m_Ratios.size();++i) {
+    for(size_t i=0;i<m_Ratios.size();++i) {
       int ind1 = m_model->TPS()->PdgToId(m_Ratios[i].fPDGID1);
       int ind2 = m_model->TPS()->PdgToId(m_Ratios[i].fPDGID2);
       double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
@@ -777,7 +783,7 @@ namespace thermalfist {
     //m_model->CalculateDensities();
 
     std::vector<std::string> prt(0);
-    std::vector<int> pdgs(0);
+    std::vector<long long> pdgs(0);
     std::vector<int> fl(m_Multiplicities.size(), 0);
     prt.push_back("\\pi^+");   pdgs.push_back(211);
     prt.push_back("\\pi^-");   pdgs.push_back(-211);
@@ -823,10 +829,10 @@ namespace thermalfist {
       prt.push_back("D^0"); pdgs.push_back(421);
       prt.push_back("\\bar{D}^0"); pdgs.push_back(-421);
 
-    for(int i=0;i<prt.size();++i) {
+    for(size_t i=0;i<prt.size();++i) {
       bool isexp = false;
       int tj = -1;
-      for(int j=0;j<m_Multiplicities.size();++j)
+      for(size_t j=0;j<m_Multiplicities.size();++j)
         if (pdgs[i]==m_Multiplicities[j].fPDGID) { isexp = true; fl[j] = 1; tj = j; break; }
 
         if (m_model->TPS()->PdgToId(pdgs[i]) == -1) continue;
@@ -847,9 +853,9 @@ namespace thermalfist {
             int step = 0;
             char valst[6];
             char stepst[6];
-            for(int i=0;i<4;++i) valst[i] = tnum[i];
+            for(int ii=0;ii<4;++ii) valst[ii] = tnum[ii];
             valst[4] = 0;
-            for(int i=0;i<4;++i) stepst[i] = tnum[5+i];
+            for(int ii=0;ii<4;++ii) stepst[ii] = tnum[5+ii];
             stepst[4] = 0;
             val = atof(valst);
             step = atoi(stepst);
@@ -863,7 +869,7 @@ namespace thermalfist {
         }
     }
 
-    for(int i=0;i<m_Multiplicities.size();++i) 
+    for(size_t i=0;i<m_Multiplicities.size();++i) 
       if (!fl[i]) {
         double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
@@ -872,7 +878,7 @@ namespace thermalfist {
         else if (m_Multiplicities[i].fPDGID==33340) tname =  m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
         fprintf(f, "$%s$ & $%.4lf \\pm %.4lf$ & $%.4lf$ & $%.4lf$ \\\\\n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V-m_Multiplicities[i].fValue)/m_Multiplicities[i].fError);
       }
-      for(int i=0;i<m_Ratios.size();++i) {
+      for(size_t i=0;i<m_Ratios.size();++i) {
         double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
         double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
@@ -1018,7 +1024,7 @@ namespace thermalfist {
     fprintf(f, "\n\n");
 
     fprintf(f, "Yields:\n");
-    for (int i = 0; i<m_Multiplicities.size(); ++i) {
+    for (size_t i = 0; i<m_Multiplicities.size(); ++i) {
       double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
       std::string tname = m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
@@ -1030,7 +1036,7 @@ namespace thermalfist {
         fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
     }
 
-    for (int i = 0; i<m_Ratios.size(); ++i) {
+    for (size_t i = 0; i<m_Ratios.size(); ++i) {
       double dens1 = m_model->GetDensity(m_Ratios[i].fPDGID1, m_Ratios[i].fFeedDown1);
       double dens2 = m_model->GetDensity(m_Ratios[i].fPDGID2, m_Ratios[i].fFeedDown2);
 
@@ -1093,11 +1099,11 @@ namespace thermalfist {
         vector<string> fields = CuteHRGHelper::split(tmp, ';');
         if (fields.size()<4) break;
         int type = atoi(fields[0].c_str());
-        int pdgid1 = atoi(fields[1].c_str()), pdgid2 = 0;
-        double value, error, error2;
+        long long pdgid1 = stringToLongLong(fields[1]), pdgid2 = 0;
+        double value = 0., error = 0., error2 = 0.;
         int feeddown1 = 1, feeddown2 = 1;
         if (type) {
-          pdgid2 = atoi(fields[2].c_str());
+          pdgid2 = stringToLongLong(fields[2]);
           value = atof(fields[3].c_str());
           if (fields.size() >= 5) error = atof(fields[4].c_str());
           if (fields.size() >= 6) {
@@ -1143,7 +1149,7 @@ namespace thermalfist {
         istringstream iss(elems[0]);
 
         int fitflag;
-        int pdgid1, pdgid2;
+        long long pdgid1, pdgid2;
         int feeddown1, feeddown2;
         double value, error;
       
@@ -1174,7 +1180,7 @@ namespace thermalfist {
         << std::setw(15) << "value"
         << std::setw(15) << "error"
         << std::endl;
-      for (int i = 0; i < outQuantities.size(); ++i) {
+      for (size_t i = 0; i < outQuantities.size(); ++i) {
         if (outQuantities[i].type == FittedQuantity::Multiplicity) {
           fout << std::setw(15) << static_cast<int>(outQuantities[i].toFit)
             << std::setw(15) << outQuantities[i].mult.fPDGID
@@ -1216,7 +1222,7 @@ namespace thermalfist {
     if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
     if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::CE && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CCE)) nparams--;
     int ndof = 0;
-    for (int i = 0; i < m_Quantities.size(); ++i)
+    for (size_t i = 0; i < m_Quantities.size(); ++i)
       if (m_Quantities[i].toFit) ndof++;
     return (ndof - nparams);
   }

@@ -23,7 +23,7 @@ namespace thermalfist {
       << std::setw(20) << "motherpdgid"
       << std::endl;
 
-    for (int i = 0; i < Particles.size(); ++i) {
+    for (size_t i = 0; i < Particles.size(); ++i) {
       fout << std::setw(20) << Particles[i].PDGID
         << std::setw(20) << Particles[i].px
         << std::setw(20) << Particles[i].py

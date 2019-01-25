@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
     font.setPointSize(10);
     QApplication::setFont(font);
 
-		QPixmap pixmap(":/images/FIST.png");
-		QSplashScreen splash(pixmap);
-		splash.show();
+    QPixmap pixmap(":/images/FIST.png");
+    QSplashScreen splash(pixmap);
+    splash.show();
     splash.setFont(fontSmall);
     splash.showMessage(QObject::tr("Initializing QtThermalFIST..."),
       Qt::AlignLeft | Qt::AlignTop, Qt::black);  //This line represents the alignment of text, color and position
@@ -43,13 +43,13 @@ int main(int argc, char *argv[])
 
     
 
-		//std::ios_base::sync_with_stdio(false);
-	
+    //std::ios_base::sync_with_stdio(false);
+  
 
     MainWindow w;
     w.showMaximized();
 
-		splash.finish(&w);
+    splash.finish(&w);
 
     return a.exec();
 }

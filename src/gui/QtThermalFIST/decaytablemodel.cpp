@@ -102,6 +102,7 @@ bool DecayTableModel::setData(const QModelIndex & index, const QVariant & value,
       fParticle->Decays()[row].mDaughters.push_back(value.toInt());
       return true;
     }
+    else return false;
   }
   else return false;
 }

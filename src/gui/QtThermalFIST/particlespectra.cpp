@@ -91,7 +91,7 @@ double ParticleSpectrum::GetSkewnessError() const {
     double n4av = means[4];
     double n5av = means[5];
     double n6av = means[6];
-		double dm32 = (n6av - 6.*n5av*nav + 15.*n4av*nav*nav - 20.*n3av*nav*nav*nav + 15.*n2av*nav*nav*nav*nav
+    double dm32 = (n6av - 6.*n5av*nav + 15.*n4av*nav*nav - 20.*n3av*nav*nav*nav + 15.*n2av*nav*nav*nav*nav
                    -9.*nav*nav*nav*nav*nav*nav + 12.*nav*nav*nav*nav*n2av - 9.*nav*nav*n2av*n2av
                    -4.*nav*nav*nav*n3av + 6.*nav*n2av*n3av - n3av*n3av) / nE;
 
@@ -158,9 +158,9 @@ ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, double T, double bet
                 MomentumDistributionBase *ptr;
                 if (distrtype==0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(),model->TPS()->Particles()[i].Mass(),T,beta);
                 else ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
-								distrs.push_back(ptr);
-								fParticles[fParticles.size()-1].SetDistribution(ptr);
-								fNames.push_back(model->TPS()->Particles()[i].Name());
+                distrs.push_back(ptr);
+                fParticles[fParticles.size()-1].SetDistribution(ptr);
+                fNames.push_back(model->TPS()->Particles()[i].Name());
                 fMasses.push_back(model->TPS()->Particles()[i].Mass());
                 fPDGtoID[model->TPS()->Particles()[i].PdgId()] = fMasses.size()-1;
 
@@ -297,12 +297,12 @@ void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int
             if (model->TPS()->Particles()[i].IsStable()) {
                 if (distrtype==0) fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass()));
                 else fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), etamax));
-								MomentumDistributionBase *ptr;
+                MomentumDistributionBase *ptr;
                 if (distrtype==0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(),model->TPS()->Particles()[i].Mass(),T,beta);
                 else ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
                 distrs.push_back(ptr);
                 fParticles[fParticles.size()-1].SetDistribution(ptr);
-								fNames.push_back(model->TPS()->Particles()[i].Name());
+                fNames.push_back(model->TPS()->Particles()[i].Name());
                 fMasses.push_back(model->TPS()->Particles()[i].Mass());
                 fPDGtoID[model->TPS()->Particles()[i].PdgId()] = fMasses.size()-1;
 

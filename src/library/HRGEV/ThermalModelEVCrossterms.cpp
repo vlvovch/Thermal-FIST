@@ -53,16 +53,16 @@ namespace thermalfist {
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_Virial[i].resize(m_TPS->Particles().size());
-      for (int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         m_Virial[i][j] = CuteHRGHelper::brr(ri[i], ri[j]);
     }
 
     // Correction for non-diagonal terms R1=R2 and R2=0
     std::vector< std::vector<double> > fVirialTmp = m_Virial;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         if (i == j) m_Virial[i][j] = fVirialTmp[i][j];
         else if ((fVirialTmp[i][i] + fVirialTmp[j][j]) > 0.0) m_Virial[i][j] = 2. * fVirialTmp[i][j] * fVirialTmp[i][i] / (fVirialTmp[i][i] + fVirialTmp[j][j]);
       }
@@ -72,7 +72,7 @@ namespace thermalfist {
   {
     m_Virial = std::vector< std::vector<double> >(m_TPS->Particles().size(), std::vector<double>(m_TPS->Particles().size(), 0.));
 
-    ifstream fin(filename);
+    ifstream fin(filename.c_str());
     char cc[2000];
     while (!fin.eof()) {
       fin.getline(cc, 2000);
@@ -95,7 +95,7 @@ namespace thermalfist {
 
   void ThermalModelEVCrossterms::WriteInteractionParameters(const std::string & filename)
   {
-    ofstream fout(filename);
+    ofstream fout(filename.c_str());
     fout << "# List of crossterms parameters to be used in the Crossterms excluded-volume HRG model"
       << std::endl;
     fout << "# Only particle pairs with a non-zero eigenvolume parameter are listed here"
@@ -104,8 +104,8 @@ namespace thermalfist {
       << std::setw(15) << "pdg_j"
       << std::setw(15) << "b_{ij}[fm^3]"
       << std::endl;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         if (m_Virial[i][j] != 0.) {
           fout << std::setw(15) << m_TPS->Particle(i).PdgId();
           fout << std::setw(15) << m_TPS->Particle(j).PdgId();
@@ -122,13 +122,14 @@ namespace thermalfist {
   }
 
   double ThermalModelEVCrossterms::VirialCoefficient(int i, int j) const {
-    if (i < 0 || i >= m_Virial.size() || j<0 || j>m_Virial.size())
+    if (i < 0 || i >= static_cast<int>(m_Virial.size()) || j < 0 || j > static_cast<int>(m_Virial.size()))
       return 0.;
     return m_Virial[i][j];
   }
 
   void ThermalModelEVCrossterms::SetVirial(int i, int j, double b) {
-    if (i >= 0 && i < m_Virial.size() && j >= 0 && j < m_Virial.size()) m_Virial[i][j] = b;
+    if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial.size())) 
+      m_Virial[i][j] = b;
     else printf("**WARNING** Index overflow in ThermalModelEVCrossterms::SetVirial\n");
   }
 
@@ -140,14 +141,12 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::DensityId(int i, const std::vector<double>& pstars)
   {
-    double ret = 0.;
-
     double dMu = 0.;
     if (pstars.size() == m_TPS->Particles().size())
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) 
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) 
         dMu += -m_Virial[i][j] * pstars[j];
     else
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) 
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) 
         dMu += -m_Virial[i][j] * m_Ps[j];
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] + dMu);
@@ -155,31 +154,25 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::Pressure(int i, const std::vector<double>& pstars)
   {
-    double ret = 0.;
-
     double dMu = 0.;
     if (pstars.size() == m_TPS->Particles().size())
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) 
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) 
         dMu += -m_Virial[i][j] * pstars[j];
     else
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) 
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) 
         dMu += -m_Virial[i][j] * m_Ps[j];
 
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVCrossterms::ScaledVarianceId(int i) {
-    double ret = 0.;
-
     double dMu = 0.;
-    for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
+    for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
 
     return m_TPS->Particles()[i].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[i] + dMu);
   }
 
   double ThermalModelEVCrossterms::PartialPressureDiagonal(int i, double P) {
-    double ret = 0.;
-
     double dMu = 0.;
     dMu += -m_Virial[i][i] * P;
 
@@ -189,7 +182,7 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::PressureDiagonalTotal(double P) {
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += PartialPressureDiagonal(i, P);
     return ret;
   }
@@ -208,7 +201,7 @@ namespace thermalfist {
     x = broydn.Solve(x, &crit);
 
     m_Pressure = x[0];
-    for (int i = 0; i < m_Ps.size(); ++i)
+    for (size_t i = 0; i < m_Ps.size(); ++i)
       m_Ps[i] = PartialPressureDiagonal(i, m_Pressure);
   }
 
@@ -216,7 +209,7 @@ namespace thermalfist {
   void ThermalModelEVCrossterms::SolvePressure(bool resetPartials) {
     if (resetPartials) {
       m_Ps.resize(m_TPS->Particles().size());
-      for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = 0.;
+      for (size_t i = 0; i < m_Ps.size(); ++i) m_Ps[i] = 0.;
       SolveDiagonal();
     }
 
@@ -227,7 +220,8 @@ namespace thermalfist {
 
     m_Ps = broydn.Solve(m_Ps, &crit);
     m_Pressure = 0.;
-    for (int i = 0; i < m_Ps.size(); ++i) m_Pressure += m_Ps[i];
+    for (size_t i = 0; i < m_Ps.size(); ++i) 
+      m_Pressure += m_Ps[i];
 
     if (broydn.Iterations() == broydn.MaxIterations())
       m_LastCalculationSuccessFlag = false;
@@ -242,7 +236,8 @@ namespace thermalfist {
     // Pressure
     SolvePressure();
     vector<double> tN(m_densities.size());
-    for (int i = 0; i < m_Ps.size(); ++i) tN[i] = DensityId(i);
+    for (size_t i = 0; i < m_Ps.size(); ++i) 
+      tN[i] = DensityId(i);
 
     // Densities
 
@@ -277,7 +272,7 @@ namespace thermalfist {
     std::vector<double> fEntropyP(m_densities.size());
     for (int i = 0; i < NN; ++i) {
       double dMu = 0.;
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
       xVector[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i] + dMu);
     }
 
@@ -301,7 +296,8 @@ namespace thermalfist {
     // Pressure
     SolvePressure(false);
     vector<double> tN(m_densities.size());
-    for (int i = 0; i < m_Ps.size(); ++i) tN[i] = DensityId(i);
+    for (size_t i = 0; i < m_Ps.size(); ++i) 
+      tN[i] = DensityId(i);
 
     // Densities
 
@@ -340,7 +336,7 @@ namespace thermalfist {
     std::vector<double> fEntropyP(m_densities.size());
     for (int i = 0; i < NN; ++i) {
       double dMu = 0.;
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
       xVector[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i] + dMu);
     }
 
@@ -367,7 +363,8 @@ namespace thermalfist {
 
   void ThermalModelEVCrossterms::SolvePressureIter() {
     m_Ps.resize(m_TPS->Particles().size());
-    for (int i = 0; i < m_Ps.size(); ++i) m_Ps[i] = 0.;
+    for (size_t i = 0; i < m_Ps.size(); ++i) 
+      m_Ps[i] = 0.;
     SolveDiagonal();
     vector<double> Pstmp = m_Ps;
     int iter = 0;
@@ -375,7 +372,7 @@ namespace thermalfist {
     for (iter = 0; iter < 1000; ++iter)
     {
       maxdiff = 0.;
-      for (int i = 0; i < m_Ps.size(); ++i) {
+      for (size_t i = 0; i < m_Ps.size(); ++i) {
         Pstmp[i] = Pressure(i);
         maxdiff = max(maxdiff, fabs((Pstmp[i] - m_Ps[i]) / Pstmp[i]));
       }
@@ -385,7 +382,8 @@ namespace thermalfist {
     }
     if (iter == 1000) cout << iter << "\t" << maxdiff << "\n";
     m_Pressure = 0.;
-    for (int i = 0; i < m_Ps.size(); ++i) m_Pressure += m_Ps[i];
+    for (size_t i = 0; i < m_Ps.size(); ++i) 
+      m_Pressure += m_Ps[i];
   }
 
   void ThermalModelEVCrossterms::CalculatePrimordialDensitiesIter() {
@@ -431,7 +429,7 @@ namespace thermalfist {
     std::vector<double> fEntropyP(m_densities.size());
     for (int i = 0; i < NN; ++i) {
       double dMu = 0.;
-      for (int j = 0; j < m_TPS->Particles().size(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
       xVector[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i] + dMu);
     }
 
@@ -544,7 +542,7 @@ namespace thermalfist {
 
     m_FluctuationsCalculated = true;
 
-    for (int i = 0; i < m_wprim.size(); ++i) {
+    for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_skewprim[i] = 1.;
       m_kurtprim[i] = 1.;
       m_skewtot[i] = 1.;
@@ -557,7 +555,7 @@ namespace thermalfist {
     vector<double> ret(order + 1, 0.);
 
     // chi1
-    for (int i = 0; i < m_densities.size(); ++i)
+    for (size_t i = 0; i < m_densities.size(); ++i)
       ret[0] += chgs[i] * m_densities[i];
 
     ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
@@ -743,7 +741,7 @@ namespace thermalfist {
     double ret = 0.;
     ret += m_Parameters.T * CalculateEntropyDensity();
     ret += -CalculatePressure();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_Chem[i] * m_densities[i];
     return ret;
   }
@@ -761,9 +759,9 @@ namespace thermalfist {
 
   double ThermalModelEVCrossterms::MuShift(int id)
   {
-    if (id >= 0. && id < m_Virial.size()) {
+    if (id >= 0. && id < static_cast<int>(m_Virial.size())) {
       double dMu = 0.;
-      for (int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         dMu += -m_Virial[id][j] * m_Ps[j];
       return dMu;
     }
@@ -774,7 +772,7 @@ namespace thermalfist {
   std::vector<double> ThermalModelEVCrossterms::BroydenEquationsCRS::Equations(const std::vector<double>& x)
   {
     std::vector<double> ret(m_N);
-    for (int i = 0; i < x.size(); ++i)
+    for (size_t i = 0; i < x.size(); ++i)
       ret[i] = x[i] - m_THM->Pressure(i, x);
     return ret;
   }
@@ -800,10 +798,10 @@ namespace thermalfist {
     return ret;
   }
 
-  bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
   {
     double maxdiff = 0.;
-    for (int i = 0; i < x.size(); ++i) {
+    for (size_t i = 0; i < x.size(); ++i) {
       maxdiff = std::max(maxdiff, fabs(f[i]) / x[i]);
     }
     return (maxdiff < m_MaximumError);

@@ -37,6 +37,9 @@ namespace thermalfist {
      */
     enum QStatsCalculationType { ClusterExpansion, Quadratures };
 
+    /// \brief Whether \mu > m Bose-Einstein condensation issue was encountered for a Bose gas
+    extern bool calculationHadBECIssue;
+
     /**
      * \brief Computes the particle number density of a Maxwell-Boltzmann gas.
      * 

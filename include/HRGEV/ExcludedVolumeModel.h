@@ -38,8 +38,8 @@ namespace thermalfist {
     virtual double f(double x) const { return 1. / (1. - x); }
     virtual double g1(double x) const { return 1. / (1. - x); }
     virtual double g2(double x) const { return -log(1. - x); }
-    virtual double g3(double x) const { return 1.; }
-    virtual double Dg3(double x) const { return 0.; }
+    virtual double g3(double /*x*/) const { return 1.; }
+    virtual double Dg3(double /*x*/) const { return 0.; }
   };
 
   /**

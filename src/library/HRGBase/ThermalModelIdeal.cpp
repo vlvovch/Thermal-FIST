@@ -35,7 +35,7 @@ namespace thermalfist {
   void ThermalModelIdeal::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densities[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
 
@@ -76,18 +76,18 @@ namespace thermalfist {
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
 
-    for (int i = 0; i < m_wprim.size(); ++i) {
+    for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_wprim[i] = ParticleScaledVariance(i);
       m_skewprim[i] = ParticleSkewness(i);
       m_kurtprim[i] = ParticleKurtosis(i);
     }
-    for (int i = 0; i < m_wtot.size(); ++i) {
+    for (size_t i = 0; i < m_wtot.size(); ++i) {
       double tmp1 = 0., tmp2 = 0., tmp3 = 0., tmp4 = 0.;
       tmp2 = m_densities[i] * m_wprim[i];
       tmp3 = m_densities[i] * m_wprim[i] * m_skewprim[i];
       tmp4 = m_densities[i] * m_wprim[i] * m_kurtprim[i];
       const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = m_TPS->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
-      for (int r = 0; r < decayContributions.size(); ++r) {
+      for (size_t r = 0; r < decayContributions.size(); ++r) {
         const ThermalParticleSystem::SingleDecayContribution& decayContrib = decayContributions[r];
         const ThermalParticleSystem::SingleDecayCumulantsContribution& decayCumulantsSingle = m_TPS->DecayCumulants()[i][r];
         tmp2 += m_densities[decayContrib.second] *
@@ -123,24 +123,24 @@ namespace thermalfist {
     vector<double> ret(order + 1, 0.);
 
     // chi1
-    for (int i = 0; i < m_densities.size(); ++i)
+    for (size_t i = 0; i < m_densities.size(); ++i)
       ret[0] += chgs[i] * m_densities[i];
 
     ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
 
     if (order < 2) return ret;
 
-    for (int i = 0; i < m_densities.size(); ++i)
+    for (size_t i = 0; i < m_densities.size(); ++i)
       ret[1] += chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_Chem[i]);
 
     if (order < 3) return ret;
 
-    for (int i = 0; i < m_densities.size(); ++i)
+    for (size_t i = 0; i < m_densities.size(); ++i)
       ret[2] += chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_Chem[i]);
 
     if (order < 4) return ret;
 
-    for (int i = 0; i < m_densities.size(); ++i)
+    for (size_t i = 0; i < m_densities.size(); ++i)
       ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i]);
 
     return ret;
@@ -149,7 +149,7 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculateEnergyDensity() {
     double ret = 0.;
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
 
     return ret;
   }
@@ -157,14 +157,14 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculateEntropyDensity() {
     double ret = 0.;
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i]);
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i]);
 
     return ret;
   }
 
   double ThermalModelIdeal::CalculateBaryonMatterEntropyDensity() {
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].BaryonCharge() != 0)
         ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i]);
     return ret;
@@ -172,7 +172,7 @@ namespace thermalfist {
 
   double ThermalModelIdeal::CalculateMesonMatterEntropyDensity() {
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].BaryonCharge() == 0)
         ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_Chem[i]);
     return ret;
@@ -181,7 +181,7 @@ namespace thermalfist {
   double ThermalModelIdeal::CalculatePressure() {
     double ret = 0.;
 
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
 
     return ret;
   }

@@ -46,7 +46,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     model = new ThermalModelIdeal(modelop->TPS());
     *model = *modelop;
 
-	
+  
 
     QHBoxLayout *DataEditLay = new QHBoxLayout();
 
@@ -76,17 +76,17 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     tmpf.setPointSize(tmpf.pointSize() - 1);
     labelHint->setFont(tmpf);
 
-		labelValid = new QPushButton(tr("Calculation valid!"));
-		labelValid->setFlat(true);
-		labelValid->setVisible(false);
-		connect(labelValid, SIGNAL(clicked()), this, SLOT(showValidityCheckLog()));
+    labelValid = new QPushButton(tr("Calculation valid!"));
+    labelValid->setFlat(true);
+    labelValid->setVisible(false);
+    connect(labelValid, SIGNAL(clicked()), this, SLOT(showValidityCheckLog()));
 
 
     layMisc->addWidget(checkOnlyStable);
     layMisc->addWidget(buttonResults);
     layMisc->addWidget(labelHint);
-		layMisc->addStretch(1);
-		layMisc->addWidget(labelValid, 0, Qt::AlignRight);
+    layMisc->addStretch(1);
+    layMisc->addWidget(labelValid, 0, Qt::AlignRight);
 
     dataLayv->addWidget(tableParticles);
     dataLayv->addLayout(layMisc);
@@ -127,13 +127,13 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinmuB->setValue(model->Parameters().muB * 1e3);
     spinmuB->setToolTip(tr("Baryochemical potential"));
     QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
-		spingammaq = new QDoubleSpinBox();
-		spingammaq->setMinimum(0.);
-		spingammaq->setMaximum(10.);
-		spingammaq->setDecimals(4);
-		spingammaq->setValue(model->Parameters().gammaq);
+    spingammaq = new QDoubleSpinBox();
+    spingammaq->setMinimum(0.);
+    spingammaq->setMaximum(10.);
+    spingammaq->setDecimals(4);
+    spingammaq->setValue(model->Parameters().gammaq);
     spingammaq->setToolTip(tr("Chemical non-equilibrium factor for light quarks"));
-		labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
+    labelgammaS = new QLabel(tr("γ<sub>S</sub>:"));
     spingammaS = new QDoubleSpinBox();
     spingammaS->setMinimum(0.);
     spingammaS->setMaximum(10.);
@@ -160,11 +160,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinmuQ->setMaximum(1000.);
     spinmuQ->setValue(model->Parameters().muQ * 1e3);
     spinmuQ->setToolTip(tr("Electric charge chemical potential"));
-		labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
-		spinmuC = new QDoubleSpinBox();
-		spinmuC->setMinimum(-1000.);
-		spinmuC->setMaximum(1000.);
-		spinmuC->setValue(model->Parameters().muC * 1e3);
+    labelmuC = new QLabel(tr("μ<sub>C</sub> (MeV):"));
+    spinmuC = new QDoubleSpinBox();
+    spinmuC->setMinimum(-1000.);
+    spinmuC->setMaximum(1000.);
+    spinmuC->setValue(model->Parameters().muC * 1e3);
     spinmuC->setToolTip(tr("Charm chemical potential"));
     QLabel *labelVolume = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
@@ -173,7 +173,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinVolumeR->setDecimals(4);
     spinVolumeR->setValue(8.);
     spinVolumeR->setToolTip(tr("System radius: the system volume is a sphere of this radius"));
-		connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
+    connect(spinVolumeR, SIGNAL(valueChanged(double)), this, SLOT(changeVolumeRSC(double)));
     QLabel *labelVolumeRSC = new QLabel(tr("R<sub>C</sub>:"));
     spinVolumeRSC = new QDoubleSpinBox();
     spinVolumeRSC->setDecimals(4);
@@ -199,11 +199,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinQ->setMinimum(-1000);
     spinQ->setMaximum(1000);
     spinQ->setValue(2);
-		labelC = new QLabel(tr("C:"));
-		spinC = new QSpinBox();
-		spinC->setMinimum(-1000);
-		spinC->setMaximum(1000);
-		spinC->setValue(0);
+    labelC = new QLabel(tr("C:"));
+    spinC = new QSpinBox();
+    spinC->setMinimum(-1000);
+    spinC->setMaximum(1000);
+    spinC->setValue(0);
 
     spinB->setToolTip(tr("Total baryon number in CE calculation"));
     spinQ->setToolTip(tr("Total electric charge in CE calculation"));
@@ -214,9 +214,9 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinTemperature, 0, 1);
     layParameters->addWidget(labelmuB, 1, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinmuB, 1, 1);
-		layParameters->addWidget(labelgammaq, 0, 2, 1, 1, Qt::AlignRight);
-		layParameters->addWidget(spingammaq, 0, 3); 
-		layParameters->addWidget(labelgammaS, 0, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelgammaq, 0, 2, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spingammaq, 0, 3); 
+    layParameters->addWidget(labelgammaS, 0, 4, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spingammaS, 0, 5);
     layParameters->addWidget(labelgammaC, 0, 6, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spingammaC, 0, 7);
@@ -225,9 +225,9 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinmuS, 1, 5);
     layParameters->addWidget(labelmuQ, 1, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinmuQ, 1, 3);
-		layParameters->addWidget(labelmuC, 1, 6, 1, 1, Qt::AlignRight);
-		layParameters->addWidget(spinmuC, 1, 7); 
-		layParameters->addWidget(labelVolume, 2, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelmuC, 1, 6, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinmuC, 1, 7); 
+    layParameters->addWidget(labelVolume, 2, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeR, 2, 1);
     layParameters->addWidget(labelVolumeRSC, 2, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeRSC, 2, 3);
@@ -238,23 +238,23 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinS, 3, 5);
     layParameters->addWidget(labelQ, 3, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinQ, 3, 3);
-		layParameters->addWidget(labelC, 3, 6, 1, 1, Qt::AlignRight);
-		layParameters->addWidget(spinC, 3, 7);
+    layParameters->addWidget(labelC, 3, 6, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinC, 3, 7);
 
     grParameters->setLayout(layParameters);
 
 
     QHBoxLayout *layFlags = new QHBoxLayout();
     layFlags->setAlignment(Qt::AlignLeft);
-		checkFluctuations = new QCheckBox(tr("Compute fluctuations and correlations"));
-		checkFluctuations->setChecked(false);
+    checkFluctuations = new QCheckBox(tr("Compute fluctuations and correlations"));
+    checkFluctuations->setChecked(false);
     checkFluctuations->setToolTip(tr("Compute fluctuation observables (viewable in \"Equation of state\" dialog)"));
 
     checkMuInitials = new QCheckBox(tr("Reset mu's"));
-		checkMuInitials->setChecked(true);
+    checkMuInitials->setChecked(true);
     checkMuInitials->setToolTip(tr("Whether current values of chemical potentials are used as initial conditions for conservation laws or they are reset"));
 
-		layFlags->addWidget(checkFluctuations);
+    layFlags->addWidget(checkFluctuations);
     layFlags->addWidget(checkMuInitials);
 
     QHBoxLayout *layButtons = new QHBoxLayout();
@@ -327,7 +327,7 @@ void ModelTab::particleInfoDoubleClick(const QModelIndex & index) {
 
 void ModelTab::changeVolumeRSC(double VRSC)
 {
-	spinVolumeRSC->setValue(VRSC);
+  spinVolumeRSC->setValue(VRSC);
 }
 
 
@@ -403,55 +403,55 @@ void ModelTab::updateControlsWithConfig(const ThermalModelConfig & config)
 void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
   QElapsedTimer timerc;
-	timerc.start();
-	
-	ThermalModelBase *modelnew;
+  timerc.start();
+  
+  ThermalModelBase *modelnew;
 
   if (config.ModelType == ThermalModelConfig::DiagonalEV) {
     modelnew = new ThermalModelEVDiagonal(model->TPS());
   }
-	else if (config.ModelType == ThermalModelConfig::CrosstermsEV)
-		modelnew = new ThermalModelEVCrossterms(model->TPS());	
-	else if (config.ModelType == ThermalModelConfig::CE) {
-		modelnew = new ThermalModelCanonical(model->TPS());
-	}
-	else if (config.ModelType == ThermalModelConfig::SCE)
-		modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
-	else if (config.ModelType == ThermalModelConfig::EVSCE)
-		modelnew = new ThermalModelEVCanonicalStrangeness(model->TPS());
-	else if (config.ModelType == ThermalModelConfig::VDWSCE)
-		modelnew = new ThermalModelVDWCanonicalStrangeness(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::CrosstermsEV)
+    modelnew = new ThermalModelEVCrossterms(model->TPS());  
+  else if (config.ModelType == ThermalModelConfig::CE) {
+    modelnew = new ThermalModelCanonical(model->TPS());
+  }
+  else if (config.ModelType == ThermalModelConfig::SCE)
+    modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::EVSCE)
+    modelnew = new ThermalModelEVCanonicalStrangeness(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::VDWSCE)
+    modelnew = new ThermalModelVDWCanonicalStrangeness(model->TPS());
   else if (config.ModelType == ThermalModelConfig::QvdW) {
     modelnew = new ThermalModelVDW(model->TPS());
   }
-	else if (config.ModelType == ThermalModelConfig::CCE)
-		modelnew = new ThermalModelCanonicalCharm(model->TPS());
-	else
-		modelnew = new ThermalModelIdeal(model->TPS());
+  else if (config.ModelType == ThermalModelConfig::CCE)
+    modelnew = new ThermalModelCanonicalCharm(model->TPS());
+  else
+    modelnew = new ThermalModelIdeal(model->TPS());
 
-	myModel->setModel(modelnew);
+  myModel->setModel(modelnew);
   configWidget->setModel(modelnew);
-	if (model != NULL) 
-		delete model;
+  if (model != NULL) 
+    delete model;
 
-	model = modelnew;
+  model = modelnew;
 
-	QElapsedTimer timer;
-	timer.start();
+  QElapsedTimer timer;
+  timer.start();
 
 
-	model->SetTemperature(config.T);
-	model->SetBaryonChemicalPotential(config.muB);
-	model->SetElectricChemicalPotential(config.muQ);
-	model->SetStrangenessChemicalPotential(config.muS);
-	model->SetCharmChemicalPotential(config.muC);
-	model->SetGammaq(config.gq);
-	model->SetGammaS(config.gS);
-	model->SetGammaC(config.gC);
-	model->SetVolumeRadius(config.VolumeR);
-	model->SetCanonicalVolumeRadius(config.VolumeRSC);
+  model->SetTemperature(config.T);
+  model->SetBaryonChemicalPotential(config.muB);
+  model->SetElectricChemicalPotential(config.muQ);
+  model->SetStrangenessChemicalPotential(config.muS);
+  model->SetCharmChemicalPotential(config.muC);
+  model->SetGammaq(config.gq);
+  model->SetGammaS(config.gS);
+  model->SetGammaC(config.gC);
+  model->SetVolumeRadius(config.VolumeR);
+  model->SetCanonicalVolumeRadius(config.VolumeRSC);
 
-	dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
+  dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
 
   SetThermalModelConfiguration(model, config);
 
@@ -459,124 +459,124 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     SetThermalModelInteraction(model, config);
 
 
-	// If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
-	if (config.ModelType == ThermalModelConfig::CE) {
-		static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(config.ComputeFluctations);
-	}
+  // If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
+  if (config.ModelType == ThermalModelConfig::CE) {
+    static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(config.ComputeFluctations);
+  }
 
-	printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
-	timerc.restart();
+  timerc.restart();
 
-	model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
+  model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
 
-	model->CalculatePrimordialDensities();
+  model->CalculatePrimordialDensities();
 
-	printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
   timerc.restart();
 
   model->CalculateFeeddown();
 
-	printf("Feeddown time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  printf("Feeddown time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
-	timerc.restart();
+  timerc.restart();
 
-	if (config.ComputeFluctations) {
-		model->CalculateFluctuations();
+  if (config.ComputeFluctations) {
+    model->CalculateFluctuations();
 
-		computeHigherOrderFluctuations();
-	}
+    computeHigherOrderFluctuations();
+  }
 
-	printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
-	timerc.restart();
+  timerc.restart();
 
-	if (config.ModelType != ThermalModelConfig::CE) {
+  if (config.ModelType != ThermalModelConfig::CE) {
     if (model->TPS()->hasBaryons())
       dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
 
     if (model->TPS()->hasCharged())
       dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
 
-		if (model->TPS()->hasStrange() && config.ModelType != ThermalModelConfig::SCE && config.ModelType != ThermalModelConfig::EVSCE && config.ModelType != ThermalModelConfig::VDWSCE)
-			dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+    if (model->TPS()->hasStrange() && config.ModelType != ThermalModelConfig::SCE && config.ModelType != ThermalModelConfig::EVSCE && config.ModelType != ThermalModelConfig::VDWSCE)
+      dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
 
-		if (model->TPS()->hasCharmed() && config.ModelType != ThermalModelConfig::CCE)
-			dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
-	}
-	else {
-		dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
-		dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
-		dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
-		if (model->TPS()->hasCharmed())
-			dbgstrm << "C\t= " << model->CalculateCharmDensity()     * model->Volume() << endl;
-	}
-	dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
-	dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
-	if (model->TPS()->hasCharmed())
-		dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
-	dbgstrm << "V\t= " << model->Volume() << " fm^3" << endl;
-	dbgstrm << endl;
-	dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+    if (model->TPS()->hasCharmed() && config.ModelType != ThermalModelConfig::CCE)
+      dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
+  }
+  else {
+    dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
+    dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+    dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
+    if (model->TPS()->hasCharmed())
+      dbgstrm << "C\t= " << model->CalculateCharmDensity()     * model->Volume() << endl;
+  }
+  dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
+  dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
+  if (model->TPS()->hasCharmed())
+    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
+  dbgstrm << "V\t= " << model->Volume() << " fm^3" << endl;
+  dbgstrm << endl;
+  dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
   double nb = model->CalculateBaryonDensity();
-	dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
-	dbgstrm << "Net baryon number\t= " << nb * model->Volume() << endl;
-	if (model->TPS()->hasCharged())
+  dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
+  dbgstrm << "Net baryon number\t= " << nb * model->Volume() << endl;
+  if (model->TPS()->hasCharged())
     dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
-	if (model->TPS()->hasStrange())
+  if (model->TPS()->hasStrange())
     dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
-	if (model->TPS()->hasCharmed())
-		dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
-	dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
+  if (model->TPS()->hasCharmed())
+    dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
+  dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
   if (fabs(nb) > 1.e-10)
-	  dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;
+    dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;
   if (fabs(nb) > 1.e-10)
-	  dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
-	dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << endl;
+    dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
+  dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << endl;
   if (fabs(nb) > 1.e-10)
-	  dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
-	if (model->TPS()->hasStrange())
-		dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
-	if (model->TPS()->hasCharmed())
-		dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
+    dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
+  if (model->TPS()->hasStrange())
+    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+  if (model->TPS()->hasCharmed())
+    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
     dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
   dbgstrm << endl;
-	dbgstrm << endl;
-	dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
-	dbgstrm << "----------------------------------------------------------" << endl;
-	teDebug->append(dbgstr);
-	dbgstr.clear();
+  dbgstrm << endl;
+  dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
+  dbgstrm << "----------------------------------------------------------" << endl;
+  teDebug->append(dbgstr);
+  dbgstr.clear();
 
-	printf("Finalizing time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  printf("Finalizing time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
-	if (model->IsLastSolutionOK()) {
-		labelValid->setText(tr("Calculation valid!"));
-		labelValid->setStyleSheet("border : none; background-color : lightgreen;");
-	}
-	else {
-		labelValid->setText(tr("Calculation NOT valid!"));
-		labelValid->setStyleSheet("border : none; background-color : red;");
-	}
-	labelValid->setVisible(true);
+  if (model->IsLastSolutionOK()) {
+    labelValid->setText(tr("Calculation valid!"));
+    labelValid->setStyleSheet("border : none; background-color : lightgreen;");
+  }
+  else {
+    labelValid->setText(tr("Calculation NOT valid!"));
+    labelValid->setStyleSheet("border : none; background-color : red;");
+  }
+  labelValid->setVisible(true);
 
-	myModel->updateAll();
+  myModel->updateAll();
 }
 
 void ModelTab::calculate() {
   ThermalModelConfig config = getConfig();
   performCalculation(config);
 
-	if (!(config.Ensemble == ThermalModelConfig::EnsembleCE)) {
+  if (!(config.Ensemble == ThermalModelConfig::EnsembleCE)) {
     spinmuB->setValue(model->Parameters().muB * 1.e3);
-		spinmuQ->setValue(model->Parameters().muQ * 1.e3);
+    spinmuQ->setValue(model->Parameters().muQ * 1.e3);
     if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE))
       spinmuS->setValue(model->Parameters().muS * 1.e3);
     if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE) && !(config.Ensemble == ThermalModelConfig::EnsembleCCE))
       spinmuC->setValue(model->Parameters().muC * 1.e3);
-	}
-	return;
+  }
+  return;
 }
 
 void ModelTab::calculateFitted()
@@ -594,7 +594,7 @@ void ModelTab::writetofile() {
             FILE *f = fopen(path.toStdString().c_str(), "w");
             fprintf(f, "%20s%15s%8s%8s%8s%8s%8s%15s%15s\n", "Name", "PDGID", "Stable", "B", "Q", "S", "C", "Primary yield", "Total yield");
             for(int i=0;i<model->TPS()->Particles().size();++i) {
-                fprintf(f, "%20s%15d%8d%8d%8d%8d%8d%15E%15E\n",
+                fprintf(f, "%20s%15lld%8d%8d%8d%8d%8d%15E%15E\n",
                         model->TPS()->Particles()[i].Name().c_str(),
                         model->TPS()->Particles()[i].PdgId(),
                         model->TPS()->Particles()[i].IsStable(),
@@ -625,78 +625,78 @@ void ModelTab::showResults() {
 }
 
 void ModelTab::showValidityCheckLog() {
-	if (!model->IsLastSolutionOK()) {
-		QMessageBox msgBox;
-		msgBox.setText("There were some issues in calculation. See the log below:");
-		msgBox.setDetailedText(model->ValidityCheckLog().c_str());
-		msgBox.exec();
-	}
+  if (!model->IsLastSolutionOK()) {
+    QMessageBox msgBox;
+    msgBox.setText("There were some issues in calculation. See the log below:");
+    msgBox.setDetailedText(model->ValidityCheckLog().c_str());
+    msgBox.exec();
+  }
 }
 
 void ModelTab::computeHigherOrderFluctuations()
 {
-	if (model->Ensemble() != ThermalModelBase::GCE) {
-		flucts.flag = false;
-		return;
-	}
-	
-	// Higher-order fluctuations
-	std::vector<double> chargesB(model->Densities().size()), chargesQ(model->Densities().size()), chargesS(model->Densities().size()), chargesC(model->Densities().size());
-	std::vector<double> chchis;
+  if (model->Ensemble() != ThermalModelBase::GCE) {
+    flucts.flag = false;
+    return;
+  }
+  
+  // Higher-order fluctuations
+  std::vector<double> chargesB(model->Densities().size()), chargesQ(model->Densities().size()), chargesS(model->Densities().size()), chargesC(model->Densities().size());
+  std::vector<double> chchis;
 
-	// Baryon number
-	if (model->TPS()->hasBaryons()) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			chargesB[i] = model->TPS()->Particles()[i].BaryonCharge();
-		}
+  // Baryon number
+  if (model->TPS()->hasBaryons()) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      chargesB[i] = model->TPS()->Particles()[i].BaryonCharge();
+    }
 
-		chchis = model->CalculateChargeFluctuations(chargesB, 4);
-		flucts.chi1B = chchis[0];
-		flucts.chi2B = chchis[1];
-		flucts.chi3B = chchis[2];
-		flucts.chi4B = chchis[3];
-	}
+    chchis = model->CalculateChargeFluctuations(chargesB, 4);
+    flucts.chi1B = chchis[0];
+    flucts.chi2B = chchis[1];
+    flucts.chi3B = chchis[2];
+    flucts.chi4B = chchis[3];
+  }
 
-	// Electric charge
-	if (model->TPS()->hasCharged()) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			chargesQ[i] = model->TPS()->Particles()[i].ElectricCharge();
-		}
+  // Electric charge
+  if (model->TPS()->hasCharged()) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      chargesQ[i] = model->TPS()->Particles()[i].ElectricCharge();
+    }
 
-		chchis = model->CalculateChargeFluctuations(chargesQ, 4);
-		flucts.chi1Q = chchis[0];
-		flucts.chi2Q = chchis[1];
-		flucts.chi3Q = chchis[2];
-		flucts.chi4Q = chchis[3];
-	}
+    chchis = model->CalculateChargeFluctuations(chargesQ, 4);
+    flucts.chi1Q = chchis[0];
+    flucts.chi2Q = chchis[1];
+    flucts.chi3Q = chchis[2];
+    flucts.chi4Q = chchis[3];
+  }
 
-	// Strangeness
-	if (model->TPS()->hasStrange()) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			chargesS[i] = model->TPS()->Particles()[i].Strangeness();
-		}
+  // Strangeness
+  if (model->TPS()->hasStrange()) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      chargesS[i] = model->TPS()->Particles()[i].Strangeness();
+    }
 
-		chchis = model->CalculateChargeFluctuations(chargesS, 4);
-		flucts.chi1S = chchis[0];
-		flucts.chi2S = chchis[1];
-		flucts.chi3S = chchis[2];
-		flucts.chi4S = chchis[3];
-	}
+    chchis = model->CalculateChargeFluctuations(chargesS, 4);
+    flucts.chi1S = chchis[0];
+    flucts.chi2S = chchis[1];
+    flucts.chi3S = chchis[2];
+    flucts.chi4S = chchis[3];
+  }
 
-	// Charm
-	if (model->TPS()->hasCharmed()) {
-		for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-			chargesC[i] = model->TPS()->Particles()[i].Charm();
-		}
+  // Charm
+  if (model->TPS()->hasCharmed()) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      chargesC[i] = model->TPS()->Particles()[i].Charm();
+    }
 
-		chchis = model->CalculateChargeFluctuations(chargesC, 4);
-		flucts.chi1C = chchis[0];
-		flucts.chi2C = chchis[1];
-		flucts.chi3C = chchis[2];
-		flucts.chi4C = chchis[3];
-	}
+    chchis = model->CalculateChargeFluctuations(chargesC, 4);
+    flucts.chi1C = chchis[0];
+    flucts.chi2C = chchis[1];
+    flucts.chi3C = chchis[2];
+    flucts.chi4C = chchis[3];
+  }
 
-	flucts.flag = true;
+  flucts.flag = true;
 }
 
 void ModelTab::setModel(ThermalModelBase *modelop) {
@@ -712,13 +712,13 @@ void ModelTab::updateModel() {
 void ModelTab::resetTPS() {
     model->ChangeTPS(model->TPS());
     myModel->reset();
-		tableParticles->setColumnHidden(5, !model->TPS()->hasBaryons());
-		tableParticles->setColumnHidden(6, !model->TPS()->hasCharged());
-		tableParticles->setColumnHidden(7, !model->TPS()->hasStrange());
-		tableParticles->setColumnHidden(8, !model->TPS()->hasCharmed());
-		tableParticles->resizeColumnsToContents();
+    tableParticles->setColumnHidden(5, !model->TPS()->hasBaryons());
+    tableParticles->setColumnHidden(6, !model->TPS()->hasCharged());
+    tableParticles->setColumnHidden(7, !model->TPS()->hasStrange());
+    tableParticles->setColumnHidden(8, !model->TPS()->hasCharmed());
+    tableParticles->resizeColumnsToContents();
 
-		labelValid->setVisible(false);
+    labelValid->setVisible(false);
 
     configWidget->setModel(model);
 

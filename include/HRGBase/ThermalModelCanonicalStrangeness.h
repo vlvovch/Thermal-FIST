@@ -123,9 +123,9 @@ namespace thermalfist {
 
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
 
-    virtual double ParticleScaledVariance(int part) { return 1.; }
+    virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
 
-    virtual double ParticleScalarDensity(int part) { return 0.; }
+    virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
     // Override functions end
 

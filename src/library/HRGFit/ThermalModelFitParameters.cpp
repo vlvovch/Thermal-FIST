@@ -102,7 +102,7 @@ namespace thermalfist {
   int ThermalModelFitParameters::IndexByName(const std::string & name) const
   {
     int ret = -1;
-    for (int i = 0; i < ParameterList.size(); ++i)
+    for (size_t i = 0; i < ParameterList.size(); ++i)
       if (ParameterList[i]->name == name)
         ret = i;
     return ret;
@@ -128,7 +128,7 @@ namespace thermalfist {
 
   FitParameter ThermalModelFitParameters::GetParameter(const int index) const
   {
-    if (index >= 0 && index < ParameterList.size())
+    if (index >= 0 && index < static_cast<int>(ParameterList.size()))
       return *ParameterList[index];
     // return T by default
     return T;
@@ -136,7 +136,7 @@ namespace thermalfist {
 
   FitParameter & ThermalModelFitParameters::GetParameter(const int index)
   {
-    if (index >= 0 && index < ParameterList.size())
+    if (index >= 0 && index < static_cast<int>(ParameterList.size()))
       return *ParameterList[index];
     // return T by default
     return T;

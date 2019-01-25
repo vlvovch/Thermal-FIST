@@ -56,11 +56,11 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
         layout->addWidget(tableDecays);
     }
 
-		if (model->TPS()->Particles()[pid].ResonanceWidth() > 0.) {
-			buttonSpectralFunction = new QPushButton(tr("Spectral function..."));
-			connect(buttonSpectralFunction, SIGNAL(clicked()), this, SLOT(showSpectralFunction()));
-			layout->addWidget(buttonSpectralFunction, 0, Qt::AlignRight);
-		}
+    if (model->TPS()->Particles()[pid].ResonanceWidth() > 0.) {
+      buttonSpectralFunction = new QPushButton(tr("Spectral function..."));
+      connect(buttonSpectralFunction, SIGNAL(clicked()), this, SLOT(showSpectralFunction()));
+      layout->addWidget(buttonSpectralFunction, 0, Qt::AlignRight);
+    }
 
     QLabel *labProd = new QLabel(tr("Production of ") + QString::fromStdString(model->TPS()->Particles()[pid].Name()));
     labProd->setFont(font);
@@ -109,11 +109,11 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
         tableSources->setItem(0, 1, new QTableWidgetItem(QString::number(model->Densities()[pid] * model->Volume())));
         tableSources->setItem(0, 2, new QTableWidgetItem(QString::number(model->Densities()[pid] / model->TotalDensities()[pid] * 100.)));
 
-				
-				for (int j = 0; j < 3; ++j) {
-					QTableWidgetItem *item = tableSources->item(0, j);
-					item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
-				}
+        
+        for (int j = 0; j < 3; ++j) {
+          QTableWidgetItem *item = tableSources->item(0, j);
+          item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
+        }
 
         for(int i=0;i<sources.size();++i)
           {
@@ -122,12 +122,12 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
                 tableSources->setItem(i+1, 0, new QTableWidgetItem(tr("Decays from primordial ") + QString(model->TPS()->Particles()[decaypartid].Name().c_str())));
                 tableSources->setItem(i+1, 1, new QTableWidgetItem(QString::number(sources[tindex].first * model->Volume())));
                 tableSources->setItem(i+1, 2, new QTableWidgetItem(QString::number(sources[tindex].first / model->TotalDensities()[pid] * 100.)));
-								
-								for (int j = 0; j < 3; ++j) {
-									QTableWidgetItem *item = tableSources->item(i+1, j);
-									item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
-								}
-					}
+                
+                for (int j = 0; j < 3; ++j) {
+                  QTableWidgetItem *item = tableSources->item(i+1, j);
+                  item->setFlags(item->flags() &  ~Qt::ItemIsEditable);
+                }
+          }
     }
 
     tableSources->resizeColumnsToContents();
@@ -225,11 +225,11 @@ QString ParticleDialog::GetParticleInfo() {
     ret += tr("|c|").leftJustified(20) + " = ";
     ret += QString::number(model->TPS()->Particles()[pid].AbsoluteCharm()) + "\r\n";
 
-		ret += tr("Isospin").leftJustified(20) + " = ";
-		ret += QString::number(2*model->TPS()->Particles()[pid].ElectricCharge() - model->TPS()->Particles()[pid].BaryonCharge() - model->TPS()->Particles()[pid].Strangeness() - model->TPS()->Particles()[pid].Charm()) + "\r\n";
+    ret += tr("Isospin").leftJustified(20) + " = ";
+    ret += QString::number(2*model->TPS()->Particles()[pid].ElectricCharge() - model->TPS()->Particles()[pid].BaryonCharge() - model->TPS()->Particles()[pid].Strangeness() - model->TPS()->Particles()[pid].Charm()) + "\r\n";
 
-		ret += tr("I3").leftJustified(20) + " = ";
-		ret += QString::number(model->TPS()->Particles()[pid].ElectricCharge() - (model->TPS()->Particles()[pid].BaryonCharge() + model->TPS()->Particles()[pid].Strangeness() + model->TPS()->Particles()[pid].Charm())/2.) + "\r\n";
+    ret += tr("I3").leftJustified(20) + " = ";
+    ret += QString::number(model->TPS()->Particles()[pid].ElectricCharge() - (model->TPS()->Particles()[pid].BaryonCharge() + model->TPS()->Particles()[pid].Strangeness() + model->TPS()->Particles()[pid].Charm())/2.) + "\r\n";
 
     if (model->TPS()->Particles()[pid].ResonanceWidth()>1e-5) {
         ret += tr("Decay width").leftJustified(20) + " = ";
@@ -238,7 +238,7 @@ QString ParticleDialog::GetParticleInfo() {
         if (model->TPS()->Particles()[pid].DecayThresholdMass()>1e-5) {
             ret += tr("Threshold mass").leftJustified(20) + " = ";
             ret += QString::number(model->TPS()->Particles()[pid].DecayThresholdMass()*1.e3) + " " + tr("MeV");
-						ret += "\r\n";
+            ret += "\r\n";
         }
     }
 
@@ -278,8 +278,8 @@ void ParticleDialog::removeColumn() {
 
 void ParticleDialog::showSpectralFunction()
 {
-	SpectralFunctionDialog dialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
-	dialog.setWindowFlags(Qt::Window);
-	dialog.setMinimumSize(QSize(800, 400));
-	dialog.exec();
+  SpectralFunctionDialog dialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
+  dialog.setWindowFlags(Qt::Window);
+  dialog.setMinimumSize(QSize(800, 400));
+  dialog.exec();
 }

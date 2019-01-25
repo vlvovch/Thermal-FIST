@@ -16,6 +16,7 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QComboBox>
+#include <QLineEdit>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
@@ -32,14 +33,14 @@ class QuantityDialog : public QDialog
     int pid;
 
     QCheckBox *checkType;
-    QSpinBox *spinPDG1;
-    QSpinBox *spinPDG2;
+    QLineEdit *lePDG1;
+    QLineEdit *lePDG2;
     QLabel *name1, *name2;
     QDoubleSpinBox *spinValue;
     QDoubleSpinBox *spinError;
 
-		QComboBox *comboFeeddown1;
-		QComboBox *comboFeeddown2;
+    QComboBox *comboFeeddown1;
+    QComboBox *comboFeeddown2;
 
     QPushButton *buttonOK;
     QPushButton *buttonCancel;
@@ -56,8 +57,8 @@ public slots:
     void changeType(bool flag);
     void returnOK();
     void returnCancel();
-    void PDGChanged1(int pdgid);
-    void PDGChanged2(int pdgid);
+    void PDGChanged1();
+    void PDGChanged2();
 };
 
 #endif // QUANTITYDIALOG_H

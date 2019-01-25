@@ -36,7 +36,7 @@ class MainWindow : public QMainWindow
     int currentTab;
 
     ModelTab *tab1;
-	
+  
     FitToExperimentTab *tab2;
 
     EventGeneratorTab *tab5;
@@ -45,12 +45,12 @@ class MainWindow : public QMainWindow
 
     QLineEdit *leDatabase;
     QPushButton *buttonLoad;
-		QPushButton *buttonLoadDecays;
+    QPushButton *buttonLoadDecays;
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
 
-		QString cpath = "";
+    QString cpath = "";
 
 public:
     MainWindow(QWidget *parent = 0);
@@ -60,16 +60,16 @@ protected:
 //  void contextMenuEvent(QContextMenuEvent *event) override;
 #endif // QT_NO_CONTEXTMENU
 private:
-  void createMenus();
+    void createMenus();
 private slots:
-  void loadDatabase();
-  void loadDecays();
-  void tabChanged(int newIndex);
-  void about();
-  void documentation();
-  void quickstartguide();
-  void increaseFontSize();
-  void decreaseFontSize();
+    void loadDatabase();
+    void loadDecays();
+    void tabChanged(int newIndex);
+    void about();
+    void documentation();
+    void quickstartguide();
+    void increaseFontSize();
+    void decreaseFontSize();
 };
 
 #endif // MAINWINDOW_H

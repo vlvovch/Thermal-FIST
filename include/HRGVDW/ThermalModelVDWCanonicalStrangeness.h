@@ -59,9 +59,9 @@ namespace thermalfist {
 
     void FillAttraction(const std::vector< std::vector<double> > & aij = std::vector< std::vector<double> >(0));
     
-    void SetVirial(int i, int j, double b) { if (i >= 0 && i < m_Virial.size() && j >= 0 && j < m_Virial[i].size()) m_Virial[i][j] = b; }
+    void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; }
     
-    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < m_Attr.size() && j >= 0 && j < m_Attr[i].size())     m_Attr[i][j] = a; }
+    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; }
 
     double VirialCoefficient(int i, int j) const;
 

@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -23,61 +23,67 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
     connect(checkType, SIGNAL(toggled(bool)), this, SLOT(changeType(bool)));
     QLabel *labPDG1 = new QLabel(tr("PDGID 1"));
     QLabel *labPDG2 = new QLabel(tr("PDGID 2"));
-    spinPDG1 = new QSpinBox();
-    spinPDG1->setMinimum(-2000000000);
-    spinPDG1->setMaximum(2000000000);
-    if (!quant->type) spinPDG1->setValue(quant->mult.fPDGID);
-    else spinPDG1->setValue(quant->ratio.fPDGID1);
-    spinPDG2 = new QSpinBox();
-    spinPDG2->setMinimum(-2000000000);
-    spinPDG2->setMaximum(2000000000);
-    if (!quant->type) spinPDG2->setEnabled(false);
-    else spinPDG2->setValue(quant->ratio.fPDGID2);
+
+    lePDG1 = new QLineEdit();
+    QRegExp rx("-?\\d{1,15}");
+    QValidator *validator1 = new QRegExpValidator(rx, this);
+    lePDG1->setValidator(validator1);
+    lePDG1->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    if (!quant->type) lePDG1->setText(QString::number(quant->mult.fPDGID));
+    else lePDG1->setText(QString::number(quant->ratio.fPDGID1));
+
+    lePDG2 = new QLineEdit();
+    QValidator *validator2 = new QRegExpValidator(rx, this);
+    lePDG2->setValidator(validator2);
+    lePDG2->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    if (!quant->type) lePDG2->setEnabled(false);
+    else lePDG2->setText(QString::number(quant->ratio.fPDGID2));
+
     name1 = new QLabel();
     name2 = new QLabel();
-    name1->setText(QString(model->TPS()->GetNameFromPDG(spinPDG1->value()).c_str()));
-    name2->setText(QString(model->TPS()->GetNameFromPDG(spinPDG2->value()).c_str()));
+    name1->setText(QString(model->TPS()->GetNameFromPDG(lePDG1->text().toLongLong()).c_str()));
+    name2->setText(QString(model->TPS()->GetNameFromPDG(lePDG2->text().toLongLong()).c_str()));
     layGrid->addWidget(labPDG1, 0, 0);
-    layGrid->addWidget(spinPDG1, 0, 1);
+    layGrid->addWidget(lePDG1, 0, 1);
     layGrid->addWidget(name1, 0, 2);
     layGrid->addWidget(labPDG2, 1, 0);
-    layGrid->addWidget(spinPDG2, 1, 1);
+    layGrid->addWidget(lePDG2, 1, 1);
     layGrid->addWidget(name2, 1, 2);
 
-    connect(spinPDG1, SIGNAL(valueChanged(int)), this, SLOT(PDGChanged1(int)));
-    connect(spinPDG2, SIGNAL(valueChanged(int)), this, SLOT(PDGChanged2(int)));
+    connect(lePDG1, SIGNAL(textChanged(QString)), this, SLOT(PDGChanged1()));
+    connect(lePDG2, SIGNAL(textChanged(QString)), this, SLOT(PDGChanged2()));
 
-		QLabel *labFeeddown1 = new QLabel(tr("Feeddown 1"));
-		comboFeeddown1 = new QComboBox();
-		comboFeeddown1->addItem(tr("Primordial"));
+    QLabel *labFeeddown1 = new QLabel(tr("Feeddown 1"));
+    comboFeeddown1 = new QComboBox();
+    comboFeeddown1->addItem(tr("Primordial"));
     comboFeeddown1->addItem(tr("Stability flags"));
-		comboFeeddown1->addItem(tr("Strong+EM+weak decays"));
+    comboFeeddown1->addItem(tr("Strong+EM+weak decays"));
     comboFeeddown1->addItem(tr("Strong+EM decays"));
     comboFeeddown1->addItem(tr("Strong decays"));
-		QLabel *labFeeddown2 = new QLabel(tr("Feeddown 2"));
-		comboFeeddown2 = new QComboBox();
-		comboFeeddown2->addItem(tr("Primordial"));
-		comboFeeddown2->addItem(tr("Stability flags"));
+    QLabel *labFeeddown2 = new QLabel(tr("Feeddown 2"));
+    comboFeeddown2 = new QComboBox();
+    comboFeeddown2->addItem(tr("Primordial"));
+    comboFeeddown2->addItem(tr("Stability flags"));
     comboFeeddown2->addItem(tr("Strong+EM+weak decays"));
     comboFeeddown2->addItem(tr("Strong+EM decays"));
     comboFeeddown2->addItem(tr("Strong decays"));
 
-		if (!quant->type) {
-			comboFeeddown1->setCurrentIndex(quant->mult.fFeedDown);
-			comboFeeddown2->setCurrentIndex(1);
-		}
-		else {
-			comboFeeddown1->setCurrentIndex(quant->ratio.fFeedDown1);
-			comboFeeddown2->setCurrentIndex(quant->ratio.fFeedDown2);
-		}
+    if (!quant->type) {
+      comboFeeddown1->setCurrentIndex(quant->mult.fFeedDown);
+      comboFeeddown2->setCurrentIndex(1);
+    }
+    else {
+      comboFeeddown1->setCurrentIndex(quant->ratio.fFeedDown1);
+      comboFeeddown2->setCurrentIndex(quant->ratio.fFeedDown2);
+    }
 
-		if (!quant->type) comboFeeddown2->setEnabled(false);
+    if (!quant->type) comboFeeddown2->setEnabled(false);
 
-		layGrid->addWidget(labFeeddown1, 2, 0);
-		layGrid->addWidget(comboFeeddown1, 2, 1);
-		layGrid->addWidget(labFeeddown2, 3, 0);
-		layGrid->addWidget(comboFeeddown2, 3, 1);
-		
+    layGrid->addWidget(labFeeddown1, 2, 0);
+    layGrid->addWidget(comboFeeddown1, 2, 1);
+    layGrid->addWidget(labFeeddown2, 3, 0);
+    layGrid->addWidget(comboFeeddown2, 3, 1);
+    
 
     QLabel *labVal = new QLabel(tr("Value"));
     spinValue = new QDoubleSpinBox();
@@ -92,7 +98,7 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
     if (!quant->type) spinError->setValue(quant->mult.fError);
     else spinError->setValue(quant->ratio.fError);
 
-		
+    
 
     layGrid->addWidget(labVal, 4, 0);
     layGrid->addWidget(spinValue, 4, 1);
@@ -120,28 +126,28 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
 }
 
 void QuantityDialog::changeType(bool flag) {
-	if (!flag) {
-		spinPDG2->setEnabled(false);
-		comboFeeddown2->setEnabled(false);
-	}
-	else {
-		spinPDG2->setEnabled(true);
-		comboFeeddown2->setEnabled(true);
-	}
+  if (!flag) {
+    lePDG2->setEnabled(false);
+    comboFeeddown2->setEnabled(false);
+  }
+  else {
+    lePDG2->setEnabled(true);
+    comboFeeddown2->setEnabled(true);
+  }
 }
 
 void QuantityDialog::returnOK() {
   if (!checkType->isChecked()) {
-		quant->type  = FittedQuantity::Multiplicity;
-    quant->mult  = ExperimentMultiplicity(spinPDG1->value(), spinValue->value(), spinError->value());
-		quant->mult.fFeedDown = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
+    quant->type  = FittedQuantity::Multiplicity;
+    quant->mult  = ExperimentMultiplicity(lePDG1->text().toLongLong(), spinValue->value(), spinError->value());
+    quant->mult.fFeedDown = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
   }
-	else {
-		quant->type  = FittedQuantity::Ratio;
-		quant->ratio = ExperimentRatio(spinPDG1->value(), spinPDG2->value(), spinValue->value(), spinError->value());
-		quant->ratio.fFeedDown1 = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
-		quant->ratio.fFeedDown2 = static_cast<Feeddown::Type>(comboFeeddown2->currentIndex());
-	}
+  else {
+    quant->type  = FittedQuantity::Ratio;
+    quant->ratio = ExperimentRatio(lePDG1->text().toLongLong(), lePDG2->text().toLongLong(), spinValue->value(), spinError->value());
+    quant->ratio.fFeedDown1 = static_cast<Feeddown::Type>(comboFeeddown1->currentIndex());
+    quant->ratio.fFeedDown2 = static_cast<Feeddown::Type>(comboFeeddown2->currentIndex());
+  }
   this->accept();
 }
 
@@ -149,10 +155,12 @@ void QuantityDialog::returnCancel() {
     this->reject();
 }
 
-void QuantityDialog::PDGChanged1(int pdgid) {
-    name1->setText(QString(model->TPS()->GetNameFromPDG(pdgid).c_str()));
+void QuantityDialog::PDGChanged1() {
+  long long pdgid = lePDG1->text().toLongLong();
+  name1->setText(QString(model->TPS()->GetNameFromPDG(pdgid).c_str()));
 }
 
-void QuantityDialog::PDGChanged2(int pdgid) {
-    name2->setText(QString(model->TPS()->GetNameFromPDG(pdgid).c_str()));
+void QuantityDialog::PDGChanged2() {
+  long long pdgid = lePDG2->text().toLongLong();
+  name2->setText(QString(model->TPS()->GetNameFromPDG(pdgid).c_str()));
 }

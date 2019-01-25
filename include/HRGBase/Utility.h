@@ -15,6 +15,7 @@
  * 
  */
 
+#include <string>
 
 namespace thermalfist {
 
@@ -26,6 +27,10 @@ namespace thermalfist {
     static bool DisclaimerPrinted;
   
   };
+
+
+  // For C99 compatibility
+  long long stringToLongLong(const std::string &str);
 
   double get_wall_time();
 

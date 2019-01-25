@@ -36,6 +36,7 @@ void EoSWorker::run() {
         model->ConstrainChemicalPotentials(true);
       else
         model->ConstrainChemicalPotentials(false);
+
       model->CalculateDensities();
 
       varvalues->operator [](i) = T;

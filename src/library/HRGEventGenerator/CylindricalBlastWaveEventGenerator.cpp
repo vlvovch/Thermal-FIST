@@ -28,7 +28,7 @@ namespace thermalfist {
     SetMomentumGenerators();
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, double etamax, double npow, bool onlyStable, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow) {
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)
@@ -49,17 +49,17 @@ namespace thermalfist {
     config.C = THM->Parameters().C;
 
     config.bij.resize(THMEVVDW->ComponentsNumber());
-    for (int i = 0; i < config.bij.size(); ++i) {
+    for (size_t i = 0; i < config.bij.size(); ++i) {
       config.bij[i].resize(THMEVVDW->ComponentsNumber());
-      for (int j = 0; j < config.bij.size(); ++j) {
+      for (size_t j = 0; j < config.bij.size(); ++j) {
         config.bij[i][j] = THMEVVDW->VirialCoefficient(i, j);
       }
     }
 
     config.aij.resize(THMEVVDW->ComponentsNumber());
-    for (int i = 0; i < config.bij.size(); ++i) {
+    for (size_t i = 0; i < config.bij.size(); ++i) {
       config.aij[i].resize(THMEVVDW->ComponentsNumber());
-      for (int j = 0; j < config.bij.size(); ++j) {
+      for (size_t j = 0; j < config.bij.size(); ++j) {
         config.aij[i][j] = THMEVVDW->AttractionCoefficient(i, j);
       }
     }
@@ -83,7 +83,7 @@ namespace thermalfist {
     ClearMomentumGenerators();
     m_BWGens.resize(0);
     if (m_THM != NULL) {
-      for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         m_MomentumGens.push_back(new RandomGenerators::SSHMomentumGenerator(m_T, m_Beta, m_EtaMax, m_n, m_THM->TPS()->Particles()[i].Mass()));
 
         double T = m_THM->Parameters().T;

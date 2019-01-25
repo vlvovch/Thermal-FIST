@@ -7,6 +7,7 @@
  */
 #include "HRGBase/Broyden.h"
 
+#include <stdio.h>
 #include <cmath>
 
 #include <Eigen/Dense>
@@ -30,7 +31,7 @@ namespace thermalfist {
       exit(1);
     }
 
-    if (m_Equations->Dimension() != x.size()) {
+    if (m_Equations->Dimension() != static_cast<int>(x.size())) {
       printf("**ERROR** BroydenJacobian::Jacobian: Equations dimension does not match that of input!\n");
       exit(1);
     }
@@ -41,15 +42,15 @@ namespace thermalfist {
 
     std::vector< std::vector<double> > xh(N);
 
-    for (int i = 0; i < x.size(); ++i) {
+    for (size_t i = 0; i < x.size(); ++i) {
       h[i] = m_dx*abs(h[i]);
       if (h[i] == 0.0) h[i] = m_dx;
       //h[i] = max(m_dx, h[i]);
     }
 
-    for (int i = 0; i < x.size(); ++i) {
+    for (size_t i = 0; i < x.size(); ++i) {
       xh[i].resize(N);
-      for (int j = 0; j < x.size(); ++j) {
+      for (size_t j = 0; j < x.size(); ++j) {
         if (i != j)
           xh[i][j] = x[j];
         else
@@ -63,7 +64,7 @@ namespace thermalfist {
 
     for (int j = 0; j < N; ++j) {
       std::vector<double> dfdxj = m_Equations->Equations(xh[j]);
-      for (int i = 0; i < dfdxj.size(); ++i) {
+      for (size_t i = 0; i < dfdxj.size(); ++i) {
         dfdxj[i] = (dfdxj[i] - fx[i]) / h[j];
         Jac[i*N + j] = dfdxj[i];
       }
@@ -125,7 +126,7 @@ namespace thermalfist {
 
       
       maxdiff = 0.;
-      for (int i = 0; i < xcur.size(); ++i) {
+      for (size_t i = 0; i < xcur.size(); ++i) {
         maxdiff = std::max(maxdiff, fabs(fnew[i]));
       }
 
@@ -171,10 +172,10 @@ namespace thermalfist {
     return xcur;
   }
 
-  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
   {
     double maxdiff = 0.;
-    for (int i = 0; i < x.size(); ++i) {
+    for (size_t i = 0; i < x.size(); ++i) {
       maxdiff = std::max(maxdiff, fabs(f[i]));
     }
     return (maxdiff < m_MaximumError);

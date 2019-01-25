@@ -76,7 +76,7 @@ namespace thermalfist {
      *           0-based indices of the vector must corresponds to the
      *           0-based indices of the particle list TPS()
      */
-    virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0)) { }
+    virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
 
     /// Whether finite resonance widths are considered.
     bool UseWidth() const { return m_UseWidth; }
@@ -216,7 +216,7 @@ namespace thermalfist {
      * 
      * \param rad Radius parameter (fm)
      */
-    virtual void SetRadius(double rad) { }
+    virtual void SetRadius(double /*rad*/) { }
 
     /**
      * \brief Set the radius parameter for particle species i
@@ -224,7 +224,7 @@ namespace thermalfist {
      * \param i 0-based index of particle species
      * \param rad Radius parameter (fm)
      */
-    virtual void SetRadius(int i, double rad) { }
+    virtual void SetRadius(int /*i*/, double /*rad*/) { }
 
     /**
      * \brief Set the excluded volume coefficient \f$ \tilde{b}_{ij} \f$
@@ -236,7 +236,7 @@ namespace thermalfist {
      * \param j 0-based index of the second particle species
      * \param b Excluded volume parameter \f$ \tilde{b}_{ij} \f$ (fm\f$^3\f$)
      */
-    virtual void SetVirial(int i, int j, double b) { }
+    virtual void SetVirial(int /*i*/, int /*j*/, double /*b*/) { }
 
     /**
      * \brief Set the vdW mean field attraction coefficient \f$ a_{ij} \f$
@@ -245,7 +245,7 @@ namespace thermalfist {
      * \param j 0-based index of the second particle species
      * \param a vdW mean field attraction parameter \f$ a_{ij} \f$ (GeV fm\f$^3\f$) 
      */
-    virtual void SetAttraction(int i, int j, double a) { }
+    virtual void SetAttraction(int /*i*/, int /*j*/, double /*a*/) { }
 
     //@{
     /// Switches off excluded volume terms for all meson-meson pairs
@@ -298,7 +298,7 @@ namespace thermalfist {
      * 
      * \param filename File with interaction parameters.
      */
-    virtual void ReadInteractionParameters(const std::string &filename) { }
+    virtual void ReadInteractionParameters(const std::string & /*filename*/) { }
 
     /**
      * \brief Write the QvdW interaction parameters to a file.
@@ -307,7 +307,7 @@ namespace thermalfist {
      * 
      * \param filename Output file.
      */
-    virtual void WriteInteractionParameters(const std::string &filename) { }
+    virtual void WriteInteractionParameters(const std::string & /*filename*/) { }
 
     /**
      * \brief Change the particle list.
@@ -327,7 +327,7 @@ namespace thermalfist {
        * \param j 0-based index of the second particle species
        * \return double Coefficient \f$ \tilde{b}_{ij} = 0 \f$
        */
-    virtual double VirialCoefficient(int i, int j) const { return 0.; }
+    virtual double VirialCoefficient(int /*i*/, int /*j*/) const { return 0.; }
     double RepulsionCoefficient(int i, int j) const { return VirialCoefficient(i,j); }
     //@}
 
@@ -338,7 +338,7 @@ namespace thermalfist {
      * \param j 0-based index of the second particle species
      * \return double Coefficient \f$ a_{ij} = 0 \f$
      */
-    virtual double AttractionCoefficient(int i, int j) const { return 0.; }
+    virtual double AttractionCoefficient(int /*i*/, int /*j*/) const { return 0.; }
 
     /// Whether quantum statistics is used, 
     /// 0 - Boltzmann, 1 - Quantum
@@ -809,7 +809,7 @@ namespace thermalfist {
      * 
      * \deprecated
      */
-    double GetDensity(int PDGID, int feeddown) { return GetDensity(PDGID, static_cast<Feeddown::Type>(feeddown)); }
+    double GetDensity(long long PDGID, int feeddown) { return GetDensity(PDGID, static_cast<Feeddown::Type>(feeddown)); }
     
     /**
      * \brief Particle number density of species
@@ -819,7 +819,7 @@ namespace thermalfist {
      * \param feeddown Which decay feeddown contributions to take into account
      * \return Particle number density
      */
-    double GetDensity(int PDGID, Feeddown::Type feeddown);
+    double GetDensity(long long PDGID, Feeddown::Type feeddown);
 
     std::vector<double> GetIdealGasDensities() const;
 
@@ -878,7 +878,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Scaled variance
      */
-    double ScaledVariancePrimordial(int id) const { return (id >= 0 && id < m_wprim.size()) ? m_wprim[id] : 1.; }
+    double ScaledVariancePrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_wprim.size())) ? m_wprim[id] : 1.; }
     
     /**
      * \brief Scaled variance of final particle
@@ -890,7 +890,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Scaled variance
      */
-    double ScaledVarianceTotal(int id) const { return (id >= 0 && id < m_wtot.size()) ? m_wtot[id] : 1.; }
+    double ScaledVarianceTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_wtot.size())) ? m_wtot[id] : 1.; }
     
     /**
      * \brief Normalized skewness of primordial particle
@@ -899,7 +899,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized skewness
      */
-    double SkewnessPrimordial(int id) const { return (id >= 0 && id < m_skewprim.size()) ? m_skewprim[id] : 1.; }
+    double SkewnessPrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_skewprim.size())) ? m_skewprim[id] : 1.; }
     
     /**
      * \brief Normalized skewness of final particle
@@ -911,7 +911,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized skewness
      */
-    double SkewnessTotal(int id) const { return (id >= 0 && id < m_skewtot.size()) ? m_skewtot[id] : 1.; }
+    double SkewnessTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_skewtot.size())) ? m_skewtot[id] : 1.; }
     
     /**
      * \brief Normalized excess kurtosis of primordial particle
@@ -920,7 +920,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized excess kurtosis
      */
-    double KurtosisPrimordial(int id) const { return (id >= 0 && id < m_kurtprim.size()) ? m_kurtprim[id] : 1.; }
+    double KurtosisPrimordial(int id) const { return (id >= 0 && id < static_cast<int>(m_kurtprim.size())) ? m_kurtprim[id] : 1.; }
     
     /**
      * \brief Normalized excess kurtosis of final particle
@@ -932,7 +932,7 @@ namespace thermalfist {
      * \param id  0-based index of particle species
      * \return    Normalized excess kurtosis
      */
-    double KurtosisTotal(int id) const { return (id >= 0 && id < m_kurttot.size()) ? m_kurttot[id] : 1.; }
+    double KurtosisTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_kurttot.size())) ? m_kurttot[id] : 1.; }
 
     /**
      * \brief A 2nd order susceptibility of conserved charges
@@ -1087,12 +1087,12 @@ namespace thermalfist {
     
 
     /// Shift in chemical potential of particle species id due to interactions
-    virtual double MuShift(int id) { return 0.; }
+    virtual double MuShift(int /*id*/) { return 0.; }
 
   private:
     void ResetChemicalPotentials();
 
-    double GetDensity(int PDGID, const std::vector<double> *dens);
+    double GetDensity(long long PDGID, const std::vector<double> *dens);
 
     class BroydenEquationsChem : public BroydenEquations
     {

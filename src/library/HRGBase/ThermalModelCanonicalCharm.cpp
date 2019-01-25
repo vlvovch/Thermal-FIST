@@ -46,7 +46,7 @@ namespace thermalfist {
     m_Parameters.muC = 0.;
   }
 
-  void ThermalModelCanonicalCharm::SetCharmChemicalPotential(double muC)
+  void ThermalModelCanonicalCharm::SetCharmChemicalPotential(double /*muC*/)
   {
     m_Parameters.muC = 0.0;
   }
@@ -58,13 +58,13 @@ namespace thermalfist {
 
   void ThermalModelCanonicalCharm::SetStatistics(bool stats) {
     m_QuantumStats = stats;
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i)
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       if (m_TPS->Particles()[i].Charm() == 0) m_TPS->Particle(i).UseStatistics(stats);
       else m_TPS->Particle(i).UseStatistics(false);
   }
 
   void ThermalModelCanonicalCharm::CalculateDensitiesGCE() {
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_densitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
     }
     m_GCECalculated = true;
@@ -72,7 +72,7 @@ namespace thermalfist {
 
   void ThermalModelCanonicalCharm::CalculateEnergyDensitiesGCE() {
     m_energydensitiesGCE.resize(m_densitiesGCE.size());
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_energydensitiesGCE[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
     }
   }
@@ -94,9 +94,9 @@ namespace thermalfist {
     m_partialZ.resize(m_CharmValues.size());
     vector<double> xi(1, 0.), yi(1, 0.);
 
-    for (unsigned int i = 0; i < m_CharmValues.size(); ++i) {
+    for (size_t i = 0; i < m_CharmValues.size(); ++i) {
       m_partialZ[i] = 0.;
-      for (unsigned int j = 0; j < m_TPS->Particles().size(); ++j)
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j)
         if (m_CharmValues[i] == m_TPS->Particles()[j].Charm()) m_partialZ[i] += m_densitiesGCE[j] * m_Volume;
       if (m_partialZ[i] < 1.e-10) m_partialZ[i] += 1e-10;
     }
@@ -107,14 +107,14 @@ namespace thermalfist {
       yi[i] = sqrt(m_partialZ[m_CharmMap[i + 1]] / m_partialZ[m_CharmMap[-(i + 1)]]);
     }
 
-    for (unsigned int i = 0; i < m_CharmValues.size(); ++i) {
+    for (size_t i = 0; i < m_CharmValues.size(); ++i) {
       double res = 0.;
 
       res = xMath::BesselI(abs(-m_CharmValues[i]), xi[0]) * pow(yi[0], m_CharmValues[i]);
       m_Zsum[i] = res;
     }
 
-    for (unsigned int i = 0; i < m_TPS->Particles().size(); ++i) {
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) m_densities[i] = (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_densitiesGCE[i];
     }
 
@@ -125,7 +125,7 @@ namespace thermalfist {
   void ThermalModelCanonicalCharm::CalculateFluctuations() {
     m_wprim.resize(m_densities.size());
     m_wtot.resize(m_densities.size());
-    for (int i = 0; i < m_wprim.size(); ++i) {
+    for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_wprim[i] = 1.;
       m_wtot[i] = 1.;
       m_skewprim[i] = 1.;
@@ -137,21 +137,21 @@ namespace thermalfist {
     if (!m_Calculated) CalculateDensities();
     if (m_energydensitiesGCE.size() == 0) CalculateEnergyDensitiesGCE();
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_energydensitiesGCE[i];
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_energydensitiesGCE[i];
     return ret;
   }
 
   double ThermalModelCanonicalCharm::CalculateEntropyDensity() {
     double ret = m_partialZ[0] + log(m_Zsum[m_CharmMap[0]]);
     if (m_energydensitiesGCE.size() == 0) CalculateEnergyDensitiesGCE();
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * ((m_energydensitiesGCE[i] - (m_Parameters.muB * m_TPS->Particles()[i].BaryonCharge() + m_Parameters.muQ * m_TPS->Particles()[i].ElectricCharge() + m_Parameters.muS * m_TPS->Particles()[i].Strangeness()) * m_densitiesGCE[i]) / m_Parameters.T);
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * ((m_energydensitiesGCE[i] - (m_Parameters.muB * m_TPS->Particles()[i].BaryonCharge() + m_Parameters.muQ * m_TPS->Particles()[i].ElectricCharge() + m_Parameters.muS * m_TPS->Particles()[i].Strangeness()) * m_densitiesGCE[i]) / m_Parameters.T);
     return ret;
   }
 
 
   double ThermalModelCanonicalCharm::CalculatePressure() {
     double ret = 0.;
-    for (int i = 0; i < m_TPS->Particles().size(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_Parameters.T * m_densitiesGCE[i];
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * m_Parameters.T * m_densitiesGCE[i];
     return ret;
   }
 

@@ -180,6 +180,7 @@ namespace thermalfist {
         m_Beta = beta;
         m_EtaMax = etamax;
         m_Mass = mass;
+        m_n = npow;
         m_distr = SSHDistribution(0, m_Mass, m_T, m_Beta, m_EtaMax, m_n);
         m_dPt = 0.02;
         m_dy = 0.05;

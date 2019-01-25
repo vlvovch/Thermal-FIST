@@ -103,7 +103,7 @@ QVariant ListTableModel::data(const QModelIndex &index, int role) const
                 if (fabs(bratiosum - 1.) > 1.e-8) {
                     if (ret != "")
                         ret += " / ";
-                    ret += "Not 100\%!";
+                    ret += "Not 100%!";
                 }
 
                 return ret;
@@ -322,6 +322,7 @@ bool DecayEditorTableModel::setData(const QModelIndex & index, const QVariant & 
             fParticle->Decays()[row].mDaughters.push_back(value.toInt());
             return true;
         }
+        else return false;
     }
     else return false;
 }

@@ -23,7 +23,7 @@ using namespace std;
 
 namespace thermalfist {
 
-  ThermalParticle::ThermalParticle(bool Stable, std::string Name, int PDGID, double Deg, int Stat, double Mass,
+  ThermalParticle::ThermalParticle(bool Stable, std::string Name, long long PDGID, double Deg, int Stat, double Mass,
     int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
     m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.)
@@ -72,7 +72,7 @@ namespace thermalfist {
   void ThermalParticle::CalculateAndSetDynamicalThreshold()
   {
     double Thr = m_Mass + m_Width;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       Thr = min(Thr, m_Decays[i].mM0);
     }
     m_ThresholdDynamical = Thr;
@@ -141,7 +141,7 @@ namespace thermalfist {
   void ThermalParticle::CalculateThermalBranchingRatios(const ThermalModelParameters & params, bool useWidth, double mu)
   {
     if (!useWidth || m_Width == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType != eBW) {
-      for (int j = 0; j < m_Decays.size(); ++j) {
+      for (size_t j = 0; j < m_Decays.size(); ++j) {
         m_Decays[j].mBratioAverage = m_Decays[j].mBratio;
       }
     }
@@ -150,23 +150,23 @@ namespace thermalfist {
       if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
       if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-      for (int j = 0; j < m_Decays.size(); ++j) {
+      for (size_t j = 0; j < m_Decays.size(); ++j) {
         m_Decays[j].mBratioAverage = 0.;
       }
 
       double ret1 = 0., ret2 = 0., tmp = 0.;
-      for (int i = 0; i < m_xalldyn.size(); i++) {
+      for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
         double dens = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
         ret1 += tmp * dens;
         ret2 += tmp;
 
-        for (int j = 0; j < m_Decays.size(); ++j) {
+        for (size_t j = 0; j < m_Decays.size(); ++j) {
           const_cast<double&>(m_Decays[j].mBratioAverage) += tmp * dens * m_Decays[j].mBratioVsM[i];
         }
       }
 
-      for (int j = 0; j < m_Decays.size(); ++j) {
+      for (size_t j = 0; j < m_Decays.size(); ++j) {
         if (ret1 != 0.0)
           m_Decays[j].mBratioAverage /= ret1;
         else
@@ -181,7 +181,7 @@ namespace thermalfist {
 
     std::vector<double> mthr, br;
     double tsum = 0.;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       mthr.push_back(m_Decays[i].mM0);
       br.push_back(m_Decays[i].mBratio);
       tsum += m_Decays[i].mBratio;
@@ -191,13 +191,13 @@ namespace thermalfist {
       br.push_back(1. - tsum);
     }
     else if (tsum > 1.) {
-      for (int i = 0; i < br.size(); ++i)
+      for (size_t i = 0; i < br.size(); ++i)
         br[i] *= 1. / tsum;
     }
 
-    for (int i = 0; i < ms.size(); ++i) {
+    for (size_t i = 0; i < ms.size(); ++i) {
       double tw = 0.;
-      for (int j = 0.; j < br.size(); ++j) {
+      for (size_t j = 0; j < br.size(); ++j) {
         if (mthr[j] <= ms[i])
           tw += br[j];
       }
@@ -279,10 +279,10 @@ namespace thermalfist {
 
   void ThermalParticle::NormalizeBranchingRatios() {
     double sum = 0.;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       sum += m_Decays[i].mBratio;
     }
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       m_Decays[i].mBratio *= 1. / sum;
     }
     FillCoefficientsDynamical();
@@ -291,7 +291,7 @@ namespace thermalfist {
   void ThermalParticle::RestoreBranchingRatios()
   {
     //m_Decays = m_DecaysOrig;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       m_Decays[i].mBratio = m_DecaysOrig[i].mBratio;
     }
     FillCoefficientsDynamical();
@@ -356,15 +356,15 @@ namespace thermalfist {
     double tC = 0.;
     vector<double> tCP(m_Decays.size(), 0.);
 
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       tsumb += m_Decays[i].mBratio;
       m_Decays[i].mBratioVsM.resize(0);
     }
 
-    for (int j = 0; j < m_xlegpdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlegpdyn.size(); ++j) {
       double twid = 0.;
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         twid += m_Decays[i].ModifiedWidth(m_xlegpdyn[j]) * m_Width;
       }
 
@@ -373,12 +373,12 @@ namespace thermalfist {
 
       if (twid == 0.0) {
         m_vallegpdyn[j] = 0.;
-        for (int i = 0; i < m_Decays.size(); ++i)
+        for (size_t i = 0; i < m_Decays.size(); ++i)
           m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
         continue;
       }
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         double ttwid = m_Decays[i].ModifiedWidth(m_xlegpdyn[j]) * m_Width;
         m_Decays[i].mBratioVsM.push_back(ttwid / twid);
         tCP[i] += m_wlegpdyn[j] * ttwid / twid * MassDistribution(m_xlegpdyn[j], twid);
@@ -388,10 +388,10 @@ namespace thermalfist {
       m_vallegpdyn[j] = MassDistribution(m_xlegpdyn[j], twid);
     }
 
-    for (int j = 0; j < m_xlegdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlegdyn.size(); ++j) {
       double twid = 0.;
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         twid += m_Decays[i].ModifiedWidth(m_xlegdyn[j]) * m_Width;
       }
 
@@ -400,12 +400,12 @@ namespace thermalfist {
 
       if (twid == 0.0) {
         m_vallegdyn[j] = 0.;
-        for (int i = 0; i < m_Decays.size(); ++i)
+        for (size_t i = 0; i < m_Decays.size(); ++i)
           m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
         continue;
       }
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         double ttwid = m_Decays[i].ModifiedWidth(m_xlegdyn[j]) * m_Width;
         m_Decays[i].mBratioVsM.push_back(ttwid / twid);
         tCP[i] += m_wlegdyn[j] * ttwid / twid * MassDistribution(m_xlegdyn[j], twid);
@@ -415,11 +415,11 @@ namespace thermalfist {
       m_vallegdyn[j] = MassDistribution(m_xlegdyn[j], twid);
     }
 
-    for (int j = 0; j < m_xlagdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlagdyn.size(); ++j) {
       double twid = 0.;
       double tx = m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width;
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         twid += m_Decays[i].ModifiedWidth(tx) * m_Width;
       }
 
@@ -428,12 +428,12 @@ namespace thermalfist {
 
       if (twid == 0.0) {
         m_vallagdyn[j] = 0.;
-        for (int i = 0; i < m_Decays.size(); ++i)
+        for (size_t i = 0; i < m_Decays.size(); ++i)
           m_Decays[i].mBratioVsM.push_back(m_Decays[i].mBratio);
         continue;
       }
 
-      for (int i = 0; i < m_Decays.size(); ++i) {
+      for (size_t i = 0; i < m_Decays.size(); ++i) {
         double ttwid = m_Decays[i].ModifiedWidth(tx) * m_Width;
         m_Decays[i].mBratioVsM.push_back(ttwid / twid);
         tCP[i] += m_wlagdyn[j] * m_Width * ttwid / twid * MassDistribution(tx, twid);
@@ -446,17 +446,17 @@ namespace thermalfist {
     m_xalldyn.resize(0);
     m_walldyn.resize(0);
 
-    for (int j = 0; j < m_xlegpdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlegpdyn.size(); ++j) {
       m_xalldyn.push_back(m_xlegpdyn[j]);
       m_walldyn.push_back(m_wlegpdyn[j] * m_vallegpdyn[j] / tC);
     }
 
-    for (int j = 0; j < m_xlegdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlegdyn.size(); ++j) {
       m_xalldyn.push_back(m_xlegdyn[j]);
       m_walldyn.push_back(m_wlegdyn[j] * m_vallegdyn[j] / tC);
     }
 
-    for (int j = 0; j < m_xlagdyn.size(); ++j) {
+    for (size_t j = 0; j < m_xlagdyn.size(); ++j) {
       m_xalldyn.push_back(m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width);
       m_walldyn.push_back(m_wlagdyn[j] * m_vallagdyn[j] / tC);
     }
@@ -464,7 +464,7 @@ namespace thermalfist {
     m_densalldyn.resize(m_xalldyn.size());
 
     double tsum = 0.;
-    for (int j = 0; j < m_walldyn.size(); ++j) {
+    for (size_t j = 0; j < m_walldyn.size(); ++j) {
       tsum += m_walldyn[j];
     }
 
@@ -495,12 +495,12 @@ namespace thermalfist {
     //  return m_Width;
 
     double tsumb = 0.0;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       tsumb += m_Decays[i].mBratio;
     }
 
     double twid = 0.0;
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       twid += m_Decays[i].ModifiedWidth(M) * m_Width;
     }
 
@@ -515,7 +515,7 @@ namespace thermalfist {
     std::vector<double> ret(m_Decays.size(), 0.);
 
     if (!eBW || m_Width / m_Mass < 0.01) {
-      for (int i = 0; i < m_Decays.size(); ++i)
+      for (size_t i = 0; i < m_Decays.size(); ++i)
         ret[i] = m_Decays[i].mBratio;
 
       return ret;
@@ -523,7 +523,7 @@ namespace thermalfist {
 
     double totwid = TotalWidtheBW(M);
 
-    for (int i = 0; i < m_Decays.size(); ++i) {
+    for (size_t i = 0; i < m_Decays.size(); ++i) {
       double partialwid = m_Decays[i].ModifiedWidth(M) * m_Width;
       ret[i] = partialwid / totwid;
     }
@@ -603,7 +603,7 @@ namespace thermalfist {
     }
 
     if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
-      for (int i = 0; i < m_xalldyn.size(); i++) {
+      for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
         double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
         ret1 += tmp * dens;
@@ -661,7 +661,7 @@ namespace thermalfist {
     }
 
     if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
-      for (int i = 0; i < m_xalldyn.size(); i++) {
+      for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
         double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_xalldyn[i], m_Degeneracy);
         ret1 += tmp * dens;

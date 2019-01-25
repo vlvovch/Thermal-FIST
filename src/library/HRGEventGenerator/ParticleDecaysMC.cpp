@@ -74,7 +74,7 @@ namespace thermalfist {
       return ret;
     }
 
-    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, int pdg1, double m2, int pdg2) {
+    std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, long long pdg1, double m2, long long pdg2) {
       std::vector<SimpleParticle> ret(0);
       ret.push_back(Mother);
       ret.push_back(Mother);
@@ -107,7 +107,7 @@ namespace thermalfist {
       ret[0].MotherPDGID = Mother.PDGID;
       ret[1].MotherPDGID = Mother.PDGID;
 
-      for (int i = 0; i < ret.size(); ++i)
+      for (size_t i = 0; i < ret.size(); ++i)
         if (ret[i].px != ret[i].px) {
           printf("**WARNING** Issue in a two-body decay!\n");
         }
@@ -115,7 +115,7 @@ namespace thermalfist {
       return ret;
     }
 
-    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<int> pdgs) {
+    std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<long long> pdgs) {
       std::vector<SimpleParticle> ret(0);
       if (masses.size() < 1) return ret;
 
@@ -128,12 +128,12 @@ namespace thermalfist {
       SimpleParticle Mother2 = Mother;
       // Mass validation
       double tmasssum = 0.;
-      for (int i = 0; i < masses.size(); ++i) tmasssum += masses[i];
+      for (size_t i = 0; i < masses.size(); ++i) tmasssum += masses[i];
       if (Mother2.m < tmasssum) Mother2.m = tmasssum + 1e-7;
 
       if (masses.size() == 2) return TwoBodyDecay(Mother2, masses[0], pdgs[0], masses[1], pdgs[1]);
       double tmin = 0.;
-      for (int i = 0; i < masses.size() - 1; ++i) tmin += masses[i];
+      for (size_t i = 0; i < masses.size() - 1; ++i) tmin += masses[i];
       double tmax = Mother2.m - masses[masses.size() - 1];
       double mijk = 0.;
       if (masses.size() == 3) {
@@ -148,10 +148,10 @@ namespace thermalfist {
       masses.resize(masses.size() - 1);
       pdgs.resize(pdgs.size() - 1);
       ret1 = ManyBodyDecay(ret1[0], masses, pdgs);
-      for (int i = 0; i < ret1.size(); ++i)
+      for (size_t i = 0; i < ret1.size(); ++i)
         ret.push_back(ret1[i]);
 
-      for (int i = 0; i < ret.size(); ++i)
+      for (size_t i = 0; i < ret.size(); ++i)
         ret[i].MotherPDGID = Mother.PDGID;
 
 #ifdef DEBUGDECAYS

@@ -196,7 +196,7 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
-    virtual double ParticleScalarDensity(int part) { return 0.; }
+    virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
     // Override functions end
 

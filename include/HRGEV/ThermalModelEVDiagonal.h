@@ -178,13 +178,13 @@ namespace thermalfist {
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
 
     // TODO properly with excluded volume
-    virtual double ParticleScaledVariance(int part) { return 1.; }
+    virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
 
     // TODO properly with excluded volume
-    virtual double ParticleSkewness(int part) { return 1.; }
+    virtual double ParticleSkewness(int /*part*/) { return 1.; }
 
     // TODO properly with excluded volume
-    virtual double ParticleKurtosis(int part) { return 1.; }
+    virtual double ParticleKurtosis(int /*part*/) { return 1.; }
 
     virtual double ParticleScalarDensity(int part);
 

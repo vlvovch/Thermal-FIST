@@ -26,7 +26,7 @@ class ResultDialog : public QDialog
 
 
     thermalfist::ThermalModelBase *model;
-		ChargesFluctuations *flucts;
+    ChargesFluctuations *flucts;
 
 
     QTextEdit *parameters;

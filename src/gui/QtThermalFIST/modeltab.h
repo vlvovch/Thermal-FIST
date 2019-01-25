@@ -37,17 +37,17 @@ class ModelTab : public QWidget
 
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
-		QPushButton *labelValid;
+    QPushButton *labelValid;
     QLabel *labelHint;
 
-		QLabel *labelmuS, *labelmuC;
+    QLabel *labelmuS, *labelmuC;
     QLabel *labelgammaS, *labelgammaC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
-		QDoubleSpinBox *spinVolumeRSC;
-		QLabel *labelB, *labelQ, *labelS, *labelC;
+    QDoubleSpinBox *spinVolumeRSC;
+    QLabel *labelB, *labelQ, *labelS, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
-		QCheckBox *checkFluctuations;
+    QCheckBox *checkFluctuations;
     QCheckBox *checkMuInitials;
 
     QCheckBox *checkOMP;
@@ -61,7 +61,7 @@ class ModelTab : public QWidget
 
     thermalfist::ThermalModelBase *model;
 
-		ChargesFluctuations flucts;
+    ChargesFluctuations flucts;
 
     QTextEdit *teDebug;
 
@@ -80,7 +80,7 @@ public:
     void updateControlsWithConfig(const ThermalModelConfig & config);
 private slots:
     void changedRow();
-		void performCalculation(const ThermalModelConfig & config);
+    void performCalculation(const ThermalModelConfig & config);
     void calculate();
     void calculateFitted();
     void writetofile();
@@ -90,9 +90,9 @@ private slots:
     void showResults();
     void setModel(thermalfist::ThermalModelBase *model);
     void modelChanged();
-		void changeVolumeRSC(double);
-		void showValidityCheckLog();
-		void computeHigherOrderFluctuations();
+    void changeVolumeRSC(double);
+    void showValidityCheckLog();
+    void computeHigherOrderFluctuations();
 public:
     void updateModel();
     void resetTPS();

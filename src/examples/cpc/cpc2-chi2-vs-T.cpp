@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   {
     model = new ThermalModelEVDiagonal(&TPS);
     double rad = 0.3;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
       if (model->TPS()->Particle(i).BaryonCharge() == 0) model->SetRadius(i, 0.);
       else model->SetRadius(i, rad);
     }
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   {
     model = new ThermalModelEVDiagonal(&TPS);
     double radProton = 0.5;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
       model->SetRadius(i, radProton * pow(model->TPS()->Particle(i).Mass() / 0.938, 1/3.));
     }
 
@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
     double b = 3.42;  // In fm3
 
                       // Iterate over all pairs of hadron species and set a and b
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < model->TPS()->ComponentsNumber(); ++j) {
         int B1 = model->TPS()->Particle(i).BaryonCharge(); // Baryon number of 1st species
         int B2 = model->TPS()->Particle(j).BaryonCharge(); // Baryon number of 2nd species
 
@@ -163,12 +163,6 @@ int main(int argc, char *argv[])
   vector<FittedQuantity> quantities = ThermalModelFit::loadExpDataFromFile(string(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
   fitter.SetQuantities(quantities);
 
-  // Prepare for output
-
-  // To write output to file uncomment the three lines below, or use fprintf
-  //char tmpc[1000];
-  //sprintf(tmpc, "%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
-  //freopen(tmpc, "w", stdout);
 
   printf("%15s%15s%15s%15s\n",
     "T[MeV]",   // Temperature in MeV
@@ -177,15 +171,35 @@ int main(int argc, char *argv[])
     "chi2_dof"  // Reduced chi2
   );
 
+  
+  // Prepare for output to file
+  char tmpc[1000];
+  sprintf(tmpc, "cpc2.%s.ALICE2_76.chi2.TDep.out", modeltype.c_str());
+  FILE *fout = fopen(tmpc, "w");
+
+  fprintf(fout, "%15s%15s%15s%15s\n",
+    "T[MeV]",   // Temperature in MeV
+    "R[fm]",    // System radius in fm
+    "chi2",     // chi_2
+    "chi2_dof"  // Reduced chi2
+  );
 
   double wt1 = get_wall_time(); // Timing
 
   int iters = 0; // Number of data points
 
-                 // Temperature interval, in GeV
+  // Temperature interval, in GeV
   double Tmin = 0.100;
-  double Tmax = 0.4001;
-  double dT   = 0.001;
+  double Tmax = 0.2501;
+  double dT   = 0.002;
+
+  if (config == 0)
+    dT = 0.001;
+
+  if (config == 2) {
+    dT = 0.005;
+    Tmax = 0.4001;
+  }
 
   for (double T = Tmin; T <= Tmax; T += dT) {
     // We also do not fit T, but fix it at each iteration to a given value
@@ -198,15 +212,17 @@ int main(int argc, char *argv[])
     double chi2 = result.chi2;
     double chi2dof = result.chi2ndf;
 
-    printf("%15lf%15lf%15lf%15lf", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
+    printf("%15lf%15lf%15lf%15lf\n", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
 
-    printf("\n");
+    fprintf(fout, "%15lf%15lf%15lf%15lf\n", T * 1000., Rfit, chi2, chi2 / (result.ndf - 1.));
 
     iters++;
 
     fflush(stdout);
 
   }
+
+  fclose(fout);
 
   delete model;
 
@@ -219,21 +235,21 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+
 /**
  * \example cpc2-chi2-vs-T.cpp
  * 
  * Calculates the temperature profile of \f$ \chi^2 \f$ of a fit to
  * the ALICE 2.76 TeV data, 0-5% centrality, as in 1512.08046
  * 
- * The calculated quantities include scaled pressure, scaled energy density,
- * scaled entropy density, the 2nd and 4th order baryon number susceptibilities.
- * 
  * Calculations can be done within four variants of the HRG model:
- * - <config> = 0: Ideal HRG model
- * - <config> = 1: Diagonal EV-HRG model with the bag model radii parametrization r = r_p * (m/m_p)^1/3, 
- *   where r_p = 0.5 is proton radius parameter (as in 1512.08046) 
- * - <config> = 2: QvdW-HRG with QvdW interactions between baryons only,
- *   with parameters being fixed to the nuclear ground state (as in 1609.03975) 
+ *   - <config> = 0: Ideal HRG model
+ *   - <config> = 1: Diagonal EV-HRG model with the bag model radii parametrization r = r_p * (m/m_p)^1/3, 
+ *     where r_p = 0.5 is proton radius parameter (as in 1512.08046) 
+ *   - <config> = 2: Diagonal EV-HRG model with a constant radius parameter r = 0.3 fm for all baryons 
+ *     and r = 0 for all mesons (as in 1201.0693)
+ *   - <config> = 3: QvdW-HRG with QvdW interactions between baryons only,
+ *     with parameters being fixed to the nuclear ground state (as in 1609.03975) 
  * 
  * Usage:
  * ~~~.bash
