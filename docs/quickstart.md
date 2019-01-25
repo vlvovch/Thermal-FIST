@@ -151,7 +151,7 @@ All changes can be saved to a file.
 
 ### Other notes
 
-- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/routines](../src/routines) folder
+- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/examples](../src/examples) folder
   
 - An example of using the Thermal-FIST library as a submodule is provided by [this repository](https://github.com/vlvovch/1807.02079)
   
