@@ -798,7 +798,7 @@ namespace thermalfist {
     return ret;
   }
 
-  bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  bool ThermalModelEVCrossterms::BroydenSolutionCriteriumCRS::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
   {
     double maxdiff = 0.;
     for (size_t i = 0; i < x.size(); ++i) {

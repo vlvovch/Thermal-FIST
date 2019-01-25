@@ -51,7 +51,7 @@ namespace thermalfist {
       return deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(1, m / T) * exp((mu - m) / T) * xMath::GeVtoifm3();
     }
 
-    double BoltzmannTdndmu(int N, double T, double mu, double m, double deg)
+    double BoltzmannTdndmu(int /*N*/, double T, double mu, double m, double deg)
     {
       return BoltzmannDensity(T, mu, m, deg);
     }

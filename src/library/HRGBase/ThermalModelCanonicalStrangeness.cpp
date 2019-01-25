@@ -48,7 +48,7 @@ namespace thermalfist {
     m_Parameters.muS = 0.;
   }
 
-  void ThermalModelCanonicalStrangeness::SetStrangenessChemicalPotential(double muS)
+  void ThermalModelCanonicalStrangeness::SetStrangenessChemicalPotential(double /*muS*/)
   {
     m_Parameters.muS = 0.0;
   }

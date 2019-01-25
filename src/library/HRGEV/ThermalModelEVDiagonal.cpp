@@ -546,7 +546,7 @@ namespace thermalfist {
       m_v[i] = CuteHRGHelper::vr(rad);
   }
 
-  double ThermalModelEVDiagonal::VirialCoefficient(int i, int j) const
+  double ThermalModelEVDiagonal::VirialCoefficient(int i, int /*j*/) const
   {
     return m_v[i];
   }
@@ -599,7 +599,7 @@ namespace thermalfist {
     return std::vector<double>(1, ret);
   }
 
-  bool ThermalModelEVDiagonal::BroydenSolutionCriteriumDEV::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  bool ThermalModelEVDiagonal::BroydenSolutionCriteriumDEV::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
   {
     double maxdiff = 0.;
     for (size_t i = 0; i < x.size(); ++i) {

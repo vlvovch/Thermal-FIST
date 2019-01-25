@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     model = new ThermalModelEVDiagonal(&TPS);
     // Set r = 0.3 fm for each hadron in the list
     double rad = 0.3;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i)
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i)
       model->SetRadius(i, rad);
 
     printf("#Calculating thermodynamics at \\mu = 0 in EV-HRG model with r = %lf fm\n", rad);
@@ -82,8 +82,8 @@ int main(int argc, char *argv[])
     double b = 3.42;  // In fm3
 
     // Iterate over all pairs of hadron species and set a and b
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < model->TPS()->ComponentsNumber(); ++j) {
         int B1 = model->TPS()->Particle(i).BaryonCharge(); // Baryon number of 1st species
         int B2 = model->TPS()->Particle(j).BaryonCharge(); // Baryon number of 2nd species
 
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 
     // Vector containing baryon charge of each species
     vector<double> baryon_charges;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
       baryon_charges.push_back(static_cast<double>(model->TPS()->Particle(i).BaryonCharge()));
     }
 

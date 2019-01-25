@@ -183,7 +183,7 @@ namespace thermalfist {
     return ComputeNp(dmustar, ns);
   }
 
-  std::vector<double> ThermalModelVDW::ComputeNp(const std::vector<double>& dmustar, const std::vector<double>& ns)
+  std::vector<double> ThermalModelVDW::ComputeNp(const std::vector<double>& /*dmustar*/, const std::vector<double>& ns)
   {
     int NN = m_densities.size();
     int NNdmu = m_MapFromdMuStar.size();

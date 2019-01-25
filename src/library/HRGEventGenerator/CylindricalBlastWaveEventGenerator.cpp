@@ -28,7 +28,7 @@ namespace thermalfist {
     SetMomentumGenerators();
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, double etamax, double npow, bool onlyStable, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow) {
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)

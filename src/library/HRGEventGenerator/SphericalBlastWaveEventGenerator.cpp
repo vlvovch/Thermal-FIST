@@ -28,7 +28,7 @@ namespace thermalfist {
   }
 
 
-  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, bool onlyStable, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) : m_T(T), m_Beta(beta) {
+  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) : m_T(T), m_Beta(beta) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)

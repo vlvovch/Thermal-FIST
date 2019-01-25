@@ -287,7 +287,7 @@ namespace thermalfist {
       }
       return ret;
     }
-    return ret;
+    //return ret;
   }
 
   std::vector<double> ThermalParticleSystem::GoResonanceDecayProbsCharge(int ind, int nch, bool firstdecay)
@@ -344,7 +344,7 @@ namespace thermalfist {
       }
       return ret;
     }
-    return ret;
+    //return ret;
   }
 
   ThermalParticleSystem::ResonanceFinalStatesDistribution ThermalParticleSystem::GoResonanceDecayDistributions(int ind, bool firstdecay)
@@ -506,9 +506,9 @@ namespace thermalfist {
       fin.seekg(0, ios::beg);
 
       if (flnew == 1)
-        LoadTable_NewFormat(fin);
+        LoadTable_NewFormat(fin, GenAntiP, mcut);
       else
-        LoadTable_OldFormat(fin);
+        LoadTable_OldFormat(fin, GenAntiP, mcut);
 
       fin.close();
 
@@ -858,7 +858,7 @@ namespace thermalfist {
           }
         }
 
-        if (tdecays.size() == tdecaysnumber && tdecays.size() != 0) {
+        if (static_cast<int>(tdecays.size()) == tdecaysnumber && static_cast<int>(tdecays.size()) != 0) {
           decays.push_back(tdecays);
           decaymap[tpdgid] = index;
           index++;
@@ -886,7 +886,7 @@ namespace thermalfist {
       fout << std::endl;
 
       for (unsigned int i = 0; i < m_Particles.size(); ++i) {
-        if (m_Particles[i].PdgId()>0 && m_Particles[i].Decays().size()>0) {
+        if ((m_Particles[i].PdgId()>0 || WriteAntiParticles) && m_Particles[i].Decays().size()>0) {
           fout << std::left << std::setw(36) << m_Particles[i].PdgId();
           fout << " # " << m_Particles[i].Name() << std::endl;
 

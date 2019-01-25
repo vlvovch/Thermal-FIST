@@ -205,7 +205,7 @@ namespace thermalfist {
 
     // Override functions begin
 
-    virtual double dndp(double p) const { return 0.; }
+    virtual double dndp(double /*p*/) const { return 0.; }
 
     virtual double dndy(double y) const;
 

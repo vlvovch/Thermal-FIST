@@ -81,6 +81,10 @@ namespace thermalfist {
   }
 
 
+  void ThermalModelBase::FillVirial(const std::vector<double>& /*ri*/)
+  {
+  }
+
   void ThermalModelBase::SetUseWidth(bool useWidth)
   {
     if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
@@ -473,7 +477,6 @@ namespace thermalfist {
       Broyden::BroydenSolutionCriterium crit(1.0E-8);
       broydn.Solve(x22, &crit);
       break;
-      iter++; // Obsolete
     }
   }
 
@@ -559,7 +562,7 @@ namespace thermalfist {
     }
   }
 
-  std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+  std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& /*chgs*/, int /*order*/)
   {
     printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
     return std::vector<double>();

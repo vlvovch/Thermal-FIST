@@ -196,7 +196,7 @@ namespace thermalfist {
 
   void ThermalModelEVCanonicalStrangeness::SetRadius(double rad)
   {
-    if (m_v.size() != m_TPS->ComponentsNumber())
+    if (static_cast<int>(m_v.size()) != m_TPS->ComponentsNumber())
       m_v.resize(m_TPS->Particles().size());
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       m_v[i] = CuteHRGHelper::vr(rad);

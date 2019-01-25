@@ -46,7 +46,7 @@ namespace thermalfist {
     m_Parameters.muC = 0.;
   }
 
-  void ThermalModelCanonicalCharm::SetCharmChemicalPotential(double muC)
+  void ThermalModelCanonicalCharm::SetCharmChemicalPotential(double /*muC*/)
   {
     m_Parameters.muC = 0.0;
   }

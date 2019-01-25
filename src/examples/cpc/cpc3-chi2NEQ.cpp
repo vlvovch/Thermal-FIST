@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
   int iters = 0; // Number of data sets
 
-  for(int ind = 0; ind < names.size(); ++ind)
+  for(size_t ind = 0; ind < names.size(); ++ind)
   {
     // Load the data to be fitted
     vector<FittedQuantity> quantities = ThermalModelFit::loadExpDataFromFile(filenames[ind]);
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     }
 
 
-    ThermalModelFitParameters result = fitter.PerformFit(true);  // The argument suppresses the output during minimization  
+    ThermalModelFitParameters result = fitter.PerformFit(true);  // The argument is set to show additional (verbose) output during minimization  
 
     double Tfit = result.T.value;
     double Terr = result.T.error;

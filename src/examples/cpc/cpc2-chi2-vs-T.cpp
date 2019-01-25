@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   {
     model = new ThermalModelEVDiagonal(&TPS);
     double rad = 0.3;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
       if (model->TPS()->Particle(i).BaryonCharge() == 0) model->SetRadius(i, 0.);
       else model->SetRadius(i, rad);
     }
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   {
     model = new ThermalModelEVDiagonal(&TPS);
     double radProton = 0.5;
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
       model->SetRadius(i, radProton * pow(model->TPS()->Particle(i).Mass() / 0.938, 1/3.));
     }
 
@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
     double b = 3.42;  // In fm3
 
                       // Iterate over all pairs of hadron species and set a and b
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
+    for (int i = 0; i < model->TPS()->ComponentsNumber(); ++i) {
+      for (int j = 0; j < model->TPS()->ComponentsNumber(); ++j) {
         int B1 = model->TPS()->Particle(i).BaryonCharge(); // Baryon number of 1st species
         int B2 = model->TPS()->Particle(j).BaryonCharge(); // Baryon number of 2nd species
 

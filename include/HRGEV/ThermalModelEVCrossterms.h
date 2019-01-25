@@ -85,7 +85,7 @@ namespace thermalfist {
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
 
     // TODO properly with excluded volume
-    virtual double ParticleScaledVariance(int part) { return 1.; }
+    virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
 
     // TODO properly with excluded volume
     virtual double ParticleSkewness(int part) { return m_skewprim[part]; }
@@ -94,7 +94,7 @@ namespace thermalfist {
     virtual double ParticleKurtosis(int part) { return m_kurtprim[part]; }
 
     // TODO properly with excluded volume
-    virtual double ParticleScalarDensity(int part) { return 0.; }
+    virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
     // Override functions end
 

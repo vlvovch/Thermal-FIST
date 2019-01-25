@@ -31,7 +31,7 @@ namespace thermalfist {
       exit(1);
     }
 
-    if (m_Equations->Dimension() != x.size()) {
+    if (m_Equations->Dimension() != static_cast<int>(x.size())) {
       printf("**ERROR** BroydenJacobian::Jacobian: Equations dimension does not match that of input!\n");
       exit(1);
     }
@@ -172,7 +172,7 @@ namespace thermalfist {
     return xcur;
   }
 
-  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
+  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
   {
     double maxdiff = 0.;
     for (size_t i = 0; i < x.size(); ++i) {
