@@ -163,7 +163,7 @@ namespace thermalfist {
 
     /// Value of the measurement
     double Value() const {
-      if (type == 0)
+      if (type == Multiplicity)
         return mult.fValue;
       else
         return ratio.fValue;
@@ -171,7 +171,7 @@ namespace thermalfist {
 
     /// Error of the measurement
     double ValueError() const {
-      if (type == 0)
+      if (type == Multiplicity)
         return mult.fError;
       else
         return ratio.fError;

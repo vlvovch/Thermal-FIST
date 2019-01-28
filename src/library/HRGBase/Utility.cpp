@@ -131,13 +131,18 @@ namespace thermalfist {
 
   long long stringToLongLong(const string &str) {
     long long ret = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
+    int ist = 0, mn = 1;
+    if (str.size() > 0 && str[0] == '-') {
+      mn = -1;
+      ist = 1;
+    }
+    for (size_t i = ist; i < str.size(); ++i) {
       if (str[i] >= '0' && str[i] <= '9') {
         ret *= 10;
         ret += static_cast<long long>(str[i] - '0');
       }
     }
-    return ret;
+    return ret * mn;
   }
 
   // Time keeping
