@@ -945,6 +945,9 @@ namespace thermalfist {
 
     fprintf(f, "chi2/dof = %lf/%d = %lf\n\n", m_Parameters.chi2, m_Parameters.ndf, m_Parameters.chi2ndf);
 
+    std::pair<double, double> accuracy = ModelDescriptionAccuracy();
+    fprintf(f, "Data description accuracy = (%.2lf +- %.2lf) %%\n\n", accuracy.first * 100., accuracy.second * 100.);
+
     fprintf(f, "Extracted parameters:\n");
     for (int i = 0; i < 10 ; ++i) {
       if (i == 6 && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)
@@ -1057,6 +1060,37 @@ namespace thermalfist {
   }
 
   using namespace std;
+
+  std::pair<double, double> ThermalModelFit::ModelDescriptionAccuracy() const
+  {
+    double chi2total = 0.;
+    std::vector<double> weights;
+    std::vector<double> vals, errors;
+    for (int i = 0; i < ModelDataSize(); ++i) {
+      const FittedQuantity &quantity = FittedQuantities()[i];
+      if (quantity.toFit) {
+        vals.push_back(fabs(m_ModelData[i] / quantity.Value() - 1));
+        errors.push_back(quantity.ValueError() / quantity.Value() * m_ModelData[i] / quantity.Value());
+
+        double chi2contrib = (m_ModelData[i] - quantity.Value()) * (m_ModelData[i] - quantity.Value()) / quantity.ValueError() / quantity.ValueError();
+
+        chi2total += chi2contrib;
+        weights.push_back(chi2contrib);
+      }
+    }
+
+    for (size_t i = 0; i < weights.size(); ++i) {
+      weights[i] /= chi2total;
+    }
+
+    double mean = 0., error = 0.;
+    for (size_t i = 0; i < vals.size(); ++i) {
+      mean += vals[i] * weights[i];
+      error += errors[i] * weights[i];
+    }
+
+    return make_pair(mean, error);
+  }
 
   std::vector<FittedQuantity> ThermalModelFit::loadExpDataFromFile(const std::string & filename) {
     std::vector<FittedQuantity> ret(0);

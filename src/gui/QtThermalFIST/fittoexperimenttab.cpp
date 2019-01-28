@@ -734,34 +734,10 @@ void FitToExperimentTab::finalize() {
 
   // Data description accuracy
   {
-    double chi2total = 0.;
-    std::vector<double> weights;
-    std::vector<double> vals, errors;
-    for (int i = 0; i < fitcopy->ModelDataSize(); ++i) {
-      const FittedQuantity &quantity = fitcopy->FittedQuantities()[i];
-      if (quantity.toFit) {
-        vals.push_back(fabs(fitcopy->ModelData(i) / quantity.Value() - 1));
-        errors.push_back(quantity.ValueError() / quantity.Value() * fitcopy->ModelData(i) / quantity.Value());
-
-        double chi2contrib = (fitcopy->ModelData(i) - quantity.Value()) * (fitcopy->ModelData(i) - quantity.Value()) / quantity.ValueError() / quantity.ValueError();
-
-        chi2total += chi2contrib;
-        weights.push_back(chi2contrib);
-      }
-    }
-
-    for (size_t i = 0; i < weights.size(); ++i) {
-      weights[i] /= chi2total;
-    }
-
-    double mean = 0., error = 0.;
-    for (size_t i = 0; i < vals.size(); ++i) {
-      mean += vals[i] * weights[i];
-      error += errors[i] * weights[i];
-    }
-    dbgstrm << "Model accuracy = (" << QString::number(100. * mean, 'f', 2) 
+    std::pair<double, double> accuracy = fitcopy->ModelDescriptionAccuracy();
+    dbgstrm << "Model accuracy = (" << QString::number(100. * accuracy.first, 'f', 2) 
       << QString::fromUtf8(" ± ") 
-      << QString::number(100. * error, 'f', 2)  << ") %" << endl;
+      << QString::number(100. * accuracy.second, 'f', 2)  << ") %" << endl;
 
     dbgstrm << endl;
   }
