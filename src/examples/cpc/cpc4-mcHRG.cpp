@@ -87,7 +87,21 @@ int main(int argc, char *argv[])
   parts.ParticleByPDG(311).SetStable(true);
   parts.ParticleByPDG(-311).SetStable(true);
 
+  // Optionally switch off some decays
+  //for (size_t i = 0; i < parts.Particles().size(); ++i) {
+  //  ThermalParticle& part = parts.Particle(i);
+  //  
+  //  // Switch off |S| = 1 hyperon decays
+  //  if (abs(part.BaryonCharge()) == 1 && abs(part.Strangeness()) == 1)
+  //    part.SetStable(true);
+  //  
+  //  // Switch off K*0 like decays
+  //  if (abs(part.BaryonCharge()) == 0 && abs(part.Strangeness()) == 1 && part.ElectricCharge() == 0)
+  //    part.SetStable(true);
 
+  //  // Switch off all decays
+  //  part.SetStable(true);
+  //}
 
   ThermalModelParameters params;
   params.V   = 1000.;
