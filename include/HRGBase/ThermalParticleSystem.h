@@ -259,8 +259,9 @@ namespace thermalfist {
      */
     void SetClusterExpansionOrder(int order);
 
+    //@{
     /**
-     * \brief Set the ThermalParticle::ResonanceWidthShape for all particles.
+     * \brief Set (or get) the ThermalParticle::ResonanceWidthShape for all particles.
      * 
      * This global setting can be overriden for individual particles
      * by ThermalParticle::SetResonanceWidthShape().
@@ -268,10 +269,12 @@ namespace thermalfist {
      * \param shape ThermalParticle::ResonanceWidthShape
      */
     void SetResonanceWidthShape(ThermalParticle::ResonanceWidthShape shape);
+    ThermalParticle::ResonanceWidthShape ResonanceWidthShape() const { return m_ResonanceWidthShape; }
+    //@}
 
     //@{
       /**
-       * \brief Set the ThermalParticle::ResonanceWidthIntegration scheme for
+       * \brief Set (or get) the ThermalParticle::ResonanceWidthIntegration scheme for
        *        all particles.
        * 
        * \param type ThermalParticle::ResonanceWidthIntegration
@@ -443,6 +446,8 @@ namespace thermalfist {
     int m_NumberOfParticles;
 
     ThermalParticle::ResonanceWidthIntegration m_ResonanceWidthIntegrationType;
+
+    ThermalParticle::ResonanceWidthShape m_ResonanceWidthShape;
 
     IdealGasFunctions::QStatsCalculationType m_QStatsCalculationType;
 

@@ -49,6 +49,7 @@ namespace thermalfist {
 
     m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
+    SetResonanceWidthShape(ThermalParticle::RelativisticBreitWigner);
     SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
     SetCalculationType(IdealGasFunctions::Quadratures);
 
@@ -1006,6 +1007,7 @@ namespace thermalfist {
 
   void ThermalParticleSystem::SetResonanceWidthShape(ThermalParticle::ResonanceWidthShape shape)
   {
+    m_ResonanceWidthShape = shape;
     for (size_t i = 0; i < m_Particles.size(); ++i)
       m_Particles[i].SetResonanceWidthShape(shape);
   }
