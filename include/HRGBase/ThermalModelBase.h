@@ -1011,6 +1011,12 @@ namespace thermalfist {
      */
     ThermalModelEnsemble Ensemble() { return m_Ensemble; }
 
+
+    /**
+     * \brief Whether the given conserved charge is treated canonically
+     */
+    virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const { return 0; }
+
     /**
      * \brief The interactions present in the current HRG model.
      * 

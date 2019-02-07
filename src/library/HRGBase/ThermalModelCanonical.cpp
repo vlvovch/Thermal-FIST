@@ -162,10 +162,14 @@ namespace thermalfist {
     }
     else {
       m_Banalyt = false;
-      m_Parameters.muB = 0.0;
-      m_Parameters.muQ = 0.0;
-      m_Parameters.muS = 0.0;
-      m_Parameters.muC = 0.0;
+      if (m_BCE)
+        m_Parameters.muB = 0.0;
+      if (m_QCE)
+        m_Parameters.muQ = 0.0;
+      if (m_SCE)
+        m_Parameters.muS = 0.0;
+      if (m_CCE)
+        m_Parameters.muC = 0.0;
 
       //PrepareModelGCE(); // Plan B, may work better when quantum numbers are large
     }
@@ -249,7 +253,7 @@ Obtained: %lf\n\
     if (m_SCE && m_SMAX != 0) {
       double totS = CalculateStrangenessDensity() * m_Parameters.SVc;
       if (fabs(m_Parameters.S - totS) > TOL) {
-        sprintf(cc, "**WARNING** ThermalModelCanonical: Inaccurate calculation of total electric charge.\
+        sprintf(cc, "**WARNING** ThermalModelCanonical: Inaccurate calculation of total strangeness.\
 \n\
 Expected: %d\n\
 Obtained: %lf\n\
@@ -267,7 +271,7 @@ Obtained: %lf\n\
     if (m_CCE && m_CMAX != 0) {
       double totC = CalculateCharmDensity() * m_Parameters.SVc;
       if (fabs(m_Parameters.C - totC) > TOL) {
-        sprintf(cc, "**WARNING** ThermalModelCanonical: Inaccurate calculation of total electric charge.\
+        sprintf(cc, "**WARNING** ThermalModelCanonical: Inaccurate calculation of total charm.\
 \n\
 Expected: %d\n\
 Obtained: %lf\n\
@@ -803,6 +807,19 @@ Obtained: %lf\n\
       && (part.Strangeness() == 0 || m_SCE == 0)
       && (part.Charm() == 0 || m_CCE == 0)
       );
+  }
+
+  bool ThermalModelCanonical::IsConservedChargeCanonical(ConservedCharge::Name charge) const
+  {
+    if (charge == ConservedCharge::BaryonCharge)
+      return (m_BCE != 0);
+    else if (charge == ConservedCharge::ElectricCharge)
+      return (m_QCE != 0);
+    else if (charge == ConservedCharge::StrangenessCharge)
+      return (m_SCE != 0);
+    else if (charge == ConservedCharge::CharmCharge)
+      return (m_CCE != 0);
+    return 0;
   }
 
   void ThermalModelCanonical::PrepareModelGCE()

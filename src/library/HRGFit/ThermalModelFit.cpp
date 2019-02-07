@@ -247,26 +247,25 @@ namespace thermalfist {
       m_Parameters.SetParameterFitFlag("Rc", false);
 
     // If full CE, or S/B fixed, then muB drops out
-    if (m_model->Ensemble() == ThermalModelBase::CE 
+    if (m_model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge)
       || m_model->ConstrainMuB()
       || !m_model->TPS()->hasBaryons())
       m_Parameters.SetParameterFitFlag("muB", false);
 
     // If full CE, or Q/B fixed, or no charged particles, then muQ drops out
-    if (m_model->Ensemble() == ThermalModelBase::CE
+    if (m_model->IsConservedChargeCanonical(ConservedCharge::CharmCharge)
        || m_model->ConstrainMuQ()
        || !m_model->TPS()->hasCharged())
       m_Parameters.SetParameterFitFlag("muQ", false);
 
     // If full CE, SCE, or S fixed to zero, or no strange particles then muS drops out
-    if (m_model->Ensemble() == ThermalModelBase::CE
-      || m_model->Ensemble() == ThermalModelBase::SCE
+    if (m_model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge)
       || m_model->ConstrainMuS()
       || !m_model->TPS()->hasStrange())
       m_Parameters.SetParameterFitFlag("muS", false);
 
     // If not GCE, or C fixed to zero, or no charm particles then muC drops out
-    if (m_model->Ensemble() != ThermalModelBase::GCE
+    if (m_model->IsConservedChargeCanonical(ConservedCharge::CharmCharge)
       || m_model->ConstrainMuC()
       || !m_model->TPS()->hasCharmed())
       m_Parameters.SetParameterFitFlag("muC", false);
