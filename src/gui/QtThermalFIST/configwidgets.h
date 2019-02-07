@@ -20,6 +20,7 @@
 #include <QCheckBox>
 #include <QRadioButton>
 #include <QTextEdit>
+#include <QLayout>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
@@ -83,6 +84,14 @@ public:
   QCheckBox *CBmuB, *CBmuQ, *CBmuS, *CBmuC;
   QDoubleSpinBox *spinSBRatio, *spinQBRatio;
 
+  QWidget *CBmuBfull, *CBmuQfull;
+  //QHBoxLayout *laymuB, *laymuQ;
+  QLabel *labelNothing;
+  
+  QCheckBox *checkBConserve;
+  QCheckBox *checkQConserve;
+  QCheckBox *checkSConserve;
+  QCheckBox *checkCConserve;
 public:
   explicit  ConservationLawsDialog(ModelConfigWidget *parent = 0);
 private slots:
@@ -128,6 +137,8 @@ class OtherOptionsDialog : public QDialog
 public:
   ModelConfigWidget *m_parent;
   QCheckBox *CBNormBratio, *CBFluctuations;
+
+  QComboBox *comboBWShape;
 
 public:
   explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);

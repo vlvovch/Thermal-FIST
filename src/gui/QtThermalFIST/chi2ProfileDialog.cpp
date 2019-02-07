@@ -32,6 +32,8 @@ using namespace thermalfist;
 chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inTPS, const ThermalModelConfig & inConfig, const ThermalModelFitParameters & inParams, const std::vector<FittedQuantity> & inQuantities, ThermalModelFit *inFit) :
     QDialog(parent), TPS(inTPS), config(inConfig), fitParams(inParams), quantities(inQuantities), modelFitInput(inFit)
 {
+  fitParams = inFit->Parameters();
+  
   model = NULL;
   modelFit = NULL;
 
@@ -45,6 +47,8 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
   comboParameter = new QComboBox();
   std::vector<std::string> paramNames;
   paramNames.push_back("T");
+  paramNames.push_back("R");
+  paramNames.push_back("Rc");
   paramNames.push_back("muB");
   paramNames.push_back("muQ");
   paramNames.push_back("muS");
@@ -52,8 +56,6 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
   paramNames.push_back("gammaq");
   paramNames.push_back("gammaS");
   paramNames.push_back("gammaC");
-  paramNames.push_back("R");
-  //paramNames.push_back("Rc"); //*< Can only either be fitted or fixed to Rc = R*>
 
   int pind = 0;
   for (int i = 0; i < paramNames.size(); ++i) {
@@ -283,35 +285,37 @@ void chi2ProfileDialog::setModel()
   else if (config.FiniteWidth == 2)
     model->SetResonanceWidthIntegrationType(ThermalParticle::eBW);
 
-  model->SetQoverB(config.QoverB);
-  model->ConstrainMuQ(config.ConstrainMuQ);
-  model->ConstrainMuS(config.ConstrainMuS);
-  model->ConstrainMuC(config.ConstrainMuC);
+  //model->SetQoverB(config.QoverB);
+  //model->ConstrainMuQ(config.ConstrainMuQ);
+  //model->ConstrainMuS(config.ConstrainMuS);
+  //model->ConstrainMuC(config.ConstrainMuC);
 
-  model->SetNormBratio(config.RenormalizeBR);
+  //model->SetNormBratio(config.RenormalizeBR);
 
-  if (config.QuantumStatisticsType)
-    model->SetCalculationType(IdealGasFunctions::Quadratures);
-  else
-    model->SetCalculationType(IdealGasFunctions::ClusterExpansion);
+  //if (config.QuantumStatisticsType)
+  //  model->SetCalculationType(IdealGasFunctions::Quadratures);
+  //else
+  //  model->SetCalculationType(IdealGasFunctions::ClusterExpansion);
 
-  model->SetStatistics(config.QuantumStatistics);
+  //model->SetStatistics(config.QuantumStatistics);
 
-  if (config.QuantumStatisticsInclude == 1 || config.QuantumStatisticsInclude == 2) {
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-      ThermalParticle &part = model->TPS()->Particle(i);
-      if (config.QuantumStatisticsInclude == 2) {
-        if (part.PdgId() != 211 && part.PdgId() != 111 && part.PdgId() != -211) {
-          part.UseStatistics(false);
-        }
-      }
-      else if (config.QuantumStatisticsInclude == 1) {
-        if (part.BaryonCharge() != 0) {
-          part.UseStatistics(false);
-        }
-      }
-    }
-  }
+  //if (config.QuantumStatisticsInclude == 1 || config.QuantumStatisticsInclude == 2) {
+  //  for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+  //    ThermalParticle &part = model->TPS()->Particle(i);
+  //    if (config.QuantumStatisticsInclude == 2) {
+  //      if (part.PdgId() != 211 && part.PdgId() != 111 && part.PdgId() != -211) {
+  //        part.UseStatistics(false);
+  //      }
+  //    }
+  //    else if (config.QuantumStatisticsInclude == 1) {
+  //      if (part.BaryonCharge() != 0) {
+  //        part.UseStatistics(false);
+  //      }
+  //    }
+  //  }
+  //}
+
+  SetThermalModelConfiguration(model, config);
 
   SetThermalModelInteraction(model, config);
 
@@ -353,8 +357,10 @@ void chi2ProfileDialog::calculate() {
       modelFit = new ThermalModelFit(model);
       modelFit->SetParameters(fitParams);
 
-      for (int i = 0; i<quantities.size(); ++i) {
+      modelFit->FixVcOverV(modelFitInput->FixVcOverV());
+      modelFit->SetVcOverV(modelFitInput->VcOverV());
 
+      for (int i = 0; i<quantities.size(); ++i) {
         modelFit->AddQuantity(quantities[i]);
       }
 
