@@ -85,6 +85,8 @@ namespace thermalfist {
 
     virtual double CalculatePressure();
 
+    virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
+    
     // Override functions end
 
   protected:

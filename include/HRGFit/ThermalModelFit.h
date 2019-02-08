@@ -300,6 +300,9 @@ namespace thermalfist {
     double VcOverV() const { return m_VcOverV; }
     //@}
 
+    /// Returns a relative error of the data description (and its uncertainty estimate)
+    std::pair< double, double > ModelDescriptionAccuracy() const;
+
     /// Load the experimental data from a file.
     static std::vector<FittedQuantity> loadExpDataFromFile(const std::string & filename);
 

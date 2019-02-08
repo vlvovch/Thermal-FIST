@@ -383,10 +383,10 @@ void ModelConfigWidget::ensembleChanged()
     comboModel->blockSignals(false);
   }
 
-  if (comboEnsemble->currentText() == tr("Canonical"))
-    buttonConservationLaws->setEnabled(false);
-  else
-    buttonConservationLaws->setEnabled(true);
+  //if (comboEnsemble->currentText() == tr("Canonical"))
+  //  buttonConservationLaws->setEnabled(false);
+  //else
+  //  buttonConservationLaws->setEnabled(true);
 
   if (comboEnsemble->currentText() == tr("Canonical")) {
     CBQuadratures->setChecked(false);
@@ -497,6 +497,11 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
 
   laymuB->addWidget(CBmuB);
   laymuB->addWidget(spinSBRatio);
+  laymuB->setContentsMargins(0, 0, 0, 0);
+
+
+  CBmuBfull = new QWidget();
+  CBmuBfull->setLayout(laymuB);
 
   QHBoxLayout *laymuQ = new QHBoxLayout();
   laymuQ->setAlignment(Qt::AlignLeft);
@@ -511,6 +516,10 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
 
   laymuQ->addWidget(CBmuQ);
   laymuQ->addWidget(spinQBRatio);
+  laymuQ->setContentsMargins(0, 0, 0, 0);
+
+  CBmuQfull = new QWidget();
+  CBmuQfull->setLayout(laymuQ);
 
   CBmuS = new QCheckBox(tr("Constrain μS from the condition of zero net strangeness"));
   CBmuS->setChecked(m_parent->currentConfig.ConstrainMuS);
@@ -518,27 +527,32 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
   CBmuC = new QCheckBox(tr("Constrain μC from the condition of zero net charm"));
   CBmuC->setChecked(m_parent->currentConfig.ConstrainMuC);
 
-  if (m_parent->model->TPS()->hasBaryons()
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE)
-    grLayout->addLayout(laymuB);
+  //if (m_parent->model->TPS()->hasBaryons()
+  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+  //    !m_parent->currentConfig.CanonicalB))
+    grLayout->addWidget(CBmuBfull);
 
-  if (m_parent->model->TPS()->hasCharged()
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE)
-    grLayout->addLayout(laymuQ);
+  //if (m_parent->model->TPS()->hasCharged()
+  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+  //    !m_parent->currentConfig.CanonicalQ))
+    grLayout->addWidget(CBmuQfull);
 
-  if (m_parent->model->TPS()->hasStrange() 
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE)
+  //if (m_parent->model->TPS()->hasStrange() 
+  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+  //    !m_parent->currentConfig.CanonicalS)
+  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE)
     grLayout->addWidget(CBmuS);
-  if (m_parent->model->TPS()->hasCharmed() 
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE
-    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCCE)
+
+  //if (m_parent->model->TPS()->hasCharmed() 
+  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+  //    !m_parent->currentConfig.CanonicalC)
+  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE
+  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCCE)
     grLayout->addWidget(CBmuC);
 
-  if (grLayout->count() == 0) {
-    grLayout->addWidget(new QLabel(tr("It appears none of the chemical potentials can be constrained")));
-  }
+  labelNothing = new QLabel(tr("It appears none of the chemical potentials can be constrained"));
+  //grLayout->addWidget(labelNothing);
+
 
   grLaws->setLayout(grLayout);
 
@@ -549,6 +563,43 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
   connect(buttonBox, &QDialogButtonBox::rejected, this, &ConservationLawsDialog::Discard);
 
   layout->addWidget(grLaws);
+
+
+  QGroupBox *grMixCan = new QGroupBox(tr("Mixed-canonical ensemble"));
+
+  QVBoxLayout *layMixCan = new QVBoxLayout();
+
+  checkBConserve = new QCheckBox(tr("Canonical treatment of baryon number"));
+  checkQConserve = new QCheckBox(tr("Canonical treatment of electric charge"));
+  checkSConserve = new QCheckBox(tr("Canonical treatment of strangeness"));
+  checkCConserve = new QCheckBox(tr("Canonical treatment of charm"));
+  checkBConserve->setChecked(m_parent->currentConfig.CanonicalB);
+  checkQConserve->setChecked(m_parent->currentConfig.CanonicalQ);
+  checkSConserve->setChecked(m_parent->currentConfig.CanonicalS);
+  checkCConserve->setChecked(m_parent->currentConfig.CanonicalC);
+
+  connect(checkBConserve, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
+  connect(checkQConserve, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
+  connect(checkSConserve, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
+  connect(checkCConserve, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
+
+  if (m_parent->model->TPS()->hasBaryons())
+    layMixCan->addWidget(checkBConserve);
+
+  if (m_parent->model->TPS()->hasCharged())
+    layMixCan->addWidget(checkQConserve);
+
+  if (m_parent->model->TPS()->hasStrange())
+    layMixCan->addWidget(checkSConserve);
+
+  if (m_parent->model->TPS()->hasCharmed())
+    layMixCan->addWidget(checkCConserve);
+
+  grMixCan->setLayout(layMixCan);
+
+  if (m_parent->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE && layMixCan->count() > 0)
+    layout->addWidget(grMixCan);
+
   layout->addWidget(buttonBox);
 
   setLayout(layout);
@@ -573,6 +624,47 @@ void ConservationLawsDialog::updateControls()
   else {
     spinQBRatio->setEnabled(false);
   }
+
+  bool fl = false;
+
+  if (m_parent->model->TPS()->hasBaryons()
+    && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+      !checkBConserve->isChecked())) {
+    CBmuBfull->setEnabled(true);
+    fl = true;
+  }
+  else
+    CBmuBfull->setEnabled(false);
+
+  if (m_parent->model->TPS()->hasCharged()
+    && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+      !checkQConserve->isChecked())) {
+    CBmuQfull->setEnabled(true);
+    fl = true;
+  }
+  else
+    CBmuQfull->setEnabled(false);
+
+  if (m_parent->model->TPS()->hasStrange()
+    && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+      !checkSConserve->isChecked())
+    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE) {
+    CBmuS->setEnabled(true);
+    fl = true;
+  }
+  else
+    CBmuS->setEnabled(false);
+
+  if (m_parent->model->TPS()->hasCharmed()
+    && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+      !checkCConserve->isChecked())
+    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE
+    && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCCE) {
+    CBmuC->setEnabled(true);
+    fl = true;
+  }
+  else
+    CBmuC->setEnabled(false);
 }
 
 void ConservationLawsDialog::OK()
@@ -583,6 +675,11 @@ void ConservationLawsDialog::OK()
   m_parent->currentConfig.QoverB = spinQBRatio->value();
   m_parent->currentConfig.ConstrainMuS = CBmuS->isChecked();
   m_parent->currentConfig.ConstrainMuC = CBmuC->isChecked();
+
+  m_parent->currentConfig.CanonicalB = checkBConserve->isChecked();
+  m_parent->currentConfig.CanonicalQ = checkQConserve->isChecked();
+  m_parent->currentConfig.CanonicalS = checkSConserve->isChecked();
+  m_parent->currentConfig.CanonicalC = checkCConserve->isChecked();
   QDialog::accept();
 }
 
@@ -605,6 +702,21 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget * parent) : QDialog(par
   connect(buttonBox, &QDialogButtonBox::accepted, this, &OtherOptionsDialog::OK);
   connect(buttonBox, &QDialogButtonBox::rejected, this, &OtherOptionsDialog::Discard);
 
+  QHBoxLayout* layWidths = new QHBoxLayout();
+  layWidths->setAlignment(Qt::AlignLeft);
+
+  QLabel* labelWidths = new QLabel(tr("Breit-Wigner shape:"));
+  comboBWShape = new QComboBox();
+  comboBWShape->addItem(tr("Relativistic"));
+  comboBWShape->addItem(tr("Nonrelativistic"));
+  comboBWShape->setCurrentIndex(m_parent->currentConfig.WidthShape);
+
+  layWidths->addWidget(labelWidths);
+  layWidths->addWidget(comboBWShape);
+
+  layout->addLayout(layWidths);
+
+
   layout->addWidget(buttonBox);
 
   setLayout(layout);
@@ -616,6 +728,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget * parent) : QDialog(par
 void OtherOptionsDialog::OK()
 {
   m_parent->currentConfig.RenormalizeBR = CBNormBratio->isChecked();
+  m_parent->currentConfig.WidthShape = comboBWShape->currentIndex();
   //m_parent->currentConfig.ComputeFluctations = CBFluctuations->isChecked();
   QDialog::accept();
 }

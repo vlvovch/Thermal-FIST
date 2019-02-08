@@ -43,7 +43,12 @@ struct ThermalModelConfig {
   double muB, muQ, muS, muC;
   double gq, gS, gC;
   double VolumeR, VolumeRSC;
+
   int B, S, Q, C;
+  bool CanonicalB;
+  bool CanonicalQ;
+  bool CanonicalS;
+  bool CanonicalC;
 
   /// Constraints on mu's
   double SoverB;
@@ -55,6 +60,7 @@ struct ThermalModelConfig {
 
   /// Extra flags
   int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
+  int WidthShape;  /**< 0 - Relativistic Breit-Wigner, 1 - Nonrelativistic Breit-Wigner */
   bool RenormalizeBR;
   bool ComputeFluctations;
   bool ResetMus;

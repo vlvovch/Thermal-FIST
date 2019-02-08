@@ -280,4 +280,8 @@ namespace thermalfist {
       m_v[i] = CuteHRGHelper::vr(rad);
   }
 
+  bool ThermalModelEVCanonicalStrangeness::IsConservedChargeCanonical(ConservedCharge::Name charge) const {
+    return (charge == ConservedCharge::StrangenessCharge);
+  }
+
 } // namespace thermalfist

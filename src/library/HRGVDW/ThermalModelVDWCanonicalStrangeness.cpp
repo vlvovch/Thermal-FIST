@@ -363,4 +363,8 @@ namespace thermalfist {
     return m_Attr[i][j];
   }
 
+  bool ThermalModelVDWCanonicalStrangeness::IsConservedChargeCanonical(ConservedCharge::Name charge) const {
+    return (charge == ConservedCharge::StrangenessCharge);
+  }
+
 } // namespace thermalfist

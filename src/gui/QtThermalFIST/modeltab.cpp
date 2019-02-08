@@ -492,24 +492,27 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   timerc.restart();
 
-  if (config.ModelType != ThermalModelConfig::CE) {
-    if (model->TPS()->hasBaryons())
-      dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
+  if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
+    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
 
-    if (model->TPS()->hasCharged())
-      dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
+  if (model->TPS()->hasCharged() && !model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
+    dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
 
-    if (model->TPS()->hasStrange() && config.ModelType != ThermalModelConfig::SCE && config.ModelType != ThermalModelConfig::EVSCE && config.ModelType != ThermalModelConfig::VDWSCE)
-      dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+  if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
 
-    if (model->TPS()->hasCharmed() && config.ModelType != ThermalModelConfig::CCE)
-      dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
-  }
-  else {
-    dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
-    dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
-    dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
-    if (model->TPS()->hasCharmed())
+  if (model->TPS()->hasCharmed() && !model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
+    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
+
+  if (config.ModelType == ThermalModelConfig::CE) 
+  {
+    if (model->TPS()->hasBaryons() && model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
+      dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
+    if (model->TPS()->hasStrange() && model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+      dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+    if (model->TPS()->hasCharged() && model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
+      dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
+    if (model->TPS()->hasCharmed() && model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
       dbgstrm << "C\t= " << model->CalculateCharmDensity()     * model->Volume() << endl;
   }
   dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
@@ -738,16 +741,19 @@ void ModelTab::modelChanged()
     spinC->setEnabled(false);
   }
   else {
-    spinmuB->setEnabled(false);
-    spinmuS->setEnabled(false);
-    spinmuQ->setEnabled(false);
-    spinmuC->setEnabled(false);
-    spinB->setEnabled(true);
-    spinS->setEnabled(true);
-    spinQ->setEnabled(true);
-    spinC->setEnabled(true);
+    spinmuB->setEnabled(!configWidget->currentConfig.CanonicalB);
+    spinmuS->setEnabled(!configWidget->currentConfig.CanonicalS);
+    spinmuQ->setEnabled(!configWidget->currentConfig.CanonicalQ);
+    spinmuC->setEnabled(!configWidget->currentConfig.CanonicalC);
+    spinB->setEnabled(configWidget->currentConfig.CanonicalB);
+    spinS->setEnabled(configWidget->currentConfig.CanonicalS);
+    spinQ->setEnabled(configWidget->currentConfig.CanonicalQ);
+    spinC->setEnabled(configWidget->currentConfig.CanonicalC);
 
-    spinVolumeRSC->setEnabled(true);
+    spinVolumeRSC->setEnabled(configWidget->currentConfig.CanonicalB ||
+    configWidget->currentConfig.CanonicalS ||
+    configWidget->currentConfig.CanonicalQ ||
+    configWidget->currentConfig.CanonicalC);
   }
   
   if (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleSCE) {
@@ -759,7 +765,11 @@ void ModelTab::modelChanged()
     spinmuC->setEnabled(false);
     spinVolumeRSC->setEnabled(true);
   }
-  else if (!configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
+  else if (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
+    (!configWidget->currentConfig.CanonicalB &&
+    !configWidget->currentConfig.CanonicalS &&
+    !configWidget->currentConfig.CanonicalQ &&
+    !configWidget->currentConfig.CanonicalC))
     spinVolumeRSC->setEnabled(false);
   
   spinmuS->setVisible(model->TPS()->hasStrange());

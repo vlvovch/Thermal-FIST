@@ -127,6 +127,8 @@ namespace thermalfist {
 
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
+    virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
+
     // Override functions end
 
   protected:

@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 file (GLOB QTHRG_SOURCES 
       "*.h" , 
       "*.cxx" , 
-	  "*.cpp")
+	    "*.cpp")
 
 file (GLOB QCUSTOMPLOT_SOURCE
       "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot/*.cpp")
@@ -31,9 +31,13 @@ add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLO
 
 if(WIN32)
   if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")
-    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}")
+    add_custom_command(TARGET QtThermalFIST 
+                       POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.exe")
   else()
-    set_property(TARGET QtThermalFIST PROPERTY OUTPUT_NAME "QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}")
+    add_custom_command(TARGET QtThermalFIST 
+                       POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}.exe")
   endif()
 endif()
 

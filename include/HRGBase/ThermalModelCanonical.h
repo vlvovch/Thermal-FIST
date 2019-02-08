@@ -156,6 +156,8 @@ namespace thermalfist {
      */
     virtual void ConserveCharm(bool conserve = true) { m_CCE = static_cast<int>(conserve); }
 
+    virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
+
     /**
      * \brief Density of particle species i in the grand-canonical ensemble.
      * 

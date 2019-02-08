@@ -536,14 +536,14 @@ void FitToExperimentTab::modelChanged()
     labelC->setEnabled(false);
   }
   else {
-    spinB->setEnabled(true);
-    spinQ->setEnabled(true);
-    spinS->setEnabled(true);
-    spinC->setEnabled(true);
-    labelB->setEnabled(true);
-    labelQ->setEnabled(true);
-    labelS->setEnabled(true);
-    labelC->setEnabled(true);
+    spinB->setEnabled(configWidget->currentConfig.CanonicalB);
+    spinQ->setEnabled(configWidget->currentConfig.CanonicalQ);
+    spinS->setEnabled(configWidget->currentConfig.CanonicalS);
+    spinC->setEnabled(configWidget->currentConfig.CanonicalC);
+    labelB->setEnabled(configWidget->currentConfig.CanonicalB);
+    labelQ->setEnabled(configWidget->currentConfig.CanonicalQ);
+    labelS->setEnabled(configWidget->currentConfig.CanonicalS);
+    labelC->setEnabled(configWidget->currentConfig.CanonicalC);
   }
 
 
@@ -574,26 +574,30 @@ void FitToExperimentTab::modelChanged()
 
   // If full CE, S/B fixed, or no baryons then muB drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muB"),
-    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE
+      && configWidget->currentConfig.CanonicalB)
     || (configWidget->currentConfig.ConstrainMuB)
     || !(model->TPS()->hasBaryons()));
 
   // If full CE, Q/B fixed, or no charged particles then muQ drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muQ"),
-    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE
+      && configWidget->currentConfig.CanonicalQ)
     || (configWidget->currentConfig.ConstrainMuQ)
     || !(model->TPS()->hasCharged()));
 
   // If full CE, SCE, or S fixed to zero, or no strange particles then muS drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muS"),
-    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE
+      && configWidget->currentConfig.CanonicalS)
     || (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleSCE)
     || (configWidget->currentConfig.ConstrainMuS)
     || !(model->TPS()->hasStrange()));
 
   // If not GCE, or C fixed to zero, or no charm particles then muC drops out
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("muC"),
-    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleGCE)
+    (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleGCE
+      && configWidget->currentConfig.CanonicalC)
     || (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleSCE)
     || (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCCE)
     || (configWidget->currentConfig.ConstrainMuC)
@@ -684,18 +688,28 @@ void FitToExperimentTab::finalize() {
   ThermalModelFitParameters result = fitcopy->Parameters();
 
   dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
-  dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
-  if (!(model->Ensemble() == ThermalModelBase::CE)) {
-    if (!(model->Ensemble() == ThermalModelBase::SCE))
-      dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+
+  if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
+    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
+
+  if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+
+  if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
     dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
-    if (model->TPS()->hasCharmed() && !(model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CCE))
-      dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
-  }
-  else {
+
+  if (model->TPS()->hasCharmed() && !model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
+    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
+
+
+  if (model->Ensemble() == ThermalModelBase::CE) {
+    if (model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
       dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
+    if (model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
       dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+    if (model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
       dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
+    if (model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
       dbgstrm << "C\t= " << model->CalculateCharmDensity()       * model->Volume() << endl;
   }
   dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
@@ -734,34 +748,10 @@ void FitToExperimentTab::finalize() {
 
   // Data description accuracy
   {
-    double chi2total = 0.;
-    std::vector<double> weights;
-    std::vector<double> vals, errors;
-    for (int i = 0; i < fitcopy->ModelDataSize(); ++i) {
-      const FittedQuantity &quantity = fitcopy->FittedQuantities()[i];
-      if (quantity.toFit) {
-        vals.push_back(fabs(fitcopy->ModelData(i) / quantity.Value() - 1));
-        errors.push_back(quantity.ValueError() / quantity.Value() * fitcopy->ModelData(i) / quantity.Value());
-
-        double chi2contrib = (fitcopy->ModelData(i) - quantity.Value()) * (fitcopy->ModelData(i) - quantity.Value()) / quantity.ValueError() / quantity.ValueError();
-
-        chi2total += chi2contrib;
-        weights.push_back(chi2contrib);
-      }
-    }
-
-    for (size_t i = 0; i < weights.size(); ++i) {
-      weights[i] /= chi2total;
-    }
-
-    double mean = 0., error = 0.;
-    for (size_t i = 0; i < vals.size(); ++i) {
-      mean += vals[i] * weights[i];
-      error += errors[i] * weights[i];
-    }
-    dbgstrm << "Model accuracy = (" << QString::number(100. * mean, 'f', 2) 
+    std::pair<double, double> accuracy = fitcopy->ModelDescriptionAccuracy();
+    dbgstrm << "Model accuracy = (" << QString::number(100. * accuracy.first, 'f', 2) 
       << QString::fromUtf8(" ± ") 
-      << QString::number(100. * error, 'f', 2)  << ") %" << endl;
+      << QString::number(100. * accuracy.second, 'f', 2)  << ") %" << endl;
 
     dbgstrm << endl;
   }
@@ -788,11 +778,23 @@ void FitToExperimentTab::finalize() {
   tableParameters->setColumnCount(3);
   int RowCount = 30;
 
-  if (model->Ensemble() == ThermalModelBase::CE)
-    RowCount -= 4;
+  if (model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
+    RowCount--;
 
-  if (model->Ensemble() == ThermalModelBase::SCE)
-    RowCount -= 2;
+  if (model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+    RowCount--;
+
+  if (model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
+    RowCount--;
+
+  if (model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
+    RowCount--;
+
+  //if (model->Ensemble() == ThermalModelBase::CE)
+  //  RowCount -= 4;
+
+  //if (model->Ensemble() == ThermalModelBase::SCE)
+  //  RowCount -= 2;
 
   RowCount -= 1;
 
@@ -810,7 +812,8 @@ void FitToExperimentTab::finalize() {
   else
     tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
 
-  if (!(model->Ensemble() == ThermalModelBase::CE)) {
+  if (!model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge)
+    && model->TPS()->hasBaryons()) {
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("μB (MeV)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.muB.value*1.e3)));
@@ -893,7 +896,7 @@ void FitToExperimentTab::finalize() {
   tableParameters->setItem(cRow, 2, new QTableWidgetItem(""));
 
   
-  if (!(model->Ensemble() == ThermalModelBase::CE)
+  if (!model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge)
     && model->TPS()->hasCharged()) {
       cRow++;
       tableParameters->setItem(cRow, 0, new QTableWidgetItem("μQ (MeV)"));
@@ -901,8 +904,7 @@ void FitToExperimentTab::finalize() {
       tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muQ.error*1.e3)));
   }
 
-  if (!(model->Ensemble() == ThermalModelBase::CE)
-    && !(model->Ensemble() == ThermalModelBase::SCE)
+  if (!model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge)
     && model->TPS()->hasStrange()) {
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("μS (MeV)"));
@@ -910,7 +912,7 @@ void FitToExperimentTab::finalize() {
     tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.muS.error*1.e3)));
   }
 
-  if (model->Ensemble() == ThermalModelBase::GCE
+  if (!model->IsConservedChargeCanonical(ConservedCharge::CharmCharge)
     && model->TPS()->hasCharmed()) {
     cRow++;
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("μC (MeV)"));

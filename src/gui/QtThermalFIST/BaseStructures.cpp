@@ -1,6 +1,7 @@
 #include "BaseStructures.h"
 
 #include "HRGEV/ExcludedVolumeHelper.h"
+#include "HRGBase/ThermalModelCanonical.h"
 
 using namespace thermalfist;
 
@@ -88,6 +89,14 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.C = model->Parameters().C;
 
+  ret.CanonicalB = true;// model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge);
+
+  ret.CanonicalQ = true;// model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge);
+
+  ret.CanonicalS = true;// model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge);
+
+  ret.CanonicalC = true;// model->IsConservedChargeCanonical(ConservedCharge::CharmCharge);
+
   ret.SoverB = model->SoverB();
 
   ret.QoverB = model->QoverB();
@@ -102,6 +111,8 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.FiniteWidth = static_cast<int>(model->TPS()->ResonanceWidthIntegrationType());
 
+  ret.WidthShape = static_cast<int>(model->TPS()->ResonanceWidthShape());
+
   ret.RenormalizeBR = model->NormBratio();
 
   ret.ComputeFluctations = false;
@@ -115,6 +126,19 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
   model->SetElectricCharge(config.Q);
   model->SetStrangeness(config.S);
   model->SetCharm(config.C);
+
+  if (model->Ensemble() == ThermalModelBase::CE) {
+    ThermalModelCanonical *modcan = static_cast<ThermalModelCanonical*>(model);
+    modcan->ConserveBaryonCharge(config.CanonicalB);
+    modcan->ConserveElectricCharge(config.CanonicalQ);
+    modcan->ConserveStrangeness(config.CanonicalS);
+    modcan->ConserveCharm(config.CanonicalC);
+  }
+
+  if (config.WidthShape == 0)
+    model->SetResonanceWidthShape(ThermalParticle::RelativisticBreitWigner);
+  else
+    model->SetResonanceWidthShape(ThermalParticle::NonRelativisticBreitWigner);
 
   if (config.FiniteWidth == 0)
     model->SetUseWidth(ThermalParticle::ZeroWidth);

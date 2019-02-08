@@ -155,4 +155,8 @@ namespace thermalfist {
     return ret;
   }
 
+  bool ThermalModelCanonicalCharm::IsConservedChargeCanonical(ConservedCharge::Name charge) const {
+    return (charge == ConservedCharge::CharmCharge);
+  }
+
 } // namespace thermalfist
