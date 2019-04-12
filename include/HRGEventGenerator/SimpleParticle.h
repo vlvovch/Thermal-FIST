@@ -51,6 +51,12 @@ namespace thermalfist {
     double GetY() const {
       return 0.5*log((p0 + pz) / (p0 - pz));
     }
+
+    /// The longitudinal pseudorapidity
+    double GetEta() const {
+      //return atanh(pz/GetP());
+      return 0.5*log((GetP() + pz) / (GetP() - pz));
+    }
   };
 
 } // namespace thermalfist
