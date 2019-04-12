@@ -621,6 +621,18 @@ namespace thermalfist {
         if (tind >= static_cast<int>(fAntiStrangeMesonsc.size())) tind = fAntiStrangeMesonsc.size() - 1;
         totals[fAntiStrangeMesonsc[tind].second]++;
       }
+
+      // Cross-check that all resulting strangeness is zero
+      int finS = 0;
+      for (size_t i = 0; i < totals.size(); ++i) {
+        finS += totals[i] * m_THM->TPS()->Particles()[i].Strangeness();
+      }
+
+      if (finS != 0) {
+        printf("**ERROR** EventGeneratorBase::GenerateTotalsSCESubVolume(): Generated strangeness is non-zero!");
+        exit(1);
+      }
+
       return totals;
     }
     return totals;
@@ -799,6 +811,18 @@ namespace thermalfist {
       if (tind >= static_cast<int>(fAntiCharmAllc.size())) tind = fAntiCharmAllc.size() - 1;
       totals[fAntiCharmAllc[tind].second]++;
     }
+
+    // Cross-check that all resulting strangeness is zero
+    int finC = 0;
+    for (size_t i = 0; i < totals.size(); ++i) {
+      finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
+    }
+
+    if (finC != m_THM->Parameters().C) {
+      printf("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
+      exit(1);
+    }
+
     return totals;
   }
 
@@ -887,7 +911,8 @@ namespace thermalfist {
         if (tind >= static_cast<int>(fAntiBaryonsc.size())) tind = fAntiBaryonsc.size() - 1;
         totals[fAntiBaryonsc[tind].second]++;
         netS += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].Strangeness();
-        netQ += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].Charm();
+        netQ += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].ElectricCharge();
+        netC += m_THM->TPS()->Particles()[fAntiBaryonsc[tind].second].Charm();
       }
 
       // Total numbers of (anti)strange mesons
@@ -972,6 +997,35 @@ namespace thermalfist {
           int total = RandomGenerators::RandomPoisson(mean);
           totals[i] = total;
         }
+      }
+
+      // Cross-check that all resulting charges are OK
+      int finB = 0, finQ = 0, finS = 0, finC = 0;
+      for (size_t i = 0; i < totals.size(); ++i) {
+        finB += totals[i] * m_THM->TPS()->Particles()[i].BaryonCharge();
+        finQ += totals[i] * m_THM->TPS()->Particles()[i].ElectricCharge();
+        finS += totals[i] * m_THM->TPS()->Particles()[i].Strangeness();
+        finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
+      }
+
+      if (finB != m_THM->Parameters().B) {
+        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
+        exit(1);
+      }
+
+      if (finQ != m_THM->Parameters().Q) {
+        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
+        exit(1);
+      }
+
+      if (finS != m_THM->Parameters().S) {
+        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
+        exit(1);
+      }
+
+      if (finC != m_THM->Parameters().C) {
+        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
+        exit(1);
       }
 
       return totals;
