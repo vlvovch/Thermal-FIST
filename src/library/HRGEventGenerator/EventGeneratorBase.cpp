@@ -277,10 +277,6 @@ namespace thermalfist {
         m_AntiChargeMesons.push_back(std::make_pair(densities[i], i));
         m_MeanACM += densities[i];
       }
-      else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == 1) {
-        m_ChargeMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanCM += densities[i];
-      }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == 0 && m_THM->TPS()->Particles()[i].Charm() == 1) {
         m_CharmMesons.push_back(std::make_pair(densities[i], i));
         m_MeanCHRMM += densities[i];
@@ -698,7 +694,7 @@ namespace thermalfist {
           std::vector<int> totalsaux2(m_THM->TPS()->Particles().size(), 0);
           int netC = 0;
           for (size_t i = 0; i < totalsaux.size(); ++i) {
-            if (m_THM->TPS()->Particles()[i].Strangeness() > 0) {
+            if (m_THM->TPS()->Particles()[i].Charm() > 0) {
               for (int j = 0; j < totalsaux[i]; ++j) {
                 if (RandomGenerators::randgenMT.rand() < fraction) {
                   totalsaux2[i]++;
