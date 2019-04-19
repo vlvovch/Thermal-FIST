@@ -153,7 +153,7 @@ namespace thermalfist {
     if (m_PartialZ.size() == 0)
       CalculateQuantumNumbersRange();
 
-    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE) {
+    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE && !UsePartialChemicalEquilibrium()) {
       m_Banalyt = true;
       m_Parameters.muB = 0.0;
       m_Parameters.muQ = 0.0;
@@ -291,7 +291,8 @@ Obtained: %lf\n\
     if (Vc < 0.0)
       Vc = m_Parameters.SVc;
 
-    FillChemicalPotentials();
+    if (!UsePartialChemicalEquilibrium()) 
+      FillChemicalPotentials();
 
     bool AllMuZero = true;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {

@@ -151,8 +151,10 @@ namespace thermalfist {
       for (size_t i = 0; i < ret1.size(); ++i)
         ret.push_back(ret1[i]);
 
-      for (size_t i = 0; i < ret.size(); ++i)
+      for (size_t i = 0; i < ret.size(); ++i) {
         ret[i].MotherPDGID = Mother.PDGID;
+        ret[i].epoch = Mother.epoch + 1;
+      }
 
 #ifdef DEBUGDECAYS
       for (int i = 0; i < ret.size(); ++i)

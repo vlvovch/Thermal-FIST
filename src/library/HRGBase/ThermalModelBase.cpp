@@ -25,6 +25,7 @@ namespace thermalfist {
     m_TPS(TPS_), 
     m_Parameters(params),
     m_UseWidth(false),
+    m_PCE(false),
     m_Calculated(false),
     m_FeeddownCalculated(false),
     m_FluctuationsCalculated(false),
@@ -483,6 +484,11 @@ namespace thermalfist {
   void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
     double muBinit, double muQinit, double muSinit, double muCinit,
     bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
+    if (UsePartialChemicalEquilibrium()) {
+      printf("**WARNING** PCE enabled, cannot assume chemical equilibrium to do optimization...");
+      return;
+    }
+
     m_Parameters.muB = muBinit;
     m_Parameters.muS = muSinit;
     m_Parameters.muQ = muQinit;

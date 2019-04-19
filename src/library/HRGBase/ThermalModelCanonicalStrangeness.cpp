@@ -138,6 +138,11 @@ namespace thermalfist {
   }
 
   void ThermalModelCanonicalStrangeness::CalculatePrimordialDensities() {
+    if (UsePartialChemicalEquilibrium()) {
+      printf("**ERROR** ThermalModelCanonicalStrangeness::CalculatePrimordialDensities(): PCE not supported!\n");
+      exit(1);
+    }
+
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);

@@ -84,6 +84,11 @@ namespace thermalfist {
   }
 
   void ThermalModelCanonicalCharm::CalculatePrimordialDensities() {
+    if (UsePartialChemicalEquilibrium()) {
+      printf("**ERROR** ThermalModelCanonicalCharm::CalculatePrimordialDensities(): PCE not supported!\n");
+      exit(1);
+    }
+
     m_FluctuationsCalculated = false;
     m_energydensitiesGCE.resize(0);
 

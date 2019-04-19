@@ -37,6 +37,50 @@ namespace thermalfist {
     /// \param rangen A Mersenne Twister random number generator to use
     int RandomPoisson(double mean, MTRand &rangen);
 
+    /// \brief Probability of a Skellam distributed random variable with Poisson means
+    ///        mu1 and mu2 to have the value of k.
+    double SkellamProbability(int k, double mu1, double mu2);
+
+
+    /// \brief Generator of a random number from the Bessel distribution (a, nu), nu is integer
+    ///        Uses methods from https://www.sciencedirect.com/science/article/pii/S016771520200055X
+    ///        Used in event generator with exact conservation of charges to
+    ///        generate two Poisson numbers with fixed difference, as described in https://arxiv.org/pdf/1609.01087.pdf
+    struct BesselDistributionGenerator
+    {
+      static double pn(int n, double a, int nu);
+
+      static double R(double x, int nu) { return xMath::BesselI(nu + 1, x) / xMath::BesselI(nu, x); }
+
+      static double mu(double a, int nu) { return a * R(a, nu) / 2; }
+
+      static double chi2(double a, int nu);
+
+      static int    m(double a, int nu) { return static_cast<int>((sqrt(a*a+static_cast<double>(nu)*nu) - nu)/2.); }
+
+      static double sig2(double a, int nu);
+
+      static double Q2(double a, int nu);
+
+      static int RandomBesselPoisson(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselPoisson(double a, int nu) { return RandomBesselPoisson(a, nu, randgenMT); }
+
+      static double pmXmOverpm(int X, int tm, double a, int nu);
+
+      static int RandomBesselDevroye1(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye1(double a, int nu) { return RandomBesselDevroye1(a, nu, randgenMT); }
+
+      static int RandomBesselDevroye2(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye2(double a, int nu) { return RandomBesselDevroye2(a, nu, randgenMT); }
+
+      static int RandomBesselDevroye3(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye3(double a, int nu) { return RandomBesselDevroye3(a, nu, randgenMT); }
+    };
+
 
     /// \brief Base class for Monte Carlo sampling of particle momenta
     class ParticleMomentumGenerator
