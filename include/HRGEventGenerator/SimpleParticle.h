@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -18,6 +18,7 @@ namespace thermalfist {
     double p0;         ///< Energy (in GeV)
     long long PDGID;         ///< PDG code
     long long MotherPDGID;   ///< PDG code of a mother particle, if applicable
+    int epoch;               ///< 0 - primary particle, 1 - after decay of primary particles, 2 - after a casacde of two decays and so on...
     bool processed;          ///< Used in event generator
 
     /// Default constructor
@@ -30,7 +31,7 @@ namespace thermalfist {
       pz(inPz),
       m(inM),
       p0(sqrt(m*m + px * px + py * py + pz * pz)),
-      PDGID(inPDGID), MotherPDGID(inMotherPDGID), processed(false) { }
+      PDGID(inPDGID), MotherPDGID(inMotherPDGID), epoch(0), processed(false) { }
 
     /// Absolute value of the 3-momentum (in GeV)
     double GetP() const {
@@ -56,6 +57,12 @@ namespace thermalfist {
     double GetEta() const {
       //return atanh(pz/GetP());
       return 0.5*log((GetP() + pz) / (GetP() - pz));
+    }
+
+    /// Rapidity boost
+    void RapidityBoost(double dY) {
+      pz = GetMt() * sinh(GetY() + dY);
+      p0 = sqrt(m*m + px * px + py * py + pz * pz);
     }
   };
 

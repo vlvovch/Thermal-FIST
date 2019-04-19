@@ -454,6 +454,12 @@ namespace thermalfist {
     /// by the condition of charm neutrality
     void ConstrainMuC(bool constrain) { m_ConstrainMuC = constrain; }
 
+    /// Sets whether partial chemical equilibrium with additional chemical potentials is used
+    void UsePartialChemicalEquilibrium(bool usePCE) { m_PCE = usePCE; }
+
+    /// Whether partial chemical equilibrium with additional chemical potentials is used
+    bool UsePartialChemicalEquilibrium() { return m_PCE; }
+
     //@{
       /**
        * \brief The entropy per baryon ratio
@@ -1046,6 +1052,8 @@ namespace thermalfist {
     bool m_ConstrainMuQ;
     bool m_ConstrainMuS;
     bool m_ConstrainMuC;
+
+    bool m_PCE;
 
     bool m_useOpenMP;
 

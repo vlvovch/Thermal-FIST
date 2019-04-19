@@ -23,14 +23,22 @@ namespace thermalfist {
     /// Log of the event weight factor
     double logweight;
 
-    /// Vector of all particles in the event
+    /// Vector of all final particles in the event
     std::vector<SimpleParticle> Particles;
 
+     /// Vector of all particles which ever appeared in the event (including those that decay)
+    std::vector<SimpleParticle> AllParticles;
+
     /// Default constructor, empty event
-    SimpleEvent() { Particles.resize(0); weight = 1.; }
+    SimpleEvent() { Particles.resize(0); AllParticles.resize(0); weight = 1.; }
 
     /// Writes the event to an output file stream
     void writeToFile(std::ofstream & fout, int eventnumber = 1);
+
+    /// Rapidity boost for all particles
+    void RapidityBoost(double dY);
+
+    static SimpleEvent MergeEvents(const SimpleEvent &evt1, const SimpleEvent &evt2);
   };
 
 } // namespace thermalfist

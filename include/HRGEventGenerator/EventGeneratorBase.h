@@ -37,7 +37,7 @@ namespace thermalfist {
     /// Enumerates the statistical ensembles 
     enum Ensemble { 
       GCE, ///< Grand-canonical
-      CE,  ///< Caonical
+      CE,  ///< Canonical
       SCE, ///< Strangeness-canonical
       CCE  ///< Charm-canonical
     };
@@ -68,6 +68,15 @@ namespace thermalfist {
 
     /// The matrix of van der Waals attraction coefficients \f$ a_{ij} \f$
     std::vector< std::vector<double> > aij;
+
+    /// Whether partial chemical equilibrium is used
+    bool fUsePCE;
+
+    /// PCE chemical potentials
+    std::vector<double> fPCEChems;
+
+
+    EventGeneratorConfiguration();
   };
 
   /// \brief Base class for generating events with the Thermal Event Generator

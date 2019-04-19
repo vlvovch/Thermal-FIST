@@ -153,7 +153,7 @@ namespace thermalfist {
     if (m_PartialZ.size() == 0)
       CalculateQuantumNumbersRange();
 
-    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE) {
+    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE && !UsePartialChemicalEquilibrium()) {
       m_Banalyt = true;
       m_Parameters.muB = 0.0;
       m_Parameters.muQ = 0.0;
@@ -291,7 +291,8 @@ Obtained: %lf\n\
     if (Vc < 0.0)
       Vc = m_Parameters.SVc;
 
-    FillChemicalPotentials();
+    if (!UsePartialChemicalEquilibrium()) 
+      FillChemicalPotentials();
 
     bool AllMuZero = true;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -524,7 +525,7 @@ Obtained: %lf\n\
     }
 
     for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
-      if (m_BMAX != 0 && m_BMAX != 1)
+      if (m_BMAX != 0 && m_BMAX != 1 && !m_Banalyt) // TODO: cross-check
         m_PartialZ[iN] /= 2. * xMath::Pi();
       if (m_QMAX != 0) {
         m_PartialZ[iN] /= 2. * xMath::Pi();
@@ -617,7 +618,7 @@ Obtained: %lf\n\
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-          int ind = m_QNMap[QuantumNumbers(n*tpart.BaryonCharge(), n*tpart.ElectricCharge(), n*tpart.Strangeness(), n*tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
 
           double densityClusterN = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
 
@@ -647,10 +648,10 @@ Obtained: %lf\n\
           for (int n1 = 1; n1 <= n1max; ++n1) {
             for (int n2 = 1; n2 <= n2max; ++n2) {
               int ind = m_QNMap[QuantumNumbers(
-                n1*tpart1.BaryonCharge() + n2 * tpart2.BaryonCharge(),
-                n1*tpart1.ElectricCharge() + n2 * tpart2.ElectricCharge(),
-                n1*tpart1.Strangeness() + n2 * tpart2.Strangeness(),
-                n1*tpart1.Charm() + n2 * tpart2.Charm())];
+                m_BCE*(n1*tpart1.BaryonCharge() + n2 * tpart2.BaryonCharge()),
+                m_QCE*(n1*tpart1.ElectricCharge() + n2 * tpart2.ElectricCharge()),
+                m_SCE*(n1*tpart1.Strangeness() + n2 * tpart2.Strangeness()),
+                m_CCE*(n1*tpart1.Charm() + n2 * tpart2.Charm()))];
 
               double densityClusterN1 = tpart1.DensityCluster(n1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
               double densityClusterN2 = tpart2.DensityCluster(n2, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[j]);
