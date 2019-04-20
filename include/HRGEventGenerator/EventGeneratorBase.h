@@ -136,6 +136,15 @@ namespace thermalfist {
     /// sampling used for canonical ensemble and/or eigenvolumes.
     static int fCEAccepted, fCETotal;
 
+    /// Set system volume
+    /// Can be used to include volume fluctuations
+    /**
+     * \brief Set system volume.
+     * 
+     * Can be used to include volume fluctuations
+     */
+    void SetVolume(double V) { m_THM->SetVolume(V); m_Config.CFOParameters.V = V; }
+
   protected:
     /**
      * \brief Sets the event generator configuration.
