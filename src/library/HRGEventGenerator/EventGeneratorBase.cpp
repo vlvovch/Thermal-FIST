@@ -1194,6 +1194,41 @@ namespace thermalfist {
     return ret;
   }
 
+  void EventGeneratorBase::SetVolume(double V)
+  {
+    if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
+      RescaleCEMeans(V / m_THM->Volume());
+    m_THM->SetVolume(V); 
+    m_Config.CFOParameters.V = V; 
+    m_THM->SetCanonicalVolume(V); 
+    m_Config.CFOParameters.SVc = V; 
+  }
+
+  void EventGeneratorBase::RescaleCEMeans(double Vmod)
+  {
+    m_MeanB      *= Vmod;
+    m_MeanAB     *= Vmod;
+    m_MeanSM     *= Vmod;
+    m_MeanASM    *= Vmod;
+    m_MeanCM     *= Vmod;
+    m_MeanACM    *= Vmod;
+    m_MeanCHRMM  *= Vmod;
+    m_MeanACHRMM *= Vmod;
+    m_MeanCHRM   *= Vmod;
+    m_MeanACHRM  *= Vmod;
+
+    for (int i = 0; i < static_cast<int>(m_Baryons.size()); ++i)            m_Baryons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiBaryons.size()); ++i)        m_AntiBaryons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_StrangeMesons.size()); ++i)      m_StrangeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiStrangeMesons.size()); ++i)  m_AntiStrangeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_ChargeMesons.size()); ++i)       m_ChargeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiChargeMesons.size()); ++i)   m_AntiChargeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_CharmMesons.size()); ++i)        m_CharmMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiCharmMesons.size()); ++i)    m_AntiCharmMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_CharmAll.size()); ++i)           m_CharmAll[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiCharmAll.size()); ++i)       m_AntiCharmAll[i].first *= Vmod;
+  }
+
   EventGeneratorConfiguration::EventGeneratorConfiguration()
   {
     fEnsemble = GCE;

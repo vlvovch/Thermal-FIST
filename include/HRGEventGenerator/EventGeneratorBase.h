@@ -136,14 +136,20 @@ namespace thermalfist {
     /// sampling used for canonical ensemble and/or eigenvolumes.
     static int fCEAccepted, fCETotal;
 
-    /// Set system volume
-    /// Can be used to include volume fluctuations
     /**
      * \brief Set system volume.
      * 
      * Can be used to include volume fluctuations
      */
-    void SetVolume(double V) { m_THM->SetVolume(V); m_Config.CFOParameters.V = V; }
+    void SetVolume(double V);
+
+    /**
+     * \brief Rescale precalculated GCE means. 
+     * 
+     * Called when the system volume is changed
+     */
+    void RescaleCEMeans(double Vmod);
+
 
   protected:
     /**
