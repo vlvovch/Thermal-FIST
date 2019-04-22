@@ -898,19 +898,22 @@ namespace thermalfist {
       int tB = 0, tAB = 0;
       // First total baryons and antibaryons from the Poisson distribution
       if (fl) {
-        /*tB = RandomGenerators::RandomPoisson(m_MeanB);
+        tB = RandomGenerators::RandomPoisson(m_MeanB);
         tAB = RandomGenerators::RandomPoisson(m_MeanAB);
-        if (tB - tAB != m_THM->Parameters().B - netB) continue;*/
-        if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().B - netB, m_MeanB, m_MeanAB))
-          continue;
+        if (tB - tAB != m_THM->Parameters().B - netB) continue;
+        //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().B - netB, m_MeanB, m_MeanAB))
+        //  continue;
       }
-
+      else
       // Generate from the Bessel distribution, using Devroye's method, if no light nuclei
       {
         int nu = m_THM->Parameters().B - netB;
         if (nu < 0) nu = -nu;
         double a = 2. * sqrt(m_MeanB * m_MeanAB);
-        int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselPoisson(a, nu);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselCombined(a, nu);
+        int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye1(a, nu);
         if (m_THM->Parameters().B - netB < 0) {
           tB = BessN;
           tAB = nu + tB;

@@ -50,7 +50,8 @@ namespace thermalfist {
     {
       static double pn(int n, double a, int nu);
 
-      static double R(double x, int nu) { return xMath::BesselI(nu + 1, x) / xMath::BesselI(nu, x); }
+      //static double R(double x, int nu) { return xMath::BesselI(nu + 1, x) / xMath::BesselI(nu, x); }
+      static double R(double x, int nu);
 
       static double mu(double a, int nu) { return a * R(a, nu) / 2; }
 
@@ -79,6 +80,14 @@ namespace thermalfist {
       static int RandomBesselDevroye3(double a, int nu, MTRand &rangen);
 
       static int RandomBesselDevroye3(double a, int nu) { return RandomBesselDevroye3(a, nu, randgenMT); }
+
+      static int RandomBesselNormal(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselNormal(double a, int nu) { return RandomBesselNormal(a, nu, randgenMT); }
+
+      static int RandomBesselCombined(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselCombined(double a, int nu) { return RandomBesselCombined(a, nu, randgenMT); }
     };
 
 

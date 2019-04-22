@@ -61,6 +61,11 @@ namespace thermalfist {
     double BesselK1exp(double x);         // modified Bessel function K_1(x), divided by exponential factor
     double BesselKexp(int n, double x);    // integer order modified Bessel function K_n(x), divided by exponential factor
 
+    double BesselI0exp(double x);         // modified Bessel function I_0(x), divided by exponential factor
+    double BesselI1exp(double x);         // modified Bessel function I_1(x), divided by exponential factor
+    double BesselIexp(int n, double x);   // integer order modified Bessel function I_n(x), divided by exponential factor
+
+
     // Note that the functions Gamma and LogGamma are mutually dependent.
     double LogGamma(double);
     double Gamma(double);
