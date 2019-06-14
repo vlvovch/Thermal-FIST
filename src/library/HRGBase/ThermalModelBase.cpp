@@ -946,7 +946,8 @@ namespace thermalfist {
             int c1 = 0;
             //if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
             if (i == 0) c1 = 1 * (m_TPS->Particles()[k].PdgId() == 2212) - 1 * (m_TPS->Particles()[k].PdgId() == -2212);
-            if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
+            //if (i == 1) c1 = m_TPS->Particles()[k].ElectricCharge();
+            if (i == 1) c1 = 1 * (m_TPS->Particles()[k].PdgId() == 211) - 1 * (m_TPS->Particles()[k].PdgId() == -211);
             if (i == 2) c1 = 1 * (m_TPS->Particles()[k].PdgId() == 321) - 1 * (m_TPS->Particles()[k].PdgId() == -321);
             if (i == 3) c1 = m_TPS->Particles()[k].Charm();
             for (size_t kp = 0; kp < m_TotalCorrel.size(); ++kp) {
@@ -954,7 +955,8 @@ namespace thermalfist {
                 int c2 = 0;
                 //if (j == 0) c2 = m_TPS->Particles()[kp].BaryonCharge();
                 if (j == 0) c2 = 1 * (m_TPS->Particles()[kp].PdgId() == 2212) - 1 * (m_TPS->Particles()[kp].PdgId() == -2212);
-                if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
+                //if (j == 1) c2 = m_TPS->Particles()[kp].ElectricCharge();
+                if (j == 1) c2 = 1 * (m_TPS->Particles()[kp].PdgId() == 211) - 1 * (m_TPS->Particles()[kp].PdgId() == -211);
                 if (j == 2) c2 = 1 * (m_TPS->Particles()[kp].PdgId() == 321) - 1 * (m_TPS->Particles()[kp].PdgId() == -321);
                 if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
                 m_ProxySusc[i][j] += c1 * c2 * m_TotalCorrel[k][kp];
@@ -965,6 +967,9 @@ namespace thermalfist {
         m_ProxySusc[i][j] = m_ProxySusc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
       }
     }
+
+    printf("chi2netp/chi2skellam = %lf\n", m_ProxySusc[0][0] / (m_densitiestotal[m_TPS->PdgToId(2212)] + m_densitiestotal[m_TPS->PdgToId(-2212)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
+    printf("chi2netpi/chi2skellam = %lf\n", m_ProxySusc[1][1] / (m_densitiestotal[m_TPS->PdgToId(211)] + m_densitiestotal[m_TPS->PdgToId(-211)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
   }
 
   void ThermalModelBase::CalculateFluctuations() {
