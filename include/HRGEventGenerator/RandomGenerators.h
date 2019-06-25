@@ -204,13 +204,13 @@ namespace thermalfist {
       /**
        * \brief Construct a new SSHGenerator object
        * \param T      The kinetic temperature (in GeV)
-       * \param beta   The transverse flow velocity
+       * \param betas  The transverse flow velocity at the surface
        * \param etamax The longitudinal space-time rapidity cut-off
        * \param npow   The power in the transverse flow profile function
        * \param mass   Particle mass (in GeV) 
        */
-      SSHMomentumGenerator(double T, double beta, double etamax, double npow, double mass) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_Beta, m_EtaMax, m_n, false);
+      SSHMomentumGenerator(double T, double betas, double etamax, double npow, double mass) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
         m_dPt = 0.02;
         m_dy = 0.05;
         FixParameters2();
@@ -223,18 +223,33 @@ namespace thermalfist {
        * \brief Sets the parameters of the distribution
        * 
        * \param T      The kinetic temperature (in GeV)
-       * \param beta   The transverse flow velocity
+       * \param betas  The transverse flow velocity at the surface
        * \param etamax The longitudinal space-time rapidity cut-off
        * \param npow   The power in the transverse flow profile function
        * \param mass   Particle mass (in GeV) 
        */
-      void SetParameters(double T, double beta, double etamax, double npow, double mass) {
+      void SetParameters(double T, double betas, double etamax, double npow, double mass) {
         m_T = T;
-        m_Beta = beta;
+        m_BetaS = betas;
         m_EtaMax = etamax;
         m_Mass = mass;
         m_n = npow;
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_Beta, m_EtaMax, m_n);
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
+        m_dPt = 0.02;
+        m_dy = 0.05;
+        FixParameters2();
+      }
+
+      /**
+        * \brief Set the mean transverse flow velocity.
+        *
+        * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2 
+        * 
+        * \param betaT  The mean transverse flow velocity
+        */
+      void SetMeanBetaT(double betaT) {
+        m_BetaS = (2. + m_n) / 2. * betaT;
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
         m_dPt = 0.02;
         m_dy = 0.05;
         FixParameters2();
@@ -275,7 +290,7 @@ namespace thermalfist {
 
       std::pair<double, double> GetRandom2() const;
 
-      double m_T, m_Beta, m_EtaMax, m_n, m_Mass;
+      double m_T, m_BetaS, m_EtaMax, m_n, m_Mass;
       double m_MaxY, m_MaxPt;
       SSHDistribution m_distr;
       SplineFunction m_dndpt;
