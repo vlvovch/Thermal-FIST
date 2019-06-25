@@ -89,7 +89,11 @@ namespace thermalfist {
     m_THM->ConstrainMuQ(false);
     m_THM->ConstrainMuS(false);
     m_THM->ConstrainMuC(false);
-    m_THM->FillChemicalPotentials();
+
+    if (!m_Config.fUsePCE)
+      m_THM->FillChemicalPotentials();
+    else
+      m_THM->SetChemicalPotentials(m_Config.fPCEChems);
 
     if (m_Config.fModelType != EventGeneratorConfiguration::PointParticle) {
       for (size_t i = 0; i < m_THM->Densities().size(); ++i) {
@@ -106,8 +110,10 @@ namespace thermalfist {
     }
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
-      // The following procedure currently not used, but can be considered if SolveChemicalPotentials routine fails
-      if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0)) {
+      // The following procedure currently not used, 
+      // but can be considered if SolveChemicalPotentials routine fails
+      // Note to take into account PCE possiblity if this option is considered
+      if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0) && !m_Config.fUsePCE) {
         if (m_Config.S == 0 && !(m_Config.Q == 0 || m_Config.B == 0)) {
           double QBrat = (double)(m_Config.Q) / m_Config.B;
 
@@ -157,38 +163,41 @@ namespace thermalfist {
         }
       }
 
-      m_THM->SolveChemicalPotentials(m_Config.B, m_Config.Q, m_Config.S, m_Config.C,
-        m_THM->Parameters().muB, m_THM->Parameters().muQ, m_THM->Parameters().muS, m_THM->Parameters().muC);
-      if (m_THM->Parameters().muB != m_THM->Parameters().muB ||
-        m_THM->Parameters().muQ != m_THM->Parameters().muQ ||
-        m_THM->Parameters().muS != m_THM->Parameters().muS ||
-        m_THM->Parameters().muC != m_THM->Parameters().muC) {
-        printf("**WARNING** Could not constrain chemical potentials. Setting all to zero...\n");
-        m_THM->SetBaryonChemicalPotential(0.);
-        m_THM->SetElectricChemicalPotential(0.);
-        m_THM->SetStrangenessChemicalPotential(0.);
-        m_THM->SetCharmChemicalPotential(0.);
-        m_THM->FillChemicalPotentials();
+      if (!m_Config.fUsePCE) {
+
+        m_THM->SolveChemicalPotentials(m_Config.B, m_Config.Q, m_Config.S, m_Config.C,
+          m_THM->Parameters().muB, m_THM->Parameters().muQ, m_THM->Parameters().muS, m_THM->Parameters().muC);
+        if (m_THM->Parameters().muB != m_THM->Parameters().muB ||
+          m_THM->Parameters().muQ != m_THM->Parameters().muQ ||
+          m_THM->Parameters().muS != m_THM->Parameters().muS ||
+          m_THM->Parameters().muC != m_THM->Parameters().muC) {
+          printf("**WARNING** Could not constrain chemical potentials. Setting all to zero...\n");
+          m_THM->SetBaryonChemicalPotential(0.);
+          m_THM->SetElectricChemicalPotential(0.);
+          m_THM->SetStrangenessChemicalPotential(0.);
+          m_THM->SetCharmChemicalPotential(0.);
+          m_THM->FillChemicalPotentials();
+        }
+        m_Config.CFOParameters.muB = m_THM->Parameters().muB;
+        m_Config.CFOParameters.muS = m_THM->Parameters().muS;
+        m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
+        m_Config.CFOParameters.muC = m_THM->Parameters().muC;
+
+        std::cout << "Chemical potentials constrained!\n" << "muB = "
+          << m_Config.CFOParameters.muB << " muQ = "
+          << m_Config.CFOParameters.muQ << " muS = "
+          << m_Config.CFOParameters.muS << " muC = "
+          << m_Config.CFOParameters.muC << "\n";
+
+        std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V
+          << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V
+          << " S = " << m_THM->CalculateStrangenessDensity() * m_THM->Parameters().V
+          << " C = " << m_THM->CalculateCharmDensity() * m_THM->Parameters().V
+          << "\n";
       }
-      m_Config.CFOParameters.muB = m_THM->Parameters().muB;
-      m_Config.CFOParameters.muS = m_THM->Parameters().muS;
-      m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
-      m_Config.CFOParameters.muC = m_THM->Parameters().muC;
-
-      std::cout << "Chemical potentials constrained!\n" << "muB = " 
-        << m_Config.CFOParameters.muB << " muQ = " 
-        << m_Config.CFOParameters.muQ << " muS = " 
-        << m_Config.CFOParameters.muS << " muC = " 
-        << m_Config.CFOParameters.muC << "\n";
-
-      std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V 
-        << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V 
-        << " S = " << m_THM->CalculateStrangenessDensity() * m_THM->Parameters().V 
-        << " C = " << m_THM->CalculateCharmDensity() * m_THM->Parameters().V
-        << "\n";
     }
 
-    if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE) {
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::SCE && !m_Config.fUsePCE) {
       m_THM->ConstrainMuS(true);
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
@@ -197,7 +206,7 @@ namespace thermalfist {
       m_Config.CFOParameters.muC = m_THM->Parameters().muC;
     }
 
-    if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE && !m_Config.fUsePCE) {
       m_THM->ConstrainMuC(true);
       m_THM->ConstrainChemicalPotentials();
       m_THM->FillChemicalPotentials();
@@ -869,9 +878,11 @@ namespace thermalfist {
 
 
       // Light nuclei first
+      bool fl = false; // Whether light nuclei appear at all
 
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (abs(m_THM->TPS()->Particles()[i].BaryonCharge()) > 1) {
+          fl = true;
           double mean = densities[i] * m_THM->Volume();
           int total = RandomGenerators::RandomPoisson(mean);
           totals[i] = total;
@@ -884,10 +895,34 @@ namespace thermalfist {
 
       // Then all hadrons
 
+      int tB = 0, tAB = 0;
       // First total baryons and antibaryons from the Poisson distribution
-      int tB = RandomGenerators::RandomPoisson(m_MeanB);
-      int tAB = RandomGenerators::RandomPoisson(m_MeanAB);
-      if (tB - tAB != m_THM->Parameters().B - netB) continue;
+      if (fl) {
+        tB = RandomGenerators::RandomPoisson(m_MeanB);
+        tAB = RandomGenerators::RandomPoisson(m_MeanAB);
+        if (tB - tAB != m_THM->Parameters().B - netB) continue;
+        //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().B - netB, m_MeanB, m_MeanAB))
+        //  continue;
+      }
+      else
+      // Generate from the Bessel distribution, using Devroye's method, if no light nuclei
+      {
+        int nu = m_THM->Parameters().B - netB;
+        if (nu < 0) nu = -nu;
+        double a = 2. * sqrt(m_MeanB * m_MeanAB);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselPoisson(a, nu);
+        //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselCombined(a, nu);
+        int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye1(a, nu);
+        if (m_THM->Parameters().B - netB < 0) {
+          tB = BessN;
+          tAB = nu + tB;
+        }
+        else {
+          tAB = BessN;
+          tB = nu + tAB;
+        }
+      }
 
       // Then individual baryons and antibaryons from the multinomial distribution
       for (int i = 0; i < tB; ++i) {
@@ -912,10 +947,29 @@ namespace thermalfist {
       }
 
       // Total numbers of (anti)strange mesons
+      
       int tSM = RandomGenerators::RandomPoisson(m_MeanSM);
       int tASM = RandomGenerators::RandomPoisson(m_MeanASM);
-
       if (netS != tASM - tSM + m_THM->Parameters().S) continue;
+
+      //int tSM = 0, tASM = 0;
+      //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().S - netS, m_MeanSM, m_MeanASM))
+      //    continue;
+      //// Generate from the Bessel distribution, using Devroye's method, if no light nuclei
+      //{
+      //  int nu = m_THM->Parameters().S - netS;
+      //  if (nu < 0) nu = -nu;
+      //  double a = 2. * sqrt(m_MeanSM * m_MeanASM);
+      //  int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
+      //  if (m_THM->Parameters().S - netS < 0) {
+      //    tSM = BessN;
+      //    tASM = nu + tSM;
+      //  }
+      //  else {
+      //    tASM = BessN;
+      //    tSM = nu + tASM;
+      //  }
+      //}
 
       // Multinomial distribution for individual numbers of (anti)strange mesons
       for (int i = 0; i < tSM; ++i) {
@@ -940,8 +994,26 @@ namespace thermalfist {
       // Total numbers of remaining electrically charged mesons
       int tCM = RandomGenerators::RandomPoisson(m_MeanCM);
       int tACM = RandomGenerators::RandomPoisson(m_MeanACM);
-
       if (netQ != tACM - tCM + m_THM->Parameters().Q) continue;
+
+      //int tCM = 0, tACM = 0;
+      //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().Q - netQ, m_MeanCM, m_MeanACM))
+      //    continue;
+      //// Generate from the Bessel distribution, using Devroye's method, if no light nuclei
+      //{
+      //  int nu = m_THM->Parameters().Q - netQ;
+      //  if (nu < 0) nu = -nu;
+      //  double a = 2. * sqrt(m_MeanCM * m_MeanACM);
+      //  int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
+      //  if (m_THM->Parameters().Q - netQ < 0) {
+      //    tCM = BessN;
+      //    tACM = nu + tCM;
+      //  }
+      //  else {
+      //    tACM = BessN;
+      //    tCM = nu + tACM;
+      //  }
+      //}
 
       // Multinomial distribution for individual numbers of remaining electrically charged mesons
       for (int i = 0; i < tCM; ++i) {
@@ -1055,6 +1127,7 @@ namespace thermalfist {
       }
     }
 
+
     bool flag_repeat = true;
     while (flag_repeat) {
       flag_repeat = false;
@@ -1118,7 +1191,54 @@ namespace thermalfist {
         }
       }
     }
+    
+    for (int i = primParticles.size() - 1; i >= 0; --i)
+      ret.AllParticles.insert(ret.AllParticles.end(), primParticles[i].begin(), primParticles[i].end());
     return ret;
+  }
+
+  void EventGeneratorBase::SetVolume(double V)
+  {
+    if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
+      RescaleCEMeans(V / m_THM->Volume());
+    m_THM->SetVolume(V); 
+    m_Config.CFOParameters.V = V; 
+    m_THM->SetCanonicalVolume(V); 
+    m_Config.CFOParameters.SVc = V; 
+  }
+
+  void EventGeneratorBase::RescaleCEMeans(double Vmod)
+  {
+    m_MeanB      *= Vmod;
+    m_MeanAB     *= Vmod;
+    m_MeanSM     *= Vmod;
+    m_MeanASM    *= Vmod;
+    m_MeanCM     *= Vmod;
+    m_MeanACM    *= Vmod;
+    m_MeanCHRMM  *= Vmod;
+    m_MeanACHRMM *= Vmod;
+    m_MeanCHRM   *= Vmod;
+    m_MeanACHRM  *= Vmod;
+
+    for (int i = 0; i < static_cast<int>(m_Baryons.size()); ++i)            m_Baryons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiBaryons.size()); ++i)        m_AntiBaryons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_StrangeMesons.size()); ++i)      m_StrangeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiStrangeMesons.size()); ++i)  m_AntiStrangeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_ChargeMesons.size()); ++i)       m_ChargeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiChargeMesons.size()); ++i)   m_AntiChargeMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_CharmMesons.size()); ++i)        m_CharmMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiCharmMesons.size()); ++i)    m_AntiCharmMesons[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_CharmAll.size()); ++i)           m_CharmAll[i].first *= Vmod;
+    for (int i = 0; i < static_cast<int>(m_AntiCharmAll.size()); ++i)       m_AntiCharmAll[i].first *= Vmod;
+  }
+
+  EventGeneratorConfiguration::EventGeneratorConfiguration()
+  {
+    fEnsemble = GCE;
+    fModelType = PointParticle;
+    CFOParameters = ThermalModelParameters();
+    B = Q = S = C = 0;
+    fUsePCE = false;
   }
 
 } // namespace thermalfist

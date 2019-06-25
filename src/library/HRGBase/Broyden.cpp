@@ -45,6 +45,7 @@ namespace thermalfist {
     for (size_t i = 0; i < x.size(); ++i) {
       h[i] = m_dx*abs(h[i]);
       if (h[i] == 0.0) h[i] = m_dx;
+      if (h[i] < 1.e-10) h[i] = 1.e-10;
       //h[i] = max(m_dx, h[i]);
     }
 

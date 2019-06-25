@@ -723,6 +723,122 @@ namespace thermalfist {
     return bk;
   }
 
+  //______________________________________________________________________________
+  double xMath::BesselI0exp(double x)
+  {
+    // Compute the modified Bessel function I_0(x) for any real x.
+    //
+    //--- NvE 12-mar-2000 UU-SAP Utrecht
+
+    // Parameters of the polynomial approximation
+    const double p1 = 1.0, p2 = 3.5156229, p3 = 3.0899424,
+      p4 = 1.2067492, p5 = 0.2659732, p6 = 3.60768e-2, p7 = 4.5813e-3;
+
+    const double q1 = 0.39894228, q2 = 1.328592e-2, q3 = 2.25319e-3,
+      q4 = -1.57565e-3, q5 = 9.16281e-3, q6 = -2.057706e-2,
+      q7 = 2.635537e-2, q8 = -1.647633e-2, q9 = 3.92377e-3;
+
+    const double k1 = 3.75;
+    double ax = fabs(x);
+
+    double y = 0, result = 0;
+
+    if (ax < k1) {
+      double xx = x / k1;
+      y = xx * xx;
+      result = exp(-ax) * ( p1 + y * (p2 + y * (p3 + y * (p4 + y * (p5 + y * (p6 + y * p7))))) );
+    }
+    else {
+      y = k1 / ax;
+      result = (1. / sqrt(ax))*(q1 + y * (q2 + y * (q3 + y * (q4 + y * (q5 + y * (q6 + y * (q7 + y * (q8 + y * q9))))))));
+    }
+    return result;
+  }
+
+  //______________________________________________________________________________
+  double xMath::BesselI1exp(double x)
+  {
+    // Compute the modified Bessel function I_1(x) for any real x.
+    //
+    //  M.Abramowitz and I.A.Stegun, Handbook of Mathematical Functions,
+    //     Applied Mathematics Series vol. 55 (1964), Washington.
+    //
+    //--- NvE 12-mar-2000 UU-SAP Utrecht
+
+    // Parameters of the polynomial approximation
+    const double p1 = 0.5, p2 = 0.87890594, p3 = 0.51498869,
+      p4 = 0.15084934, p5 = 2.658733e-2, p6 = 3.01532e-3, p7 = 3.2411e-4;
+
+    const double q1 = 0.39894228, q2 = -3.988024e-2, q3 = -3.62018e-3,
+      q4 = 1.63801e-3, q5 = -1.031555e-2, q6 = 2.282967e-2,
+      q7 = -2.895312e-2, q8 = 1.787654e-2, q9 = -4.20059e-3;
+
+    const double k1 = 3.75;
+    double ax = fabs(x);
+
+    double y = 0, result = 0;
+
+    if (ax < k1) {
+      double xx = x / k1;
+      y = xx * xx;
+      result = exp(-ax) * (x * (p1 + y * (p2 + y * (p3 + y * (p4 + y * (p5 + y * (p6 + y * p7)))))));
+    }
+    else {
+      y = k1 / ax;
+      result = (1. / sqrt(ax))*(q1 + y * (q2 + y * (q3 + y * (q4 + y * (q5 + y * (q6 + y * (q7 + y * (q8 + y * q9))))))));
+      if (x < 0) result = -result;
+    }
+    return result;
+  }
+
+  //______________________________________________________________________________
+  double xMath::BesselIexp(int n, double x)
+  {
+    // Compute the Integer Order Modified Bessel function I_n(x)
+    // for n=0,1,2,... and any real x.
+    //
+    //--- NvE 12-mar-2000 UU-SAP Utrecht
+    if (n < 0) n = -n;
+
+    int iacc = 40; // Increase to enhance accuracy
+    const double kBigPositive = 1.e10;
+    const double kBigNegative = 1.e-10;
+
+    if (n < 0) {
+      //Error("xMath::BesselI", "*I* Invalid argument (n,x) = (%d, %g)\n",n,x);
+      return 0;
+    }
+
+    if (n == 0) return xMath::BesselI0exp(x);
+    if (n == 1) return xMath::BesselI1exp(x);
+
+    if (x == 0) return 0;
+    if (fabs(x) > kBigPositive) return 0;
+
+    double tox = 2 / fabs(x);
+    double bip = 0, bim = 0;
+    double bi = 1;
+    double result = 0;
+    int m = 2 * ((n + int(sqrt(float(iacc*n)))));
+    for (int j = m; j >= 1; j--) {
+      bim = bip + double(j)*tox*bi;
+      bip = bi;
+      bi = bim;
+      // Renormalise to prevent overflows
+      if (fabs(bi) > kBigPositive) {
+        result *= kBigNegative;
+        bi *= kBigNegative;
+        bip *= kBigNegative;
+      }
+      if (j == n) result = bip;
+    }
+
+    result *= xMath::BesselI0exp(x) / bi; // Normalise with BesselI0exp(x)
+    if ((x < 0) && (n % 2 == 1)) result = -result;
+
+    return result;
+  }
+
 
   double xMath::Gamma
   (

@@ -151,14 +151,14 @@ namespace thermalfist {
     /**
      * \copydoc MomentumDistributionBase()
      * \param T      The kinetic temperature (in GeV)
-     * \param beta   The transverse flow velocity
+     * \param beta   The transverse flow velocity at the surface
      * \param etamax The longitudinal space-time rapidity cut-off
      * \param npow   The power in the transverse flow profile function
      * \param norm   Whether the momentum distribution should be normalized to unity 
      */
-    SSHDistribution(int pdgid = 0, double mass = 0., double T = 0.100, double beta = 0.5, double etamax = 0.5, double npow = 1., bool norm = false) :
+    SSHDistribution(int pdgid = 0, double mass = 0., double T = 0.100, double betas = 0.5, double etamax = 0.5, double npow = 1., bool norm = false) :
       MomentumDistributionBase(pdgid, mass),
-      m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow)
+      m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow)
     {
       m_NormY = m_NormPt = m_Norm = 1.;
       if (norm) Normalize();
@@ -172,16 +172,16 @@ namespace thermalfist {
      * \brief Set the parameters of the longitudinal blast-wave distribution
      * 
      * \param T      The kinetic temperature (in GeV)
-     * \param beta   The transverse flow velocity
+     * \param betas  The transverse flow velocity at the surface
      * \param etamax The longitudinal space-time rapidity cut-off
      * \param npow   The power in the transverse flow profile function
      * \param mass   Particle mass (in GeV)
      * \param pdgid  Particle PDG code
      * \param norm   Whether the momentum distribution should be normalized to unity 
      */
-    void SetParameters(double T, double beta, double etamax, double npow, double mass, int pdgid = 0, bool norm = true) {
+    void SetParameters(double T, double betas, double etamax, double npow, double mass, int pdgid = 0, bool norm = true) {
       m_T = T;
-      m_Beta = beta;
+      m_BetaS = betas;
       m_EtaMax = etamax;
       m_n = npow;
       m_Mass = mass;
@@ -190,6 +190,17 @@ namespace thermalfist {
       m_Normalized = false;
       if (norm) Normalize();
       else Initialize();
+    }
+
+    /**
+     * \brief Set the mean transverse flow velocity.
+     *
+     * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2 
+     * 
+     * \param betaT  The mean transverse flow velocity
+     */
+    void SetMeanBetaT(double betaT) {
+      m_BetaS = (2. + m_n) / 2. * betaT;
     }
 
     void Normalize();
@@ -239,11 +250,11 @@ namespace thermalfist {
 
     double betar(double r) const {
       if (m_n == 1.)
-        return m_Beta * r;
+        return m_BetaS * r;
       else if (m_n == 2.)
-        return m_Beta * r * m_Beta * r;
+        return m_BetaS * r * r;
       else
-        return pow(m_Beta * r, m_n);
+        return m_BetaS * pow(r, m_n);
     }
 
     double rho(double r) const { return atanh(betar(r)); }
@@ -253,7 +264,7 @@ namespace thermalfist {
     double y2Av() const;
 
     double m_T;
-    double m_Beta, m_EtaMax;
+    double m_BetaS, m_EtaMax;
     double m_NormY, m_NormPt, m_Norm;
     double m_n;
     std::vector<double> m_xlag, m_wlag;

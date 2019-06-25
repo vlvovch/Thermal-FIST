@@ -37,6 +37,59 @@ namespace thermalfist {
     /// \param rangen A Mersenne Twister random number generator to use
     int RandomPoisson(double mean, MTRand &rangen);
 
+    /// \brief Probability of a Skellam distributed random variable with Poisson means
+    ///        mu1 and mu2 to have the value of k.
+    double SkellamProbability(int k, double mu1, double mu2);
+
+
+    /// \brief Generator of a random number from the Bessel distribution (a, nu), nu is integer
+    ///        Uses methods from https://www.sciencedirect.com/science/article/pii/S016771520200055X
+    ///        Used in event generator with exact conservation of charges to
+    ///        generate two Poisson numbers with fixed difference, as described in https://arxiv.org/pdf/1609.01087.pdf
+    struct BesselDistributionGenerator
+    {
+      static double pn(int n, double a, int nu);
+
+      //static double R(double x, int nu) { return xMath::BesselI(nu + 1, x) / xMath::BesselI(nu, x); }
+      static double R(double x, int nu);
+
+      static double mu(double a, int nu) { return a * R(a, nu) / 2; }
+
+      static double chi2(double a, int nu);
+
+      static int    m(double a, int nu) { return static_cast<int>((sqrt(a*a+static_cast<double>(nu)*nu) - nu)/2.); }
+
+      static double sig2(double a, int nu);
+
+      static double Q2(double a, int nu);
+
+      static int RandomBesselPoisson(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselPoisson(double a, int nu) { return RandomBesselPoisson(a, nu, randgenMT); }
+
+      static double pmXmOverpm(int X, int tm, double a, int nu);
+
+      static int RandomBesselDevroye1(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye1(double a, int nu) { return RandomBesselDevroye1(a, nu, randgenMT); }
+
+      static int RandomBesselDevroye2(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye2(double a, int nu) { return RandomBesselDevroye2(a, nu, randgenMT); }
+
+      static int RandomBesselDevroye3(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselDevroye3(double a, int nu) { return RandomBesselDevroye3(a, nu, randgenMT); }
+
+      static int RandomBesselNormal(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselNormal(double a, int nu) { return RandomBesselNormal(a, nu, randgenMT); }
+
+      static int RandomBesselCombined(double a, int nu, MTRand &rangen);
+
+      static int RandomBesselCombined(double a, int nu) { return RandomBesselCombined(a, nu, randgenMT); }
+    };
+
 
     /// \brief Base class for Monte Carlo sampling of particle momenta
     class ParticleMomentumGenerator
@@ -151,13 +204,13 @@ namespace thermalfist {
       /**
        * \brief Construct a new SSHGenerator object
        * \param T      The kinetic temperature (in GeV)
-       * \param beta   The transverse flow velocity
+       * \param betas  The transverse flow velocity at the surface
        * \param etamax The longitudinal space-time rapidity cut-off
        * \param npow   The power in the transverse flow profile function
        * \param mass   Particle mass (in GeV) 
        */
-      SSHMomentumGenerator(double T, double beta, double etamax, double npow, double mass) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_Beta, m_EtaMax, m_n, false);
+      SSHMomentumGenerator(double T, double betas, double etamax, double npow, double mass) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
         m_dPt = 0.02;
         m_dy = 0.05;
         FixParameters2();
@@ -170,18 +223,33 @@ namespace thermalfist {
        * \brief Sets the parameters of the distribution
        * 
        * \param T      The kinetic temperature (in GeV)
-       * \param beta   The transverse flow velocity
+       * \param betas  The transverse flow velocity at the surface
        * \param etamax The longitudinal space-time rapidity cut-off
        * \param npow   The power in the transverse flow profile function
        * \param mass   Particle mass (in GeV) 
        */
-      void SetParameters(double T, double beta, double etamax, double npow, double mass) {
+      void SetParameters(double T, double betas, double etamax, double npow, double mass) {
         m_T = T;
-        m_Beta = beta;
+        m_BetaS = betas;
         m_EtaMax = etamax;
         m_Mass = mass;
         m_n = npow;
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_Beta, m_EtaMax, m_n);
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
+        m_dPt = 0.02;
+        m_dy = 0.05;
+        FixParameters2();
+      }
+
+      /**
+        * \brief Set the mean transverse flow velocity.
+        *
+        * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2 
+        * 
+        * \param betaT  The mean transverse flow velocity
+        */
+      void SetMeanBetaT(double betaT) {
+        m_BetaS = (2. + m_n) / 2. * betaT;
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
         m_dPt = 0.02;
         m_dy = 0.05;
         FixParameters2();
@@ -222,7 +290,7 @@ namespace thermalfist {
 
       std::pair<double, double> GetRandom2() const;
 
-      double m_T, m_Beta, m_EtaMax, m_n, m_Mass;
+      double m_T, m_BetaS, m_EtaMax, m_n, m_Mass;
       double m_MaxY, m_MaxPt;
       SSHDistribution m_distr;
       SplineFunction m_dndpt;

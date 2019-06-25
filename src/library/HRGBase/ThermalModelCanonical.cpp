@@ -153,7 +153,7 @@ namespace thermalfist {
     if (m_PartialZ.size() == 0)
       CalculateQuantumNumbersRange();
 
-    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE) {
+    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE && !UsePartialChemicalEquilibrium()) {
       m_Banalyt = true;
       m_Parameters.muB = 0.0;
       m_Parameters.muQ = 0.0;
@@ -291,7 +291,8 @@ Obtained: %lf\n\
     if (Vc < 0.0)
       Vc = m_Parameters.SVc;
 
-    FillChemicalPotentials();
+    if (!UsePartialChemicalEquilibrium()) 
+      FillChemicalPotentials();
 
     bool AllMuZero = true;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -322,18 +323,32 @@ Obtained: %lf\n\
         || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
         if (ind < static_cast<int>(Nsx.size())) {
-          double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.);
-          Nsx[ind] += tdens * cosh(m_Chem[i] / m_Parameters.T);
-          Nsy[ind] += tdens * sinh(m_Chem[i] / m_Parameters.T);
+          if (!UsePartialChemicalEquilibrium()) {
+            double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.);
+            Nsx[ind] += tdens * cosh(m_Chem[i] / m_Parameters.T);
+            Nsy[ind] += tdens * sinh(m_Chem[i] / m_Parameters.T);
+          }
+          // Currently only works at mu = 0!!
+          else {
+            double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
+            Nsx[ind] += tdens;
+          }
         }
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
           int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
           if (ind < static_cast<int>(Nsx.size())) {
-            double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.) / static_cast<double>(n); // TODO: Check
-            Nsx[ind] += tdens * cosh(n * m_Chem[i] / m_Parameters.T);
-            Nsy[ind] += tdens * sinh(n * m_Chem[i] / m_Parameters.T);
+            if (!UsePartialChemicalEquilibrium()) {
+              double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.) / static_cast<double>(n); // TODO: Check
+              Nsx[ind] += tdens * cosh(n * m_Chem[i] / m_Parameters.T);
+              Nsy[ind] += tdens * sinh(n * m_Chem[i] / m_Parameters.T);
+            }
+            // Currently only works at mu = 0!!
+            else {
+              double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]) / static_cast<double>(n); // TODO: Check
+              Nsx[ind] += tdens;
+            }
           }
         }
       }

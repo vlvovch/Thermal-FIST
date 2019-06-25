@@ -374,7 +374,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinBeta->setDecimals(3);
     spinBeta->setValue(0.5);
     spinBeta->setToolTip(tr("Radial flow velocity"));
-    QLabel *labelBetat = new QLabel(tr("β<sub>T</sub>:"));
+    QLabel *labelBetat = new QLabel(tr("⟨β<sub>T</sub>⟩:"));
     spinBetat = new QDoubleSpinBox();
     spinBetat->setMinimum(0.);
     spinBetat->setMaximum(1.);
@@ -1067,10 +1067,11 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     model->CalculateDensitiesGCE();
 
-
+    // Convert the mean transverse velocity into the one at the surface
+    double betaS = (2. + spinn->value()) / 2. * spinBetat->value();
 
     if (radioSR->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
-    else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBetat->value(), 1, spinEtaMax->value(), spinn->value());
+    else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
 
     int id = getCurrentRow();
     if (id<0) id = 0;
@@ -1127,7 +1128,7 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     if (radioSR->isChecked())
       generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
     else 
-      generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value());
+      generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value(), spinn->value());
 
 
     //if (radioSR->isChecked()) generator = new SphericalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBeta->value(), false, EV, modelEVVDW);

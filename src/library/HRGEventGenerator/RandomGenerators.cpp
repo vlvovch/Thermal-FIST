@@ -108,6 +108,11 @@ namespace thermalfist {
       //}
     }
 
+    double SkellamProbability(int k, double mu1, double mu2)
+    {
+      return exp(-(mu1 + mu2)) * pow(sqrt(mu1 / mu2), k) * xMath::BesselI(k, 2. * sqrt(mu1 * mu2));
+    }
+
 
     double SiemensRasmussenMomentumGenerator::g(double x) const {
       double tp = -log(x);
@@ -566,6 +571,270 @@ namespace thermalfist {
       return m_part->ThermalMassDistribution(M, m_T, m_Mu, m_part->TotalWidtheBW(M));
     }
 
-  }
+    //double BesselDistributionGenerator::pn(int n, double a, int nu)
+    //{
+    //  if (nu < 0 || n < 0) return 0.0;
+    //  double nfact = 1., nnufact = 1.;
+    //  for (int i = 1; i <= n; ++i)
+    //    nfact *= i;
+
+    //  nnufact = nfact;
+    //  for (int i = n + 1; i <= n + nu; ++i)
+    //    nnufact *= i;
+
+    //  return pow(a / 2., 2 * n + nu) / xMath::BesselI(nu, a) / nfact / nnufact;
+    //}
+
+    double BesselDistributionGenerator::pn(int n, double a, int nu)
+    {
+      if (nu < 0 || n < 0) return 0.0;
+
+      double logret = (2. * n + nu) * log(a/2.) - a;
+      for (int i = 1; i <= n; ++i)
+        logret -= 2. * log(i);
+      for (int i = n + 1; i <= n + nu; ++i)
+        logret -= log(i);
+
+      return exp(logret) / xMath::BesselIexp(nu, a);
+    }
+
+    double BesselDistributionGenerator::R(double x, int nu)
+    {
+      double hn2 = 1., hn1 = 0., hn = 0.;
+      double kn2 = 0., kn1 = 1., kn = 0.;
+      int nmax = 20;
+      for (int n = 1; n <= nmax; ++n) {
+        double an = 2. * (nu + n) / x;
+        hn = an * hn1 + hn2;
+        kn = an * kn1 + kn2;
+        
+        hn2 = hn1;
+        hn1 = hn;
+
+        kn2 = kn1;
+        kn1 = kn;
+
+        if (n == nmax && nmax <= 1000 && abs(hn2 / kn2 - hn1 / kn1) > 1.e-9)
+          nmax *= 2;
+
+        if (n == 1000) {
+          printf("**WARNING** BesselDistributionGenerator::R(x,nu): Reached maximum iterations...\n");
+        }
+      }
+      return hn / kn;
+    }
+
+    double BesselDistributionGenerator::chi2(double a, int nu)
+    {
+      return mu(a, nu) + (1. / 4.) * a * a * R(a, nu) * (R(a,nu+1) - R(a,nu));
+    }
+
+    double BesselDistributionGenerator::sig2(double a, int nu)
+    {
+      double tmp = m(a, nu) - mu(a, nu);
+      return chi2(a, nu) + tmp * tmp;
+    }
+
+    double BesselDistributionGenerator::Q2(double a, int nu)
+    {
+      double A = sqrt(a*a + nu*nu);
+      double B = sqrt(a*a + (nu+1.)*(nu+1.));
+      double tmp = 1. + a * a * (1. + B - A) / 2. / (nu + A) / (nu + 1. + B);
+      return a*a / 2. / (nu + A) + tmp * tmp;
+    }
+
+    int BesselDistributionGenerator::RandomBesselPoisson(double a, int nu, MTRand & rangen)
+    {
+      if (nu < 0 || a <= 0.) return 0;
+
+      while (true) {
+        int n1 = RandomPoisson(a / 2., rangen);
+        int n2 = RandomPoisson(a / 2., rangen);
+        if (n1 - n2 == nu)
+          return n2;
+      }
+
+      return 0;
+    }
+
+    //double BesselDistributionGenerator::pmXmOverpm(int X, int tm, double a, int nu) {
+    //  double tf1 = 1., tf2 = 1.;
+    //  if (X > 0) {
+    //    for (int i = 1; i <= X; ++i) {
+    //      tf1 *= tm + i;
+    //      tf2 *= tm + nu + i;
+    //    }
+    //  }
+    //  else if (X < 0) {
+    //    for (int i = 1; i <= -X; ++i) {
+    //      tf1 *= tm + X + i;
+    //      tf2 *= tm + nu + X + i;
+    //    }
+    //    tf1 = 1. / tf1;
+    //    tf2 = 1. / tf2;
+    //  }
+
+    //  return pow(a / 2., 2 * X) / tf1 / tf2;
+    //}
+
+    double BesselDistributionGenerator::pmXmOverpm(int X, int tm, double a, int nu) {
+      double ret = 1.;
+      if (X > 0) {
+        for (int i = 1; i <= X; ++i) {
+          ret *= (a / 2.)/(tm + i);
+          ret *= (a / 2.)/(tm + nu + i);
+        }
+      }
+      else if (X < 0) {
+        for (int i = 1; i <= -X; ++i) {
+          ret *= (tm + X + i) / (a / 2.);
+          ret *= (tm + nu + X + i) / (a / 2.);
+        }
+      }
+
+      return ret;
+    }
+
+    int BesselDistributionGenerator::RandomBesselDevroye1(double a, int nu, MTRand & rangen)
+    {
+      int tm = m(a, nu);
+      double pm = pn(tm, a, nu);
+      double w = 1. + pm / 2.;
+      while (true) {
+        double U = rangen.rand();
+        double W = rangen.rand();
+        int S = 1;
+        if (rangen.rand() < 0.5)
+          S = -1;
+
+        double Y = 0.;
+        if (U <= w / (1. + w)) {
+          double V = rangen.rand();
+          Y = V * w / pm;
+        }
+        else {
+          double E = -log(rangen.randDblExc());
+          Y = (w + E) / pm;
+        }
+        int X = S * std::lround(Y);
+
+        if (tm + X < 0)
+          continue;
+
+        double pratio = pmXmOverpm(X, tm, a, nu);
+
+        if (pratio != pratio) {
+          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye1: Float problem!");
+          continue;
+        }
+
+        if (W * std::min(1., exp(w - pm * Y)) <= pratio)
+          return tm + X;
+      }
+      return 0;
+    }
+
+    int BesselDistributionGenerator::RandomBesselDevroye2(double a, int nu, MTRand & rangen)
+    {
+      int tm = m(a, nu);
+      double tsig = sqrt(sig2(a, nu));
+      double q = std::min(1. / tsig / sqrt(648.), 1. / 3.);
+      while (true) {
+        double U = rangen.rand();
+        double W = rangen.rand();
+        int S = 1;
+        if (rangen.rand() < 0.5)
+          S = -1;
+
+        double Y = 0.;
+        if (U <= (1. + 2. / q) / (1. + 4. / q)) {
+          double V = rangen.rand();
+          Y = V * (1. / 2. + 1. / q);
+        }
+        else {
+          double E = -log(rangen.randDblExc());
+          Y = 1. / 2. + 1. / q + E / q;
+        }
+        int X = S * std::lround(Y);
+
+        if (tm + X < 0)
+          continue;
+
+        double pratio = pmXmOverpm(X, tm, a, nu);
+
+        if (pratio != pratio) {
+          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye2: Float problem!");
+          continue;
+        }
+
+        if (W * std::min(1., exp(1. + q/2. - q*Y)) <= pratio)
+          return tm + X;
+      }
+      return 0;
+    }
+
+    int BesselDistributionGenerator::RandomBesselDevroye3(double a, int nu, MTRand & rangen)
+    {
+      int tm = m(a, nu);
+      double tQ = sqrt(Q2(a, nu));
+      double q = std::min(1. / tQ / sqrt(648.), 1. / 3.);
+      while (true) {
+        double U = rangen.rand();
+        double W = rangen.rand();
+        int S = 1;
+        if (rangen.rand() < 0.5)
+          S = -1;
+
+        double Y = 0.;
+        if (U <= (1. + 2. / q) / (1. + 4. / q)) {
+          double V = rangen.rand();
+          Y = V * (1. / 2. + 1. / q);
+        }
+        else {
+          double E = -log(rangen.randDblExc());
+          Y = 1. / 2. + 1. / q + E / q;
+        }
+        int X = S * std::lround(Y);
+
+        if (tm + X < 0)
+          continue;
+
+        double pratio = pmXmOverpm(X, tm, a, nu);
+
+        if (pratio != pratio) {
+          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye3: Float problem!");
+          continue;
+        }
+
+
+        if (W * std::min(1., exp(1. + q/2. - q*Y)) <= pratio)
+          return tm + X;
+      }
+      return 0;
+    }
+
+    int BesselDistributionGenerator::RandomBesselNormal(double a, int nu, MTRand & rangen)
+    {
+      double ret = -1.;
+      while (ret <= -0.5) {
+        ret = rangen.randNorm(mu(a,nu), sqrt(chi2(a,nu)));
+      }
+      return static_cast<int>(ret + 0.5);
+    }
+
+    int BesselDistributionGenerator::RandomBesselCombined(double a, int nu, MTRand & rangen)
+    {
+      int tm = m(a, nu);
+      if (tm < 6) {
+        if (nu <= a)
+          return RandomBesselPoisson(a, nu, rangen);
+        else
+          return RandomBesselDevroye3(a, nu, rangen);
+      }
+      else
+        return RandomBesselNormal(a, nu, rangen);
+    }
+
+}
 
 } // namespace thermalfist

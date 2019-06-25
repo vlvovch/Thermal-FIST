@@ -20,15 +20,15 @@ namespace thermalfist {
     m_THM = NULL;
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double beta, double etamax, double npow) : 
-    m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow)
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double betas, double etamax, double npow) : 
+    m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow)
   {
     SetConfiguration(TPS, config);
 
     SetMomentumGenerators();
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_Beta(beta), m_EtaMax(etamax), m_n(npow) {
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double betas, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)
@@ -69,11 +69,18 @@ namespace thermalfist {
     SetMomentumGenerators();
   }
 
-  void CylindricalBlastWaveEventGenerator::SetParameters(double T, double beta, double etamax, double npow) {
+  void CylindricalBlastWaveEventGenerator::SetParameters(double T, double betas, double etamax, double npow) {
     m_T = T;
-    m_Beta = beta;
+    m_BetaS = betas;
     m_EtaMax = etamax;
     m_n = npow;
+
+    SetMomentumGenerators();
+  }
+
+  void CylindricalBlastWaveEventGenerator::SetMeanBetaT(double betaT)
+  {
+    m_BetaS = (2. + m_n) / 2. * betaT;
 
     SetMomentumGenerators();
   }
@@ -84,7 +91,7 @@ namespace thermalfist {
     m_BWGens.resize(0);
     if (m_THM != NULL) {
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        m_MomentumGens.push_back(new RandomGenerators::SSHMomentumGenerator(m_T, m_Beta, m_EtaMax, m_n, m_THM->TPS()->Particles()[i].Mass()));
+        m_MomentumGens.push_back(new RandomGenerators::SSHMomentumGenerator(m_T, m_BetaS, m_EtaMax, m_n, m_THM->TPS()->Particles()[i].Mass()));
 
         double T = m_THM->Parameters().T;
         double Mu = m_THM->ChemicalPotential(i);
