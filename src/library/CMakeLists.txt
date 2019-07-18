@@ -1,5 +1,5 @@
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
-
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
 # Properties->C/C++->General->Additional Include Directories
 include_directories ("${PROJECT_SOURCE_DIR}/include" 
@@ -154,7 +154,7 @@ target_include_directories(ThermalFIST PUBLIC
 "${PROJECT_BINARY_DIR}/include"
 "${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister")
 
-install (TARGETS ThermalFIST
-         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)
+#install (TARGETS ThermalFIST
+#         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)
 
 		 

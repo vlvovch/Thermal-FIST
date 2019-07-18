@@ -1,4 +1,5 @@
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/lib")
 
 # Minuit2 headers 
 file (GLOB HEADERS_MINUIT
@@ -18,7 +19,7 @@ target_include_directories(Minuit2 PUBLIC "Minuit/include")
 
 set_property(TARGET Minuit2 PROPERTY FOLDER "libraries")
 
-install (TARGETS Minuit2
-         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)
+#install (TARGETS Minuit2
+#         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)
 
 		 
