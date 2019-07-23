@@ -128,6 +128,17 @@ ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator})
 
 
+# Partial chemical equilibrium part of the library
+set(SRCS_HRGPCE
+HRGPCE/ThermalModelPCE.cpp
+)
+
+source_group("HRGPCE\\Source Files" FILES ${SRCS_HRGVDW})
+
+set(HEADERS_HRGPCE
+${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCE.h
+)
+
 
 if (NOT STANDALONE_MINUIT)
 include_directories ("$ENV{ROOTSYS}/include/root") 
@@ -137,7 +148,7 @@ endif (NOT STANDALONE_MINUIT)
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
-add_library(ThermalFIST ${SRCS_HRGBase} ${HEADERS_HRGBase} ${SRCS_HRGEV} ${HEADERS_HRGEV} ${SRCS_HRGVDW} ${HEADERS_HRGVDW} ${SRCS_HRGFit} ${HEADERS_HRGFit} ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator})
+add_library(ThermalFIST ${SRCS_HRGBase} ${HEADERS_HRGBase} ${SRCS_HRGEV} ${HEADERS_HRGEV} ${SRCS_HRGVDW} ${HEADERS_HRGVDW} ${SRCS_HRGFit} ${HEADERS_HRGFit} ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator} ${SRCS_HRGPCE} ${HEADERS_HRGPCE})
 
 if (NOT STANDALONE_MINUIT)
 find_library (MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
