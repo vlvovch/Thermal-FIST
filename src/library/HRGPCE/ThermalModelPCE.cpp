@@ -253,6 +253,7 @@ namespace thermalfist {
 
       for (int j = 0; j < nuclpdgs.size(); ++j) {
         if (part.PdgId() == nuclpdgs[j] || part.PdgId() == -nuclpdgs[j]) {
+          part.Decays().resize(0);
           int sign = 1;
           if (part.PdgId() < 0)
             sign = -1;
