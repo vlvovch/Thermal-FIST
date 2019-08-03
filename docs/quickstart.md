@@ -84,7 +84,7 @@ The possibilities are:
 1. Zero-width approximation
 2. Energy-independent Breit-Wigner, restricted to a ±2Γ interval around the pole mass
 3. Energy-dependent Breit-Wigner (eBW)
-4. Energy-dependent Breit-Wigner for the spectrak function, but constant branching ratios for evaluating feeddown
+4. Energy-dependent Breit-Wigner for the spectral function, but constant branching ratios for evaluating feeddown
 
 **Statistics.** Maxwell-Boltzmann or quantum statistics. 
 
@@ -171,7 +171,7 @@ All changes can be saved to a file.
   cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
   ```
   
-  The above solution can also be applied in the case when CMake finds an incompatible version of Qt5, e.g. an x86 Qt build for a x64 build configuration.
+  The above solution can also be applied in the case when CMake finds an incompatible version of Qt5, e.g. an x86 Qt build for a x64 Thermal-FIST build configuration.
 
 - Program outputs warnings about the Bose-Einstein condensation. This occurs if chemical potentials of bosons at some point exceed their mass. This sometimes happens in the process of constaining electric/strange chemical potentials through conservation laws. If these warnings eventually disappear and final values of chemical potentials are reasonable, things should be fine.
 
