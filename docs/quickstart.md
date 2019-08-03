@@ -84,7 +84,7 @@ The possibilities are:
 1. Zero-width approximation
 2. Energy-independent Breit-Wigner, restricted to a ±2Γ interval around the pole mass
 3. Energy-dependent Breit-Wigner (eBW)
-4. Energy-dependent Breit-Wigner but with constant branching ratios when evaluating feeddown
+4. Energy-dependent Breit-Wigner for the spectrak function, but constant branching ratios for evaluating feeddown
 
 **Statistics.** Maxwell-Boltzmann or quantum statistics. 
 
@@ -154,6 +154,8 @@ All changes can be saved to a file.
 - Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/examples](../src/examples) folder
   
 - An example of using the Thermal-FIST library as a submodule is provided by [this repository](https://github.com/vlvovch/1807.02079)
+
+- Since version 1.2.1 it is possible to run interactive Thermal-FIST sessions in Jupyter Notebook. See the [FIST-jupyter](https://github.com/vlvovch/FIST-jupyter) repository for an example.
   
 - The canonical ensemble calculations use the method from [this paper](https://arxiv.org/abs/nucl-th/0112021) to perform analytically the integration over the baryon number fugacity whenever this is possible. This allows to significantly speed up the calculations. This method cannot be used if quantum statisics is considered for baryons, or if there are multi-baryons (light nuclei) in the particle list. In this case direct numerical integration is performed, which can make calculations very slow.
 
@@ -168,6 +170,8 @@ All changes can be saved to a file.
   ```bash
   cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
   ```
+  
+  The above solution can also be applied in the case when CMake finds an incompatible version of Qt5, e.g. an x86 Qt build for a x64 build configuration.
 
 - Program outputs warnings about the Bose-Einstein condensation. This occurs if chemical potentials of bosons at some point exceed their mass. This sometimes happens in the process of constaining electric/strange chemical potentials through conservation laws. If these warnings eventually disappear and final values of chemical potentials are reasonable, things should be fine.
 
