@@ -115,7 +115,7 @@ namespace thermalfist {
 
 
     double SiemensRasmussenMomentumGenerator::g(double x, double mass) const {
-      if (mass < -1.)
+      if (mass < 0.)
         mass = m_Mass;
       double tp = -log(x);
       double talpha = alpha(tp);
@@ -130,7 +130,7 @@ namespace thermalfist {
     }
 
     double SiemensRasmussenMomentumGenerator::g2(double x, double tp, double mass) const {
-      if (mass < -1.)
+      if (mass < 0.)
         mass = m_Mass;
       double talpha = alpha(tp);
       //double en = w(tp);
@@ -165,7 +165,7 @@ namespace thermalfist {
     }
 
     double SiemensRasmussenMomentumGenerator::GetRandom(double mass) const {
-      if (mass < -1.)
+      if (mass < 0.)
         mass = m_Mass;
       while (1) {
         double x0 = randgenMT.randDblExc();
