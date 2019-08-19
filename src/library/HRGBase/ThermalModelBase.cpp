@@ -88,9 +88,9 @@ namespace thermalfist {
 
   void ThermalModelBase::SetUseWidth(bool useWidth)
   {
-    if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+    if (!useWidth && m_TPS->ResonanceWidthIntegrationType() != ThermalParticle::ZeroWidth) {
       m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
-      m_TPS->ProcessDecays();
+      //m_TPS->ProcessDecays();
     }
     if (useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth) {
       m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
