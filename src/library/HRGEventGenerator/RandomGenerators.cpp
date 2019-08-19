@@ -114,10 +114,13 @@ namespace thermalfist {
     }
 
 
-    double SiemensRasmussenMomentumGenerator::g(double x) const {
+    double SiemensRasmussenMomentumGenerator::g(double x, double mass) const {
+      if (mass < -1.)
+        mass = m_Mass;
       double tp = -log(x);
       double talpha = alpha(tp);
-      double en = w(tp);
+      //double en = w(tp);
+      double en = sqrt(tp * tp + mass * mass);
       double sh = sinh(talpha);
       double shtalpha = 1.;
       if (talpha != 0.0)
@@ -126,9 +129,12 @@ namespace thermalfist {
       return tp * tp * exp(-m_Gamma * en / m_T) * ((1. + m_T / m_Gamma / en)*shtalpha - m_T / m_Gamma / en * ch) / x;
     }
 
-    double SiemensRasmussenMomentumGenerator::g2(double x, double tp) const {
+    double SiemensRasmussenMomentumGenerator::g2(double x, double tp, double mass) const {
+      if (mass < -1.)
+        mass = m_Mass;
       double talpha = alpha(tp);
-      double en = w(tp);
+      //double en = w(tp);
+      double en = sqrt(tp * tp + mass * mass);
       double sh = sinh(talpha);
       double shtalpha = 1.;
       if (talpha != 0.0)
@@ -158,18 +164,23 @@ namespace thermalfist {
       m_Max = g((m1 + m2) / 2.);
     }
 
-    double SiemensRasmussenMomentumGenerator::GetRandom() const {
+    double SiemensRasmussenMomentumGenerator::GetRandom(double mass) const {
+      if (mass < -1.)
+        mass = m_Mass;
       while (1) {
         double x0 = randgenMT.randDblExc();
         double y0 = m_Max * randgenMT.randDblExc();
-        if (y0 < g(x0)) return -log(x0);
+        double mn = 1.;
+        if (mass != m_Mass)
+          mn = 10.;
+        if (y0 < mn * g(x0)) return -log(x0);
       }
       return 0.;
     }
 
-    std::vector<double> SiemensRasmussenMomentumGenerator::GetMomentum() const {
+    std::vector<double> SiemensRasmussenMomentumGenerator::GetMomentum(double mass) const {
       std::vector<double> ret(0);
-      double tp = GetRandom();
+      double tp = GetRandom(mass);
       double tphi = 2. * xMath::Pi() * randgenMT.rand();
       double cthe = 2. * randgenMT.rand() - 1.;
       double sthe = sqrt(1. - cthe * cthe);
@@ -380,7 +391,7 @@ namespace thermalfist {
       m_MaxY = m_distr.dndysingle((m1 + m2) / 2., pt);
     }
 
-    std::pair<double, double> SSHMomentumGenerator::GetRandom() {
+    std::pair<double, double> SSHMomentumGenerator::GetRandom(double mass) {
       double tpt = 0., ty = 0.;
       while (1) {
         double x0 = randgenMT.randDblExc();
@@ -404,7 +415,7 @@ namespace thermalfist {
       return std::make_pair(tpt, ty);
     }
 
-    std::pair<double, double> SSHMomentumGenerator::GetRandom2() const {
+    std::pair<double, double> SSHMomentumGenerator::GetRandom2(double mass) const {
       double tpt = 0., ty = 0., teta = 0.;
       while (1) {
         double x0 = randgenMT.randDblExc();
@@ -430,9 +441,9 @@ namespace thermalfist {
       return std::make_pair(tpt, ty - teta);
     }
 
-    std::vector<double> SSHMomentumGenerator::GetMomentum() const {
+    std::vector<double> SSHMomentumGenerator::GetMomentum(double mass) const {
       std::vector<double> ret(0);
-      std::pair<double, double> pty = GetRandom2();
+      std::pair<double, double> pty = GetRandom2(mass);
       double tpt = pty.first;
       double ty = pty.second;
       double tphi = 2. * xMath::Pi() * randgenMT.rand();

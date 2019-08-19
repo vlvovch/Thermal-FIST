@@ -102,9 +102,10 @@ namespace thermalfist {
       virtual ~ParticleMomentumGenerator() { }
 
       /// Samples the 3-momentum of a particle
+      /// \param mass The mass of a particle. If negative value provided, defaults to the pole/vacuum mass
       /// \return std::vector<double> A vector containing the sampled
       ///         \f$p_x\f$, \f$p_y\f$, \f$p_z\f$ components of the three-momentum
-      virtual std::vector<double> GetMomentum() const = 0;
+      virtual std::vector<double> GetMomentum(double mass = -1.) const = 0;
     };
 
     /**
@@ -150,11 +151,15 @@ namespace thermalfist {
         FixParameters();
       }
 
+      double GetBeta() const { return m_Beta; }
+      double GetMass() const { return m_Mass; }
+
       // Override functions begin
 
-      std::vector<double> GetMomentum() const;
+      virtual std::vector<double> GetMomentum(double mass = -1.) const;
 
       // Override functions end
+
 
     private:
       double w(double p) const {
@@ -166,8 +171,9 @@ namespace thermalfist {
       }
 
       /// Unnormalized probability density of x = exp(-p)
-      double g(double x) const;
-      double g2(double x, double tp) const;
+      /// If mass is negative, then use the pole mass
+      double g(double x, double mass = -1.) const;
+      double g2(double x, double tp, double mass = -1.) const;
 
       /// Finds the maximum of g(x) using the ternary search
       void FixParameters();
@@ -175,7 +181,7 @@ namespace thermalfist {
       /// Generates random momentum p from Siemens-Rasmussen distribution
       /// Initially x = exp(-p) is generated in [0,1] where p is given in GeV
       /// Then p is recovered as p = -log(x)
-      double GetRandom() const;
+      double GetRandom(double mass = -1.) const;
 
       double m_T;
       double m_Beta;
@@ -213,7 +219,7 @@ namespace thermalfist {
         m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
         m_dPt = 0.02;
         m_dy = 0.05;
-        FixParameters2();
+        //FixParameters2();
 
       }
       
@@ -255,9 +261,15 @@ namespace thermalfist {
         FixParameters2();
       }
 
+      double GetTkin() const { return m_T; }
+      double GetBetaSurface() const { return m_BetaS; }
+      double GetMass() const { return m_Mass; }
+      double GetNPow() const { return m_n; }
+      double GetEtaMax() const { return m_EtaMax; }
+
       // Override functions begin
 
-      std::vector<double> GetMomentum() const;
+      std::vector<double> GetMomentum(double mass = -1.) const;
 
       // Override functions end
 
@@ -286,9 +298,9 @@ namespace thermalfist {
       void FindMaximumY2(double pt);
 
       // Generates random pt and y
-      std::pair<double, double> GetRandom();
+      std::pair<double, double> GetRandom(double mass = -1.);
 
-      std::pair<double, double> GetRandom2() const;
+      std::pair<double, double> GetRandom2(double mass = -1.) const;
 
       double m_T, m_BetaS, m_EtaMax, m_n, m_Mass;
       double m_MaxY, m_MaxPt;

@@ -422,6 +422,17 @@ namespace thermalfist {
      */
     double ChemicalPotential(int i) const;
 
+    /**
+     * \brief Chemical potential entering the ideal gas expressions of particle species i.
+     *
+     * Includes chemical non-equilibrium and EV/vdW effects
+     *
+     * \param i 0-based index of particle species
+     * \return double Chemical potential of particle species i
+     */
+    virtual double FullIdealChemicalPotential(int i) const;
+
+
     /// Whether the baryon chemical potential is to be constrained
     /// by a fixed entropy per baryon ratio SoverB().
     bool ConstrainMuB() const { return m_ConstrainMuB; }
@@ -1101,7 +1112,7 @@ namespace thermalfist {
     
 
     /// Shift in chemical potential of particle species id due to interactions
-    virtual double MuShift(int /*id*/) { return 0.; }
+    virtual double MuShift(int /*id*/) const { return 0.; }
 
   private:
     void ResetChemicalPotentials();

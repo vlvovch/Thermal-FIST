@@ -144,7 +144,7 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelEVCanonicalStrangeness::MuShift(int id)
+  double ThermalModelEVCanonicalStrangeness::MuShift(int id) const
   {
     if (id >= 0. && id < static_cast<int>(m_v.size()))
       return -m_v[id] * m_PNS;

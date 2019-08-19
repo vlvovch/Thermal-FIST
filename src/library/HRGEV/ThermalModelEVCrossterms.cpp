@@ -757,7 +757,7 @@ namespace thermalfist {
   }
 
 
-  double ThermalModelEVCrossterms::MuShift(int id)
+  double ThermalModelEVCrossterms::MuShift(int id) const
   {
     if (id >= 0. && id < static_cast<int>(m_Virial.size())) {
       double dMu = 0.;

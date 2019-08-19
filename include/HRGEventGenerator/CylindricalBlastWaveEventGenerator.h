@@ -61,6 +61,11 @@ namespace thermalfist {
     /// Sets up the random generators of particle momenta
     /// and resonances masses
     void SetMomentumGenerators();
+
+    double GetTkin() const { return m_T; }
+    double GetBetaSurface() const { return m_BetaS; }
+    double GetNPow() const { return m_n; }
+    double GetEtaMax() const { return m_EtaMax; }
   private:
     double m_T, m_BetaS, m_EtaMax, m_n;
   };

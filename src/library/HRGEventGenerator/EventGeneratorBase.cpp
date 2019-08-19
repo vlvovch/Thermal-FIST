@@ -83,7 +83,7 @@ namespace thermalfist {
     }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
-    m_THM->SetStatistics(false);
+    //m_THM->SetStatistics(false);
 
     m_THM->ConstrainMuB(false);
     m_THM->ConstrainMuQ(false);
@@ -1116,11 +1116,11 @@ namespace thermalfist {
         primParticles[i].resize(0);
         int total = totals[i];
         for (int part = 0; part < total; ++part) {
-          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
-
           double tmass = m_THM->TPS()->Particles()[i].Mass();
           if (m_THM->UseWidth() && !(m_THM->TPS()->Particles()[i].ResonanceWidth() / m_THM->TPS()->Particles()[i].Mass() < 0.01))
             tmass = m_BWGens[i]->GetRandom();
+
+          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
 
           primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
         }

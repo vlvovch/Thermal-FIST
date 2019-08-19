@@ -524,7 +524,7 @@ namespace thermalfist {
     return m_Suppression;
   }
 
-  double ThermalModelEVDiagonal::MuShift(int id)
+  double ThermalModelEVDiagonal::MuShift(int id) const
   {
     if (id >= 0. && id < static_cast<int>(m_v.size()))
       return -m_v[id] * m_Pressure;

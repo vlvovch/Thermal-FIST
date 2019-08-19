@@ -198,7 +198,7 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelVDWCanonicalStrangeness::MuShift(int id)
+  double ThermalModelVDWCanonicalStrangeness::MuShift(int id) const
   {
     if (id >= 0. && id < static_cast<int>(m_Virial.size()))
       return m_MuStar[id] - m_Chem[id];
