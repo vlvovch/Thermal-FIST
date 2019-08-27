@@ -257,6 +257,7 @@ namespace thermalfist {
     int m_BMAX_list, m_QMAX_list, m_SMAX_list, m_CMAX_list;
 
     double m_MultExp;
+    double m_MultExpBanalyt;
 
     ThermalModelIdeal *m_modelgce;
 
