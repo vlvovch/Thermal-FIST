@@ -42,7 +42,7 @@ If in doubt, contact the program author(s).
 ## Attribution
 Please cite the following paper when using this code:
 
-- V. Vovchenko, H. Stoecker, *Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state*, [arXiv:1901.05249 [nucl-th]](https://arxiv.org/abs/1901.05249)
+- V. Vovchenko, H. Stoecker, *Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state*, Comput. Phys. Commun. **244**, 295 (2019)](https://doi.org/10.1016/j.cpc.2019.06.024), [arXiv:1901.05249 [nucl-th]](https://arxiv.org/abs/1901.05249)
 
 It is expected that changes to the code are documented.
 
