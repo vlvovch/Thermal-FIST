@@ -219,7 +219,7 @@ namespace thermalfist {
         m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
         m_dPt = 0.02;
         m_dy = 0.05;
-        //FixParameters2();
+        FixParameters2();
 
       }
       
