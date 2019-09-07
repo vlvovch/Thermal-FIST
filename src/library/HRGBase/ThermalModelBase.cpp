@@ -64,7 +64,7 @@ namespace thermalfist {
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       const ThermalParticle &tpart = m_TPS->Particles()[i];
       for (size_t j = 0; j < tpart.Decays().size(); ++j) {
-        if (tpart.Decays()[j].mBratio != tpart.DecaysOriginal()[j].mBratio)
+        if (tpart.DecaysOriginal().size() == tpart.Decays().size() && tpart.Decays()[j].mBratio != tpart.DecaysOriginal()[j].mBratio)
           m_NormBratio = true;
       }
     }
@@ -72,8 +72,8 @@ namespace thermalfist {
     m_Ensemble = GCE;
     m_InteractionModel = Ideal;
 
-    SetStatistics(m_QuantumStats);
-    SetCalculationType(IdealGasFunctions::Quadratures);
+    //SetStatistics(m_QuantumStats);
+    //SetCalculationType(IdealGasFunctions::Quadratures);
     SetUseWidth(TPS()->ResonanceWidthIntegrationType());
 
     ResetCalculatedFlags();
@@ -88,9 +88,9 @@ namespace thermalfist {
 
   void ThermalModelBase::SetUseWidth(bool useWidth)
   {
-    if (!useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {
+    if (!useWidth && m_TPS->ResonanceWidthIntegrationType() != ThermalParticle::ZeroWidth) {
       m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::ZeroWidth);
-      m_TPS->ProcessDecays();
+      //m_TPS->ProcessDecays();
     }
     if (useWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth) {
       m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
@@ -365,6 +365,25 @@ namespace thermalfist {
     return m_Chem[i];
   }
 
+  double ThermalModelBase::FullIdealChemicalPotential(int i) const
+  {
+    if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
+      printf("**ERROR** ThermalModelBase::FullIdealChemicalPotential(int i): i is out of bounds!");
+      exit(1);
+    }
+    
+    double ret = ChemicalPotential(i);
+
+    ret += MuShift(i);
+
+    const ThermalParticle& part = m_TPS->Particles()[i];
+
+    if (!(m_Parameters.gammaq == 1.))                  ret += log(m_Parameters.gammaq) * part.AbsoluteQuark() * m_Parameters.T;
+    if (!(m_Parameters.gammaS == 1. || part.AbsoluteStrangeness() == 0.))  ret += log(m_Parameters.gammaS) * part.AbsoluteStrangeness() * m_Parameters.T;
+    if (!(m_Parameters.gammaC == 1. || part.AbsoluteCharm() == 0.))  ret += log(m_Parameters.gammaC) * part.AbsoluteCharm() * m_Parameters.T;
+
+    return ret;
+  }
 
   void ThermalModelBase::CalculateFeeddown() {
     if (m_UseWidth && m_TPS->ResonanceWidthIntegrationType() == ThermalParticle::eBW) {

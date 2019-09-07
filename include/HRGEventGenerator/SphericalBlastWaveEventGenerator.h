@@ -53,6 +53,9 @@ namespace thermalfist {
     /// and resonances masses
     void SetMomentumGenerators();
 
+    double GetTkin() { return m_T; }
+    double GetBeta() { return m_Beta; }
+
   private:
     double m_T;
     double m_Beta;

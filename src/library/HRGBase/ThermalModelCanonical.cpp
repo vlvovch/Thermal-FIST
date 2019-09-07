@@ -377,9 +377,13 @@ Obtained: %lf\n\
 
 
     m_MultExp = 0.;
-    for (size_t i = 0; i < m_PartialZ.size(); ++i)
+    m_MultExpBanalyt = 0.;
+    for (size_t i = 0; i < m_PartialZ.size(); ++i) {
       if (!m_Banalyt || m_QNvec[i].B == 0)
         m_MultExp += Nsx[i];
+      if (m_Banalyt && (m_QNvec[i].B == 1 || m_QNvec[i].B == -1))
+        m_MultExpBanalyt += Nsx[i];
+    }
 
     double dphiB = xMath::Pi() / nmaxB;
     int maxB = 2 * nmaxB;
@@ -515,7 +519,11 @@ Obtained: %lf\n\
                       int tCg = m_Parameters.C - m_QNvec[iN].C;
 
                       if (m_Banalyt) {
-                        m_PartialZ[iN] += wlegB[iBt] * wlegS[iSt] * wlegQ[iQt] * wlegC[iCt] * cos(tBg*xlegB[iBt] + tSg * xlegS[iSt] + tQg * xlegQ[iQt] + tCg * xlegC[iCt] - tBg * warg) * exp(mx) * xMath::BesselI(tBg, 2. * wmod);
+                        //m_PartialZ[iN] += wlegB[iBt] * wlegS[iSt] * wlegQ[iQt] * wlegC[iCt] * cos(tBg*xlegB[iBt] + tSg * xlegS[iSt] + tQg * xlegQ[iQt] + tCg * xlegC[iCt] - tBg * warg) * exp(mx) * xMath::BesselI(tBg, 2. * wmod);
+                        m_PartialZ[iN] += wlegB[iBt] * wlegS[iSt] * wlegQ[iQt] * wlegC[iCt] * 
+                          cos(tBg * xlegB[iBt] + tSg * xlegS[iSt] + tQg * xlegQ[iQt] + tCg * xlegC[iCt] - tBg * warg) * 
+                          exp(mx + 2. * wmod - m_MultExpBanalyt) * 
+                          xMath::BesselIexp(tBg, 2. * wmod);
                       }
                       else {
                         if (AllMuZero)
@@ -784,7 +792,7 @@ Obtained: %lf\n\
 
   double ThermalModelCanonical::CalculateEntropyDensity()
   {
-    double ret = (CalculateEnergyDensity() / m_Parameters.T) + (m_MultExp + log(m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]])) / m_Parameters.SVc;
+    double ret = (CalculateEnergyDensity() / m_Parameters.T) + (m_MultExp + m_MultExpBanalyt + log(m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]])) / m_Parameters.SVc;
 
     if (m_BCE)
       ret += -m_Parameters.muB / m_Parameters.T * m_Parameters.B / m_Parameters.SVc;

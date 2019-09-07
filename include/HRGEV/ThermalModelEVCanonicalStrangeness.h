@@ -101,7 +101,7 @@ namespace thermalfist {
     void ClearModelEV();    
 
     /// \copydoc thermalfist::ThermalModelEVDiagonal::MuShift()
-    virtual double MuShift(int id);
+    virtual double MuShift(int id) const;
 
     ThermalModelEVDiagonal *m_modelEV; /**< Pointer to the diagonal EV model in the GCE with non-strange particles only */
     std::vector<double> m_v;   /**< Vector of eigenvolumes of all hadrons */

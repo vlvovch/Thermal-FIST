@@ -905,7 +905,7 @@ namespace thermalfist {
     return m_scaldens[part];
   }
 
-  double ThermalModelVDW::MuShift(int id)
+  double ThermalModelVDW::MuShift(int id) const
   {
     if (id >= 0. && id < static_cast<int>(m_Virial.size()))
       return m_MuStar[id] - m_Chem[id];

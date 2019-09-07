@@ -248,7 +248,7 @@ namespace thermalfist {
      * \param i 0-based particle specie index
      * \return  The shift in the chemical potential
      */
-    virtual double MuShift(int id);
+    virtual double MuShift(int id) const;
 
     /// Vector of ideal gas densities with shifted chemical potentials
     std::vector<double> m_DensitiesId;

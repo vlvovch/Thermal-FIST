@@ -83,7 +83,7 @@ namespace thermalfist {
     }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
-    m_THM->SetStatistics(false);
+    //m_THM->SetStatistics(false);
 
     m_THM->ConstrainMuB(false);
     m_THM->ConstrainMuQ(false);
@@ -1116,11 +1116,20 @@ namespace thermalfist {
         primParticles[i].resize(0);
         int total = totals[i];
         for (int part = 0; part < total; ++part) {
-          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum();
-
-          double tmass = m_THM->TPS()->Particles()[i].Mass();
-          if (m_THM->UseWidth() && !(m_THM->TPS()->Particles()[i].ResonanceWidth() / m_THM->TPS()->Particles()[i].Mass() < 0.01))
+          const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
+          double tmass = tpart.Mass();
+          if (m_THM->UseWidth() && !(tpart.ResonanceWidth() / tpart.Mass() < 0.01))
             tmass = m_BWGens[i]->GetRandom();
+
+          // Check for Bose-Einstein condensation
+          // Force m = mu if the sampled mass is too small
+          double tmu = m_THM->FullIdealChemicalPotential(i);
+          if (tpart.Statistics() == -1 && tmu > tmass) {
+            tmass = tmu;
+          }
+
+          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
+          //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
 
           primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
         }

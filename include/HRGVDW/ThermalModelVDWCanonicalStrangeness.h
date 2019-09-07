@@ -111,7 +111,7 @@ namespace thermalfist {
     virtual void CalculateSums(const std::vector<double> &  Vcs);
 
     /// \copydoc thermalfist::ThermalModelVDW::MuShift()
-    virtual double MuShift(int id);
+    virtual double MuShift(int id) const;
 
     ThermalModelVDWFull *m_modelVDW; /**< Pointer to the QvdW model in the GCE with non-strange particles only */
     std::vector< std::vector<double> > m_Virial; /**Matrix of the excluded volume coefficients \f$ \tilde{b}_{ij} \f$ */
