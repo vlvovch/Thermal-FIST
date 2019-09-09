@@ -1172,8 +1172,9 @@ namespace thermalfist {
 
     //if (f != stdout)
     //  fclose(f);
-    if (fout != &std::cout)
+    if (filename != "" && fout != NULL) {
       delete fout;
+    }
   }
 
   using namespace std;
