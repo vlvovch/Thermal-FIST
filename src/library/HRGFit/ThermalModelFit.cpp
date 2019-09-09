@@ -930,24 +930,42 @@ namespace thermalfist {
 
   void ThermalModelFit::PrintFitLog(std::string filename, std::string comment, bool asymm)
   {
-    FILE *f;
-    if (filename != "") {
-      f = fopen(filename.c_str(), "w");
-    }
-    else {
-      f = stdout;
-    }
+    std::ostream *fout;
+    if (filename != "")
+      fout = new std::ofstream(filename.c_str());
+    else
+      fout = &std::cout;
+
+    //FILE *f;
+    //if (filename != "") {
+    //  f = fopen(filename.c_str(), "w");
+    //}
+    //else {
+    //  f = stdout;
+    //}
+
     if (comment != "")
-      fprintf(f, "%s\n\n", comment.c_str());
+      *fout << comment << std::endl << std::endl;
+      //fprintf(f, "%s\n\n", comment.c_str());
 
-    fprintf(f, "Performed on %s\n\n", GetCurrentTime().c_str());
+    //fprintf(f, "Performed on %s\n\n", GetCurrentTime().c_str());
+    *fout << "Performed on " << GetCurrentTime() << std::endl << std::endl;
 
-    fprintf(f, "chi2/dof = %lf/%d = %lf\n\n", m_Parameters.chi2, m_Parameters.ndf, m_Parameters.chi2ndf);
+    //fprintf(f, "chi2/dof = %lf/%d = %lf\n\n", m_Parameters.chi2, m_Parameters.ndf, m_Parameters.chi2ndf);
+    *fout << "chi2/dof = " << m_Parameters.chi2 << "/" << m_Parameters.ndf << " = " << m_Parameters.chi2ndf << std::endl << std::endl;
 
     std::pair<double, double> accuracy = ModelDescriptionAccuracy();
-    fprintf(f, "Data description accuracy = (%.2lf +- %.2lf) %%\n\n", accuracy.first * 100., accuracy.second * 100.);
+    //fprintf(f, "Data description accuracy = (%.2lf +- %.2lf) %%\n\n", accuracy.first * 100., accuracy.second * 100.);
+    *fout << "Data description accuracy = (" 
+      << std::fixed
+      << std::setprecision(2)
+      << accuracy.first * 100. << " +- " << accuracy.second * 100. << ") %" << std::endl << std::endl;
+    
+    fout->unsetf(std::ios_base::floatfield);
+    *fout << std::setprecision(6);
 
-    fprintf(f, "Extracted parameters:\n");
+    //fprintf(f, "Extracted parameters:\n");
+    *fout << "Extracted parameters:" << std::endl;
     for (int i = 0; i < 10 ; ++i) {
       if (i == 6 && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CE)
         continue;
@@ -988,54 +1006,131 @@ namespace thermalfist {
       
         if (param.name != "R" && param.name != "Rc") {
           if (!asymm)
-            fprintf(f, "%15s = %15lf +- %-15lf\n", tname.c_str(), tval * tmn, terr * tmn);
+            *fout << std::setw(15) << tname
+            << " = "
+            << std::setw(15) << tval * tmn
+            << " +- "
+            << std::left << std::setw(15) << terr * tmn << std::right
+            << std::endl;
+            //fprintf(f, "%15s = %15lf +- %-15lf\n", tname.c_str(), tval * tmn, terr * tmn);
           else
-            fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
+            *fout << std::setw(15) << tname
+            << " = "
+            << std::setw(15) << tval * tmn
+            << " + "
+            << std::left << std::setw(15) << terrp * tmn << std::right
+            << " - "
+            << std::left << std::setw(15) << terrm * tmn << std::right
+            << std::endl;
+            //fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
         }
         else {
           if (!asymm) {
-            fprintf(f, "%15s = %15lf +- %-15lf\t", tname.c_str(), tval * tmn, terr * tmn);
+            *fout << std::setw(15) << tname
+              << " = "
+              << std::setw(15) << tval * tmn
+              << " +- "
+              << std::left << std::setw(15) << terr * tmn << std::right
+              << "\t";
+            //fprintf(f, "%15s = %15lf +- %-15lf\t", tname.c_str(), tval * tmn, terr * tmn);
             std::string tname2 = "V[fm3]";
             if (param.name == "Rc")
               tname2 = "Vc[fm3]";
-            fprintf(f, "%15s = %15lf +- %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terr * tmn);
+            *fout << std::setw(15) << tname2
+              << " = "
+              << std::setw(15) << 4. / 3. * xMath::Pi() * pow(tval * tmn, 3)
+              << " +- "
+              << std::left << std::setw(15) << 4. * xMath::Pi() * pow(tval * tmn, 2) * terr * tmn << std::right
+              << std::endl;
+            //fprintf(f, "%15s = %15lf +- %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terr * tmn);
           }
           else {
-            fprintf(f, "%15s = %15lf + %-15lf - %-15lf\t", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
+            *fout << std::setw(15) << tname
+              << " = "
+              << std::setw(15) << tval * tmn
+              << " + "
+              << std::left << std::setw(15) << terrp * tmn << std::right
+              << " - "
+              << std::left << std::setw(15) << terrm * tmn << std::right
+              << "\t";
+            //fprintf(f, "%15s = %15lf + %-15lf - %-15lf\t", tname.c_str(), tval * tmn, terrp * tmn, terrm * tmn);
             std::string tname2 = "V[fm3]";
             if (param.name == "Rc")
               tname2 = "Vc[fm3]";
-            fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terrp * tmn, 4. * xMath::Pi() * pow(tval * tmn, 2) * terrm * tmn);
+            *fout << std::setw(15) << tname2
+              << " = "
+              << std::setw(15) << 4. / 3. * xMath::Pi() * pow(tval * tmn, 3)
+              << " + "
+              << std::left << std::setw(15) << 4. * xMath::Pi() * pow(tval * tmn, 2) * terrp * tmn << std::right
+              << " - "
+              << std::left << std::setw(15) << 4. * xMath::Pi() * pow(tval * tmn, 2) * terrm * tmn << std::right
+              << std::endl;
+            //fprintf(f, "%15s = %15lf + %-15lf - %-15lf\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3), 4. * xMath::Pi() * pow(tval * tmn, 2) * terrp * tmn, 4. * xMath::Pi() * pow(tval * tmn, 2) * terrm * tmn);
           }
         }
       }
       else {
         double tval = param.value;
         if (param.name != "R" && param.name != "Rc")
-          fprintf(f, "%15s = %15lf (FIXED)\n", tname.c_str(), tval * tmn);
+          *fout << std::setw(15) << tname
+            << " = "
+            << std::setw(15) << tval * tmn
+            << " (FIXED)" << std::endl;
+          //fprintf(f, "%15s = %15lf (FIXED)\n", tname.c_str(), tval * tmn);
         else {
-          fprintf(f, "%15s = %15lf (FIXED)\t", tname.c_str(), tval * tmn);
+          //fprintf(f, "%15s = %15lf (FIXED)\t", tname.c_str(), tval * tmn);
+          *fout << std::setw(15) << tname
+            << " = "
+            << std::setw(15) << tval * tmn
+            << " (FIXED)" << "\t";
           std::string tname2 = "V[fm3]";
           if (param.name == "Rc")
             tname2 = "Vc[fm3]";
-          fprintf(f, "%15s = %15lf (FIXED)\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3));
+          *fout << std::setw(15) << tname2
+            << " = "
+            << std::setw(15) << 4. / 3. * xMath::Pi() * pow(tval * tmn, 3)
+            << " (FIXED)" << std::endl;
+          //fprintf(f, "%15s = %15lf (FIXED)\n", tname2.c_str(), 4. / 3. * xMath::Pi() * pow(tval * tmn, 3));
         }
       }
     }
 
-    fprintf(f, "\n\n");
+    //fprintf(f, "\n\n");
+    *fout << std::endl << std::endl;
 
-    fprintf(f, "Yields:\n");
+    *fout << "Yields:" << std::endl;
+    //fprintf(f, "Yields:\n");
     for (size_t i = 0; i<m_Multiplicities.size(); ++i) {
       double dens1 = m_model->GetDensity(m_Multiplicities[i].fPDGID, m_Multiplicities[i].fFeedDown);
 
       std::string tname = m_model->TPS()->GetNameFromPDG(m_Multiplicities[i].fPDGID);
       if (m_Multiplicities[i].fPDGID == 1) tname = "Npart";
       else if (m_Multiplicities[i].fPDGID == 33340) tname = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      
+      *fout << std::setw(25) << tname
+        << " Experiment: ";
+
       if (m_Multiplicities[i].fValue > 1.e-5 && m_Multiplicities[i].fError > 1.e-5)
-        fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
-      else 
-        fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
+        fout->unsetf(std::ios_base::floatfield);
+      else
+        *fout << std::scientific;
+
+      *fout << std::setw(15) << m_Multiplicities[i].fValue;
+      *fout << " +- ";
+      *fout << std::left << std::setw(15) << m_Multiplicities[i].fError << std::right << " ";
+      *fout << "Model: ";
+      *fout << std::left << std::setw(15) << dens1 * m_model->Parameters().V << std::right << " ";
+
+      fout->unsetf(std::ios_base::floatfield);
+
+      *fout << "Std.dev.: ";
+      *fout << std::left << std::setw(15) << (dens1* m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError << std::right << " ";
+      *fout << std::endl;
+      
+      //if (m_Multiplicities[i].fValue > 1.e-5 && m_Multiplicities[i].fError > 1.e-5)
+      //  fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
+      //else 
+      //  fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", tname.c_str(), m_Multiplicities[i].fValue, m_Multiplicities[i].fError, dens1 * m_model->Parameters().V, (dens1 * m_model->Parameters().V - m_Multiplicities[i].fValue) / m_Multiplicities[i].fError);
     }
 
     for (size_t i = 0; i<m_Ratios.size(); ++i) {
@@ -1048,14 +1143,37 @@ namespace thermalfist {
       if (m_Ratios[i].fPDGID2 == 1) name2 = "Npart";
       if (m_Ratios[i].fPDGID1 == 33340) name1 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
       if (m_Ratios[i].fPDGID2 == 33340) name2 = m_model->TPS()->Particles()[m_model->TPS()->PdgToId(3334)].Name() + " + " + m_model->TPS()->Particles()[m_model->TPS()->PdgToId(-3334)].Name();
+      
+      *fout << std::setw(25) << std::string(name1 + "/" + name2)
+        << " Experiment: ";
+
       if (m_Ratios[i].fValue > 1.e-5 && m_Ratios[i].fError > 1.e-5)
-        fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
+        fout->unsetf(std::ios_base::floatfield);
       else
-        fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
+        *fout << std::scientific;
+
+      *fout << std::setw(15) << m_Ratios[i].fValue;
+      *fout << " +- ";
+      *fout << std::left << std::setw(15) << m_Ratios[i].fError << std::right << " ";
+      *fout << "Model: ";
+      *fout << std::left << std::setw(15) << dens1 / dens2 << std::right << " ";
+
+      fout->unsetf(std::ios_base::floatfield);
+
+      *fout << "Std.dev.: ";
+      *fout << std::left << std::setw(15) << (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError << std::right << " ";
+      *fout << std::endl;
+      
+      //if (m_Ratios[i].fValue > 1.e-5 && m_Ratios[i].fError > 1.e-5)
+      //  fprintf(f, "%25s Experiment: %15lf +- %-15lf Model: %-15lf Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
+      //else
+      //  fprintf(f, "%25s Experiment: %15E +- %-15E Model: %-15E Std.dev.: %-15lf \n", (std::string(name1 + "/" + name2)).c_str(), m_Ratios[i].fValue, m_Ratios[i].fError, dens1 / dens2, (dens1 / dens2 - m_Ratios[i].fValue) / m_Ratios[i].fError);
     }
 
-    if (f != stdout)
-      fclose(f);
+    //if (f != stdout)
+    //  fclose(f);
+    if (fout != &std::cout)
+      delete fout;
   }
 
   using namespace std;
