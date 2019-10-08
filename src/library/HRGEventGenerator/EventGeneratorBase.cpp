@@ -1112,27 +1112,25 @@ namespace thermalfist {
 
     std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      {
-        primParticles[i].resize(0);
-        int total = totals[i];
-        for (int part = 0; part < total; ++part) {
-          const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
-          double tmass = tpart.Mass();
-          if (m_THM->UseWidth() && !(tpart.ResonanceWidth() / tpart.Mass() < 0.01))
-            tmass = m_BWGens[i]->GetRandom();
+      primParticles[i].resize(0);
+      int total = totals[i];
+      for (int part = 0; part < total; ++part) {
+        const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
+        double tmass = tpart.Mass();
+        if (m_THM->UseWidth() && !(tpart.ResonanceWidth() / tpart.Mass() < 0.01))
+          tmass = m_BWGens[i]->GetRandom();
 
-          // Check for Bose-Einstein condensation
-          // Force m = mu if the sampled mass is too small
-          double tmu = m_THM->FullIdealChemicalPotential(i);
-          if (tpart.Statistics() == -1 && tmu > tmass) {
-            tmass = tmu;
-          }
-
-          std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
-          //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
-
-          primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
+        // Check for Bose-Einstein condensation
+        // Force m = mu if the sampled mass is too small
+        double tmu = m_THM->FullIdealChemicalPotential(i);
+        if (tpart.Statistics() == -1 && tmu > tmass) {
+          tmass = tmu;
         }
+
+        std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
+        //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
+
+        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
       }
     }
 
