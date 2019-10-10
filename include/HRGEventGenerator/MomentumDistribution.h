@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2018 Volodymyr Vovchenko
+ * Copyright (c) 2014-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -13,6 +13,7 @@
 
 #include "HRGBase/SplineFunction.h"
 #include "HRGEventGenerator/Acceptance.h"
+#include "HRGEventGenerator/FreezeoutModels.h"
 
 namespace thermalfist {
 
@@ -63,7 +64,7 @@ namespace thermalfist {
     bool m_Normalized; ///< \copydoc isNormalized()
     Acceptance::AcceptanceFunction *m_acc; ///< Pointer to acceptance function
     double m_ycm;      ///< Center-of-mass rapidity for the acceptance function
-    bool m_useacc;     ///< Whether the acceptance functions is used
+    bool m_useacc;     ///< Whether the acceptance functions are used
   };
 
 
@@ -140,10 +141,107 @@ namespace thermalfist {
     std::vector<double> m_xlag, m_wlag;
   };
 
+
   /**
-   * \brief Class implementing the momentum distribution 
+   * \brief Class implementing the momentum distribution
+   *        of boost-invariant, azimuthally symmetric freeze-out models
+   *        using Maxwell-Boltzmann statistics.
+   *
+   */
+  class BoostInvariantMomentumDistribution : public MomentumDistributionBase {
+  public:
+    /**
+     * \copydoc MomentumDistributionBase()
+     * \param FreezeoutModel Pointer to a BoostInvariantFreezeoutParametrization object. Will be deleted on destruction!
+     * \param T      The kinetic temperature (in GeV)
+     * \param etamax The longitudinal space-time rapidity cut-off
+     * \param npow   The power in the transverse flow profile function
+     * \param norm   Whether the momentum distribution should be normalized to unity
+     */
+    BoostInvariantMomentumDistribution(BoostInvariantFreezeoutParametrization* freezeoutModel = NULL, int pdgid = 0, double mass = 0., double T = 0.100, double etamax = 0.5, bool norm = false) :
+      MomentumDistributionBase(pdgid, mass),
+      m_FreezeoutModel(freezeoutModel),
+      m_T(T), m_EtaMax(etamax)
+    {
+      if (m_FreezeoutModel == NULL) {
+        m_FreezeoutModel = new BoostInvariantFreezeoutParametrization();
+      }
+      m_NormY = m_NormPt = m_Norm = 1.;
+      if (norm) Normalize();
+      else Initialize();
+      m_useacc = false;
+    }
+
+    virtual ~BoostInvariantMomentumDistribution();
+
+    void Normalize();
+
+    ///// Rapidity distribution at fixed pT
+    //virtual double dndy(double y, double pt) const;
+
+    ///// Rapidity distribution of a single fireball at fixed pT
+    //virtual double dndysingle(double y, double pt) const;
+
+    ///// The pT distribution function
+    //virtual double dndpt(double pt) const;
+
+    // Override functions begin
+
+    virtual double dndp(double /*p*/) const { return 0.; }
+
+    virtual double dndy(double y) const;
+
+    virtual double dnmtdmt(double mt) const;
+
+    virtual double d2ndptdy(double pt, double y) const;
+
+    // Override functions end
+
+  protected:
+    virtual double ZetaIntegrandpTYSingleFireball(double zeta, double pt, double y) const;
+    virtual double ZetaIntegrandpT(double zeta, double pt) const;
+
+  private:
+    void Initialize();
+
+    virtual double dndysingle(double y) const;
+
+    virtual double dndptsingle(double pt, double y) const;
+
+    /// The pT distribution function
+    virtual double dndpt(double pt) const { return pt * dnmtdmt(sqrt(pt * pt + m_Mass * m_Mass)); }
+
+    virtual double dndpt(double pt, double y) const;
+
+    BoostInvariantFreezeoutParametrization* m_FreezeoutModel;
+
+    double m_T;
+    double m_EtaMax;
+    double m_NormY, m_NormPt, m_Norm;
+    std::vector<double> m_xlag, m_wlag;
+    std::vector<double> m_xlegT, m_wlegT;
+    std::vector<double> m_xlegY, m_wlegY;
+    std::vector<double> m_xlegeta, m_wlegeta;
+
+    SplineFunction m_dndy, m_dndyint;
+  };
+
+} // namespace thermalfist
+
+
+/** \defgroup deprecatedEventGenerators Deprecated objects from event generator module.
+ *  \deprecated The source code below is no longer used.
+ *  @{
+ */
+
+namespace thermalfist {
+
+  /**
+   * \brief Class implementing the momentum distribution
    *        in the longitudinally symmetric Blast-Wave model
-   * 
+   *
+   * \deprecared Superseded by BoostInvariantMomentumDistribution class
+   *
    * Reference: E. Schnedermann, J. Sollfrank, U. Heinz, Phys. Rev. C 48, 2462 (1993)
    */
   class SSHDistribution : public MomentumDistributionBase {
@@ -154,7 +252,7 @@ namespace thermalfist {
      * \param beta   The transverse flow velocity at the surface
      * \param etamax The longitudinal space-time rapidity cut-off
      * \param npow   The power in the transverse flow profile function
-     * \param norm   Whether the momentum distribution should be normalized to unity 
+     * \param norm   Whether the momentum distribution should be normalized to unity
      */
     SSHDistribution(int pdgid = 0, double mass = 0., double T = 0.100, double betas = 0.5, double etamax = 0.5, double npow = 1., bool norm = false) :
       MomentumDistributionBase(pdgid, mass),
@@ -170,14 +268,14 @@ namespace thermalfist {
 
     /**
      * \brief Set the parameters of the longitudinal blast-wave distribution
-     * 
+     *
      * \param T      The kinetic temperature (in GeV)
      * \param betas  The transverse flow velocity at the surface
      * \param etamax The longitudinal space-time rapidity cut-off
      * \param npow   The power in the transverse flow profile function
      * \param mass   Particle mass (in GeV)
      * \param pdgid  Particle PDG code
-     * \param norm   Whether the momentum distribution should be normalized to unity 
+     * \param norm   Whether the momentum distribution should be normalized to unity
      */
     void SetParameters(double T, double betas, double etamax, double npow, double mass, int pdgid = 0, bool norm = true) {
       m_T = T;
@@ -195,8 +293,8 @@ namespace thermalfist {
     /**
      * \brief Set the mean transverse flow velocity.
      *
-     * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2 
-     * 
+     * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2
+     *
      * \param betaT  The mean transverse flow velocity
      */
     void SetMeanBetaT(double betaT) {
@@ -204,10 +302,10 @@ namespace thermalfist {
     }
 
     void Normalize();
-    
+
     /// Rapidity distribution at fixed pT
     virtual double dndy(double y, double pt) const;
-    
+
     /// Rapidity distribution of a single fireball at fixed pT
     virtual double dndysingle(double y, double pt) const;
 
@@ -221,7 +319,7 @@ namespace thermalfist {
     virtual double dndy(double y) const;
 
     virtual double dnmtdmt(double mt) const;
-    
+
     virtual double d2ndptdy(double pt, double y) const;
 
     // Override functions end
@@ -230,14 +328,14 @@ namespace thermalfist {
     void Initialize();
 
     virtual double dndysingle(double y) const;
-    
+
     virtual double dndptsingle(double pt, double y) const;
-    
-    
+
+
     virtual double dndpt(double pt, double y) const;
 
     double w(double p) const {
-      return sqrt(p*p + m_Mass * m_Mass);
+      return sqrt(p * p + m_Mass * m_Mass);
     }
 
     double asinh(double x) const {
@@ -276,5 +374,7 @@ namespace thermalfist {
   };
 
 } // namespace thermalfist
+
+ /** @}*/
 
 #endif

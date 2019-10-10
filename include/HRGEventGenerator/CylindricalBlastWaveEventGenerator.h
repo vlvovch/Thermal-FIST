@@ -72,6 +72,7 @@ namespace thermalfist {
 
   /// For backward compatibility
   typedef CylindricalBlastWaveEventGenerator SSHEventGenerator;
+
 } // namespace thermalfist
 
 #endif

@@ -91,10 +91,11 @@ namespace thermalfist {
     m_BWGens.resize(0);
     if (m_THM != NULL) {
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        m_MomentumGens.push_back(new RandomGenerators::SSHMomentumGenerator(m_T, m_BetaS, m_EtaMax, m_n, m_THM->TPS()->Particles()[i].Mass()));
+        const ThermalParticle& part = m_THM->TPS()->Particles()[i];
+        m_MomentumGens.push_back(new RandomGenerators::BoostInvariantMomentumGenerator(new CylindricalBlastWaveParametrization(GetBetaSurface(), GetNPow()), GetTkin(), GetEtaMax(), part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
 
         double T = m_THM->Parameters().T;
-        double Mu = m_THM->ChemicalPotential(i);
+        double Mu = m_THM->FullIdealChemicalPotential(i);
         if (m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW || m_THM->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBWconstBR)
           m_BWGens.push_back(new RandomGenerators::ThermalEnergyBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));
         else

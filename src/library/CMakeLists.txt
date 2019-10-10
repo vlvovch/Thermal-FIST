@@ -103,12 +103,14 @@ source_group("HRGFit\\Header Files" FILES ${HEADERS_HRGFit})
 set(SRCS_HRGEventGenerator
 HRGEventGenerator/Acceptance.cpp
 HRGEventGenerator/EventGeneratorBase.cpp
+HRGEventGenerator/FreezeoutModels.cpp
 HRGEventGenerator/MomentumDistribution.cpp
 HRGEventGenerator/ParticleDecaysMC.cpp
 HRGEventGenerator/RandomGenerators.cpp
 HRGEventGenerator/SimpleEvent.cpp
 HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CylindricalBlastWaveEventGenerator.cpp
+HRGEventGenerator/CracowFreezeoutEventGenerator.cpp
 )
 
 source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
@@ -116,11 +118,13 @@ source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
 set(HEADERS_HRGEventGenerator
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/Acceptance.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/EventGeneratorBase.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/FreezeoutModels.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/MomentumDistribution.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/ParticleDecaysMC.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/RandomGenerators.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SphericalBlastWaveEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CylindricalBlastWaveEventGenerator.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CracowFreezeoutEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleEvent.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 )	
