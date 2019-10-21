@@ -689,6 +689,34 @@ namespace thermalfist {
     virtual void CalculateTwoParticleFluctuationsDecays();
 
     /**
+     * \brief Returns the computed primordial particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        for particles with ids i and j. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double TwoParticleCorrelationPrimordial(int i, int j) const;
+
+    /**
+     * \brief Returns the computed primordial particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double TwoParticleCorrelationPrimordialByPdg(int id1, int id2);
+
+    /**
+     * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        for particles with ids i and j. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
+     *
+     */
+    virtual double TwoParticleCorrelationFinal(int i, int j) const;
+
+    /**
+     * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
+     *
+     */
+    virtual double TwoParticleCorrelationFinalByPdg(int id1, int id2);
+
+    /**
      * \brief Calculates the conserved charges susceptibility matrix.
      *        
      * Computes \f$ \chi_{lmnk}^{BSQC}~=~\frac{\partial^{l+m+n+k}p/T^4}{\partial(\mu_B/T)^l 

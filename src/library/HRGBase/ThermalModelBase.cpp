@@ -922,6 +922,68 @@ namespace thermalfist {
     }
   }
 
+  double ThermalModelBase::TwoParticleCorrelationPrimordial(int i, int j) const
+  {
+    if (!IsFluctuationsCalculated()) {
+      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationPrimordial: fluctuations were not computed beforehand! Quitting...\n");
+      exit(1);
+    }
+
+    return m_PrimCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+  }
+
+  double ThermalModelBase::TwoParticleCorrelationPrimordialByPdg(int id1, int id2)
+  {
+    int i = TPS()->PdgToId(id1);
+    int j = TPS()->PdgToId(id2);
+
+    if (i == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+    if (j == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id2);
+      return 0.;
+    }
+
+    return TwoParticleCorrelationPrimordial(i, j);
+  }
+
+  double ThermalModelBase::TwoParticleCorrelationFinal(int i, int j) const
+  {
+    if (!IsFluctuationsCalculated()) {
+      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationFinal: fluctuations were not computed beforehand! Quitting...\n");
+      exit(1);
+    }
+
+    if (!m_TPS->Particle(i).IsStable() || !m_TPS->Particle(j).IsStable()) {
+      int tid = i;
+      if (!m_TPS->Particle(j).IsStable())
+        tid = j;
+      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationFinal: Particle %d is not stable! Final correlations not computed for unstable particles. Quitting...\n", tid);
+      exit(1);
+    }
+
+    return m_TotalCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+  }
+
+  double ThermalModelBase::TwoParticleCorrelationFinalByPdg(int id1, int id2)
+  {
+    int i = TPS()->PdgToId(id1);
+    int j = TPS()->PdgToId(id2);
+
+    if (i == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelatioFinalByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+    if (j == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelatioFinalByPdg: unknown pdg code %I64", id2);
+      return 0.;
+    }
+
+    return TwoParticleCorrelationFinal(i, j);
+  }
+
   void ThermalModelBase::CalculateSusceptibilityMatrix()
   {
     m_Susc.resize(4);
