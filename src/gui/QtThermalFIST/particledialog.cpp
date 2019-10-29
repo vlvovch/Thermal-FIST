@@ -12,6 +12,9 @@
 #include <QTimer>
 #include <QLabel>
 #include <QApplication>
+#include <QClipboard>
+#include <QMenu>
+#include <QKeyEvent>
 #include <QDebug>
 
 #include "SpectralFunctionDialog.h"
@@ -19,6 +22,33 @@
 #include "HRGBase/ThermalModelBase.h"
 
 using namespace thermalfist;
+
+void copyTableViewSelectionToClipBoard(QTableView * view)
+{
+  QAbstractItemModel * model = view->model();
+  QItemSelectionModel * selection = view->selectionModel();
+  QModelIndexList indexes = selection->selectedIndexes();
+
+  qSort(indexes);
+
+  if (indexes.size() < 1)
+    return;
+
+  QString selected_text;
+  for (int i = 0; i < indexes.size(); i++)
+  {
+    QModelIndex current = indexes.at(i);
+    QVariant data = model->data(current);
+    QString text = data.toString();
+    selected_text.append(text);
+    if (i == indexes.size() - 1 || current.row() != indexes.at(i + 1).row())
+      selected_text.append('\n');
+    else
+      selected_text.append('\t');
+  }
+
+  QApplication::clipboard()->setText(selected_text);
+}
 
 
 ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int ParticleID) :
@@ -131,6 +161,9 @@ ParticleDialog::ParticleDialog(QWidget *parent, ThermalModelBase *mod, int Parti
     }
 
     tableSources->resizeColumnsToContents();
+    tableSources->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(tableSources, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
+    tableSources->installEventFilter(this);
 
     QVBoxLayout *layoutProd = new QVBoxLayout();
     layoutProd->setAlignment(Qt::AlignTop);
@@ -283,3 +316,55 @@ void ParticleDialog::showSpectralFunction()
   dialog.setMinimumSize(QSize(800, 400));
   dialog.exec();
 }
+
+
+void ParticleDialog::contextMenuRequest(QPoint pos)
+{
+  QMenu *menu = new QMenu(this);
+  menu->setAttribute(Qt::WA_DeleteOnClose);
+
+  menu->addAction("Copy table to clipboard", this, SLOT(copyFeeddownTable()));
+
+  menu->popup(tableSources->mapToGlobal(pos));
+}
+
+void ParticleDialog::copyFeeddownTable()
+{
+  QString table_text = "";
+
+  for (int i = 0; i < tableSources->rowCount(); ++i) {
+    for (int j = 0; j < tableSources->columnCount(); ++j) {
+      if (tableSources->item(i, j) != NULL)
+        table_text.append(tableSources->item(i, j)->text());
+      if (j != tableSources->columnCount() - 1)
+        table_text.append('\t');
+      else
+        table_text.append('\n');
+    }
+  }
+
+  QApplication::clipboard()->setText(table_text);
+}
+
+bool ParticleDialog::eventFilter(QObject * obj, QEvent * event)
+{
+  if (obj == tableSources) {
+    if (event->type() == QEvent::KeyPress) {
+      QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+      if (keyEvent->matches(QKeySequence::Copy)) {
+        copyTableViewSelectionToClipBoard(tableSources);
+        return true;
+      }
+      else
+        return false;
+    }
+    else {
+      return false;
+    }
+  }
+  else {
+    // pass the event on to the parent class
+    return QDialog::eventFilter(obj, event);
+  }
+}
+

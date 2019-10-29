@@ -17,6 +17,8 @@
 
 #include "HRGBase/ThermalModelBase.h"
 
+void copyTableViewSelectionToClipBoard(QTableView *view);
+
 class ParticleDialog : public QDialog
 {
     Q_OBJECT
@@ -53,6 +55,11 @@ public slots:
     void addColumn();
     void removeColumn();
     void showSpectralFunction();
+    void contextMenuRequest(QPoint pos);
+    void copyFeeddownTable();
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *ev);
 };
 
 #endif // DECAYSEDITOR_H
