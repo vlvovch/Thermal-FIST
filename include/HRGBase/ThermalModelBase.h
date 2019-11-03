@@ -700,7 +700,7 @@ namespace thermalfist {
      *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double TwoParticleCorrelationPrimordialByPdg(int id1, int id2);
+    virtual double TwoParticleCorrelationPrimordialByPdg(long long id1, long long id2);
 
     /**
      * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
@@ -714,7 +714,7 @@ namespace thermalfist {
      *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
      *
      */
-    virtual double TwoParticleCorrelationFinalByPdg(int id1, int id2);
+    virtual double TwoParticleCorrelationFinalByPdg(long long id1, long long id2);
 
     /**
      * \brief Calculates the conserved charges susceptibility matrix.

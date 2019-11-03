@@ -932,7 +932,7 @@ namespace thermalfist {
     return m_PrimCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::TwoParticleCorrelationPrimordialByPdg(int id1, int id2)
+  double ThermalModelBase::TwoParticleCorrelationPrimordialByPdg(long long id1, long long id2)
   {
     int i = TPS()->PdgToId(id1);
     int j = TPS()->PdgToId(id2);
@@ -967,7 +967,7 @@ namespace thermalfist {
     return m_TotalCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::TwoParticleCorrelationFinalByPdg(int id1, int id2)
+  double ThermalModelBase::TwoParticleCorrelationFinalByPdg(long long id1, long long id2)
   {
     int i = TPS()->PdgToId(id1);
     int j = TPS()->PdgToId(id2);
