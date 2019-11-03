@@ -349,17 +349,13 @@ void ParticleDialog::copyFeeddownTable()
 bool ParticleDialog::eventFilter(QObject * obj, QEvent * event)
 {
   if (obj == tableSources) {
-    if (event->type() == QEvent::KeyPress) {
-      QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-      if (keyEvent->matches(QKeySequence::Copy)) {
-        copyTableViewSelectionToClipBoard(tableSources);
-        return true;
-      }
-      else
-        return false;
+    if (event->type() == QEvent::KeyPress && static_cast<QKeyEvent*>(event)->matches(QKeySequence::Copy)) {
+      copyTableViewSelectionToClipBoard(tableSources);
+      return true;
     }
     else {
-      return false;
+      //return false;
+      return QDialog::eventFilter(obj, event);
     }
   }
   else {

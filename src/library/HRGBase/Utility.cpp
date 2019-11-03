@@ -105,9 +105,13 @@ namespace thermalfist {
     tmpstr = OutputString(tmpstr);
     cout << tmpstr << endl;
 
-    tmpstr = "V. Vovchenko, H. Stoecker, arXiv:1901.05249 [nucl-th]";
+    tmpstr = "V. Vovchenko, H. Stoecker, Comput. Phys. Commun. 244, 295 (2019)";
     tmpstr = OutputString(tmpstr);
     cout << tmpstr << endl;
+
+    //tmpstr = "V. Vovchenko, H. Stoecker, arXiv:1901.05249 [nucl-th]";
+    //tmpstr = OutputString(tmpstr);
+    //cout << tmpstr << endl;
 
     cout << "#" << string(77, ' ') << "#" << endl;
 
