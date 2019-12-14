@@ -1117,7 +1117,8 @@ namespace thermalfist {
       for (int part = 0; part < total; ++part) {
         const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
         double tmass = tpart.Mass();
-        if (m_THM->UseWidth() && !(tpart.ResonanceWidth() / tpart.Mass() < 0.01))
+        //if (m_THM->UseWidth() && !(tpart.ResonanceWidth() / tpart.Mass() < 0.01))
+        if (m_THM->UseWidth() && !tpart.ZeroWidthEnforced() && !(tpart.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
           tmass = m_BWGens[i]->GetRandom();
 
         // Check for Bose-Einstein condensation

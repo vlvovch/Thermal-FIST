@@ -58,7 +58,7 @@ namespace thermalfist {
       bool FreezeLongLived = false,
       double WidthCut = 0.015);
 
-
+    void ApplyFixForBoseCondensation();
     
 
   protected:

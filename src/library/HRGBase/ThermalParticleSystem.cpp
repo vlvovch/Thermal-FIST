@@ -1018,8 +1018,10 @@ namespace thermalfist {
 
     m_ResonanceWidthIntegrationType = type;
 
-    for (size_t i = 0; i < m_Particles.size(); ++i)
-      m_Particles[i].SetResonanceWidthIntegrationType(type);
+    for (size_t i = 0; i < m_Particles.size(); ++i) {
+      if (!m_Particles[i].ZeroWidthEnforced())
+        m_Particles[i].SetResonanceWidthIntegrationType(type);
+    }
 
     if (dodecays)
       ProcessDecays();

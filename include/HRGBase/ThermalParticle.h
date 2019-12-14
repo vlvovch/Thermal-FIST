@@ -431,6 +431,9 @@ namespace thermalfist {
     /// Set absolute charm quark content |s|, light quark content then re-evaluted
     void SetAbsoluteCharm(double abschg) { m_AbsC = abschg; SetAbsoluteQuark(GetAbsQ()); }
 
+    /// Whether zero-width approximation is enforced for this particle species
+    bool ZeroWidthEnforced() const;
+
     /// Particle's width at the pole mass (GeV)
     double ResonanceWidth() const { return m_Width; }
 
@@ -465,9 +468,15 @@ namespace thermalfist {
      */
     void SetDecayThresholdMass(double threshold);
 
+    
+
     /// Returns threshold mass as the minimum
-    /// threshold among all the decay channels
+    /// threshold among all the decay channels.
+    /// Used in the eBW scheme
     double DecayThresholdMassDynamical() const { return m_ThresholdDynamical; }
+
+    /// Set the threshold mass manually for use in the eBW scheme. 
+    void SetDecayThresholdMassDynamical(double threshold);
 
     /// Evaluate the threshold mass as the minimum
     /// threshold among all the decay channels

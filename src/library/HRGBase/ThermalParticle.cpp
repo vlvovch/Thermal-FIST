@@ -38,7 +38,8 @@ namespace thermalfist {
     if (m_Mass < 0.200) SetClusterExpansionOrder(10);
 
     SetResonanceWidthShape(RelativisticBreitWigner);
-    SetResonanceWidthIntegrationType(BWTwoGamma);
+    //SetResonanceWidthIntegrationType(BWTwoGamma);
+    SetResonanceWidthIntegrationType(ZeroWidth);
 
     m_DecayType = ParticleDecayType::Default;
 
@@ -47,8 +48,17 @@ namespace thermalfist {
     SetAbsoluteQuark(GetAbsQ());
 
   }
+
+
   ThermalParticle::~ThermalParticle(void)
   {
+  }
+
+  bool ThermalParticle::ZeroWidthEnforced() const
+  {
+    //if (PdgId() == 223) // omega(782)
+    //  return true;
+    return ((ResonanceWidth() / Mass()) < 0.01);
   }
 
   void ThermalParticle::SetResonanceWidth(double width)
@@ -67,6 +77,14 @@ namespace thermalfist {
       printf("**WARNING** Trying to set negative decay threshold for %s, setting to zero instead", m_Name.c_str());
     }
     if (m_Width != 0.0) FillCoefficients();
+  }
+
+  void ThermalParticle::SetDecayThresholdMassDynamical(double threshold)
+  {
+    m_ThresholdDynamical = threshold;
+    if (m_ThresholdDynamical < 0.0) {
+      printf("**WARNING** Trying to set negative dynamical decay threshold for %s, setting to zero instead", m_Name.c_str());
+    }
   }
 
   void ThermalParticle::CalculateAndSetDynamicalThreshold()
@@ -565,7 +583,8 @@ namespace thermalfist {
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    if (!useWidth || m_Mass == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
+    //if (!useWidth || m_Mass == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
+    if (!useWidth || m_Mass == 0.0 || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder);
     }
 
@@ -624,7 +643,8 @@ namespace thermalfist {
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
+    //if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
+    if (!useWidth || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy);
     }
 

@@ -19,6 +19,7 @@
 #include "HRGFit/ThermalModelFitParameters.h"
 #include "HRGFit/ThermalModelFitQuantities.h"
 #include "HRGBase/xMath.h"
+#include "HRGPCE/ThermalModelPCE.h"
 
 namespace thermalfist {
 
@@ -228,6 +229,10 @@ namespace thermalfist {
     /// the HRG model used
     ThermalModelBase* model() { return m_model; }
 
+    /// Pointer to a ThermalModelBase object implementing
+    /// the partial chemical equilibrium HRG model used
+    ThermalModelPCE* modelpce() { return m_modelpce; }
+
     /// Set the entropy per baryon constraint for \f$\mu_B \f$
     /// \deprecated Entropy per baryon constraint should be set directly on a ThermalModelBase object
     void SetSBConstraint(double SB) {
@@ -300,6 +305,19 @@ namespace thermalfist {
     double VcOverV() const { return m_VcOverV; }
     //@}
 
+    /// Sets whether the yields should be evaluated at Tkin using partial chemical equilibrium
+    void UseTkin(bool YieldsAtTkin) { m_YieldsAtTkin = YieldsAtTkin; }
+    bool UseTkin() const { return m_YieldsAtTkin; }
+
+    /// Sets whether the nuclear abundances are evaluated in PCE using the Saha equation
+    void UseSahaForNuclei(bool UseSaha) { m_SahaForNuclei = UseSaha; }
+
+    /// Sets whether the yields of long-lived resonance are frozen in the PCE
+    void PCEFreezeLongLived(bool FreezeLongLived) { m_PCEFreezeLongLived = FreezeLongLived; }
+
+    /// Sets the resonance width cut for freezeing the yields of long-lived resonances
+    void SetPCEWidthCut(double WidthCut) { m_PCEWidthCut = WidthCut; }
+
     /// Returns a relative error of the data description (and its uncertainty estimate)
     std::pair< double, double > ModelDescriptionAccuracy() const;
 
@@ -318,6 +336,7 @@ namespace thermalfist {
     ThermalModelFitParameters m_Parameters;
     ThermalModelFitParametersExtended m_ExtendedParameters;
     ThermalModelBase *m_model;
+    ThermalModelPCE  *m_modelpce;
     std::vector<ExperimentMultiplicity> m_Multiplicities;
     std::vector<ExperimentRatio> m_Ratios;
     std::vector<FittedQuantity> m_Quantities;
@@ -331,6 +350,11 @@ namespace thermalfist {
     int       m_Ndf;
     bool      m_FixVcToV;
     double    m_VcOverV;
+
+    bool      m_YieldsAtTkin;
+    bool      m_SahaForNuclei;
+    bool      m_PCEFreezeLongLived;
+    double    m_PCEWidthCut;
   };
 
 } // namespace thermalfist

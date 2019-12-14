@@ -59,6 +59,7 @@ namespace thermalfist {
       }
     }
 
+    ApplyFixForBoseCondensation();
 
     m_ChemicalFreezeoutSet = false;
     m_IsCalculated = false;
@@ -70,15 +71,16 @@ namespace thermalfist {
     m_ChemInit = ChemInit;
     m_model->SetParameters(m_ParametersInit);
     m_model->SetChemicalPotentials(m_ChemInit);
-    m_model->CalculateDensities();
+    //m_model->CalculateDensities();
+    m_model->CalculatePrimordialDensities();
 
-    m_DensitiesInit = m_model->TotalDensities();
+    //m_DensitiesInit = m_model->TotalDensities();
 
     m_StableDensitiesInit = std::vector<double>(m_StableComponentsNumber, 0.);
     for (int is = 0; is < m_StableDensitiesInit.size(); ++is) {
       double totdens = 0.;
       for (int i = 0; i < m_EffectiveCharges.size(); ++i) {
-        totdens +=m_EffectiveCharges[i][is] * m_model->Densities()[i];
+        totdens += m_EffectiveCharges[i][is] * m_model->Densities()[i];
       }
       m_StableDensitiesInit[is] = totdens;
     }
@@ -127,6 +129,8 @@ namespace thermalfist {
 
     m_ChemCurrent = m_model->ChemicalPotentials();
     m_ParametersCurrent.V = PCEParams[PCEParams.size() - 1];
+
+    m_model->CalculateFeeddown();
     
     m_IsCalculated = true;
   }
@@ -284,6 +288,28 @@ namespace thermalfist {
     return stability_flags;
   }
 
+  void ThermalModelPCE::ApplyFixForBoseCondensation()
+  {
+    for (int ipart = 0; ipart < m_EffectiveCharges.size(); ++ipart) {
+      ThermalParticle& part = m_model->TPS()->Particle(ipart);
+      if (part.ZeroWidthEnforced() || part.Statistics() != -1)
+        continue;
+
+      double totmu = 0.;
+      for (int ifeed = 0; ifeed < m_EffectiveCharges[ipart].size(); ++ifeed) {
+        totmu += m_EffectiveCharges[ipart][ifeed] * m_model->TPS()->Particle(m_StableMapTo[ifeed]).Mass();
+      }
+
+      if (totmu > part.DecayThresholdMassDynamical()) {
+        cout << "Changing threshold mass for " << part.Name() << " from " << part.DecayThresholdMassDynamical() << " to " << totmu << "\n";
+        part.SetDecayThresholdMassDynamical(totmu);
+        part.FillCoefficientsDynamical();
+      }
+    }
+
+    m_model->TPS()->ProcessDecays();
+  }
+
   std::vector<double> ThermalModelPCE::BroydenEquationsPCE::Equations(const std::vector<double>& x)
   {
     std::vector<double> ret(x.size(), 0.);
@@ -301,7 +327,8 @@ namespace thermalfist {
     const double& V = x[x.size() - 1];
     m_THM->m_ParametersCurrent.V = V;
     model->SetParameters(m_THM->m_ParametersCurrent);
-    model->CalculateDensities();
+    //model->CalculateDensities();
+    model->CalculatePrimordialDensities();
 
     for (int is = 0; is < m_THM->m_StableComponentsNumber; ++is) {
       double totdens = 0.;
