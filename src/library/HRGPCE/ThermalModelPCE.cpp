@@ -97,12 +97,22 @@ namespace thermalfist {
     m_IsCalculated = false;
   }
 
-  void ThermalModelPCE::CalculatePCE(double T)
+  void ThermalModelPCE::CalculatePCE(double param, int mode)
   {
-    // Initial guess for the new volume
-    m_ParametersCurrent.V = m_ParametersCurrent.V * pow(m_ParametersCurrent.T / T, 3.);
+    double T = param;
+    if (mode == 1) {
+      // Initial guess for the new temperature
+      T = m_ParametersCurrent.T * pow(m_ParametersCurrent.V / param, 1. / 3.);
+      m_ParametersCurrent.V = param;
+    }
+    else {
+      // Initial guess for the new volume
+      m_ParametersCurrent.V = m_ParametersCurrent.V * pow(m_ParametersCurrent.T / T, 3.);
+    }
+    
+    
 
-    BroydenEquationsPCE eqs(this);
+    BroydenEquationsPCE eqs(this, mode);
     Broyden broydn(&eqs);
 
     std::vector<double> PCEParams(m_StableComponentsNumber, 0.);
@@ -123,12 +133,18 @@ namespace thermalfist {
     
     m_ParametersCurrent.T = T;
 
-    PCEParams.push_back(m_ParametersCurrent.V);
+    if (mode == 0)
+      PCEParams.push_back(m_ParametersCurrent.V);
+    else
+      PCEParams.push_back(m_ParametersCurrent.T);
 
     PCEParams = broydn.Solve(PCEParams);
 
     m_ChemCurrent = m_model->ChemicalPotentials();
-    m_ParametersCurrent.V = PCEParams[PCEParams.size() - 1];
+    if (mode == 0)
+      m_ParametersCurrent.V = PCEParams[PCEParams.size() - 1];
+    else
+      m_ParametersCurrent.T = PCEParams[PCEParams.size() - 1];
 
     m_model->CalculateFeeddown();
     
@@ -324,8 +340,15 @@ namespace thermalfist {
     ThermalModelBase *model = m_THM->ThermalModel();
 
     model->SetChemicalPotentials(Chem);
-    const double& V = x[x.size() - 1];
-    m_THM->m_ParametersCurrent.V = V;
+    if (m_Mode == 0) {
+      const double& Vtmp = x[x.size() - 1];
+      m_THM->m_ParametersCurrent.V = Vtmp;
+    }
+    else {
+      const double& Ttmp = x[x.size() - 1];
+      m_THM->m_ParametersCurrent.T = Ttmp;
+    }
+    double V = m_THM->m_ParametersCurrent.V;
     model->SetParameters(m_THM->m_ParametersCurrent);
     //model->CalculateDensities();
     model->CalculatePrimordialDensities();
