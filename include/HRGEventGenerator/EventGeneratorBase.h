@@ -63,6 +63,12 @@ namespace thermalfist {
     /// The total values of conserved charges in the CE
     int B, Q, S, C;
 
+    /// Mixed-canonical configuration (full canonical by default)
+    bool CanonicalB;
+    bool CanonicalQ;
+    bool CanonicalS;
+    bool CanonicalC;
+
     /// The matrix of excluded volume coefficients \f$ \tilde{b}_{ij} \f$
     std::vector< std::vector<double> > bij;
 

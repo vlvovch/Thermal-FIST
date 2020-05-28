@@ -63,10 +63,14 @@ namespace thermalfist {
       m_Config.CFOParameters.muC = 0.;
     }
     else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
-      m_Config.CFOParameters.muB = 0.;
-      m_Config.CFOParameters.muS = 0.;
-      m_Config.CFOParameters.muQ = 0.;
-      m_Config.CFOParameters.muC = 0.;
+      if (m_Config.CanonicalB) 
+        m_Config.CFOParameters.muB = 0.;
+      if (m_Config.CanonicalS)
+        m_Config.CFOParameters.muS = 0.;
+      if (m_Config.CanonicalQ)
+        m_Config.CFOParameters.muQ = 0.;
+      if (m_Config.CanonicalC)
+        m_Config.CFOParameters.muC = 0.;
     }
 
     if (m_Config.fModelType == EventGeneratorConfiguration::PointParticle) {
@@ -113,6 +117,7 @@ namespace thermalfist {
       // The following procedure currently not used, 
       // but can be considered if SolveChemicalPotentials routine fails
       // Note to take into account PCE possiblity if this option is considered
+      // TODO: Properly for mixed-canonical ensembles
       if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0) && !m_Config.fUsePCE) {
         if (m_Config.S == 0 && !(m_Config.Q == 0 || m_Config.B == 0)) {
           double QBrat = (double)(m_Config.Q) / m_Config.B;
@@ -164,9 +169,9 @@ namespace thermalfist {
       }
 
       if (!m_Config.fUsePCE) {
-
         m_THM->SolveChemicalPotentials(m_Config.B, m_Config.Q, m_Config.S, m_Config.C,
-          m_THM->Parameters().muB, m_THM->Parameters().muQ, m_THM->Parameters().muS, m_THM->Parameters().muC);
+          m_THM->Parameters().muB, m_THM->Parameters().muQ, m_THM->Parameters().muS, m_THM->Parameters().muC,
+          m_Config.CanonicalB, m_Config.CanonicalQ, m_Config.CanonicalS, m_Config.CanonicalC);
         if (m_THM->Parameters().muB != m_THM->Parameters().muB ||
           m_THM->Parameters().muQ != m_THM->Parameters().muQ ||
           m_THM->Parameters().muS != m_THM->Parameters().muS ||
@@ -183,11 +188,11 @@ namespace thermalfist {
         m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
         m_Config.CFOParameters.muC = m_THM->Parameters().muC;
 
-        std::cout << "Chemical potentials constrained!\n" << "muB = "
-          << m_Config.CFOParameters.muB << " muQ = "
-          << m_Config.CFOParameters.muQ << " muS = "
-          << m_Config.CFOParameters.muS << " muC = "
-          << m_Config.CFOParameters.muC << "\n";
+        std::cout << "Chemical potentials constrained!\n" 
+          <<  "muB = " << m_Config.CFOParameters.muB 
+          << " muQ = " << m_Config.CFOParameters.muQ 
+          << " muS = " << m_Config.CFOParameters.muS 
+          << " muC = " << m_Config.CFOParameters.muC << "\n";
 
         std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V
           << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V
@@ -858,10 +863,10 @@ namespace thermalfist {
         netQ += totals[i] * m_THM->TPS()->Particles()[i].ElectricCharge();
         netC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
       }
-      if (netB == m_THM->Parameters().B 
-        && netS == m_THM->Parameters().S 
-        && netQ == m_THM->Parameters().Q
-        && netC == m_THM->Parameters().C) {
+      if ((!m_Config.CanonicalB || netB == m_THM->Parameters().B) 
+        && (!m_Config.CanonicalS || netS == m_THM->Parameters().S)
+        && (!m_Config.CanonicalQ || netQ == m_THM->Parameters().Q)
+        && (!m_Config.CanonicalC || netC == m_THM->Parameters().C)) {
         fCEAccepted++;
         return totals;
       }
@@ -897,10 +902,10 @@ namespace thermalfist {
 
       int tB = 0, tAB = 0;
       // First total baryons and antibaryons from the Poisson distribution
-      if (fl) {
+      if (fl || !m_Config.CanonicalB) {
         tB = RandomGenerators::RandomPoisson(m_MeanB);
         tAB = RandomGenerators::RandomPoisson(m_MeanAB);
-        if (tB - tAB != m_THM->Parameters().B - netB) continue;
+        if (m_Config.CanonicalB && tB - tAB != m_THM->Parameters().B - netB) continue;
         //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().B - netB, m_MeanB, m_MeanAB))
         //  continue;
       }
@@ -950,7 +955,7 @@ namespace thermalfist {
       
       int tSM = RandomGenerators::RandomPoisson(m_MeanSM);
       int tASM = RandomGenerators::RandomPoisson(m_MeanASM);
-      if (netS != tASM - tSM + m_THM->Parameters().S) continue;
+      if (m_Config.CanonicalS && netS != tASM - tSM + m_THM->Parameters().S) continue;
 
       //int tSM = 0, tASM = 0;
       //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().S - netS, m_MeanSM, m_MeanASM))
@@ -994,7 +999,7 @@ namespace thermalfist {
       // Total numbers of remaining electrically charged mesons
       int tCM = RandomGenerators::RandomPoisson(m_MeanCM);
       int tACM = RandomGenerators::RandomPoisson(m_MeanACM);
-      if (netQ != tACM - tCM + m_THM->Parameters().Q) continue;
+      if (m_Config.CanonicalQ && netQ != tACM - tCM + m_THM->Parameters().Q) continue;
 
       //int tCM = 0, tACM = 0;
       //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().Q - netQ, m_MeanCM, m_MeanACM))
@@ -1037,7 +1042,7 @@ namespace thermalfist {
       int tCHRMM = RandomGenerators::RandomPoisson(m_MeanCHRMM);
       int tACHRNMM = RandomGenerators::RandomPoisson(m_MeanACHRMM);
 
-      if (netC != tACHRNMM - tCHRMM + m_THM->Parameters().C) continue;
+      if (m_Config.CanonicalC && netC != tACHRNMM - tCHRMM + m_THM->Parameters().C) continue;
 
       // Multinomial distribution for individual numbers of remaining charmed mesons
       for (int i = 0; i < tCHRMM; ++i) {
@@ -1076,22 +1081,22 @@ namespace thermalfist {
         finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
       }
 
-      if (finB != m_THM->Parameters().B) {
+      if (m_Config.CanonicalB && finB != m_THM->Parameters().B) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
         exit(1);
       }
 
-      if (finQ != m_THM->Parameters().Q) {
+      if (m_Config.CanonicalQ && finQ != m_THM->Parameters().Q) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
         exit(1);
       }
 
-      if (finS != m_THM->Parameters().S) {
+      if (m_Config.CanonicalS && finS != m_THM->Parameters().S) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
         exit(1);
       }
 
-      if (finC != m_THM->Parameters().C) {
+      if (m_Config.CanonicalC && finC != m_THM->Parameters().C) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
         exit(1);
       }
@@ -1432,6 +1437,7 @@ namespace thermalfist {
     fModelType = PointParticle;
     CFOParameters = ThermalModelParameters();
     B = Q = S = C = 0;
+    CanonicalB = CanonicalQ = CanonicalS = CanonicalC = true;
     fUsePCE = false;
   }
 
