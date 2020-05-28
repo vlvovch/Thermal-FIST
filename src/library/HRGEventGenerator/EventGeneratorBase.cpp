@@ -219,17 +219,17 @@ namespace thermalfist {
     if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
       PrepareMultinomials();
 
-    m_acc.resize(m_THM->ComponentsNumber());
+    //m_acc.resize(m_THM->ComponentsNumber());
   }
 
-  void EventGeneratorBase::ReadAcceptance(std::string accfolder)
-  {
-    m_acc.resize(m_THM->TPS()->Particles().size());
-    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      std::string filename = accfolder + "pty_acc_" + to_string_fix(m_THM->TPS()->Particles()[i].PdgId()) + ".txt";
-      Acceptance::ReadAcceptanceFunction(m_acc[i], filename);
-    }
-  }
+  //void EventGeneratorBase::ReadAcceptance(std::string accfolder)
+  //{
+  //  //m_acc.resize(m_THM->TPS()->Particles().size());
+  //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+  //    std::string filename = accfolder + "pty_acc_" + to_string_fix(m_THM->TPS()->Particles()[i].PdgId()) + ".txt";
+  //    Acceptance::ReadAcceptanceFunction(m_acc[i], filename);
+  //  }
+  //}
 
   void EventGeneratorBase::PrepareMultinomials() {
     if (!m_THM->IsGCECalculated())
@@ -1101,7 +1101,7 @@ namespace thermalfist {
     return totals;
   }
 
-  SimpleEvent EventGeneratorBase::GetEvent(bool PerformDecays) const
+  SimpleEvent EventGeneratorBase::GetEvent(bool DoDecays) const
   {
     SimpleEvent ret;
     if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
@@ -1136,17 +1136,203 @@ namespace thermalfist {
     }
 
 
+    //bool flag_repeat = true;
+    //while (flag_repeat) {
+    //  flag_repeat = false;
+    //  for (int i = primParticles.size() - 1; i >= 0; --i) {
+    //    if (!PerformDecays || m_THM->TPS()->Particles()[i].IsStable()) {
+    //      for (size_t j = 0; j < primParticles[i].size(); ++j) {
+    //        if (!primParticles[i][j].processed) {
+    //          SimpleParticle prt = primParticles[i][j];
+    //          double tpt = prt.GetPt();
+    //          double ty = prt.GetY();
+    //          //if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) 
+    //            ret.Particles.push_back(prt);
+    //          primParticles[i][j].processed = true;
+    //        }
+    //      }
+    //    }
+    //    else {
+    //      for (size_t j = 0; j < primParticles[i].size(); ++j) {
+    //        if (!primParticles[i][j].processed) {
+    //          flag_repeat = true;
+    //          double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+
+    //          std::vector<double> Bratios;
+    //          if (primParticles[i][j].MotherPDGID != 0 ||
+    //            m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+    //            Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+    //          }
+    //          else {
+    //            Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+    //          }
+
+    //          int DecayIndex = 0;
+    //          for (DecayIndex = 0; DecayIndex < static_cast<int>(Bratios.size()); ++DecayIndex) {
+    //            tsum += Bratios[DecayIndex];
+    //            if (tsum > DecParam) break;
+    //          }
+    //          if (DecayIndex < static_cast<int>(m_THM->TPS()->Particles()[i].Decays().size())) {
+    //            std::vector<double> masses(0);
+    //            std::vector<long long> pdgids(0);
+    //            for (size_t di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
+    //              long long dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
+    //              if (m_THM->TPS()->PdgToId(dpdg) == -1) {
+    //                continue;
+    //              }
+    //              masses.push_back(m_THM->TPS()->ParticleByPDG(dpdg).Mass());
+    //              pdgids.push_back(dpdg);
+    //            }
+    //            std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
+    //            for (size_t ind = 0; ind < decres.size(); ind++) {
+    //              decres[ind].processed = false;
+    //              if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
+    //                primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+    //            }
+    //            primParticles[i][j].processed = true;
+    //          }
+    //          else {
+    //            // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
+    //            primParticles[i][j].processed = true;
+    //          }
+    //        }
+    //      }
+    //    }
+    //  }
+    //}
+    
+    for (int i = primParticles.size() - 1; i >= 0; --i) {
+      ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
+    }
+
+    ret.AllParticles = ret.Particles;
+
+    if (DoDecays)
+      return PerformDecays(ret, m_THM->TPS());
+    else
+      return ret;
+  }
+
+  SimpleEvent EventGeneratorBase::PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
+  {
+    SimpleEvent ret;
+    ret.weight = evtin.weight;
+    ret.logweight = evtin.logweight;
+    ret.AllParticles = evtin.Particles;
+    reverse(ret.AllParticles.begin(), ret.AllParticles.end());
+    
+    for (auto&& part : ret.AllParticles)
+      part.processed = false;
+
+
+    bool flag_repeat = true;
+    while (flag_repeat) {
+      flag_repeat = false;
+
+      bool current_stable_flag = false;
+      long long current_pdgcode = 0;
+      long long current_tid = -1;
+      for (int i = ret.AllParticles.size() - 1; i >= 0; --i) {
+        SimpleParticle& particle = ret.AllParticles[i];
+
+        if (particle.processed)
+          continue;
+
+        long long tpdgcode = particle.PDGID;
+        if (!(tpdgcode == current_pdgcode))
+        {
+          current_tid = TPS->PdgToId(tpdgcode);
+          if (current_tid != -1)
+            current_stable_flag = TPS->Particle(current_tid).IsStable();
+          else
+            current_stable_flag = true;
+          current_pdgcode = tpdgcode;
+        }
+
+
+        if (current_stable_flag) {
+          //SimpleParticle prt = primParticles[i][j];
+          //double tpt = prt.GetPt();
+          //double ty = prt.GetY();
+          //if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand())
+          //  ret.Particles.push_back(prt);
+          //primParticles[i][j].processed = true;
+          ret.Particles.push_back(particle);
+          particle.processed = true;
+        }
+        else {
+          flag_repeat = true;
+          double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+
+          std::vector<double> Bratios;
+          if (particle.MotherPDGID != 0 ||
+            TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+            Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, false);
+          }
+          else {
+            Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, true);
+          }
+
+          int DecayIndex = 0;
+          for (DecayIndex = 0; DecayIndex < static_cast<int>(Bratios.size()); ++DecayIndex) {
+            tsum += Bratios[DecayIndex];
+            if (tsum > DecParam) break;
+          }
+          if (DecayIndex < static_cast<int>(TPS->Particles()[current_tid].Decays().size())) {
+            std::vector<double> masses(0);
+            std::vector<long long> pdgids(0);
+            for (size_t di = 0; di < TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters.size(); di++) {
+              long long dpdg = TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters[di];
+              if (TPS->PdgToId(dpdg) == -1) {
+                continue;
+              }
+              masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
+              pdgids.push_back(dpdg);
+            }
+            std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(particle, masses, pdgids);
+            for (size_t ind = 0; ind < decres.size(); ind++) {
+              decres[ind].processed = false;
+              if (TPS->PdgToId(decres[ind].PDGID) != -1)
+                ret.AllParticles.push_back(decres[ind]);
+                //primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+            }
+            ret.AllParticles[i].processed = true;
+          }
+          else {
+            // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
+            ret.AllParticles[i].processed = true;
+          }
+        }
+      }
+    }
+
+    return ret;
+  }
+
+  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
+  {
+    SimpleEvent ret;
+    ret.weight = evtin.weight;
+    ret.logweight = evtin.logweight;
+
+    std::vector< std::vector<SimpleParticle> > primParticles(TPS->Particles().size(), std::vector<SimpleParticle>(0));
+    for (auto&& particle : evtin.Particles) {
+      long long tid = TPS->PdgToId(particle.PDGID);
+      if (tid != -1)
+        primParticles[tid].push_back(particle);
+    }
+
     bool flag_repeat = true;
     while (flag_repeat) {
       flag_repeat = false;
       for (int i = primParticles.size() - 1; i >= 0; --i) {
-        if (!PerformDecays || m_THM->TPS()->Particles()[i].IsStable()) {
+        if (!PerformDecays || TPS->Particles()[i].IsStable()) {
           for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
               SimpleParticle prt = primParticles[i][j];
               double tpt = prt.GetPt();
               double ty = prt.GetY();
-              if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand()) ret.Particles.push_back(prt);
+              ret.Particles.push_back(prt);
               primParticles[i][j].processed = true;
             }
           }
@@ -1159,11 +1345,11 @@ namespace thermalfist {
 
               std::vector<double> Bratios;
               if (primParticles[i][j].MotherPDGID != 0 ||
-                m_THM->TPS()->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
-                Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+                TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+                Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
               }
               else {
-                Bratios = m_THM->TPS()->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+                Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
               }
 
               int DecayIndex = 0;
@@ -1171,22 +1357,22 @@ namespace thermalfist {
                 tsum += Bratios[DecayIndex];
                 if (tsum > DecParam) break;
               }
-              if (DecayIndex < static_cast<int>(m_THM->TPS()->Particles()[i].Decays().size())) {
+              if (DecayIndex < static_cast<int>(TPS->Particles()[i].Decays().size())) {
                 std::vector<double> masses(0);
                 std::vector<long long> pdgids(0);
-                for (size_t di = 0; di < m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
-                  long long dpdg = m_THM->TPS()->Particles()[i].Decays()[DecayIndex].mDaughters[di];
-                  if (m_THM->TPS()->PdgToId(dpdg) == -1) {
+                for (size_t di = 0; di < TPS->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
+                  long long dpdg = TPS->Particles()[i].Decays()[DecayIndex].mDaughters[di];
+                  if (TPS->PdgToId(dpdg) == -1) {
                     continue;
                   }
-                  masses.push_back(m_THM->TPS()->ParticleByPDG(dpdg).Mass());
+                  masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
                   pdgids.push_back(dpdg);
                 }
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
                 for (size_t ind = 0; ind < decres.size(); ind++) {
                   decres[ind].processed = false;
-                  if (m_THM->TPS()->PdgToId(decres[ind].PDGID) != -1)
-                    primParticles[m_THM->TPS()->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+                  if (TPS->PdgToId(decres[ind].PDGID) != -1)
+                    primParticles[TPS->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
                 }
                 primParticles[i][j].processed = true;
               }
@@ -1199,7 +1385,7 @@ namespace thermalfist {
         }
       }
     }
-    
+
     for (int i = primParticles.size() - 1; i >= 0; --i)
       ret.AllParticles.insert(ret.AllParticles.end(), primParticles[i].begin(), primParticles[i].end());
     return ret;

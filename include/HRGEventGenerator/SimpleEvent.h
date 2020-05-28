@@ -35,9 +35,10 @@ namespace thermalfist {
     /// Writes the event to an output file stream
     void writeToFile(std::ofstream & fout, int eventnumber = 1);
 
-    /// Rapidity boost for all particles
+    /// Rapidity boost by dY for all particles
     void RapidityBoost(double dY);
 
+    /// Merge particles from two events (e.g. two patches, two canonical volumes, etc.)
     static SimpleEvent MergeEvents(const SimpleEvent &evt1, const SimpleEvent &evt2);
   };
 
