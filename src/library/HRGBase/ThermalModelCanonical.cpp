@@ -718,6 +718,7 @@ Obtained: %lf\n\
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
 
     m_FluctuationsCalculated = true;
 

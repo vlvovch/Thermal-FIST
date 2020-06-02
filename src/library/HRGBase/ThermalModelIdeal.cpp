@@ -75,6 +75,7 @@ namespace thermalfist {
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
 
     for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_wprim[i] = ParticleScaledVariance(i);

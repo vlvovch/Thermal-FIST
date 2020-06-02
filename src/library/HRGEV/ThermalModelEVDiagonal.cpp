@@ -276,6 +276,8 @@ namespace thermalfist {
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
+
     m_FluctuationsCalculated = true;
 
     for (size_t i = 0; i < m_wprim.size(); ++i) {

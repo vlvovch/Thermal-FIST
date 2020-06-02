@@ -573,6 +573,19 @@ namespace thermalfist {
     }
   }
 
+  int ThermalParticle::ConservedCharge(ConservedCharge::Name chg) const
+  {
+    if (chg == ConservedCharge::BaryonCharge)
+      return BaryonCharge();
+    if (chg == ConservedCharge::ElectricCharge)
+      return ElectricCharge();
+    if (chg == ConservedCharge::StrangenessCharge)
+      return Strangeness();
+    if (chg == ConservedCharge::CharmCharge)
+      return Charm();
+    return 0;
+  }
+
   bool ThermalParticle::IsNeutral() const {
     return (m_Baryon == 0 && m_ElectricCharge == 0 && m_Strangeness == 0 && m_Charm == 0);
   }

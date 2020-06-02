@@ -399,6 +399,9 @@ namespace thermalfist {
     /// Set particle's charm
     void SetCharm(int chg) { m_Charm = chg; }
 
+    /// One of the four QCD conserved charges
+    int ConservedCharge(ConservedCharge::Name chg) const;
+
     /**
      * \brief Arbitrary (auxiliary) charge assigned to particle
      *

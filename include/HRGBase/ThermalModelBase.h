@@ -703,6 +703,13 @@ namespace thermalfist {
     virtual double TwoParticleCorrelationPrimordialByPdg(long long id1, long long id2);
 
     /**
+     * \brief Returns the computed correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        between primordial net-particle numbers for pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double NetParticleCorrelationPrimordialByPdg(long long id1, long long id2);
+
+    /**
      * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with ids i and j. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
      *
@@ -715,6 +722,56 @@ namespace thermalfist {
      *
      */
     virtual double TwoParticleCorrelationFinalByPdg(long long id1, long long id2);
+
+    /**
+     * \brief Returns the computed correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        between final net-particle numbers for pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double NetParticleCorrelationFinalByPdg(long long id1, long long id2);
+
+    /**
+     * \brief Returns the computed primordial particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with id i and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double PrimordialParticleChargeCorrelation(int i, ConservedCharge::Name chg) const;
+
+    /**
+     * \brief Returns the computed primordial particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double PrimordialParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+
+    /**
+     * \brief Returns the computed primordial net particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double PrimordialNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+
+
+    /**
+     * \brief Returns the computed final (after decays) particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with id i and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double FinalParticleChargeCorrelation(int i, ConservedCharge::Name chg) const;
+
+    /**
+     * \brief Returns the computed final (after decays) particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double FinalParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+
+    /**
+     * \brief Returns the computed final (after decays) net particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double FinalNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
 
     /**
      * \brief Calculates the conserved charges susceptibility matrix.
@@ -743,6 +800,16 @@ namespace thermalfist {
      * 
      */
     virtual void CalculateProxySusceptibilityMatrix();
+
+    /**
+     * \brief Calculates the matrix of correlators between primordial (and also final) particle numbers and conserved charges.
+     *
+     * Correlators are normalized by VT^3.
+     *
+     * The calculation results are accessible through PrimordialParticleChargeCorrelation() and FinalParticleChargeCorrelation().
+     *
+     */
+    virtual void CalculateParticleChargeCorrelationMatrix();
 
     /**
      * \brief Calculates fluctuations (diagonal susceptibilities) of an arbitrary "conserved" charge.
@@ -980,6 +1047,16 @@ namespace thermalfist {
     double KurtosisTotal(int id) const { return (id >= 0 && id < static_cast<int>(m_kurttot.size())) ? m_kurttot[id] : 1.; }
 
     /**
+     * \brief A density of a conserved charge (in fm^-3)
+     *
+     * \f$ \rho_{c_i} \f$
+     *
+     * \param i Conserved charge
+     * \return  Conserved charge density \f$ \rho_{c_i} \f$
+     */
+    double ConservedChargeDensity(ConservedCharge::Name chg);
+
+    /**
      * \brief A 2nd order susceptibility of conserved charges
      * 
      * \f$ \chi_{11}^{c_i c_j} \f$
@@ -1117,6 +1194,10 @@ namespace thermalfist {
     // 2nd order correlations of primordial and total numbers
     std::vector< std::vector<double> > m_PrimCorrel;
     std::vector< std::vector<double> > m_TotalCorrel;
+
+    // Particle number-conserved charge correlators
+    std::vector< std::vector<double> > m_PrimChargesCorrel;
+    std::vector< std::vector<double> > m_FinalChargesCorrel;
 
     // Conserved charges susceptibility matrix
     std::vector< std::vector<double> > m_Susc;

@@ -69,6 +69,11 @@ namespace thermalfist {
       }
     }
 
+    m_PrimCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(TPS()->ComponentsNumber(), 0.));
+    m_TotalCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(TPS()->ComponentsNumber(), 0.));
+    m_PrimChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
+    m_FinalChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
+
     m_Ensemble = GCE;
     m_InteractionModel = Ideal;
 
@@ -322,6 +327,10 @@ namespace thermalfist {
     m_skewtot.resize(m_TPS->Particles().size());
     m_kurtprim.resize(m_TPS->Particles().size());
     m_kurttot.resize(m_TPS->Particles().size());
+    m_PrimCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(TPS()->ComponentsNumber(), 0.));
+    m_TotalCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(TPS()->ComponentsNumber(), 0.));
+    m_PrimChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
+    m_FinalChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
     ResetCalculatedFlags();
   }
 
@@ -742,6 +751,19 @@ namespace thermalfist {
     m_GCECalculated = false;
   }
 
+  double ThermalModelBase::ConservedChargeDensity(ConservedCharge::Name chg)
+  {
+    if (chg == ConservedCharge::BaryonCharge)
+      return BaryonDensity();
+    if (chg == ConservedCharge::ElectricCharge)
+      return ElectricChargeDensity();
+    if (chg == ConservedCharge::StrangenessCharge)
+      return StrangenessDensity();
+    if (chg == ConservedCharge::CharmCharge)
+      return CharmDensity();
+    return 0.0;
+  }
+
   double ThermalModelBase::ChargedMultiplicity(int type)
   {
     if (!m_Calculated) CalculateDensities();
@@ -949,6 +971,42 @@ namespace thermalfist {
     return TwoParticleCorrelationPrimordial(i, j);
   }
 
+  double ThermalModelBase::NetParticleCorrelationPrimordialByPdg(long long id1, long long id2)
+  {
+    int i1 = TPS()->PdgToId(id1);
+    int j1 = TPS()->PdgToId(id2);
+
+    if (i1 == -1) {
+      printf("**WARNING** ThermalModelBase::NetParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+    if (j1 == -1) {
+      printf("**WARNING** ThermalModelBase::NetParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id2);
+      return 0.;
+    }
+
+    int i2 = TPS()->PdgToId(-id1);
+    int j2 = TPS()->PdgToId(-id2);
+
+    // Both particles are neutral
+    if (i2 == -1 && j2 == -1) {
+      return TwoParticleCorrelationPrimordial(i1, j1);
+    }
+
+    // First particle species is neutral
+    if (i2 == -1) {
+      return TwoParticleCorrelationPrimordial(i1, j1) - TwoParticleCorrelationPrimordial(i1, j2);
+    }
+
+    // Second particle species is neutral
+    if (j2 == -1) {
+      return TwoParticleCorrelationPrimordial(i1, j1) - TwoParticleCorrelationPrimordial(i2, j1);
+    }
+
+    // Both particles have antiparticles
+    return TwoParticleCorrelationPrimordial(i1, j1) + TwoParticleCorrelationPrimordial(i2, j2) - TwoParticleCorrelationPrimordial(i1, j2) - TwoParticleCorrelationPrimordial(i2, j1);
+  }
+
   double ThermalModelBase::TwoParticleCorrelationFinal(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
@@ -973,15 +1031,123 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelatioFinalByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationFinalByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelatioFinalByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationFinalByPdg: unknown pdg code %I64", id2);
       return 0.;
     }
 
     return TwoParticleCorrelationFinal(i, j);
+  }
+
+  double ThermalModelBase::NetParticleCorrelationFinalByPdg(long long id1, long long id2)
+  {
+    int i1 = TPS()->PdgToId(id1);
+    int j1 = TPS()->PdgToId(id2);
+
+    if (i1 == -1) {
+      printf("**WARNING** ThermalModelBase::NetParticleCorrelationFinalByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+    if (j1 == -1) {
+      printf("**WARNING** ThermalModelBase::NetParticleCorrelationFinalByPdg: unknown pdg code %I64", id2);
+      return 0.;
+    }
+
+    int i2 = TPS()->PdgToId(-id1);
+    int j2 = TPS()->PdgToId(-id2);
+
+    // Both particles are neutral
+    if (i2 == -1 && j2 == -1) {
+      return TwoParticleCorrelationFinal(i1, j1);
+    }
+
+    // First particle species is neutral
+    if (i2 == -1) {
+      return TwoParticleCorrelationFinal(i1, j1) - TwoParticleCorrelationFinal(i1, j2);
+    }
+
+    // Second particle species is neutral
+    if (j2 == -1) {
+      return TwoParticleCorrelationFinal(i1, j1) - TwoParticleCorrelationFinal(i2, j1);
+    }
+
+    // Both particles have antiparticles
+    return TwoParticleCorrelationFinal(i1, j1) + TwoParticleCorrelationFinal(i2, j2) - TwoParticleCorrelationFinal(i1, j2) - TwoParticleCorrelationFinal(i2, j1);
+  }
+
+  double ThermalModelBase::PrimordialParticleChargeCorrelation(int i, ConservedCharge::Name chg) const
+  {
+    if (!IsFluctuationsCalculated()) {
+      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeCorrelation: fluctuations were not computed beforehand! Quitting...\n");
+      exit(1);
+    }
+
+    return m_PrimChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+  }
+
+  double ThermalModelBase::PrimordialParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  {
+    int i = TPS()->PdgToId(id1);
+    if (i == -1) {
+      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+
+    return PrimordialParticleChargeCorrelation(i, chg);
+  }
+
+  double ThermalModelBase::PrimordialNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  {
+    int i1 = TPS()->PdgToId(id1);
+    if (i1 == -1) {
+      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+
+    int i2 = TPS()->PdgToId(-id1);
+    if (i2 == -1)
+      return PrimordialParticleChargeCorrelation(i1, chg);
+
+    return PrimordialParticleChargeCorrelation(i1, chg) - PrimordialParticleChargeCorrelation(i2, chg);
+  }
+
+  double ThermalModelBase::FinalParticleChargeCorrelation(int i, ConservedCharge::Name chg) const
+  {
+    if (!IsFluctuationsCalculated()) {
+      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeCorrelation: fluctuations were not computed beforehand! Quitting...\n");
+      exit(1);
+    }
+
+    return m_FinalChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+  }
+
+  double ThermalModelBase::FinalParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  {
+    int i = TPS()->PdgToId(id1);
+    if (i == -1) {
+      printf("**WARNING** ThermalModelBase::FinalParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+
+    return FinalParticleChargeCorrelation(i, chg);
+  }
+
+  double ThermalModelBase::FinalNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  {
+    int i1 = TPS()->PdgToId(id1);
+    if (i1 == -1) {
+      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      return 0.;
+    }
+
+    int i2 = TPS()->PdgToId(-id1);
+    if (i2 == -1)
+      return FinalParticleChargeCorrelation(i1, chg);
+
+    return FinalParticleChargeCorrelation(i1, chg) - FinalParticleChargeCorrelation(i2, chg);
   }
 
   void ThermalModelBase::CalculateSusceptibilityMatrix()
@@ -1051,6 +1217,36 @@ namespace thermalfist {
 
     //printf("chi2netp/chi2skellam = %lf\n", m_ProxySusc[0][0] / (m_densitiestotal[m_TPS->PdgToId(2212)] + m_densitiestotal[m_TPS->PdgToId(-2212)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
     //printf("chi2netpi/chi2skellam = %lf\n", m_ProxySusc[1][1] / (m_densitiestotal[m_TPS->PdgToId(211)] + m_densitiestotal[m_TPS->PdgToId(-211)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
+  }
+
+  void ThermalModelBase::CalculateParticleChargeCorrelationMatrix()
+  {
+    m_PrimChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
+    m_FinalChargesCorrel = std::vector< std::vector<double> >(TPS()->ComponentsNumber(), std::vector<double>(4, 0.));
+
+    for (size_t i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      int c1 = 1;
+      for (int chg = 0; chg < 4; ++chg) {
+        for (size_t j = 0; j < TPS()->ComponentsNumber(); ++j) {
+          int c2 = TPS()->Particle(j).ConservedCharge((ConservedCharge::Name)chg);
+          m_PrimChargesCorrel[i][chg] += c1 * c2 * m_PrimCorrel[i][j];
+        }
+      }
+    }
+
+    for (size_t i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      if (m_TPS->Particles()[i].IsStable()) {
+        int c1 = 1;
+        for (int chg = 0; chg < 4; ++chg) {
+          for (size_t j = 0; j < TPS()->ComponentsNumber(); ++j) {
+            if (m_TPS->Particles()[j].IsStable()) {
+              int c2 = TPS()->Particle(j).ConservedCharge((ConservedCharge::Name)chg);
+              m_FinalChargesCorrel[i][chg] += c1 * c2 * m_TotalCorrel[i][j];
+            }
+          }
+        }
+      }
+    }
   }
 
   void ThermalModelBase::CalculateFluctuations() {

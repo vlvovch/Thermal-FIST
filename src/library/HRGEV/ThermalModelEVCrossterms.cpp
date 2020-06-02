@@ -539,6 +539,7 @@ namespace thermalfist {
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
 
     m_FluctuationsCalculated = true;
 
