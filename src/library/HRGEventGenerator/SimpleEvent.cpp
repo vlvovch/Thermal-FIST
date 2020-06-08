@@ -50,6 +50,14 @@ namespace thermalfist {
     ret.AllParticles.reserve(evt1.AllParticles.size() + evt2.AllParticles.size());
     ret.AllParticles.insert(ret.AllParticles.end(), evt1.AllParticles.begin(), evt1.AllParticles.end());
     ret.AllParticles.insert(ret.AllParticles.end(), evt2.AllParticles.begin(), evt2.AllParticles.end());
+
+    ret.DecayMap.reserve(evt1.DecayMap.size() + evt2.DecayMap.size());
+    ret.DecayMap.insert(ret.DecayMap.end(), evt1.DecayMap.begin(), evt1.DecayMap.end());
+    ret.DecayMap.insert(ret.DecayMap.end(), evt2.DecayMap.begin(), evt2.DecayMap.end());
+
+    ret.DecayMapFinal.reserve(evt1.DecayMapFinal.size() + evt2.DecayMapFinal.size());
+    ret.DecayMapFinal.insert(ret.DecayMapFinal.end(), evt1.DecayMapFinal.begin(), evt1.DecayMapFinal.end());
+    ret.DecayMapFinal.insert(ret.DecayMapFinal.end(), evt2.DecayMapFinal.begin(), evt2.DecayMapFinal.end());
     
     // TODO: check if proper to combine weights like that
     ret.weight = evt1.weight * evt2.weight;

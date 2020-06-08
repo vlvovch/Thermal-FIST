@@ -26,11 +26,18 @@ namespace thermalfist {
     /// Vector of all final particles in the event
     std::vector<SimpleParticle> Particles;
 
-     /// Vector of all particles which ever appeared in the event (including those that decay)
+    /// Vector of all particles which ever appeared in the event (including those that decay)
     std::vector<SimpleParticle> AllParticles;
 
+    /// Vector for each AllParticles element pointing to the index of the mother resonance.
+    /// If the element corresponds to a primordial particle, the id is -1.
+    std::vector<int> DecayMap;
+
+    /// Vector for each Particles element pointing to the index of the primordial resonance from which this particle originated.
+    std::vector<int> DecayMapFinal;
+
     /// Default constructor, empty event
-    SimpleEvent() { Particles.resize(0); AllParticles.resize(0); weight = 1.; }
+    SimpleEvent() { Particles.resize(0); AllParticles.resize(0); weight = 1.; logweight = 0.; }
 
     /// Writes the event to an output file stream
     void writeToFile(std::ofstream & fout, int eventnumber = 1);

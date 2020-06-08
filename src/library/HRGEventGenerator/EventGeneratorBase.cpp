@@ -1212,6 +1212,13 @@ namespace thermalfist {
 
     ret.AllParticles = ret.Particles;
 
+    ret.DecayMap.resize(ret.Particles.size());
+    fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+
+    ret.DecayMapFinal.resize(ret.Particles.size());
+    for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+      ret.DecayMapFinal[i] = i;
+
     if (DoDecays)
       return PerformDecays(ret, m_THM->TPS());
     else
@@ -1320,25 +1327,40 @@ namespace thermalfist {
     ret.weight = evtin.weight;
     ret.logweight = evtin.logweight;
 
+    ret.AllParticles = evtin.AllParticles;
+    ret.DecayMap = evtin.DecayMap;
+
     std::vector< std::vector<SimpleParticle> > primParticles(TPS->Particles().size(), std::vector<SimpleParticle>(0));
-    for (auto&& particle : evtin.Particles) {
+    //for (auto&& particle : evtin.Particles) {
+    //std::map<int, std::pair<int, int> > mapToPrim;
+    std::vector< std::vector<int> > AllParticlesMap(TPS->Particles().size(), std::vector<int>(0));// , ResoMap(TPS->Particles().size(), std::vector<int>(0));
+    for(int i = 0; i < evtin.Particles.size(); ++i) {
+      const SimpleParticle& particle = evtin.Particles[i];
       long long tid = TPS->PdgToId(particle.PDGID);
-      if (tid != -1)
+      if (tid != -1) {
         primParticles[tid].push_back(particle);
+        //mapToPrim[i] = std::make_pair(tid, primParticles[tid].size() - 1);
+        AllParticlesMap[tid].push_back(i);
+        //ResoMap[tid].push_back(evtin.DecayMap[i]);
+      }
     }
 
     bool flag_repeat = true;
     while (flag_repeat) {
       flag_repeat = false;
       for (int i = primParticles.size() - 1; i >= 0; --i) {
-        if (!PerformDecays || TPS->Particles()[i].IsStable()) {
+        if (TPS->Particles()[i].IsStable()) {
           for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
               SimpleParticle prt = primParticles[i][j];
-              double tpt = prt.GetPt();
-              double ty = prt.GetY();
+              //double tpt = prt.GetPt();
+              //double ty = prt.GetY();
               ret.Particles.push_back(prt);
               primParticles[i][j].processed = true;
+              int tid = AllParticlesMap[i][j];
+              while (tid >= 0 && tid < ret.DecayMap.size() && ret.DecayMap[tid] != -1)
+                tid = ret.DecayMap[tid];
+              ret.DecayMapFinal.push_back(tid);
             }
           }
         }
@@ -1376,8 +1398,15 @@ namespace thermalfist {
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
                 for (size_t ind = 0; ind < decres.size(); ind++) {
                   decres[ind].processed = false;
-                  if (TPS->PdgToId(decres[ind].PDGID) != -1)
-                    primParticles[TPS->PdgToId(decres[ind].PDGID)].push_back(decres[ind]);
+                  if (TPS->PdgToId(decres[ind].PDGID) != -1) {
+                    int tid = TPS->PdgToId(decres[ind].PDGID);
+                    SimpleParticle& dprt = decres[ind];
+                    primParticles[tid].push_back(dprt);
+                    ret.AllParticles.push_back(dprt);
+                    AllParticlesMap[tid].push_back(ret.AllParticles.size() - 1);
+                    //ResoMap[tid].push_back(AllParticlesMap[i][j]);
+                    ret.DecayMap.push_back(AllParticlesMap[i][j]);
+                  }
                 }
                 primParticles[i][j].processed = true;
               }
@@ -1391,8 +1420,8 @@ namespace thermalfist {
       }
     }
 
-    for (int i = primParticles.size() - 1; i >= 0; --i)
-      ret.AllParticles.insert(ret.AllParticles.end(), primParticles[i].begin(), primParticles[i].end());
+    //for (int i = primParticles.size() - 1; i >= 0; --i)
+    //  ret.AllParticles.insert(ret.AllParticles.end(), primParticles[i].begin(), primParticles[i].end());
     return ret;
   }
 
