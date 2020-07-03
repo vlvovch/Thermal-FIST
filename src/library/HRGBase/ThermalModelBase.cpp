@@ -944,44 +944,44 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelBase::TwoParticleCorrelationPrimordial(int i, int j) const
+  double ThermalModelBase::TwoParticleSusceptibilityPrimordial(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationPrimordial: fluctuations were not computed beforehand! Quitting...\n");
+      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityPrimordial: fluctuations were not computed beforehand! Quitting...\n");
       exit(1);
     }
 
     return m_PrimCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::TwoParticleCorrelationPrimordialByPdg(long long id1, long long id2)
+  double ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg(long long id1, long long id2)
   {
     int i = TPS()->PdgToId(id1);
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id2);
       return 0.;
     }
 
-    return TwoParticleCorrelationPrimordial(i, j);
+    return TwoParticleSusceptibilityPrimordial(i, j);
   }
 
-  double ThermalModelBase::NetParticleCorrelationPrimordialByPdg(long long id1, long long id2)
+  double ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg(long long id1, long long id2)
   {
     int i1 = TPS()->PdgToId(id1);
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleCorrelationPrimordialByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id2);
       return 0.;
     }
 
@@ -990,27 +990,27 @@ namespace thermalfist {
 
     // Both particles are neutral
     if (i2 == -1 && j2 == -1) {
-      return TwoParticleCorrelationPrimordial(i1, j1);
+      return TwoParticleSusceptibilityPrimordial(i1, j1);
     }
 
     // First particle species is neutral
     if (i2 == -1) {
-      return TwoParticleCorrelationPrimordial(i1, j1) - TwoParticleCorrelationPrimordial(i1, j2);
+      return TwoParticleSusceptibilityPrimordial(i1, j1) - TwoParticleSusceptibilityPrimordial(i1, j2);
     }
 
     // Second particle species is neutral
     if (j2 == -1) {
-      return TwoParticleCorrelationPrimordial(i1, j1) - TwoParticleCorrelationPrimordial(i2, j1);
+      return TwoParticleSusceptibilityPrimordial(i1, j1) - TwoParticleSusceptibilityPrimordial(i2, j1);
     }
 
     // Both particles have antiparticles
-    return TwoParticleCorrelationPrimordial(i1, j1) + TwoParticleCorrelationPrimordial(i2, j2) - TwoParticleCorrelationPrimordial(i1, j2) - TwoParticleCorrelationPrimordial(i2, j1);
+    return TwoParticleSusceptibilityPrimordial(i1, j1) + TwoParticleSusceptibilityPrimordial(i2, j2) - TwoParticleSusceptibilityPrimordial(i1, j2) - TwoParticleSusceptibilityPrimordial(i2, j1);
   }
 
-  double ThermalModelBase::TwoParticleCorrelationFinal(int i, int j) const
+  double ThermalModelBase::TwoParticleSusceptibilityFinal(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationFinal: fluctuations were not computed beforehand! Quitting...\n");
+      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityFinal: fluctuations were not computed beforehand! Quitting...\n");
       exit(1);
     }
 
@@ -1018,41 +1018,41 @@ namespace thermalfist {
       int tid = i;
       if (!m_TPS->Particle(j).IsStable())
         tid = j;
-      printf("**ERROR** ThermalModelBase::TwoParticleCorrelationFinal: Particle %d is not stable! Final correlations not computed for unstable particles. Quitting...\n", tid);
+      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityFinal: Particle %d is not stable! Final correlations not computed for unstable particles. Quitting...\n", tid);
       exit(1);
     }
 
     return m_TotalCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::TwoParticleCorrelationFinalByPdg(long long id1, long long id2)
+  double ThermalModelBase::TwoParticleSusceptibilityFinalByPdg(long long id1, long long id2)
   {
     int i = TPS()->PdgToId(id1);
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationFinalByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleCorrelationFinalByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id2);
       return 0.;
     }
 
-    return TwoParticleCorrelationFinal(i, j);
+    return TwoParticleSusceptibilityFinal(i, j);
   }
 
-  double ThermalModelBase::NetParticleCorrelationFinalByPdg(long long id1, long long id2)
+  double ThermalModelBase::NetParticleSusceptibilityFinalByPdg(long long id1, long long id2)
   {
     int i1 = TPS()->PdgToId(id1);
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleCorrelationFinalByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleCorrelationFinalByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id2);
       return 0.;
     }
 
@@ -1061,93 +1061,93 @@ namespace thermalfist {
 
     // Both particles are neutral
     if (i2 == -1 && j2 == -1) {
-      return TwoParticleCorrelationFinal(i1, j1);
+      return TwoParticleSusceptibilityFinal(i1, j1);
     }
 
     // First particle species is neutral
     if (i2 == -1) {
-      return TwoParticleCorrelationFinal(i1, j1) - TwoParticleCorrelationFinal(i1, j2);
+      return TwoParticleSusceptibilityFinal(i1, j1) - TwoParticleSusceptibilityFinal(i1, j2);
     }
 
     // Second particle species is neutral
     if (j2 == -1) {
-      return TwoParticleCorrelationFinal(i1, j1) - TwoParticleCorrelationFinal(i2, j1);
+      return TwoParticleSusceptibilityFinal(i1, j1) - TwoParticleSusceptibilityFinal(i2, j1);
     }
 
     // Both particles have antiparticles
-    return TwoParticleCorrelationFinal(i1, j1) + TwoParticleCorrelationFinal(i2, j2) - TwoParticleCorrelationFinal(i1, j2) - TwoParticleCorrelationFinal(i2, j1);
+    return TwoParticleSusceptibilityFinal(i1, j1) + TwoParticleSusceptibilityFinal(i2, j2) - TwoParticleSusceptibilityFinal(i1, j2) - TwoParticleSusceptibilityFinal(i2, j1);
   }
 
-  double ThermalModelBase::PrimordialParticleChargeCorrelation(int i, ConservedCharge::Name chg) const
+  double ThermalModelBase::PrimordialParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeCorrelation: fluctuations were not computed beforehand! Quitting...\n");
+      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeSusceptibility: fluctuations were not computed beforehand! Quitting...\n");
       exit(1);
     }
 
     return m_PrimChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::PrimordialParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  double ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg)
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
 
-    return PrimordialParticleChargeCorrelation(i, chg);
+    return PrimordialParticleChargeSusceptibility(i, chg);
   }
 
-  double ThermalModelBase::PrimordialNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  double ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg)
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
 
     int i2 = TPS()->PdgToId(-id1);
     if (i2 == -1)
-      return PrimordialParticleChargeCorrelation(i1, chg);
+      return PrimordialParticleChargeSusceptibility(i1, chg);
 
-    return PrimordialParticleChargeCorrelation(i1, chg) - PrimordialParticleChargeCorrelation(i2, chg);
+    return PrimordialParticleChargeSusceptibility(i1, chg) - PrimordialParticleChargeSusceptibility(i2, chg);
   }
 
-  double ThermalModelBase::FinalParticleChargeCorrelation(int i, ConservedCharge::Name chg) const
+  double ThermalModelBase::FinalParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeCorrelation: fluctuations were not computed beforehand! Quitting...\n");
+      printf("**ERROR** ThermalModelBase::FinalParticleChargeSusceptibility: fluctuations were not computed beforehand! Quitting...\n");
       exit(1);
     }
 
     return m_FinalChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::FinalParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  double ThermalModelBase::FinalParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg)
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::FinalParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::FinalParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
 
-    return FinalParticleChargeCorrelation(i, chg);
+    return FinalParticleChargeSusceptibility(i, chg);
   }
 
-  double ThermalModelBase::FinalNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg)
+  double ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg)
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeCorrelationByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
       return 0.;
     }
 
     int i2 = TPS()->PdgToId(-id1);
     if (i2 == -1)
-      return FinalParticleChargeCorrelation(i1, chg);
+      return FinalParticleChargeSusceptibility(i1, chg);
 
-    return FinalParticleChargeCorrelation(i1, chg) - FinalParticleChargeCorrelation(i2, chg);
+    return FinalParticleChargeSusceptibility(i1, chg) - FinalParticleChargeSusceptibility(i2, chg);
   }
 
   void ThermalModelBase::CalculateSusceptibilityMatrix()

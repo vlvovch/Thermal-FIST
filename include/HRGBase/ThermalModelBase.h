@@ -63,7 +63,7 @@ namespace thermalfist {
     virtual ~ThermalModelBase(void) { }
 
     /// Number of different particle species in the list
-    int ComponentsNumber() const { return m_densities.size(); }
+    int ComponentsNumber() const { return static_cast<int>(m_densities.size()); }
 
     /**
      * \brief Fills the excluded volume coefficients \f$ \tilde{b}_{ij} \f$ based on the 
@@ -662,7 +662,7 @@ namespace thermalfist {
      * \brief Computes the fluctuations and
      *        correlations of the primordial particle numbers.
      * 
-     * More specifically, computes the matrix
+     * More specifically, computes the susceptibility matrix
      * \f$ \frac{1}{VT^3} \, \langle \Delta N_i^* \Delta N_j^* \rangle \f$,
      * where \f$ N_i^* \f$ is the primordial yield of species i.
      * 
@@ -671,15 +671,15 @@ namespace thermalfist {
 
     /**
      * \brief Computes particle number correlations
-     *        and fluctuations for all particles which
+     *        and fluctuations for all final-state particles which
      *        are marked stable.
      * 
-     * More specifically, computes the matrix
+     * More specifically, computes the susceptibility matrix
      * \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$,
      * where \f$ N_i \f$ is the final yield of species i,
      * and indices i and j corresponds to stable particles only.
      * 
-     * Uses the formalism from paper 
+     * To incorporate probabilistic decays uses the formalism from paper 
      * V.V. Begun, M.I. Gorenstein, M. Hauer, V. Konchakovski, O.S. Zozulya,
      * Phys.Rev. C 74, 044903 (2006), 
      * [https://arxiv.org/pdf/nucl-th/0606036.pdf](https://arxiv.org/pdf/nucl-th/0606036.pdf)
@@ -689,89 +689,89 @@ namespace thermalfist {
     virtual void CalculateTwoParticleFluctuationsDecays();
 
     /**
-     * \brief Returns the computed primordial particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed primordial particle number (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with ids i and j. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double TwoParticleCorrelationPrimordial(int i, int j) const;
+    virtual double TwoParticleSusceptibilityPrimordial(int i, int j) const;
 
     /**
-     * \brief Returns the computed primordial particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed primordial particle number (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double TwoParticleCorrelationPrimordialByPdg(long long id1, long long id2);
+    virtual double TwoParticleSusceptibilityPrimordialByPdg(long long id1, long long id2);
 
     /**
-     * \brief Returns the computed correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        between primordial net-particle numbers for pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double NetParticleCorrelationPrimordialByPdg(long long id1, long long id2);
+    virtual double NetParticleSusceptibilityPrimordialByPdg(long long id1, long long id2);
 
     /**
-     * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed final particle number (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with ids i and j. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
      *
      */
-    virtual double TwoParticleCorrelationFinal(int i, int j) const;
+    virtual double TwoParticleSusceptibilityFinal(int i, int j) const;
 
     /**
-     * \brief Returns the computed final particle number correlations \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed final particle number (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand. Both particle species must be those marked stable.
      *
      */
-    virtual double TwoParticleCorrelationFinalByPdg(long long id1, long long id2);
+    virtual double TwoParticleSusceptibilityFinalByPdg(long long id1, long long id2);
 
     /**
-     * \brief Returns the computed correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     * \brief Returns the computed (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        between final net-particle numbers for pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double NetParticleCorrelationFinalByPdg(long long id1, long long id2);
+    virtual double NetParticleSusceptibilityFinalByPdg(long long id1, long long id2);
 
     /**
-     * \brief Returns the computed primordial particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed primordial particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with id i and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double PrimordialParticleChargeCorrelation(int i, ConservedCharge::Name chg) const;
+    virtual double PrimordialParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const;
 
     /**
-     * \brief Returns the computed primordial particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed primordial particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double PrimordialParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+    virtual double PrimordialParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
     /**
-     * \brief Returns the computed primordial net particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed primordial net particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double PrimordialNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+    virtual double PrimordialNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
 
     /**
-     * \brief Returns the computed final (after decays) particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed final (after decays) particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with id i and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double FinalParticleChargeCorrelation(int i, ConservedCharge::Name chg) const;
+    virtual double FinalParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const;
 
     /**
-     * \brief Returns the computed final (after decays) particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed final (after decays) particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double FinalParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+    virtual double FinalParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
     /**
-     * \brief Returns the computed final (after decays) net particle vs conserved charge correlation \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
+     * \brief Returns the computed final (after decays) net particle vs conserved charge (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_chg \rangle \f$
      *        for particle with pdg code id1 and conserved charge chg. CalculateFluctuations() must be called beforehand.
      *
      */
-    virtual double FinalNetParticleChargeCorrelationByPdg(long long id1, ConservedCharge::Name chg);
+    virtual double FinalNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
     /**
      * \brief Calculates the conserved charges susceptibility matrix.
@@ -856,10 +856,10 @@ namespace thermalfist {
     /// Net charm density (fm\f$^{-3}\f$)
     double CharmDensity() { return CalculateCharmDensity(); }
 
-    /// Absolute baryon number density (fm\f$^{-3}\f$)
+    /// Absolute baryon number density (baryons + antibaryons) (fm\f$^{-3}\f$)
     double AbsoluteBaryonDensity() { return CalculateAbsoluteBaryonDensity(); }
 
-    /// Absolute electric charge density (fm\f$^{-3}\f$)
+    /// Absolute electric charge density (Q+ + Q-) (fm\f$^{-3}\f$)
     double AbsoluteElectricChargeDensity() { return CalculateAbsoluteChargeDensity(); }
 
     /// Absolute strange quark content density (fm\f$^{-3}\f$)
@@ -932,6 +932,16 @@ namespace thermalfist {
      * \return Particle number density
      */
     double GetDensity(long long PDGID, Feeddown::Type feeddown);
+
+    /**
+     * \brief Particle number yield of species
+     *        with a specified PDG ID and feeddown
+     *
+     * \param PDGID    Particle Data Group ID of the needed specie
+     * \param feeddown Which decay feeddown contributions to take into account
+     * \return Particle number yield
+     */
+    double GetYield(long long PDGID, Feeddown::Type feeddown) { return GetDensity(PDGID, feeddown) * Volume(); }
 
     std::vector<double> GetIdealGasDensities() const;
 
