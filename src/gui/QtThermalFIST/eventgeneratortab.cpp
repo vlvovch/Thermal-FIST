@@ -32,8 +32,11 @@
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
-#include "HRGEventGenerator/SREventGenerator.h"
-#include "HRGEventGenerator/SSHEventGenerator.h"
+#include "HRGEventGenerator/SphericalBlastWaveEventGenerator.h"
+#include "HRGEventGenerator/CylindricalBlastWaveEventGenerator.h"
+#include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"
+
+//#include "EventGeneratorExtensions.h"
 
 #include "DebugText.h"
 #include "spectramodel.h"
@@ -92,6 +95,12 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     tname = "d2N/dydpt";
     paramnames.push_back(tname);
     paramnamesx.push_back("y");
+    parammap[tname] = index;
+    index++;
+
+    tname = "dN/dpt";
+    paramnames.push_back(tname);
+    paramnamesx.push_back("pT (GeV)");
     parammap[tname] = index;
     index++;
 
@@ -203,7 +212,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     grModelConfig->setLayout(layModelConfig);
 
 
-    QGroupBox *grParameters = new QGroupBox(tr("Thermal model parameters:"));
+    QGroupBox *grParameters = new QGroupBox(tr("Chemical freeze-out parameters:"));
 
     QGridLayout *layParameters = new QGridLayout();
     layParameters->setAlignment(Qt::AlignLeft);
@@ -348,15 +357,18 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     radioSR = new QRadioButton(tr("Spherically symmetric"));
     radioSR->setToolTip(tr("Siemens-Rasmussen momentum distribution"));
     radioSSH = new QRadioButton(tr("Cylindrically symmetric"));
-    radioSSH->setToolTip(tr("Schnedermann-Sollfrank-Heinz prescription (note that initialization takes while!)"));
+    radioSSH->setToolTip(tr("Schnedermann-Sollfrank-Heinz prescription (note that initialization takes a while!)"));
+    radioCracow = new QRadioButton(tr("Cracow model"));
+    radioCracow->setToolTip(tr("Cracow model"));
     radioSR->setChecked(true);
     connect(radioSR, SIGNAL(clicked()), this, SLOT(modelChanged()));
     connect(radioSSH, SIGNAL(clicked()), this, SLOT(modelChanged()));
+    connect(radioCracow, SIGNAL(clicked()), this, SLOT(modelChanged()));
 
 
     layMom1->addWidget(radioSR);
     layMom1->addWidget(radioSSH);
-
+    layMom1->addWidget(radioCracow);
 
     QHBoxLayout *layMom2 = new QHBoxLayout();
     layMom2->setAlignment(Qt::AlignLeft);
@@ -374,7 +386,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinBeta->setDecimals(3);
     spinBeta->setValue(0.5);
     spinBeta->setToolTip(tr("Radial flow velocity"));
-    QLabel *labelBetat = new QLabel(tr("⟨β<sub>T</sub>⟩:"));
+    QLabel *labelBetat = new QLabel(tr("β<sub>T</sub>:"));
     spinBetat = new QDoubleSpinBox();
     spinBetat->setMinimum(0.);
     spinBetat->setMaximum(1.);
@@ -523,9 +535,10 @@ ThermalModelConfig EventGeneratorTab::getConfig()
 {
   ThermalModelConfig ret = configWidget->updatedConfig();
 
-  ret.QuantumStatistics = 0;
-  ret.QuantumStatisticsType = 0;
-  ret.QuantumStatisticsInclude = 0;
+  //ret.QuantumStatistics = 0;
+  //ret.QuantumStatisticsType = 0;
+  //ret.QuantumStatisticsInclude = 0;
+
 
   ret.T = spinTemperature->value() * 1.e-3;
   ret.muB = spinmuB->value() * 1.e-3;
@@ -563,7 +576,7 @@ void EventGeneratorTab::changedRow()
     mutex.lock();
     if (id<spectra->fParticles.size()) {
         int ttype = comboDistr->currentIndex();
-        if (ttype>=0 && ttype<=2) {
+        if ((ttype>=0 && ttype<=2) || ttype == 4) {
             double tl = 0.;
             if (ttype==1) tl = -3.;
             double tr = 2.;
@@ -585,7 +598,7 @@ void EventGeneratorTab::replot() {
     int index = comboDistr->currentIndex();
     int id = getCurrentRow();
     if (id<0) id = 0;
-    if (index>=0 && index<3 && id<spectra->fParticles.size()) {
+    if (((index>=0 && index<3) || index == 4) && id<spectra->fParticles.size()) {
 
         double tmin = 1.e5, tmax = 0.;
         double tl = 0., tr = 2.;
@@ -598,9 +611,11 @@ void EventGeneratorTab::replot() {
         plotDistr->graph(1)->setName(paramnames[index]);
 
         int ttype = comboDistr->currentIndex();
-        if (ttype>=0 && ttype<=2) {
+        if ((ttype>=0 && ttype<=2) || ttype==4) {
             QVector<double> x1,y1,y1err;
-            x1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
+            std::vector<double> tvec = spectra->fParticles[id].GetXVector(ttype);
+            x1 = QVector<double>::fromStdVector(tvec);
+            //x1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
             y1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
             y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
             for(int i=0;i<x1.size();++i) {
@@ -656,9 +671,10 @@ void EventGeneratorTab::replot() {
         plot->setCurrentIndex(0);
         plotDistr->replot();
     }
+
     if (index==3 && id<spectra->fParticles.size()) {
-        plot2D->xAxis->setRange(-3., 3.);
-        if (spectra->fDistributionType==1) plot2D->xAxis->setRange(-3. - spectra->fEtaMax, 3. + spectra->fEtaMax);
+        if (spectra->fDistributionType == 0) plot2D->xAxis->setRange(-3., 3.);
+        else plot2D->xAxis->setRange(-3. - spectra->fEtaMax, 3. + spectra->fEtaMax);
         plot2D->yAxis->setRange( 0., 2.);
 
         QCPColorMapData *data = new QCPColorMapData(spectra->fParticles[id].d2ndptdy.szx,
@@ -749,8 +765,8 @@ void EventGeneratorTab::replot(const QVector<double> &x1, const QVector<double> 
 
 void EventGeneratorTab::replot2D(const QVector<double> &xv, const QVector<double> &yv, const QVector<double> &zv, int index, double rightlimit)
 {
-    plot2D->xAxis->setRange(-3., 3.);
-    //if (spectra->fDistributionType==1) plot2D->xAxis->setRange(-3. - spectra->fEtaMax, 3. + spectra->fEtaMax);
+    if (spectra->fDistributionType == 0) plot2D->xAxis->setRange(-3., 3.);
+    else plot2D->xAxis->setRange(-3. - spectra->fEtaMax, 3. + spectra->fEtaMax);
     plot2D->yAxis->setRange( 0., rightlimit);
     
     int id = getCurrentRow();
@@ -845,10 +861,10 @@ void EventGeneratorTab::updateProgress() {
     QVector<double> x2, y2;
     if (index>=0 && index<paramnames.size() && id<spectra->fParticles.size()) {
         int ttype = comboDistr->currentIndex();
-        if (ttype>=0 && ttype<=3) {
+        if (ttype>=0 && ttype<=4) {
             x1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
             y1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
-            if (ttype<=2) y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
+            if (ttype<=2 || ttype == 4) y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
             else z1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetZVector(ttype) );
             plotDistr->graph(0)->setData(x1, y1);
             //plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
@@ -861,7 +877,7 @@ void EventGeneratorTab::updateProgress() {
     //qDebug() << "munlock";
 
 
-    if (index>=0 && index<3 && id<spectra->fParticles.size()) {
+    if (((index>=0 && index<3) || index == 4) && id<spectra->fParticles.size()) {
       double tr = 2.;
       if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1)
         tr = TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Mass() + 2.;
@@ -906,7 +922,7 @@ void EventGeneratorTab::changePlot() {
     mutex.lock();
     if (id<spectra->fParticles.size()) {
         int ttype = comboDistr->currentIndex();
-        if (ttype>=0 && ttype<=2) {
+        if ((ttype>=0 && ttype<=2) || ttype == 4) {
             double tl = 0.;
             if (ttype==1) tl = -3.;
             double tr = 2.;
@@ -1064,7 +1080,6 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     SetThermalModelInteraction(modelEVVDW, config);
 
-
     model->CalculateDensitiesGCE();
 
     // Convert the mean transverse velocity into the one at the surface
@@ -1072,12 +1087,13 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     if (radioSR->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
     else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
+    else spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 2, spinEtaMax->value());
 
     int id = getCurrentRow();
     if (id<0) id = 0;
     if (id<spectra->fParticles.size()) {
       int ttype = comboDistr->currentIndex();
-      if (ttype >= 0 && ttype <= 2) {
+      if ((ttype >= 0 && ttype <= 2) || ttype == 4) {
         double tl = 0.;
         if (ttype == 1) tl = -3.;
         double tr = 2.;
@@ -1120,16 +1136,23 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     configMC.Q = model->Parameters().Q;
     configMC.S = model->Parameters().S;
     configMC.C = model->Parameters().C;
+    configMC.CanonicalB = config.CanonicalB;
+    configMC.CanonicalQ = config.CanonicalQ;
+    configMC.CanonicalS = config.CanonicalS;
+    configMC.CanonicalC = config.CanonicalC;
 
     configMC.bij = CuteHRGHelper::bijMatrix(modelEVVDW);
 
     configMC.aij = CuteHRGHelper::aijMatrix(modelEVVDW);
 
     if (radioSR->isChecked())
+      //generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
       generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
-    else 
+    else if (radioSSH->isChecked())
       generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value(), spinn->value());
-
+    else
+      generator = new CracowFreezeoutEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value());
+      //generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value());
 
     //if (radioSR->isChecked()) generator = new SphericalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBeta->value(), false, EV, modelEVVDW);
     //else generator = new CylindricalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value(), false, EV, modelEVVDW);

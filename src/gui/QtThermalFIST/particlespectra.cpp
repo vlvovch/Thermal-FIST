@@ -13,6 +13,8 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 
+//#include "EventGeneratorExtensions.h"
+
 using namespace thermalfist;
 
 void ParticleSpectrum::AddParticle(const SimpleParticle &part) {
@@ -20,6 +22,7 @@ void ParticleSpectrum::AddParticle(const SimpleParticle &part) {
     dndp.insert(sqrt(part.p0*part.p0 - part.m*part.m));
     dndy.insert(part.GetY());
     dndmt.insert(part.GetMt());
+    dndpt.insert(part.GetPt());
     d2ndptdy.insert(part.GetY(), part.GetPt());
 }
 
@@ -39,6 +42,7 @@ void ParticleSpectrum::FinishEvent(double weight) {
     dndp.updateEvent(weight);
     dndy.updateEvent(weight);
     dndmt.updateEvent(weight);
+    dndpt.updateEvent(weight);
     d2ndptdy.updateEvent(weight);
     events++;
     isAveragesCalculated = false;
@@ -156,8 +160,11 @@ ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, double T, double bet
                 if (distrtype==0) fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass()));
                 else fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), etamax));
                 MomentumDistributionBase *ptr;
-                if (distrtype==0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(),model->TPS()->Particles()[i].Mass(),T,beta);
-                else ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
+                if (distrtype == 0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta);
+                //else if (distrtype == 1) ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
+                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, 1.0), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
+                //else ptr = new CracowFreezeoutDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
+                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
                 distrs.push_back(ptr);
                 fParticles[fParticles.size()-1].SetDistribution(ptr);
                 fNames.push_back(model->TPS()->Particles()[i].Name());
@@ -299,7 +306,10 @@ void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int
                 else fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), etamax));
                 MomentumDistributionBase *ptr;
                 if (distrtype==0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(),model->TPS()->Particles()[i].Mass(),T,beta);
-                else ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
+                //else if (distrtype == 1) ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
+                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, npow), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
+                //else ptr = new CracowFreezeoutDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
+                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
                 distrs.push_back(ptr);
                 fParticles[fParticles.size()-1].SetDistribution(ptr);
                 fNames.push_back(model->TPS()->Particles()[i].Name());

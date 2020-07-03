@@ -235,12 +235,14 @@ public:
     density   dndp;
     density   dndy;
     density   dndmt;
+    density   dndpt;
     density2d d2ndptdy;
     ParticleSpectrum(int PDGID_=0, double mass_=1., double etamax = 0.):n(0),n2(0),n3(0),n4(0),n5(0),n6(0),n7(0),n8(0),wsum(0.),w2sum(0.),events(0),PDGID(PDGID_),mass(mass_),tmpn(0) {
         fDistribution = NULL;
         dndp     = density(0., 2. + mass, 500);
         dndy     = density(-3. - etamax, 3. + etamax, 500);
         dndmt    = density(mass, 2.+mass, 500);
+        dndpt    = density(0., 3. + mass, 500);
         d2ndptdy = density2d(-3. - etamax, 3. + etamax, 40, 0., 2., 40);
         acc      = false;
         isAveragesCalculated = false;
@@ -258,6 +260,7 @@ public:
         dndp = density(0., 2. + mass, 500);
         dndy = density(-3., 3., 500);
         dndmt = density(mass, 2.+mass, 500);
+        dndpt = density(0., 3. + mass, 500);
         d2ndptdy = density2d(-3., 3., 40, 0., 2., 40);
     }
     void SetDistribution(thermalfist::MomentumDistributionBase *distr) {
@@ -303,6 +306,11 @@ public:
         if (fDistribution==NULL) return 0.;
         else return fDistribution->dnmtdmt(mt);
     }
+    double GetModeldNdpt(double pt) const {
+      if (fDistribution != NULL && !fDistribution->isNormalized()) fDistribution->Normalize();
+      if (fDistribution == NULL) return 0.;
+      else return fDistribution->dnmtdmt(sqrt(mass*mass + pt*pt)) * pt;
+    }
     double GetModeld2Ndptdy(double pt, double y) const {
         if (fDistribution!=NULL && !fDistribution->isNormalized()) fDistribution->Normalize();
         if (fDistribution==NULL) return 0.;
@@ -318,6 +326,7 @@ public:
             if (type==2) { tx += mass; }
             if (type==0) ty = GetModeldNdp(tx);
             else if (type==1) ty = GetModeldNdy(tx);
+            else if (type == 4) ty = GetModeldNdpt(tx);
             else ty = GetModeldNmtdmt(tx);
             if (type!=2) xs.push_back(tx);
             else xs.push_back(tx-mass);
@@ -344,26 +353,45 @@ public:
             for(int i=0;i<ret.size();++i) ret[i] -= mass;
             return ret;
         }
+        //else if (type == 4) {
+        //  std::vector<double> ret = dndmt.GetXVector();
+        //  for (int i = 0; i < ret.size(); ++i)
+        //    ret[i] = sqrt(ret[i] * ret[i] - mass * mass);
+        //  return ret;
+        //}
+        else if (type == 4) return dndpt.GetXVector();
         else return d2ndptdy.GetXVector();
     }
     std::vector<double> GetYVector(int type=0) const {
-        if (type==0) return dndp.GetYVector();
-        else if (type==1) return dndy.GetYVector();
-        else if (type==2) {
-            std::vector<double> ret = dndmt.GetYVector();
-            for(int i=0;i<ret.size();++i) ret[i] /= dndmt.GetX(i);
-            return ret;
-        }
-        else return d2ndptdy.GetYVector();
+      if (type == 0) return dndp.GetYVector();
+      else if (type == 1) return dndy.GetYVector();
+      else if (type == 2) {
+        std::vector<double> ret = dndmt.GetYVector();
+        for (int i = 0; i < ret.size(); ++i) ret[i] /= dndmt.GetX(i);
+        return ret;
+      }
+      else if (type == 4) return dndpt.GetYVector();
+      //{
+      //  std::vector<double> ret = dndmt.GetYVector();
+      //  for (int i = 0; i < ret.size(); ++i) ret[i] *= sqrt(dndmt.GetX(i) * dndmt.GetX(i) - mass * mass) / dndmt.GetX(i);
+      //  return ret;
+      //}
+      else return d2ndptdy.GetYVector();
     }
     std::vector<double> GetYErrorVector(int type=0) const {
         if (type==0) return dndp.GetYErrorVector();
         else if (type==1) return dndy.GetYErrorVector();
-        else {
+        else if (type == 3) {
             std::vector<double> ret = dndmt.GetYErrorVector();
             for(int i=0;i<ret.size();++i) ret[i] /= dndmt.GetX(i);
             return ret;
         }
+        else return dndpt.GetYErrorVector();
+        //{
+        //  std::vector<double> ret = dndmt.GetYErrorVector();
+        //  for (int i = 0; i < ret.size(); ++i) ret[i] *= sqrt(dndmt.GetX(i) * dndmt.GetX(i) - mass * mass) / dndmt.GetX(i);
+        //  return ret;
+        //}
     }
     std::vector<double> GetZVector(int type=0) const {
         return d2ndptdy.GetZVector();

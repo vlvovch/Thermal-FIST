@@ -108,7 +108,7 @@ class EventGeneratorTab : public QWidget
     QLabel *labelB, *labelQ, *labelS, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
-    QRadioButton *radioSR, *radioSSH;
+    QRadioButton *radioSR, *radioSSH, *radioCracow;
 
     QDoubleSpinBox *spinTkin;
     QDoubleSpinBox *spinBeta;

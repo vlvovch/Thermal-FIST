@@ -63,8 +63,6 @@ class SpectralFunctionDialog : public QDialog
     //QCPColorMap *colormap;
     //QCPColorScale *colorScale;
 
-    QString cpath;
-
     QComboBox *comboScheme;
 
     QDoubleSpinBox *spinT;
@@ -88,13 +86,6 @@ public slots:
     void replotSpectralFunctions();
     void replotBranchingRatios();
     void replotPartialWidths();
-
-    void contextMenuRequest(QPoint pos);
-    void saveAsPdf();
-    void saveAsPng();
-    void saveAsAscii();
-    // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
-    void saveAs(int type);
 };
 
 #endif // SPECTRALFUNCTIONDIALOG_H

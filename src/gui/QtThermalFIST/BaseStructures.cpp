@@ -117,6 +117,13 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.ComputeFluctations = false;
 
+
+  ret.UsePCE = model->UsePartialChemicalEquilibrium();
+  ret.Tkin = 0.100;
+  ret.PCEFreezeLongLived = false;
+  ret.PCEWidthCut = 0.015;
+  ret.PCESahaForNuclei = true;
+
   return ret;
 }
 
@@ -167,7 +174,6 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     model->SetCalculationType(IdealGasFunctions::Quadratures);
   else
     model->SetCalculationType(IdealGasFunctions::ClusterExpansion);
-
 
   if (config.QuantumStatisticsInclude == 1 || config.QuantumStatisticsInclude == 2) {
     for (int i = 0; i < model->TPS()->Particles().size(); ++i) {

@@ -326,6 +326,8 @@ ThermalModelConfig FitToExperimentTab::getConfig()
   ret.S = spinS->value();
   ret.C = spinC->value();
 
+  ret.Tkin = m_FitParameters.Tkin.value;
+
   ret.ComputeFluctations = false;
   ret.ResetMus = true;
 
@@ -403,10 +405,18 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
   ThermalModelFit *fit = new ThermalModelFit(model);
 
+  std::cout << "Tkin = " << params.Tkin.value << "\n";
+
   fit->SetParameters(params);
 
   fit->FixVcOverV(checkFixRc->isChecked());
   fit->SetVcOverV(spinVcV->value());
+
+  fit->UseTkin(config.UsePCE);
+  fit->UseSahaForNuclei(config.PCESahaForNuclei);
+  fit->PCEFreezeLongLived(config.PCEFreezeLongLived);
+  fit->SetPCEWidthCut(config.PCEWidthCut);
+
 
   SetThermalModelInteraction(model, config);
 
@@ -613,6 +623,10 @@ void FitToExperimentTab::modelChanged()
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("gammaC"),
     !(model->TPS()->hasCharmed()));
 
+  // If PCE not used, no Tkin is fitted
+  tableFitParameters->setRowHidden(m_FitParameters.IndexByName("Tkin"),
+    !(configWidget->currentConfig.UsePCE));
+
   //tableParameters->hideRow(1);
   //tableParameters->setRowHidden(0, true);
   //tableParameters->resizeColumnsToContents();
@@ -645,18 +659,19 @@ void FitToExperimentTab::writetofile() {
 }
 
 void FitToExperimentTab::updateProgress() {
-  dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
+  //dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
+  dbgstrm << "T\t= " << fitcopy->Parameters().T.value * 1.e3 << " MeV" << endl;
   if (!(model->Ensemble() == ThermalModelBase::CE)) {
-    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
+    dbgstrm << "muB\t= " << fitcopy->Parameters().muB.value * 1.e3 << " MeV" << endl;
     if (model->TPS()->hasCharged())
-      dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
+      dbgstrm << "muQ\t= " << fitcopy->Parameters().muQ.value * 1.e3 << " MeV" << endl;
     if (!(model->Ensemble() == ThermalModelBase::SCE)
       && model->TPS()->hasStrange())
-      dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+      dbgstrm << "muS\t= " << fitcopy->Parameters().muS.value * 1.e3 << " MeV" << endl;
     if (!(model->Ensemble() == ThermalModelBase::SCE)
       && !(model->Ensemble() == ThermalModelBase::CCE)
       && model->TPS()->hasCharmed())
-      dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+      dbgstrm << "muC\t= " << fitcopy->Parameters().muC.value * 1.e3 << " MeV" << endl;
   }
   else {
       dbgstrm << "B\t= " << fitcopy->BT() << endl;
@@ -665,12 +680,16 @@ void FitToExperimentTab::updateProgress() {
       dbgstrm << "C\t= " << fitcopy->CT() << endl;
   }
   if (fitcopy->Parameters().gammaq.toFit == true)
-    dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
+    dbgstrm << "gammaq\t= " << fitcopy->Parameters().gammaq.value << endl;
   if (fitcopy->Parameters().gammaS.toFit == true)
-    dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
-  dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
+    dbgstrm << "gammaS\t= " << fitcopy->Parameters().gammaS.value << endl;
+  if (fitcopy->Parameters().gammaC.toFit == true)
+    dbgstrm << "gammaC\t= " << fitcopy->Parameters().gammaC.value << endl;
+  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(fitcopy->Parameters().R.value,3) << " fm^3" << endl;
   if (model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CE)
-    dbgstrm << "Vc\t= " << model->Parameters().SVc << " fm^3" << endl;
+    dbgstrm << "Vc\t= " << (4. / 3.) * xMath::Pi() * pow(fitcopy->Parameters().Rc.value, 3) << " fm^3" << endl;
+  if (fitcopy->UseTkin())
+    dbgstrm << "Tkin\t= " << fitcopy->Parameters().Tkin.value * 1.e3 << " MeV" << endl;
   dbgstrm << endl;
 
   dbgstrm << "Iteration\t= " << fitcopy->Iters() << endl;
@@ -687,7 +706,7 @@ void FitToExperimentTab::finalize() {
   calcTimer->stop();
   ThermalModelFitParameters result = fitcopy->Parameters();
 
-  dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
+  dbgstrm << "T\t= " << result.T.value * 1.e3 << " MeV" << endl;
 
   if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
     dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
@@ -717,7 +736,12 @@ void FitToExperimentTab::finalize() {
     dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
   if (model->TPS()->hasCharmed())
     dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
-  dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
+  //dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
+  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(result.R.value, 3) << " fm^3" << endl;
+  if (fitcopy->UseTkin()) {
+    dbgstrm << "Tkin\t= " << result.Tkin.value * 1.e3 << " MeV" << endl;
+    dbgstrm << "Vkin\t= " << model->Parameters().V << " fm^3" << endl;
+  }
   dbgstrm << endl;
 
   dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
@@ -881,6 +905,15 @@ void FitToExperimentTab::finalize() {
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(4. * xMath::Pi() / 3. * pow(result.Rc.value, 3))));
     if (result.R.toFit == true)
       tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(4. * xMath::Pi() * pow(result.Rc.value, 2) * result.Rc.error)));
+    else
+      tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
+  }
+
+  if (model->UsePartialChemicalEquilibrium()) {
+    tableParameters->setItem(cRow, 0, new QTableWidgetItem("Tkin (MeV)"));
+    tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.Tkin.value * 1.e3)));
+    if (result.T.toFit == true)
+      tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.Tkin.error * 1.e3)));
     else
       tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));
   }
