@@ -40,7 +40,13 @@ namespace thermalfist {
 
     ThermalModelBase* ThermalModel() const { return m_model; }
 
-    virtual void CalculatePCE(double T);
+    /**
+     * \brief Solves the equation of partial chemical equilibrium at fixed temperature or volume
+     *
+     * \param param  Temperature (in GeV) if mode == 0, Volume (in fm^3) if mode == 1
+     * \param mode   PCE at fixed temperature for mode == 0, at fixed voluime for mode == 1
+     */
+    virtual void CalculatePCE(double param, int mode = 0);
 
     const std::vector<double>& ChemicalPotentials() const { return m_ChemCurrent; }
     double Volume() const { return m_ParametersCurrent.V; }
@@ -58,7 +64,7 @@ namespace thermalfist {
       bool FreezeLongLived = false,
       double WidthCut = 0.015);
 
-
+    void ApplyFixForBoseCondensation();
     
 
   protected:
@@ -83,10 +89,11 @@ namespace thermalfist {
     class BroydenEquationsPCE : public BroydenEquations
     {
     public:
-      BroydenEquationsPCE(ThermalModelPCE *model) : BroydenEquations(), m_THM(model) { m_N = m_THM->m_StableComponentsNumber + 1; }
+      BroydenEquationsPCE(ThermalModelPCE *model, int mode = 0) : BroydenEquations(), m_THM(model), m_Mode(mode) { m_N = m_THM->m_StableComponentsNumber + 1; }
       std::vector<double> Equations(const std::vector<double> &x);
     private:
       ThermalModelPCE *m_THM;
+      int m_Mode;
     };
 
   };

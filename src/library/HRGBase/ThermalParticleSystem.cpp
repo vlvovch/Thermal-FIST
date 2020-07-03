@@ -28,12 +28,28 @@ namespace thermalfist {
     bool cmpParticleMass(const ThermalParticle &a, const ThermalParticle &b) {
       return (a.Mass() < b.Mass());
     }
+
+    /// For sorting particles by mass (default for GUI)
+    /// If masses equal, use pdg code as a tie-breaker
+    bool cmpParticleMassAndPdg(const ThermalParticle& a, const ThermalParticle& b) {
+      if (a.Mass() == b.Mass()) {
+        if (abs(a.PdgId()) != abs(b.PdgId()))
+          return abs(a.PdgId()) < abs(b.PdgId());
+        return (a.PdgId() > b.PdgId());
+      }
+      return (a.Mass() < b.Mass());
+    }
     
-    /// For sorting particles by the quark content
+    /// For sorting particles by the quark content, then by mass
     bool cmpParticlePDG(const ThermalParticle &a, const ThermalParticle &b) {
       if (abs(a.BaryonCharge()) != abs(b.BaryonCharge())) return (abs(a.BaryonCharge()) < abs(b.BaryonCharge()));
       if (abs(a.Charm()) != abs(b.Charm())) return (abs(a.Charm()) < abs(b.Charm()));
       if (abs(a.Strangeness()) != abs(b.Strangeness())) return (abs(a.Strangeness()) < abs(b.Strangeness()));
+      if (a.Mass() == b.Mass()) {
+        if (abs(a.PdgId()) != abs(b.PdgId()))
+          return abs(a.PdgId()) < abs(b.PdgId());
+        return (a.PdgId() > b.PdgId());
+      }
       return (a.Mass() < b.Mass());
     }
   }
@@ -46,6 +62,8 @@ namespace thermalfist {
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
     m_PDGtoID.clear();
+
+    m_SortMode = SortModeType::ByMass;
 
     m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
@@ -1018,8 +1036,10 @@ namespace thermalfist {
 
     m_ResonanceWidthIntegrationType = type;
 
-    for (size_t i = 0; i < m_Particles.size(); ++i)
-      m_Particles[i].SetResonanceWidthIntegrationType(type);
+    for (size_t i = 0; i < m_Particles.size(); ++i) {
+      if (!m_Particles[i].ZeroWidthEnforced())
+        m_Particles[i].SetResonanceWidthIntegrationType(type);
+    }
 
     if (dodecays)
       ProcessDecays();
@@ -1072,8 +1092,15 @@ namespace thermalfist {
 
   void ThermalParticleSystem::FinalizeList()
   {
-    sort(m_Particles.begin(), m_Particles.end(), cmpParticleMass);
-    //sort(m_Particles.begin(), m_Particles.end(), cmpParticlePDG);
+    //bool (*cmpParticles)(const ThermalParticle&, const ThermalParticle&);
+    //cmpParticles = cmpParticleMassAndPdg;
+    //sort(m_Particles.begin(), m_Particles.end(), cmpParticles);
+    if (SortMode() == SortModeType::ByMass)
+      sort(m_Particles.begin(), m_Particles.end(), cmpParticleMass);
+    else if (SortMode() == SortModeType::ByMassAndPDG)
+      sort(m_Particles.begin(), m_Particles.end(), cmpParticleMassAndPdg);
+    else
+      sort(m_Particles.begin(), m_Particles.end(), cmpParticlePDG);
     FillPdgMap();
     for (size_t i = 0; i < m_Particles.size(); ++i) {
       if (m_Particles[i].DecayType() == ParticleDecayType::Default)

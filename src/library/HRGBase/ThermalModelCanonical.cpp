@@ -293,6 +293,18 @@ Obtained: %lf\n\
 
     if (!UsePartialChemicalEquilibrium()) 
       FillChemicalPotentials();
+    else {
+      // Partial chemical equilibrium canonical ensemble currently works only if there is particle-antiparticle symmetry
+      for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+        int i2 = m_TPS->PdgToId(-m_TPS->Particle(i).PdgId());
+        if (i2 != -1) {
+          if (fabs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
+            printf("**ERROR** ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble not supported if no particle-antiparticle symmetry!\n");
+            exit(1);
+          }
+        }
+      }
+    }
 
     bool AllMuZero = true;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -718,6 +730,7 @@ Obtained: %lf\n\
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
 
     m_FluctuationsCalculated = true;
 

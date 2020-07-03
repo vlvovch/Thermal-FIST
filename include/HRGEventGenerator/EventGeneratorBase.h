@@ -63,13 +63,19 @@ namespace thermalfist {
     /// The total values of conserved charges in the CE
     int B, Q, S, C;
 
+    /// Mixed-canonical configuration (full canonical by default)
+    bool CanonicalB;
+    bool CanonicalQ;
+    bool CanonicalS;
+    bool CanonicalC;
+
     /// The matrix of excluded volume coefficients \f$ \tilde{b}_{ij} \f$
     std::vector< std::vector<double> > bij;
 
     /// The matrix of van der Waals attraction coefficients \f$ a_{ij} \f$
     std::vector< std::vector<double> > aij;
 
-    /// Whether partial chemical equilibrium is used
+    /// Whether partial chemical equilibrium (PCE) is used
     bool fUsePCE;
 
     /// PCE chemical potentials
@@ -112,10 +118,10 @@ namespace thermalfist {
     }
 
     /// The y-pT acceptance map (not used by default).
-    std::vector<Acceptance::AcceptanceFunction>& GetAcceptance() { return m_acc; }
+    //std::vector<Acceptance::AcceptanceFunction>& GetAcceptance() { return m_acc; }
 
     /// Read the acceptance map from file.
-    virtual void ReadAcceptance(std::string accfolder);
+    //virtual void ReadAcceptance(std::string accfolder);
 
     /// The center-of-mass longitudinal rapidity relative to the lab frame.
     double getYcm() const { return m_ycm; }
@@ -130,7 +136,18 @@ namespace thermalfist {
      *                      generated and appear in the output
      * \return SimpleEvent  The generated event
      */
-    virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
+    virtual SimpleEvent GetEvent(bool DoDecays = true) const;
+
+    /**
+     * \brief Performs decays of all unstable particles until only stable ones left.
+     *
+     * \param evtin An event structure contains the list of all the primordial particles.
+     * \return TPS  Point to the particle list instance that contains all the decay properties.
+     */
+    static SimpleEvent PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
+
+    /// Currently not used
+    static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
     /// Helper variable to monitor the Acceptance rate of the rejection
     /// sampling used for canonical ensemble and/or eigenvolumes.
@@ -232,7 +249,8 @@ namespace thermalfist {
 
   private:
     double m_ekin, m_ycm, m_ssqrt, m_elab;
-    std::vector<Acceptance::AcceptanceFunction> m_acc;
+    // Acceptance discontinued
+    //std::vector<Acceptance::AcceptanceFunction> m_acc;
 
     //@{
     /// Indices and multinomial probabilities for an efficient CE sampling

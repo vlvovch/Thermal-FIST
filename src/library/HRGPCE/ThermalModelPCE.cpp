@@ -59,6 +59,7 @@ namespace thermalfist {
       }
     }
 
+    ApplyFixForBoseCondensation();
 
     m_ChemicalFreezeoutSet = false;
     m_IsCalculated = false;
@@ -70,15 +71,16 @@ namespace thermalfist {
     m_ChemInit = ChemInit;
     m_model->SetParameters(m_ParametersInit);
     m_model->SetChemicalPotentials(m_ChemInit);
-    m_model->CalculateDensities();
+    //m_model->CalculateDensities();
+    m_model->CalculatePrimordialDensities();
 
-    m_DensitiesInit = m_model->TotalDensities();
+    //m_DensitiesInit = m_model->TotalDensities();
 
     m_StableDensitiesInit = std::vector<double>(m_StableComponentsNumber, 0.);
     for (int is = 0; is < m_StableDensitiesInit.size(); ++is) {
       double totdens = 0.;
       for (int i = 0; i < m_EffectiveCharges.size(); ++i) {
-        totdens +=m_EffectiveCharges[i][is] * m_model->Densities()[i];
+        totdens += m_EffectiveCharges[i][is] * m_model->Densities()[i];
       }
       m_StableDensitiesInit[is] = totdens;
     }
@@ -95,12 +97,22 @@ namespace thermalfist {
     m_IsCalculated = false;
   }
 
-  void ThermalModelPCE::CalculatePCE(double T)
+  void ThermalModelPCE::CalculatePCE(double param, int mode)
   {
-    // Initial guess for the new volume
-    m_ParametersCurrent.V = m_ParametersCurrent.V * pow(m_ParametersCurrent.T / T, 3.);
+    double T = param;
+    if (mode == 1) {
+      // Initial guess for the new temperature
+      T = m_ParametersCurrent.T * pow(m_ParametersCurrent.V / param, 1. / 3.);
+      m_ParametersCurrent.V = param;
+    }
+    else {
+      // Initial guess for the new volume
+      m_ParametersCurrent.V = m_ParametersCurrent.V * pow(m_ParametersCurrent.T / T, 3.);
+    }
+    
+    
 
-    BroydenEquationsPCE eqs(this);
+    BroydenEquationsPCE eqs(this, mode);
     Broyden broydn(&eqs);
 
     std::vector<double> PCEParams(m_StableComponentsNumber, 0.);
@@ -121,12 +133,20 @@ namespace thermalfist {
     
     m_ParametersCurrent.T = T;
 
-    PCEParams.push_back(m_ParametersCurrent.V);
+    if (mode == 0)
+      PCEParams.push_back(m_ParametersCurrent.V);
+    else
+      PCEParams.push_back(m_ParametersCurrent.T);
 
     PCEParams = broydn.Solve(PCEParams);
 
     m_ChemCurrent = m_model->ChemicalPotentials();
-    m_ParametersCurrent.V = PCEParams[PCEParams.size() - 1];
+    if (mode == 0)
+      m_ParametersCurrent.V = PCEParams[PCEParams.size() - 1];
+    else
+      m_ParametersCurrent.T = PCEParams[PCEParams.size() - 1];
+
+    m_model->CalculateFeeddown();
     
     m_IsCalculated = true;
   }
@@ -284,6 +304,28 @@ namespace thermalfist {
     return stability_flags;
   }
 
+  void ThermalModelPCE::ApplyFixForBoseCondensation()
+  {
+    for (int ipart = 0; ipart < m_EffectiveCharges.size(); ++ipart) {
+      ThermalParticle& part = m_model->TPS()->Particle(ipart);
+      if (part.ZeroWidthEnforced() || part.Statistics() != -1)
+        continue;
+
+      double totmu = 0.;
+      for (int ifeed = 0; ifeed < m_EffectiveCharges[ipart].size(); ++ifeed) {
+        totmu += m_EffectiveCharges[ipart][ifeed] * m_model->TPS()->Particle(m_StableMapTo[ifeed]).Mass();
+      }
+
+      if (totmu > part.DecayThresholdMassDynamical()) {
+        cout << "Changing threshold mass for " << part.Name() << " from " << part.DecayThresholdMassDynamical() << " to " << totmu << "\n";
+        part.SetDecayThresholdMassDynamical(totmu);
+        part.FillCoefficientsDynamical();
+      }
+    }
+
+    m_model->TPS()->ProcessDecays();
+  }
+
   std::vector<double> ThermalModelPCE::BroydenEquationsPCE::Equations(const std::vector<double>& x)
   {
     std::vector<double> ret(x.size(), 0.);
@@ -298,10 +340,18 @@ namespace thermalfist {
     ThermalModelBase *model = m_THM->ThermalModel();
 
     model->SetChemicalPotentials(Chem);
-    const double& V = x[x.size() - 1];
-    m_THM->m_ParametersCurrent.V = V;
+    if (m_Mode == 0) {
+      const double& Vtmp = x[x.size() - 1];
+      m_THM->m_ParametersCurrent.V = Vtmp;
+    }
+    else {
+      const double& Ttmp = x[x.size() - 1];
+      m_THM->m_ParametersCurrent.T = Ttmp;
+    }
+    double V = m_THM->m_ParametersCurrent.V;
     model->SetParameters(m_THM->m_ParametersCurrent);
-    model->CalculateDensities();
+    //model->CalculateDensities();
+    model->CalculatePrimordialDensities();
 
     for (int is = 0; is < m_THM->m_StableComponentsNumber; ++is) {
       double totdens = 0.;

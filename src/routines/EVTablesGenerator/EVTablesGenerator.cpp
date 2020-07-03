@@ -163,7 +163,7 @@ void Crossterms(std::string filename, ThermalParticleSystem *TPS, int mode = 0, 
 }
 
 
-void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329, double b = 3.42) {
+void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329, double b = 3.42, double StoNS = 1.) {
 	ThermalModelVDW model(TPS);
 
 	for (int i1 = 0; i1 < model.TPS()->Particles().size(); ++i1) {
@@ -181,14 +181,18 @@ void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329,
 			}
 
 			// First excluded-volume, proportional to baryon charge if light nuclei included
-			if (B1 == B2) {
+/*			if (B1 == B2) {
 				double tb = b * abs(B1);
 				model.SetVirial(i1, i2, tb);
 			}
-			else {
+			else */{
 				// Following prescription in nucl-th/9906068, Eqs. (53) and (54)
 				double b11 = b * abs(B1);
 				double b22 = b * abs(B2);
+				if (part1.Strangeness() != 0)
+					b11 *= StoNS;
+				if (part2.Strangeness() != 0)
+					b22 *= StoNS;
 				double r1 = CuteHRGHelper::rv(b11);
 				double r2 = CuteHRGHelper::rv(b22);
 				double b12sym = CuteHRGHelper::brr(r1, r2);
@@ -199,7 +203,13 @@ void QvdWHRG(std::string filename, ThermalParticleSystem *TPS, double a = 0.329,
 
 			// QvdW attraction for baryon-baryon pairs only
 			if ((B1 == 1 && B2 == 1) || (B1 == -1 && B2 == -1)) {
-				model.SetAttraction(i1, i2, a);
+				double ta1 = a, ta2 = a;
+				if (part1.Strangeness() != 0)
+					ta1 *= StoNS;
+				if (part2.Strangeness() != 0)
+					ta2 *= StoNS;
+				double ta = sqrt(ta1 * ta2);
+				model.SetAttraction(i1, i2, ta);
 			}
 			else {
 				model.SetAttraction(i1, i2, 0.);
@@ -231,6 +241,9 @@ int main(int argc, char *argv[])
 
 	// arXiv:1609.03975
 	QvdWHRG(directory + "1609.03975.QvdWHRG.dat", &TPS, 0.329, 3.42);
+
+	// arXiv:1707.09215
+	QvdWHRG(directory + "1707.09215.QvdWHRG.SandNS.dat", &TPS, 0.329, 3.42, 1./8.);
 
 	// arXiv:1708.02852
 	Crossterms(directory + "1708.02852.ImMu.dat", &TPS, 3, CuteHRGHelper::rv(1.), 0.);

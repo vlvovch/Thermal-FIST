@@ -312,7 +312,7 @@ namespace thermalfist {
     bool hasCharmed() const { return (m_NumCharmed > 0); }
 
     /// Number of different particle species in the list
-    int ComponentsNumber() const { return m_Particles.size(); }
+    int ComponentsNumber() const { return static_cast<int>(m_Particles.size()); }
 
     /**
      * \brief Returns the vector of all particle species.
@@ -394,6 +394,20 @@ namespace thermalfist {
     /// and the 0-based indices of all particles
     void FillPdgMap();
 
+    /// Mode list to sort particles species
+    enum SortModeType {
+      ByMass = 0,
+      ByMassAndPDG = 1,
+      ByBaryonAndMassAndPDG = 2
+    };
+
+    /// Sets the mode to sort particle species (see SortModeType)
+    /// Use carefully! Need to recalculate all model calculations after this!
+    void SetSortMode(SortModeType type) { m_SortMode = type; FinalizeList(); ProcessDecays(); }
+
+    /// Current mode to sort particle species
+    SortModeType SortMode() const { return m_SortMode; }
+
     /// Sorts the particles by their mass,
     /// fills the PdgToId() map between PDG ID numbers
     /// and the 0-based indices of all particles,
@@ -461,6 +475,8 @@ namespace thermalfist {
 
     // Map for DP-based calculations of decay distributions
     std::vector<ResonanceFinalStatesDistribution> m_DecayDistributionsMap;
+
+    SortModeType m_SortMode;
   };
 
   /// Contains several helper routines.

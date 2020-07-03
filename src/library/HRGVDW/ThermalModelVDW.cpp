@@ -150,7 +150,7 @@ namespace thermalfist {
     fout << "#" << std::setw(14) << "pdg_i"
       << std::setw(15) << "pdg_j"
       << std::setw(15) << "b_{ij}[fm^3]"
-      << std::setw(15) << "b_{ij}[GeV*fm^3]"
+      << std::setw(20) << "a_{ij}[GeV*fm^3]"
       << std::endl;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
@@ -158,7 +158,7 @@ namespace thermalfist {
           fout << setw(15) << m_TPS->Particle(i).PdgId();
           fout << setw(15) << m_TPS->Particle(j).PdgId();
           fout << setw(15) << m_Virial[i][j];
-          fout << setw(15) << m_Attr[i][j];
+          fout << setw(20) << m_Attr[i][j];
           fout << endl;
         }
       }
@@ -832,6 +832,7 @@ namespace thermalfist {
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
+    CalculateParticleChargeCorrelationMatrix();
 
     for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_skewprim[i] = 1.;

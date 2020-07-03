@@ -1136,12 +1136,12 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     delete modelEVVDW;
     
-    std::vector<Acceptance::AcceptanceFunction>& tacc = generator->GetAcceptance();
-    for (int i = 0; i<spectra->fParticles.size(); ++i) {
-      int tind = model->TPS()->PdgToId(spectra->fParticles[i].GetPDGID());
-      if (tacc.size()>tind && tacc[tind].init) spectra->fParticles[i].SetAcceptance(true);
-      else spectra->fParticles[i].SetAcceptance(false);
-    }
+    //std::vector<Acceptance::AcceptanceFunction>& tacc = generator->GetAcceptance();
+    //for (int i = 0; i<spectra->fParticles.size(); ++i) {
+    //  int tind = model->TPS()->PdgToId(spectra->fParticles[i].GetPDGID());
+    //  if (tacc.size()>tind && tacc[tind].init) spectra->fParticles[i].SetAcceptance(true);
+    //  else spectra->fParticles[i].SetAcceptance(false);
+    //}
 
 
 
