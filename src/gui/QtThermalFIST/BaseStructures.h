@@ -65,6 +65,13 @@ struct ThermalModelConfig {
   bool ComputeFluctations;
   bool ResetMus;
 
+  /// Partial chemical equilibrium
+  bool UsePCE;
+  double Tkin;
+  bool PCEFreezeLongLived;
+  double PCEWidthCut;
+  bool PCESahaForNuclei;
+
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };
 

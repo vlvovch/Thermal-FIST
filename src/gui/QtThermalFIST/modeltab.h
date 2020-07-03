@@ -37,6 +37,7 @@ class ModelTab : public QWidget
 
     QCheckBox *checkOnlyStable;
     QPushButton *buttonResults;
+    QPushButton *buttonCorrelations;
     QPushButton *labelValid;
     QLabel *labelHint;
 
@@ -88,6 +89,7 @@ private slots:
     void particleInfoDoubleClick(const QModelIndex &);
     void switchStability(bool);
     void showResults();
+    void showCorrelations();
     void setModel(thermalfist::ThermalModelBase *model);
     void modelChanged();
     void changeVolumeRSC(double);
