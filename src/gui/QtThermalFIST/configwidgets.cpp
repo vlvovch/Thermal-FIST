@@ -1,6 +1,6 @@
 /*
  * Thermal-FIST package
- * 
+ *
  * Copyright (c) 2014-2018 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
@@ -42,26 +42,26 @@ using namespace thermalfist;
 
 namespace {
   const QString ModelIdeal = "Ideal";
-  const QString ModelDEV   = "Excluded volume (Diagonal)";
+  const QString ModelDEV = "Excluded volume (Diagonal)";
   const QString ModelCRSEV = "Excluded volume (X-terms)";
-  const QString ModelQvdW  = "Quantum van der Waals";
+  const QString ModelQvdW = "Quantum van der Waals";
 }
 
-ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop, bool eventGeneratorMode)
-    : QWidget(parent), m_eventGeneratorMode(eventGeneratorMode)
+ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode)
+  : QWidget(parent), m_eventGeneratorMode(eventGeneratorMode)
 {
   model = modelop;
 
   currentConfig = ThermalModelConfig::fromThermalModel(model);
-  
-  QVBoxLayout *layout = new QVBoxLayout();
+
+  QVBoxLayout* layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setAlignment(Qt::AlignTop);
 
-  QHBoxLayout *layModelEnsemble = new QHBoxLayout();
+  QHBoxLayout* layModelEnsemble = new QHBoxLayout();
   layModelEnsemble->setAlignment(Qt::AlignLeft);
 
-  QLabel *labelModel = new QLabel(tr("Model:"));
+  QLabel* labelModel = new QLabel(tr("Model:"));
   comboModel = new QComboBox();
   comboModel->addItem(ModelIdeal);
   comboModel->addItem(ModelDEV);
@@ -70,7 +70,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
   comboModel->setCurrentIndex(0);
   comboModel->setToolTip(tr("Type of HRG model"));
 
-  QLabel *labelEnsemble = new QLabel(tr("Ensemble:"));
+  QLabel* labelEnsemble = new QLabel(tr("Ensemble:"));
   comboEnsemble = new QComboBox();
   comboEnsemble->addItem(tr("Grand-canonical"));
   comboEnsemble->addItem(tr("Canonical"));
@@ -80,26 +80,26 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
     comboEnsemble->addItem(tr("Charm-canonical"));
   comboEnsemble->setCurrentIndex(0);
   comboEnsemble->setToolTip(tr("Choice of ensemble"));
-  
+
   layModelEnsemble->addWidget(labelModel);
   layModelEnsemble->addWidget(comboModel);
   layModelEnsemble->addSpacing(20);
   layModelEnsemble->addWidget(labelEnsemble);
   layModelEnsemble->addWidget(comboEnsemble);
 
-  
+
 
   /// Quantum statistics
-  QHBoxLayout *layStats = new QHBoxLayout();
+  QHBoxLayout* layStats = new QHBoxLayout();
   layStats->setAlignment(Qt::AlignLeft);
-  QLabel *labelStats = new QLabel(tr("Statistics:"));
+  QLabel* labelStats = new QLabel(tr("Statistics:"));
   radioBoltz = new QRadioButton(tr("Boltzmann"));
   radioQuant = new QRadioButton(tr("Quantum"));
 
   radioBoltz->setToolTip(tr("Maxwell-Boltzmann"));
   radioQuant->setToolTip(tr("Fermi-Dirac/Bose-Einstein"));
 
-  QLabel *labelQuant = new QLabel(tr("for"));
+  QLabel* labelQuant = new QLabel(tr("for"));
   comboQuant = new QComboBox();
   comboQuant->addItem(tr("All particles"));
   comboQuant->addItem(tr("Mesons only"));
@@ -111,11 +111,13 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
 
   if (!m_eventGeneratorMode)
     radioQuant->setChecked(true);
+  else
+    radioBoltz->setChecked(true);
   CBQuadratures->setChecked(true);
 
-  
 
-  if (!m_eventGeneratorMode) {
+
+  if (1 || !m_eventGeneratorMode) {
     layStats->addWidget(labelStats);
     layStats->addWidget(radioBoltz);
     layStats->addWidget(radioQuant);
@@ -124,9 +126,9 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
     layStats->addSpacing(10);
     layStats->addWidget(CBQuadratures);
   }
-  
 
-  QHBoxLayout *layOptions = new QHBoxLayout();
+
+  QHBoxLayout* layOptions = new QHBoxLayout();
   layOptions->setAlignment(Qt::AlignLeft);
 
   //buttonStatistics = new QPushButton(tr("Quantum statistics..."));
@@ -136,13 +138,13 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
 
   buttonInteractions = new QPushButton(tr("EV/vdW interactions..."));
   connect(buttonInteractions, &QPushButton::clicked, this, &ModelConfigWidget::interactionsDialog);
-  
+
   buttonOther = new QPushButton(tr("Other options..."));
   connect(buttonOther, &QPushButton::clicked, this, &ModelConfigWidget::otherOptionsDialog);
 
 
   layOptions->addWidget(buttonConservationLaws);
-  if (!m_eventGeneratorMode) {
+  if (1 || !m_eventGeneratorMode) {
     layOptions->addSpacing(20);
   }
   else {
@@ -152,13 +154,13 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
   layOptions->addSpacing(20);
   layOptions->addWidget(buttonOther);
 
-  
 
 
-  QHBoxLayout *layOptions2 = new QHBoxLayout();
+
+  QHBoxLayout* layOptions2 = new QHBoxLayout();
   layOptions2->setAlignment(Qt::AlignLeft);
 
-  QLabel *labelWidth = new QLabel(tr("Resonance widths:"));
+  QLabel* labelWidth = new QLabel(tr("Resonance widths:"));
   comboWidth = new QComboBox();
   comboWidth->addItem(tr("Zero-width"));
   comboWidth->addItem(tr("Const Breit-Wigner"));
@@ -170,7 +172,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget *parent, ThermalModelBase *modelop,
 
   layOptions2->addWidget(labelWidth);
   layOptions2->addWidget(comboWidth);
-  if (m_eventGeneratorMode) {
+  if (0 && m_eventGeneratorMode) {
     layOptions2->addSpacing(10);
     layOptions2->addWidget(labelStats);
     layOptions2->addWidget(radioBoltz);
@@ -216,7 +218,7 @@ ModelConfigWidget::~ModelConfigWidget()
 ThermalModelConfig ModelConfigWidget::updatedConfig()
 {
   ThermalModelConfig ret = currentConfig;
-  
+
   ret.ModelType = ThermalModelConfig::Ideal;
   if (comboEnsemble->currentText() == tr("Grand-canonical")) {
     if (comboModel->currentText() == ModelDEV)
@@ -254,6 +256,18 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
   if (ret.ModelType == ThermalModelConfig::QvdW
     || ret.ModelType == ThermalModelConfig::VDWSCE) {
     ret.InteractionModel = ThermalModelConfig::InteractionQVDW;
+  }
+
+  // Event generator mode
+  if (m_eventGeneratorMode) {
+    ret.InteractionModel = ThermalModelConfig::InteractionIdeal;
+
+    if (comboModel->currentText() == ModelDEV)
+      ret.InteractionModel = ThermalModelConfig::InteractionEVDiagonal;
+    if (comboModel->currentText() == ModelCRSEV)
+      ret.InteractionModel = ThermalModelConfig::InteractionEVCrossterms;
+    if (comboModel->currentText() == ModelQvdW)
+      ret.InteractionModel = ThermalModelConfig::InteractionQVDW;
   }
 
   ret.Ensemble = ThermalModelConfig::EnsembleGCE;
@@ -299,7 +313,7 @@ void ModelConfigWidget::interactionsDialog()
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
-  OtherOptionsDialog dialog(this);
+  OtherOptionsDialog dialog(this, m_eventGeneratorMode);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
@@ -317,17 +331,17 @@ void ModelConfigWidget::modelTypeChanged()
   QVector<QString> newitems;
   newitems.push_back(tr("Grand-canonical"));
 
-  if (comboModel->currentText() == ModelIdeal)
+  if (comboModel->currentText() == ModelIdeal || m_eventGeneratorMode)
     newitems.push_back(tr("Canonical"));
 
   if (comboModel->currentText() == ModelIdeal
     || comboModel->currentText() == ModelDEV
-    || comboModel->currentText() == ModelQvdW) {
+    || comboModel->currentText() == ModelQvdW || m_eventGeneratorMode) {
     if (model->TPS()->hasStrange())
       newitems.push_back(tr("Strangeness-canonical"));
   }
 
-  if (comboModel->currentText() == ModelIdeal) {
+  if (comboModel->currentText() == ModelIdeal || m_eventGeneratorMode) {
     if (model->TPS()->hasCharmed())
       newitems.push_back(tr("Charm-canonical"));
   }
@@ -363,15 +377,15 @@ void ModelConfigWidget::ensembleChanged()
   newitems.push_back(ModelIdeal);
 
   if (comboEnsemble->currentText() == tr("Grand-canonical")
-    || comboEnsemble->currentText() == tr("Strangeness-canonical"))
-  newitems.push_back(ModelDEV);
+    || comboEnsemble->currentText() == tr("Strangeness-canonical") || m_eventGeneratorMode)
+    newitems.push_back(ModelDEV);
 
-  if (comboEnsemble->currentText() == tr("Grand-canonical"))
-  newitems.push_back(ModelCRSEV);
+  if (comboEnsemble->currentText() == tr("Grand-canonical") || m_eventGeneratorMode)
+    newitems.push_back(ModelCRSEV);
 
   if (comboEnsemble->currentText() == tr("Grand-canonical")
-    || comboEnsemble->currentText() == tr("Strangeness-canonical"))
-  newitems.push_back(ModelQvdW);
+    || comboEnsemble->currentText() == tr("Strangeness-canonical") || m_eventGeneratorMode)
+    newitems.push_back(ModelQvdW);
 
   if (newitems != olditems) {
     comboModel->blockSignals(true);
@@ -396,6 +410,11 @@ void ModelConfigWidget::ensembleChanged()
     CBQuadratures->setEnabled(true);
   }
 
+  if (!(comboEnsemble->currentText() == tr("Canonical")) && m_eventGeneratorMode)
+    buttonConservationLaws->setEnabled(false);
+  else
+    buttonConservationLaws->setEnabled(true);
+
   emit changed();
 }
 
@@ -416,13 +435,13 @@ void ModelConfigWidget::statChanged()
   }
 }
 
-void ModelConfigWidget::setModel(ThermalModelBase *modelop) {
+void ModelConfigWidget::setModel(ThermalModelBase* modelop) {
   model = modelop;
   modelTypeChanged();
   ensembleChanged();
 }
 
-void ModelConfigWidget::setNewConfig(const ThermalModelConfig & config)
+void ModelConfigWidget::setNewConfig(const ThermalModelConfig& config)
 {
   currentConfig = config;
 
@@ -475,15 +494,15 @@ void ModelConfigWidget::setNewConfig(const ThermalModelConfig & config)
   statChanged();
 }
 
-ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDialog(parent), m_parent(parent)
+ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
 {
-  QVBoxLayout *layout = new QVBoxLayout();
+  QVBoxLayout* layout = new QVBoxLayout();
 
-  QGroupBox *grLaws = new QGroupBox(tr("Conservation laws"));
+  QGroupBox* grLaws = new QGroupBox(tr("Conservation laws"));
 
-  QVBoxLayout *grLayout = new QVBoxLayout();
+  QVBoxLayout* grLayout = new QVBoxLayout();
 
-  QHBoxLayout *laymuB = new QHBoxLayout();
+  QHBoxLayout* laymuB = new QHBoxLayout();
   laymuB->setAlignment(Qt::AlignLeft);
   CBmuB = new QCheckBox(tr("Constrain μB from entropy per baryon ratio, S/B:"));
   CBmuB->setChecked(m_parent->currentConfig.ConstrainMuB);
@@ -503,7 +522,7 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
   CBmuBfull = new QWidget();
   CBmuBfull->setLayout(laymuB);
 
-  QHBoxLayout *laymuQ = new QHBoxLayout();
+  QHBoxLayout* laymuQ = new QHBoxLayout();
   laymuQ->setAlignment(Qt::AlignLeft);
   CBmuQ = new QCheckBox(tr("Constrain μQ from electric-to-baryon charge ratio, Q/B:"));
   CBmuQ->setChecked(m_parent->currentConfig.ConstrainMuQ);
@@ -530,25 +549,25 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
   //if (m_parent->model->TPS()->hasBaryons()
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
   //    !m_parent->currentConfig.CanonicalB))
-    grLayout->addWidget(CBmuBfull);
+  grLayout->addWidget(CBmuBfull);
 
   //if (m_parent->model->TPS()->hasCharged()
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
   //    !m_parent->currentConfig.CanonicalQ))
-    grLayout->addWidget(CBmuQfull);
+  grLayout->addWidget(CBmuQfull);
 
   //if (m_parent->model->TPS()->hasStrange() 
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
   //    !m_parent->currentConfig.CanonicalS)
   //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE)
-    grLayout->addWidget(CBmuS);
+  grLayout->addWidget(CBmuS);
 
   //if (m_parent->model->TPS()->hasCharmed() 
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
   //    !m_parent->currentConfig.CanonicalC)
   //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE
   //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCCE)
-    grLayout->addWidget(CBmuC);
+  grLayout->addWidget(CBmuC);
 
   labelNothing = new QLabel(tr("It appears none of the chemical potentials can be constrained"));
   //grLayout->addWidget(labelNothing);
@@ -556,18 +575,19 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget * parent) : QDi
 
   grLaws->setLayout(grLayout);
 
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
     | QDialogButtonBox::Cancel);
 
   connect(buttonBox, &QDialogButtonBox::accepted, this, &ConservationLawsDialog::OK);
   connect(buttonBox, &QDialogButtonBox::rejected, this, &ConservationLawsDialog::Discard);
 
-  layout->addWidget(grLaws);
+  if (!m_parent->m_eventGeneratorMode)
+    layout->addWidget(grLaws);
 
 
-  QGroupBox *grMixCan = new QGroupBox(tr("Mixed-canonical ensemble"));
+  QGroupBox* grMixCan = new QGroupBox(tr("Mixed-canonical ensemble"));
 
-  QVBoxLayout *layMixCan = new QVBoxLayout();
+  QVBoxLayout* layMixCan = new QVBoxLayout();
 
   checkBConserve = new QCheckBox(tr("Canonical treatment of baryon number"));
   checkQConserve = new QCheckBox(tr("Canonical treatment of electric charge"));
@@ -670,7 +690,7 @@ void ConservationLawsDialog::updateControls()
 void ConservationLawsDialog::OK()
 {
   m_parent->currentConfig.ConstrainMuB = CBmuB->isChecked();
-  m_parent->currentConfig.SoverB = spinSBRatio->value(); 
+  m_parent->currentConfig.SoverB = spinSBRatio->value();
   m_parent->currentConfig.ConstrainMuQ = CBmuQ->isChecked();
   m_parent->currentConfig.QoverB = spinQBRatio->value();
   m_parent->currentConfig.ConstrainMuS = CBmuS->isChecked();
@@ -683,9 +703,13 @@ void ConservationLawsDialog::OK()
   QDialog::accept();
 }
 
-OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget * parent) : QDialog(parent), m_parent(parent)
+OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGeneratorMode) : QDialog(parent), m_parent(parent)
 {
-  QVBoxLayout *layout = new QVBoxLayout();
+  QVBoxLayout* layout = new QVBoxLayout(); 
+  
+  QGroupBox* grReso = new QGroupBox(tr("Resonances"));
+
+  QVBoxLayout* grLayout = new QVBoxLayout();
 
   CBNormBratio = new QCheckBox(tr("Renormalize branching ratios to 100%"));
   CBNormBratio->setChecked(m_parent->currentConfig.RenormalizeBR);
@@ -693,10 +717,10 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget * parent) : QDialog(par
   CBFluctuations = new QCheckBox(tr("Compute fluctuations and correlations"));
   CBFluctuations->setChecked(m_parent->currentConfig.ComputeFluctations);
 
-  layout->addWidget(CBNormBratio);
+  grLayout->addWidget(CBNormBratio);
   //layout->addWidget(CBFluctuations);
 
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
     | QDialogButtonBox::Cancel);
 
   connect(buttonBox, &QDialogButtonBox::accepted, this, &OtherOptionsDialog::OK);
@@ -714,41 +738,112 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget * parent) : QDialog(par
   layWidths->addWidget(labelWidths);
   layWidths->addWidget(comboBWShape);
 
-  layout->addLayout(layWidths);
+  grLayout->addLayout(layWidths);
 
 
-  layout->addWidget(buttonBox);
+  grLayout->addWidget(buttonBox);
+
+  grReso->setLayout(grLayout);
+
+
+  QGroupBox* grPCE = new QGroupBox(tr("Partial chemical equilibrium"));
+  QVBoxLayout* PCELayout = new QVBoxLayout();
+
+  CBUsePCE = new QCheckBox(tr("Apply partial chemical equilibrium"));
+  CBUsePCE->setChecked(m_parent->currentConfig.UsePCE);
+  connect(CBUsePCE, SIGNAL(toggled(bool)), this, SLOT(UpdateControls()));
+
+  QHBoxLayout* layTkin= new QHBoxLayout();
+  layTkin->setAlignment(Qt::AlignLeft);
+  QLabel* labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
+  labelTkin->setToolTip(tr("Make sure T<sub>kin</sub> <= T<sub>ch</sub>. The T<sub>kin</sub> > T<sub>ch</sub> case will still compute, but may not have much physical sense."));
+  spinTkin = new QDoubleSpinBox();
+  spinTkin->setRange(0., 10000.);
+  spinTkin->setValue(m_parent->currentConfig.Tkin * 1.e3);
+
+  layTkin->addWidget(labelTkin);
+  layTkin->addWidget(spinTkin);
+
+  CBFreezeLongLived = new QCheckBox(tr("Freeze long-lived resonances"));
+  CBFreezeLongLived->setToolTip(tr("Yields of resonances with Γ<Γ_lim will frozen at the chemical freeze-out"));
+  CBFreezeLongLived->setChecked(m_parent->currentConfig.PCEFreezeLongLived);
+
+  QHBoxLayout* layGammaLim = new QHBoxLayout();
+  layGammaLim->setAlignment(Qt::AlignLeft);
+  QLabel* labelGammaLim = new QLabel(tr("Γ<sub>lim</sub> (MeV):"));
+  spinWidthCut = new QDoubleSpinBox();
+  spinWidthCut->setRange(0., 10000.);
+  spinWidthCut->setValue(m_parent->currentConfig.PCEWidthCut * 1.e3);
+
+  layGammaLim->addWidget(labelGammaLim);
+  layGammaLim->addWidget(spinWidthCut);
+
+  CBSahaNuclei = new QCheckBox(tr("Use Saha equation for light nuclei"));
+  CBSahaNuclei->setToolTip(tr("Evaluate nuclear abundances through the Saha equation. Otherwise their abundances are frozen at T_ch."));
+  CBSahaNuclei->setChecked(m_parent->currentConfig.PCESahaForNuclei);
+
+  PCELayout->addWidget(CBUsePCE);
+  PCELayout->addLayout(layTkin);
+  PCELayout->addSpacing(10);
+  PCELayout->addWidget(CBFreezeLongLived);
+  PCELayout->addLayout(layGammaLim);
+  PCELayout->addSpacing(10);
+  PCELayout->addWidget(CBSahaNuclei);
+
+  grPCE->setLayout(PCELayout);
+
+  layout->addWidget(grReso);
+  layout->addWidget(grPCE);
 
   setLayout(layout);
 
+  if (eventGeneratorMode)
+    grPCE->setVisible(false);
+
+  UpdateControls();
+
   setWindowTitle(tr("Thermal model configuration"));
+}
+
+void OtherOptionsDialog::UpdateControls()
+{
+  bool PCEControlsEnabled = CBUsePCE->isChecked();
+  spinTkin->setEnabled(PCEControlsEnabled);
+  CBFreezeLongLived->setEnabled(PCEControlsEnabled);
+  spinWidthCut->setEnabled(PCEControlsEnabled);
+  CBSahaNuclei->setEnabled(PCEControlsEnabled);
 }
 
 
 void OtherOptionsDialog::OK()
 {
-  m_parent->currentConfig.RenormalizeBR = CBNormBratio->isChecked();
-  m_parent->currentConfig.WidthShape = comboBWShape->currentIndex();
-  //m_parent->currentConfig.ComputeFluctations = CBFluctuations->isChecked();
+  ThermalModelConfig& config = m_parent->currentConfig;
+  config.RenormalizeBR = CBNormBratio->isChecked();
+  config.WidthShape = comboBWShape->currentIndex();
+  config.UsePCE = CBUsePCE->isChecked();
+  config.Tkin = spinTkin->value() * 1.e-3;
+  config.PCEFreezeLongLived = CBFreezeLongLived->isChecked();
+  config.PCEWidthCut = spinWidthCut->value() * 1.e-3;
+  config.PCESahaForNuclei = CBSahaNuclei->isChecked();
   QDialog::accept();
 }
 
-InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(parent), m_parent(parent)
+InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
 {
-  QVBoxLayout *layout = new QVBoxLayout();
+  QVBoxLayout* layout = new QVBoxLayout();
 
   radSet = new QRadioButton(tr("Set parameters manually"));
 
-  QHBoxLayout *layB = new QHBoxLayout();
+  QHBoxLayout* layB = new QHBoxLayout();
   layB->setAlignment(Qt::AlignLeft);
-  QLabel *labelvdWB = new QLabel(tr("b (fm<sup>3</sup>)"));
+  QLabel* labelvdWB = new QLabel(tr("b (fm<sup>3</sup>)"));
   spinB = new QDoubleSpinBox();
   spinB->setMinimum(0.);
   spinB->setMaximum(100.);
   spinB->setDecimals(4);
   spinB->setValue(m_parent->currentConfig.vdWB);
-  QLabel *labelRadius = new QLabel(tr("Radius:"));
-  labelRadiusValue = new QLabel(QString::number( CuteHRGHelper::rv(spinB->value()), 'g', 4) + " fm");
+  QLabel* labelRadius = new QLabel(tr("Radius:"));
+  labelRadiusValue = new QLabel(QString::number(CuteHRGHelper::rv(spinB->value()), 'g', 4) + " fm");
 
   connect(spinB, SIGNAL(valueChanged(double)), this, SLOT(updateRadius()));
 
@@ -757,9 +852,9 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(par
   layB->addWidget(labelRadius);
   layB->addWidget(labelRadiusValue);
 
-  QHBoxLayout *layA = new QHBoxLayout();
+  QHBoxLayout* layA = new QHBoxLayout();
   layA->setAlignment(Qt::AlignLeft);
-  QLabel *labelvdWA = new QLabel(tr("a (MeV fm<sup>3</sup>)"));
+  QLabel* labelvdWA = new QLabel(tr("a (MeV fm<sup>3</sup>)"));
   spinA = new QDoubleSpinBox();
   spinA->setMinimum(0.);
   spinA->setMaximum(10000.);
@@ -769,9 +864,9 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(par
   layA->addWidget(labelvdWA);
   layA->addWidget(spinA);
 
-  QHBoxLayout *layScaling = new QHBoxLayout();
+  QHBoxLayout* layScaling = new QHBoxLayout();
   layScaling->setAlignment(Qt::AlignLeft);
-  QLabel *labelScaling = new QLabel(tr("EV/vdW parameters scaling:"));
+  QLabel* labelScaling = new QLabel(tr("EV/vdW parameters scaling:"));
   comboScaling = new QComboBox();
   comboScaling->addItem(tr("Same for all particles"));
   comboScaling->addItem(tr("Mass-proportional (bag model)"));
@@ -799,7 +894,7 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(par
   else
     radLoad->setChecked(true);
 
-  QHBoxLayout *layFile = new QHBoxLayout();
+  QHBoxLayout* layFile = new QHBoxLayout();
   layFile->setAlignment(Qt::AlignLeft);
   leFilePath = new QLineEdit("");
   leFilePath->setReadOnly(true);
@@ -822,7 +917,7 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget * parent) : QDialog(par
   layout->addWidget(radLoad, 0, Qt::AlignLeft);
   layout->addLayout(layFile);
 
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
     | QDialogButtonBox::Cancel);
 
   connect(buttonBox, &QDialogButtonBox::accepted, this, &InteractionsDialog::OK);
@@ -843,8 +938,8 @@ void InteractionsDialog::modeToggled()
   CBMM->setEnabled(false);
   CBMB->setEnabled(false);
   CBBaB->setEnabled(false);
-  CBBB->setEnabled(false); 
-  
+  CBBB->setEnabled(false);
+
   if (radSet->isChecked()) {
     leFilePath->setEnabled(false);
     buttonChooseFile->setEnabled(false);
@@ -852,9 +947,12 @@ void InteractionsDialog::modeToggled()
     spinB->setEnabled(true);
     spinA->setEnabled(true);
     comboScaling->setEnabled(true);
-    if (m_parent->currentConfig.ModelType == ThermalModelConfig::CrosstermsEV
-      || m_parent->currentConfig.ModelType == ThermalModelConfig::QvdW
-      || m_parent->currentConfig.ModelType == ThermalModelConfig::VDWSCE) {
+    //if (m_parent->currentConfig.ModelType == ThermalModelConfig::CrosstermsEV
+    //  || m_parent->currentConfig.ModelType == ThermalModelConfig::QvdW
+    //  || m_parent->currentConfig.ModelType == ThermalModelConfig::VDWSCE) 
+    if (m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionEVCrossterms
+      || m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionQVDW)
+    {
       CBMM->setEnabled(true);
       CBMB->setEnabled(true);
       CBBaB->setEnabled(true);
@@ -875,7 +973,7 @@ void InteractionsDialog::modeToggled()
     CBBB->setEnabled(false);
 
     if (leFilePath->text() == "") {
-    //  chooseInputFile();
+      //  chooseInputFile();
     }
   }
 }

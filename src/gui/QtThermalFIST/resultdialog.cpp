@@ -239,24 +239,6 @@ QString ResultDialog::GetResults() {
   ret += QString(cc);
   ret += QString::number((model->CalculateEntropyDensity()) / model->Parameters().T / model->Parameters().T / model->Parameters().T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm()) + "\r\n";
 
-  if (model->TPS()->PdgToId(2212) != -1 && model->TPS()->PdgToId(1000010020) != -1) {
-    ret += "\r\n";
-
-    sprintf(cc, "%-25s = ", "O_p,d = N_d/N_p^2");
-    ret += QString(cc);
-    ret += QString::number( model->TotalDensities()[model->TPS()->PdgToId(1000010020)] / model->TotalDensities()[model->TPS()->PdgToId(2212)] / model->TotalDensities()[model->TPS()->PdgToId(2212)] ) + "\r\n";
-
-    if (model->TPS()->PdgToId(1000010020) != -1) {
-      sprintf(cc, "%-25s = ", "O_p,d,t = N_p N_t/N_d^2");
-      ret += QString(cc);
-      ret += QString::number(  model->TotalDensities()[model->TPS()->PdgToId(2212)] * model->TotalDensities()[model->TPS()->PdgToId(1000010030)] / model->TotalDensities()[model->TPS()->PdgToId(1000010020)] / model->TotalDensities()[model->TPS()->PdgToId(1000010020)] ) + "\r\n";
-
-      sprintf(cc, "%-25s = ", "delta_n");
-      ret += QString(cc);
-      ret += QString::number( (9./4.) * pow(4./3., 3./2.) * model->TotalDensities()[model->TPS()->PdgToId(2212)] * model->TotalDensities()[model->TPS()->PdgToId(1000010030)] / model->TotalDensities()[model->TPS()->PdgToId(1000010020)] / model->TotalDensities()[model->TPS()->PdgToId(1000010020)] - 1.) + "\r\n";
-    }
-  }
-
   if (model->IsFluctuationsCalculated()) {
     ret += "\r\n";
 

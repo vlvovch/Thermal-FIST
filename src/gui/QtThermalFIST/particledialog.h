@@ -53,6 +53,11 @@ public slots:
     void addColumn();
     void removeColumn();
     void showSpectralFunction();
+    void contextMenuRequest(QPoint pos);
+    void copyFeeddownTable();
+
+protected:
+  bool eventFilter(QObject* obj, QEvent* ev);
 };
 
 #endif // DECAYSEDITOR_H

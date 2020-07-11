@@ -125,6 +125,11 @@ namespace thermalfist {
         masses.push_back(0.);
         pdgs.push_back(22);
       }
+
+      if (masses.size() > 3) {
+        ShuffleDecayProducts(masses, pdgs);
+      }
+
       SimpleParticle Mother2 = Mother;
       // Mass validation
       double tmasssum = 0.;
@@ -162,6 +167,20 @@ namespace thermalfist {
 #endif
 
       return ret;
+    }
+
+    void ShuffleDecayProducts(std::vector<double>& masses, std::vector<long long>& pdgs)
+    {
+      if (masses.size() != pdgs.size()) {
+        std::cout << "**WARNING** ShuffleDecayProducts(): size of masses does not match size of pdgs!\n";
+        return;
+      }
+      int N = masses.size();
+      for (int i = N - 1; i >= 1; --i) {
+        int j = RandomGenerators::randgenMT.randInt() % (i + 1);
+        std::swap(masses[j], masses[i]);
+        std::swap(pdgs[j], pdgs[i]);
+      }
     }
 
   }

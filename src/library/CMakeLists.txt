@@ -103,12 +103,14 @@ source_group("HRGFit\\Header Files" FILES ${HEADERS_HRGFit})
 set(SRCS_HRGEventGenerator
 HRGEventGenerator/Acceptance.cpp
 HRGEventGenerator/EventGeneratorBase.cpp
+HRGEventGenerator/FreezeoutModels.cpp
 HRGEventGenerator/MomentumDistribution.cpp
 HRGEventGenerator/ParticleDecaysMC.cpp
 HRGEventGenerator/RandomGenerators.cpp
 HRGEventGenerator/SimpleEvent.cpp
 HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CylindricalBlastWaveEventGenerator.cpp
+HRGEventGenerator/CracowFreezeoutEventGenerator.cpp
 )
 
 source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
@@ -116,18 +118,31 @@ source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
 set(HEADERS_HRGEventGenerator
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/Acceptance.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/EventGeneratorBase.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/FreezeoutModels.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/MomentumDistribution.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/ParticleDecaysMC.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/RandomGenerators.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SphericalBlastWaveEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CylindricalBlastWaveEventGenerator.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CracowFreezeoutEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleEvent.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 )	
 
 source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator})
 
+# Partial chemical equilibrium part
+set(SRCS_HRGPCE
+HRGPCE/ThermalModelPCE.cpp
+)
 
+source_group("HRGPCE\\Source Files" FILES ${SRCS_HRGPCE})
+
+set(HEADERS_HRGPCE
+${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCE.h
+)	
+
+source_group("HRGPCE\\Header Files" FILES ${HEADERS_HRGPCE})
 
 if (NOT STANDALONE_MINUIT)
 include_directories ("$ENV{ROOTSYS}/include/root") 
@@ -137,7 +152,14 @@ endif (NOT STANDALONE_MINUIT)
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
-add_library(ThermalFIST ${SRCS_HRGBase} ${HEADERS_HRGBase} ${SRCS_HRGEV} ${HEADERS_HRGEV} ${SRCS_HRGVDW} ${HEADERS_HRGVDW} ${SRCS_HRGFit} ${HEADERS_HRGFit} ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator})
+add_library(ThermalFIST 
+${SRCS_HRGBase} ${HEADERS_HRGBase} 
+${SRCS_HRGEV} ${HEADERS_HRGEV} 
+${SRCS_HRGVDW} ${HEADERS_HRGVDW} 
+${SRCS_HRGFit} ${HEADERS_HRGFit} 
+${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator}
+${SRCS_HRGPCE} ${HEADERS_HRGPCE}
+)
 
 if (NOT STANDALONE_MINUIT)
 find_library (MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")

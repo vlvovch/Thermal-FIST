@@ -402,6 +402,8 @@ namespace thermalfist {
 
     double psi(double x)
     {
+      if (x == 0.0)
+        return 1.;
       double x2 = x * x;
       double tmpsqrt = sqrt(1. + x2);
       return (1. + x2 / 2.) * tmpsqrt - x2 * x2 / 2. * log((1. + tmpsqrt) / x);
@@ -409,6 +411,8 @@ namespace thermalfist {
 
     double psi2(double x)
     {
+      if (x == 0.0)
+        return 2.;
       double x2 = x * x;
       double tmpsqrt = sqrt(1. + x2);
       return 2. * tmpsqrt + 2. * x2 * log((1. + tmpsqrt) / x);

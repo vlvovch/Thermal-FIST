@@ -102,6 +102,18 @@ namespace thermalfist {
      * \return std::vector<SimpleParticle> 
      */
     std::vector<SimpleParticle> ManyBodyDecay(const SimpleParticle & Mother, std::vector<double> masses, std::vector<long long> pdgs); // TODO: proper implementation for 4+ - body decays
+
+
+    /**
+     * \brief Shuffles the decay products.
+     *        
+     * Currently used for four+ body decays to avoid having asymmetry in 
+     * momentum distributions of decay products due to non-exact current implementation of these decays.
+     *
+     * \param masses Masses of the decay products (in GeV)
+     * \param pdgs   Pdg codes of the decay products
+     */
+    void ShuffleDecayProducts(std::vector<double> &masses, std::vector<long long> &pdgs); // TODO: proper implementation for 4+ - body decays
   }
 
 } // namespace thermalfist

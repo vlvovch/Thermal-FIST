@@ -8,6 +8,8 @@
 #include "HRGEventGenerator/RandomGenerators.h"
 
 #include "HRGBase/xMath.h"
+#include "HRGEventGenerator/SimpleParticle.h"
+#include "HRGEventGenerator/ParticleDecaysMC.h"
 
 namespace thermalfist {
 
@@ -191,138 +193,17 @@ namespace thermalfist {
     }
 
 
-
-    void SSHMomentumGenerator::FixParameters() {
-      {
-        double eps = 1e-8;
-        double l = 0., r = 1.;
-        double m1 = l + (r - l) / 3.;
-        double m2 = r - (r - l) / 3.;
-        int MAXITERS = 200;
-        int iter = 0;
-        while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-          if (g(m1) < g(m2)) {
-            l = m1;
-          }
-          else {
-            r = m2;
-          }
-          m1 = l + (r - l) / 3.;
-          m2 = r - (r - l) / 3.;
-          iter++;
-        }
-        m_MaxPt = g((m1 + m2) / 2.);
-
-        m_dndpt.clear();
-        double dx = m_dPt;
-        for (double x = 0.5*dx; x <= 1.; x += dx) {
-          m_dndpt.add_val(x, g(x));
-        }
-      }
-
-      {
-        m_dndy.resize(0);
-        m_MaxYs.resize(0);
-        double dx = m_dPt;
-        for (double x = 0.5*dx; x <= 1.; x += dx) {
-
-          double pt = -log(x);
-
-          double eps = 1e-8;
-          double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
-          double m1 = l + (r - l) / 3.;
-          double m2 = r - (r - l) / 3.;
-          int MAXITERS = 200;
-          int iter = 0;
-          while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-            if (m_distr.dndy(m1, pt) < m_distr.dndy(m2, pt)) {
-              l = m1;
-            }
-            else {
-              r = m2;
-            }
-            m1 = l + (r - l) / 3.;
-            m2 = r - (r - l) / 3.;
-            iter++;
-          }
-          m_MaxYs.push_back(m_distr.dndy((m1 + m2) / 2., pt));
-
-          m_dndy.push_back(SplineFunction());
-          double dy = m_dy;
-          for (double ty = -4. - m_EtaMax + 0.5*dy; ty <= 4. + m_EtaMax; ty += dy) {
-            m_dndy[m_dndy.size() - 1].add_val(ty, m_distr.dndy(ty, pt));
-          }
-        }
-      }
+    double ThermalMomentumGenerator::g(double x, double mass) const
+    {
+      if (mass < 0.)
+        mass = m_Mass;
+      double tp = -log(x);
+      double texp = exp((sqrt(mass * mass + tp * tp) - m_Mu) / m_T);
+      return tp * tp / (texp + m_Statistics) / x;
     }
 
-    void SSHMomentumGenerator::FixParameters2() {
-      {
-        double eps = 1e-8;
-        double l = 0., r = 1.;
-        double m1 = l + (r - l) / 3.;
-        double m2 = r - (r - l) / 3.;
-        int MAXITERS = 200;
-        int iter = 0;
-        while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-          if (g(m1) < g(m2)) {
-            l = m1;
-          }
-          else {
-            r = m2;
-          }
-          m1 = l + (r - l) / 3.;
-          m2 = r - (r - l) / 3.;
-          iter++;
-        }
-        m_MaxPt = g((m1 + m2) / 2.);
-
-        m_dndpt.clear();
-        double dx = m_dPt;
-        for (double x = 0.5*dx; x <= 1.; x += dx) {
-          m_dndpt.add_val(x, g(x));
-        }
-      }
-
-      {
-        m_dndy.resize(0);
-        m_MaxYs.resize(0);
-        double dx = m_dPt;
-        for (double x = 0.5*dx; x <= 1.; x += dx) {
-
-          double pt = -log(x);
-
-          double eps = 1e-8;
-          double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
-          double m1 = l + (r - l) / 3.;
-          double m2 = r - (r - l) / 3.;
-          int MAXITERS = 200;
-          int iter = 0;
-          while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-            if (m_distr.dndysingle(m1, pt) < m_distr.dndysingle(m2, pt)) {
-              l = m1;
-            }
-            else {
-              r = m2;
-            }
-            m1 = l + (r - l) / 3.;
-            m2 = r - (r - l) / 3.;
-            iter++;
-          }
-          m_MaxYs.push_back(m_distr.dndysingle((m1 + m2) / 2., pt));
-
-          m_dndy.push_back(SplineFunction());
-          double dy = m_dy;
-          for (double ty = -4. + 0.5*dy; ty <= 4.; ty += dy) {
-            m_dndy[m_dndy.size() - 1].add_val(ty, m_distr.dndysingle(ty, pt));
-          }
-        }
-      }
-
-    }
-
-    void SSHMomentumGenerator::FindMaximumPt() {
-
+    void ThermalMomentumGenerator::FixParameters()
+    {
       double eps = 1e-8;
       double l = 0., r = 1.;
       double m1 = l + (r - l) / 3.;
@@ -340,24 +221,19 @@ namespace thermalfist {
         m2 = r - (r - l) / 3.;
         iter++;
       }
-      m_MaxPt = g((m1 + m2) / 2.);
-
-      m_dndpt.clearall();
-      double dx = 0.05;
-      for (double x = 0.5*dx; x <= 1.; x += dx) {
-        m_dndpt.add_val(x, g(x));
-      }
+      m_Max = g((m1 + m2) / 2.);
     }
 
-    void SSHMomentumGenerator::FindMaximumY(double pt) {
+    double ThermalMomentumGenerator::ComputeMaximum(double mass) const
+    {
       double eps = 1e-8;
-      double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
+      double l = 0., r = 1.;
       double m1 = l + (r - l) / 3.;
       double m2 = r - (r - l) / 3.;
       int MAXITERS = 200;
       int iter = 0;
       while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-        if (m_distr.dndy(m1, pt) < m_distr.dndy(m2, pt)) {
+        if (g(m1, mass) < g(m2, mass)) {
           l = m1;
         }
         else {
@@ -367,91 +243,128 @@ namespace thermalfist {
         m2 = r - (r - l) / 3.;
         iter++;
       }
-      m_MaxY = m_distr.dndy((m1 + m2) / 2., pt);
+      return g((m1 + m2) / 2., mass);
     }
 
-    void SSHMomentumGenerator::FindMaximumY2(double pt) {
-      double eps = 1e-8;
-      double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
-      double m1 = l + (r - l) / 3.;
-      double m2 = r - (r - l) / 3.;
-      int MAXITERS = 200;
-      int iter = 0;
-      while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-        if (m_distr.dndysingle(m1, pt) < m_distr.dndysingle(m2, pt)) {
-          l = m1;
-        }
-        else {
-          r = m2;
-        }
-        m1 = l + (r - l) / 3.;
-        m2 = r - (r - l) / 3.;
-        iter++;
-      }
-      m_MaxY = m_distr.dndysingle((m1 + m2) / 2., pt);
-    }
-
-    std::pair<double, double> SSHMomentumGenerator::GetRandom(double mass) {
-      double tpt = 0., ty = 0.;
+    double ThermalMomentumGenerator::GetP(double mass) const
+    {
+      if (mass < 0.)
+        mass = m_Mass;
       while (1) {
         double x0 = randgenMT.randDblExc();
-        double y0 = m_MaxPt * randgenMT.randDblExc();
-        if (y0 < g2(x0)) {
-          tpt = -log(x0);
-          break;
-        }
+
+        if (mass < m_Mu && m_Statistics == -1)
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf!\n", m_Mu, mass);
+
+        double M = m_Max;
+        if (mass != m_Mass)
+          M = ComputeMaximum(mass);
+
+        double prob = g(x0, mass) / M;
+
+        if (prob > 1.)
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability by %E exceeds unity!\n", prob - 1.);
+
+        if (randgenMT.randDblExc() < prob) return -log(x0);
       }
-      while (1) {
-        int ind = (int)(exp(-tpt) / m_dPt);
-        if (ind < 0) ind = 0;
-        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
-        double x0 = -4. - m_EtaMax + (8. + 2. * m_EtaMax) * randgenMT.randDblExc();
-        double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
-        if (y0 < m_dndy[ind].f(x0)) {
-          ty = x0;
-          break;
-        }
-      }
-      return std::make_pair(tpt, ty);
+      return 0.;
     }
 
-    std::pair<double, double> SSHMomentumGenerator::GetRandom2(double mass) const {
-      double tpt = 0., ty = 0., teta = 0.;
-      while (1) {
-        double x0 = randgenMT.randDblExc();
-        double y0 = m_MaxPt * randgenMT.randDblExc();
-        if (y0 < g2(x0)) {
-          tpt = -log(x0);
-          break;
-        }
-      }
-      while (1) {
-        int ind = (int)(exp(-tpt) / m_dPt);
-        if (ind < 0) ind = 0;
-        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
-        double x0 = -4. + (8.) * randgenMT.randDblExc();
-        double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
 
-        if (y0 < m_dndy[ind].f(x0)) {
-          ty = x0;
-          teta = -m_EtaMax + 2. * m_EtaMax * randgenMT.randDblExc();
-          break;
-        }
+    BoostInvariantMomentumGenerator::BoostInvariantMomentumGenerator(BoostInvariantFreezeoutParametrization* FreezeoutModel,
+      double Tkin, double etamax, double mass, int statistics, double mu) :
+      m_FreezeoutModel(FreezeoutModel),
+      m_Tkin(Tkin), m_EtaMax(etamax), m_Mass(mass),
+      m_Generator(mass, statistics, Tkin, mu)
+    {
+      if (m_FreezeoutModel == NULL) {
+        //m_FreezeoutModel = new BoostInvariantFreezeoutParametrization();
       }
-      return std::make_pair(tpt, ty - teta);
     }
 
-    std::vector<double> SSHMomentumGenerator::GetMomentum(double mass) const {
-      std::vector<double> ret(0);
-      std::pair<double, double> pty = GetRandom2(mass);
-      double tpt = pty.first;
-      double ty = pty.second;
-      double tphi = 2. * xMath::Pi() * randgenMT.rand();
-      ret.push_back(tpt*cos(tphi));                          //px
-      ret.push_back(tpt*sin(tphi));                          //py
-      ret.push_back(sqrt(tpt*tpt + m_Mass * m_Mass)*sinh(ty)); //pz
+    BoostInvariantMomentumGenerator::~BoostInvariantMomentumGenerator()
+    {
+      if (m_FreezeoutModel != NULL)
+        delete m_FreezeoutModel;
+    }
+
+    std::vector<double> BoostInvariantMomentumGenerator::GetMomentum(double mass) const
+    {
+      if (mass < 0.)
+        mass = Mass();
+
+      std::vector<double> ret(3, 0.);
+      while (1) {
+        double zetacand = GetRandomZeta(RandomGenerators::randgenMT);
+        double eta = -EtaMax() + 2. * EtaMax() * RandomGenerators::randgenMT.rand();
+        double ph = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
+
+        double betar = m_FreezeoutModel->tanhetaperp(zetacand);
+        double cosheta = cosh(eta);
+        double sinheta = sinh(eta);
+
+        double cosphi = cos(ph);
+        double sinphi = sin(ph);
+
+        double vx = betar * cosphi / cosheta;
+        double vy = betar * sinphi / cosheta;
+        double vz = tanh(eta);
+
+        SimpleParticle part(0., 0., 0., mass, 0);
+
+        double tp = m_Generator.GetP(mass);
+        double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
+        double cthe = 2. * RandomGenerators::randgenMT.rand() - 1.;
+        double sthe = sqrt(1. - cthe * cthe);
+        part.px = tp * cos(tphi) * sthe;
+        part.py = tp * sin(tphi) * sthe;
+        part.pz = tp * cthe;
+        part.p0 = sqrt(mass * mass + tp * tp);
+
+        double p0LRF = part.p0;
+
+        part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+
+        //double prob = (cosheta * part.p0 - sinheta * part.pz) /
+        //  (2. * (1. / (1 - betar * betar)) * (cosheta * part.p0 - sinheta * part.pz - betar * (part.px * cos(ph) + part.py * sin(ph))));
+
+        double dRdZeta = m_FreezeoutModel->dRdZeta(zetacand);
+        double dtaudZeta = m_FreezeoutModel->dtaudZeta(zetacand);
+
+        double coshetaperp = m_FreezeoutModel->coshetaperp(zetacand);
+        double sinhetaperp = m_FreezeoutModel->sinhetaperp(zetacand);
+
+        double prob = (dRdZeta * (cosheta * part.p0 - sinheta * part.pz)
+          - dtaudZeta * (cosphi * part.px + sinphi * part.py)) /
+          (coshetaperp * dRdZeta - sinhetaperp * dtaudZeta) / p0LRF
+          / 2.;
+
+        if (RandomGenerators::randgenMT.rand() < prob) {
+          ret[0] = part.px;
+          ret[1] = part.py;
+          ret[2] = part.pz;
+          break;
+        }
+      }
       return ret;
     }
+
+    double BoostInvariantMomentumGenerator::GetRandomZeta(MTRand& rangen) const
+    {
+      if (m_FreezeoutModel->InverseZetaDistributionIsExplicit())
+        return m_FreezeoutModel->InverseZetaDistribution(rangen.rand());
+      
+      while (1) {
+        double zetacand = rangen.rand();
+
+        double prob = m_FreezeoutModel->ZetaProbability(zetacand) / m_FreezeoutModel->ProbabilityMaximum();
+
+        if (rangen.rand() < prob)
+          return zetacand;
+      }
+      return 0.;
+    }
+
 
     double BreitWignerGenerator::f(double x) const {
       return x / ((x*x - m_M * m_M)*(x*x - m_M * m_M) + m_M * m_M*m_Gamma*m_Gamma);
@@ -846,6 +759,313 @@ namespace thermalfist {
         return RandomBesselNormal(a, nu, rangen);
     }
 
+    std::vector<double> SiemensRasmussenMomentumGeneratorGeneralized::GetMomentum(double mass) const
+    {
+      if (mass < 0.)
+        mass = GetMass();
+
+      double ph = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
+      double costh = 2. * RandomGenerators::randgenMT.rand() - 1.;
+      double sinth = sqrt(1. - costh * costh);
+
+      double vx = GetBeta() * sinth * cos(ph);
+      double vy = GetBeta() * sinth * sin(ph);
+      double vz = GetBeta() * costh;
+
+      SimpleParticle part(0., 0., 0., mass, 0);
+
+      double tp = m_Generator.GetP(mass);
+      double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
+      double cthe = 2. * RandomGenerators::randgenMT.rand() - 1.;
+      double sthe = sqrt(1. - cthe * cthe);
+      part.px = tp * cos(tphi) * sthe;
+      part.py = tp * sin(tphi) * sthe;
+      part.pz = tp * cthe;
+      part.p0 = sqrt(mass * mass + tp * tp);
+
+      part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+
+      std::vector<double> ret(3);
+      ret[0] = part.px;
+      ret[1] = part.py;
+      ret[2] = part.pz;
+
+      return ret;
+    }
+
 }
+
+} // namespace thermalfist
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Deprecated code below
+
+namespace thermalfist {
+
+  namespace RandomGenerators {
+
+    void SSHMomentumGenerator::FixParameters() {
+      {
+        double eps = 1e-8;
+        double l = 0., r = 1.;
+        double m1 = l + (r - l) / 3.;
+        double m2 = r - (r - l) / 3.;
+        int MAXITERS = 200;
+        int iter = 0;
+        while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+          if (g(m1) < g(m2)) {
+            l = m1;
+          }
+          else {
+            r = m2;
+          }
+          m1 = l + (r - l) / 3.;
+          m2 = r - (r - l) / 3.;
+          iter++;
+        }
+        m_MaxPt = g((m1 + m2) / 2.);
+
+        m_dndpt.clear();
+        double dx = m_dPt;
+        for (double x = 0.5 * dx; x <= 1.; x += dx) {
+          m_dndpt.add_val(x, g(x));
+        }
+      }
+
+      {
+        m_dndy.resize(0);
+        m_MaxYs.resize(0);
+        double dx = m_dPt;
+        for (double x = 0.5 * dx; x <= 1.; x += dx) {
+
+          double pt = -log(x);
+
+          double eps = 1e-8;
+          double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
+          double m1 = l + (r - l) / 3.;
+          double m2 = r - (r - l) / 3.;
+          int MAXITERS = 200;
+          int iter = 0;
+          while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+            if (m_distr.dndy(m1, pt) < m_distr.dndy(m2, pt)) {
+              l = m1;
+            }
+            else {
+              r = m2;
+            }
+            m1 = l + (r - l) / 3.;
+            m2 = r - (r - l) / 3.;
+            iter++;
+          }
+          m_MaxYs.push_back(m_distr.dndy((m1 + m2) / 2., pt));
+
+          m_dndy.push_back(SplineFunction());
+          double dy = m_dy;
+          for (double ty = -4. - m_EtaMax + 0.5 * dy; ty <= 4. + m_EtaMax; ty += dy) {
+            m_dndy[m_dndy.size() - 1].add_val(ty, m_distr.dndy(ty, pt));
+          }
+        }
+      }
+    }
+
+    void SSHMomentumGenerator::FixParameters2() {
+      {
+        double eps = 1e-8;
+        double l = 0., r = 1.;
+        double m1 = l + (r - l) / 3.;
+        double m2 = r - (r - l) / 3.;
+        int MAXITERS = 200;
+        int iter = 0;
+        while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+          if (g(m1) < g(m2)) {
+            l = m1;
+          }
+          else {
+            r = m2;
+          }
+          m1 = l + (r - l) / 3.;
+          m2 = r - (r - l) / 3.;
+          iter++;
+        }
+        m_MaxPt = g((m1 + m2) / 2.);
+
+        m_dndpt.clear();
+        double dx = m_dPt;
+        for (double x = 0.5 * dx; x <= 1.; x += dx) {
+          m_dndpt.add_val(x, g(x));
+        }
+      }
+
+      {
+        m_dndy.resize(0);
+        m_MaxYs.resize(0);
+        double dx = m_dPt;
+        for (double x = 0.5 * dx; x <= 1.; x += dx) {
+
+          double pt = -log(x);
+
+          double eps = 1e-8;
+          double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
+          double m1 = l + (r - l) / 3.;
+          double m2 = r - (r - l) / 3.;
+          int MAXITERS = 200;
+          int iter = 0;
+          while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+            if (m_distr.dndysingle(m1, pt) < m_distr.dndysingle(m2, pt)) {
+              l = m1;
+            }
+            else {
+              r = m2;
+            }
+            m1 = l + (r - l) / 3.;
+            m2 = r - (r - l) / 3.;
+            iter++;
+          }
+          m_MaxYs.push_back(m_distr.dndysingle((m1 + m2) / 2., pt));
+
+          m_dndy.push_back(SplineFunction());
+          double dy = m_dy;
+          for (double ty = -4. + 0.5 * dy; ty <= 4.; ty += dy) {
+            m_dndy[m_dndy.size() - 1].add_val(ty, m_distr.dndysingle(ty, pt));
+          }
+        }
+      }
+
+    }
+
+    void SSHMomentumGenerator::FindMaximumPt() {
+
+      double eps = 1e-8;
+      double l = 0., r = 1.;
+      double m1 = l + (r - l) / 3.;
+      double m2 = r - (r - l) / 3.;
+      int MAXITERS = 200;
+      int iter = 0;
+      while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+        if (g(m1) < g(m2)) {
+          l = m1;
+        }
+        else {
+          r = m2;
+        }
+        m1 = l + (r - l) / 3.;
+        m2 = r - (r - l) / 3.;
+        iter++;
+      }
+      m_MaxPt = g((m1 + m2) / 2.);
+
+      m_dndpt.clearall();
+      double dx = 0.05;
+      for (double x = 0.5 * dx; x <= 1.; x += dx) {
+        m_dndpt.add_val(x, g(x));
+      }
+    }
+
+    void SSHMomentumGenerator::FindMaximumY(double pt) {
+      double eps = 1e-8;
+      double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
+      double m1 = l + (r - l) / 3.;
+      double m2 = r - (r - l) / 3.;
+      int MAXITERS = 200;
+      int iter = 0;
+      while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+        if (m_distr.dndy(m1, pt) < m_distr.dndy(m2, pt)) {
+          l = m1;
+        }
+        else {
+          r = m2;
+        }
+        m1 = l + (r - l) / 3.;
+        m2 = r - (r - l) / 3.;
+        iter++;
+      }
+      m_MaxY = m_distr.dndy((m1 + m2) / 2., pt);
+    }
+
+    void SSHMomentumGenerator::FindMaximumY2(double pt) {
+      double eps = 1e-8;
+      double l = -4. - m_EtaMax, r = 4. + m_EtaMax;
+      double m1 = l + (r - l) / 3.;
+      double m2 = r - (r - l) / 3.;
+      int MAXITERS = 200;
+      int iter = 0;
+      while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+        if (m_distr.dndysingle(m1, pt) < m_distr.dndysingle(m2, pt)) {
+          l = m1;
+        }
+        else {
+          r = m2;
+        }
+        m1 = l + (r - l) / 3.;
+        m2 = r - (r - l) / 3.;
+        iter++;
+      }
+      m_MaxY = m_distr.dndysingle((m1 + m2) / 2., pt);
+    }
+
+    std::pair<double, double> SSHMomentumGenerator::GetRandom(double mass) {
+      double tpt = 0., ty = 0.;
+      while (1) {
+        double x0 = randgenMT.randDblExc();
+        double y0 = m_MaxPt * randgenMT.randDblExc();
+        if (y0 < g2(x0)) {
+          tpt = -log(x0);
+          break;
+        }
+      }
+      while (1) {
+        int ind = (int)(exp(-tpt) / m_dPt);
+        if (ind < 0) ind = 0;
+        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
+        double x0 = -4. - m_EtaMax + (8. + 2. * m_EtaMax) * randgenMT.randDblExc();
+        double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
+        if (y0 < m_dndy[ind].f(x0)) {
+          ty = x0;
+          break;
+        }
+      }
+      return std::make_pair(tpt, ty);
+    }
+
+    std::pair<double, double> SSHMomentumGenerator::GetRandom2(double mass) const {
+      double tpt = 0., ty = 0., teta = 0.;
+      while (1) {
+        double x0 = randgenMT.randDblExc();
+        double y0 = m_MaxPt * randgenMT.randDblExc();
+        if (y0 < g2(x0)) {
+          tpt = -log(x0);
+          break;
+        }
+      }
+      while (1) {
+        int ind = (int)(exp(-tpt) / m_dPt);
+        if (ind < 0) ind = 0;
+        if (ind >= static_cast<int>(m_dndy.size())) ind = m_dndy.size() - 1;
+        double x0 = -4. + (8.) * randgenMT.randDblExc();
+        double y0 = m_MaxYs[ind] * randgenMT.randDblExc();
+
+        if (y0 < m_dndy[ind].f(x0)) {
+          ty = x0;
+          teta = -m_EtaMax + 2. * m_EtaMax * randgenMT.randDblExc();
+          break;
+        }
+      }
+      return std::make_pair(tpt, ty - teta);
+    }
+
+    std::vector<double> SSHMomentumGenerator::GetMomentum(double mass) const {
+      std::vector<double> ret(0);
+      std::pair<double, double> pty = GetRandom2(mass);
+      double tpt = pty.first;
+      double ty = pty.second;
+      double tphi = 2. * xMath::Pi() * randgenMT.rand();
+      ret.push_back(tpt * cos(tphi));                          //px
+      ret.push_back(tpt * sin(tphi));                          //py
+      ret.push_back(sqrt(tpt * tpt + m_Mass * m_Mass) * sinh(ty)); //pz
+      return ret;
+    }
+
+  }
 
 } // namespace thermalfist

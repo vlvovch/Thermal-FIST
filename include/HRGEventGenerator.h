@@ -14,3 +14,4 @@
 #include "HRGEventGenerator/SimpleParticle.h"
 #include "HRGEventGenerator/SREventGenerator.h"
 #include "HRGEventGenerator/SSHEventGenerator.h"
+#include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"

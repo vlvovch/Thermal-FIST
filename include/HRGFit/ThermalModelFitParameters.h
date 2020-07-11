@@ -52,6 +52,8 @@ namespace thermalfist {
     FitParameter R;
     FitParameter Rc;
 
+    FitParameter Tkin;
+
     /// Reduced \f$ \chi^2 \f$
     double chi2ndf;
 
@@ -65,12 +67,14 @@ namespace thermalfist {
    *  \brief Structure holding information about parameters of a thermal fit.
    */
   struct ThermalModelFitParameters {
-    static const int ParameterCount = 10;
+    static const int ParameterCount = 11;
 
     bool GCE;  ///< 0 - CE, 1 - GCE
 
     /// All the fit parameters
     FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
+
+    FitParameter Tkin;
 
     /// Vector of pointer to all the parameters
     std::vector<FitParameter*> ParameterList;

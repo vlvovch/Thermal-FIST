@@ -140,13 +140,20 @@ public:
 
   QComboBox *comboBWShape;
 
+  QCheckBox *CBUsePCE;
+  QDoubleSpinBox* spinTkin;
+  QCheckBox *CBFreezeLongLived;
+  QDoubleSpinBox *spinWidthCut;
+  QCheckBox *CBSahaNuclei;
+
 public:
-  explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);
+  explicit  OtherOptionsDialog(ModelConfigWidget* parent = 0, bool eventGeneratorMode = false);
 signals:
 
 public slots :
   void OK();
   void Discard() { QDialog::reject(); };
+  void UpdateControls();
 };
 
 #endif // CONFIGWIDGETS_H

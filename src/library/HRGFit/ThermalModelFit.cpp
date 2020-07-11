@@ -28,6 +28,7 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/Utility.h"
+#include "HRGPCE/ThermalModelPCE.h"
 
 namespace thermalfist {
 
@@ -51,6 +52,18 @@ namespace thermalfist {
         double chi2 = 0.;
         if (par[2]<0.) return 1e12;
         if (par[3]<0.) return 1e12;
+
+        m_THMFit->SetParameterValue("T", par[0]);
+        m_THMFit->SetParameterValue("muB", par[1]);
+        m_THMFit->SetParameterValue("gammaS", par[2]);
+        m_THMFit->SetParameterValue("R", par[3]);
+        m_THMFit->SetParameterValue("Rc", par[4]);
+        m_THMFit->SetParameterValue("gammaq", par[5]);
+        m_THMFit->SetParameterValue("muQ", par[6]);
+        m_THMFit->SetParameterValue("muS", par[7]);
+        m_THMFit->SetParameterValue("muC", par[8]);
+        m_THMFit->SetParameterValue("gammac", par[9]);
+        m_THMFit->SetParameterValue("Tkin", par[10]);
 
         m_THMFit->model()->SetTemperature(par[0]);
 
@@ -94,7 +107,13 @@ namespace thermalfist {
 
         m_THMFit->model()->ConstrainChemicalPotentials();
 
-        m_THMFit->model()->CalculateDensities();
+        if (m_THMFit->UseTkin()) {
+          m_THMFit->modelpce()->SetChemicalFreezeout(m_THMFit->model()->Parameters(), m_THMFit->model()->ChemicalPotentials());
+          m_THMFit->modelpce()->CalculatePCE(par[10]);
+        }
+        else {
+          m_THMFit->model()->CalculateDensities();
+        }
 
         // If current chemical potentials lead to
         // Bose-Einstein function divergence (\mu > m),
@@ -134,7 +153,7 @@ namespace thermalfist {
           printf("%15d ", m_THMFit->Iters());
           printf("%15lf ", chi2);
           if (m_THMFit->Parameters().T.toFit)
-            printf("%15lf ", m_THMFit->model()->Parameters().T);
+            printf("%15lf ", par[0]);
           if (m_THMFit->Parameters().muB.toFit)
             printf("%15lf ", m_THMFit->model()->Parameters().muB);
           if (m_THMFit->Parameters().muQ.toFit)
@@ -153,6 +172,8 @@ namespace thermalfist {
             printf("%15lf ", m_THMFit->model()->Parameters().gammaS);
           if (m_THMFit->Parameters().gammaC.toFit)
             printf("%15lf ", m_THMFit->model()->Parameters().gammaC);
+          if (m_THMFit->Parameters().Tkin.toFit)
+            printf("%15lf ", par[10]);
           printf("\n");
 
           if (m_THMFit->model()->Ensemble() == ThermalModelBase::CE)
@@ -191,7 +212,8 @@ namespace thermalfist {
   #endif
 
   ThermalModelFit::ThermalModelFit(ThermalModelBase *model_):
-    m_model(model_), m_Parameters(model_->Parameters()), m_FixVcToV(true), m_VcOverV(1.)
+    m_model(model_), m_modelpce(NULL), m_Parameters(model_->Parameters()), m_FixVcToV(true), m_VcOverV(1.), 
+    m_YieldsAtTkin(false), m_SahaForNuclei(true), m_PCEFreezeLongLived(false), m_PCEWidthCut(0.015)
   {
   }
 
@@ -209,9 +231,16 @@ namespace thermalfist {
     m_Parameters.S = m_model->Parameters().S;
     m_Parameters.C = m_model->Parameters().C;
 
+    if (UseTkin()) {
+      m_modelpce = new ThermalModelPCE(m_model, m_PCEFreezeLongLived, m_PCEWidthCut);
+      if (!m_SahaForNuclei) {
+        m_modelpce->SetStabilityFlags(m_modelpce->ComputePCEStabilityFlags(m_model->TPS(), m_SahaForNuclei, m_PCEFreezeLongLived, m_PCEWidthCut));
+      }
+    }
+
     m_Iters = 0;
     FitFCN mfunc(this, verbose);
-    std::vector<double> params(10, 0.);
+    std::vector<double> params(11, 0.);
     params[0] = m_Parameters.T.value;
     params[1] = m_Parameters.muB.value;
     params[2] = m_Parameters.gammaS.value;
@@ -222,6 +251,7 @@ namespace thermalfist {
     params[7] = m_Parameters.muS.value;
     params[8] = m_Parameters.muC.value;
     params[9] = m_Parameters.gammaC.value;
+    params[10] = m_Parameters.Tkin.value;
 
     MnUserParameters upar;
     upar.Add("T", m_Parameters.T.value, m_Parameters.T.error, m_Parameters.T.xmin, m_Parameters.T.xmax);
@@ -234,8 +264,9 @@ namespace thermalfist {
     upar.Add("muS", m_Parameters.muS.value, m_Parameters.muS.error, m_Parameters.muS.xmin, m_Parameters.muS.xmax);
     upar.Add("muC", m_Parameters.muC.value, m_Parameters.muC.error, m_Parameters.muC.xmin, m_Parameters.muC.xmax);
     upar.Add("gammaC", m_Parameters.gammaC.value, m_Parameters.gammaC.error, m_Parameters.gammaC.xmin, m_Parameters.gammaC.xmax);
+    upar.Add("Tkin", m_Parameters.Tkin.value, m_Parameters.Tkin.error, m_Parameters.Tkin.xmin, m_Parameters.Tkin.xmax);
 
-    int nparams = 10;
+    int nparams = 11;
 
     // If only ratios fitted then volume drops out
     //if (m_Multiplicities.size() == 0 && m_model->Ensemble() == ThermalModelBase::GCE)
@@ -278,6 +309,10 @@ namespace thermalfist {
     if (!m_model->TPS()->hasCharmed())
       m_Parameters.SetParameterFitFlag("gammaC", false);
 
+    // If not using PCE, no point using Tkin
+    if (!UseTkin())
+      m_Parameters.SetParameterFitFlag("Tkin", false);
+
     if (!m_Parameters.T.toFit) { upar.Fix("T"); nparams--; }
     if (!m_Parameters.R.toFit) { upar.Fix("R"); nparams--; }
     if (!m_Parameters.Rc.toFit) { upar.Fix("Rc"); nparams--; }
@@ -288,7 +323,7 @@ namespace thermalfist {
     if (!m_Parameters.gammaq.toFit) { upar.Fix("gammaq"); nparams--; }
     if (!m_Parameters.gammaS.toFit) { upar.Fix("gammaS"); nparams--; }
     if (!m_Parameters.gammaC.toFit) { upar.Fix("gammaC"); nparams--; }
-
+    if (!m_Parameters.Tkin.toFit) { upar.Fix("Tkin"); nparams--; }
 
 
     m_Ndf = GetNdf();
@@ -323,6 +358,8 @@ namespace thermalfist {
           printf("%15s ", "gammaS");
         if (m_Parameters.gammaC.toFit)
           printf("%15s ", "gammaC");
+        if (m_Parameters.Tkin.toFit)
+          printf("%15s ", "Tkin [GeV]");
         printf("\n");
       }
 
@@ -369,51 +406,56 @@ namespace thermalfist {
       ret.muC.error = (min.UserParameters()).Errors()[8];
       ret.gammaC.value = (min.UserParameters()).Params()[9];
       ret.gammaC.error = (min.UserParameters()).Errors()[9];
+      ret.Tkin.value = (min.UserParameters()).Params()[10];
+      ret.Tkin.error = (min.UserParameters()).Errors()[10];
 
       if (!m_Parameters.Rc.toFit && FixVcOverV()) {
         ret.Rc.value = ret.R.value * pow(VcOverV(), 1./3.);
         ret.Rc.error = 0.;
       }
 
-      if (repeat) {
-        m_model->SetUseWidth(true);
+      //if (repeat) {
+      //  m_model->SetUseWidth(true);
 
-        upar.SetValue("T", (min.UserParameters()).Params()[0]);
-        upar.SetValue("muB", (min.UserParameters()).Params()[1]);
-        upar.SetValue("gammaS", (min.UserParameters()).Params()[2]);
-        upar.SetValue("R", (min.UserParameters()).Params()[3]);
-        upar.SetValue("Rc", (min.UserParameters()).Params()[4]);
-        upar.SetValue("gammaq", (min.UserParameters()).Params()[5]);
-        upar.SetValue("muQ", (min.UserParameters()).Params()[6]);
-        upar.SetValue("muS", (min.UserParameters()).Params()[7]);
-        upar.SetValue("muC", (min.UserParameters()).Params()[8]);
-        upar.SetValue("gammaC", (min.UserParameters()).Params()[9]);
+      //  upar.SetValue("T", (min.UserParameters()).Params()[0]);
+      //  upar.SetValue("muB", (min.UserParameters()).Params()[1]);
+      //  upar.SetValue("gammaS", (min.UserParameters()).Params()[2]);
+      //  upar.SetValue("R", (min.UserParameters()).Params()[3]);
+      //  upar.SetValue("Rc", (min.UserParameters()).Params()[4]);
+      //  upar.SetValue("gammaq", (min.UserParameters()).Params()[5]);
+      //  upar.SetValue("muQ", (min.UserParameters()).Params()[6]);
+      //  upar.SetValue("muS", (min.UserParameters()).Params()[7]);
+      //  upar.SetValue("muC", (min.UserParameters()).Params()[8]);
+      //  upar.SetValue("gammaC", (min.UserParameters()).Params()[9]); 
+      //  upar.SetValue("Tkin", (min.UserParameters()).Params()[10]);
 
-        MnMigrad migradd(mfunc, upar);
-        min = migradd();
+      //  MnMigrad migradd(mfunc, upar);
+      //  min = migradd();
 
-        ret = m_Parameters;
-        ret.T.value = (min.UserParameters()).Params()[0];
-        ret.T.error = (min.UserParameters()).Errors()[0];
-        ret.muB.value = (min.UserParameters()).Params()[1];
-        ret.muB.error = (min.UserParameters()).Errors()[1];
-        ret.gammaS.value = (min.UserParameters()).Params()[2];
-        ret.gammaS.error = (min.UserParameters()).Errors()[2];
-        ret.R.value = (min.UserParameters()).Params()[3];
-        ret.R.error = (min.UserParameters()).Errors()[3];
-        ret.Rc.value = (min.UserParameters()).Params()[4];
-        ret.Rc.error = (min.UserParameters()).Errors()[4];
-        ret.gammaq.value = (min.UserParameters()).Params()[5];
-        ret.gammaq.error = (min.UserParameters()).Errors()[5];
-        ret.muQ.value = (min.UserParameters()).Params()[6];
-        ret.muQ.error = (min.UserParameters()).Errors()[6];
-        ret.muS.value = (min.UserParameters()).Params()[7];
-        ret.muS.error = (min.UserParameters()).Errors()[7];
-        ret.muC.value = (min.UserParameters()).Params()[8];
-        ret.muC.error = (min.UserParameters()).Errors()[8];
-        ret.gammaC.value = (min.UserParameters()).Params()[9];
-        ret.gammaC.error = (min.UserParameters()).Errors()[9];
-      }
+      //  ret = m_Parameters;
+      //  ret.T.value = (min.UserParameters()).Params()[0];
+      //  ret.T.error = (min.UserParameters()).Errors()[0];
+      //  ret.muB.value = (min.UserParameters()).Params()[1];
+      //  ret.muB.error = (min.UserParameters()).Errors()[1];
+      //  ret.gammaS.value = (min.UserParameters()).Params()[2];
+      //  ret.gammaS.error = (min.UserParameters()).Errors()[2];
+      //  ret.R.value = (min.UserParameters()).Params()[3];
+      //  ret.R.error = (min.UserParameters()).Errors()[3];
+      //  ret.Rc.value = (min.UserParameters()).Params()[4];
+      //  ret.Rc.error = (min.UserParameters()).Errors()[4];
+      //  ret.gammaq.value = (min.UserParameters()).Params()[5];
+      //  ret.gammaq.error = (min.UserParameters()).Errors()[5];
+      //  ret.muQ.value = (min.UserParameters()).Params()[6];
+      //  ret.muQ.error = (min.UserParameters()).Errors()[6];
+      //  ret.muS.value = (min.UserParameters()).Params()[7];
+      //  ret.muS.error = (min.UserParameters()).Errors()[7];
+      //  ret.muC.value = (min.UserParameters()).Params()[8];
+      //  ret.muC.error = (min.UserParameters()).Errors()[8];
+      //  ret.gammaC.value = (min.UserParameters()).Params()[9];
+      //  ret.gammaC.error = (min.UserParameters()).Errors()[9];
+      //  ret.Tkin.value = (min.UserParameters()).Params()[10];
+      //  ret.Tkin.error = (min.UserParameters()).Errors()[10];
+      //}
     }
     else {
       ret = m_Parameters;
@@ -438,6 +480,8 @@ namespace thermalfist {
       ret.muC.error = upar.Errors()[8];
       ret.gammaC.value = upar.Params()[9];
       ret.gammaC.error = upar.Errors()[9];
+      ret.Tkin.value = upar.Params()[10];
+      ret.Tkin.error = upar.Errors()[10];
     }
 
 
@@ -447,8 +491,8 @@ namespace thermalfist {
     parames.S = m_model->Parameters().S;
     parames.Q = m_model->Parameters().Q;
     parames.C = m_model->Parameters().C;
-    m_model->SetParameters(parames);
-    m_model->FixParameters();
+    //m_model->SetParameters(parames);
+    //m_model->FixParameters();
     if (!ret.muQ.toFit && m_model->ConstrainMuQ()) {
       ret.muQ.value = m_model->Parameters().muQ;
       ret.muQ.error = 0.;
@@ -473,6 +517,7 @@ namespace thermalfist {
     params[7] = ret.muS.value;
     params[8] = ret.muC.value;
     params[9] = ret.gammaC.value;
+    params[10] = ret.Tkin.value;
 
     ret.chi2  = mfunc(params);
     int ndf = 0;
@@ -495,6 +540,10 @@ namespace thermalfist {
     
     m_ExtendedParameters = ThermalModelFitParametersExtended(m_model);
 
+    if (m_modelpce != NULL) {
+      delete m_modelpce;
+      m_modelpce = NULL;
+    }
   
     if (verbose)
       printf("Thermal fit finished\n\n");
@@ -527,6 +576,8 @@ namespace thermalfist {
     printf("%20s\n", "Fit parameters");
     for(int i=0;i<6;++i) {
       FitParameter param = m_Parameters.GetParameter(i);
+      if (param.name == "Tkin" && !m_YieldsAtTkin)
+        continue;
       if (param.toFit) {
         printf("%10s = %10lf %2s %lf\n", param.name.c_str(), param.value, "+-",  param.error);
       }
@@ -1003,6 +1054,9 @@ namespace thermalfist {
 
       if (param.toFit) {
         double tval = param.value, terr = param.error, terrp = param.errp, terrm = param.errm;
+
+        if (param.name == "Tkin" && !m_YieldsAtTkin)
+          continue;
       
         if (param.name != "R" && param.name != "Rc") {
           if (!asymm)
@@ -1172,8 +1226,9 @@ namespace thermalfist {
 
     //if (f != stdout)
     //  fclose(f);
-    if (fout != &std::cout)
+    if (filename != "" && fout != NULL) {
       delete fout;
+    }
   }
 
   using namespace std;
@@ -1361,7 +1416,7 @@ namespace thermalfist {
   }
 
   int ThermalModelFit::GetNdf() const {
-    int nparams = 10;
+    int nparams = 11;
     if (!m_Parameters.T.toFit) nparams--;
     if (!m_Parameters.muB.toFit) nparams--;
     if (!m_Parameters.muS.toFit) nparams--;
@@ -1372,6 +1427,7 @@ namespace thermalfist {
     if (!m_Parameters.gammaC.toFit) nparams--;
     if (!m_Parameters.R.toFit || (m_Multiplicities.size()==0 && m_model->Ensemble() == ThermalModelBase::GCE)) nparams--;
     if (!m_Parameters.Rc.toFit || (m_model->Ensemble() != ThermalModelBase::CE && m_model->Ensemble() != ThermalModelBase::SCE && m_model->Ensemble() != ThermalModelBase::CCE)) nparams--;
+    if (!m_Parameters.Tkin.toFit || !UseTkin()) nparams--;
     int ndof = 0;
     for (size_t i = 0; i < m_Quantities.size(); ++i)
       if (m_Quantities[i].toFit) ndof++;

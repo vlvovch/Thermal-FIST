@@ -44,7 +44,7 @@ QVariant FitParametersModel::data(const QModelIndex &index, int role) const
 
     QString name = QString::fromStdString(param.name);
     if (name == "T" || name == "muB" || name == "muQ" || name == "muS"
-      || name == "muC") {
+      || name == "muC" || name == "Tkin") {
       name += " (MeV)";
       mn = 1.e3;
       if (name.startsWith("mu"))
@@ -121,7 +121,7 @@ bool FitParametersModel::setData(const QModelIndex & index, const QVariant & val
 
     std::string name = param.name;
     if (name == "T" || name == "muB" || name == "muQ" || name == "muS"
-      || name == "muC") {
+      || name == "muC" || name == "Tkin") {
       mn = 1.e3;
     }
 

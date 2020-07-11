@@ -111,8 +111,6 @@ SpectralFunctionDialog::SpectralFunctionDialog(QWidget *parent, ThermalParticle 
   setWindowTitle(QString(particle->Name().c_str()) + tr(" spectral function"));
 
   calculate();
-
-  cpath = QApplication::applicationDirPath();
 }
 
 void SpectralFunctionDialog::replot()
@@ -187,9 +185,7 @@ void SpectralFunctionDialog::replotSpectralFunctions()
     plot->graph(1)->addData(BWm[i], mnozh * BWTHval[i]);
   }
 
-  plot->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(plot, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
-
+  
 
   plot->replot();
 }
@@ -478,115 +474,6 @@ void SpectralFunctionDialog::calculate()
   }
 
   replot();
-}
-
-void SpectralFunctionDialog::contextMenuRequest(QPoint pos)
-{
-  QMenu *menu = new QMenu(this);
-  menu->setAttribute(Qt::WA_DeleteOnClose);
-
-  menu->addAction("Save as pdf", this, SLOT(saveAsPdf()));
-  menu->addAction("Save as png", this, SLOT(saveAsPng()));
-  menu->addAction("Write computed values to file", this, SLOT(saveAsAscii()));
-
-  menu->popup(plot->mapToGlobal(pos));
-}
-
-void SpectralFunctionDialog::saveAsPdf()
-{
-  saveAs(0);
-}
-
-void SpectralFunctionDialog::saveAsPng()
-{
-  saveAs(1);
-}
-
-void SpectralFunctionDialog::saveAsAscii()
-{
-  saveAs(2);
-}
-
-void SpectralFunctionDialog::saveAs(int type)
-{
-  QString tname = QString::fromStdString(particle->Name());
-  if (comboView->currentIndex() == 0)
-    tname += "_spectral";
-  else if (comboView->currentIndex() == 1)
-    tname += "_BRs";
-  else
-    tname += "_widths";
-  for (int i = 0; i < tname.size(); ++i) {
-    if (tname[i] == '/')
-      tname[i] = '.';
-  }
-
-  QVector<QString> exts;
-  exts.push_back("pdf");
-  exts.push_back("png");
-  exts.push_back("dat");
-
-  QString listpathprefix = cpath + "/" + tname + "." + exts[type];
-  QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
-  if (path.length()>0)
-  {
-    if (type == 0)
-      plot->savePdf(path, plot->width(), plot->height());
-    else if (type == 1)
-      plot->savePng(path, plot->width(), plot->height());
-    else {
-      QFile fout(path);
-
-      if (fout.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&fout);
-        if (comboView->currentIndex() == 0) {
-          out.setFieldWidth(20);
-          out.setFieldAlignment(QTextStream::AlignLeft);
-          out << "M[GeV]";
-          out << "rho[GeV^-1]_vac";
-          out << "rho[GeV^-1]_th";
-          out << qSetFieldWidth(0) << endl << qSetFieldWidth(20);
-          for (int i = 0; i < plot->graph(0)->dataCount(); ++i) {
-            out.setFieldWidth(20);
-            out.setFieldAlignment(QTextStream::AlignLeft);
-            out << plot->graph(0)->dataMainKey(i);
-            out << plot->graph(0)->dataMainValue(i);
-            out << plot->graph(1)->dataMainValue(i);
-            out << qSetFieldWidth(0) << endl << qSetFieldWidth(20);
-          }
-        }
-        else  {
-          out.setFieldWidth(30);
-          out.setFieldAlignment(QTextStream::AlignLeft);
-          out << "M[GeV]";
-          for (int ch = 0; ch < plot->graphCount(); ++ch) {
-            QString tnamech = "";
-            const QString& name = plot->graph(ch)->name();
-            for (int ic = 0; ic < name.size(); ++ic)
-              if (name[ic] != QChar(' '))
-                tnamech += name[ic];
-            if (comboView->currentIndex() == 1)
-              out << "BR_" + tnamech;
-            else
-              out << "Gamm_" + tnamech + "[GeV]";
-          }
-          out << qSetFieldWidth(0) << endl << qSetFieldWidth(30);
-          for (int i = 0; i < plot->graph(0)->dataCount(); ++i) {
-            out.setFieldWidth(30);
-            out.setFieldAlignment(QTextStream::AlignLeft);
-            out << plot->graph(0)->dataMainKey(i);
-            for (int ch = 0; ch < plot->graphCount(); ++ch) {
-              out << plot->graph(ch)->dataMainValue(i);
-            }
-            out << qSetFieldWidth(0) << endl << qSetFieldWidth(30);
-          }
-        }
-      }
-    }
-    
-    QFileInfo saved(path);
-    cpath = saved.absolutePath();
-  }
 }
 
 

@@ -48,7 +48,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelVersion->setFont(fontDefault);
   layout->addWidget(labelVersion, 0, Qt::AlignCenter);
   layout->addSpacing(20);
-  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2019 Volodymyr Vovchenko"));
+  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2020 Volodymyr Vovchenko"));
   labelCC->setFont(fontDefault);
   layout->addWidget(labelCC, 0, Qt::AlignCenter);
   QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));
@@ -59,7 +59,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   fontSmaller.setPointSize(QApplication::font().pointSize() - 1);
 
   QLabel *labelAttrib = new QLabel(tr("Publication of results obtained using this code should include a reference to:"));
-  QLabel *labelAttrib2 = new QLabel(tr("V. Vovchenko, H. Stoecker, <a href=\"https://arxiv.org/abs/1901.05249\">arXiv:1901.05249 [nucl-th]</a>"));
+  QLabel *labelAttrib2 = new QLabel(tr("V. Vovchenko, H. Stoecker, <a href=\"https://dx.doi.org/10.1016/j.cpc.2019.06.024\">Comput. Phys. Commun. 244, 295 (2019)</a> [<a href=\"https://arxiv.org/abs/1901.05249\">arXiv:1901.05249</a>]"));
   labelAttrib2->setTextFormat(Qt::RichText);
   labelAttrib2->setTextInteractionFlags(Qt::TextBrowserInteraction);
   labelAttrib2->setOpenExternalLinks(true);
@@ -137,4 +137,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
   setLayout(layout);
 
   this->setWindowTitle(tr("About"));
+}
+
+void AboutDialog::showEvent(QShowEvent* ev)
+{
+  QDialog::showEvent(ev);
+
+  setFixedSize(size());
 }

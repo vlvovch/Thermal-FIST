@@ -29,12 +29,14 @@
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGPCE/ThermalModelPCE.h"
 
 #include "DebugText.h"
 #include "tablemodel.h"
 #include "particledialog.h"
 #include "resultdialog.h"
 #include "fittoexperimenttab.h"
+#include "correlationsdialog.h"
 
 using namespace thermalfist;
 
@@ -71,6 +73,10 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     buttonResults = new QPushButton(tr("Equation of state..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
 
+    buttonCorrelations = new QPushButton(tr("Correlations..."));
+    connect(buttonCorrelations, SIGNAL(clicked()), this, SLOT(showCorrelations()));
+    buttonCorrelations->setEnabled(false);
+
     labelHint = new QLabel(tr("Hint: double-click on particle for more info"));
     QFont tmpf = QApplication::font();
     tmpf.setPointSize(tmpf.pointSize() - 1);
@@ -84,6 +90,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     layMisc->addWidget(checkOnlyStable);
     layMisc->addWidget(buttonResults);
+    layMisc->addWidget(buttonCorrelations);
     layMisc->addWidget(labelHint);
     layMisc->addStretch(1);
     layMisc->addWidget(labelValid, 0, Qt::AlignRight);
@@ -123,7 +130,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
     spinmuB->setMinimum(-1000.);
-    spinmuB->setMaximum(1000.);
+    spinmuB->setMaximum(2000.);
     spinmuB->setValue(model->Parameters().muB * 1e3);
     spinmuB->setToolTip(tr("Baryochemical potential"));
     QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));
@@ -467,31 +474,13 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
   timerc.restart();
-
   model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
-
   model->CalculatePrimordialDensities();
-
   printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
-  timerc.restart();
-
-  model->CalculateFeeddown();
-
-  printf("Feeddown time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
-
-  timerc.restart();
-
-  if (config.ComputeFluctations) {
-    model->CalculateFluctuations();
-
-    computeHigherOrderFluctuations();
+  if (config.UsePCE) {
+    dbgstrm << "Chemical freeze-out:" << endl;
   }
-
-  printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
-
-  timerc.restart();
-
   if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
     dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
 
@@ -504,16 +493,16 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   if (model->TPS()->hasCharmed() && !model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
     dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
 
-  if (config.ModelType == ThermalModelConfig::CE) 
+  if (config.ModelType == ThermalModelConfig::CE)
   {
     if (model->TPS()->hasBaryons() && model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
-      dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
+      dbgstrm << "B\t= " << model->CalculateBaryonDensity() * model->Volume() << endl;
     if (model->TPS()->hasStrange() && model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
       dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
     if (model->TPS()->hasCharged() && model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
-      dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
+      dbgstrm << "Q\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
     if (model->TPS()->hasCharmed() && model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
-      dbgstrm << "C\t= " << model->CalculateCharmDensity()     * model->Volume() << endl;
+      dbgstrm << "C\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
   }
   dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
   dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
@@ -546,6 +535,51 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
     dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
   dbgstrm << endl;
+
+  if (config.UsePCE) {
+    timerc.restart();
+
+    ThermalModelPCE modelpce(model);
+    modelpce.SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(model->TPS(), config.PCESahaForNuclei, config.PCEFreezeLongLived, config.PCEWidthCut));
+    modelpce.SetChemicalFreezeout(model->Parameters(), model->ChemicalPotentials());
+    modelpce.CalculatePCE(config.Tkin);
+
+    printf("PCE time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+  }
+
+  timerc.restart();
+  model->CalculateFeeddown();
+  printf("Feeddown time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+
+  timerc.restart();
+
+  if (config.ComputeFluctations) {
+    model->CalculateFluctuations();
+
+    computeHigherOrderFluctuations();
+
+    buttonCorrelations->setEnabled(true);
+  }
+  else {
+    buttonCorrelations->setEnabled(false);
+  }
+
+  printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+
+  timerc.restart();
+
+  
+
+  if (config.UsePCE) {
+    dbgstrm << "Kinetic freeze-out:" << endl;
+    dbgstrm << "Tkin\t\t= " << config.Tkin * 1.e3 << " MeV" << endl;
+    dbgstrm << "Vkin\t\t= " << model->Volume() << " fm^3" << endl;
+    dbgstrm << "Vkin/Vch\t\t= " << model->Volume() / (4./3.*xMath::Pi()*pow(config.VolumeR,3)) << endl;
+    if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
+      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
+    dbgstrm << endl;
+  }
+
   dbgstrm << endl;
   dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
   dbgstrm << "----------------------------------------------------------" << endl;
@@ -618,13 +652,19 @@ void ModelTab::benchmark() {
 }
 
 void ModelTab::switchStability(bool showStable) {
-    myModel->setOnlyStable(showStable);
+  myModel->setOnlyStable(showStable);
 }
 
 void ModelTab::showResults() {
-    ResultDialog dialog(this, model, &flucts);
-    dialog.setWindowFlags(Qt::Window);
-    dialog.exec();
+  ResultDialog dialog(this, model, &flucts);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.exec();
+}
+
+void ModelTab::showCorrelations() {
+  CorrelationsDialog dialog(this, model);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.exec();
 }
 
 void ModelTab::showValidityCheckLog() {

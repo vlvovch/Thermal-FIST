@@ -108,6 +108,57 @@ namespace thermalfist {
       virtual std::vector<double> GetMomentum(double mass = -1.) const = 0;
     };
 
+
+
+    /**
+     * \brief Class for generating the absolute values of the momentum of a particle
+     *              in its local rest frame.
+     *
+     * Implementation for Maxwell-Boltzmann, Fermi-Dirac or Bose-Einstein distribution
+     *
+     */
+    class ThermalMomentumGenerator
+    {
+    public:
+      /**
+       * \brief Construct a new ThermalMomentumGenerator object
+       *
+       * \param mass Particle mass (in GeV)
+       * \param statistics Statistics (0: Maxwell-Boltzmann, +1: Fermi-Dirac, -1: Bose-Einstein)
+       * \param T    The kinetic temperature (in GeV)
+       * \param mu   The chemical potential
+       */
+      ThermalMomentumGenerator(double mass = 0.938, int statistics = 0, double T = 0.100, double mu = 0.) :
+        m_Mass(mass), m_T(T), m_Mu(mu), m_Statistics(statistics)
+      {
+        //FixParameters();
+        m_Max = ComputeMaximum(m_Mass);
+      }
+
+      /**
+      *  \brief Samples the momentum of a particle
+      *
+      *  \param mass Particle mass used for sampling.
+      *              If a negative value is provided, the default (e.g. pole) mass is used.
+      */
+      double GetP(double mass = -1.) const;
+
+    private:
+      /// Unnormalized probability density of x = exp(-p)
+      double g(double x, double mass = -1.) const;
+
+      double ComputeMaximum(double mass) const;
+
+      void FixParameters();
+
+      double m_Mass, m_T, m_Mu;
+      int m_Statistics;
+
+      double m_Max;
+    };
+
+
+
     /**
      * \brief Class for generating the momentum of a particle 
      *              in accordance with the Siemens-Rasmussen formula.
@@ -123,7 +174,7 @@ namespace thermalfist {
       SiemensRasmussenMomentumGenerator() { }
 
       /**
-       * \brief Construct a new SiemensRasmussenGenerator object
+       * \brief Construct a new SiemensRasmussenMomentumGenerator object
        * 
        * \param T    The kinetic temperature (in GeV)
        * \param beta Transverse flow velocity
@@ -192,124 +243,102 @@ namespace thermalfist {
     };
 
 
-    // Class for generating momentum of particle with mass m in accordance with Schnedermann-Sollfrank-Heinz formula with temperature T, transverse flow beta, and longitudinal flow etamax
     /**
-     * \brief Class for generating the momentum of a particle 
-     *              in accordance with the longitudinally symmetric
-     *              blast-wave model.
-     * 
-     * Used in the longitudinally symmetric blast-wave event generator.
-     * 
+     * \brief A generalized class for generating the momentum of a particle
+     *        in accordance with the Siemens-Rasmussen spherically symmetric blast-wave model
+     *        which is able to incoporate Fermi-Dirac and Bose-Einstein statistics.
+     *
+     * Used in the spherically symmetric blast-wave event generator.
+     *
      */
-    class SSHMomentumGenerator
-      : public ParticleMomentumGenerator
+    class SiemensRasmussenMomentumGeneratorGeneralized
+      : public SiemensRasmussenMomentumGenerator
     {
     public:
-      SSHMomentumGenerator() { }
+      SiemensRasmussenMomentumGeneratorGeneralized() { }
 
       /**
-       * \brief Construct a new SSHGenerator object
-       * \param T      The kinetic temperature (in GeV)
-       * \param betas  The transverse flow velocity at the surface
-       * \param etamax The longitudinal space-time rapidity cut-off
-       * \param npow   The power in the transverse flow profile function
-       * \param mass   Particle mass (in GeV) 
+       * \brief Construct a new SiemensRasmussenMomentumGeneratorGeneralized object
+       *
+       * \param T    The kinetic temperature (in GeV)
+       * \param beta Radial flow velocity
+       * \param mass Particle mass (in GeV)
+       * \param statistics Statistics (0: Maxwell-Boltzmann, +1: Fermi-Dirac, -1: Bose-Einstein)
+       * \param mu   The chemical potential
        */
-      SSHMomentumGenerator(double T, double betas, double etamax, double npow, double mass) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
-        m_dPt = 0.02;
-        m_dy = 0.05;
-        FixParameters2();
+      SiemensRasmussenMomentumGeneratorGeneralized(double T, double beta, double mass, int statistics = 0, double mu = 0) :
+        SiemensRasmussenMomentumGenerator(T, beta, mass),
+        m_Generator(mass, statistics, T, mu)
+      {
 
       }
-      
-      ~SSHMomentumGenerator() { }
-
-      /**
-       * \brief Sets the parameters of the distribution
-       * 
-       * \param T      The kinetic temperature (in GeV)
-       * \param betas  The transverse flow velocity at the surface
-       * \param etamax The longitudinal space-time rapidity cut-off
-       * \param npow   The power in the transverse flow profile function
-       * \param mass   Particle mass (in GeV) 
-       */
-      void SetParameters(double T, double betas, double etamax, double npow, double mass) {
-        m_T = T;
-        m_BetaS = betas;
-        m_EtaMax = etamax;
-        m_Mass = mass;
-        m_n = npow;
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
-        m_dPt = 0.02;
-        m_dy = 0.05;
-        FixParameters2();
-      }
-
-      /**
-        * \brief Set the mean transverse flow velocity.
-        *
-        * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2 
-        * 
-        * \param betaT  The mean transverse flow velocity
-        */
-      void SetMeanBetaT(double betaT) {
-        m_BetaS = (2. + m_n) / 2. * betaT;
-        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
-        m_dPt = 0.02;
-        m_dy = 0.05;
-        FixParameters2();
-      }
-
-      double GetTkin() const { return m_T; }
-      double GetBetaSurface() const { return m_BetaS; }
-      double GetMass() const { return m_Mass; }
-      double GetNPow() const { return m_n; }
-      double GetEtaMax() const { return m_EtaMax; }
 
       // Override functions begin
 
-      std::vector<double> GetMomentum(double mass = -1.) const;
+      virtual std::vector<double> GetMomentum(double mass = -1.) const;
 
       // Override functions end
 
     private:
-      double w(double p) const {
-        return sqrt(p*p + m_Mass * m_Mass);
-      }
+      ThermalMomentumGenerator m_Generator;
+    };
 
-      double g(double x) const {
-        return m_distr.dndpt(-log(x)) / x;
-      }
 
-      double g2(double x) const {
-        return m_dndpt.f(x);
-      }
 
-      void FixParameters();
+    /**
+     * \brief Class for generating momentum of a particle
+     *              in accordance with a longitudinally boost invariant
+     *              and azimuthally symmetric freeze-out model.
+     *
+     */
+    class BoostInvariantMomentumGenerator
+      : public ParticleMomentumGenerator
+    {
+    public:
+      /**
+       * \brief Construct a new BoostInvariantMomentumGenerator object
+       *
+       * \param FreezeoutModel Pointer to a BoostInvariantFreezeoutParametrization object. Will be deleted on destruction!
+       * \param Tkin       The kinetic temperature (in GeV)
+       * \param etamax     The longitudinal space-time rapidity cut-off
+       * \param mass       Particle mass (in GeV)
+       * \param statistics Quantum statistics (default: Maxwell-Boltzmann)
+       * \param mu         Chemical potential (in GeV). Only matters for quantum statistics
+       */
+      BoostInvariantMomentumGenerator(BoostInvariantFreezeoutParametrization* FreezeoutModel = NULL,
+        double Tkin = 0.100, double etamax = 3.0, double mass = 0.938, int statistics = 0, double mu = 0);
 
-      void FixParameters2();
+      /**
+       * \brief BoostInvariantMomentumGenerator desctructor.
+       *
+       * Will free the memory used by the object pointed to by m_FreezeoutModel
+       */
+      virtual ~BoostInvariantMomentumGenerator();
 
-      // Finds the maximum of g(x) using the ternary search
-      void FindMaximumPt();
+      double EtaMax() const { return m_EtaMax; }
+      double Mass() const { return m_Mass; }
 
-      void FindMaximumY(double pt);
+      // Override functions begin
 
-      void FindMaximumY2(double pt);
+      virtual std::vector<double> GetMomentum(double mass = -1.) const;
 
-      // Generates random pt and y
-      std::pair<double, double> GetRandom(double mass = -1.);
+      // Override functions end
 
-      std::pair<double, double> GetRandom2(double mass = -1.) const;
+    protected:
+     /**
+     * \brief Samples zeta for use in Monte Carlo event generator.
+     *
+     * Uses rejection sampling.
+     *
+     */
+     virtual double GetRandomZeta(MTRand& rangen = RandomGenerators::randgenMT) const;
 
-      double m_T, m_BetaS, m_EtaMax, m_n, m_Mass;
-      double m_MaxY, m_MaxPt;
-      SSHDistribution m_distr;
-      SplineFunction m_dndpt;
-      std::vector<SplineFunction> m_dndy;
-      std::vector<double> m_MaxYs;
-      double m_dPt;
-      double m_dy;
+    private:
+      BoostInvariantFreezeoutParametrization* m_FreezeoutModel;
+      ThermalMomentumGenerator m_Generator;
+      double m_Tkin;
+      double m_EtaMax;
+      double m_Mass;
     };
 
 
@@ -367,12 +396,6 @@ namespace thermalfist {
       double m_Max;
     };
 
-
-    /// \brief Class for generating mass of resonance 
-    ///        in accordance with constant width Breit-Wigner distribution 
-    ///        multiplied by the thermal density.
-    ///
-    /// Samples
 
     /**
      * \brief Class for generating mass of resonance
@@ -472,5 +495,142 @@ namespace thermalfist {
 
 } // namespace thermalfist
 
+
+/** \defgroup deprecatedEventGenerators Deprecated objects from event generator module.
+ *  \deprecated The source code below is no longer used.
+ *  @{
+ */
+
+namespace thermalfist {
+
+  /// \brief Contains random generator functions used in
+  ///        the Monte Carlo Thermal Event Generator 
+  namespace RandomGenerators {
+
+    // Class for generating momentum of particle with mass m in accordance with Schnedermann-Sollfrank-Heinz formula with temperature T, transverse flow beta, and longitudinal flow etamax
+    /**
+     * \brief Class for generating the momentum of a particle
+     *              in accordance with the longitudinally symmetric
+     *              blast-wave model.
+     *
+     * Used in the longitudinally symmetric blast-wave event generator.
+     *
+     */
+    class SSHMomentumGenerator
+      : public ParticleMomentumGenerator
+    {
+    public:
+      SSHMomentumGenerator() { }
+
+      /**
+       * \brief Construct a new SSHGenerator object
+       * \param T      The kinetic temperature (in GeV)
+       * \param betas  The transverse flow velocity at the surface
+       * \param etamax The longitudinal space-time rapidity cut-off
+       * \param npow   The power in the transverse flow profile function
+       * \param mass   Particle mass (in GeV)
+       */
+      SSHMomentumGenerator(double T, double betas, double etamax, double npow, double mass) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Mass(mass) {
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n, false);
+        m_dPt = 0.02;
+        m_dy = 0.05;
+        FixParameters2();
+
+      }
+
+      ~SSHMomentumGenerator() { }
+
+      /**
+       * \brief Sets the parameters of the distribution
+       *
+       * \param T      The kinetic temperature (in GeV)
+       * \param betas  The transverse flow velocity at the surface
+       * \param etamax The longitudinal space-time rapidity cut-off
+       * \param npow   The power in the transverse flow profile function
+       * \param mass   Particle mass (in GeV)
+       */
+      void SetParameters(double T, double betas, double etamax, double npow, double mass) {
+        m_T = T;
+        m_BetaS = betas;
+        m_EtaMax = etamax;
+        m_Mass = mass;
+        m_n = npow;
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
+        m_dPt = 0.02;
+        m_dy = 0.05;
+        FixParameters2();
+      }
+
+      /**
+        * \brief Set the mean transverse flow velocity.
+        *
+        * Surface velocity is calculated as \\beta_s = \\langle \\beta_T \\rangle (2+n)/2
+        *
+        * \param betaT  The mean transverse flow velocity
+        */
+      void SetMeanBetaT(double betaT) {
+        m_BetaS = (2. + m_n) / 2. * betaT;
+        m_distr = SSHDistribution(0, m_Mass, m_T, m_BetaS, m_EtaMax, m_n);
+        m_dPt = 0.02;
+        m_dy = 0.05;
+        FixParameters2();
+      }
+
+      double GetTkin() const { return m_T; }
+      double GetBetaSurface() const { return m_BetaS; }
+      double GetMass() const { return m_Mass; }
+      double GetNPow() const { return m_n; }
+      double GetEtaMax() const { return m_EtaMax; }
+
+      // Override functions begin
+
+      std::vector<double> GetMomentum(double mass = -1.) const;
+
+      // Override functions end
+
+    private:
+      double w(double p) const {
+        return sqrt(p * p + m_Mass * m_Mass);
+      }
+
+      double g(double x) const {
+        return m_distr.dndpt(-log(x)) / x;
+      }
+
+      double g2(double x) const {
+        return m_dndpt.f(x);
+      }
+
+      void FixParameters();
+
+      void FixParameters2();
+
+      // Finds the maximum of g(x) using the ternary search
+      void FindMaximumPt();
+
+      void FindMaximumY(double pt);
+
+      void FindMaximumY2(double pt);
+
+      // Generates random pt and y
+      std::pair<double, double> GetRandom(double mass = -1.);
+
+      std::pair<double, double> GetRandom2(double mass = -1.) const;
+
+      double m_T, m_BetaS, m_EtaMax, m_n, m_Mass;
+      double m_MaxY, m_MaxPt;
+      SSHDistribution m_distr;
+      SplineFunction m_dndpt;
+      std::vector<SplineFunction> m_dndy;
+      std::vector<double> m_MaxYs;
+      double m_dPt;
+      double m_dy;
+    };
+
+  }
+
+} // namespace thermalfist
+
+ /** @}*/
 
 #endif

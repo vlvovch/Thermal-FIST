@@ -22,6 +22,7 @@ namespace thermalfist {
     //R.value = model->Parameters.R;
     R.value = 0.;
     Rc.value = 0.;
+    Tkin.value = model->Parameters().T;
     nH.value = model->CalculateHadronDensity();
     rhoB.value = model->CalculateBaryonDensity();
     rhoQ.value = model->CalculateChargeDensity();
@@ -48,12 +49,15 @@ namespace thermalfist {
     S = params.S;
     C = params.C;
 
+    Tkin = FitParameter("Tkin", false, params.T, 0.05, 0.02, 0.500);
+
     FillParameterList();
   }
 
   ThermalModelFitParameters::ThermalModelFitParameters(const ThermalModelFitParameters & op) :
     GCE(op.GCE), T(op.T), muB(op.muB), muS(op.muS), muQ(op.muQ), muC(op.muC),
     gammaq(op.gammaq), gammaS(op.gammaS), gammaC(op.gammaC), R(op.R), Rc(op.Rc),
+    Tkin(op.Tkin),
     B(op.B), S(op.S), Q(op.Q), C(op.C), chi2(op.chi2), chi2ndf(op.chi2ndf),
     ndf(op.ndf)
   {
@@ -80,6 +84,9 @@ namespace thermalfist {
     chi2 = op.chi2;
     chi2ndf = op.chi2ndf;
     ndf = op.ndf;
+
+    Tkin = op.Tkin;
+
     FillParameterList();
     return *this;
   }
@@ -97,6 +104,8 @@ namespace thermalfist {
     ParameterList.push_back(&gammaq);
     ParameterList.push_back(&gammaS);
     ParameterList.push_back(&gammaC);
+    
+    ParameterList.push_back(&Tkin);
   }
 
   int ThermalModelFitParameters::IndexByName(const std::string & name) const

@@ -173,13 +173,14 @@ namespace thermalfist {
     return xcur;
   }
 
-  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& /*xdelta*/) const
+  bool Broyden::BroydenSolutionCriterium::IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta) const
   {
-    double maxdiff = 0.;
+    double maxdiff = 0., maxdiffxdelta = 0.;
     for (size_t i = 0; i < x.size(); ++i) {
       maxdiff = std::max(maxdiff, fabs(f[i]));
+      maxdiffxdelta = std::max(maxdiffxdelta, fabs(xdelta[i]));
     }
-    return (maxdiff < m_MaximumError);
+    return (maxdiff < m_MaximumError) || maxdiffxdelta == 0.;
   }
 
 } // namespace thermalfist
