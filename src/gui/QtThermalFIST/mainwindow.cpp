@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
   currentTab = tabWidget->currentIndex();
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-  QLabel *labelCopyright = new QLabel(tr("© 2014-2019 Volodymyr Vovchenko"));
+  QLabel *labelCopyright = new QLabel(tr("© 2014-2020 Volodymyr Vovchenko"));
 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   mainLayout->addLayout(dataLay);

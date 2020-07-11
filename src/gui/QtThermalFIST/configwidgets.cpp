@@ -313,7 +313,7 @@ void ModelConfigWidget::interactionsDialog()
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
-  OtherOptionsDialog dialog(this);
+  OtherOptionsDialog dialog(this, m_eventGeneratorMode);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
@@ -703,7 +703,7 @@ void ConservationLawsDialog::OK()
   QDialog::accept();
 }
 
-OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
+OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGeneratorMode) : QDialog(parent), m_parent(parent)
 {
   QVBoxLayout* layout = new QVBoxLayout(); 
   
@@ -756,7 +756,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   QHBoxLayout* layTkin= new QHBoxLayout();
   layTkin->setAlignment(Qt::AlignLeft);
   QLabel* labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
-  labelTkin->setToolTip(tr("Make sure T<sub>kin</sub> >= T<sub>ch</sub>. The T<sub>kin</sub> > T<sub>ch</sub> case will still compute, but may not have much physical sense."));
+  labelTkin->setToolTip(tr("Make sure T<sub>kin</sub> <= T<sub>ch</sub>. The T<sub>kin</sub> > T<sub>ch</sub> case will still compute, but may not have much physical sense."));
   spinTkin = new QDoubleSpinBox();
   spinTkin->setRange(0., 10000.);
   spinTkin->setValue(m_parent->currentConfig.Tkin * 1.e3);
@@ -765,7 +765,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layTkin->addWidget(spinTkin);
 
   CBFreezeLongLived = new QCheckBox(tr("Freeze long-lived resonances"));
-  CBFreezeLongLived->setToolTip(tr("Yields of resonances with Γ<Γ<sub>lim</sub> will frozen in the PCE"));
+  CBFreezeLongLived->setToolTip(tr("Yields of resonances with Γ<Γ_lim will frozen at the chemical freeze-out"));
   CBFreezeLongLived->setChecked(m_parent->currentConfig.PCEFreezeLongLived);
 
   QHBoxLayout* layGammaLim = new QHBoxLayout();
@@ -779,6 +779,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layGammaLim->addWidget(spinWidthCut);
 
   CBSahaNuclei = new QCheckBox(tr("Use Saha equation for light nuclei"));
+  CBSahaNuclei->setToolTip(tr("Evaluate nuclear abundances through the Saha equation. Otherwise their abundances are frozen at T_ch."));
   CBSahaNuclei->setChecked(m_parent->currentConfig.PCESahaForNuclei);
 
   PCELayout->addWidget(CBUsePCE);
@@ -795,6 +796,9 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layout->addWidget(grPCE);
 
   setLayout(layout);
+
+  if (eventGeneratorMode)
+    grPCE->setVisible(false);
 
   UpdateControls();
 

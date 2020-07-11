@@ -85,7 +85,7 @@ namespace thermalfist {
     email += ".";
     email += "uni-frankfurt.de";
 
-    tmpstr = "Copyright (c) 2019 Volodymyr Vovchenko <" + email + ">";
+    tmpstr = "Copyright (c) 2020 Volodymyr Vovchenko <" + email + ">";
 
     tmpstr = OutputString(tmpstr);
 
