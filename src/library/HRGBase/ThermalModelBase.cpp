@@ -965,11 +965,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
       return 0.;
     }
 
@@ -982,11 +982,11 @@ namespace thermalfist {
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
       return 0.;
     }
 
@@ -1036,11 +1036,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id2);
       return 0.;
     }
 
@@ -1053,11 +1053,11 @@ namespace thermalfist {
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %I64", id2);
+      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id2);
       return 0.;
     }
 
@@ -1097,7 +1097,7 @@ namespace thermalfist {
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
 
@@ -1108,7 +1108,7 @@ namespace thermalfist {
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
 
@@ -1133,7 +1133,7 @@ namespace thermalfist {
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::FinalParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::FinalParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
 
@@ -1144,7 +1144,7 @@ namespace thermalfist {
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg: unknown pdg code %I64", id1);
+      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
 

@@ -1228,9 +1228,7 @@ namespace thermalfist {
         ret = false;
         cnt++;
         if (cnt == 10) {
-          printf("**WARNING** Further warnings are discarded...\n",
-            part.Name().c_str(),
-            part.PdgId());
+          printf("**WARNING** Further warnings are discarded...\n");
         }
       }
     }
