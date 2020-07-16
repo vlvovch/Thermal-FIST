@@ -695,11 +695,16 @@ namespace thermalfist {
     // 1 - Npart
     if (PDGID == 1) return CalculateBaryonDensity();
 
+    // K0S or K0L
+    if (PDGID == 310 || PDGID == 130)
+      if (m_TPS->PdgToId(311) != -1 && m_TPS->PdgToId(-311) != -1)
+        return (dens->operator[](m_TPS->PdgToId(311)) + dens->operator[](m_TPS->PdgToId(-311))) / 2.;
+
     // Id Pdg code has a trailing zero, try to construct a particle + anti-particle yield
     if (PDGID % 10 == 0) {
       long long tpdgid = PDGID / 10;
       if (m_TPS->PdgToId(tpdgid) != -1 && m_TPS->PdgToId(-tpdgid) != -1)
-      return dens->operator[](m_TPS->PdgToId(tpdgid)) + dens->operator[](m_TPS->PdgToId(-tpdgid));
+        return dens->operator[](m_TPS->PdgToId(tpdgid)) + dens->operator[](m_TPS->PdgToId(-tpdgid));
     }
 
     // 22122112 - nucleons

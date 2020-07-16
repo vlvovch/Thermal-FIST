@@ -46,6 +46,9 @@ namespace thermalfist {
 
   bool Disclaimer::PrintDisclaimer()
   {
+    if (Disclaimer::DisclaimerPrinted)
+      return true;
+    
     cout << string(79, '#') << endl;
 
     cout << "#" << string(77, ' ') << "#" << endl;

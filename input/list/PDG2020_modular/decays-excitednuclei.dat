@@ -1,0 +1,149 @@
+# the list of decays
+# each entry consists of the following:
+# a line with the pdgid of decaying particle
+# a line with the number of decay channels
+# for each channel a line containing whitespace-separated values of the channel branching ratio and pdg ids of the daughter products
+# everything after the # symbol is treated as a comment and ignored
+# decays of antiparticles are not listed but generated from the listed decays of particles
+
+# decays of excited nuclei
+
+100002004001                         # He4(1)
+1                                    # 1 decay channel
+1               1000010030 2212      # He4(1) -> H3 + p
+
+100002004002                         # He4(2)
+2                                    # 2 decay channels
+0.238           1000020030 2112      # He4(2) -> He3 + n
+0.762           1000010030 2212      # He4(2) -> H3 + p
+
+100002004003                         # He4(3)
+2                                    # 2 decay channels
+0.373           1000020030 2112      # He4(3) -> He3 + n
+0.627           1000010030 2212      # He4(3) -> H3 + p
+
+100002004004                         # He4(4)
+2                                    # 2 decay channels
+0.473           1000020030 2112      # He4(4) -> He3 + n
+0.527           1000010030 2212      # He4(4) -> H3 + p
+
+1000030040                           # Li4
+1                                    # 1 decay channel
+1               1000020030 2212      # Li4 -> He3 + p
+
+100002004005                         # He4(5)
+2                                    # 2 decay channels
+0.445           1000020030 2112      # He4(5) -> He3 + n
+0.555           1000010030 2212      # He4(5) -> H3 + p
+
+100003004001                         # Li4(1)
+1                                    # 1 decay channel
+1               1000020030 2212      # Li4(1) -> He3 + p
+
+100002004006                         # He4(6)
+3                                    # 3 decay channels
+0.47            1000020030 2112      # He4(6) -> He3 + n
+0.505           1000010030 2212      # He4(6) -> H3 + p
+0.025           1000010020 1000010020 # He4(6) -> d + d
+
+1000010040                           # H4
+1                                    # 1 decay channel
+1               1000010030 2112      # H4 -> H3 + n
+
+101001004001                         # H4(1)
+1                                    # 1 decay channel
+1               1000010030 2112      # H4(1) -> H3 + n
+
+100002004007                         # He4(7)
+2                                    # 2 decay channels
+0.483           1000020030 2112      # He4(7) -> He3 + n
+0.517           1000010030 2212      # He4(7) -> H3 + p
+
+100003004002                         # Li4(2)
+1                                    # 1 decay channel
+1               1000020030 2212      # Li4(2) -> He3 + p
+
+100002004008                         # He4(8)
+2                                    # 2 decay channels
+0.485           1000020030 2112      # He4(8) -> He3 + n
+0.515           1000010030 2212      # He4(8) -> H3 + p
+
+100003004003                         # Li4(3)
+1                                    # 1 decay channel
+1               1000020030 2212      # Li4(3) -> He3 + p
+
+101001004002                         # H4(2)
+1                                    # 1 decay channel
+1               1000010030 2112      # H4(2) -> H3 + n
+
+101001004003                         # H4(3)
+1                                    # 1 decay channel
+1               1000010030 2112      # H4(3) -> H3 + n
+
+100002004009                         # He4(9)
+3                                    # 3 decay channels
+0.03            1000020030 2112      # He4(9) -> He3 + n
+0.03            1000010030 2212      # He4(9) -> H3 + p
+0.94            1000010020 1000010020 # He4(9) -> d + d
+
+100002004010                         # He4(10)
+3                                    # 3 decay channels
+0.47            1000020030 2112      # He4(10) -> He3 + n
+0.48            1000010030 2212      # He4(10) -> H3 + p
+0.05            1000010020 1000010020 # He4(10) -> d + d
+
+100002004011                         # He4(11)
+3                                    # 3 decay channels
+0.02            1000020030 2112      # He4(11) -> He3 + n
+0.02            1000010030 2212      # He4(11) -> H3 + p
+0.96            1000010020 1000010020 # He4(11) -> d + d
+
+100002004012                         # He4(12)
+3                                    # 3 decay channels
+0.0025          1000020030 2112      # He4(12) -> He3 + n
+0.0025          1000010030 2212      # He4(12) -> H3 + p
+0.995           1000010020 1000010020 # He4(12) -> d + d
+
+100002004013                         # He4(13)
+1                                    # 1 decay channel
+1               1000010020 1000010020 # He4(13) -> d + d
+
+100002004014                         # He4(14)
+1                                    # 1 decay channel
+1               1000010020 1000010020 # He4(14) -> d + d
+
+100002004015                         # He4(15)
+3                                    # 3 decay channels
+0.004           1000020030 2112      # He4(15) -> He3 + n
+0.004           1000010030 2212      # He4(15) -> H3 + p
+0.992           1000010020 1000010020 # He4(15) -> d + d
+
+1000030050                           # Li5
+1                                    # 1 decay channel
+1               1000020040 2212      # Li5 -> He4 + p
+
+1000020050                           # He5
+1                                    # 1 decay channel
+1               1000020040 2112      # He5 -> He4 + n
+
+100003005001                         # Li5(1)
+1                                    # 1 decay channel
+1               1000020040 2212      # Li5(1) -> He4 + p
+
+100002005001                         # He5(1)
+1                                    # 1 decay channel
+1               1000020040 2112      # He5(1) -> He4 + n
+
+10000305002                          # Li5(2)
+2                                    # 2 decay channels
+0.7             1000020030 1000010020 # Li5(2) -> He3 + d
+0.3             1000020040 2212      # Li5(2) -> He4 + p
+
+100002005002                         # He5(2)
+2                                    # 2 decay channels
+0.6             1000020040 2112      # He5(2) -> He4 + n
+0.4             1000010030 1000010020 # He5(2) -> H3 + d
+
+1000010050                           # H5
+1                                    # 1 decay channel
+1               1000010030 2112 2112 # H5 -> H3 + n + n

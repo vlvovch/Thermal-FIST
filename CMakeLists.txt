@@ -8,7 +8,7 @@ project (ThermalFIST)
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 1)
 set (ThermalFIST_VERSION_MINOR 2)
-set (ThermalFIST_VERSION_DEVEL 6)
+set (ThermalFIST_VERSION_DEVEL 7)
 
 # configure a header file to pass some of the CMake settings
 # to the source code

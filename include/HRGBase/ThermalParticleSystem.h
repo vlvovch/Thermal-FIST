@@ -10,6 +10,7 @@
 
 #include <map>
 #include <vector>
+#include <set>
 #include <fstream>
 
 #include "HRGBase/ThermalParticle.h"
@@ -28,6 +29,7 @@ namespace thermalfist {
   class ThermalParticleSystem
   {
   public:
+    
     /**
      * \brief Construct a new ThermalParticleSystem object
      * 
@@ -35,9 +37,48 @@ namespace thermalfist {
      * 
      * \param InputFile Path to the file with particle list.
      * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
-     * \param mcut      Discard particles with mass > mcut (in GeV).
+     * \param mcut      Discard particles with mass > mcut (in GeV). If mcut is negative, no cut applied
      */
-    ThermalParticleSystem(std::string InputFile = "", bool GenAntiP = true, double mcut = 1.e9);
+    ThermalParticleSystem(const std::string& InputFile = "", bool GenAntiP = true, double mcut = -1.) { Initialize(InputFile, std::string(""), GenAntiP, mcut); }
+
+    /**
+     * \brief Construct a new ThermalParticleSystem object
+     *
+     * The list is read from the specified file with LoadTable() method.
+     *
+     * \param InputFile Path to the file with particle list.
+     * \param DecayFile Path to the file with the list of decays.
+     * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
+     * \param mcut      Discard particles with mass > mcut (in GeV). If mcut is negative, no cut applied
+     */
+    ThermalParticleSystem(const std::string& InputFile, const std::string& DecayFile, bool GenAntiP = true, double mcut = -1.) { Initialize(InputFile, DecayFile, GenAntiP, mcut); }
+
+
+    /**
+     * \brief Construct a new ThermalParticleSystem object
+     *
+     * The particle list is read from files listed in ListFiles vector.
+     *
+     * The decays are read from files listed in DecayFiles vector.
+     * If DecayFiles is empty, "decays.dat" file in the same directory as the first input list file is used.
+     *
+     * flags parameter can be used to specify a number of flags for reading the input.
+     *
+     * \param ListFiles  List of files that contain the particle list.
+     * \param DecayFiles List of files containing the decays.
+     * \param flags      Various flags can be enabled to apply various filters:
+     * "no_antiparticles" -- do not create antiparticles
+     * "no_strangeness"   -- ignore particles with strange quark content.
+     * "no_charm"         -- ignore particles with charm quark content.
+     * "no_nuclei"        -- ignore particles with a multiple baryon charge.
+     * "no_excitednuclei" -- ignore excited nuclei.
+     * \param mcut       Ignore particles with mass > mcut (in GeV). If mcut is negative, no cut applied
+     */
+    ThermalParticleSystem(
+      const std::vector<std::string>& ListFiles,
+      const std::vector<std::string>& DecayFiles = std::vector<std::string>(0),
+      const std::set<std::string>& flags = std::set<std::string>(),
+      double mcut = -1.);
 
     /**
      * \brief Destroy the ThermalParticleSystem object
@@ -169,24 +210,56 @@ namespace thermalfist {
 
     /**
      * \brief Loads the particle list from file.
+     *
+     * The list is read from the specified InputFile.
+     * Decays are read from the specified DecayFile.
+     *
+     * \param InputFile Path to the file with particle list.
+     * \param DecayFile Path to the file with the list of decays.
+     * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
+     * \param mcut      Discard particles with mass > mcut (in GeV).
+     */
+    void LoadList(const std::vector<std::string>& ListFiles,
+      const std::vector<std::string>& DecayFiles = std::vector<std::string>(0), 
+      const std::set<std::string>& flags = std::set<std::string>(),
+      double mcut = 1.e9);
+
+    /**
+     * \brief Loads the particle list from file.
      * 
+     * The list is read from the specified InputFile.
+     * Decays are read from the specified DecayFile.
+     * 
+     * \param InputFile Path to the file with particle list.
+     * \param DecayFile Path to the file with the list of decays.
+     * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
+     * \param mcut      Discard particles with mass > mcut (in GeV).
+     */
+    void LoadList(const std::string& InputFile, const std::string& DecayFile, bool GenerateAntiParticles = true, double mcut = 1.e9);
+
+    /**
+     * \brief Loads the particle list from file.
+     *
      * The list is read from the specified file.
      * Decays are read from file "decays.dat" from
      * the same directory as the input list.
      * This can be overriden by ReadDecays() method.
-     * 
+     *
      * \param InputFile Path to the file with particle list.
      * \param GenAntiP  Whether antiparticles are to be generated from particles automatically.
      * \param mcut      Discard particles with mass > mcut (in GeV).
      */
-    void LoadList(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9);
+    void LoadList(const std::string& InputFile = "", bool GenerateAntiParticles = true, double mcut = -1.) { LoadList(InputFile, std::string(""), GenerateAntiParticles, mcut); }
+
+    void AddParticlesToListFromFile(const std::string& InputFile = "", const std::set<std::string>& flags = std::set<std::string>(), double mcut = -1.);
+
 
     /**
      * \brief Same as LoadList()
      *
      * \deprecated
      */
-    void LoadTable(std::string InputFile = "", bool GenerateAntiParticles = true, double mcut = 1.e9) { LoadList(InputFile, GenerateAntiParticles, mcut); }
+    void LoadTable(const std::string& InputFile = "", bool GenerateAntiParticles = true, double mcut = -1.) { LoadList(InputFile, GenerateAntiParticles, mcut); }
     
     /**
      * \brief Sets the particle list from a
@@ -206,7 +279,16 @@ namespace thermalfist {
      * \param OutputFile Path to the output file.
      * \param WriteAntiParticles Whether antiparticles are to be written to the file as well.
      */
-    void WriteTableToFile(std::string OutputFile = "", bool WriteAntiParticles = false);
+    void WriteTableToFile(const std::string& OutputFile = "", bool WriteAntiParticles = false);
+
+    /**
+     * \brief Load the decay channels for all particles from a file.
+     *
+     * \param DecaysFile Path to the file with decays.
+     * \param GenerateAntiParticles Whether the decays of antiparticles are to be generated from particles automatically
+     *        using the GetDecaysFromAntiParticle() method.
+     */
+    void LoadDecays(const std::vector<std::string>& DecayFiles, const std::set<std::string>& flags = std::set<std::string>());
 
     /**
      * \brief Load the decay channels for all particles from a file.
@@ -215,7 +297,7 @@ namespace thermalfist {
      * \param GenerateAntiParticles Whether the decays of antiparticles are to be generated from particles automatically
      *        using the GetDecaysFromAntiParticle() method.
      */
-    void LoadDecays(std::string DecaysFile = "", bool GenerateAntiParticles = true);
+    void LoadDecays(const std::string& DecaysFile = "", bool GenerateAntiParticles = true);
     
     /**
      * \brief Writes the decay channels to a file.
@@ -223,7 +305,7 @@ namespace thermalfist {
      * \param OutputFile Path to the output file.
      * \param WriteAntiParticles Whether the decays of antiparticles are to be written to the file as well.
      */
-    void WriteDecaysToFile(std::string OutputFile = "", bool WriteAntiParticles = false);
+    void WriteDecaysToFile(const std::string& OutputFile = "", bool WriteAntiParticles = false);
 
     /**
      * \brief Normalize branching ratios for all particles
@@ -387,6 +469,18 @@ namespace thermalfist {
      */
     bool CheckDecayChargesConservation(int ind) const;
 
+    /**
+     * Checks if all particles marked as unstable have decay channels
+     */
+    bool CheckDecayChannelsAreSpecified() const;
+
+    /**
+     * Checks whether cumulative charges (B, Q, S, C) of decay products match those of decaying particle with index ind.
+     * Returns a 4-element vector of integers, an element is zero if the correspomnding conserved charge is not conserved
+     * and unity otherwise.
+     */
+    std::vector<int> CheckDecayChargesConservationVector(int ind) const;
+
     bool operator==(const ThermalParticleSystem &rhs) const;
     bool operator!=(const ThermalParticleSystem &rhs) const { return !(*this == rhs); }
 
@@ -430,6 +524,12 @@ namespace thermalfist {
      */
     static ParticleDecayType::DecayType DecayTypeByParticleType(const ThermalParticle &part);
 
+    static const std::string flag_no_antiparticles;
+    static const std::string flag_nostrangeness;
+    static const std::string flag_nocharm;
+    static const std::string flag_nonuclei;
+    static const std::string flag_noexcitednuclei;
+
   private:
     void GoResonance(int ind, int startind, double BR);
 
@@ -441,13 +541,25 @@ namespace thermalfist {
 
     ResonanceFinalStatesDistribution GoResonanceDecayDistributions(int ind, bool firstdecay = false);
 
-    void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
+    bool AcceptParticle(const ThermalParticle& part, const std::set<std::string>& flags, double mcut = -1.) const;
 
-    void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
+    //void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
+    void LoadTable_OldFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
+
+    //void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
+    void LoadTable_NewFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
     void ReadDecays_OldFormat(std::ifstream &fin);
 
     void ReadDecays_NewFormat(std::ifstream &fin);
+
+    void Initialize(const std::vector<std::string>& ListFiles,
+      const std::vector<std::string>& DecayFiles = std::vector<std::string>(0),
+      const std::set<std::string>& flags = std::set<std::string>(),
+      double mcut = -1.);
+
+    void Initialize(const std::string& InputFile = "", const std::string& DecayFile = "", bool GenAntiP = true, double mcut = -1.);
+
 
   private:
     std::vector<ThermalParticle>    m_Particles;
@@ -483,6 +595,15 @@ namespace thermalfist {
   namespace CuteHRGHelper {
     std::vector<std::string> split(const std::string &s, char delim);
     void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 1000);
+  }
+
+  /// Contains properties of non-QCD particles such as photons and leptons
+  namespace ExtraParticles {
+    const ThermalParticle& Particle(int id);
+    const ThermalParticle& ParticleByPdg(long long pdg);
+    int PdgToId(long long pdg);
+    bool Init();
+    std::string NameByPdg(long long pdg);
   }
 
 } // namespace thermalfist
