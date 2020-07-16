@@ -981,7 +981,7 @@ void InteractionsDialog::modeToggled()
 
 void InteractionsDialog::chooseInputFile()
 {
-  QString listpathprefix = QString(INPUT_FOLDER) + "/interaction";
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/interaction";
   if (leFilePath->text().size() != 0)
     listpathprefix = QString(leFilePath->text());
   QString path = QFileDialog::getOpenFileName(this, tr("Open file with EV/vdW parameters"), listpathprefix);

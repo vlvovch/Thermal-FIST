@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
 		dT = atof(argv[4]);
 
 	// Create the hadron list instance and read the list from file
-	ThermalParticleSystem TPS(string(INPUT_FOLDER) + "/list/thermus23/list.dat");
-	//ThermalParticleSystem TPS(string(INPUT_FOLDER) + "/list/PDG2014/list.dat");
+	ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/thermus23/list.dat");
+	//ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list.dat");
 
 	// Create the EV-HRG ThermalModel instance
 	ThermalModelEVDiagonal model(&TPS);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Load the experimental data
-	vector<FittedQuantity> quantities = ThermalModelFit::loadExpDataFromFile(string(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
+	vector<FittedQuantity> quantities = ThermalModelFit::loadExpDataFromFile(string(ThermalFIST_INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
 		
 
 	// Global fit

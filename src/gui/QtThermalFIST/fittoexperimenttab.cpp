@@ -53,7 +53,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QWidget(parent)
 {
     fitcopy = NULL;
-    cpath = QString(INPUT_FOLDER) + "/data";
+    cpath = QString(ThermalFIST_INPUT_FOLDER) + "/data";
     dbgstrm.setString(&dbgstr);
 
     TPS = modelop->TPS();
@@ -284,8 +284,8 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     modelChanged();
 
-    QString datapathprefix = QString(INPUT_FOLDER) + "/data";
-    quantities = ThermalModelFit::loadExpDataFromFile((QString(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-10-all.dat").toStdString());
+    QString datapathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/data";
+    quantities = ThermalModelFit::loadExpDataFromFile((QString(ThermalFIST_INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-10-all.dat").toStdString());
     myModel->setQuantities(&quantities);
     tableQuantities->resizeColumnsToContents();
 

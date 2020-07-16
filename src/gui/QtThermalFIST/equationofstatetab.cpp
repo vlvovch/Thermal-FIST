@@ -1001,7 +1001,7 @@ void EquationOfStateTab::readLatticeData()
   ifstream fin;
   
   // WB thermodynamics
-  fin.open((string(INPUT_FOLDER) + "/lqcd/WB-EoS.dat").c_str());
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1076,7 +1076,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi2
-  fin.open((string(INPUT_FOLDER) + "/lqcd/WB-chi2-1112.4416.dat").c_str());
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi2-1112.4416.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1159,7 +1159,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD thermodynamics
-  fin.open((string(INPUT_FOLDER) + "/lqcd/HotQCD-EoS.dat").c_str());
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1266,7 +1266,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD chi2
-  fin.open((string(INPUT_FOLDER) + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;

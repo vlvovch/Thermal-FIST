@@ -741,7 +741,7 @@ void ListEditorTab::setAllThresholds()
 
 void ListEditorTab::saveToFile()
 {
-  QString listpathprefix = QString(INPUT_FOLDER) + "/list/list.dat";
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/list.dat";
   QString path = QFileDialog::getSaveFileName(this, tr("Save particle list as"), listpathprefix);
   if (path.length()>0)
   {

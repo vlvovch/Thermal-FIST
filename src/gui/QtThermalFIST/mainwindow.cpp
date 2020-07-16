@@ -29,7 +29,7 @@ using namespace thermalfist;
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
 {
-  cpath = QString(INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
+  cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
 
   QString listpath = cpath;
   TPS = new ThermalParticleSystem(listpath.toStdString());
@@ -150,7 +150,7 @@ void MainWindow::createMenus()
 
 void MainWindow::loadDecays()
 {
-  QString listpathprefix = QString(INPUT_FOLDER) + "/list";
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
   if (leDatabase->text().size() != 0)
     listpathprefix = leDatabase->text();
   QString path = QFileDialog::getOpenFileName(this, tr("Open file with decays"), listpathprefix);
@@ -221,7 +221,7 @@ void MainWindow::decreaseFontSize()
 
 void MainWindow::loadDatabase()
 {
-  QString listpathprefix = QString(INPUT_FOLDER) + "/list";
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
   if (leDatabase->text().size() != 0)
     listpathprefix = leDatabase->text();
   QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list"), listpathprefix);
