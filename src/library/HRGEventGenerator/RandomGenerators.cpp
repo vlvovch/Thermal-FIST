@@ -254,7 +254,7 @@ namespace thermalfist {
         double x0 = randgenMT.randDblExc();
 
         if (mass < m_Mu && m_Statistics == -1)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf!\n", m_Mu, mass);
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf\n", m_Mu, mass);
 
         double M = m_Max;
         if (mass != m_Mass)
@@ -263,7 +263,7 @@ namespace thermalfist {
         double prob = g(x0, mass) / M;
 
         if (prob > 1.)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability by %E exceeds unity!\n", prob - 1.);
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability exceeds unity by %E\n", prob - 1.);
 
         if (randgenMT.randDblExc() < prob) return -log(x0);
       }

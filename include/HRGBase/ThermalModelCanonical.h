@@ -166,6 +166,23 @@ namespace thermalfist {
      */
     virtual double GetGCEDensity(int i) const;
 
+    /**
+     * \brief The multiplier of the number of iterations in the numerical integration
+     *
+     * \return The multiplier
+     */
+    int IntegrationIterationsMultiplier() const { return m_IntegrationIterationsMultiplier; }
+
+    /**
+     * \brief Assigns the multiplier of the number of iterations in the numerical integration
+     *
+     * The minimum value of multiplier is 1. Increase to improve the numerical accuracy of the canonical ensemble calculations.
+     *
+     * \param The multiplier
+     */
+    void SetIntegrationIterationsMultiplier(int multiplier) { (multiplier > 0 ? m_IntegrationIterationsMultiplier = multiplier : m_IntegrationIterationsMultiplier = 1); }
+    
+
     // Override functions begin
 
     void ChangeTPS(ThermalParticleSystem *TPS);
@@ -252,6 +269,14 @@ namespace thermalfist {
      * 
      */
     std::vector<double> m_PartialZ;
+
+    /**
+     * \brief A multiplier to increase the number of iterations during the numerical integration used to calculate the partition functions.
+     *
+     * Set with SetIntegrationIterationsMultiplier()
+     *
+     */
+    int m_IntegrationIterationsMultiplier;
 
     int m_BMAX, m_QMAX, m_SMAX, m_CMAX;
     int m_BMAX_list, m_QMAX_list, m_SMAX_list, m_CMAX_list;

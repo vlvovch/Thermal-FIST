@@ -21,7 +21,7 @@ namespace thermalfist {
   {
   public:
     
-    CylindricalBlastWaveEventGenerator();
+    //CylindricalBlastWaveEventGenerator();
 
     /**
      * \brief Construct a new CylindricalBlastWaveEventGenerator object
@@ -33,8 +33,8 @@ namespace thermalfist {
      * \param etamax The longitudinal space-time rapidity cut-off
      * \param npow   The power in the transverse flow profile function
      */
-    CylindricalBlastWaveEventGenerator(ThermalParticleSystem *TPS, 
-                                       const EventGeneratorConfiguration& config, 
+    CylindricalBlastWaveEventGenerator(ThermalParticleSystem *TPS = NULL, 
+                                       const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
                                        double T = 0.120, 
                                        double betas = 0.5, 
                                        double etamax = 0.5, 

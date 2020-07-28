@@ -20,7 +20,7 @@ using namespace std;
 namespace thermalfist {
 
   ThermalModelCanonical::ThermalModelCanonical(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params), m_BCE(1), m_QCE(1), m_SCE(1), m_CCE(1)
+    ThermalModelBase(TPS_, params), m_BCE(1), m_QCE(1), m_SCE(1), m_CCE(1), m_IntegrationIterationsMultiplier(1)
   {
 
     m_TAG = "ThermalModelCanonical";
@@ -299,7 +299,7 @@ Obtained: %lf\n\
         int i2 = m_TPS->PdgToId(-m_TPS->Particle(i).PdgId());
         if (i2 != -1) {
           if (fabs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
-            printf("**ERROR** ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble not supported if no particle-antiparticle symmetry!\n");
+            printf("**ERROR** ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble only supported if particle-antiparticle fugacities are symmetric!\n");
             exit(1);
           }
         }
@@ -377,13 +377,16 @@ Obtained: %lf\n\
       nmax = 4;
 
 
-    // This one does not work so well for large B,Q,S values, thus overriden below
+    
     int nmaxB = max(4, m_Parameters.B);
     int nmaxQ = max(4, m_Parameters.Q);
     int nmaxS = max(4, m_Parameters.S);
     int nmaxC = max(4, m_Parameters.C);
 
+    // UPDATE: allow to increase the number of interations externally
+    nmax *= m_IntegrationIterationsMultiplier;
     nmaxB = nmaxQ = nmaxS = nmaxC = nmax;
+
 
 
 

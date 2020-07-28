@@ -596,8 +596,10 @@ namespace thermalfist {
      * \param ConstrMuQ Whether the electric chemical potential should be constrained.
      * \param ConstrMuS Whether the strangeness chemical potential should be constrained.
      * \param ConstrMuC Whether the charm chemical potential should be constrained.
+     *
+     * \return true is chemical potentials were contrained successfully, false otherwise
      */
-    virtual void SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
+    virtual bool SolveChemicalPotentials(double totB = 0., double totQ = 0., double totS = 0., double totC = 0.,
       double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,
       bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
 

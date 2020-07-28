@@ -509,26 +509,31 @@ namespace thermalfist {
     }
   }
 
-  void ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
+  bool ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
     double muBinit, double muQinit, double muSinit, double muCinit,
     bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
     if (UsePartialChemicalEquilibrium()) {
       printf("**WARNING** PCE enabled, cannot assume chemical equilibrium to do optimization...");
-      return;
+      return false;
     }
 
     m_Parameters.muB = muBinit;
     m_Parameters.muS = muSinit;
     m_Parameters.muQ = muQinit;
     m_Parameters.muC = muCinit;
-    if (totB == 0.0 && totQ == 0.0 && totS == 0.0 && totC == 0.0) {
+    bool allzero = true;
+    allzero &= (totB == 0.0 && ConstrMuB) || (muBinit == 0 && !ConstrMuB);
+    allzero &= (totQ == 0.0 && ConstrMuQ) || (muQinit == 0 && !ConstrMuQ);
+    allzero &= (totS == 0.0 && ConstrMuS) || (muSinit == 0 && !ConstrMuS);
+    allzero &= (totC == 0.0 && ConstrMuC) || (muCinit == 0 && !ConstrMuC);
+    if (allzero) {
       m_Parameters.muB = 0.;
       m_Parameters.muS = 0.;
       m_Parameters.muQ = 0.;
       m_Parameters.muC = 0.;
       FillChemicalPotentials();
-      CalculateDensities();
-      return;
+      CalculatePrimordialDensities();
+      return true;
     }
     vector<int> vConstr(4, 1);
     vector<int> vType(4, 0);
@@ -567,6 +572,8 @@ namespace thermalfist {
     Broyden broydn(&eqs, &jaco);
     Broyden::BroydenSolutionCriterium crit(1.0E-8);
     broydn.Solve(xinactual, &crit);
+
+    return (broydn.Iterations() < broydn.MaxIterations());
   }
 
   void ThermalModelBase::CalculateDensities()

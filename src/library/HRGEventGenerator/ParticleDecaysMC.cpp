@@ -107,6 +107,9 @@ namespace thermalfist {
       ret[0].MotherPDGID = Mother.PDGID;
       ret[1].MotherPDGID = Mother.PDGID;
 
+      ret[0].epoch = Mother.epoch + 1;
+      ret[1].epoch = Mother.epoch + 1;
+
       for (size_t i = 0; i < ret.size(); ++i)
         if (ret[i].px != ret[i].px) {
           printf("**WARNING** Issue in a two-body decay!\n");

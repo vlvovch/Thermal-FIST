@@ -20,35 +20,129 @@ namespace thermalfist {
    * The present implementation was used (and described) in a paper
    * 
    * V. Vovchenko, K. Gallmeister, J. Schaffner-Bielich, C. Greiner,
+   * Phys. Lett. B **800**, 135131 (2020),
    * [arXiv:1903.10024](https://arxiv.org/abs/1903.10024)
    * 
    */
   class ThermalModelPCE
   {
   public:
+    /**
+     * \brief Relativistic vs non-relativistic Breit-Wigner shape.
+     *
+     */
+    enum PCEMode {
+      AtFixedTemperature = 0,
+      AtFixedVolume = 1
+    };
 
-    ThermalModelPCE(ThermalModelBase *THMbase, bool FreezeLongLived = false, double WidthCut = 0.015);
 
+    /**
+     * \brief Construct a new ThermalModelPCE object
+     *
+     * \param THMbase               A pointer to the ThermalModelBase object containing the HRG model implementation
+     * \param FreezeLonglived       Whether long-lived resonance abundances should be frozen at Tch along with the stable hadrons
+     * \param LonglivedResoWidthCut Threshold width for the long-lived resonances to be considered stable in the PCE
+     */
+    ThermalModelPCE(ThermalModelBase *THMbase, bool FreezeLonglived = false, double LonglivedResoWidthCut = 0.015);
+
+    /**
+     * \brief Destroy the ThermalModelPCE object
+     *
+     */
     virtual ~ThermalModelPCE(void) { }
 
+    //@{
+      /**
+       * \brief Whether the nuclear abundances are evaluated through the Saha equation.
+       *
+       * If not set, the nuclear abundances are frozed at the chemical freeze-out of stable hadrons.
+       *
+       * \param flag Flag whether the Saha equation is used.
+       */
+    void UseSahaForNuclei(bool flag) { m_UseSahaForNuclei = true; m_StabilityFlagsSet = false; }
+    bool UseSahaForNuclei() const { return m_UseSahaForNuclei; }
+    //@}
+
+    //@{
+      /**
+       * \brief Whether long-lived resonances yields should be frozen.
+       *
+       * If set, the long-lived resonance with width smaller than LonglivedResonanceWidthCut() are frozen at the chemical freeze-out of stable hadrons.
+       * Otherwise, their abundances are evaluated through the chemical potentials of their decay products.
+       *
+       * \param flag Whether long-lived resonances yields should be frozen.
+       */
+    void FreezeLonglivedResonances(bool flag) { m_FreezeLonglivedResonances = true; m_StabilityFlagsSet = false; }
+    bool FreezeLonglivedResonances() const { return m_FreezeLonglivedResonances; }
+    //@}
+
+    //@{
+      /**
+       * \brief The threshold resonance width value to consider the resonance long-lived and its abundance frozen in the hadronic phase.
+       *
+       * Note: This function sets FreezeLonglivedResonances() to true.
+       *
+       * \param width_cut The threshold resonance width [GeV].
+       */
+    void SetLonglivedResonanceWidthCut(double width_cut) { m_ResoWidthCut = width_cut; FreezeLonglivedResonances(true); }
+    double LonglivedResonanceWidthCut() const { return m_ResoWidthCut; }
+    //@}
+
+    //@{
+      /**
+       * \brief Manually set the PCE stability flags for all species.
+       *
+       * \param StabilityFlags Vector of stability flags. 
+       *                       Each element corresponds to a particle specie with the same 0-based index in the particle list.
+       *                       Element i equal to zero means particle yield is not frozen in the hadronic phase, otherwise it is frozen.
+       */
     virtual void SetStabilityFlags(const std::vector<int>& StabilityFlags);
     const std::vector<int>& StabilityFlags() const { return m_StabilityFlags; }
+    //@}
 
-    void SetChemicalFreezeout(const ThermalModelParameters& params, const std::vector<double>& ChemInit);
-    double EntropyDensityInit() const { return m_EntropyDensityInit; }
-    void SetEntropyDensityInit(double sinit) { m_EntropyDensityInit = sinit; }
+    //@{
+      /**
+       * \brief Sets the chemical freeze-out conditions to be used as an initial condition for PCE calculations
+       *
+       * \param params   Thermal parameters at the chemical freeze-out.
+       * \param ChemInit Chemical potentials of all species at the chemical freeze-out. 
+       *                 If this vector is empty (default value), the chemical potentials are populated using \param params
+       */
+    void SetChemicalFreezeout(const ThermalModelParameters& params, const std::vector<double>& ChemInit = std::vector<double>(0));
+    //@}
 
+    //@{
+      /**
+       * \brief Sets the entropy density at the chemical freeze-out.
+       *
+       * \param sinit  Entropy density at the chemical freeze-out.
+       */
+    void SetEntropyDensityChem(double sinit) { m_EntropyDensityInit = sinit; }
+    double EntropyDensityChem() const { return m_EntropyDensityInit; }
+    //@}
+
+    /**
+     * \brief Pointer to the HRG model used in calculations.
+     */
     ThermalModelBase* ThermalModel() const { return m_model; }
 
     /**
-     * \brief Solves the equation of partial chemical equilibrium at fixed temperature or volume
+     * \brief Solves the equations of partial chemical equilibrium at a fixed temperature or a fixed volume
      *
-     * \param param  Temperature (in GeV) if mode == 0, Volume (in fm^3) if mode == 1
-     * \param mode   PCE at fixed temperature for mode == 0, at fixed voluime for mode == 1
+     * \param param  Temperature (in GeV) for mode == AtFixedTemperature (default), Volume (in fm^3) for mode == AtFixedVolume
+     * \param mode   PCE at fixed temperature for mode == AtFixedTemperature, at fixed voluime for mode == AtFixedVolume
      */
-    virtual void CalculatePCE(double param, int mode = 0);
+    virtual void CalculatePCE(double param, PCEMode mode = AtFixedTemperature);
 
+    /**
+     * \return Vector of chemical potentials of all particles species, as resulted from the last CalculatePCE() call
+     */
     const std::vector<double>& ChemicalPotentials() const { return m_ChemCurrent; }
+
+    /**
+     * \return The system volume, as resulted from the last CalculatePCE() call
+     */
     double Volume() const { return m_ParametersCurrent.V; }
 
     /**
@@ -58,31 +152,61 @@ namespace thermalfist {
      */
     static void PrepareNucleiForPCE(ThermalParticleSystem *TPS);
 
+    /**
+     * \brief Computes the PCE stability flags based on the provided particle list and a number of parameters
+     *
+     * \param TPS                    Pointer to the particle list
+     * \param SahaEquationForNuclei  Whether the Saha equation is applied to light nuclei
+     * \param FreezeLongLived        Whether long-lived resonance yields are frozen at the chemical freeze-out
+     * \param WidthCut               The threshold resonance width value to consider the resonance long-lived and its abundance frozen [GeV]
+     */
     static std::vector<int> ComputePCEStabilityFlags(
       const ThermalParticleSystem* TPS,
       bool SahaEquationForNuclei = true,
       bool FreezeLongLived = false,
       double WidthCut = 0.015);
 
+    /**
+     * \brief Modifies the decay threshold masses of bosonic resonances such that the Bose-Condesation does not occur due to large fugacities.
+     *
+     *        This is only necessary if energy-dependent Breit-Wigner widths are used.
+     */
     void ApplyFixForBoseCondensation();
     
 
   protected:
     ThermalModelBase *m_model;
+
+    // Whether nuclear abundances are calculated via the Saha equation
+    bool m_UseSahaForNuclei;
+
+    // Whether long-lived resonances are frozen at Tch
+    bool m_FreezeLonglivedResonances;
+    // Resonance width cut for freezeing the resonance abundances
+    double m_ResoWidthCut;
+
+    // Whether the chemical freeze-out "initial" condition has been set
     bool m_ChemicalFreezeoutSet;
+
+    // Whether PCE has been calculated
     bool m_IsCalculated;
+
+    // PCE configuration, list of stable species etc.
+    bool m_StabilityFlagsSet;
     std::vector<int> m_StabilityFlags;
+    int m_StableComponentsNumber;
+    std::vector< std::vector<double> > m_EffectiveCharges;
+    std::vector<int> m_StableMapTo;
+
+    // Parameters at the chemical freeze-out
     ThermalModelParameters m_ParametersInit;
     std::vector<double> m_ChemInit;
     std::vector<double> m_DensitiesInit;
     std::vector<double> m_StableDensitiesInit;
     double m_EntropyDensityInit;
     double m_ParticleDensityInit;
-    int m_StableComponentsNumber;
-    std::vector< std::vector<double> > m_EffectiveCharges;
-    std::vector<int> m_StableMapTo;
-    //std::map<int> m_StableMapFrom;
 
+    // The current PCE thermal paratmeres and chemical potentials
     ThermalModelParameters m_ParametersCurrent;
     std::vector<double> m_ChemCurrent;
 

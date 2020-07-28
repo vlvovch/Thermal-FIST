@@ -1,0 +1,13 @@
+# ALICE data for yields of hadrons and resonances, where applicable symmetrized between particles and antiparticles by taking the average
+#     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error   # reference
+              1            211              0              3              0          561.4          39.25   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1            321              0              3              0           83.9            6.9   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1            310              0              3              0             84            6.5   # Table 1 in https://arxiv.org/pdf/1307.5530v2.pdf
+              1            333              0              3              0          10.88           1.29   # Table 2 in https://arxiv.org/pdf/1404.0495v3.pdf
+              1           2212              0              3              0           25.9            2.1   # Table 3 in https://arxiv.org/pdf/1303.0737v3.pdf
+              1           3122              0              3              0           20.5           2.25   # Table 1 in https://arxiv.org/pdf/1307.5530v2.pdf
+              1           3312              0              3              0           2.95           0.21   # Table 1 in https://arxiv.org/pdf/1307.5543v3.pdf
+              1           3334              0              3              0           0.49           0.09   # Table 1 in https://arxiv.org/pdf/1307.5543v3.pdf
+              1            313              0              3              0           16.6            2.6   # Table 2 in https://arxiv.org/pdf/1404.0495v3.pdf
+              1            113              0              3              0           42.9              7   # Table 2 in https://arxiv.org/pdf/1805.04365v2.pdf
+              0           3124              0              3              0           0.78           0.17   # Table 2 in https://arxiv.org/pdf/1805.04361v2.pdf

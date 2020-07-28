@@ -127,6 +127,26 @@ namespace thermalfist {
     double getYcm() const { return m_ycm; }
 
     /**
+     * \brief Samples the primordial yields for each particle species.
+     *
+     * \return pair< std::vector<int>, double > The sampled yields. 
+     *                                          The first element is a vector of the samled yields.
+     *                                          The second element is the weight.
+     */
+    std::pair< std::vector<int>, double > SampleYields() const;
+
+    /**
+     * \brief Samples the momenta of the particles and returns the sampled vector as an event.
+     *
+     * The sampled SimpleEvent is assigned the weight of unity. Override the weight if importance sampling is used.
+     *
+     * \param  yields       Vector of yields for each particle species for the given event.
+     *                      Make sure the indices match the particle list pointed to by \ref m_THM.
+     * \return SimpleEvent  The generated event containing the primordial particles.
+     */
+    virtual SimpleEvent SampleMomenta(const std::vector<int>& yields) const;
+
+    /**
      * \brief Generates a single event.
      * 
      * \param PerformDecays If set to true, the decays of all particles 
@@ -136,18 +156,18 @@ namespace thermalfist {
      *                      generated and appear in the output
      * \return SimpleEvent  The generated event
      */
-    virtual SimpleEvent GetEvent(bool DoDecays = true) const;
+    virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
 
     /**
      * \brief Performs decays of all unstable particles until only stable ones left.
      *
      * \param evtin An event structure contains the list of all the primordial particles.
-     * \return TPS  Point to the particle list instance that contains all the decay properties.
+     * \param TPS   Pointer to the particle list instance that contains all the decay properties.
+     * \return      A SimpleEvent instance containing all particles after resonance decays.s
      */
     static SimpleEvent PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
-    /// Currently not used
-    static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
+    
 
     /// Helper variable to monitor the Acceptance rate of the rejection
     /// sampling used for canonical ensemble and/or eigenvolumes.
@@ -248,6 +268,10 @@ namespace thermalfist {
     std::vector<RandomGenerators::ThermalBreitWignerGenerator*>  m_BWGens;
 
   private:
+
+    /// Currently not used
+    static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
+
     double m_ekin, m_ycm, m_ssqrt, m_elab;
     // Acceptance discontinued
     //std::vector<Acceptance::AcceptanceFunction> m_acc;
@@ -285,6 +309,7 @@ namespace thermalfist {
 
     static double m_LastWeight;
     static double m_LastLogWeight;
+    static double m_LastNormWeight;
   };
 
 } // namespace thermalfist
