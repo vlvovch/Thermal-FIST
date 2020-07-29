@@ -490,9 +490,9 @@ namespace thermalfist {
 
     /// Mode list to sort particles species
     enum SortModeType {
-      ByMass = 0,
-      ByMassAndPDG = 1,
-      ByBaryonAndMassAndPDG = 2
+      SortByMass = 0,
+      SortByMassAndPDG = 1,
+      SortByBaryonAndMassAndPDG = 2
     };
 
     /// Sets the mode to sort particle species (see SortModeType)

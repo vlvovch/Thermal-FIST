@@ -951,7 +951,7 @@ namespace thermalfist {
     m_Particles.resize(0);
     m_PDGtoID.clear();
 
-    m_SortMode = SortModeType::ByMass;
+    m_SortMode = ThermalParticleSystem::SortByMass;
 
     m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
@@ -1179,9 +1179,9 @@ namespace thermalfist {
 
   void ThermalParticleSystem::FinalizeList()
   {
-    if (SortMode() == SortModeType::ByMass)
+    if (SortMode() == ThermalParticleSystem::SortByMass)
       sort(m_Particles.begin(), m_Particles.end(), cmpParticleMass);
-    else if (SortMode() == SortModeType::ByMassAndPDG)
+    else if (SortMode() == ThermalParticleSystem::SortByMassAndPDG)
       sort(m_Particles.begin(), m_Particles.end(), cmpParticleMassAndPdg);
     else
       sort(m_Particles.begin(), m_Particles.end(), cmpParticlePDG);

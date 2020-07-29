@@ -270,7 +270,7 @@ namespace thermalfist {
   private:
 
     /// Currently not used
-    static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
+    //static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
     double m_ekin, m_ycm, m_ssqrt, m_elab;
     // Acceptance discontinued
