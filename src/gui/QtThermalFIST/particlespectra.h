@@ -422,6 +422,7 @@ public:
     ~ParticlesSpectra();
     void ProcessEvent(const thermalfist::SimpleEvent &evt);
     void Reset();
+    void Reset(thermalfist::ThermalParticleSystem* TPS, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
     void Reset(thermalfist::ThermalModelBase *model, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
 };
 

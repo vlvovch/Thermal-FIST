@@ -139,7 +139,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   buttonInteractions = new QPushButton(tr("EV/vdW interactions..."));
   connect(buttonInteractions, &QPushButton::clicked, this, &ModelConfigWidget::interactionsDialog);
 
-  buttonOther = new QPushButton(tr("Other options..."));
+  buttonOther = new QPushButton(tr("PCE/Saha/Other..."));
   connect(buttonOther, &QPushButton::clicked, this, &ModelConfigWidget::otherOptionsDialog);
 
 
@@ -289,6 +289,10 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
 
   ret.FiniteWidth = comboWidth->currentIndex();
 
+  if (!m_eventGeneratorMode) {
+    ret.UsePCE &= (ret.Ensemble == ret.EnsembleGCE);
+  }
+
   return (currentConfig = ret);
 }
 
@@ -313,7 +317,7 @@ void ModelConfigWidget::interactionsDialog()
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
-  OtherOptionsDialog dialog(this, m_eventGeneratorMode);
+  OtherOptionsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
@@ -703,7 +707,7 @@ void ConservationLawsDialog::OK()
   QDialog::accept();
 }
 
-OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGeneratorMode) : QDialog(parent), m_parent(parent)
+OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
 {
   QVBoxLayout* layout = new QVBoxLayout(); 
   
@@ -746,7 +750,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGene
   grReso->setLayout(grLayout);
 
 
-  QGroupBox* grPCE = new QGroupBox(tr("Partial chemical equilibrium"));
+  QGroupBox* grPCE = new QGroupBox(tr("Partial chemical equilibrium (PCE)"));
   QVBoxLayout* PCELayout = new QVBoxLayout();
 
   CBUsePCE = new QCheckBox(tr("Apply partial chemical equilibrium"));
@@ -756,7 +760,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGene
   QHBoxLayout* layTkin= new QHBoxLayout();
   layTkin->setAlignment(Qt::AlignLeft);
   QLabel* labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
-  labelTkin->setToolTip(tr("Make sure T<sub>kin</sub> <= T<sub>ch</sub>. The T<sub>kin</sub> > T<sub>ch</sub> case will still compute, but may not have much physical sense."));
+  labelTkin->setToolTip(tr("Make sure T<sub>kin</sub> >= T<sub>ch</sub>. The T<sub>kin</sub> > T<sub>ch</sub> case will still compute, but may not have much physical sense."));
   spinTkin = new QDoubleSpinBox();
   spinTkin->setRange(0., 10000.);
   spinTkin->setValue(m_parent->currentConfig.Tkin * 1.e3);
@@ -765,9 +769,9 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGene
   layTkin->addWidget(spinTkin);
 
   CBFreezeLongLived = new QCheckBox(tr("Freeze long-lived resonances"));
-  CBFreezeLongLived->setToolTip(tr("Yields of resonances with Γ<Γ_lim will frozen at the chemical freeze-out"));
   CBFreezeLongLived->setChecked(m_parent->currentConfig.PCEFreezeLongLived);
-
+  CBFreezeLongLived->setToolTip(tr("Yields of resonances with Γ&lt;Γ<sub>lim</sub> will be frozen in the PCE"));
+   
   QHBoxLayout* layGammaLim = new QHBoxLayout();
   layGammaLim->setAlignment(Qt::AlignLeft);
   QLabel* labelGammaLim = new QLabel(tr("Γ<sub>lim</sub> (MeV):"));
@@ -779,8 +783,8 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGene
   layGammaLim->addWidget(spinWidthCut);
 
   CBSahaNuclei = new QCheckBox(tr("Use Saha equation for light nuclei"));
-  CBSahaNuclei->setToolTip(tr("Evaluate nuclear abundances through the Saha equation. Otherwise their abundances are frozen at T_ch."));
   CBSahaNuclei->setChecked(m_parent->currentConfig.PCESahaForNuclei);
+  CBSahaNuclei->setToolTip(tr("Check to calculate light nuclei yields at T<sub>kin</sub> using the Saha equation. Otherwise their yields are frozen at T<sub>ch</sub>."));
 
   PCELayout->addWidget(CBUsePCE);
   PCELayout->addLayout(layTkin);
@@ -793,12 +797,14 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent, bool eventGene
   grPCE->setLayout(PCELayout);
 
   layout->addWidget(grReso);
+  if (!parent->m_eventGeneratorMode && parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleGCE) {
+    grPCE->setEnabled(false);
+    CBUsePCE->setChecked(false);
+  }
+  
   layout->addWidget(grPCE);
 
   setLayout(layout);
-
-  if (eventGeneratorMode)
-    grPCE->setVisible(false);
 
   UpdateControls();
 

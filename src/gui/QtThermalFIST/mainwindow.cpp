@@ -29,10 +29,13 @@ using namespace thermalfist;
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
 {
-  cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat";
+  //cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withnuclei.dat";
+  cpath = QString(ThermalFIST_DEFAULT_LIST_FILE);
 
   QString listpath = cpath;
   TPS = new ThermalParticleSystem(listpath.toStdString());
+
+  //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
   model = new ThermalModelIdeal(TPS);
 
   QWidget *centW = new QWidget;
@@ -42,19 +45,19 @@ MainWindow::MainWindow(QWidget *parent)
   QHBoxLayout *dataLay = new QHBoxLayout();
   QLabel *labelData = new QLabel(tr("Particle list file:"));
   dataLay->setAlignment(Qt::AlignLeft);
-  leDatabase = new QLineEdit("");//QApplication::applicationDirPath());
-  leDatabase->setReadOnly(true);
+  leList = new QLineEdit("");//QApplication::applicationDirPath());
+  leList->setReadOnly(true);
   if (TPS->Particles().size() > 0)
-    leDatabase->setText(listpath);
+    leList->setText(listpath);
 
   buttonLoad = new QPushButton(tr("Load particle list..."));
-  connect(buttonLoad, SIGNAL(clicked()), this, SLOT(loadDatabase()));
+  connect(buttonLoad, SIGNAL(clicked()), this, SLOT(loadList()));
 
   buttonLoadDecays = new QPushButton(tr("Load decays..."));
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
   dataLay->addWidget(labelData);
-  dataLay->addWidget(leDatabase, 1);
+  dataLay->addWidget(leList, 1);
   dataLay->addWidget(buttonLoad);
   dataLay->addWidget(buttonLoadDecays);
 
@@ -68,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   tab5 = new EventGeneratorTab(NULL, model);
   tabEditor = new ListEditorTab(NULL, model);
+  tabEditor->setListPath(cpath);
 
   
 
@@ -111,7 +115,7 @@ void MainWindow::createMenus()
 {
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
   QAction *loadAct = new QAction(tr("Load particle list..."), this);
-  connect(loadAct, &QAction::triggered, this, &MainWindow::loadDatabase);
+  connect(loadAct, &QAction::triggered, this, &MainWindow::loadList);
   fileMenu->addAction(loadAct);
   QAction *loadDecaysAct = new QAction(tr("Load decays..."), this);
   connect(loadDecaysAct, &QAction::triggered, this, &MainWindow::loadDecays);
@@ -151,8 +155,8 @@ void MainWindow::createMenus()
 void MainWindow::loadDecays()
 {
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
-  if (leDatabase->text().size() != 0)
-    listpathprefix = leDatabase->text();
+  if (leList->text().size() != 0)
+    listpathprefix = leList->text();
   QString path = QFileDialog::getOpenFileName(this, tr("Open file with decays"), listpathprefix);
   if (path.length() > 0)
   {
@@ -219,17 +223,38 @@ void MainWindow::decreaseFontSize()
   tab2->updateFontSizes();
 }
 
-void MainWindow::loadDatabase()
+void MainWindow::loadList()
 {
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
-  if (leDatabase->text().size() != 0)
-    listpathprefix = leDatabase->text();
-  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list"), listpathprefix);
-  if (path.length() > 0)
+  if (leList->text().size() != 0)
+    listpathprefix = leList->text();
+  //QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list"), listpathprefix);
+  QStringList pathlist = QFileDialog::getOpenFileNames(this, tr("Open file(s) with particle list"), listpathprefix);
+  if (pathlist.length() > 0)
   {
-    *TPS = ThermalParticleSystem(path.toStdString());
+    //*TPS = ThermalParticleSystem(path.toStdString());
+    std::vector<std::string> paths(0);
+    for (int i = 0; i < pathlist.length(); ++i)
+      paths.push_back(pathlist[i].toStdString());
+    *TPS = ThermalParticleSystem(paths);
+    //*TPS = ThermalParticleSystem(
+    //  { path.toStdString() }, 
+    //  { "" }, 
+    //  { ThermalParticleSystem::flag_noexcitednuclei, ThermalParticleSystem::flag_nonuclei }
+    //);
+
+    QString decpath = QFileInfo(pathlist[0]).absolutePath() + "/decays.dat";
+    if (!TPS->CheckDecayChannelsAreSpecified() &&  !QFileInfo(decpath).exists()) {
+      decpath = QFileDialog::getOpenFileName(this, tr("Open file with decays"), decpath);
+      if (decpath.length() > 0)
+      {
+        TPS->LoadDecays(decpath.toStdString());
+      }
+    }
+
+    //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
     model->ChangeTPS(TPS);
-    leDatabase->setText(path);
+    leList->setText(pathlist[0]);
     tab1->resetTPS();
     tab2->resetTPS();
 
@@ -238,7 +263,8 @@ void MainWindow::loadDatabase()
     tab5->resetTPS();
 
     tabEditor->resetTPS();
+    tabEditor->setListPath(pathlist[0]);
 
-    cpath = path;
+    cpath = pathlist[0];
   }
 }

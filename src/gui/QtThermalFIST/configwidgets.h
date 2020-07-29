@@ -147,7 +147,7 @@ public:
   QCheckBox *CBSahaNuclei;
 
 public:
-  explicit  OtherOptionsDialog(ModelConfigWidget* parent = 0, bool eventGeneratorMode = false);
+  explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);
 signals:
 
 public slots :

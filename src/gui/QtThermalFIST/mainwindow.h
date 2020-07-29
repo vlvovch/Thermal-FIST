@@ -43,7 +43,7 @@ class MainWindow : public QMainWindow
     EquationOfStateTab *tabEoS;
     ListEditorTab *tabEditor;
 
-    QLineEdit *leDatabase;
+    QLineEdit *leList;
     QPushButton *buttonLoad;
     QPushButton *buttonLoadDecays;
 
@@ -62,7 +62,7 @@ protected:
 private:
     void createMenus();
 private slots:
-    void loadDatabase();
+    void loadList();
     void loadDecays();
     void tabChanged(int newIndex);
     void about();

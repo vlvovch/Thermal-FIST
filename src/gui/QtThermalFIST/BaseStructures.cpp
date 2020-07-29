@@ -127,6 +127,20 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   return ret;
 }
 
+void SetThermalModelParameters(thermalfist::ThermalModelBase* model, const ThermalModelConfig& config)
+{
+  model->SetTemperature(config.T);
+  model->SetBaryonChemicalPotential(config.muB);
+  model->SetElectricChemicalPotential(config.muQ);
+  model->SetStrangenessChemicalPotential(config.muS);
+  model->SetCharmChemicalPotential(config.muC);
+  model->SetGammaq(config.gq);
+  model->SetGammaS(config.gS);
+  model->SetGammaC(config.gC);
+  model->SetVolumeRadius(config.VolumeR);
+  model->SetCanonicalVolumeRadius(config.VolumeRSC);
+}
+
 void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const ThermalModelConfig & config)
 {
   model->SetBaryonCharge(config.B);
@@ -140,6 +154,8 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     modcan->ConserveElectricCharge(config.CanonicalQ);
     modcan->ConserveStrangeness(config.CanonicalS);
     modcan->ConserveCharm(config.CanonicalC);
+
+    //modcan->SetIntegrationIterationsMultiplier(1);
   }
 
   if (config.WidthShape == 0)

@@ -195,7 +195,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinB = new QSpinBox();
     spinB->setMinimum(-1000);
     spinB->setMaximum(1000);
-    spinB->setValue(2);
+    spinB->setValue(0);
     labelS = new QLabel(tr("S:"));
     spinS = new QSpinBox();
     spinS->setMinimum(-1000);
@@ -205,7 +205,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinQ = new QSpinBox();
     spinQ->setMinimum(-1000);
     spinQ->setMaximum(1000);
-    spinQ->setValue(2);
+    spinQ->setValue(0);
     labelC = new QLabel(tr("C:"));
     spinC = new QSpinBox();
     spinC->setMinimum(-1000);
@@ -255,11 +255,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layFlags->setAlignment(Qt::AlignLeft);
     checkFluctuations = new QCheckBox(tr("Compute fluctuations and correlations"));
     checkFluctuations->setChecked(false);
-    checkFluctuations->setToolTip(tr("Compute fluctuation observables (viewable in \"Equation of state\" dialog)"));
+    checkFluctuations->setToolTip(tr("Compute fluctuation observables (viewable in \"Equation of state\" and \"Correlations\" dialogs)"));
 
     checkMuInitials = new QCheckBox(tr("Reset mu's"));
     checkMuInitials->setChecked(true);
-    checkMuInitials->setToolTip(tr("Whether current values of chemical potentials are used as initial conditions for conservation laws or they are reset"));
+    checkMuInitials->setToolTip(tr("Whether the current values of chemical potentials are used as initial conditions for conservation laws or they are reset"));
 
     layFlags->addWidget(checkFluctuations);
     layFlags->addWidget(checkMuInitials);
@@ -271,7 +271,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     connect(buttonCalculate, SIGNAL(clicked()), this, SLOT(calculate()));
 
     buttonCalculateFitted = new QPushButton(tr("Calculate from fit tab"));
-    buttonCalculateFitted->setToolTip(tr("Use parameters found from a thermal fit in the other tab (here no rounding errors in input due to spin boxes)"));
+    buttonCalculateFitted->setToolTip(tr("Use parameters found from a thermal fit in the other tab (faster and avoids the rounding errors due to spin boxes)"));
     connect(buttonCalculateFitted, SIGNAL(clicked()), this, SLOT(calculateFitted()));
 
     buttonWriteToFile = new QPushButton(tr("Write to file..."));
@@ -377,6 +377,7 @@ ThermalModelConfig ModelTab::getConfigFromFit(thermalfist::ThermalModelFit * fit
   ret.gC = fit->Parameters().gammaC.value;
   ret.VolumeR = fit->Parameters().R.value;
   ret.VolumeRSC = fit->Parameters().Rc.value;
+  ret.Tkin = fit->Parameters().Tkin.value;
 
   ret.ComputeFluctations = checkFluctuations->isChecked();
   ret.ResetMus = false;

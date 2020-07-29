@@ -66,12 +66,6 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     QVBoxLayout *dataLayv = new QVBoxLayout();
 
-    quantities.resize(0);
-    quantities.push_back(FittedQuantity(ExperimentRatio(-211, 211, 1.09898, 0.0798674)));
-    quantities.push_back(FittedQuantity(ExperimentRatio(-321, 321, 0.324873, 0.027183)));
-    quantities.push_back(FittedQuantity(ExperimentRatio(321, 211, 0.201706, 0.0160556)));
-    quantities.push_back(FittedQuantity(ExperimentMultiplicity(-211, 300., 30.)));
-
     QHBoxLayout *layoutTop = new QHBoxLayout;
     QLabel *labelQuantities = new QLabel(tr("Data to fit:"));
     labelHint = new QLabel(tr("Hint: double-click on yield to edit"));
@@ -195,7 +189,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spinB = new QSpinBox();
     spinB->setMinimum(-1000);
     spinB->setMaximum(1000);
-    spinB->setValue(2);
+    spinB->setValue(0);
     labelS = new QLabel(tr("S:"));
     spinS = new QSpinBox();
     spinS->setMinimum(-1000);
@@ -205,7 +199,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     spinQ = new QSpinBox();
     spinQ->setMinimum(-1000);
     spinQ->setMaximum(1000);
-    spinQ->setValue(2);
+    spinQ->setValue(0);
     labelC = new QLabel(tr("C:"));
     spinC = new QSpinBox();
     spinC->setMinimum(-1000);
@@ -626,6 +620,8 @@ void FitToExperimentTab::modelChanged()
   // If PCE not used, no Tkin is fitted
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("Tkin"),
     !(configWidget->currentConfig.UsePCE));
+
+  m_FitParameters.Tkin.value = configWidget->currentConfig.Tkin;
 
   //tableParameters->hideRow(1);
   //tableParameters->setRowHidden(0, true);

@@ -45,6 +45,7 @@ class ListEditorTab : public QWidget
   QPushButton *buttonSetThreshold;
   QPushButton *buttonReset;
 
+  QPushButton *buttonMassesWidthsFromPDG;
   QPushButton *buttonSetAllThresholds;
 
   QPushButton *buttonApply;
@@ -53,6 +54,8 @@ class ListEditorTab : public QWidget
   ListTableModel *myModel;
 
   thermalfist::ThermalModelBase *model;
+
+  QString currentPath;
 
   int getCurrentRow();
 
@@ -79,11 +82,13 @@ private slots:
   void setThreshold();
   void setAllThresholds();
   void saveToFile();
+  void loadMassesWidthsFromPdg();
 public slots:
   void applyChanges();
   bool haveChangesToList();
 public:
   void resetTPS();
+  void setListPath(const QString& path) { currentPath = path; }
 };
 
 #endif
