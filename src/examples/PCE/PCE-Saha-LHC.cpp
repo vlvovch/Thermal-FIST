@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
  *
  * Usage:
  * ~~~.bash
- * PCE-Saha-LHC
+ * ./PCE-Saha-LHC
  * ~~~
  *
  */

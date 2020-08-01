@@ -53,13 +53,13 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.InteractionInput = "";
 
-  ret.DisableMM = 0;
+  ret.DisableMM = 1;
 
-  ret.DisableMB = 0;
+  ret.DisableMB = 1;
 
   ret.DisableBB = 0;
 
-  ret.DisableBantiB = 0;
+  ret.DisableBantiB = 1;
 
   ret.T = model->Parameters().T;
 
