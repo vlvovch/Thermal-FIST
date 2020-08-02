@@ -1158,6 +1158,89 @@ void EquationOfStateTab::readLatticeData()
     fin.close();
   }
 
+  // WB chi11
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi11-1910.14592.dat").c_str());
+
+  if (fin.is_open()) {
+    QString tname;
+
+    tname = "χ₁₁BQ";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    tname = "χ₁₁QS";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    tname = "-χ₁₁BS";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    //tname = "CBS";
+    //mapWB[tname] = sizeWB;
+    //sizeWB++;
+
+    dataWBx.resize(sizeWB);
+    dataWBy.resize(sizeWB);
+    dataWByerrp.resize(sizeWB);
+    dataWByerrm.resize(sizeWB);
+
+    char cc[2000];
+    while (!fin.eof()) {
+      fin.getline(cc, 2000);
+      string tmp = string(cc);
+      vector<string> elems = CuteHRGHelper::split(tmp, '#');
+      if (elems.size() < 1 || elems[0].size() == 0)
+        continue;
+
+      istringstream iss(elems[0]);
+
+      double T;
+      std::string chi11BQ, chi11QS, chi11BS, CBS;
+
+      if (iss >> T >> chi11BQ >> chi11QS >> chi11BS >> CBS) {
+
+        vector<string> abc;
+
+        abc = CuteHRGHelper::split(chi11BQ, '(');
+        if (abc.size() >= 2) {
+          dataWBx[mapWB["χ₁₁BQ"]].push_back(T);
+          dataWBy[mapWB["χ₁₁BQ"]].push_back(QString::fromStdString(abc[0]).toDouble());
+          dataWByerrp[mapWB["χ₁₁BQ"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+          dataWByerrm[mapWB["χ₁₁BQ"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        }
+
+
+        abc = CuteHRGHelper::split(chi11QS, '(');
+        if (abc.size() >= 2) {
+          dataWBx[mapWB["χ₁₁QS"]].push_back(T);
+          dataWBy[mapWB["χ₁₁QS"]].push_back(QString::fromStdString(abc[0]).toDouble());
+          dataWByerrp[mapWB["χ₁₁QS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+          dataWByerrm[mapWB["χ₁₁QS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        }
+
+
+        abc = CuteHRGHelper::split(chi11BS, '(');
+        if (abc.size() >= 2) {
+          dataWBx[mapWB["-χ₁₁BS"]].push_back(T);
+          dataWBy[mapWB["-χ₁₁BS"]].push_back(-QString::fromStdString(abc[0]).toDouble());
+          dataWByerrp[mapWB["-χ₁₁BS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+          dataWByerrm[mapWB["-χ₁₁BS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        }
+
+        //abc = CuteHRGHelper::split(CBS, '(');
+        //if (abc.size() >= 2) {
+        //  dataWBx[mapWB["CBS"]].push_back(T);
+        //  dataWBy[mapWB["CBS"]].push_back(QString::fromStdString(abc[0]).toDouble());
+        //  dataWByerrp[mapWB["CBS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        //  dataWByerrm[mapWB["CBS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        //}
+      }
+    }
+
+    fin.close();
+  }
+
   // HotQCD thermodynamics
   fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-EoS.dat").c_str());
 
@@ -1271,9 +1354,9 @@ void EquationOfStateTab::readLatticeData()
   if (fin.is_open()) {
     QString tname;
 
-    tname = "χ₂B";
-    mapHotQCD[tname] = sizeHotQCD;
-    sizeHotQCD++;
+    //tname = "χ₂B";
+    //mapHotQCD[tname] = sizeHotQCD;
+    //sizeHotQCD++;
 
     tname = "χ₂Q";
     mapHotQCD[tname] = sizeHotQCD;
@@ -1318,12 +1401,12 @@ void EquationOfStateTab::readLatticeData()
         vector<string> abc;
 
         abc = CuteHRGHelper::split(chi2B, '(');
-        if (abc.size() >= 2) {
-          dataHotQCDx[mapHotQCD["χ₂B"]].push_back(T);
-          dataHotQCDy[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[0]).toDouble());
-          dataHotQCDyerrp[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
-          dataHotQCDyerrm[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
-        }
+        //if (abc.size() >= 2) {
+        //  dataHotQCDx[mapHotQCD["χ₂B"]].push_back(T);
+        //  dataHotQCDy[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[0]).toDouble());
+        //  dataHotQCDyerrp[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        //  dataHotQCDyerrm[mapHotQCD["χ₂B"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
+        //}
 
 
         abc = CuteHRGHelper::split(chi2Q, '(');
@@ -1366,6 +1449,150 @@ void EquationOfStateTab::readLatticeData()
           dataHotQCDyerrp[mapHotQCD["χ₁₁QS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
           dataHotQCDyerrm[mapHotQCD["χ₁₁QS"]].push_back(QString::fromStdString(abc[1].substr(0, abc[1].size() - 1)).toDouble() / 10000.);
         }
+      }
+    }
+
+    fin.close();
+  }
+
+  // HotQCD chi2-chi8
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-chi8-2001.08530.dat").c_str());
+
+  if (fin.is_open()) {
+    QString tname;
+
+    tname = "χ₂B";
+    mapHotQCD[tname] = sizeHotQCD;
+    sizeHotQCD++;
+
+    tname = "χ₄B";
+    mapHotQCD[tname] = sizeHotQCD;
+    sizeHotQCD++;
+
+    tname = "χ₆B";
+    mapHotQCD[tname] = sizeHotQCD;
+    sizeHotQCD++;
+
+    tname = "χ₈B";
+    mapHotQCD[tname] = sizeHotQCD;
+    sizeHotQCD++;
+
+    dataHotQCDx.resize(sizeHotQCD);
+    dataHotQCDy.resize(sizeHotQCD);
+    dataHotQCDyerrp.resize(sizeHotQCD);
+    dataHotQCDyerrm.resize(sizeHotQCD);
+
+    char cc[2000];
+    while (!fin.eof()) {
+      fin.getline(cc, 2000);
+      string tmp = string(cc);
+      vector<string> elems = CuteHRGHelper::split(tmp, '#');
+      if (elems.size() < 1 || elems[0].size() == 0)
+        continue;
+
+      istringstream iss(elems[0]);
+
+      double T;
+      //std::string chi2B, chi2Q, chi2S, chi11BQ, chi11BSm, chi11QS;
+      double chi2B, chi2Berr, chi4B, chi4Berr, chi6B, chi6Berr, chi8B, chi8Berr;
+
+      if (iss >> T >> chi2B >> chi2Berr >> chi4B >> chi4Berr >> chi6B >> chi6Berr >> chi8B >> chi8Berr) {
+
+        vector<string> abc;
+
+        dataHotQCDx[mapHotQCD["χ₂B"]].push_back(T);
+        dataHotQCDy[mapHotQCD["χ₂B"]].push_back(chi2B);
+        dataHotQCDyerrp[mapHotQCD["χ₂B"]].push_back(chi2Berr);
+        dataHotQCDyerrm[mapHotQCD["χ₂B"]].push_back(chi2Berr);
+
+
+        dataHotQCDx[mapHotQCD["χ₄B"]].push_back(T);
+        dataHotQCDy[mapHotQCD["χ₄B"]].push_back(chi4B);
+        dataHotQCDyerrp[mapHotQCD["χ₄B"]].push_back(chi4Berr);
+        dataHotQCDyerrm[mapHotQCD["χ₄B"]].push_back(chi4Berr);
+
+
+        dataHotQCDx[mapHotQCD["χ₆B"]].push_back(T);
+        dataHotQCDy[mapHotQCD["χ₆B"]].push_back(chi6B);
+        dataHotQCDyerrp[mapHotQCD["χ₆B"]].push_back(chi6Berr);
+        dataHotQCDyerrm[mapHotQCD["χ₆B"]].push_back(chi6Berr);
+
+        dataHotQCDx[mapHotQCD["χ₈B"]].push_back(T);
+        dataHotQCDy[mapHotQCD["χ₈B"]].push_back(chi8B);
+        dataHotQCDyerrp[mapHotQCD["χ₈B"]].push_back(chi8Berr);
+        dataHotQCDyerrm[mapHotQCD["χ₈B"]].push_back(chi8Berr);
+      }
+    }
+
+    fin.close();
+  }
+
+  // WB chi2-chi8
+  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chiB-1805.04445.dat").c_str());
+
+  if (fin.is_open()) {
+    QString tname;
+
+    tname = "χ₂B";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    tname = "χ₄B";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    tname = "χ₆B";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    tname = "χ₈B";
+    mapWB[tname] = sizeWB;
+    sizeWB++;
+
+    dataWBx.resize(sizeWB);
+    dataWBy.resize(sizeWB);
+    dataWByerrp.resize(sizeWB);
+    dataWByerrm.resize(sizeWB);
+
+    char cc[2000];
+    while (!fin.eof()) {
+      fin.getline(cc, 2000);
+      string tmp = string(cc);
+      vector<string> elems = CuteHRGHelper::split(tmp, '#');
+      if (elems.size() < 1 || elems[0].size() == 0)
+        continue;
+
+      istringstream iss(elems[0]);
+
+      double T;
+      //std::string chi2B, chi2Q, chi2S, chi11BQ, chi11BSm, chi11QS;
+      double chi2B, chi2Berr, chi4B, chi4Berr, chi6B, chi6Berr, chi8B, chi8Berr;
+
+      if (iss >> T >> chi2B >> chi2Berr >> chi4B >> chi4Berr >> chi6B >> chi6Berr >> chi8B >> chi8Berr) {
+
+        vector<string> abc;
+
+        dataWBx[mapWB["χ₂B"]].push_back(T);
+        dataWBy[mapWB["χ₂B"]].push_back(chi2B);
+        dataWByerrp[mapWB["χ₂B"]].push_back(chi2Berr);
+        dataWByerrm[mapWB["χ₂B"]].push_back(chi2Berr);
+
+
+        dataWBx[mapWB["χ₄B"]].push_back(T);
+        dataWBy[mapWB["χ₄B"]].push_back(chi4B);
+        dataWByerrp[mapWB["χ₄B"]].push_back(chi4Berr);
+        dataWByerrm[mapWB["χ₄B"]].push_back(chi4Berr);
+
+
+        dataWBx[mapWB["χ₆B"]].push_back(T);
+        dataWBy[mapWB["χ₆B"]].push_back(chi6B);
+        dataWByerrp[mapWB["χ₆B"]].push_back(chi6Berr);
+        dataWByerrm[mapWB["χ₆B"]].push_back(chi6Berr);
+
+        dataWBx[mapWB["χ₈B"]].push_back(T);
+        dataWBy[mapWB["χ₈B"]].push_back(chi8B);
+        dataWByerrp[mapWB["χ₈B"]].push_back(chi8Berr);
+        dataWByerrm[mapWB["χ₈B"]].push_back(chi8Berr);
       }
     }
 
