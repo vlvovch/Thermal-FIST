@@ -19,13 +19,17 @@ See the [**building instructions**](install.html)
 Some examples of using the library in a C++ program can be found in [**Examples**](examples.html)
 
 The package also includes the graphical user interface frontend -- **QtThermalFIST**.
-Some of the typical thermal model analysis, such as calculating
+Some of the typical thermal model analysis tasks, such as calculating
 the equation of state properties or performing the thermal fits,
 can be done in GUI. Using the GUI can therefore be a good starting point. 
 See the <a href="https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"><b>Quick Start Guide</b></a> to get started.
 
 An example of using the Thermal-FIST library as a git submodule can be found
 in the following repository [**https://github.com/vlvovch/1807.02079**](https://github.com/vlvovch/1807.02079)
+
+The library can be used in Jupyter interactive notebooks. Please see 
+[**https://github.com/vlvovch/FIST-jupyter**](https://github.com/vlvovch/FIST-jupyter) and 
+[**https://github.com/vlvovch/CSM**](https://github.com/vlvovch/CSM) for samples
 
 </span>
 */
