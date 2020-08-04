@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   if (argc >2)
     nevents = atoi(argv[2]);
   
-  string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
+  string listname = string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list.dat";
   ThermalParticleSystem parts(listname);
 
   // Disable K0 and K0bar decays to avoid strangeness non-conservation

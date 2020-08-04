@@ -28,11 +28,11 @@ int main(int argc, char *argv[])
 {
   // Particle list file
   // Here we will use the list from THERMUS-2.3, for comparing the results with THERMUS-2.3
-  //string listname = string(INPUT_FOLDER) + "/list/thermus23/list.dat";
+  //string listname = string(ThermalFIST_INPUT_FOLDER) + "/list/thermus23/list.dat";
 
   // Alternative: use the default PDG2014 list
-  string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
-  //string listname = string(INPUT_FOLDER) + "/../../input/list/PDG2014update/list.dat";
+  string listname = string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list.dat";
+  //string listname = string(ThermalFIST_INPUT_FOLDER) + "/../../input/list/PDG2014update/list.dat";
 
   // Create the hadron list instance and read the list from file
   ThermalParticleSystem TPS(listname);
@@ -114,19 +114,19 @@ int main(int argc, char *argv[])
   vector<string> filenames;
 
   names.push_back("NA49-30GeV-4pi");
-  filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb30AGeV-4pi.dat");
+  filenames.push_back(string(ThermalFIST_INPUT_FOLDER) + "/data/NA49/NA49-PbPb30AGeV-4pi.dat");
 
   names.push_back("NA49-40GeV-4pi");
-  filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb40AGeV-4pi.dat");
+  filenames.push_back(string(ThermalFIST_INPUT_FOLDER) + "/data/NA49/NA49-PbPb40AGeV-4pi.dat");
 
   names.push_back("NA49-80GeV-4pi");
-  filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb80AGeV-4pi.dat");
+  filenames.push_back(string(ThermalFIST_INPUT_FOLDER) + "/data/NA49/NA49-PbPb80AGeV-4pi.dat");
 
   names.push_back("NA49-158GeV-4pi");
-  filenames.push_back(string(INPUT_FOLDER) + "/data/NA49/NA49-PbPb158AGeV-4pi.dat");
+  filenames.push_back(string(ThermalFIST_INPUT_FOLDER) + "/data/NA49/NA49-PbPb158AGeV-4pi.dat");
 
   names.push_back("ALICE-2_76-0-5");
-  filenames.push_back(string(INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
+  filenames.push_back(string(ThermalFIST_INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-5-1512.08046.dat");
 
 
 

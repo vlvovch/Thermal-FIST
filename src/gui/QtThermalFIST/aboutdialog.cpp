@@ -138,10 +138,3 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
   this->setWindowTitle(tr("About"));
 }
-
-void AboutDialog::showEvent(QShowEvent* ev)
-{
-  QDialog::showEvent(ev);
-
-  setFixedSize(size());
-}

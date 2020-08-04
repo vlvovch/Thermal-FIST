@@ -12,11 +12,16 @@ namespace thermalfist {
 
   
 
-  ThermalModelPCE::ThermalModelPCE(ThermalModelBase * THMbase, bool FreezeLongLived, double WidthCut) : m_model(THMbase), m_ChemicalFreezeoutSet(false)
+  ThermalModelPCE::ThermalModelPCE(ThermalModelBase * THMbase, bool FreezeLonglived, double LonglivedResoWidthCut) :
+    m_model(THMbase), 
+    m_UseSahaForNuclei(true),
+    m_FreezeLonglivedResonances(FreezeLonglived),
+    m_ResoWidthCut(LonglivedResoWidthCut),
+    m_ChemicalFreezeoutSet(false), 
+    m_StabilityFlagsSet(false),
+    m_IsCalculated(false)
   {
     m_model->UsePartialChemicalEquilibrium(true);
-
-    SetStabilityFlags(ComputePCEStabilityFlags(m_model->TPS(), true, FreezeLongLived, WidthCut));
   }
 
   void ThermalModelPCE::SetStabilityFlags(const std::vector<int>& StabilityFlags)
@@ -61,16 +66,28 @@ namespace thermalfist {
 
     ApplyFixForBoseCondensation();
 
+    m_StabilityFlagsSet = true;
     m_ChemicalFreezeoutSet = false;
     m_IsCalculated = false;
   }
 
   void ThermalModelPCE::SetChemicalFreezeout(const ThermalModelParameters & params, const std::vector<double>& ChemInit)
   {
+    if (!m_StabilityFlagsSet) {
+      SetStabilityFlags(ComputePCEStabilityFlags(m_model->TPS(), UseSahaForNuclei(), FreezeLonglivedResonances(), LonglivedResonanceWidthCut()));
+    }
+    
     m_ParametersInit = params;
-    m_ChemInit = ChemInit;
+    
     m_model->SetParameters(m_ParametersInit);
-    m_model->SetChemicalPotentials(m_ChemInit);
+    if (ChemInit.size() == m_model->ComponentsNumber()) {
+      m_model->SetChemicalPotentials(ChemInit);
+      m_ChemInit = ChemInit;
+    }
+    else {
+      m_model->FillChemicalPotentials();
+      m_ChemInit = m_model->ChemicalPotentials();
+    }
     //m_model->CalculateDensities();
     m_model->CalculatePrimordialDensities();
 
@@ -97,8 +114,19 @@ namespace thermalfist {
     m_IsCalculated = false;
   }
 
-  void ThermalModelPCE::CalculatePCE(double param, int mode)
+  void ThermalModelPCE::CalculatePCE(double param, PCEMode mode)
   {
+    if (!m_ChemicalFreezeoutSet) {
+      printf("**ERROR** ThermalModelPCE::CalculatePCE:"
+             "Tried to make a PCE calculation without setting the chemical freze-out!"
+             "Call ThermalModelPCE::SetChemicalFreezeout() first.\n");
+      exit(1);
+    }
+
+    if (!m_StabilityFlagsSet) {
+      SetChemicalFreezeout(m_ParametersInit, m_ChemInit);
+    }
+    
     double T = param;
     if (mode == 1) {
       // Initial guess for the new temperature

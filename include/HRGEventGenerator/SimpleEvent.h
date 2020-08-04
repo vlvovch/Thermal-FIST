@@ -26,8 +26,11 @@ namespace thermalfist {
     /// Vector of all final particles in the event
     std::vector<SimpleParticle> Particles;
 
-    /// Vector of all particles which ever appeared in the event (including those that decay)
+    /// Vector of all particles which ever appeared in the event (including those that decay and photons/leptons)
     std::vector<SimpleParticle> AllParticles;
+
+    /// Vector of all decay photons/leptons
+    std::vector<SimpleParticle> PhotonsLeptons;
 
     /// Vector for each AllParticles element pointing to the index of the mother resonance.
     /// If the element corresponds to a primordial particle, the id is -1.
@@ -37,16 +40,38 @@ namespace thermalfist {
     std::vector<int> DecayMapFinal;
 
     /// Default constructor, empty event
-    SimpleEvent() { Particles.resize(0); AllParticles.resize(0); weight = 1.; logweight = 0.; }
+    SimpleEvent() { Particles.resize(0); AllParticles.resize(0); PhotonsLeptons.resize(0); weight = 1.; logweight = 0.; }
 
-    /// Writes the event to an output file stream
-    void writeToFile(std::ofstream & fout, int eventnumber = 1);
-
-    /// Rapidity boost by dY for all particles
+    /// Rapidity boost by Y -> Y + dY for all particles
     void RapidityBoost(double dY);
 
     /// Merge particles from two events (e.g. two patches, two canonical volumes, etc.)
     static SimpleEvent MergeEvents(const SimpleEvent &evt1, const SimpleEvent &evt2);
+
+    /// Configuration for the event output
+    struct EventOutputConfig {
+
+      /// Output the particle's energy in addition to its 3-momentum
+      bool printEnergy;
+
+      /// Output the pdg code of the mother particle
+      bool printMotherPdg;
+
+      /// Output photons and leptons, if any
+      bool printPhotonsLeptons;
+
+      /// Print the number of succesive decays before the particle was produced
+      bool printDecayEpoch;
+
+      EventOutputConfig() :
+        printEnergy(false), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false) { }
+    };
+
+    /// Writes the event to an output file stream
+    void writeToFile(std::ofstream& fout, const EventOutputConfig& config = EventOutputConfig(), int eventnumber = 1);
+
+    /// Writes the event to an output file stream
+    void writeToFile(std::ofstream& fout, int eventnumber = 1) { writeToFile(fout, EventOutputConfig(), eventnumber); }
   };
 
 } // namespace thermalfist

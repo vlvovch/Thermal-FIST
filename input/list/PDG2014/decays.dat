@@ -1878,88 +1878,221 @@
 423                                  # D*(2007)0
 2                                    # 2 decay channels
 0.619           421 111              # D*(2007)0 -> D0 + pi0
-0.381           421                  # D*(2007)0 -> D0
+0.381           421 22               # D*(2007)0 -> D0 + ?gamma?
 
-413                                  # Dstar+
+413                                  # D*(2010)+
 3                                    # 3 decay channels
-0.677           421 211              # Dstar+ -> D0 + pi+
-0.307           411 111              # Dstar+ -> D+ + pi0
-0.016           411                  # Dstar+ -> D+
+0.677           421 211              # D*(2010)+ -> D0 + pi+
+0.307           411 111              # D*(2010)+ -> D+ + pi0
+0.016           411 22               # D*(2010)+ -> D+ + ?gamma?
 
-14122                                # Lambda_c+(2595)
-3                                    # 3 decay channels
-0.24            4222 -211            # Lambda_c+(2595) -> Sigma_c++ + pi-
-0.24            4112 211             # Lambda_c+(2595) -> Sigma_c0 + pi+
-0.18            4122 211 -211        # Lambda_c+(2595) -> Lambda_c+ + pi+ + pi-
-
-4212                                 # Sigma_c+
+10421                                # D0*(2400)0
 1                                    # 1 decay channel
-1               4122 111             # Sigma_c+ -> Lambda_c+ + pi0
+1               411 -211             # D0*(2400)0 -> D+ + pi-
 
-4112                                 # Sigma_c0
-1                                    # 1 decay channel
-1               4122 -211            # Sigma_c0 -> Lambda_c+ + pi-
-
-4222                                 # Sigma_c++
-1                                    # 1 decay channel
-1               4122 211             # Sigma_c++ -> Lambda_c+ + pi+
-
-4214                                 # Sigma_c+(2520)
-1                                    # 1 decay channel
-1               4122 111             # Sigma_c+(2520) -> Lambda_c+ + pi0
-
-4114                                 # Sigma_c0(2520)
-1                                    # 1 decay channel
-1               4122 -211             # Sigma_c0(2520) -> Lambda_c+ + pi-
-
-4224                                 # Sigma_c++(2520)
-1                                    # 1 decay channel
-1               4122 211             # Sigma_c++(2520) -> Lambda_c+ + pi+
-
-4322                                 # Ksi'_c+
-1                                    # 1 decay channel
-1               4232                 # Ksi'_c+ -> Ksi_c+
-
-4312                                 # Ksi'_c0
-1                                    # 1 decay channel
-1               4132                 # Ksi'_c0 -> Ksi_c0
-
-4124                                 # Lambda_c+(2625)
-3                                    # 3 decay channels
-0.05            4222 -211            # Lambda_c+(2625) -> Sigma_c++ + pi-
-0.05            4112 211             # Lambda_c+(2625) -> Sigma_c0 + pi+
-0.57            4112 211 -211        # Lambda_c+(2625) -> Sigma_c0 + pi+ + pi-
-
-4324                                 # Ksi_c+(2645)
-1                                    # 1 decay channel
-0.5             4132 211             # Ksi_c+(2645) -> Ksi_c0 + pi+
-
-4314                                 # Ksi_c0(2645)
-1                                    # 1 decay channel
-0.5             4232 -211            # Ksi_c0(2645) -> Ksi_c+ + pi-
-
-4334                                 # Omega_c0(2770)
-1                                    # 1 decay channel
-1               4332                 # Omega_c0(2770) -> Omega_c0
-
-10441                                # chi_c0(1P)
-1                                    # 1 decay channel
-0.0116          443                  # chi_c0(1P) -> J/Psi(1S)
-
-20443                                # chi_c1(1P)
-1                                    # 1 decay channel
-0.344           443                  # chi_c1(1P) -> J/Psi(1S)
-
-445                                  # chi_c2(1P)
-1                                    # 1 decay channel
-0.195           443                  # chi_c2(1P) -> J/Psi(1S)
-
-100443                               # psi(2S)
-1                                    # 1 decay channel
-0.595           443                  # psi(2S) -> J/Psi(1S)
-
-30443                                # psi(3770)
+10423                                # D1(2420)0
 2                                    # 2 decay channels
-0.52            421 -421             # psi(3770) -> D0 + anti-D0
-0.41            411 -411             # psi(3770) -> D+ + D-
+0.5             413 -211             # D1(2420)0 -> D*(2010)+ + pi-
+0.5             421 211 -211         # D1(2420)0 -> D0 + pi+ + pi-
+
+425                                  # D2*(2460)0
+2                                    # 2 decay channels
+0.5             411 -211             # D2*(2460)0 -> D+ + pi-
+0.5             413 -211             # D2*(2460)0 -> D*(2010)+ + pi-
+
+415                                  # D2*(2460)+
+2                                    # 2 decay channels
+0.5             421 211              # D2*(2460)+ -> D0 + pi+
+0.5             423 211              # D2*(2460)+ -> D*(2007)0 + pi+
+
+433                                  # Ds*+
+2                                    # 2 decay channels
+0.942           431 22               # Ds*+ -> Ds+ + ?gamma?
+0.058           431 111              # Ds*+ -> Ds+ + pi0
+
+10431                                # Ds0*(2317)
+1                                    # 1 decay channel
+1               431 111              # Ds0*(2317) -> Ds+ + pi0
+
+20433                                # Ds1(2460)
+5                                    # 5 decay channels
+0.6             433 111              # Ds1(2460) -> Ds*+ + pi0
+0.22            431 22               # Ds1(2460) -> Ds+ + ?gamma?
+0.06            433 211 -211         # Ds1(2460) -> Ds*+ + pi+ + pi-
+0.08            433 22               # Ds1(2460) -> Ds*+ + ?gamma?
+0.04            10431 22             # Ds1(2460) -> Ds0*(2317) + ?gamma?
+
+10433                                # Ds1(2536)
+4                                    # 4 decay channels
+0.85            413 311              # Ds1(2536) -> D*(2010)+ + K0
+0.03            411 -211 321         # Ds1(2536) -> D+ + pi- + K+
+0.08            411 311              # Ds1(2536) -> D+ + K0
+0.04            421 321              # Ds1(2536) -> D0 + K+
+
+435                                  # Ds2*(2573)
+1                                    # 1 decay channel
+1               421 321              # Ds2*(2573) -> D0 + K+
+
+4122                                 # Lambda(c)+
+5                                    # 5 decay channels
+0.36            3122 211             # Lambda(c)+ -> Lambda + pi+
+0.08            3222 111             # Lambda(c)+ -> Sigma+ + pi0
+0.08            3212 211             # Lambda(c)+ -> Sigma0 + pi+
+0.32            2112 211             # Lambda(c)+ -> n + pi+
+0.16            2212 111             # Lambda(c)+ -> p + pi0
+
+4212                                 # Sigma(c)(2455)+
+1                                    # 1 decay channel
+1               4122 111             # Sigma(c)(2455)+ -> Lambda(c)+ + pi0
+
+4112                                 # Sigma(c)(2455)0
+1                                    # 1 decay channel
+1               4122 -211            # Sigma(c)(2455)0 -> Lambda(c)+ + anti-pi+
+
+4222                                 # Sigma(c)(2455)++
+1                                    # 1 decay channel
+1               4122 211             # Sigma(c)(2455)++ -> Lambda(c)+ + pi+
+
+4224                                 # Sigma(c)(2520)++
+1                                    # 1 decay channel
+1               4122 211             # Sigma(c)(2520)++ -> Lambda(c)+ + pi+
+
+4114                                 # Sigma(c)(2520)0
+1                                    # 1 decay channel
+1               4122 -211            # Sigma(c)(2520)0 -> Lambda(c)+ + anti-pi+
+
+4214                                 # Sigma(c)(2520)+
+1                                    # 1 decay channel
+1               4122 111             # Sigma(c)(2520)+ -> Lambda(c)+ + pi0
+
+14122                                # Lambda(c)(2595)+
+3                                    # 3 decay channels
+0.35            4222 -211            # Lambda(c)(2595)+ -> Sigma(c)(2455)++ + anti-pi+
+0.35            4112 211             # Lambda(c)(2595)+ -> Sigma(c)(2455)0 + pi+
+0.3             4122 211 -211        # Lambda(c)(2595)+ -> Lambda(c)+ + pi+ + anti-pi+
+
+104122                               # Lambda(c)(2625)+
+3                                    # 3 decay channels
+0.05            4222 -211            # Lambda(c)(2625)+ -> Sigma(c)(2455)++ + anti-pi+
+0.05            4112 211             # Lambda(c)(2625)+ -> Sigma(c)(2455)0 + pi+
+0.9             4122 211 -211        # Lambda(c)(2625)+ -> Lambda(c)+ + pi+ + anti-pi+
+
+4232                                 # Xi(c)+
+1                                    # 1 decay channel
+1               3312 211 211         # Xi(c)+ -> Xi- + pi+ + pi+
+
+4132                                 # Xi(c)0
+1                                    # 1 decay channel
+1               3312 211             # Xi(c)0 -> Xi- + pi+
+
+4312                                 # Xi(c)'0
+1                                    # 1 decay channel
+1               4132 22              # Xi(c)'0 -> Xi(c)0 + ?gamma?
+
+4322                                 # Xi(c)'+
+1                                    # 1 decay channel
+1               4232 22              # Xi(c)'+ -> Xi(c)+ + ?gamma?
+
+4324                                 # Xi(c)(2645)+
+1                                    # 1 decay channel
+1               4132 211             # Xi(c)(2645)+ -> Xi(c)0 + pi+
+
+4314                                 # Xi(c)(2645)0
+1                                    # 1 decay channel
+1               4232 -211            # Xi(c)(2645)0 -> Xi(c)+ + anti-pi+
+
+4332                                 # Omega(c)
+6                                    # 6 decay channels
+0.15            3222 -321 -321 211   # Omega(c) -> Sigma+ + anti-K+ + anti-K+ + pi+
+0.15            3322 -321 211        # Omega(c) -> Xi0 + anti-K+ + pi+
+0.15            3312 -321 211 211    # Omega(c) -> Xi- + anti-K+ + pi+ + pi+
+0.3             3334 211             # Omega(c) -> Omega + pi+
+0.2             3334 211 111         # Omega(c) -> Omega + pi+ + pi0
+0.05            3334 -211 211 211    # Omega(c) -> Omega + anti-pi+ + pi+ + pi+
+
+4334                                 # Omega(c)(2770)
+1                                    # 1 decay channel
+1               4332 22              # Omega(c)(2770) -> Omega(c) + ?gamma?
+
+
+441                                  # etac(1S)
+15                                   # 15 decay channels
+0.025           331 211 -211         # etac(1S) -> eta'(958) + pi+ + pi-
+0.015           331 111 111          # etac(1S) -> eta'(958) + pi0 + pi0
+0.01            313 -321 211         # etac(1S) -> Kstar(892)0 + K- + pi+
+0.01            -313 321 -211        # etac(1S) -> anti-Kstar(892)0 + K+ + pi-
+0.011           313 -313 211 -211    # etac(1S) -> Kstar(892)0 + anti-Kstar(892)0 + pi+ + pi-
+0.036           321 -321 111         # etac(1S) -> K+ + K- + pi0
+0.036           311 -311 111         # etac(1S) -> K0 + anti-K0 + pi0
+0.017           221 211 -211         # etac(1S) -> eta + pi+ + pi-
+0.044           221 211 -211 211 -211 # etac(1S) -> eta + pi+ + pi- + pi+ + pi-
+0.035           321 -321 211 -211 111 # etac(1S) -> K+ + K- + pi+ + pi- + pi0
+0.028           311 -321 211 -211 211 # etac(1S) -> K0 + K- + pi+ + pi- + pi+
+0.028           -311 321 -211 211 -211 # etac(1S) -> anti-K0 + K+ + pi- + pi+ + pi-
+0.047           211 -211 111 111     # etac(1S) -> pi+ + pi- + pi0 + pi0
+0.174           211 -211 111 211 -211 111 # etac(1S) -> pi+ + pi- + pi0 + pi+ + pi- + pi0
+0.018           211 -211 211 -211 211 -211 # etac(1S) -> pi+ + pi- + pi+ + pi- + pi+ + pi-
+
+443                                  # J/Psi
+11                                   # 11 decay channels
+0.06            -11 11               # J/Psi -> ??? + ???
+0.06            -13 13               # J/Psi -> ??? + ???
+0.0056          113 111              # J/Psi -> rho0 + pi0
+0.0056          213 -211             # J/Psi -> rho+ + pi-
+0.0056          -213 211             # J/Psi -> rho- + pi+
+0.041           211 -211 211 -211 111 # J/Psi -> pi+ + pi- + pi+ + pi- + pi0
+0.029           211 -211 211 -211 211 -211 111 # J/Psi -> pi+ + pi- + pi+ + pi- + pi+ + pi- + pi0
+0.021           211 -211 111         # J/Psi -> pi+ + pi- + pi0
+0.018           211 -211 111 321 -321 # J/Psi -> pi+ + pi- + pi0 + K+ + K-
+0.016           211 -211 111 211 -211 111 # J/Psi -> pi+ + pi- + pi0 + pi+ + pi- + pi0
+0.017           22 441               # J/Psi -> ?gamma? + etac(1S)
+
+10441                                # chic0
+15                                   # 15 decay channels
+0.0116          443 22               # chic0 -> J/Psi + ?gamma?
+0.0224          211 -211 211 -211    # chic0 -> pi+ + pi- + pi+ + pi-
+0.014           213 -211 111         # chic0 -> rho+ + pi- + pi0
+0.014           -213 211 111         # chic0 -> rho- + pi+ + pi0
+0.005           211 -211 111 111     # chic0 -> pi+ + pi- + pi0 + pi0
+0.0032          111 111 111 111      # chic0 -> pi0 + pi0 + pi0 + pi0
+0.0175          211 -211 321 -321    # chic0 -> pi+ + pi- + K+ + K-
+0.0111          321 -321 211 -211 111 # chic0 -> K+ + K- + pi+ + pi- + pi0
+0.0122          321 -211 -311 111    # chic0 -> K+ + pi- + anti-K0 + pi0
+0.0122          -321 211 311 111     # chic0 -> K- + pi+ + K0 + pi0
+0.012           211 -211 211 -211 211 -211 # chic0 -> pi+ + pi- + pi+ + pi- + pi+ + pi-
+0.0056          211 -211             # chic0 -> pi+ + pi-
+0.0028          111 111              # chic0 -> pi0 + pi0
+0.003           221 221              # chic0 -> eta + eta
+0.002           331 331              # chic0 -> eta'(958) + eta'(958)
+
+20443                                # chic1
+1                                    # 1 decay channel
+0.339           443 22               # chic1 -> J/Psi + ?gamma?
+
+10443                                # hc
+2                                    # 2 decay channels
+0.51            441 22               # hc -> etac(1S) + ?gamma?
+0.022           211 211 -211 -211 111 # hc -> pi+ + pi+ + pi- + pi- + pi0
+
+445                                  # chic2
+5                                    # 5 decay channels
+0.192           443 22               # chic2 -> J/Psi + ?gamma?
+0.0107          211 -211 211 -211    # chic2 -> pi+ + pi- + pi+ + pi-
+0.0115          213 -211 111         # chic2 -> rho+ + pi- + pi0
+0.0115          -213 211 111         # chic2 -> rho- + pi+ + pi0
+0.0123          321 -321 211 -211 111 # chic2 -> K+ + K- + pi+ + pi- + pi0
+
+100443                               # Psi(2S)
+6                                    # 6 decay channels
+0.36            443 211 -211         # Psi(2S) -> J/Psi + pi+ + pi-
+0.18            443 111 111          # Psi(2S) -> J/Psi + pi0 + pi0
+0.04            443 221              # Psi(2S) -> J/Psi + eta
+0.1             10441 22             # Psi(2S) -> chic0 + ?gamma?
+0.095           20443 22             # Psi(2S) -> chic1 + ?gamma?
+0.09            445 22               # Psi(2S) -> chic2 + ?gamma?
+
+30443                                # Psi(3770)
+2                                    # 2 decay channels
+0.52            421 -421             # Psi(3770) -> D0 + anti-D0
+0.41            411 -411             # Psi(3770) -> D+ + D-
 

@@ -1,0 +1,8 @@
+# exotic light (hyper-)nuclei (as studied in https://arxiv.org/abs/1903.10024)
+#         pdgid                name         stable      mass[GeV]     degeneracy     statistics              B              Q              S              C            |S|            |C|     width[GeV] threshold[GeV]
+     1010010020        LambdaProton              1          2.056              3             -1              2              1             -1              0              1              0              0              0
+     1010000020       LambdaNeutron              1          2.057              3             -1              2              0             -1              0              1              0              0              0
+     1020000020            DiLambda              1          2.231              1             -1              2              0             -2              0              2              0              0              0
+     1020010020            XiProton              1           2.25              1             -1              2              1             -2              0              2              0              0              0
+     1030000020         OmegaProton              1          2.608              1             -1              2              0             -3              0              3              0              0              0
+     1040000020               DiXi0              1          2.628              1             -1              2              0             -4              0              4              0              0              0

@@ -29,10 +29,10 @@ int main(int argc, char *argv[])
 {
   // Particle list file
   // Here we will use the list from THERMUS-2.3, for comparing the results with THERMUS-2.3
-  string listname = string(INPUT_FOLDER) + "/list/thermus23/list.dat";
+  string listname = string(ThermalFIST_INPUT_FOLDER) + "/list/thermus23/list.dat";
 
   // Alternative: use the default PDG2014 list
-  //string listname = string(INPUT_FOLDER) + "/list/PDG2014/list.dat";
+  //string listname = string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list.dat";
   
   // Create the hadron list instance and read the list from file
   ThermalParticleSystem TPS(listname);

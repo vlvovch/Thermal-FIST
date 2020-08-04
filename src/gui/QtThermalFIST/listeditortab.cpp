@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <sstream>
 
 #include <QLayout>
 #include <QFileDialog>
@@ -101,9 +102,10 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   QHBoxLayout *degeneracyLay = new QHBoxLayout();
   degeneracyLay->setAlignment(Qt::AlignLeft);
 
-  QLabel *labelMass = new QLabel(tr("Mass (GeV):"));
+  QLabel *labelMass = new QLabel(tr("Mass [GeV]:"));
   spinMass = new QDoubleSpinBox();
-  spinMass->setDecimals(5);
+  spinMass->setButtonSymbols(QAbstractSpinBox::NoButtons);
+  spinMass->setDecimals(6);
   spinMass->setMinimum(0.);
   spinMass->setMaximum(127.);
   connect(spinMass, SIGNAL(editingFinished()), this, SLOT(MassEdited()));
@@ -189,14 +191,14 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
 
   QLabel *labelAbsoluteStrangeness = new QLabel(tr("|s|:"));
   spinAbsoluteStrangeness = new QDoubleSpinBox();
-  spinAbsoluteStrangeness->setDecimals(3);
+  spinAbsoluteStrangeness->setDecimals(5);
   spinAbsoluteStrangeness->setMinimum(0.);
   //spinAbsoluteStrangeness->setMaximum(10);
   connect(spinAbsoluteStrangeness, SIGNAL(editingFinished()), this, SLOT(ChargeEdited()));
 
   QLabel *labelAbsoluteCharm = new QLabel(tr("|c|:"));
   spinAbsoluteCharm = new QDoubleSpinBox();
-  spinAbsoluteCharm->setDecimals(3);
+  spinAbsoluteCharm->setDecimals(5);
   spinAbsoluteCharm->setMinimum(0.);
   //spinAbsoluteStrangeness->setMaximum(10);
   connect(spinAbsoluteCharm, SIGNAL(editingFinished()), this, SLOT(ChargeEdited()));
@@ -223,14 +225,17 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   QHBoxLayout *layDecays1 = new QHBoxLayout();
   layDecays1->setAlignment(Qt::AlignLeft);
   
-  QLabel *labelWidth = new QLabel(tr("Width (GeV):"));
+  QLabel *labelWidth = new QLabel(tr("Width [MeV]:"));
   spinWidth = new QDoubleSpinBox();
+  spinWidth->setButtonSymbols(QAbstractSpinBox::NoButtons);
   spinWidth->setMinimum(0.);
-  spinWidth->setDecimals(5);
-  QLabel *labelThreshold = new QLabel(tr("Threshold (GeV):"));
+  spinWidth->setMaximum(100000.);
+  spinWidth->setDecimals(6);
+  QLabel *labelThreshold = new QLabel(tr("Threshold [GeV]:"));
   spinThreshold = new QDoubleSpinBox();
+  spinThreshold->setButtonSymbols(QAbstractSpinBox::NoButtons);
   spinThreshold->setMinimum(0.);
-  spinThreshold->setDecimals(5);
+  spinThreshold->setDecimals(6);
 
   connect(spinWidth, SIGNAL(editingFinished()), this, SLOT(DecaysEdited()));
   connect(spinThreshold, SIGNAL(editingFinished()), this, SLOT(DecaysEdited()));
@@ -277,7 +282,8 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   layoutGlobal->setAlignment(Qt::AlignLeft);
 
   
-  
+  buttonMassesWidthsFromPDG = new QPushButton(tr("Set masses/widths/names from PDG file..."));
+  connect(buttonMassesWidthsFromPDG, SIGNAL(clicked()), this, SLOT(loadMassesWidthsFromPdg()));
 
   buttonSetAllThresholds = new QPushButton(tr("Set thresholds from decay channels..."));
   connect(buttonSetAllThresholds, SIGNAL(clicked()), this, SLOT(setAllThresholds()));
@@ -286,6 +292,7 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   connect(buttonResetAll, SIGNAL(clicked()), this, SLOT(resetAll()));
 
   //layoutGlobal->addLayout(dataLay2);
+  layoutGlobal->addWidget(buttonMassesWidthsFromPDG, 0, Qt::AlignLeft);
   layoutGlobal->addWidget(buttonSetAllThresholds, 0, Qt::AlignLeft);
   layoutGlobal->addWidget(buttonResetAll, 0, Qt::AlignLeft);
 
@@ -317,6 +324,8 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   model = model_in;
 
   setParticleList(model->TPS());
+
+  currentPath = "";
 }
 
 ListEditorTab::~ListEditorTab()
@@ -382,7 +391,7 @@ void ListEditorTab::changedRow()
     spinStrangeness->setValue(TPS->Particles()[index].Strangeness());
     spinAbsoluteStrangeness->setValue(TPS->Particles()[index].AbsoluteStrangeness());
     checkBoxStable->setChecked(TPS->Particles()[index].IsStable());
-    spinWidth->setValue(TPS->Particles()[index].ResonanceWidth());
+    spinWidth->setValue(TPS->Particles()[index].ResonanceWidth() * 1.e3);
     spinThreshold->setValue(TPS->Particles()[index].DecayThresholdMass());
     spinCharm->setValue(TPS->Particles()[index].Charm());
     spinAbsoluteCharm->setValue(TPS->Particles()[index].AbsoluteCharm());
@@ -477,7 +486,7 @@ void ListEditorTab::DecaysEdited()
   if (row >= 0) {
     int index = myModel->GetRowToParticle()[row];
     ThermalParticle &part = myModel->GetTPS()->Particle(index);
-    part.SetResonanceWidth(spinWidth->value());
+    part.SetResonanceWidth(spinWidth->value() * 1.e-3);
     part.SetDecayThresholdMass(spinThreshold->value());
     myModel->updateParticle(row);
   }
@@ -741,25 +750,117 @@ void ListEditorTab::setAllThresholds()
 
 void ListEditorTab::saveToFile()
 {
-  QString listpathprefix = QString(INPUT_FOLDER) + "/list/list.dat";
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/list.dat";
+  if (currentPath.size() != 0) {
+    listpathprefix = currentPath;
+  }
   QString path = QFileDialog::getSaveFileName(this, tr("Save particle list as"), listpathprefix);
   if (path.length()>0)
   {
     myModel->GetTPS()->WriteTableToFile(path.toStdString());
 
-    listpathprefix = QDir(path).absolutePath() + "/decays.dat";
+    listpathprefix = QFileInfo(path).absolutePath() + "/decays.dat";
 
     path = QFileDialog::getSaveFileName(this, tr("Save particle decays list as"), listpathprefix);
 
     if (path.length() > 0)
     {
       myModel->GetTPS()->WriteDecaysToFile(path.toStdString());
+      currentPath = path;
     }
   }
 
   if (myModel->haveChanges())
     applyChanges();
 
+}
+
+void ListEditorTab::loadMassesWidthsFromPdg()
+{
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/mass_width_2020.mcd";
+  if (currentPath.size() != 0) {
+    listpathprefix = QFileInfo(currentPath).absolutePath() + "/pdglisting/";
+  }
+  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list from PDG website"), 
+    listpathprefix, 
+    tr("PDG file (*.mcd)"));
+  if (path.length() > 0)
+  {
+    std::ifstream fin(path.toStdString());
+    if (fin.is_open()) {
+      char cc[2000];
+      while (!fin.eof()) {
+        fin.getline(cc, 2000);
+        std::string tmp = std::string(cc);
+        if (tmp.size() == 0 || tmp[0] == '*')
+          continue;
+        std::string strpdg = tmp.substr(0, 34);
+        std::string strvals = tmp.substr(34);
+        std::string strnam = tmp.substr(107);
+        if (strvals.size() == 0)
+          continue;
+
+        std::istringstream isspdg(strpdg);
+        std::vector<long long> pdgs;
+        long long tpdg;
+        while (isspdg >> tpdg) {
+          pdgs.push_back(tpdg);
+        }
+        if (pdgs.size() == 0)
+          continue;
+
+        std::istringstream issvals(strvals);
+        double mass = 0., width = 0., tmpval = 0.;
+        if (!(issvals >> mass))
+          continue;
+
+        if (!(issvals >> tmpval >> tmpval >> width))
+          width = -1;
+
+        std::istringstream issnam(strnam);
+        std::string pname = "";
+        if (!(issnam >> pname))
+          pname = "";
+
+        for (int i = 0; i < pdgs.size(); ++i) {
+          tpdg = pdgs[i];
+          int tid = myModel->GetTPS()->PdgToId(tpdg);
+          if (tid != -1) {
+            ThermalParticle& part = myModel->GetTPS()->Particle(tid);
+            part.SetMass(mass);
+            if (width > 0.)
+              part.SetResonanceWidth(width);
+
+            if (pname != "") {
+              std::string suff = "";
+              std::string origname = part.Name();
+              for (int ic = origname.size() - 1; ic >= 0; ic--) {
+                if (origname[ic] != '+' && origname[ic] != '0' && origname[ic] != '-')
+                  break;
+                else
+                  suff += origname[ic];
+              }
+              reverse(suff.begin(), suff.end());
+              part.SetName(pname + suff);
+            }
+          }
+          tid = myModel->GetTPS()->PdgToId(-tpdg);
+          if (tid != -1) {
+            ThermalParticle& part = myModel->GetTPS()->Particle(tid);
+            part.SetMass(mass);
+            if (width > 0.)
+              part.SetResonanceWidth(width);
+            if (pname != "") {
+              part.SetName("anti-" + myModel->GetTPS()->ParticleByPDG(tpdg).Name());
+            }
+          }
+        }
+      }
+      fin.close();
+
+      //myModel->reset();
+    }
+  }
 }
 
 bool ListEditorTab::haveChangesToList()

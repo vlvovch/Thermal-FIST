@@ -93,6 +93,7 @@ struct ChargesFluctuations {
   double chi31BQ, chi31BS, chi31QS;
 };
 
+void SetThermalModelParameters(thermalfist::ThermalModelBase* model, const ThermalModelConfig& config);
 void SetThermalModelConfiguration(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 void SetThermalModelInteraction(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 

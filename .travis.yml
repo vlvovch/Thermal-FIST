@@ -23,4 +23,6 @@ script:
   - ./cpc1HRGTDep 1
   - ./cpc1HRGTDep 2
   - ./cpc3chi2NEQ 0
-  - ./cpc4mcHRG 0
+  - ./cpc4mcHRG 1 100
+  - ./PCE-Saha-LHC
+  

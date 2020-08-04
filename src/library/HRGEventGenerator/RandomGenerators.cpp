@@ -254,7 +254,7 @@ namespace thermalfist {
         double x0 = randgenMT.randDblExc();
 
         if (mass < m_Mu && m_Statistics == -1)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf!\n", m_Mu, mass);
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf\n", m_Mu, mass);
 
         double M = m_Max;
         if (mass != m_Mass)
@@ -263,7 +263,7 @@ namespace thermalfist {
         double prob = g(x0, mass) / M;
 
         if (prob > 1.)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability by %E exceeds unity!\n", prob - 1.);
+          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability exceeds unity by %E\n", prob - 1.);
 
         if (randgenMT.randDblExc() < prob) return -log(x0);
       }
@@ -640,7 +640,11 @@ namespace thermalfist {
           double E = -log(rangen.randDblExc());
           Y = (w + E) / pm;
         }
-        int X = S * std::lround(Y);
+        #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+          int X = S * std::lround(Y);
+        #else
+          int X = S * ((Y > 0.0) ? std::floor(Y + 0.5) : std::ceil(Y - 0.5));
+        #endif
 
         if (tm + X < 0)
           continue;
@@ -679,7 +683,11 @@ namespace thermalfist {
           double E = -log(rangen.randDblExc());
           Y = 1. / 2. + 1. / q + E / q;
         }
-        int X = S * std::lround(Y);
+        #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+          int X = S * std::lround(Y);
+        #else
+          int X = S * ((Y > 0.0) ? std::floor(Y + 0.5) : std::ceil(Y - 0.5));
+        #endif
 
         if (tm + X < 0)
           continue;
@@ -718,7 +726,11 @@ namespace thermalfist {
           double E = -log(rangen.randDblExc());
           Y = 1. / 2. + 1. / q + E / q;
         }
-        int X = S * std::lround(Y);
+        #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+          int X = S * std::lround(Y);
+        #else
+          int X = S * ((Y > 0.0) ? std::floor(Y + 0.5) : std::ceil(Y - 0.5));
+        #endif
 
         if (tm + X < 0)
           continue;

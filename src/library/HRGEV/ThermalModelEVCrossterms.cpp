@@ -100,16 +100,23 @@ namespace thermalfist {
       << std::endl;
     fout << "# Only particle pairs with a non-zero eigenvolume parameter are listed here"
       << std::endl;
-    fout << "#" << std::setw(14) << "pdg_i"
+    /*fout << "#" << std::setw(14) << "pdg_i"
       << std::setw(15) << "pdg_j"
       << std::setw(15) << "b_{ij}[fm^3]"
+      << std::endl;*/
+    fout << "#" << " " << "pdg_i"
+      << " " << "pdg_j"
+      << " " << "b_{ij}[fm^3]"
       << std::endl;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
       for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
         if (m_Virial[i][j] != 0.) {
-          fout << std::setw(15) << m_TPS->Particle(i).PdgId();
-          fout << std::setw(15) << m_TPS->Particle(j).PdgId();
-          fout << std::setw(15) << m_Virial[i][j];
+          //fout << std::setw(15) << m_TPS->Particle(i).PdgId();
+          //fout << std::setw(15) << m_TPS->Particle(j).PdgId();
+          //fout << std::setw(15) << m_Virial[i][j];
+          fout << " " << m_TPS->Particle(i).PdgId();
+          fout << " " << m_TPS->Particle(j).PdgId();
+          fout << " " << m_Virial[i][j];
           fout << std::endl;
         }
       }

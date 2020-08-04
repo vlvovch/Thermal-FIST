@@ -24,7 +24,7 @@
 namespace thermalfist {
 
   int EventGeneratorBase::fCEAccepted, EventGeneratorBase::fCETotal;
-  double EventGeneratorBase::m_LastWeight, EventGeneratorBase::m_LastLogWeight;
+  double EventGeneratorBase::m_LastWeight = 1., EventGeneratorBase::m_LastLogWeight = 0., EventGeneratorBase::m_LastNormWeight = 1.;
 
 
   EventGeneratorBase::~EventGeneratorBase()
@@ -53,6 +53,8 @@ namespace thermalfist {
   {
     m_Config = config;
 
+    if (TPS == NULL)
+      return;
 
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
@@ -117,7 +119,7 @@ namespace thermalfist {
       // The following procedure currently not used, 
       // but can be considered if SolveChemicalPotentials routine fails
       // Note to take into account PCE possiblity if this option is considered
-      // TODO: Properly for mixed-canonical ensembles
+      // TODO: Properly for mixed-canonical ensembles and charm
       if (0 && !(m_Config.B == 0 && m_Config.Q == 0 && m_Config.S == 0) && !m_Config.fUsePCE) {
         if (m_Config.S == 0 && !(m_Config.Q == 0 || m_Config.B == 0)) {
           double QBrat = (double)(m_Config.Q) / m_Config.B;
@@ -168,19 +170,38 @@ namespace thermalfist {
         }
       }
 
-      if (!m_Config.fUsePCE) {
-        m_THM->SolveChemicalPotentials(m_Config.B, m_Config.Q, m_Config.S, m_Config.C,
+      if (!m_Config.fUsePCE) 
+      {
+        bool solve_chems = m_THM->SolveChemicalPotentials(m_Config.B, m_Config.Q, m_Config.S, m_Config.C,
           m_THM->Parameters().muB, m_THM->Parameters().muQ, m_THM->Parameters().muS, m_THM->Parameters().muC,
           m_Config.CanonicalB, m_Config.CanonicalQ, m_Config.CanonicalS, m_Config.CanonicalC);
         if (m_THM->Parameters().muB != m_THM->Parameters().muB ||
           m_THM->Parameters().muQ != m_THM->Parameters().muQ ||
           m_THM->Parameters().muS != m_THM->Parameters().muS ||
-          m_THM->Parameters().muC != m_THM->Parameters().muC) {
-          printf("**WARNING** Could not constrain chemical potentials. Setting all to zero...\n");
-          m_THM->SetBaryonChemicalPotential(0.);
-          m_THM->SetElectricChemicalPotential(0.);
-          m_THM->SetStrangenessChemicalPotential(0.);
-          m_THM->SetCharmChemicalPotential(0.);
+          m_THM->Parameters().muC != m_THM->Parameters().muC ||
+          !solve_chems)
+        {
+          printf("**WARNING** Could not constrain chemical potentials. Setting all for exactly conserved charges to zero...\n");
+          if (m_Config.CanonicalB)
+            m_THM->SetBaryonChemicalPotential(0.);
+          else
+            m_THM->SetBaryonChemicalPotential(m_Config.CFOParameters.muB);
+
+          if (m_Config.CanonicalQ)
+            m_THM->SetElectricChemicalPotential(0.);
+          else
+            m_THM->SetElectricChemicalPotential(m_Config.CFOParameters.muQ);
+
+          if (m_Config.CanonicalS)
+            m_THM->SetStrangenessChemicalPotential(0.);
+          else
+            m_THM->SetStrangenessChemicalPotential(m_Config.CFOParameters.muS);
+
+          if (m_Config.CanonicalC)
+            m_THM->SetCharmChemicalPotential(0.);
+          else
+            m_THM->SetCharmChemicalPotential(m_Config.CFOParameters.muC);
+
           m_THM->FillChemicalPotentials();
         }
         m_Config.CFOParameters.muB = m_THM->Parameters().muB;
@@ -261,55 +282,55 @@ namespace thermalfist {
     m_MeanCHRM = 0.;
     m_MeanACHRM = 0.;
 
-    std::vector<double> densities = m_THM->Densities();
-
+    std::vector<double> yields = m_THM->Densities();
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-      densities[i] *= m_THM->Volume();
+      yields[i] *= m_THM->Volume();
 
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == 1) {
-        m_Baryons.push_back(std::make_pair(densities[i], i));
-        m_MeanB += densities[i];
+        m_Baryons.push_back(std::make_pair(yields[i], i));
+        m_MeanB += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == -1) {
-        m_AntiBaryons.push_back(std::make_pair(densities[i], i));
-        m_MeanAB += densities[i];
+        m_AntiBaryons.push_back(std::make_pair(yields[i], i));
+        m_MeanAB += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 1) {
-        m_StrangeMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanSM += densities[i];
+        m_StrangeMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanSM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == -1) {
-        m_AntiStrangeMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanASM += densities[i];
+        m_AntiStrangeMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanASM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == 1) {
-        m_ChargeMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanCM += densities[i];
+        m_ChargeMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanCM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == -1) {
-        m_AntiChargeMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanACM += densities[i];
+        m_AntiChargeMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanACM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == 0 && m_THM->TPS()->Particles()[i].Charm() == 1) {
-        m_CharmMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanCHRMM += densities[i];
+        m_CharmMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanCHRMM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].BaryonCharge() == 0 && m_THM->TPS()->Particles()[i].Strangeness() == 0 && m_THM->TPS()->Particles()[i].ElectricCharge() == 0 && m_THM->TPS()->Particles()[i].Charm() == -1) {
-        m_AntiCharmMesons.push_back(std::make_pair(densities[i], i));
-        m_MeanACHRMM += densities[i];
+        m_AntiCharmMesons.push_back(std::make_pair(yields[i], i));
+        m_MeanACHRMM += yields[i];
       }
 
       if (m_THM->TPS()->Particles()[i].Charm() == 1) {
-        m_CharmAll.push_back(std::make_pair(densities[i], i));
-        m_MeanCHRM += densities[i];
+        m_CharmAll.push_back(std::make_pair(yields[i], i));
+        m_MeanCHRM += yields[i];
       }
       else if (m_THM->TPS()->Particles()[i].Charm() == -1) {
-        m_AntiCharmAll.push_back(std::make_pair(densities[i], i));
-        m_MeanACHRM += densities[i];
+        m_AntiCharmAll.push_back(std::make_pair(yields[i], i));
+        m_MeanACHRM += yields[i];
       }
     }
 
+    // sort in descending order and convert to prefix sums
     std::sort(m_Baryons.begin(), m_Baryons.end(), std::greater< std::pair<double, int> >());
     std::sort(m_AntiBaryons.begin(), m_AntiBaryons.end(), std::greater< std::pair<double, int> >());
     std::sort(m_StrangeMesons.begin(), m_StrangeMesons.end(), std::greater< std::pair<double, int> >());
@@ -339,6 +360,7 @@ namespace thermalfist {
     std::vector<int> totals(m_THM->TPS()->Particles().size());
 
     m_LastWeight = 1.;
+    m_LastNormWeight = 1.;
 
     while (true) {
       // First generate a configuration which satisfies conservation laws
@@ -362,6 +384,7 @@ namespace thermalfist {
 
       if (m_THM->InteractionModel() == ThermalModelBase::DiagonalEV) {
         ThermalModelEVDiagonal *model = static_cast<ThermalModelEVDiagonal*>(m_THM);
+        double V   = m_THM->Volume();
         double VVN = m_THM->Volume();
 
         for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
@@ -370,21 +393,41 @@ namespace thermalfist {
         if (VVN < 0.) continue;
         double weight = 1.;
         double logweight = 0.;
+
+        double normweight = 1.;
+        double weightev = 1.;
+        double VVNev = m_THM->Volume();
+        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+          VVNev -= model->ExcludedVolume(i) * densities[i] * m_THM->Volume();
+
         for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
           if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
             logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+          weightev *= pow(VVNev / V * densitiesid->operator[](i) / densities[i], densities[i] * V);
+
+          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+            //normweight *= pow(VVN / V, totals[i]) / pow(VVNev / V, densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
         }
 
         m_LastWeight = weight;
         m_LastLogWeight = logweight;
+        m_LastNormWeight = normweight;
+
+        //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
       }
 
 
       if (m_THM->InteractionModel() == ThermalModelBase::CrosstermsEV) {
         ThermalModelEVCrossterms *model = static_cast<ThermalModelEVCrossterms*>(m_THM);
+        double V = m_THM->Volume();
+
         double weight = 1.;
         double logweight = 0.;
+        double normweight = 1.;
+        double weightev = 1.;
         bool fl = 1;
         for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           double VVN = m_THM->Volume();
@@ -393,20 +436,35 @@ namespace thermalfist {
             VVN -= model->VirialCoefficient(j, i) * totals[j];
 
           if (VVN < 0.) { fl = false; break; }
+
+          double VVNev = m_THM->Volume();
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+            VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
 
           weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
           if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
             logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+          weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
         }
         if (!fl) continue;
         m_LastWeight = weight;
         m_LastLogWeight = logweight;
+        m_LastNormWeight = normweight;
+
+        //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
       }
 
       if (m_THM->InteractionModel() == ThermalModelBase::QvdW) {
         ThermalModelVDW *model = static_cast<ThermalModelVDW*>(m_THM);
+        double V = m_THM->Volume();
+
         double weight = 1.;
         double logweight = 0.;
+        double normweight = 1.;
+        double weightvdw = 1.;
         bool fl = 1;
         for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
           double VVN = m_THM->Volume();
@@ -415,6 +473,10 @@ namespace thermalfist {
             VVN -= model->VirialCoefficient(j, i) * totals[j];
 
           if (VVN < 0.) { fl = false; break; }
+
+          double VVNev = m_THM->Volume();
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+            VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
 
           weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
           if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
@@ -426,10 +488,26 @@ namespace thermalfist {
             logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
           }
 
+          weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+
+          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+            double aij = model->AttractionCoefficient(i, j);
+            weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+            normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+          }
+
         }
         if (!fl) continue;
         m_LastWeight = weight;
         m_LastLogWeight = logweight;
+        m_LastNormWeight = normweight;
+
+        //if (normweight > 1.)
+        //  std::cout << std::scientific << normweight - 1. << std::fixed << "\n";
+
+        //std::cout << "Norm weight = " << normweight << " " << weight / weightvdw << " " << std::scientific << normweight - 1. << std::fixed << "\n";
       }
 
       break;
@@ -531,7 +609,7 @@ namespace thermalfist {
                 }
               }
               if (!fl) {
-                printf("**WARNING** SCE Event generator: Cannot match S- with S+ = 1, discarding...\n");
+                printf("**WARNING** SCE Event generator: Cannot match S- with S+ = 1, discarding subconfiguration...\n");
                 continue;
               }
             }
@@ -559,7 +637,7 @@ namespace thermalfist {
               }
               repeat++;
               if (repeat >= repeatmax) {
-                printf("**WARNING** SCE event generator: Cannot match S- with S+, too many tries, discarding...\n");
+                printf("**WARNING** SCE event generator: Cannot match S- with S+, too many tries, discarding configuration...\n");
                 break;
               }
             }
@@ -822,7 +900,7 @@ namespace thermalfist {
       totals[fAntiCharmAllc[tind].second]++;
     }
 
-    // Cross-check that all resulting strangeness is zero
+    // Cross-check that total resulting net charm is zero
     int finC = 0;
     for (size_t i = 0; i < totals.size(); ++i) {
       finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
@@ -841,14 +919,14 @@ namespace thermalfist {
     if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
-    std::vector< std::pair<double, int> > fBaryonsc = m_Baryons;
-    std::vector< std::pair<double, int> > fAntiBaryonsc = m_AntiBaryons;
-    std::vector< std::pair<double, int> > fStrangeMesonsc = m_StrangeMesons;
-    std::vector< std::pair<double, int> > fAntiStrangeMesonsc = m_AntiStrangeMesons;
-    std::vector< std::pair<double, int> > fChargeMesonsc = m_ChargeMesons;
-    std::vector< std::pair<double, int> > fAntiChargeMesonsc = m_AntiChargeMesons;
-    std::vector< std::pair<double, int> > fCharmMesonsc = m_CharmMesons;
-    std::vector< std::pair<double, int> > fAntiCharmMesonsc = m_AntiCharmMesons;
+    const std::vector< std::pair<double, int> >& fBaryonsc = m_Baryons;
+    const std::vector< std::pair<double, int> >& fAntiBaryonsc = m_AntiBaryons;
+    const std::vector< std::pair<double, int> >& fStrangeMesonsc = m_StrangeMesons;
+    const std::vector< std::pair<double, int> >& fAntiStrangeMesonsc = m_AntiStrangeMesons;
+    const std::vector< std::pair<double, int> >& fChargeMesonsc = m_ChargeMesons;
+    const std::vector< std::pair<double, int> >& fAntiChargeMesonsc = m_AntiChargeMesons;
+    const std::vector< std::pair<double, int> >& fCharmMesonsc = m_CharmMesons;
+    const std::vector< std::pair<double, int> >& fAntiCharmMesonsc = m_AntiCharmMesons;
 
     // Primitive rejection sampling (not used, but can be explored for comparisons)
     while (0) {
@@ -883,11 +961,11 @@ namespace thermalfist {
 
 
       // Light nuclei first
-      bool fl = false; // Whether light nuclei appear at all
+      bool flNuclei = false; // Whether light nuclei appear at all
 
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         if (abs(m_THM->TPS()->Particles()[i].BaryonCharge()) > 1) {
-          fl = true;
+          flNuclei = true;
           double mean = densities[i] * m_THM->Volume();
           int total = RandomGenerators::RandomPoisson(mean);
           totals[i] = total;
@@ -902,7 +980,7 @@ namespace thermalfist {
 
       int tB = 0, tAB = 0;
       // First total baryons and antibaryons from the Poisson distribution
-      if (fl || !m_Config.CanonicalB) {
+      if (flNuclei || !m_Config.CanonicalB) {
         tB = RandomGenerators::RandomPoisson(m_MeanB);
         tAB = RandomGenerators::RandomPoisson(m_MeanAB);
         if (m_Config.CanonicalB && tB - tAB != m_THM->Parameters().B - netB) continue;
@@ -931,7 +1009,7 @@ namespace thermalfist {
 
       // Then individual baryons and antibaryons from the multinomial distribution
       for (int i = 0; i < tB; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fBaryonsc.begin(), fBaryonsc.end(), std::make_pair(m_MeanB*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fBaryonsc.begin(), fBaryonsc.end(), std::make_pair(m_MeanB*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fBaryonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fBaryonsc.size())) tind = fBaryonsc.size() - 1;
@@ -941,7 +1019,7 @@ namespace thermalfist {
         netC += m_THM->TPS()->Particles()[fBaryonsc[tind].second].Charm();
       }
       for (int i = 0; i < tAB; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiBaryonsc.begin(), fAntiBaryonsc.end(), std::make_pair(m_MeanAB*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fAntiBaryonsc.begin(), fAntiBaryonsc.end(), std::make_pair(m_MeanAB*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiBaryonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fAntiBaryonsc.size())) tind = fAntiBaryonsc.size() - 1;
@@ -957,28 +1035,10 @@ namespace thermalfist {
       int tASM = RandomGenerators::RandomPoisson(m_MeanASM);
       if (m_Config.CanonicalS && netS != tASM - tSM + m_THM->Parameters().S) continue;
 
-      //int tSM = 0, tASM = 0;
-      //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().S - netS, m_MeanSM, m_MeanASM))
-      //    continue;
-      //// Generate from the Bessel distribution, using Devroye's method, if no light nuclei
-      //{
-      //  int nu = m_THM->Parameters().S - netS;
-      //  if (nu < 0) nu = -nu;
-      //  double a = 2. * sqrt(m_MeanSM * m_MeanASM);
-      //  int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
-      //  if (m_THM->Parameters().S - netS < 0) {
-      //    tSM = BessN;
-      //    tASM = nu + tSM;
-      //  }
-      //  else {
-      //    tASM = BessN;
-      //    tSM = nu + tASM;
-      //  }
-      //}
 
       // Multinomial distribution for individual numbers of (anti)strange mesons
       for (int i = 0; i < tSM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fStrangeMesonsc.begin(), fStrangeMesonsc.end(), std::make_pair(m_MeanSM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fStrangeMesonsc.begin(), fStrangeMesonsc.end(), std::make_pair(m_MeanSM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fStrangeMesonsc.size())) tind = fStrangeMesonsc.size() - 1;
@@ -987,7 +1047,7 @@ namespace thermalfist {
         netC += m_THM->TPS()->Particles()[fStrangeMesonsc[tind].second].Charm();
       }
       for (int i = 0; i < tASM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiStrangeMesonsc.begin(), fAntiStrangeMesonsc.end(), std::make_pair(m_MeanASM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fAntiStrangeMesonsc.begin(), fAntiStrangeMesonsc.end(), std::make_pair(m_MeanASM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiStrangeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fAntiStrangeMesonsc.size())) tind = fAntiStrangeMesonsc.size() - 1;
@@ -1001,28 +1061,9 @@ namespace thermalfist {
       int tACM = RandomGenerators::RandomPoisson(m_MeanACM);
       if (m_Config.CanonicalQ && netQ != tACM - tCM + m_THM->Parameters().Q) continue;
 
-      //int tCM = 0, tACM = 0;
-      //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().Q - netQ, m_MeanCM, m_MeanACM))
-      //    continue;
-      //// Generate from the Bessel distribution, using Devroye's method, if no light nuclei
-      //{
-      //  int nu = m_THM->Parameters().Q - netQ;
-      //  if (nu < 0) nu = -nu;
-      //  double a = 2. * sqrt(m_MeanCM * m_MeanACM);
-      //  int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
-      //  if (m_THM->Parameters().Q - netQ < 0) {
-      //    tCM = BessN;
-      //    tACM = nu + tCM;
-      //  }
-      //  else {
-      //    tACM = BessN;
-      //    tCM = nu + tACM;
-      //  }
-      //}
-
       // Multinomial distribution for individual numbers of remaining electrically charged mesons
       for (int i = 0; i < tCM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fChargeMesonsc.begin(), fChargeMesonsc.end(), std::make_pair(m_MeanCM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fChargeMesonsc.begin(), fChargeMesonsc.end(), std::make_pair(m_MeanCM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fChargeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fChargeMesonsc.size())) tind = fChargeMesonsc.size() - 1;
@@ -1030,7 +1071,7 @@ namespace thermalfist {
         netC += m_THM->TPS()->Particles()[fChargeMesonsc[tind].second].Charm();
       }
       for (int i = 0; i < tACM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiChargeMesonsc.begin(), fAntiChargeMesonsc.end(), std::make_pair(m_MeanACM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fAntiChargeMesonsc.begin(), fAntiChargeMesonsc.end(), std::make_pair(m_MeanACM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiChargeMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fAntiChargeMesonsc.size())) tind = fAntiChargeMesonsc.size() - 1;
@@ -1044,16 +1085,16 @@ namespace thermalfist {
 
       if (m_Config.CanonicalC && netC != tACHRNMM - tCHRMM + m_THM->Parameters().C) continue;
 
-      // Multinomial distribution for individual numbers of remaining charmed mesons
+      // Multinomial distribution for individual numbers of the remaining charmed mesons
       for (int i = 0; i < tCHRMM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fCharmMesonsc.begin(), fCharmMesonsc.end(), std::make_pair(m_MeanCHRMM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fCharmMesonsc.begin(), fCharmMesonsc.end(), std::make_pair(m_MeanCHRMM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fCharmMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fCharmMesonsc.size())) tind = fCharmMesonsc.size() - 1;
         totals[fCharmMesonsc[tind].second]++;
       }
       for (int i = 0; i < tACHRNMM; ++i) {
-        std::vector< std::pair<double, int> >::iterator it = lower_bound(fAntiCharmMesonsc.begin(), fAntiCharmMesonsc.end(), std::make_pair(m_MeanACHRMM*RandomGenerators::randgenMT.rand(), 0));
+        std::vector< std::pair<double, int> >::const_iterator it = lower_bound(fAntiCharmMesonsc.begin(), fAntiCharmMesonsc.end(), std::make_pair(m_MeanACHRMM*RandomGenerators::randgenMT.rand(), 0));
         int tind = std::distance(fAntiCharmMesonsc.begin(), it);
         if (tind < 0) tind = 0;
         if (tind >= static_cast<int>(fAntiCharmMesonsc.size())) tind = fAntiCharmMesonsc.size() - 1;
@@ -1106,39 +1147,43 @@ namespace thermalfist {
     return totals;
   }
 
-  SimpleEvent EventGeneratorBase::GetEvent(bool DoDecays) const
+  std::pair<std::vector<int>, double> EventGeneratorBase::SampleYields() const
+  {
+    std::vector<int> totals = GenerateTotals();
+    return make_pair(totals, m_LastNormWeight);
+    //std::vector<int> totals = GenerateTotalsGCE();
+    //return make_pair(totals, 1.);
+  }
+
+  SimpleEvent EventGeneratorBase::SampleMomenta(const std::vector<int>& yields) const
   {
     SimpleEvent ret;
-    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
-
-    std::vector<int> totals = GenerateTotals();
-    ret.weight = m_LastWeight;
-    ret.logweight = m_LastLogWeight;
 
     std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
+
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      const ThermalParticle& species = m_THM->TPS()->Particles()[i];
       primParticles[i].resize(0);
-      int total = totals[i];
+      int total = yields[i];
       for (int part = 0; part < total; ++part) {
-        const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
-        double tmass = tpart.Mass();
-        if (m_THM->UseWidth() && !tpart.ZeroWidthEnforced() && !(tpart.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
+        double tmass = species.Mass();
+        if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
           tmass = m_BWGens[i]->GetRandom();
 
         // Check for Bose-Einstein condensation
         // Force m = mu if the sampled mass is too small
         double tmu = m_THM->FullIdealChemicalPotential(i);
-        if (tpart.Statistics() == -1 && tmu > tmass) {
+        if (species.Statistics() == -1 && tmu > tmass) {
           tmass = tmu;
         }
 
         std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
         //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
 
-        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
+        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId()));
       }
     }
-    
+
     for (int i = primParticles.size() - 1; i >= 0; --i) {
       ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
     }
@@ -1152,106 +1197,157 @@ namespace thermalfist {
     for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
       ret.DecayMapFinal[i] = i;
 
+    return ret;
+  }
+
+  SimpleEvent EventGeneratorBase::GetEvent(bool DoDecays) const
+  {
+    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
+
+    std::vector<int> totals = GenerateTotals();
+
+    SimpleEvent ret = SampleMomenta(totals);
+    ret.weight = m_LastWeight;
+    ret.logweight = m_LastLogWeight;
+    ret.weight = m_LastNormWeight;
+
+    //std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
+    //for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    //  primParticles[i].resize(0);
+    //  int total = totals[i];
+    //  for (int part = 0; part < total; ++part) {
+    //    const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
+    //    double tmass = tpart.Mass();
+    //    if (m_THM->UseWidth() && !tpart.ZeroWidthEnforced() && !(tpart.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
+    //      tmass = m_BWGens[i]->GetRandom();
+
+    //    // Check for Bose-Einstein condensation
+    //    // Force m = mu if the sampled mass is too small
+    //    double tmu = m_THM->FullIdealChemicalPotential(i);
+    //    if (tpart.Statistics() == -1 && tmu > tmass) {
+    //      tmass = tmu;
+    //    }
+
+    //    std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
+    //    //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
+
+    //    primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
+    //  }
+    //}
+    //
+    //for (int i = primParticles.size() - 1; i >= 0; --i) {
+    //  ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
+    //}
+
+    //ret.AllParticles = ret.Particles;
+
+    //ret.DecayMap.resize(ret.Particles.size());
+    //fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+
+    //ret.DecayMapFinal.resize(ret.Particles.size());
+    //for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+    //  ret.DecayMapFinal[i] = i;
+
     if (DoDecays)
       return PerformDecays(ret, m_THM->TPS());
     else
       return ret;
   }
 
-  SimpleEvent EventGeneratorBase::PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
-  {
-    SimpleEvent ret;
-    ret.weight = evtin.weight;
-    ret.logweight = evtin.logweight;
-    ret.AllParticles = evtin.Particles;
-    reverse(ret.AllParticles.begin(), ret.AllParticles.end());
+  // SimpleEvent EventGeneratorBase::PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
+  // {
+  //   SimpleEvent ret;
+  //   ret.weight = evtin.weight;
+  //   ret.logweight = evtin.logweight;
+  //   ret.AllParticles = evtin.Particles;
+  //   reverse(ret.AllParticles.begin(), ret.AllParticles.end());
     
-    for (auto&& part : ret.AllParticles)
-      part.processed = false;
+  //   for (auto&& part : ret.AllParticles)
+  //     part.processed = false;
 
 
-    bool flag_repeat = true;
-    while (flag_repeat) {
-      flag_repeat = false;
+  //   bool flag_repeat = true;
+  //   while (flag_repeat) {
+  //     flag_repeat = false;
 
-      bool current_stable_flag = false;
-      long long current_pdgcode = 0;
-      long long current_tid = -1;
-      for (int i = ret.AllParticles.size() - 1; i >= 0; --i) {
-        SimpleParticle& particle = ret.AllParticles[i];
+  //     bool current_stable_flag = false;
+  //     long long current_pdgcode = 0;
+  //     long long current_tid = -1;
+  //     for (int i = ret.AllParticles.size() - 1; i >= 0; --i) {
+  //       SimpleParticle& particle = ret.AllParticles[i];
 
-        if (particle.processed)
-          continue;
+  //       if (particle.processed)
+  //         continue;
 
-        long long tpdgcode = particle.PDGID;
-        if (!(tpdgcode == current_pdgcode))
-        {
-          current_tid = TPS->PdgToId(tpdgcode);
-          if (current_tid != -1)
-            current_stable_flag = TPS->Particle(current_tid).IsStable();
-          else
-            current_stable_flag = true;
-          current_pdgcode = tpdgcode;
-        }
+  //       long long tpdgcode = particle.PDGID;
+  //       if (!(tpdgcode == current_pdgcode))
+  //       {
+  //         current_tid = TPS->PdgToId(tpdgcode);
+  //         if (current_tid != -1)
+  //           current_stable_flag = TPS->Particle(current_tid).IsStable();
+  //         else
+  //           current_stable_flag = true;
+  //         current_pdgcode = tpdgcode;
+  //       }
 
 
-        if (current_stable_flag) {
-          //SimpleParticle prt = primParticles[i][j];
-          //double tpt = prt.GetPt();
-          //double ty = prt.GetY();
-          //if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand())
-          //  ret.Particles.push_back(prt);
-          //primParticles[i][j].processed = true;
-          ret.Particles.push_back(particle);
-          particle.processed = true;
-        }
-        else {
-          flag_repeat = true;
-          double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+  //       if (current_stable_flag) {
+  //         //SimpleParticle prt = primParticles[i][j];
+  //         //double tpt = prt.GetPt();
+  //         //double ty = prt.GetY();
+  //         //if (static_cast<int>(m_acc.size()) < i || !m_acc[i].init || m_acc[i].getAcceptance(ty + m_ycm, tpt) > RandomGenerators::randgenMT.rand())
+  //         //  ret.Particles.push_back(prt);
+  //         //primParticles[i][j].processed = true;
+  //         ret.Particles.push_back(particle);
+  //         particle.processed = true;
+  //       }
+  //       else {
+  //         flag_repeat = true;
+  //         double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
 
-          std::vector<double> Bratios;
-          if (particle.MotherPDGID != 0 ||
-            TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
-            Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, false);
-          }
-          else {
-            Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, true);
-          }
+  //         std::vector<double> Bratios;
+  //         if (particle.MotherPDGID != 0 ||
+  //           TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
+  //           Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, false);
+  //         }
+  //         else {
+  //           Bratios = TPS->Particles()[current_tid].BranchingRatiosM(particle.m, true);
+  //         }
 
-          int DecayIndex = 0;
-          for (DecayIndex = 0; DecayIndex < static_cast<int>(Bratios.size()); ++DecayIndex) {
-            tsum += Bratios[DecayIndex];
-            if (tsum > DecParam) break;
-          }
-          if (DecayIndex < static_cast<int>(TPS->Particles()[current_tid].Decays().size())) {
-            std::vector<double> masses(0);
-            std::vector<long long> pdgids(0);
-            for (size_t di = 0; di < TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters.size(); di++) {
-              long long dpdg = TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters[di];
-              if (TPS->PdgToId(dpdg) == -1) {
-                continue;
-              }
-              masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
-              pdgids.push_back(dpdg);
-            }
-            std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(particle, masses, pdgids);
-            for (size_t ind = 0; ind < decres.size(); ind++) {
-              decres[ind].processed = false;
-              if (TPS->PdgToId(decres[ind].PDGID) != -1)
-                ret.AllParticles.push_back(decres[ind]);
-            }
-            ret.AllParticles[i].processed = true;
-          }
-          else {
-            // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore the decay products
-            ret.AllParticles[i].processed = true;
-          }
-        }
-      }
-    }
+  //         int DecayIndex = 0;
+  //         for (DecayIndex = 0; DecayIndex < static_cast<int>(Bratios.size()); ++DecayIndex) {
+  //           tsum += Bratios[DecayIndex];
+  //           if (tsum > DecParam) break;
+  //         }
+  //         if (DecayIndex < static_cast<int>(TPS->Particles()[current_tid].Decays().size())) {
+  //           std::vector<double> masses(0);
+  //           std::vector<long long> pdgids(0);
+  //           for (size_t di = 0; di < TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters.size(); di++) {
+  //             long long dpdg = TPS->Particles()[current_tid].Decays()[DecayIndex].mDaughters[di];
+  //             if (TPS->PdgToId(dpdg) == -1) {
+  //               continue;
+  //             }
+  //             masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
+  //             pdgids.push_back(dpdg);
+  //           }
+  //           std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(particle, masses, pdgids);
+  //           for (size_t ind = 0; ind < decres.size(); ind++) {
+  //             decres[ind].processed = false;
+  //             if (TPS->PdgToId(decres[ind].PDGID) != -1)
+  //               ret.AllParticles.push_back(decres[ind]);
+  //           }
+  //           ret.AllParticles[i].processed = true;
+  //         }
+  //         else {
+  //           // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore the decay products
+  //           ret.AllParticles[i].processed = true;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    return ret;
-  }
+  //   return ret;
+  // }
 
   SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
   {
@@ -1276,7 +1372,7 @@ namespace thermalfist {
     bool flag_repeat = true;
     while (flag_repeat) {
       flag_repeat = false;
-      for (int i = primParticles.size() - 1; i >= 0; --i) {
+      for (int i = static_cast<int>(primParticles.size()) - 1; i >= 0; --i) {
         if (TPS->Particles()[i].IsStable()) {
           for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
@@ -1316,9 +1412,15 @@ namespace thermalfist {
                 for (size_t di = 0; di < TPS->Particles()[i].Decays()[DecayIndex].mDaughters.size(); di++) {
                   long long dpdg = TPS->Particles()[i].Decays()[DecayIndex].mDaughters[di];
                   if (TPS->PdgToId(dpdg) == -1) {
-                    continue;
+                    // Try to see if the daughter particle is a photon/lepton
+                    if (ExtraParticles::PdgToId(dpdg) == -1)
+                      continue;
+                    else
+                      masses.push_back(ExtraParticles::ParticleByPdg(dpdg).Mass());
                   }
-                  masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
+                  else {
+                    masses.push_back(TPS->ParticleByPDG(dpdg).Mass());
+                  }
                   pdgids.push_back(dpdg);
                 }
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
@@ -1329,8 +1431,14 @@ namespace thermalfist {
                     SimpleParticle& dprt = decres[ind];
                     primParticles[tid].push_back(dprt);
                     ret.AllParticles.push_back(dprt);
-                    AllParticlesMap[tid].push_back(ret.AllParticles.size() - 1);
+                    AllParticlesMap[tid].push_back(static_cast<int>(ret.AllParticles.size()) - 1);
                     ret.DecayMap.push_back(AllParticlesMap[i][j]);
+                  }
+                  else if (ExtraParticles::PdgToId(decres[ind].PDGID) != -1) {
+                    SimpleParticle& dprt = decres[ind];
+                    ret.AllParticles.push_back(dprt);
+                    ret.DecayMap.push_back(AllParticlesMap[i][j]);
+                    ret.PhotonsLeptons.push_back(dprt);
                   }
                 }
                 primParticles[i][j].processed = true;

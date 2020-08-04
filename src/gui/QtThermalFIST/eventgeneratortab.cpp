@@ -48,22 +48,28 @@ using namespace thermalfist;
 void EventGeneratorWorker::run()
 {
      if (mutex!=NULL) {
-         for(int i=0;i<events && !(*stop);++i) {
-             SimpleEvent ev = generator->GetEvent(performDecays);
-             mutex->lock();
-             wsum += ev.weight;
-             w2sum += ev.weight*ev.weight;
-             spectra->ProcessEvent(ev);
-             (*eventsProcessed)++;
+        SimpleEvent::EventOutputConfig outconfig;
+        //outconfig.printEnergy = true;
+        //outconfig.printDecayEpoch = true;
+        outconfig.printMotherPdg = true;
+        outconfig.printPhotonsLeptons = true;
 
-             if (fout.is_open())
-               ev.writeToFile(fout, (*eventsProcessed));
+        for(int i=0;i<events && !(*stop);++i) {
+            SimpleEvent ev = generator->GetEvent(performDecays);
+            mutex->lock();
+            wsum += ev.weight;
+            w2sum += ev.weight*ev.weight;
+            spectra->ProcessEvent(ev);
+            (*eventsProcessed)++;
 
-             mutex->unlock();
-         }
+            if (fout.is_open())
+              ev.writeToFile(fout, outconfig, (*eventsProcessed));
+
+            mutex->unlock();
+        }
      }
      if (fout.is_open())
-      fout.close();
+        fout.close();
      *nE = wsum * wsum / w2sum;
      emit calculated();
  }
@@ -283,7 +289,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinB = new QSpinBox();
     spinB->setMinimum(-1000);
     spinB->setMaximum(1000);
-    spinB->setValue(2);
+    spinB->setValue(0);
     labelS = new QLabel(tr("S:"));
     spinS = new QSpinBox();
     spinS->setMinimum(-1000);
@@ -293,7 +299,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinQ = new QSpinBox();
     spinQ->setMinimum(-1000);
     spinQ->setMaximum(1000);
-    spinQ->setValue(2);
+    spinQ->setValue(0);
     labelC = new QLabel(tr("C:"));
     spinC = new QSpinBox();
     spinC->setMinimum(-1000);
@@ -357,7 +363,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     radioSR = new QRadioButton(tr("Spherically symmetric"));
     radioSR->setToolTip(tr("Siemens-Rasmussen momentum distribution"));
     radioSSH = new QRadioButton(tr("Cylindrically symmetric"));
-    radioSSH->setToolTip(tr("Schnedermann-Sollfrank-Heinz prescription (note that initialization takes a while!)"));
+    radioSSH->setToolTip(tr("Schnedermann-Sollfrank-Heinz prescription"));
     radioCracow = new QRadioButton(tr("Cracow model"));
     radioCracow->setToolTip(tr("Cracow model"));
     radioSR->setChecked(true);
@@ -373,12 +379,12 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     QHBoxLayout *layMom2 = new QHBoxLayout();
     layMom2->setAlignment(Qt::AlignLeft);
 
-    QLabel *labelTkin = new QLabel(tr("T<sub>kin</sub> (MeV):"));
+    QLabel *labelTkin = new QLabel(tr("T<sub>BW</sub> (MeV):"));
     spinTkin = new QDoubleSpinBox();
     spinTkin->setMinimum(1.);
     spinTkin->setMaximum(10000.);
     spinTkin->setValue(model->Parameters().T * 1e3);
-    spinTkin->setToolTip(tr("Kinetic freeze-out temperature which fixes the momentum spectrum"));
+    spinTkin->setToolTip(tr("Blast-wave temperature which fixes the momentum spectrum. Set it after T<sub>ch</sub> ans T<sub>kin</sub> (PCE) is fixed."));
     QLabel *labelBeta = new QLabel(tr("β:"));
     spinBeta = new QDoubleSpinBox();
     spinBeta->setMinimum(0.);
@@ -386,7 +392,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinBeta->setDecimals(3);
     spinBeta->setValue(0.5);
     spinBeta->setToolTip(tr("Radial flow velocity"));
-    QLabel *labelBetat = new QLabel(tr("β<sub>T</sub>:"));
+    labelBetat = new QLabel(tr("β<sub>T</sub>:"));
     spinBetat = new QDoubleSpinBox();
     spinBetat->setMinimum(0.);
     spinBetat->setMaximum(1.);
@@ -556,6 +562,11 @@ ThermalModelConfig EventGeneratorTab::getConfig()
   ret.C = spinC->value();
 
   ret.ComputeFluctations = false;
+
+  ret.CanonicalB &= (ret.Ensemble == ThermalModelConfig::EnsembleCE);
+  ret.CanonicalQ &= (ret.Ensemble == ThermalModelConfig::EnsembleCE);
+  ret.CanonicalS &= (ret.Ensemble == ThermalModelConfig::EnsembleCE || ret.Ensemble == ThermalModelConfig::EnsembleSCE);
+  ret.CanonicalC &= (ret.Ensemble == ThermalModelConfig::EnsembleCE || ret.Ensemble == ThermalModelConfig::EnsembleCCE);
 
   return ret;
 }
@@ -939,7 +950,8 @@ void EventGeneratorTab::changePlot() {
 
 void EventGeneratorTab::modelChanged()
 {
-  if (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE) {
+  const ThermalModelConfig& config = configWidget->currentConfig;
+  if (config.Ensemble != ThermalModelConfig::EnsembleCE) {
     spinmuB->setEnabled(true);
     spinmuS->setEnabled(true);
     spinmuQ->setEnabled(true);
@@ -950,14 +962,14 @@ void EventGeneratorTab::modelChanged()
     spinC->setEnabled(false);
   }
   else {
-    spinmuB->setEnabled(false);
-    spinmuS->setEnabled(false);
-    spinmuQ->setEnabled(false);
-    spinmuC->setEnabled(false);
-    spinB->setEnabled(true);
-    spinS->setEnabled(true);
-    spinQ->setEnabled(true);
-    spinC->setEnabled(true);
+    spinmuB->setEnabled(!config.CanonicalB);
+    spinmuS->setEnabled(!config.CanonicalS);
+    spinmuQ->setEnabled(!config.CanonicalQ);
+    spinmuC->setEnabled(!config.CanonicalC);
+    spinB->setEnabled(config.CanonicalB);
+    spinS->setEnabled(config.CanonicalS);
+    spinQ->setEnabled(config.CanonicalQ);
+    spinC->setEnabled(config.CanonicalC);
 
     spinVolumeRSC->setEnabled(true);
   }
@@ -1000,7 +1012,17 @@ void EventGeneratorTab::modelChanged()
     spinBeta->setEnabled(false);
     spinBetat->setEnabled(true);
     spinEtaMax->setEnabled(true);
-    spinn->setEnabled(true);
+    if (radioSSH->isChecked())
+      spinn->setEnabled(true);
+    else
+      spinn->setEnabled(false);
+  }
+
+  if (radioCracow->isChecked()) {
+    labelBetat->setText("R/τ<sub>H</sub>:");
+  }
+  else {
+    labelBetat->setText("β<sub>T</sub>:");
   }
 
   if (checkFile->isChecked()) {
@@ -1011,6 +1033,9 @@ void EventGeneratorTab::modelChanged()
     leFilePath->setEnabled(false);
     buttonChooseFile->setEnabled(false);
   }
+
+  if (configWidget->currentConfig.UsePCE)
+    spinTkin->setValue(configWidget->currentConfig.Tkin * 1.e3);
 }
 
 void EventGeneratorTab::resetTPS() {
@@ -1027,23 +1052,14 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 {
     ThermalModelBase *modelnew;
 
-    if (config.Ensemble == ThermalModelConfig::EnsembleGCE) modelnew = new ThermalModelIdeal(model->TPS());
-    else if (config.Ensemble == ThermalModelConfig::EnsembleCE) {
+    if (config.Ensemble == ThermalModelConfig::EnsembleGCE) 
+      modelnew = new ThermalModelIdeal(model->TPS());
+    else if (config.Ensemble == ThermalModelConfig::EnsembleCE)
       modelnew = new ThermalModelCanonical(model->TPS());
-      ThermalModelParameters params;
-      params.T = 0.100;
-      params.gammaC = 1.;
-      params.gammaS = 1.;
-      params.gammaq = 1.;
-      params.V = 20.;
-      params.B = config.B;
-      params.Q = config.Q;
-      params.S = config.S;
-      params.C = config.C;
-      modelnew->SetParameters(params);
-    }
-    else if (config.Ensemble == ThermalModelConfig::EnsembleSCE) modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
-    else modelnew = new ThermalModelCanonicalCharm(model->TPS());
+    else if (config.Ensemble == ThermalModelConfig::EnsembleSCE) 
+      modelnew = new ThermalModelCanonicalStrangeness(model->TPS());
+    else 
+      modelnew = new ThermalModelCanonicalCharm(model->TPS());
 
     myModel->setSpectra(NULL);
 
@@ -1053,7 +1069,7 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     model = modelnew;
 
     SetThermalModelConfiguration(model, config);
-
+    SetThermalModelParameters(model, config);
 
     model->SetTemperature(config.T);
     model->SetBaryonChemicalPotential(config.muB);
@@ -1078,16 +1094,22 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     else
       modelEVVDW = new ThermalModelIdeal(&TPSt);
 
+    SetThermalModelConfiguration(modelEVVDW, config);
     SetThermalModelInteraction(modelEVVDW, config);
+    SetThermalModelParameters(modelEVVDW, config);
 
-    model->CalculateDensitiesGCE();
+    // Takes time but not really needed
+    //model->CalculateDensitiesGCE();
 
     // Convert the mean transverse velocity into the one at the surface
     double betaS = (2. + spinn->value()) / 2. * spinBetat->value();
 
-    if (radioSR->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
-    else if (radioSSH->isChecked()) spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
-    else spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 2, spinEtaMax->value());
+    if (radioSR->isChecked()) 
+      spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
+    else if (radioSSH->isChecked()) 
+      spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
+    else 
+      spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 2, spinEtaMax->value());
 
     int id = getCurrentRow();
     if (id<0) id = 0;
@@ -1145,17 +1167,29 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     configMC.aij = CuteHRGHelper::aijMatrix(modelEVVDW);
 
+    if (config.UsePCE) {
+      modelEVVDW->SolveChemicalPotentials(
+        config.B, config.Q, config.S, config.C,
+        config.muB, config.muQ, config.muS, config.muC,
+        config.CanonicalB, config.CanonicalQ, config.CanonicalS, config.CanonicalC
+        );
+
+      ThermalModelPCE modelpce(modelEVVDW);
+      modelpce.SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(modelEVVDW->TPS(), config.PCESahaForNuclei, config.PCEFreezeLongLived, config.PCEWidthCut));
+      modelpce.SetChemicalFreezeout(modelEVVDW->Parameters(), modelEVVDW->ChemicalPotentials());
+      modelpce.CalculatePCE(config.Tkin);
+
+      configMC.fUsePCE = true;
+      configMC.fPCEChems = modelpce.ChemicalPotentials();
+      configMC.CFOParameters = modelEVVDW->Parameters();
+    }
+
     if (radioSR->isChecked())
-      //generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
       generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
     else if (radioSSH->isChecked())
       generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value(), spinn->value());
     else
       generator = new CracowFreezeoutEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value());
-      //generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value());
-
-    //if (radioSR->isChecked()) generator = new SphericalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBeta->value(), false, EV, modelEVVDW);
-    //else generator = new CylindricalBlastWaveEventGenerator(model, spinTkin->value() * 1.e-3, spinBetat->value(), spinEtaMax->value(), spinn->value(), false, EV, modelEVVDW);
 
     delete modelEVVDW;
     
@@ -1165,8 +1199,6 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     //  if (tacc.size()>tind && tacc[tind].init) spectra->fParticles[i].SetAcceptance(true);
     //  else spectra->fParticles[i].SetAcceptance(false);
     //}
-
-
 
     timer.start();
 
@@ -1202,5 +1234,6 @@ void EventGeneratorTab::changeVolumeRSC(double VRSC)
 
 void EventGeneratorTab::changeTkin(double Tch)
 {
-  spinTkin->setValue(Tch);
+  if (!configWidget->currentConfig.UsePCE) 
+    spinTkin->setValue(Tch);
 }

@@ -11,7 +11,7 @@
 
 namespace thermalfist {
 
-  void SimpleEvent::writeToFile(std::ofstream & fout, int eventnumber)
+  void SimpleEvent::writeToFile(std::ofstream & fout, const EventOutputConfig& config, int eventnumber)
   {
     fout << "Event " << eventnumber << std::endl;
     fout << "Weight: " << weight << std::endl;
@@ -19,19 +19,60 @@ namespace thermalfist {
     fout << std::setw(20) << "pdgid"
       << std::setw(20) << "px[GeV]"
       << std::setw(20) << "py[GeV]"
-      << std::setw(20) << "pz[GeV]"
-      << std::setw(20) << "motherpdgid"
-      << std::endl;
+      << std::setw(20) << "pz[GeV]";
+
+    if (config.printEnergy)
+      fout << std::setw(20) << "p0[GeV]";
+
+    if (config.printMotherPdg)
+      fout << std::setw(20) << "mother_pdgid";
+
+    if (config.printDecayEpoch)
+      fout << std::setw(20) << "decay_epoch";
+
+    fout << std::endl;
 
     for (size_t i = 0; i < Particles.size(); ++i) {
       fout << std::setw(20) << Particles[i].PDGID
         << std::setw(20) << Particles[i].px
         << std::setw(20) << Particles[i].py
-        << std::setw(20) << Particles[i].pz
-        << std::setw(20) << Particles[i].MotherPDGID
-        << std::endl;
+        << std::setw(20) << Particles[i].pz;
+
+      if (config.printEnergy)
+        fout << std::setw(20) << Particles[i].p0;
+
+      if (config.printMotherPdg)
+        fout << std::setw(20) << Particles[i].MotherPDGID;
+
+      if (config.printDecayEpoch)
+        fout << std::setw(20) << Particles[i].epoch;
+
+      fout << std::endl;
+    }
+
+    fout << std::scientific;
+
+    if (config.printPhotonsLeptons) {
+      for (size_t i = 0; i < PhotonsLeptons.size(); ++i) {
+        fout << std::setw(20) << PhotonsLeptons[i].PDGID
+          << std::setw(20) << PhotonsLeptons[i].px
+          << std::setw(20) << PhotonsLeptons[i].py
+          << std::setw(20) << PhotonsLeptons[i].pz;
+
+        if (config.printEnergy)
+          fout << std::setw(20) << PhotonsLeptons[i].p0;
+
+        if (config.printMotherPdg)
+          fout << std::setw(20) << PhotonsLeptons[i].MotherPDGID;
+
+        if (config.printDecayEpoch)
+          fout << std::setw(20) << PhotonsLeptons[i].epoch;
+
+        fout << std::endl;
+      }
     }
     fout << std::endl;
+    fout << std::fixed;
   }
 
   void SimpleEvent::RapidityBoost(double dY)

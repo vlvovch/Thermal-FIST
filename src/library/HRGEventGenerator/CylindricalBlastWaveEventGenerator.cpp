@@ -16,9 +16,9 @@
 
 namespace thermalfist {
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator() {
-    m_THM = NULL;
-  }
+  //CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator() {
+  //  m_THM = NULL;
+  //}
 
   CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double betas, double etamax, double npow) : 
     m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow)

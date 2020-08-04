@@ -48,8 +48,9 @@ QVariant DecayTableModel::data(const QModelIndex &index, int role) const
     else if (col == 1) return decay.mBratio / bratioSum * 100.;
     else if ((col - 2) < decay.mDaughters.size()) {
       int PDGID = decay.mDaughters[col - 2];
-      if (fTPS->PdgToId(PDGID) == -1) return QString("%1   %2").arg(QString::number(PDGID), "???");
-      else return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->ParticleByPDG(PDGID).Name().c_str()));
+      return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->GetNameFromPDG(PDGID).c_str()));
+      //if (fTPS->PdgToId(PDGID) == -1) return QString("%1   %2").arg(QString::number(PDGID), "???");
+      //else return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->ParticleByPDG(PDGID).Name().c_str()));
     }
     else return QVariant();
     break;

@@ -7,8 +7,8 @@ project (ThermalFIST)
 
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 1)
-set (ThermalFIST_VERSION_MINOR 2)
-set (ThermalFIST_VERSION_DEVEL 6)
+set (ThermalFIST_VERSION_MINOR 3)
+set (ThermalFIST_VERSION_DEVEL 0)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -42,7 +42,6 @@ endif(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c99 -pedantic")
 if(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
@@ -50,6 +49,7 @@ elseif(COMPILER_SUPPORTS_CXX0X)
 else()
 #        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pedantic")
 # Here it is setting the Visual Studio warning level to 4
 if(MSVC)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")

@@ -1,13 +1,14 @@
 // Stringify
-#define TOSTR_(x) #x
-#define STRINGIFY(x) TOSTR_(x)
+#define ThermalFIST_TOSTR_(x) #x
+#define ThermalFIST_STRINGIFY(x) TOSTR_(x)
 
 
 // Version
 #define ThermalFIST_VERSION_MAJOR @ThermalFIST_VERSION_MAJOR@
 #define ThermalFIST_VERSION_MINOR @ThermalFIST_VERSION_MINOR@
 #define ThermalFIST_VERSION_DEVEL @ThermalFIST_VERSION_DEVEL@
-#define INPUT_FOLDER "${PROJECT_SOURCE_DIR}/input"
+#define ThermalFIST_INPUT_FOLDER "${PROJECT_SOURCE_DIR}/input"
+#define ThermalFIST_DEFAULT_LIST_FILE "${PROJECT_SOURCE_DIR}/input/list/PDG2020/list-withnuclei.dat"
 
 // Now using the thermalfist namespace since version 0.7
 #define ThermalFIST_USENAMESPACE 1

@@ -54,51 +54,70 @@ QVariant ListTableModel::data(const QModelIndex &index, int role) const
     }*/
     int row = index.row();
     int col = index.column();
+    const ThermalParticle& part = TPS->Particles()[RowToParticle[row]];
     switch(role){
         case Qt::DisplayRole:
-            if (col == 0) return QString(TPS->Particles()[RowToParticle[row]].Name().c_str());
-            if (col == 1) return TPS->Particles()[RowToParticle[row]].PdgId();
-            if (col == 2) return TPS->Particles()[RowToParticle[row]].Mass();
-            if ((col == 3 && TPS->Particles()[RowToParticle[row]].IsStable()) ||
-                (col == 4 && TPS->Particles()[RowToParticle[row]].IsNeutral() != 0)) return "*";//
+            if (col == 0) return QString(part.Name().c_str());
+            if (col == 1) return part.PdgId();
+            if (col == 2) return part.Mass();
+            if ((col == 3 && part.IsStable()) ||
+                (col == 4 && part.IsNeutral() != 0)) return "*";//
                 /*    ||
                 (col==6 && TPS->fParticles[RowToParticle[row]].fC!=0) ||
                 (col==7 && TPS->fParticles[RowToParticle[row]].fAbsS>1.e-6) ||
                 (col==8 && TPS->fParticles[RowToParticle[row]].fAbsC>1.e-6)) return "*";*/
-            if (col == 5 && TPS->Particles()[RowToParticle[row]].BaryonCharge() != 0) {
-              if (TPS->Particles()[RowToParticle[row]].BaryonCharge()>0) return "+" + QString::number(TPS->Particles()[RowToParticle[row]].BaryonCharge());
-              else return TPS->Particles()[RowToParticle[row]].BaryonCharge();
+            if (col == 5 && part.BaryonCharge() != 0) {
+              if (part.BaryonCharge()>0) return "+" + QString::number(part.BaryonCharge());
+              else return part.BaryonCharge();
             }
-            if (col == 6 && TPS->Particles()[RowToParticle[row]].ElectricCharge() != 0) {
-                if (TPS->Particles()[RowToParticle[row]].ElectricCharge()>0) return "+" + QString::number(TPS->Particles()[RowToParticle[row]].ElectricCharge());
-                else return TPS->Particles()[RowToParticle[row]].ElectricCharge();
+            if (col == 6 && part.ElectricCharge() != 0) {
+                if (part.ElectricCharge()>0) return "+" + QString::number(part.ElectricCharge());
+                else return part.ElectricCharge();
             }
             if (col == 7) {
-              if (TPS->Particles()[RowToParticle[row]].Strangeness()>0) return "+" + QString::number(TPS->Particles()[RowToParticle[row]].Strangeness());
-              else if (TPS->Particles()[RowToParticle[row]].Strangeness()<0) return QString::number(TPS->Particles()[RowToParticle[row]].Strangeness());
-              else if (TPS->Particles()[RowToParticle[row]].AbsoluteStrangeness()>1.e-6) return QString::number(TPS->Particles()[RowToParticle[row]].AbsoluteStrangeness()) + " " + tr("(hidden)");
-              else if (TPS->Particles()[RowToParticle[row]].Name().substr(0, 2) == "K0") return tr("(hidden)");
+              if (part.Strangeness()>0) return "+" + QString::number(part.Strangeness());
+              else if (part.Strangeness()<0) return QString::number(part.Strangeness());
+              else if (part.AbsoluteStrangeness()>1.e-6) return QString::number(part.AbsoluteStrangeness()) + " " + tr("(hidden)");
+              else if (part.Name().substr(0, 2) == "K0") return tr("(hidden)");
             }
             if (col == 8) {
-              if (TPS->Particles()[RowToParticle[row]].Charm()>0) return "+" + QString::number(TPS->Particles()[RowToParticle[row]].Charm());
-              else if (TPS->Particles()[RowToParticle[row]].Charm()<0) return QString::number(TPS->Particles()[RowToParticle[row]].Charm());
-              else if (TPS->Particles()[RowToParticle[row]].AbsoluteCharm()>1.e-6) return QString::number(TPS->Particles()[RowToParticle[row]].AbsoluteCharm()) + " " + tr("(hidden)");
+              if (part.Charm()>0) return "+" + QString::number(part.Charm());
+              else if (part.Charm()<0) return QString::number(part.Charm());
+              else if (part.AbsoluteCharm()>1.e-6) return QString::number(part.AbsoluteCharm()) + " " + tr("(hidden)");
             }
             if (col==9) {
                 double bratiosum = 0.;
-                for(int i=0;i<TPS->Particles()[RowToParticle[row]].Decays().size();++i)
-                    bratiosum += TPS->Particles()[RowToParticle[row]].Decays()[i].mBratio;
+                for(int i=0;i<part.Decays().size();++i)
+                    bratiosum += part.Decays()[i].mBratio;
                 return bratiosum;
             }
             if (col==10) {
                 QString ret = "";
 
-                if (!TPS->CheckDecayChargesConservation(RowToParticle[row]))
-                    ret += tr("Charges not OK!");
+                //if (!TPS->CheckDecayChargesConservation(RowToParticle[row]))
+                //    ret += tr("Charges not OK!");
+
+                std::vector<int> check = TPS->CheckDecayChargesConservationVector(RowToParticle[row]);
+                if (check[0] != 1)
+                  ret += "B";
+                if (check[1] != 1)
+                  ret += "Q";
+                if (check[2] != 1)
+                  ret += "S";
+                if (check[3] != 1)
+                  ret += "C";
+
+                for (int i = 1; i < ret.size(); ++i) {
+                  ret.insert(i, ',');
+                  i++;
+                }
+
+                if (ret != "")
+                  ret += tr(" not conserved!");
 
                 double bratiosum = 0.;
-                for(int i=0;i<TPS->Particles()[RowToParticle[row]].Decays().size();++i)
-                    bratiosum += TPS->Particles()[RowToParticle[row]].Decays()[i].mBratio;
+                for(int i=0;i<part.Decays().size();++i)
+                    bratiosum += part.Decays()[i].mBratio;
 
                 if (fabs(bratiosum - 1.) > 1.e-8) {
                     if (ret != "")
@@ -106,11 +125,17 @@ QVariant ListTableModel::data(const QModelIndex &index, int role) const
                     ret += "Not 100%!";
                 }
 
+                if (abs(part.BaryonCharge()) <= 1 && (part.PdgId() % 10) != static_cast<int>(part.Degeneracy() + 0.5)) {
+                  if (ret != "")
+                    ret += " / ";
+                  ret += "PDG code/degeneracy mismatch!";
+                }
+
                 return ret;
             }
             break;
         case Qt::FontRole:
-            if (TPS->Particles()[RowToParticle[row]].IsStable()) //change font only for cell(0,0)
+            if (part.IsStable()) //change font only for cell(0,0)
             {
                 QFont boldFont;
                 boldFont.setBold(true);
@@ -258,19 +283,20 @@ QVariant DecayEditorTableModel::data(const QModelIndex &index, int role) const
         case Qt::DisplayRole:
             if (row>=fParticle->Decays().size()) return QVariant();
             decay = fParticle->Decays()[row];
-            if (col==0) return decay.mBratio * 100.;
-            else if (col==1) return decay.mBratio / bratioSum * 100.;
+            if (col==0) return QString::number(decay.mBratio * 100., 'f', 4);
+            else if (col==1) return QString::number(decay.mBratio / bratioSum * 100., 'f', 4);
             else if ((col-2)<decay.mDaughters.size()){
                 int PDGID = decay.mDaughters[col-2];
-                if (fTPS->PdgToId(PDGID)==-1) return QString("%1   %2").arg(QString::number(PDGID), "???");
-                else return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->Particles()[fTPS->PdgToId(PDGID)].Name().c_str()));
+                return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->GetNameFromPDG(PDGID).c_str()));
+                //if (fTPS->PdgToId(PDGID)==-1) return QString("%1   %2").arg(QString::number(PDGID), "???");
+                //else return QString("%1   %2").arg(QString::number(PDGID), QString(fTPS->Particles()[fTPS->PdgToId(PDGID)].Name().c_str()));
             }
             else return QVariant();
             break;
         case Qt::EditRole:
             if (row>=fParticle->Decays().size()) return QVariant();
             decay = fParticle->Decays()[row];
-            if (col==0) return decay.mBratio * 100.;
+            if (col==0) return QString::number(decay.mBratio * 100., 'f', 4);
             else if (col==1) return decay.mBratio / bratioSum * 100.;
             else if ((col-2)<decay.mDaughters.size()){
                 return decay.mDaughters[col-2];

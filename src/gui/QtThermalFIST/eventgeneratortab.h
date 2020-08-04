@@ -103,6 +103,7 @@ class EventGeneratorTab : public QWidget
 
 
     QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
+    QLabel *labelBetat;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
     QDoubleSpinBox *spinVolumeRSC;
     QLabel *labelB, *labelQ, *labelS, *labelC;

@@ -33,7 +33,7 @@ namespace thermalfist {
 
   ThermalModelFitParameters::ThermalModelFitParameters(const ThermalModelParameters & params)
   {
-    T = FitParameter("T", true, params.T, 0.05, 0.02, 0.500);
+    T = FitParameter("T", true, params.T, 0.05, 0.02, 0.300);
     muB = FitParameter("muB", true, params.muB, 0.05, -0.100, 0.900);
     muS = FitParameter("muS", false, params.muS, 0.05, -0.450, 0.450);
     muQ = FitParameter("muQ", false, params.muQ, 0.05, -0.130, 0.130);
@@ -49,7 +49,7 @@ namespace thermalfist {
     S = params.S;
     C = params.C;
 
-    Tkin = FitParameter("Tkin", false, params.T, 0.05, 0.02, 0.500);
+    Tkin = FitParameter("Tkin", false, params.T, 0.05, 0.02, 0.300);
 
     FillParameterList();
   }

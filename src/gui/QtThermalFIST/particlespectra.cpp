@@ -281,7 +281,14 @@ void ParticlesSpectra::Reset() {
     }
 }
 
-void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int distrtype, double etamax, double npow) {
+void ParticlesSpectra::Reset(ThermalModelBase* model, double T, double beta, int distrtype, double etamax, double npow) {
+  ThermalParticleSystem* TPS = NULL;
+  if (model != NULL)
+    TPS = model->TPS();
+  Reset(TPS, T, beta, distrtype, etamax, npow);
+}
+
+void ParticlesSpectra::Reset(ThermalParticleSystem *TPS, double T, double beta, int distrtype, double etamax, double npow) {
     fEtaMax = etamax;
     fDistributionType = distrtype;
     fPDGtoID.clear();
@@ -299,36 +306,34 @@ void ParticlesSpectra::Reset(ThermalModelBase *model, double T, double beta, int
     for(int i=0;i<distrs.size();++i)
         delete distrs[i];
     distrs.resize(0);
-    if (model!=NULL) {
-        for(int i=0;i<model->TPS()->Particles().size();++i) {
-            if (model->TPS()->Particles()[i].IsStable()) {
-                if (distrtype==0) fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass()));
-                else fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), etamax));
+    if (TPS != NULL) {
+        for(int i=0;i<TPS->Particles().size();++i) {
+            if (TPS->Particles()[i].IsStable()) {
+                if (distrtype==0) fParticles.push_back(ParticleSpectrum(TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass()));
+                else fParticles.push_back(ParticleSpectrum(TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), etamax));
                 MomentumDistributionBase *ptr;
-                if (distrtype==0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(),model->TPS()->Particles()[i].Mass(),T,beta);
-                //else if (distrtype == 1) ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
-                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, npow), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
-                //else ptr = new CracowFreezeoutDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
-                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
+                if (distrtype==0) ptr = new SiemensRasmussenDistribution(TPS->Particles()[i].PdgId(),TPS->Particles()[i].Mass(),T,beta);
+                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, npow), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), T, etamax, false);
+                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), T, etamax, false);
                 distrs.push_back(ptr);
                 fParticles[fParticles.size()-1].SetDistribution(ptr);
-                fNames.push_back(model->TPS()->Particles()[i].Name());
-                fMasses.push_back(model->TPS()->Particles()[i].Mass());
-                fPDGtoID[model->TPS()->Particles()[i].PdgId()] = fMasses.size()-1;
+                fNames.push_back(TPS->Particles()[i].Name());
+                fMasses.push_back(TPS->Particles()[i].Mass());
+                fPDGtoID[TPS->Particles()[i].PdgId()] = fMasses.size()-1;
 
-                if (model->TPS()->Particles()[i].PdgId()>0 && model->TPS()->PdgToId(-model->TPS()->Particles()[i].PdgId())!=-1) {
-                    fNetParticles.push_back(NumberStatistics("net-" + model->TPS()->Particles()[i].Name()));
-                    fPDGtoIDnet[model->TPS()->Particles()[i].PdgId()] = fNetParticles.size()-1;
+                if (TPS->Particles()[i].PdgId()>0 && TPS->PdgToId(-TPS->Particles()[i].PdgId())!=-1) {
+                    fNetParticles.push_back(NumberStatistics("net-" + TPS->Particles()[i].Name()));
+                    fPDGtoIDnet[TPS->Particles()[i].PdgId()] = fNetParticles.size()-1;
                 }
             }
 
-            fPDGtoIDall[model->TPS()->Particles()[i].PdgId()] = i;
+            fPDGtoIDall[TPS->Particles()[i].PdgId()] = i;
 
             std::vector<int> tchr(4,0);
-            tchr[0] = model->TPS()->Particles()[i].BaryonCharge();
-            tchr[1] = model->TPS()->Particles()[i].ElectricCharge();
-            tchr[2] = model->TPS()->Particles()[i].Strangeness();
-            tchr[3] = model->TPS()->Particles()[i].Charm();
+            tchr[0] = TPS->Particles()[i].BaryonCharge();
+            tchr[1] = TPS->Particles()[i].ElectricCharge();
+            tchr[2] = TPS->Particles()[i].Strangeness();
+            tchr[3] = TPS->Particles()[i].Charm();
             fParticleCharges.push_back(tchr);
         }
         fNetCharges.push_back(NumberStatistics("net-baryon"));

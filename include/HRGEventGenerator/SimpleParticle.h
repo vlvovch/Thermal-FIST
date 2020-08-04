@@ -21,11 +21,8 @@ namespace thermalfist {
     int epoch;               ///< 0 - primary particle, 1 - after decay of primary particles, 2 - after a casacde of two decays and so on...
     bool processed;          ///< Used in event generator
 
-    /// Default constructor
-    SimpleParticle() { processed = false; }
-
     /// Constructs a particle from provided three-momentum, mass, and PDG code
-    SimpleParticle(double inPx, double inPy, double inPz, double inM, long long inPDGID, long long inMotherPDGID = 0) :
+    SimpleParticle(double inPx = 0., double inPy = 0., double inPz = 0., double inM = 0., long long inPDGID = 0., long long inMotherPDGID = 0) :
       px(inPx),
       py(inPy),
       pz(inPz),
