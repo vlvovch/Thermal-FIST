@@ -29,7 +29,7 @@ namespace thermalfist {
    * 3. Set the chemical freeze-out conditions via SetChemicalFreezeout()
    * 4. Evaluate the PCE conditions at a given temperature or volume in the hadronic phase via CalculatePCE()
    * 5. Use the pointer ThermalModel() to the HRG model to access the various physical properties at the given
-   * PCE point, like hadron yields or the equation of state.
+   * PCE point, like various hadron yields or the equation of state.
    * 
    */
   class ThermalModelPCE
