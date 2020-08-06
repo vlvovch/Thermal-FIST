@@ -74,6 +74,7 @@ namespace thermalfist {
     /// All the fit parameters
     FitParameter T, muB, muS, muQ, muC, gammaq, gammaS, gammaC, R, Rc;
 
+    /// Since version 1.3: Kinetic freeze-out temperature
     FitParameter Tkin;
 
     /// Vector of pointer to all the parameters

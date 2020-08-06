@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	// Set the chemical freeze-out as an "initial" condition for PCE
 	modelpce.SetChemicalFreezeout(params_chemical_freezeout);
 
-	// The list of chemical potentials to output, coded by pdg code
+	// The list of chemical potentials for output, coded by the pdg code
 	vector<long long> pdgcodes_stable;
 	pdgcodes_stable.push_back(211);  // pions (pi+)
 	pdgcodes_stable.push_back(321);  // kaons (K+)
@@ -68,28 +68,30 @@ int main(int argc, char *argv[])
 
 	// The list of yield ratios to output
 	vector< pair<long long, long long> > ratios;
-	// First nuclei
-	ratios.push_back(make_pair(1000010020,2212));  // d/p
+	// First the nuclei
+	ratios.push_back(make_pair(1000010020, 2212));  // d/p
 	ratios.push_back(make_pair(1000020030, 2212)); // He3/p
 	ratios.push_back(make_pair(1000010030, 2212)); // H3/p
 	ratios.push_back(make_pair(1000020040, 2212)); // He4/p
 	ratios.push_back(make_pair(1010010030, 2212)); // Hypertriton/p
 	ratios.push_back(make_pair(1010010040, 2212)); // HyperHydrogen4/p
-	// Resonances
+	// Now the resonances
 	ratios.push_back(make_pair(313, -321));    // K^*0 / K^-
 	ratios.push_back(make_pair(113, 211));     // rho^0/ pi^+
 	ratios.push_back(make_pair(3124, 3122));   // \Lambda(1520)/\Lambda
 	ratios.push_back(make_pair(9010221, 211)); // f0(980) / pi^+
 	ratios.push_back(make_pair(2224, 2212));   // \Delta(1232)++/p
 
+	// Preparing the output files
+	// The file to output the parameters (volume, entropy, chemical potentials)
 	FILE* fout_params = fopen("PCE.LHC.Parameters.dat", "w");
-
 	fprintf(fout_params, "%15s %15s %15s ", "T[MeV]", "V/Vch", "S/Sch");
 	for (int i = 0; i < pdgcodes_stable.size(); ++i) {
 		fprintf(fout_params, "%15s ", ("mu_" + string(parts.ParticleByPDG(pdgcodes_stable[i]).Name())).c_str());
 	}
 	fprintf(fout_params, "\n");
 
+	// The file to output the yield ratios
 	FILE* fout_ratios = fopen("PCE.LHC.Ratios.dat", "w");
 	fprintf(fout_ratios, "%15s ", "T[MeV]");
 	for (int i = 0; i < ratios.size(); ++i) {
@@ -97,19 +99,22 @@ int main(int argc, char *argv[])
 	}
 	fprintf(fout_ratios, "\n");
 
-	// Temperature scan
+	// The temperature scan
 	double T0 = params_chemical_freezeout.T;
-	double dT = 0.001; // steps of 1 MeV
+	double dT = 0.001;   // steps of 1 MeV
 	double Tmin = 0.070; // Down to 70 MeV
 
+	// Store the value of the total entropy at the chemical freeze-out
 	double entropy_chemical_freezeout = modelpce.ThermalModel()->EntropyDensity() * params_chemical_freezeout.V;
 
+	// Loop over temperatures
 	for (double T = T0; T >= Tmin - 1.e-9; T -= dT) {
 		printf("T = %lf MeV\n", T * 1.e3);
 
+		// Compute the PCE chemical potentials at a given temperature
 		modelpce.CalculatePCE(T);
 
-		// Output the parameters
+		// Output the parameters at the current temperature
 		fprintf(fout_params, "%15lf %15lf %15lf ",
 			T * 1.e3,
 			modelpce.ThermalModel()->Volume() / params_chemical_freezeout.V,
@@ -123,7 +128,7 @@ int main(int argc, char *argv[])
 		}
 		fprintf(fout_params, "\n");
 
-		// Output the ratios
+		// Output the yield ratios at the current temperature
 		fprintf(fout_ratios, "%15lf ", T * 1.e3);
 		for (int i = 0; i < ratios.size(); ++i) {
 			fprintf(fout_ratios, "%15E ",
@@ -145,12 +150,12 @@ int main(int argc, char *argv[])
  *
  * An example of doing partial chemical equilibrium HRG model calculations at the LHC energies using Thermal-FIST
  *
- * Calculates the evolution of the non-equilbrium chemical potentials (fugacities) and various particle ratios
+ * Calculates the evolution of the non-equilibrium chemical potentials (fugacities) and various particle ratios
  * in the hadronic phase of 0-10% central 2.76 TeV Pb-Pb collisions at the LHC.
  *
  * The calculations closely correspond to the results published in [arXiv:1903.10024](https://arxiv.org/abs/1903.10024)
  *
- * Calculations start at Tch = 155 MeV and go down to a specified temperature (down to 70 MeV by default).
+ * Calculations start at T<sub>ch</sub> = 155 MeV and go down to a specified temperature (by default down to 70 MeV in steps of 1 MeV).
  * The values of the chemical potentials, as well as of the system volume relative to the volume at the freeze-out, are 
  * written to a file `PCE.LHC.Parameters.dat'
  *

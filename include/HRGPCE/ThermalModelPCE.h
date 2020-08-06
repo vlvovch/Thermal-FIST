@@ -13,26 +13,39 @@ namespace thermalfist {
    * Partial chemical equilbiirum (PCE) describes the hadronic phase dynamics.
    *
    * The basic ideas about PCE can be found in
-   *
    * H. Bebie, P. Gerber, J.L. Goity, H. Leutwyler,
    * Nucl. Phys. B **378**, 95 (1992)
    * 
    * The present implementation was used (and described) in a paper
-   * 
    * V. Vovchenko, K. Gallmeister, J. Schaffner-Bielich, C. Greiner,
    * Phys. Lett. B **800**, 135131 (2020),
    * [arXiv:1903.10024](https://arxiv.org/abs/1903.10024)
+   * 
+   * A typical usage pattern is the following:
+   * 1. Create a ThermalModelBase() instance implementing a particular grand-canonical HRG model.
+   * 2. Create a ThermalModelPCE() instance using the ThermalModelBase() instance from the first step.
+   * Configure PCE options like which hadrons should be considered stable and whether the Saha
+   * equation should be used for light nuclei.
+   * 3. Set the chemical freeze-out conditions via SetChemicalFreezeout()
+   * 4. Evaluate the PCE conditions at a given temperature or volume in the hadronic phase via CalculatePCE()
+   * 5. Use the pointer ThermalModel() to the HRG model to access the various physical properties at the given
+   * PCE point, like various hadron yields or the equation of state.
    * 
    */
   class ThermalModelPCE
   {
   public:
     /**
-     * \brief Relativistic vs non-relativistic Breit-Wigner shape.
+     * \brief Whether partial chemical equilibrium should be calculated
+     * at a fixed value of the temperature or a fixed value of the volume.
+     * 
+     * Used in CalculatePCE()
      *
      */
     enum PCEMode {
-      AtFixedTemperature = 0,
+      /// Partial chemical equilibrium at fixed value of the temperature
+      AtFixedTemperature = 0, 
+      /// Partial chemical equilibrium at fixed value of the volume
       AtFixedVolume = 1
     };
 
@@ -107,7 +120,7 @@ namespace thermalfist {
        *
        * \param params   Thermal parameters at the chemical freeze-out.
        * \param ChemInit Chemical potentials of all species at the chemical freeze-out. 
-       *                 If this vector is empty (default value), the chemical potentials are populated using \param params
+       *                 If this vector is empty (default value), the chemical potentials are populated using \p params
        */
     void SetChemicalFreezeout(const ThermalModelParameters& params, const std::vector<double>& ChemInit = std::vector<double>(0));
     //@}
@@ -130,8 +143,10 @@ namespace thermalfist {
     /**
      * \brief Solves the equations of partial chemical equilibrium at a fixed temperature or a fixed volume
      *
-     * \param param  Temperature (in GeV) for mode == AtFixedTemperature (default), Volume (in fm^3) for mode == AtFixedVolume
-     * \param mode   PCE at fixed temperature for mode == AtFixedTemperature, at fixed voluime for mode == AtFixedVolume
+     * \param param  Temperature (in GeV) if \p mode correspond to PCE at fixed temperature, 
+     * Volume (in fm^3)  if \p mode correspond to PCE at fixed volume.
+     * \param mode   Determines whether the PCE calculation
+     * is perfored at a fixed temperature (default) or at a fixed volume. 
      */
     virtual void CalculatePCE(double param, PCEMode mode = AtFixedTemperature);
 
@@ -177,28 +192,28 @@ namespace thermalfist {
   protected:
     ThermalModelBase *m_model;
 
-    // Whether nuclear abundances are calculated via the Saha equation
+    /// Whether nuclear abundances are calculated via the Saha equation
     bool m_UseSahaForNuclei;
 
-    // Whether long-lived resonances are frozen at Tch
+    /// Whether long-lived resonances are frozen at Tch
     bool m_FreezeLonglivedResonances;
-    // Resonance width cut for freezeing the resonance abundances
+    /// Resonance width cut for freezeing the resonance abundances
     double m_ResoWidthCut;
 
-    // Whether the chemical freeze-out "initial" condition has been set
+    /// Whether the chemical freeze-out "initial" condition has been set
     bool m_ChemicalFreezeoutSet;
 
-    // Whether PCE has been calculated
+    /// Whether PCE has been calculated
     bool m_IsCalculated;
 
-    // PCE configuration, list of stable species etc.
+    /// PCE configuration, list of stable species etc.
     bool m_StabilityFlagsSet;
     std::vector<int> m_StabilityFlags;
     int m_StableComponentsNumber;
     std::vector< std::vector<double> > m_EffectiveCharges;
     std::vector<int> m_StableMapTo;
 
-    // Parameters at the chemical freeze-out
+    /// Parameters at the chemical freeze-out
     ThermalModelParameters m_ParametersInit;
     std::vector<double> m_ChemInit;
     std::vector<double> m_DensitiesInit;
@@ -206,7 +221,7 @@ namespace thermalfist {
     double m_EntropyDensityInit;
     double m_ParticleDensityInit;
 
-    // The current PCE thermal paratmeres and chemical potentials
+    /// The current PCE thermal paratmeres and chemical potentials
     ThermalModelParameters m_ParametersCurrent;
     std::vector<double> m_ChemCurrent;
 

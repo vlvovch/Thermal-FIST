@@ -81,7 +81,7 @@ namespace thermalfist {
     /// PCE chemical potentials
     std::vector<double> fPCEChems;
 
-
+    /// Default configuration
     EventGeneratorConfiguration();
   };
 
@@ -130,15 +130,16 @@ namespace thermalfist {
      * \brief Samples the primordial yields for each particle species.
      *
      * \return pair< std::vector<int>, double > The sampled yields. 
-     *                                          The first element is a vector of the samled yields.
+     *                                          The first element is a vector of the sampled yields.
      *                                          The second element is the weight.
      */
     std::pair< std::vector<int>, double > SampleYields() const;
 
     /**
-     * \brief Samples the momenta of the particles and returns the sampled vector as an event.
+     * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
      *
-     * The sampled SimpleEvent is assigned the weight of unity. Override the weight if importance sampling is used.
+     * The sampled SimpleEvent is assigned the weight of unity. 
+     * This weight should be overriden if importance sampling is used.
      *
      * \param  yields       Vector of yields for each particle species for the given event.
      *                      Make sure the indices match the particle list pointed to by \ref m_THM.
@@ -163,7 +164,7 @@ namespace thermalfist {
      *
      * \param evtin An event structure contains the list of all the primordial particles.
      * \param TPS   Pointer to the particle list instance that contains all the decay properties.
-     * \return      A SimpleEvent instance containing all particles after resonance decays.s
+     * \return      A SimpleEvent instance containing all particles after resonance decays.
      */
     static SimpleEvent PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
@@ -181,7 +182,7 @@ namespace thermalfist {
     void SetVolume(double V);
 
     /**
-     * \brief Rescale precalculated GCE means. 
+     * \brief Rescale the precalculated GCE means. 
      * 
      * Called when the system volume is changed
      */
@@ -257,7 +258,7 @@ namespace thermalfist {
     EventGeneratorConfiguration m_Config;
     ThermalModelBase *m_THM;
 
-    // Ideal gas densities used for sampling an interacting HRG
+    /// Ideal gas densities used for sampling an interacting HRG
     std::vector<double> m_DensitiesIdeal;
 
     /// Vector of momentum generators for each particle species
