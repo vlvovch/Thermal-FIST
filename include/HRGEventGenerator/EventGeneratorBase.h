@@ -188,6 +188,13 @@ namespace thermalfist {
      */
     void RescaleCEMeans(double Vmod);
 
+    /**
+    * \brief Pointer to an underlying GCE Thermal Model.
+    */
+    ThermalModelBase* ThermalModel() { return m_THM; }
+
+
+    double ComputeWeight(const std::vector<int>& totals) const;
 
   protected:
     /**

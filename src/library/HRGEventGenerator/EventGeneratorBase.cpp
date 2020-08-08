@@ -357,6 +357,7 @@ namespace thermalfist {
   std::vector<int> EventGeneratorBase::GenerateTotals() const {
     if (!m_THM->IsGCECalculated())
       m_THM->CalculateDensitiesGCE();
+
     std::vector<int> totals(m_THM->TPS()->Particles().size());
 
     m_LastWeight = 1.;
@@ -373,144 +374,150 @@ namespace thermalfist {
       else
         totals = GenerateTotalsGCE();
 
-      // Then take into account EV/vdW interactions using importance sampling
-      std::vector<double> *densitiesid = NULL;
-      std::vector<double> tmpdens;
-      const std::vector<double>& densities = m_THM->Densities();
-      if (m_THM->InteractionModel() != ThermalModelBase::Ideal) {
-        tmpdens = m_DensitiesIdeal;
-        densitiesid = &tmpdens;
-      }
-
-      if (m_THM->InteractionModel() == ThermalModelBase::DiagonalEV) {
-        ThermalModelEVDiagonal *model = static_cast<ThermalModelEVDiagonal*>(m_THM);
-        double V   = m_THM->Volume();
-        double VVN = m_THM->Volume();
-
-        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-          VVN -= model->ExcludedVolume(i) * totals[i];
-
-        if (VVN < 0.) continue;
-        double weight = 1.;
-        double logweight = 0.;
-
-        double normweight = 1.;
-        double weightev = 1.;
-        double VVNev = m_THM->Volume();
-        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-          VVNev -= model->ExcludedVolume(i) * densities[i] * m_THM->Volume();
-
-        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-          weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-          weightev *= pow(VVNev / V * densitiesid->operator[](i) / densities[i], densities[i] * V);
-
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            //normweight *= pow(VVN / V, totals[i]) / pow(VVNev / V, densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-        }
-
-        m_LastWeight = weight;
-        m_LastLogWeight = logweight;
-        m_LastNormWeight = normweight;
-
-        //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      }
-
-
-      if (m_THM->InteractionModel() == ThermalModelBase::CrosstermsEV) {
-        ThermalModelEVCrossterms *model = static_cast<ThermalModelEVCrossterms*>(m_THM);
-        double V = m_THM->Volume();
-
-        double weight = 1.;
-        double logweight = 0.;
-        double normweight = 1.;
-        double weightev = 1.;
-        bool fl = 1;
-        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-          double VVN = m_THM->Volume();
-
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-            VVN -= model->VirialCoefficient(j, i) * totals[j];
-
-          if (VVN < 0.) { fl = false; break; }
-
-          double VVNev = m_THM->Volume();
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-            VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-          weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-          weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-        }
-        if (!fl) continue;
-        m_LastWeight = weight;
-        m_LastLogWeight = logweight;
-        m_LastNormWeight = normweight;
-
-        //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      }
-
-      if (m_THM->InteractionModel() == ThermalModelBase::QvdW) {
-        ThermalModelVDW *model = static_cast<ThermalModelVDW*>(m_THM);
-        double V = m_THM->Volume();
-
-        double weight = 1.;
-        double logweight = 0.;
-        double normweight = 1.;
-        double weightvdw = 1.;
-        bool fl = 1;
-        for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-          double VVN = m_THM->Volume();
-
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-            VVN -= model->VirialCoefficient(j, i) * totals[j];
-
-          if (VVN < 0.) { fl = false; break; }
-
-          double VVNev = m_THM->Volume();
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-            VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-          weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-            double aij = model->AttractionCoefficient(i, j);
-            weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
-            logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
-          }
-
-          weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-          if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-            normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-
-          for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-            double aij = model->AttractionCoefficient(i, j);
-            weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
-            normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
-          }
-
-        }
-        if (!fl) continue;
-        m_LastWeight = weight;
-        m_LastLogWeight = logweight;
-        m_LastNormWeight = normweight;
-
-        //if (normweight > 1.)
-        //  std::cout << std::scientific << normweight - 1. << std::fixed << "\n";
-
-        //std::cout << "Norm weight = " << normweight << " " << weight / weightvdw << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      }
+      double weight = ComputeWeight(totals);
+      if (weight < 0.)
+        continue;
 
       break;
+
+      //// Then take into account EV/vdW interactions using importance sampling
+      //std::vector<double> *densitiesid = NULL;
+      //std::vector<double> tmpdens;
+      //const std::vector<double>& densities = m_THM->Densities();
+      //if (m_THM->InteractionModel() != ThermalModelBase::Ideal) {
+      //  tmpdens = m_DensitiesIdeal;
+      //  densitiesid = &tmpdens;
+      //}
+
+      //if (m_THM->InteractionModel() == ThermalModelBase::DiagonalEV) {
+      //  ThermalModelEVDiagonal *model = static_cast<ThermalModelEVDiagonal*>(m_THM);
+      //  double V   = m_THM->Volume();
+      //  double VVN = m_THM->Volume();
+
+      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      //    VVN -= model->ExcludedVolume(i) * totals[i];
+
+      //  if (VVN < 0.) continue;
+      //  double weight = 1.;
+      //  double logweight = 0.;
+
+      //  double normweight = 1.;
+      //  double weightev = 1.;
+      //  double VVNev = m_THM->Volume();
+      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      //    VVNev -= model->ExcludedVolume(i) * densities[i] * m_THM->Volume();
+
+      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+      //    weightev *= pow(VVNev / V * densitiesid->operator[](i) / densities[i], densities[i] * V);
+
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      //normweight *= pow(VVN / V, totals[i]) / pow(VVNev / V, densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+      //  }
+
+      //  m_LastWeight = weight;
+      //  m_LastLogWeight = logweight;
+      //  m_LastNormWeight = normweight;
+
+      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
+      //}
+
+
+      //if (m_THM->InteractionModel() == ThermalModelBase::CrosstermsEV) {
+      //  ThermalModelEVCrossterms *model = static_cast<ThermalModelEVCrossterms*>(m_THM);
+      //  double V = m_THM->Volume();
+
+      //  double weight = 1.;
+      //  double logweight = 0.;
+      //  double normweight = 1.;
+      //  double weightev = 1.;
+      //  bool fl = 1;
+      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      //    double VVN = m_THM->Volume();
+
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+      //      VVN -= model->VirialCoefficient(j, i) * totals[j];
+
+      //    if (VVN < 0.) { fl = false; break; }
+
+      //    double VVNev = m_THM->Volume();
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+      //      VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
+
+      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+      //    weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+      //  }
+      //  if (!fl) continue;
+      //  m_LastWeight = weight;
+      //  m_LastLogWeight = logweight;
+      //  m_LastNormWeight = normweight;
+
+      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
+      //}
+
+      //if (m_THM->InteractionModel() == ThermalModelBase::QvdW) {
+      //  ThermalModelVDW *model = static_cast<ThermalModelVDW*>(m_THM);
+      //  double V = m_THM->Volume();
+
+      //  double weight = 1.;
+      //  double logweight = 0.;
+      //  double normweight = 1.;
+      //  double weightvdw = 1.;
+      //  bool fl = 1;
+      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+      //    double VVN = m_THM->Volume();
+
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+      //      VVN -= model->VirialCoefficient(j, i) * totals[j];
+
+      //    if (VVN < 0.) { fl = false; break; }
+
+      //    double VVNev = m_THM->Volume();
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+      //      VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
+
+      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+      //      double aij = model->AttractionCoefficient(i, j);
+      //      weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
+      //      logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
+      //    }
+
+      //    weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+
+      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+      //      double aij = model->AttractionCoefficient(i, j);
+      //      weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+      //      normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+      //    }
+
+      //  }
+      //  if (!fl) continue;
+      //  m_LastWeight = weight;
+      //  m_LastLogWeight = logweight;
+      //  m_LastNormWeight = normweight;
+
+      //  //if (normweight > 1.)
+      //  //  std::cout << std::scientific << normweight - 1. << std::fixed << "\n";
+
+      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightvdw << " " << std::scientific << normweight - 1. << std::fixed << "\n";
+      //}
+
+      //break;
     }
 
     fCEAccepted++;
@@ -1489,6 +1496,155 @@ namespace thermalfist {
     for (int i = 0; i < static_cast<int>(m_AntiCharmMesons.size()); ++i)    m_AntiCharmMesons[i].first *= Vmod;
     for (int i = 0; i < static_cast<int>(m_CharmAll.size()); ++i)           m_CharmAll[i].first *= Vmod;
     for (int i = 0; i < static_cast<int>(m_AntiCharmAll.size()); ++i)       m_AntiCharmAll[i].first *= Vmod;
+  }
+
+  double EventGeneratorBase::ComputeWeight(const std::vector<int>& totals) const
+  {
+    // Compute the normlaized weight factor due to EV/vdW interactions
+    // If V - bN < 0, returns -1.
+    std::vector<double>* densitiesid = NULL;
+    std::vector<double> tmpdens;
+    const std::vector<double>& densities = m_THM->Densities();
+    if (m_THM->InteractionModel() != ThermalModelBase::Ideal) {
+      tmpdens = m_DensitiesIdeal;
+      densitiesid = &tmpdens;
+    }
+
+    double ret = 1.;
+
+    if (m_THM->InteractionModel() == ThermalModelBase::DiagonalEV) {
+      ThermalModelEVDiagonal* model = static_cast<ThermalModelEVDiagonal*>(m_THM);
+      double V = m_THM->Volume();
+      double VVN = m_THM->Volume();
+
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+        VVN -= model->ExcludedVolume(i) * totals[i];
+
+      if (VVN < 0.)
+        return -1.;
+
+      double weight = 1.;
+      double logweight = 0.;
+
+      double normweight = 1.;
+      double weightev = 1.;
+      double VVNev = m_THM->Volume();
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+        VVNev -= model->ExcludedVolume(i) * densities[i] * m_THM->Volume();
+
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+        weightev *= pow(VVNev / V * densitiesid->operator[](i) / densities[i], densities[i] * V);
+
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          //normweight *= pow(VVN / V, totals[i]) / pow(VVNev / V, densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+          normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+      }
+
+      m_LastWeight = weight;
+      m_LastLogWeight = logweight;
+      m_LastNormWeight = normweight;
+
+      ret = normweight;
+    }
+
+
+    if (m_THM->InteractionModel() == ThermalModelBase::CrosstermsEV) {
+      ThermalModelEVCrossterms* model = static_cast<ThermalModelEVCrossterms*>(m_THM);
+      double V = m_THM->Volume();
+
+      double weight = 1.;
+      double logweight = 0.;
+      double normweight = 1.;
+      double weightev = 1.;
+      bool fl = 1;
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        double VVN = m_THM->Volume();
+
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          VVN -= model->VirialCoefficient(j, i) * totals[j];
+
+        if (VVN < 0.) { fl = false; break; }
+
+        double VVNev = m_THM->Volume();
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
+
+        weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+        weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+      }
+
+      if (!fl)
+        return -1.;
+
+      m_LastWeight = weight;
+      m_LastLogWeight = logweight;
+      m_LastNormWeight = normweight;
+
+      ret = normweight;
+    }
+
+    if (m_THM->InteractionModel() == ThermalModelBase::QvdW) {
+      ThermalModelVDW* model = static_cast<ThermalModelVDW*>(m_THM);
+      double V = m_THM->Volume();
+
+      double weight = 1.;
+      double logweight = 0.;
+      double normweight = 1.;
+      double weightvdw = 1.;
+      bool fl = 1;
+      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+        double VVN = m_THM->Volume();
+
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          VVN -= model->VirialCoefficient(j, i) * totals[j];
+
+        if (VVN < 0.) { fl = false; break; }
+
+        double VVNev = m_THM->Volume();
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
+          VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
+
+        weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
+
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+          double aij = model->AttractionCoefficient(i, j);
+          weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
+          logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
+        }
+
+        weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
+        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
+          normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+
+        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
+          double aij = model->AttractionCoefficient(i, j);
+          weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+          normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+        }
+
+      }
+      if (!fl)
+        return -1.;
+
+      m_LastWeight = weight;
+      m_LastLogWeight = logweight;
+      m_LastNormWeight = normweight;
+
+      ret = normweight;
+    }
+
+    return ret;
   }
 
   EventGeneratorConfiguration::EventGeneratorConfiguration()
