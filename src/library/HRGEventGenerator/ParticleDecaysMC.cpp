@@ -63,6 +63,8 @@ namespace thermalfist {
     SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz) {
       SimpleParticle ret = part;
       double v2 = vx * vx + vy * vy + vz * vz;
+      if (v2 == 0.0)
+        return part;
       double gamma = 1. / sqrt(1. - v2);
       ret.p0 = gamma * part.p0 - gamma * (vx * part.px + vy * part.py + vz * part.pz);
       ret.px = -gamma * vx * part.p0 + (1. + (gamma - 1.)*vx*vx / v2) * part.px +

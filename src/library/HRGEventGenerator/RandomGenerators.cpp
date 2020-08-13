@@ -323,7 +323,8 @@ namespace thermalfist {
 
         double p0LRF = part.p0;
 
-        part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+        if (betar != 0.0 || eta != 0.0)
+          part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
 
         //double prob = (cosheta * part.p0 - sinheta * part.pz) /
         //  (2. * (1. / (1 - betar * betar)) * (cosheta * part.p0 - sinheta * part.pz - betar * (part.px * cos(ph) + part.py * sin(ph))));
@@ -795,7 +796,8 @@ namespace thermalfist {
       part.pz = tp * cthe;
       part.p0 = sqrt(mass * mass + tp * tp);
 
-      part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+      if (GetBeta() != 0.0)
+        part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
 
       std::vector<double> ret(3);
       ret[0] = part.px;

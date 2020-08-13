@@ -32,6 +32,9 @@ int main(int argc, char *argv[])
 {
 	// The default particle list. As of version 1.3 this is PDG2020 list including light nuclei
 	ThermalParticleSystem parts(ThermalFIST_DEFAULT_LIST_FILE);
+	
+	// To include excited nuclei use the following line instead
+	//ThermalParticleSystem parts(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withexcitednuclei.dat");
 
 	// To reproduce arXiv:1903.10024 use the PDG2014 list
 	//ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat"); 
@@ -51,6 +54,11 @@ int main(int argc, char *argv[])
 	params_chemical_freezeout.V = 4700.; // Volume in fm^3
 
 	model.SetParameters(params_chemical_freezeout);
+
+	// For finite baryon density: constrain muQ and muS
+	model.ConstrainChemicalPotentials();
+	params_chemical_freezeout = model.Parameters();
+
 	model.FillChemicalPotentials(); // Fills chemical potentials for all species at Tch
 
 	// Set the chemical freeze-out as an "initial" condition for PCE
