@@ -79,6 +79,8 @@ namespace thermalfist {
   {
     for (size_t i = 0; i < Particles.size(); ++i)
       Particles[i].RapidityBoost(dY);
+    for (size_t i = 0; i < AllParticles.size(); ++i)
+      AllParticles[i].RapidityBoost(dY);
   }
 
   SimpleEvent SimpleEvent::MergeEvents(const SimpleEvent & evt1, const SimpleEvent & evt2)
