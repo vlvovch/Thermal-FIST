@@ -29,7 +29,7 @@ namespace thermalfist {
     // A helper ThermalParticleSystem instance to compute the PCE effective charges for all particles
     ThermalParticleSystem TPShelper = ThermalParticleSystem(*m_model->TPS());
 
-    // Set the nucleon content of the known light nuclei as "decay" products
+    // Set the nucleon content of the known stable light nuclei as "decay" products
     PrepareNucleiForPCE(&TPShelper);
 
     m_StabilityFlags = StabilityFlags;

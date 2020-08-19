@@ -97,11 +97,17 @@ namespace thermalfist {
     ret.DecayMap.reserve(evt1.DecayMap.size() + evt2.DecayMap.size());
     ret.DecayMap.insert(ret.DecayMap.end(), evt1.DecayMap.begin(), evt1.DecayMap.end());
     ret.DecayMap.insert(ret.DecayMap.end(), evt2.DecayMap.begin(), evt2.DecayMap.end());
+    int offset = evt1.DecayMap.size();
+    for (int i = evt1.DecayMap.size(); i < ret.DecayMap.size(); i++)
+      if (ret.DecayMap[i] != -1)
+        ret.DecayMap[i] += offset;
 
     ret.DecayMapFinal.reserve(evt1.DecayMapFinal.size() + evt2.DecayMapFinal.size());
     ret.DecayMapFinal.insert(ret.DecayMapFinal.end(), evt1.DecayMapFinal.begin(), evt1.DecayMapFinal.end());
     ret.DecayMapFinal.insert(ret.DecayMapFinal.end(), evt2.DecayMapFinal.begin(), evt2.DecayMapFinal.end());
-    
+    for (int i = evt1.DecayMapFinal.size(); i < ret.DecayMapFinal.size(); i++)
+      ret.DecayMapFinal[i] += offset;
+
     // TODO: check if proper to combine weights like that
     ret.weight = evt1.weight * evt2.weight;
     ret.logweight = evt1.logweight + evt2.logweight;
