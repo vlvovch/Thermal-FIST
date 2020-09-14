@@ -31,10 +31,10 @@ using namespace thermalfist;
 int main(int argc, char *argv[])
 {
 	// The default particle list. As of version 1.3 this is PDG2020 list including light nuclei
-	//ThermalParticleSystem parts(ThermalFIST_DEFAULT_LIST_FILE);
+	ThermalParticleSystem parts(ThermalFIST_DEFAULT_LIST_FILE);
 	
 	// To include excited nuclei use the following line instead
-	ThermalParticleSystem parts(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withexcitednuclei.dat");
+	//ThermalParticleSystem parts(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withexcitednuclei.dat");
 
 	// To reproduce arXiv:1903.10024 use the PDG2014 list
 	//ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2014/list-withnuclei.dat"); 
