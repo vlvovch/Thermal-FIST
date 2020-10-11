@@ -240,6 +240,37 @@ namespace thermalfist {
   void ThermalModelEVCrossterms::CalculatePrimordialDensities() {
     m_FluctuationsCalculated = false;
 
+    map< vector<double>, int> m_MapEVcomponent;
+
+    {
+      int NN = m_densities.size();
+      m_MapToEVComponent.resize(NN);
+      m_MapFromEVComponent.clear();
+      m_MapEVcomponent.clear();
+      m_EVComponentIndices.clear();
+
+      int tind = 0;
+      for (int i = 0; i < NN; ++i) {
+        vector<double> EVParam(0);
+        for (int j = 0; j < NN; ++j) {
+          EVParam.push_back(m_Virial[i][j]);
+          EVParam.push_back(m_Virial[j][i]);
+        }
+
+        if (m_MapEVcomponent.count(EVParam) == 0) {
+          m_MapEVcomponent[EVParam] = tind;
+          m_MapToEVComponent[i] = tind;
+          m_MapFromEVComponent.push_back(i);
+          m_EVComponentIndices.push_back(vector<int>(1, i));
+          tind++;
+        }
+        else {
+          m_MapToEVComponent[i] = m_MapEVcomponent[EVParam];
+          m_EVComponentIndices[m_MapEVcomponent[EVParam]].push_back(i);
+        }
+      }
+    }
+
     // Pressure
     SolvePressure();
     vector<double> tN(m_densities.size());

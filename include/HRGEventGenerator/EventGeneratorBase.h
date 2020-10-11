@@ -195,6 +195,7 @@ namespace thermalfist {
 
 
     double ComputeWeight(const std::vector<int>& totals) const;
+    double ComputeWeightNew(const std::vector<int>& totals) const;
 
   protected:
     /**

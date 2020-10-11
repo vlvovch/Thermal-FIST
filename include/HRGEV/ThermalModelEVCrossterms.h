@@ -98,6 +98,11 @@ namespace thermalfist {
 
     // Override functions end
 
+
+    const std::vector< std::vector<int> >& EVComponentIndices() const { return m_EVComponentIndices; }
+    virtual double DeltaMu(int i) const { return MuShift(i); }
+    const std::vector< std::vector<double> >& VirialMatrix() const { return m_Virial; }
+
   protected:
     /**
      * \brief Solves the system of transcdental equations 
@@ -196,6 +201,11 @@ namespace thermalfist {
     std::vector< std::vector<double> > m_Virial;  /**< Matrix of virial (excluded-volume) coefficients \f$ \tilde{b}_{ij} \f$ */
     double m_Pressure;                            /**< The (solved) total pressure */
     double m_TotalEntropyDensity;                 /**< The (solved) entropy pressure */
+
+
+    std::vector<int> m_MapToEVComponent;
+    std::vector<int> m_MapFromEVComponent;
+    std::vector< std::vector<int> > m_EVComponentIndices;
 
   private:
     class BroydenEquationsCRS : public BroydenEquations
