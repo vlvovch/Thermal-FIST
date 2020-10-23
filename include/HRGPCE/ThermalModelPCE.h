@@ -73,7 +73,7 @@ namespace thermalfist {
        *
        * \param flag Flag whether the Saha equation is used.
        */
-    void UseSahaForNuclei(bool flag) { m_UseSahaForNuclei = true; m_StabilityFlagsSet = false; }
+    void UseSahaForNuclei(bool flag) { m_UseSahaForNuclei = flag; m_StabilityFlagsSet = false; }
     bool UseSahaForNuclei() const { return m_UseSahaForNuclei; }
     //@}
 
@@ -86,7 +86,7 @@ namespace thermalfist {
        *
        * \param flag Whether long-lived resonances yields should be frozen.
        */
-    void FreezeLonglivedResonances(bool flag) { m_FreezeLonglivedResonances = true; m_StabilityFlagsSet = false; }
+    void FreezeLonglivedResonances(bool flag) { m_FreezeLonglivedResonances = flag; m_StabilityFlagsSet = false; }
     bool FreezeLonglivedResonances() const { return m_FreezeLonglivedResonances; }
     //@}
 
