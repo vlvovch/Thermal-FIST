@@ -950,6 +950,8 @@ namespace thermalfist {
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
     m_PDGtoID.clear();
+    m_ResonanceWidthShape = ThermalParticle::RelativisticBreitWigner;
+    m_ResonanceWidthIntegrationType = ThermalParticle::ZeroWidth;
 
     m_SortMode = ThermalParticleSystem::SortByMass;
 
