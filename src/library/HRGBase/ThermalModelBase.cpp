@@ -943,7 +943,6 @@ namespace thermalfist {
                 m_TotalCorrel[i][j] += m_densities[r] / m_Parameters.T * dnij;
               }
             }
-
           }
         }
       }

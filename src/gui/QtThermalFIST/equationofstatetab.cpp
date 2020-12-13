@@ -641,9 +641,23 @@ void EquationOfStateTab::plotLatticeData()
     }
 
     // WB data
-    if (mapWB.count(paramname) > 0) {
+    if (mapWB.count(paramname) > 0
+    || (CBratio->isChecked()
+    && mapWB.count(paramnames[index]) && mapWB.count(paramnames[comboQuantity2->currentIndex()])
+    && dataWBx[mapWB[paramnames[index]]].size() == dataWBx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
+    ) {
       
-      int indWB = mapWB[paramname];
+      int indWB = 0;
+      if (mapWB.count(paramname))
+        indWB = mapWB[paramname];
+      int indWB2 = 0;
+      if (CBratio->isChecked()) {
+        int index2 = comboQuantity2->currentIndex();
+        indWB  = mapWB[paramnames[index]];
+        indWB2 = mapWB[paramnames[index2]];
+        if (dataWBx[indWB].size() != dataWBx[indWB2].size())
+          return;
+      }
       plotDependence->addGraph();
       plotDependence->graph(graphStart)->setName("LQCD (Wuppertal-Budapest)");
       plotDependence->graph(graphStart)->setPen(QPen(QColor(255, 255, 255, 0)));
@@ -659,8 +673,18 @@ void EquationOfStateTab::plotLatticeData()
       QVector<double> yConfUpper(dataWBx[indWB].size()), yConfLower(dataWBx[indWB].size());
       for (int i = 0; i < x0.size(); ++i) {
         x0[i] = dataWBx[indWB][i];
-        yConfUpper[i] = dataWBy[indWB][i] + dataWByerrp[indWB][i];
-        yConfLower[i] = dataWBy[indWB][i] - dataWByerrm[indWB][i];
+        if (mapWB.count(paramname)) {
+          yConfUpper[i] = dataWBy[indWB][i] + dataWByerrp[indWB][i];
+          yConfLower[i] = dataWBy[indWB][i] - dataWByerrm[indWB][i];
+        }
+        else if (CBratio->isChecked()) {
+          double mean = dataWBy[indWB][i] / dataWBy[indWB2][i];
+          double error = mean * sqrt((dataWByerrp[indWB][i]/dataWBy[indWB][i])*(dataWByerrp[indWB][i]/dataWBy[indWB][i])
+                  + (dataWByerrp[indWB2][i]/dataWBy[indWB2][i])*(dataWByerrp[indWB2][i]/dataWBy[indWB2][i]));
+
+          yConfUpper[i] = mean + error;
+          yConfLower[i] = mean - error;
+        }
         if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
           tmin = std::min(tmin, yConfLower[i]);
           tmax = std::max(tmax, yConfUpper[i]);
@@ -676,8 +700,23 @@ void EquationOfStateTab::plotLatticeData()
     }
 
     // HotQCD data
-    if (mapHotQCD.count(paramname) > 0) {
-      int indHotQCD = mapHotQCD[paramname];
+    if (mapHotQCD.count(paramname) > 0 || (CBratio->isChecked()
+      && mapHotQCD.count(paramnames[index]) && mapHotQCD.count(paramnames[comboQuantity2->currentIndex()])
+      && dataHotQCDx[mapHotQCD[paramnames[index]]].size() == dataHotQCDx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
+      )
+    {
+      int indHotQCD = 0;
+      if (mapHotQCD.count(paramname))
+        indHotQCD = mapHotQCD[paramname];
+      int indHotQCD2 = 0;
+      if (CBratio->isChecked()) {
+        int index2 = comboQuantity2->currentIndex();
+        indHotQCD  = mapHotQCD[paramnames[index]];
+        indHotQCD2 = mapHotQCD[paramnames[index2]];
+        if (dataHotQCDx[indHotQCD].size() != dataHotQCDx[indHotQCD2].size())
+          return;
+      }
+
       plotDependence->addGraph();
       plotDependence->graph(graphStart)->setName("LQCD (HotQCD)");
       plotDependence->graph(graphStart)->setPen(QPen(QColor(255, 255, 255, 0)));
@@ -693,8 +732,20 @@ void EquationOfStateTab::plotLatticeData()
       QVector<double> yConfUpper(dataHotQCDx[indHotQCD].size()), yConfLower(dataHotQCDx[indHotQCD].size());
       for (int i = 0; i < x0.size(); ++i) {
         x0[i] = dataHotQCDx[indHotQCD][i];
-        yConfUpper[i] = dataHotQCDy[indHotQCD][i] + dataHotQCDyerrp[indHotQCD][i];
-        yConfLower[i] = dataHotQCDy[indHotQCD][i] - dataHotQCDyerrm[indHotQCD][i];
+
+        if (mapHotQCD.count(paramname)) {
+          yConfUpper[i] = dataHotQCDy[indHotQCD][i] + dataHotQCDyerrp[indHotQCD][i];
+          yConfLower[i] = dataHotQCDy[indHotQCD][i] - dataHotQCDyerrm[indHotQCD][i];
+        }
+        else if (CBratio->isChecked()) {
+          double mean = dataHotQCDy[indHotQCD][i] / dataHotQCDy[indHotQCD2][i];
+          double error = mean * sqrt((dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])*(dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])
+                                     + (dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i])*(dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i]));
+
+          yConfUpper[i] = mean + error;
+          yConfLower[i] = mean - error;
+        }
+
         if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
           tmin = std::min(tmin, yConfLower[i]);
           tmax = std::max(tmax, yConfUpper[i]);
