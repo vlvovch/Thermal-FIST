@@ -1188,7 +1188,8 @@ namespace thermalfist {
         std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
         //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
 
-        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId()));
+        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId(), 0,
+          momentum[3], momentum[4], momentum[5], momentum[6]));
       }
     }
 

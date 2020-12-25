@@ -38,7 +38,8 @@ namespace thermalfist {
                                        double T = 0.120, 
                                        double betas = 0.5, 
                                        double etamax = 0.5, 
-                                       double npow = 1.);
+                                       double npow = 1.,
+                                       double Rperp = 6.5);
     
     /// \deprecated
     /// \brief Old constructor. Included for backward compatibility.
@@ -66,8 +67,11 @@ namespace thermalfist {
     double GetBetaSurface() const { return m_BetaS; }
     double GetNPow() const { return m_n; }
     double GetEtaMax() const { return m_EtaMax; }
+    double GetRperp() const { return m_Rperp; }
   private:
-    double m_T, m_BetaS, m_EtaMax, m_n;
+    double GetVeffIntegral() const;
+
+    double m_T, m_BetaS, m_EtaMax, m_n, m_Rperp;
   };
 
   /// For backward compatibility

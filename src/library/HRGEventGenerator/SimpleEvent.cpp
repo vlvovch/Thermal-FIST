@@ -14,15 +14,24 @@ namespace thermalfist {
   void SimpleEvent::writeToFile(std::ofstream & fout, const EventOutputConfig& config, int eventnumber)
   {
     fout << "Event " << eventnumber << std::endl;
-    fout << "Weight: " << weight << std::endl;
 
-    fout << std::setw(20) << "pdgid"
-      << std::setw(20) << "px[GeV]"
-      << std::setw(20) << "py[GeV]"
-      << std::setw(20) << "pz[GeV]";
+    if (config.printWeight)
+      fout << "Weight: " << weight << std::endl;
+
+    fout << std::setw(20) << "pdgid";
+
+    if (config.printCoordinates)
+      fout << std::setw(20) << "r0[fm/c]" 
+      << std::setw(20) << "rx[fm]"
+      << std::setw(20) << "ry[fm]"
+      << std::setw(20) << "rz[fm]";
+
+    fout << std::setw(20) << "px[GeV/c]"
+      << std::setw(20) << "py[GeV/c]"
+      << std::setw(20) << "pz[GeV/c]";
 
     if (config.printEnergy)
-      fout << std::setw(20) << "p0[GeV]";
+      fout << std::setw(20) << "p0[GeV/c2]";
 
     if (config.printMotherPdg)
       fout << std::setw(20) << "mother_pdgid";
@@ -33,8 +42,16 @@ namespace thermalfist {
     fout << std::endl;
 
     for (size_t i = 0; i < Particles.size(); ++i) {
-      fout << std::setw(20) << Particles[i].PDGID
-        << std::setw(20) << Particles[i].px
+      fout << std::setw(20) << Particles[i].PDGID;
+
+      if (config.printCoordinates)
+        fout << std::setw(20) << Particles[i].r0
+          << std::setw(20) << Particles[i].rx
+          << std::setw(20) << Particles[i].ry
+          << std::setw(20) << Particles[i].rz;
+
+
+      fout << std::setw(20) << Particles[i].px
         << std::setw(20) << Particles[i].py
         << std::setw(20) << Particles[i].pz;
 
@@ -54,8 +71,15 @@ namespace thermalfist {
 
     if (config.printPhotonsLeptons) {
       for (size_t i = 0; i < PhotonsLeptons.size(); ++i) {
-        fout << std::setw(20) << PhotonsLeptons[i].PDGID
-          << std::setw(20) << PhotonsLeptons[i].px
+        fout << std::setw(20) << PhotonsLeptons[i].PDGID;
+        
+        if (config.printCoordinates)
+          fout << std::setw(20) << PhotonsLeptons[i].r0
+            << std::setw(20) << PhotonsLeptons[i].rx
+            << std::setw(20) << PhotonsLeptons[i].ry
+            << std::setw(20) << PhotonsLeptons[i].rz;
+        
+        fout << std::setw(20) << PhotonsLeptons[i].px
           << std::setw(20) << PhotonsLeptons[i].py
           << std::setw(20) << PhotonsLeptons[i].pz;
 

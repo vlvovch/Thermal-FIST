@@ -189,6 +189,11 @@ namespace thermalfist {
       ret.push_back(tp*cos(tphi)*sthe); //px
       ret.push_back(tp*sin(tphi)*sthe); //py
       ret.push_back(tp*cthe);           //pz
+      // TODO: proper Cartesian coordinates
+      ret.push_back(0.); //r0
+      ret.push_back(0.); //rx
+      ret.push_back(0.); //ry
+      ret.push_back(0.); //rz
       return ret;
     }
 
@@ -344,6 +349,21 @@ namespace thermalfist {
           ret[0] = part.px;
           ret[1] = part.py;
           ret[2] = part.pz;
+
+          // Space-time coordinates
+          double tau = m_FreezeoutModel->taufunc(zetacand);
+          double r0 = tau * cosheta;
+          double rz = tau * sinheta;
+
+          double Rperp = m_FreezeoutModel->Rfunc(zetacand);
+          double rx = Rperp * cosphi;
+          double ry = Rperp * sinphi;
+
+          ret.push_back(r0);
+          ret.push_back(rx);
+          ret.push_back(ry);
+          ret.push_back(rz);
+
           break;
         }
       }
@@ -799,10 +819,16 @@ namespace thermalfist {
       if (GetBeta() != 0.0)
         part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
 
-      std::vector<double> ret(3);
+      std::vector<double> ret(7);
       ret[0] = part.px;
       ret[1] = part.py;
       ret[2] = part.pz;
+
+      // Assume unit sphere at t = 0
+      ret[3] = 0.;
+      ret[4] = sinth * cos(ph);
+      ret[5] = sinth * sin(ph);
+      ret[6] = costh;
 
       return ret;
     }

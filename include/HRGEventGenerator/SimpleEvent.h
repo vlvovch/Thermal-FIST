@@ -60,11 +60,17 @@ namespace thermalfist {
       /// Output photons and leptons, if any
       bool printPhotonsLeptons;
 
-      /// Print the number of succesive decays before the particle was produced
+      /// Print the number of successive decays before the particle was produced
       bool printDecayEpoch;
 
+      /// Print the space-time coordinates of the particles
+      bool printCoordinates;
+
+      /// Print the event weight for importance sampling
+      bool printWeight;
+
       EventOutputConfig() :
-        printEnergy(false), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false) { }
+        printEnergy(false), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false), printCoordinates(false), printWeight(true) { }
     };
 
     /// Writes the event to an output file stream
