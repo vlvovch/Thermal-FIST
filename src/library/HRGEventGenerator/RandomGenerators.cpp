@@ -345,6 +345,11 @@ namespace thermalfist {
           (coshetaperp * dRdZeta - sinhetaperp * dtaudZeta) / p0LRF
           / 2.;
 
+        if (prob > 1.) {
+          printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Probability exceeds unity by %E\n",
+            prob - 1.);
+        }
+
         if (RandomGenerators::randgenMT.rand() < prob) {
           ret[0] = part.px;
           ret[1] = part.py;
