@@ -105,22 +105,24 @@ namespace thermalfist {
   {
     fout << "# " << Particles.size() << std::endl;
 
-    fout.precision(10);
+    fout.precision(16);
     fout << std::scientific;
 
+    const int tabsize = 23;
+
     for (size_t i = 0; i < Particles.size(); ++i) {
-      fout << std::setw(20) << Particles[i].PDGID << " ";
+      fout << std::setw(12) << Particles[i].PDGID << " ";
 
-      fout << std::setw(20) << Particles[i].r0 << " "
-        << std::setw(20) << Particles[i].rx << " "
-        << std::setw(20) << Particles[i].ry << " "
-        << std::setw(20) << Particles[i].rz << " ";
+      fout << std::setw(tabsize) << Particles[i].r0 << " "
+        << std::setw(tabsize) << Particles[i].rx << " "
+        << std::setw(tabsize) << Particles[i].ry << " "
+        << std::setw(tabsize) << Particles[i].rz << " ";
 
 
-      fout << std::setw(20) << Particles[i].p0 << " ";
-      fout << std::setw(20) << Particles[i].px << " "
-        << std::setw(20) << Particles[i].py << " "
-        << std::setw(20) << Particles[i].pz << " ";
+      fout << std::setw(tabsize) << Particles[i].p0 << " ";
+      fout << std::setw(tabsize) << Particles[i].px << " "
+        << std::setw(tabsize) << Particles[i].py << " "
+        << std::setw(tabsize) << Particles[i].pz << " ";
 
       fout << std::endl;
     }
