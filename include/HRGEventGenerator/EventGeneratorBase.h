@@ -133,7 +133,7 @@ namespace thermalfist {
      *                                          The first element is a vector of the sampled yields.
      *                                          The second element is the weight.
      */
-    std::pair< std::vector<int>, double > SampleYields() const;
+    virtual std::pair< std::vector<int>, double > SampleYields() const;
 
     /**
      * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
@@ -168,7 +168,12 @@ namespace thermalfist {
      */
     static SimpleEvent PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
-    
+    /**
+     * \brief The grand-canonical mean yields.
+     *
+     * \return std::vector<double> The computed grand-canonical mean yields.
+     */
+    virtual std::vector<double> GCEMeanYields() const;
 
     /// Helper variable to monitor the Acceptance rate of the rejection
     /// sampling used for canonical ensemble and/or eigenvolumes.

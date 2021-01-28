@@ -207,27 +207,28 @@ namespace thermalfist {
       return tp * tp / (texp + m_Statistics) / x;
     }
 
-    void ThermalMomentumGenerator::FixParameters()
-    {
-      double eps = 1e-8;
-      double l = 0., r = 1.;
-      double m1 = l + (r - l) / 3.;
-      double m2 = r - (r - l) / 3.;
-      int MAXITERS = 200;
-      int iter = 0;
-      while (fabs(m2 - m1) > eps && iter < MAXITERS) {
-        if (g(m1) < g(m2)) {
-          l = m1;
-        }
-        else {
-          r = m2;
-        }
-        m1 = l + (r - l) / 3.;
-        m2 = r - (r - l) / 3.;
-        iter++;
-      }
-      m_Max = g((m1 + m2) / 2.);
-    }
+    //void ThermalMomentumGenerator::FixParameters()
+    //{
+    //  //double eps = 1e-8;
+    //  //double l = 0., r = 1.;
+    //  //double m1 = l + (r - l) / 3.;
+    //  //double m2 = r - (r - l) / 3.;
+    //  //int MAXITERS = 200;
+    //  //int iter = 0;
+    //  //while (fabs(m2 - m1) > eps && iter < MAXITERS) {
+    //  //  if (g(m1) < g(m2)) {
+    //  //    l = m1;
+    //  //  }
+    //  //  else {
+    //  //    r = m2;
+    //  //  }
+    //  //  m1 = l + (r - l) / 3.;
+    //  //  m2 = r - (r - l) / 3.;
+    //  //  iter++;
+    //  //}
+    //  //m_Max = g((m1 + m2) / 2.);
+    //  m_Max = ComputeMaximum(m_Mass);
+    //}
 
     double ThermalMomentumGenerator::ComputeMaximum(double mass) const
     {

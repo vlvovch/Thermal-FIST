@@ -151,7 +151,7 @@ namespace thermalfist {
 
       double ComputeMaximum(double mass) const;
 
-      void FixParameters();
+      //void FixParameters();
 
       double m_Mass, m_T, m_Mu;
       int m_Statistics;

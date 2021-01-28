@@ -1465,6 +1465,15 @@ namespace thermalfist {
     return ret;
   }
 
+  std::vector<double> EventGeneratorBase::GCEMeanYields() const
+  {
+    std::vector<double> ret = m_THM->Densities();
+    for(size_t i = 0; i < ret.size(); ++i) {
+      ret[i] *= m_THM->Volume();
+    }
+    return ret;
+  }
+
   void EventGeneratorBase::SetVolume(double V)
   {
     if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
