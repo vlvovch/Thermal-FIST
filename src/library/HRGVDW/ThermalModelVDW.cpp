@@ -290,6 +290,7 @@ namespace thermalfist {
       }
 
       vector<double> sol = SearchSingleSolution(curmust);
+
       bool fl = true;
       for(size_t i = 0; i < sol.size(); ++i)
         if (sol[i] != sol[i]) fl = false;
@@ -1135,6 +1136,7 @@ namespace thermalfist {
       double maxdiff = 0.;
       for (size_t i = 0; i < xdelta.size(); ++i) {
         maxdiff = std::max(maxdiff, fabs(xdelta[i]));
+        maxdiff = std::max(maxdiff, fabs(f[i]));
       }
       return (maxdiff < m_MaximumError);
     }
