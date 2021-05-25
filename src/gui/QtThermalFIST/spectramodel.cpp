@@ -174,7 +174,7 @@ QVariant SpectraModel::headerData(int section, Qt::Orientation orientation, int 
       case 0:
         return tr("Name");
       case 2:
-        return tr("Mass [GeV]");
+        return tr("m [GeV]");
       case 3:
         return tr("Multiplicity");
       case 4:

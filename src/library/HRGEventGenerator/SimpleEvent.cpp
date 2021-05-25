@@ -26,12 +26,12 @@ namespace thermalfist {
       << std::setw(20) << "ry[fm]"
       << std::setw(20) << "rz[fm]";
 
+    if (config.printEnergy)
+      fout << std::setw(20) << "p0[GeV/c2]";
+
     fout << std::setw(20) << "px[GeV/c]"
       << std::setw(20) << "py[GeV/c]"
       << std::setw(20) << "pz[GeV/c]";
-
-    if (config.printEnergy)
-      fout << std::setw(20) << "p0[GeV/c2]";
 
     if (config.printMotherPdg)
       fout << std::setw(20) << "mother_pdgid";

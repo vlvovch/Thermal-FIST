@@ -70,7 +70,7 @@ namespace thermalfist {
       bool printWeight;
 
       EventOutputConfig() :
-        printEnergy(false), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false), printCoordinates(false), printWeight(true) { }
+        printEnergy(true), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false), printCoordinates(false), printWeight(true) { }
     };
 
     /// Writes the event to an output file stream
