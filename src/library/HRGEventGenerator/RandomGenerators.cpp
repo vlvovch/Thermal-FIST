@@ -10,6 +10,7 @@
 #include "HRGBase/xMath.h"
 #include "HRGEventGenerator/SimpleParticle.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
+#include "HRGEventGenerator/EventGeneratorBase.h"
 
 namespace thermalfist {
 
@@ -299,24 +300,44 @@ namespace thermalfist {
       if (mass < 0.)
         mass = Mass();
 
-      std::vector<double> ret(3, 0.);
-      while (1) {
-        double zetacand = GetRandomZeta(RandomGenerators::randgenMT);
-        double eta = -EtaMax() + 2. * EtaMax() * RandomGenerators::randgenMT.rand();
-        double ph = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
 
-        double betar = m_FreezeoutModel->tanhetaperp(zetacand);
-        double cosheta = cosh(eta);
-        double sinheta = sinh(eta);
+      double zetacand = GetRandomZeta(RandomGenerators::randgenMT);
+      double eta = -EtaMax() + 2. * EtaMax() * RandomGenerators::randgenMT.rand();
+      double ph = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
 
-        double cosphi = cos(ph);
-        double sinphi = sin(ph);
+      double betar = m_FreezeoutModel->tanhetaperp(zetacand);
+      double cosheta = cosh(eta);
+      double sinheta = sinh(eta);
 
-        double vx = betar * cosphi / cosheta;
-        double vy = betar * sinphi / cosheta;
-        double vz = tanh(eta);
+      double cosphi = cos(ph);
+      double sinphi = sin(ph);
 
-        SimpleParticle part(0., 0., 0., mass, 0);
+      double vx = betar * cosphi / cosheta;
+      double vy = betar * sinphi / cosheta;
+      double vz = tanh(eta);
+
+      double dRdZeta = m_FreezeoutModel->dRdZeta(zetacand);
+      double dtaudZeta = m_FreezeoutModel->dtaudZeta(zetacand);
+
+      double coshetaperp = m_FreezeoutModel->coshetaperp(zetacand);
+      double sinhetaperp = m_FreezeoutModel->sinhetaperp(zetacand);
+
+      std::vector<double> dsigma_lab;
+      dsigma_lab.push_back(dRdZeta * cosheta);
+      dsigma_lab.push_back(dtaudZeta * cosphi);
+      dsigma_lab.push_back(dtaudZeta * sinphi);
+      dsigma_lab.push_back(dRdZeta * sinheta);
+
+      // dsigma^\mu in the local rest frame
+      std::vector<double> dsigma_loc = LorentzBoost(dsigma_lab, vx, vy, vz);
+
+      // Maximum weight for the rejection sampling of the momentum
+      double maxWeight = 1. + std::abs(dsigma_loc[1] / dsigma_loc[0]) + std::abs(dsigma_loc[2] / dsigma_loc[0]) + std::abs(dsigma_loc[3] / dsigma_loc[0]);
+      maxWeight += 1.e-5; // To stabilize models where maxWeight is equal to unity, like Cracow model
+
+      SimpleParticle part(0., 0., 0., mass, 0);
+
+      while (true) {
 
         double tp = m_Generator.GetP(mass);
         double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -329,50 +350,48 @@ namespace thermalfist {
 
         double p0LRF = part.p0;
 
-        if (betar != 0.0 || eta != 0.0)
+        double dsigmamu_pmu_loc = dsigma_loc[0] * part.p0
+          - dsigma_loc[1] * part.px - dsigma_loc[2] * part.py - dsigma_loc[3] * part.pz;
+
+
+        double dsigmamu_umu_loc = dsigma_loc[0];
+
+        double dumu_pmu_loc = p0LRF;
+
+        double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
+
+        if (Weight > 1.) {
+          printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
+            Weight - 1.);
+        }
+
+        if (RandomGenerators::randgenMT.rand() < Weight)
+          break;
+
+      }
+
+      if (betar != 0.0 || eta != 0.0)
           part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
 
-        //double prob = (cosheta * part.p0 - sinheta * part.pz) /
-        //  (2. * (1. / (1 - betar * betar)) * (cosheta * part.p0 - sinheta * part.pz - betar * (part.px * cos(ph) + part.py * sin(ph))));
 
-        double dRdZeta = m_FreezeoutModel->dRdZeta(zetacand);
-        double dtaudZeta = m_FreezeoutModel->dtaudZeta(zetacand);
+      std::vector<double> ret(3, 0.);
+      ret[0] = part.px;
+      ret[1] = part.py;
+      ret[2] = part.pz;
 
-        double coshetaperp = m_FreezeoutModel->coshetaperp(zetacand);
-        double sinhetaperp = m_FreezeoutModel->sinhetaperp(zetacand);
+      // Space-time coordinates
+      double tau = m_FreezeoutModel->taufunc(zetacand);
+      double r0 = tau * cosheta;
+      double rz = tau * sinheta;
 
-        double prob = (dRdZeta * (cosheta * part.p0 - sinheta * part.pz)
-          - dtaudZeta * (cosphi * part.px + sinphi * part.py)) /
-          (coshetaperp * dRdZeta - sinhetaperp * dtaudZeta) / p0LRF
-          / 2.;
+      double Rperp = m_FreezeoutModel->Rfunc(zetacand);
+      double rx = Rperp * cosphi;
+      double ry = Rperp * sinphi;
 
-        if (prob > 1.) {
-          printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Probability exceeds unity by %E\n",
-            prob - 1.);
-        }
-
-        if (RandomGenerators::randgenMT.rand() < prob) {
-          ret[0] = part.px;
-          ret[1] = part.py;
-          ret[2] = part.pz;
-
-          // Space-time coordinates
-          double tau = m_FreezeoutModel->taufunc(zetacand);
-          double r0 = tau * cosheta;
-          double rz = tau * sinheta;
-
-          double Rperp = m_FreezeoutModel->Rfunc(zetacand);
-          double rx = Rperp * cosphi;
-          double ry = Rperp * sinphi;
-
-          ret.push_back(r0);
-          ret.push_back(rx);
-          ret.push_back(ry);
-          ret.push_back(rz);
-
-          break;
-        }
-      }
+      ret.push_back(r0);
+      ret.push_back(rx);
+      ret.push_back(ry);
+      ret.push_back(rz);
       return ret;
     }
 

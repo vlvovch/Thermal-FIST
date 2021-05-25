@@ -743,7 +743,21 @@ namespace thermalfist {
     if (feeddown != Feeddown::Primordial && !m_FeeddownCalculated)
       CalculateFeeddown();
 
-    return GetDensity(PDGID, dens);
+    double ret = GetDensity(PDGID, dens);
+
+    // Weak decay contributions from K0S if this particle is not in the list
+    if (feeddown == Feeddown::Weak && m_TPS->PdgToId(310) == -1) {
+      // pi0
+      if (PDGID == 111) {
+        ret += 2. * 0.308 * GetDensity(310, dens);
+      }
+      // pi+,-
+      if (PDGID == 211 || PDGID == -211) {
+        ret += 0.692 * GetDensity(310, dens);
+      }
+    }
+
+    return ret;
   }
 
 

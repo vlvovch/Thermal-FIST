@@ -26,6 +26,29 @@ namespace thermalfist {
   int EventGeneratorBase::fCEAccepted, EventGeneratorBase::fCETotal;
   double EventGeneratorBase::m_LastWeight = 1., EventGeneratorBase::m_LastLogWeight = 0., EventGeneratorBase::m_LastNormWeight = 1.;
 
+  std::vector<double> LorentzBoost(const std::vector<double>& fourvector, double vx, double vy, double vz)
+  {
+    std::vector<double> ret(4, 0);
+    double v2 = vx * vx + vy * vy + vz * vz;
+    if (v2 == 0.0)
+      return fourvector;
+    double gamma = 1. / sqrt(1. - v2);
+
+    const double& r0 = fourvector[0];
+    const double& rx = fourvector[1];
+    const double& ry = fourvector[2];
+    const double& rz = fourvector[3];
+
+    ret[0] = gamma * r0 - gamma * (vx * rx + vy * ry + vz * rz);
+    ret[1] = -gamma * vx * r0 + (1. + (gamma - 1.) * vx * vx / v2) * rx +
+      (gamma - 1.) * vx * vy / v2 * ry + (gamma - 1.) * vx * vz / v2 * rz;
+    ret[2] = -gamma * vy * r0 + (1. + (gamma - 1.) * vy * vy / v2) * ry +
+      (gamma - 1.) * vy * vx / v2 * rx + (gamma - 1.) * vy * vz / v2 * rz;
+    ret[3] = -gamma * vz * r0 + (1. + (gamma - 1.) * vz * vz / v2) * rz +
+      (gamma - 1.) * vz * vx / v2 * rx + (gamma - 1.) * vz * vy / v2 * ry;
+
+    return ret;
+  }
 
   EventGeneratorBase::~EventGeneratorBase()
   {

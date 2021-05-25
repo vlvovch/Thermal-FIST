@@ -32,6 +32,9 @@ namespace thermalfist {
     return os.str();
   }
 
+  /// Lorentz boost
+  std::vector<double> LorentzBoost(const std::vector<double>& fourvector, double vx, double vy, double vz);
+
   /// \brief Structure containing the thermal event generator configuration.
   struct EventGeneratorConfiguration {
     /// Enumerates the statistical ensembles 
