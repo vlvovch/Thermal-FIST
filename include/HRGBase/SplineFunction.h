@@ -1,12 +1,4 @@
 /*
-/*
-/*
-/*
-/*
-/*
-/*
-/*
-/*
 /* * GNU General Public License (GPLv3 or later)
  */
 #ifndef SPLINEFUNCTION_H

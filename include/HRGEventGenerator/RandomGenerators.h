@@ -104,7 +104,9 @@ namespace thermalfist {
       /// Samples the 3-momentum of a particle
       /// \param mass The mass of a particle. If negative value provided, defaults to the pole/vacuum mass
       /// \return std::vector<double> A vector containing the sampled
-      ///         \f$p_x\f$, \f$p_y\f$, \f$p_z\f$ components of the three-momentum
+      ///         \f$p_x\f$, \f$p_y\f$, \f$p_z\f$ components of the three-momentum,
+      ///         and, additionally, the space-time Cartesian coordinates \f$r_0\f$, \f$r_x\f$, \f$r_y\f$, \f$r_z\f$
+      ///         in the collision center-of-mass frame
       virtual std::vector<double> GetMomentum(double mass = -1.) const = 0;
     };
 
@@ -149,7 +151,7 @@ namespace thermalfist {
 
       double ComputeMaximum(double mass) const;
 
-      void FixParameters();
+      //void FixParameters();
 
       double m_Mass, m_T, m_Mu;
       int m_Statistics;

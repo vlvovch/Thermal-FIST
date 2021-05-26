@@ -24,6 +24,11 @@ void ParticleSpectrum::AddParticle(const SimpleParticle &part) {
     dndmt.insert(part.GetMt());
     dndpt.insert(part.GetPt());
     d2ndptdy.insert(part.GetY(), part.GetPt());
+
+    double pT = part.GetPt();
+    pTsum_event += pT;
+    pT2sum_event += pT * pT;
+    //pTcnt += 1.;
 }
 
 void ParticleSpectrum::FinishEvent(double weight) {
@@ -38,6 +43,13 @@ void ParticleSpectrum::FinishEvent(double weight) {
     n8 += weight*tmn*tmn*tmn*tmn*tmn*tmn*tmn*tmn;
     wsum  += weight;
     w2sum += weight*weight;
+
+    pTsum += pTsum_event * weight;
+    pT2sum += pT2sum_event * weight;
+    pTcnt += tmn * weight;
+    pTcnt2 += tmn * weight * weight;
+    pTsum_event = pT2sum_event = 0.;
+
     tmpn = 0;
     dndp.updateEvent(weight);
     dndy.updateEvent(weight);
@@ -140,6 +152,19 @@ double ParticleSpectrum::GetVarianceError() const {
 
 double ParticleSpectrum::GetScaledVarianceError() const {
     return GetVarianceError() / GetMean();
+}
+
+double ParticleSpectrum::GetMeanPt() const
+{
+  return pTsum / pTcnt;
+}
+
+double ParticleSpectrum::GetMeanPtError() const
+{
+  double pTmean  = pTsum / pTcnt;
+  double pT2mean = pT2sum / pTcnt;
+  double nEpT = pTcnt * pTcnt / pTcnt2;
+  return sqrt((pT2mean - pTmean * pTmean) / (nEpT - 1.));
 }
 
 ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, double T, double beta, int distrtype, double etamax) {

@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	// The list of yield ratios to output
 	vector< pair<long long, long long> > ratios;
 	// First the nuclei
-	ratios.push_back(make_pair(1000010020, 2212));  // d/p
+	ratios.push_back(make_pair(1000010020, 2212)); // d/p
 	ratios.push_back(make_pair(1000020030, 2212)); // He3/p
 	ratios.push_back(make_pair(1000010030, 2212)); // H3/p
 	ratios.push_back(make_pair(1000020040, 2212)); // He4/p

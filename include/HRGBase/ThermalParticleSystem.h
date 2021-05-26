@@ -560,6 +560,15 @@ namespace thermalfist {
 
     void Initialize(const std::string& InputFile = "", const std::string& DecayFile = "", bool GenAntiP = true, double mcut = -1.);
 
+    void FinalizeListLoad();
+
+    void FinalizeDecaysLoad();
+
+    /// Check is the particle list is in the iSS format
+    bool CheckListIsiSS(const std::string &filename);
+
+    /// Load particle list from the iSS sampler format used at https://github.com/chunshen1987/iSS
+    void LoadListiSS(const std::string& filename, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
   private:
     std::vector<ThermalParticle>    m_Particles;

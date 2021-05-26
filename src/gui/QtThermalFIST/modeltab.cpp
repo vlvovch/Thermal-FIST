@@ -521,6 +521,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
   if (model->TPS()->hasCharmed())
     dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
+  dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << endl;
   dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
   if (fabs(nb) > 1.e-10)
     dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;

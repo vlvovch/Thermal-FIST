@@ -486,6 +486,11 @@ namespace thermalfist {
 
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
 
+    if (ListFiles.size() == 1 && CheckListIsiSS(ListFiles[0])) {
+      LoadListiSS(ListFiles[0], flags, mcut);
+      return;
+    }
+
     for(int i = 0; i < ListFiles.size(); ++i)
       AddParticlesToListFromFile(ListFiles[i], flags, mcut);
 
@@ -529,11 +534,7 @@ namespace thermalfist {
 
     LoadDecays(tDecayFiles, flags);
 
-    SetResonanceWidthShape(m_ResonanceWidthShape);
-    SetResonanceWidthIntegrationType(m_ResonanceWidthIntegrationType);
-    SetCalculationType(m_QStatsCalculationType);
-
-    CheckDecayChannelsAreSpecified();
+    FinalizeListLoad();
   }
 
   void ThermalParticleSystem::LoadList(const std::string& InputFile, const std::string& DecayFile, bool GenAntiP, double mcut) {
@@ -846,12 +847,7 @@ namespace thermalfist {
       }
     }
 
-    for (size_t i = 0; i < m_Particles.size(); ++i)
-      m_Particles[i].SetDecaysOriginal(m_Particles[i].Decays());
-
-    FillDecayProperties();
-    FillDecayThresholds();
-    ProcessDecays();
+    FinalizeDecaysLoad();
   }
 
   void ThermalParticleSystem::LoadDecays(const std::string& DecaysFile, bool GenerateAntiParticles)
@@ -950,6 +946,8 @@ namespace thermalfist {
     m_NumberOfParticles = 0;
     m_Particles.resize(0);
     m_PDGtoID.clear();
+    m_ResonanceWidthShape = ThermalParticle::RelativisticBreitWigner;
+    m_ResonanceWidthIntegrationType = ThermalParticle::ZeroWidth;
 
     m_SortMode = ThermalParticleSystem::SortByMass;
 
@@ -968,6 +966,171 @@ namespace thermalfist {
     if (!GenAntiP)
       flags.insert(ThermalParticleSystem::flag_no_antiparticles);
     Initialize(vector<string>(1, InputFile), vector<string>(1, DecayFile), flags, mcut);
+  }
+
+  void ThermalParticleSystem::FinalizeListLoad()
+  {
+    SetResonanceWidthShape(m_ResonanceWidthShape);
+    SetResonanceWidthIntegrationType(m_ResonanceWidthIntegrationType);
+    SetCalculationType(m_QStatsCalculationType);
+
+    CheckDecayChannelsAreSpecified();
+  }
+
+  void ThermalParticleSystem::FinalizeDecaysLoad()
+  {
+    for (size_t i = 0; i < m_Particles.size(); ++i)
+      m_Particles[i].SetDecaysOriginal(m_Particles[i].Decays());
+
+    FillDecayProperties();
+    FillDecayThresholds();
+    ProcessDecays();
+  }
+
+  bool ThermalParticleSystem::CheckListIsiSS(const std::string& filename)
+  {
+    ifstream fin(filename.c_str());
+    if (fin.is_open()) {
+      string tmp;
+      fin >> tmp;
+      return (tmp == "iSS");
+    }
+    return false;
+  }
+
+  void ThermalParticleSystem::LoadListiSS(const std::string& filename, const std::set<std::string>& flags, double mcut)
+  {
+    m_NumberOfParticles = 0;
+    m_Particles.resize(0);
+    m_PDGtoID.clear();
+
+    m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+
+    ifstream fin(filename.c_str());
+
+    if (fin.is_open()) {
+      char cc[2000];
+      // Skip the header line
+      fin.getline(cc, 2000);
+      // Read all the particles
+      while (!fin.eof()) {
+        fin.getline(cc, 2000);
+        string tmp = string(cc);
+        vector<string> elems = CuteHRGHelper::split(tmp, '#');
+        if (elems.size() < 1 || elems[0].size() == 0)
+          continue;
+
+        istringstream iss(elems[0]);
+
+        int stable, stat, str, bary, chg, charm, itmp, tdecaynumber;
+        long long pdgid, ltmp;
+        double mass, degeneracy, width, threshold, abss, absc;
+        string name;
+
+        if (iss >> pdgid
+          >> name
+          >> mass
+          >> width
+          >> degeneracy
+          >> bary
+          >> str
+          >> charm
+          >> itmp
+          >> itmp
+          >> chg
+          >> tdecaynumber
+          ) {
+
+          stable = 0;
+          abss = std::abs(str);
+          if (pdgid == 333)
+            abss = 2.;
+          absc = std::abs(charm);
+          threshold = 0.;
+          stat = (std::abs(bary) % 2 == 0 ? -1 : 1);
+
+          ThermalParticle part_candidate = ThermalParticle(
+            (bool)stable, name, pdgid, degeneracy, stat, mass, str, bary, chg, abss, width, threshold, charm, absc);
+
+          if (pdgid < 0)
+            part_candidate.SetAntiParticle(true);
+
+          if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0)
+            continue;
+
+          if (bary != 0)  m_NumBaryons++;
+          if (chg != 0)   m_NumCharged++;
+          if (str != 0)   m_NumStrange++;
+          if (charm != 0) m_NumCharmed++;
+
+          m_Particles.push_back(part_candidate);
+          m_PDGtoID[pdgid] = m_Particles.size() - 1;
+          m_NumberOfParticles++;
+
+          // now read the decays
+          ThermalParticle::ParticleDecaysVector tdecays(0);
+          for (size_t idec = 0; idec < tdecaynumber; ++idec) {
+            fin.getline(cc, 2000);
+            string tmp = string(cc);
+            elems = CuteHRGHelper::split(tmp, '#');
+            istringstream issdec(elems[0]);
+
+            ParticleDecayChannel tdecay;
+            issdec >> ltmp;
+            int ndecayparticles;
+            double BR;
+            issdec >> ndecayparticles >> tdecay.mBratio;
+            for (size_t idaughter = 0; idaughter < 5; ++idaughter) {
+              issdec >> ltmp;
+              if (idaughter < ndecayparticles)
+                tdecay.mDaughters.push_back(ltmp);
+            }
+            tdecays.push_back(tdecay);
+          }
+
+          if (static_cast<int>(tdecays.size()) == tdecaynumber 
+            && static_cast<int>(tdecays.size()) != 0
+            && tdecays[0].mDaughters.size() != 1) {
+            m_Particles.back().SetDecays(tdecays);
+          }
+          else {
+            stable = 1;
+            m_Particles.back().SetStable(true);
+          }
+
+          // Add antibaryon
+          if (bary > 0 && (m_PDGtoID.count(-pdgid) == 0)) {
+
+            if (bary != 0)  m_NumBaryons++;
+            if (chg != 0)   m_NumCharged++;
+            if (str != 0)   m_NumStrange++;
+            if (charm != 0) m_NumCharmed++;
+
+            if (bary == 0 && name[name.size() - 1] == '+')
+              name[name.size() - 1] = '-';
+            else if (bary == 0 && name[name.size() - 1] == '-')
+              name[name.size() - 1] = '+';
+            else
+              name = "anti-" + name;
+            m_Particles.push_back(ThermalParticle((bool)stable, name, -pdgid, degeneracy, stat, mass, -str, -bary, -chg, abss, width, threshold, -charm, absc));
+            m_Particles.back().SetAntiParticle(true);
+            m_PDGtoID[pdgid] = m_Particles.size() - 1;
+          }
+
+        }
+      }
+
+      FinalizeList();
+
+      for (size_t i = 0; i < m_Particles.size(); ++i) {
+        if (m_Particles[i].BaryonCharge() < 0)
+          m_Particles[i].SetDecays(GetDecaysFromAntiParticle(m_Particles[m_PDGtoID[-m_Particles[i].PdgId()]].Decays()));
+      }
+
+      FinalizeDecaysLoad();
+
+      FinalizeListLoad();
+    }
   }
 
   void ThermalParticleSystem::WriteDecaysToFile(const std::string& OutputFile, bool WriteAntiParticles)

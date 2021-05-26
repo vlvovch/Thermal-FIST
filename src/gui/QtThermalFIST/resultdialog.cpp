@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QDebug>
+#include <iostream>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/xMath.h"
@@ -374,6 +375,33 @@ QString ResultDialog::GetResults() {
 
     ret += "\r\n";
 
+    {
+      double Np = model->ChargedMultiplicity(1);
+      double Nm = model->ChargedMultiplicity(-1);
+      double wplus = model->ChargedScaledVariance(1);
+      double wminus = model->ChargedScaledVariance(-1);
+      double covNpm =
+              (Np * wplus + Nm * wminus - (model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)
+                                           * model->Volume() * pow(model->Parameters().T * xMath::GeVtoifm(), 3))) / 2.;
+
+      double nudyn = wplus / Np + wminus / Nm - 2. * covNpm / Np / Nm - (Np + Nm) / Np / Nm;
+
+      sprintf(cc, "%-25s = ", "Primordial <Nch>*nu_dyn");
+      ret += QString(cc);
+      ret += QString::number((Np + Nm) * nudyn) + "\r\n";
+
+      double Dprim = 4. * model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)
+                     * model->Volume() * pow(model->Parameters().T * xMath::GeVtoifm(), 3) /
+                     model->ChargedMultiplicity(0);
+
+      sprintf(cc, "%-25s = ", "Primordial D");
+      ret += QString(cc);
+      ret += QString::number(Dprim) + "\r\n";
+
+      ret += "\r\n";
+    }
+
+
     sprintf(cc, "%-25s = ", "Final Nch");
     ret += QString(cc);
     ret += QString::number(model->ChargedMultiplicityFinal(0)) + "\r\n";
@@ -398,6 +426,34 @@ QString ResultDialog::GetResults() {
     sprintf(cc, "%-25s = ", "Final w[N-]");
     ret += QString(cc);
     ret += QString::number(model->ChargedScaledVarianceFinal(-1)) + "\r\n";
+
+    ret += "\r\n";
+
+    {
+      double Np = model->ChargedMultiplicityFinal(1);
+      double Nm = model->ChargedMultiplicityFinal(-1);
+      double wplus = model->ChargedScaledVarianceFinal(1);
+      double wminus = model->ChargedScaledVarianceFinal(-1);
+      double covNpm =
+              (Np * wplus + Nm * wminus - (model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)
+                                           * model->Volume() * pow(model->Parameters().T * xMath::GeVtoifm(), 3))) / 2.;
+
+      double nudyn = wplus / Np + wminus / Nm - 2. * covNpm / Np / Nm - (Np + Nm) / Np / Nm;
+
+      sprintf(cc, "%-25s = ", "Final <Nch>*nu_dyn");
+      ret += QString(cc);
+      ret += QString::number((Np + Nm) * nudyn) + "\r\n";
+
+      double Dtot = 4. * model->Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)
+                     * model->Volume() * pow(model->Parameters().T * xMath::GeVtoifm(), 3) /
+                     model->ChargedMultiplicityFinal(0);
+
+      sprintf(cc, "%-25s = ", "Final D");
+      ret += QString(cc);
+      ret += QString::number(Dtot) + "\r\n";
+
+      ret += "\r\n";
+    }
 
     if (flucts != NULL && flucts->flag) {
       ret += "\r\n";

@@ -51,6 +51,7 @@ CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
   QLabel* labelQuantity = new QLabel(tr("Quantity:"));
   comboQuantity = new QComboBox();
   comboQuantity->addItem(tr("Susceptibility"));
+  comboQuantity->addItem(tr("Moment"));
   comboQuantity->addItem(tr("Delta[N1,N2]"));
   comboQuantity->addItem(tr("Sigma[N1,N2]"));
   comboQuantity->setCurrentIndex(0);
@@ -146,6 +147,8 @@ void CorrelationsDialog::recalculate()
 
         if (comboQuantity->currentIndex() == 0)
           tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr)));
+        else if (comboQuantity->currentIndex() == 1)
+          tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
         else {
           if (pdg1 == pdg2) {
             tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(0.)));
@@ -179,12 +182,12 @@ void CorrelationsDialog::recalculate()
                 - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg1)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg1)
                 + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1)) / N1;
-              wn1 *= model->Volume() * pow(model->Parameters().T, 3);
+              wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
               wn2 = (model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, pdg2)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, -pdg2)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg2, pdg2)
                 + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg2, -pdg2)) / N2;
-              wn2 *= model->Volume() * pow(model->Parameters().T, 3);
+              wn2 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
             }
             else {
               N1 = model->GetDensity(pdg1, Feeddown::StabilityFlag) * model->Volume()
@@ -207,7 +210,7 @@ void CorrelationsDialog::recalculate()
           corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
           // Delta
-          if (comboQuantity->currentIndex() == 1) {
+          if (comboQuantity->currentIndex() == 2) {
             double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
             tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
             continue;
@@ -252,6 +255,9 @@ void CorrelationsDialog::recalculate()
             if (comboQuantity->currentIndex() == 0) {
               tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j))));
             }
+            else if (comboQuantity->currentIndex() == 1) {
+              tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
+            }
             else {
               double N1 = model->ConservedChargeDensity((ConservedCharge::Name)i) * model->Volume();
               double N2 = model->ConservedChargeDensity((ConservedCharge::Name)j) * model->Volume();
@@ -259,7 +265,7 @@ void CorrelationsDialog::recalculate()
               double wn2 = model->Susc((ConservedCharge::Name)j, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
               double corr = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
               // Delta
-              if (comboQuantity->currentIndex() == 1) {
+              if (comboQuantity->currentIndex() == 2) {
                 double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
@@ -333,6 +339,8 @@ void CorrelationsDialog::recalculate()
 
           if (comboQuantity->currentIndex() == 0)
             tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr)));
+          else if (comboQuantity->currentIndex() == 1)
+            tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
           else {
             double N1 = 0., N2 = 0.;
             double wn1 = 0., wn2 = 0.;
@@ -360,7 +368,7 @@ void CorrelationsDialog::recalculate()
                   - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg1)
                   - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg1)
                   + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1)) / N1;
-                wn1 *= model->Volume() * pow(model->Parameters().T, 3);
+                wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
                 wn2 = model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
               }
               else {
@@ -379,7 +387,7 @@ void CorrelationsDialog::recalculate()
             corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
             // Delta
-            if (comboQuantity->currentIndex() == 1) {
+            if (comboQuantity->currentIndex() == 2) {
               double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }

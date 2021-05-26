@@ -60,11 +60,17 @@ namespace thermalfist {
       /// Output photons and leptons, if any
       bool printPhotonsLeptons;
 
-      /// Print the number of succesive decays before the particle was produced
+      /// Print the number of successive decays before the particle was produced
       bool printDecayEpoch;
 
+      /// Print the space-time coordinates of the particles
+      bool printCoordinates;
+
+      /// Print the event weight for importance sampling
+      bool printWeight;
+
       EventOutputConfig() :
-        printEnergy(false), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false) { }
+        printEnergy(true), printMotherPdg(false), printPhotonsLeptons(false), printDecayEpoch(false), printCoordinates(false), printWeight(true) { }
     };
 
     /// Writes the event to an output file stream
@@ -72,6 +78,9 @@ namespace thermalfist {
 
     /// Writes the event to an output file stream
     void writeToFile(std::ofstream& fout, int eventnumber = 1) { writeToFile(fout, EventOutputConfig(), eventnumber); }
+
+    /// Writes the event in a format suitable for UrQMD afterburner, as described here https://github.com/jbernhard/urqmd-afterburner
+    void writeToFileForUrqmd(std::ofstream& fout);
   };
 
 } // namespace thermalfist

@@ -231,6 +231,9 @@ class ParticleSpectrum
     std::vector<double> xs;
     std::vector<double> ys;
     bool acc;
+    double pTsum_event, pT2sum_event;
+    double pTsum, pT2sum;
+    double pTcnt, pTcnt2;
 public:
     density   dndp;
     density   dndy;
@@ -246,7 +249,10 @@ public:
         d2ndptdy = density2d(-3. - etamax, 3. + etamax, 40, 0., 2., 40);
         acc      = false;
         isAveragesCalculated = false;
+        tmpn = 0;
         means.resize(9);
+        pTsum = pT2sum = pTcnt = pTcnt2 = 0.;
+        pTsum_event = pT2sum_event = 0.;
     }
     ~ParticleSpectrum() {
     }
@@ -262,6 +268,8 @@ public:
         dndmt = density(mass, 2.+mass, 500);
         dndpt = density(0., 3. + mass, 500);
         d2ndptdy = density2d(-3., 3., 40, 0., 2., 40);
+        pTsum = pT2sum = pTcnt = pTcnt2 = 0.;
+        pTsum_event = pT2sum_event = 0.;
     }
     void SetDistribution(thermalfist::MomentumDistributionBase *distr) {
         fDistribution = distr;
@@ -290,6 +298,10 @@ public:
     double GetN2Error2() const;
     double GetVarianceError() const;
     double GetScaledVarianceError() const;
+
+    double GetMeanPt() const;
+    double GetMeanPtError() const;
+
 
     double GetModeldNdp(double p) const {
         if (fDistribution!=NULL && !fDistribution->isNormalized()) fDistribution->Normalize();

@@ -77,6 +77,7 @@ namespace thermalfist {
     }
 
     std::vector<SimpleParticle> TwoBodyDecay(const SimpleParticle & Mother, double m1, long long pdg1, double m2, long long pdg2) {
+
       std::vector<SimpleParticle> ret(0);
       ret.push_back(Mother);
       ret.push_back(Mother);
@@ -103,6 +104,8 @@ namespace thermalfist {
       ret[1].pz = -ret[0].pz;
       ret[1].p0 = sqrt(m2*m2 + ret[1].px*ret[1].px + ret[1].py*ret[1].py + ret[1].pz*ret[1].pz);
 
+      double ten2 = ret[1].p0;
+
       ret[0] = LorentzBoost(ret[0], -vx, -vy, -vz);
       ret[1] = LorentzBoost(ret[1], -vx, -vy, -vz);
 
@@ -116,6 +119,14 @@ namespace thermalfist {
         if (ret[i].px != ret[i].px) {
           printf("**WARNING** Issue in a two-body decay!\n");
         }
+
+#ifdef DEBUGDECAYS
+      if (abs(Mother.p0 - (ret[0].p0 + ret[1].p0)) > 1.e-9) {
+        printf("Two-body decay energy conservation issue: %lf %lf\n",
+               Mother.p0 - (ret[0].p0 + ret[1].p0), sqrt(vx*vx+vy*vy+vz*vz));
+        printf("%lf %lf\n", Mother.m, ten1 + ten2);
+      }
+#endif
 
       return ret;
     }
@@ -138,8 +149,15 @@ namespace thermalfist {
       SimpleParticle Mother2 = Mother;
       // Mass validation
       double tmasssum = 0.;
-      for (size_t i = 0; i < masses.size(); ++i) tmasssum += masses[i];
-      if (Mother2.m < tmasssum) Mother2.m = tmasssum + 1e-7;
+      for (size_t i = 0; i < masses.size(); ++i)
+        tmasssum += masses[i];
+
+      // If sum of decay product masses larger than the mother particle mass (happens with zero-width resonances),
+      // adjust the mass and the energy of the mother particle
+      if (Mother2.m < tmasssum) {
+        Mother2.m = tmasssum + 1.e-7;
+        Mother2.p0 = sqrt(Mother2.px * Mother2.px + Mother2.py * Mother2.py + Mother2.pz * Mother2.pz + Mother2.m * Mother2.m);
+      }
 
       if (masses.size() == 2) return TwoBodyDecay(Mother2, masses[0], pdgs[0], masses[1], pdgs[1]);
       double tmin = 0.;

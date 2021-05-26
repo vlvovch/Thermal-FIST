@@ -106,7 +106,8 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
   if (model->IsCalculated()) {
 
     std::vector< std::pair<double, int> > sources = model->TPS()->DecayContributionsByFeeddown()[Feeddown::StabilityFlag][pid];
-    for (int i = 0; i < sources.size(); ++i) sources[i].first *= model->Densities()[sources[i].second];
+    for (int i = 0; i < sources.size(); ++i)
+      sources[i].first *= model->Densities()[sources[i].second];
 
     qSort(sources.begin(), sources.end());
 

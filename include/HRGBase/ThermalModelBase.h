@@ -956,6 +956,7 @@ namespace thermalfist {
     /// in accordance with the 0-based index of each specie.
     /// PdgToId() maps PDG ID to the 0-based index.
     const std::vector<double>& Densities()      const { return m_densities; }
+    std::vector<double>& Densities() { return m_densities; }
 
     /// A vector with total particle number densities,
     /// which include the feeddown contribution in accordance

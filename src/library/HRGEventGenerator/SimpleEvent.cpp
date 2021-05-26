@@ -1,6 +1,6 @@
 /*
  * Thermal-FIST package
- * 
+ *
  * Copyright (c) 2015-2019 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
@@ -11,18 +11,27 @@
 
 namespace thermalfist {
 
-  void SimpleEvent::writeToFile(std::ofstream & fout, const EventOutputConfig& config, int eventnumber)
+  void SimpleEvent::writeToFile(std::ofstream& fout, const EventOutputConfig& config, int eventnumber)
   {
     fout << "Event " << eventnumber << std::endl;
-    fout << "Weight: " << weight << std::endl;
 
-    fout << std::setw(20) << "pdgid"
-      << std::setw(20) << "px[GeV]"
-      << std::setw(20) << "py[GeV]"
-      << std::setw(20) << "pz[GeV]";
+    if (config.printWeight)
+      fout << "Weight: " << weight << std::endl;
+
+    fout << std::setw(20) << "pdgid";
+
+    if (config.printCoordinates)
+      fout << std::setw(20) << "r0[fm/c]"
+      << std::setw(20) << "rx[fm]"
+      << std::setw(20) << "ry[fm]"
+      << std::setw(20) << "rz[fm]";
 
     if (config.printEnergy)
-      fout << std::setw(20) << "p0[GeV]";
+      fout << std::setw(20) << "p0[GeV/c2]";
+
+    fout << std::setw(20) << "px[GeV/c]"
+      << std::setw(20) << "py[GeV/c]"
+      << std::setw(20) << "pz[GeV/c]";
 
     if (config.printMotherPdg)
       fout << std::setw(20) << "mother_pdgid";
@@ -32,9 +41,20 @@ namespace thermalfist {
 
     fout << std::endl;
 
+    fout.precision(10);
+    fout << std::scientific;
+
     for (size_t i = 0; i < Particles.size(); ++i) {
-      fout << std::setw(20) << Particles[i].PDGID
-        << std::setw(20) << Particles[i].px
+      fout << std::setw(20) << Particles[i].PDGID;
+
+      if (config.printCoordinates)
+        fout << std::setw(20) << Particles[i].r0
+        << std::setw(20) << Particles[i].rx
+        << std::setw(20) << Particles[i].ry
+        << std::setw(20) << Particles[i].rz;
+
+
+      fout << std::setw(20) << Particles[i].px
         << std::setw(20) << Particles[i].py
         << std::setw(20) << Particles[i].pz;
 
@@ -50,12 +70,18 @@ namespace thermalfist {
       fout << std::endl;
     }
 
-    fout << std::scientific;
 
     if (config.printPhotonsLeptons) {
       for (size_t i = 0; i < PhotonsLeptons.size(); ++i) {
-        fout << std::setw(20) << PhotonsLeptons[i].PDGID
-          << std::setw(20) << PhotonsLeptons[i].px
+        fout << std::setw(20) << PhotonsLeptons[i].PDGID;
+
+        if (config.printCoordinates)
+          fout << std::setw(20) << PhotonsLeptons[i].r0
+          << std::setw(20) << PhotonsLeptons[i].rx
+          << std::setw(20) << PhotonsLeptons[i].ry
+          << std::setw(20) << PhotonsLeptons[i].rz;
+
+        fout << std::setw(20) << PhotonsLeptons[i].px
           << std::setw(20) << PhotonsLeptons[i].py
           << std::setw(20) << PhotonsLeptons[i].pz;
 
@@ -75,6 +101,35 @@ namespace thermalfist {
     fout << std::fixed;
   }
 
+  void SimpleEvent::writeToFileForUrqmd(std::ofstream& fout)
+  {
+    fout << "# " << Particles.size() << std::endl;
+
+    fout.precision(16);
+    fout << std::scientific;
+
+    const int tabsize = 23;
+
+    for (size_t i = 0; i < Particles.size(); ++i) {
+      fout << std::setw(12) << Particles[i].PDGID << " ";
+
+      fout << std::setw(tabsize) << Particles[i].r0 << " "
+        << std::setw(tabsize) << Particles[i].rx << " "
+        << std::setw(tabsize) << Particles[i].ry << " "
+        << std::setw(tabsize) << Particles[i].rz << " ";
+
+
+      fout << std::setw(tabsize) << Particles[i].p0 << " ";
+      fout << std::setw(tabsize) << Particles[i].px << " "
+        << std::setw(tabsize) << Particles[i].py << " "
+        << std::setw(tabsize) << Particles[i].pz << " ";
+
+      fout << std::endl;
+    }
+
+    fout << std::fixed;
+  }
+
   void SimpleEvent::RapidityBoost(double dY)
   {
     for (size_t i = 0; i < Particles.size(); ++i)
@@ -83,7 +138,7 @@ namespace thermalfist {
       AllParticles[i].RapidityBoost(dY);
   }
 
-  SimpleEvent SimpleEvent::MergeEvents(const SimpleEvent & evt1, const SimpleEvent & evt2)
+  SimpleEvent SimpleEvent::MergeEvents(const SimpleEvent& evt1, const SimpleEvent& evt2)
   {
     SimpleEvent ret;
     ret.Particles.reserve(evt1.Particles.size() + evt2.Particles.size());

@@ -42,11 +42,15 @@ namespace thermalfist {
   {
     ClearMomentumGenerators();
     m_BWGens.resize(0);
+
+    // Find \tau_H from Veff / (\delta \eta) = \pi \tau_H R^2 where R = m_RoverTauH * \tau_H
+    double tauH = pow(m_THM->Volume() / (2. * m_EtaMax) / xMath::Pi() / m_RoverTauH / m_RoverTauH, 1. / 3.);
+
     if (m_THM != NULL) {
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         const ThermalParticle& part = m_THM->TPS()->Particles()[i];
         //m_MomentumGens.push_back(new RandomGenerators::CracowFreezeoutMomentumGenerator(m_T, m_RoverTauH, m_EtaMax, part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
-        m_MomentumGens.push_back(new RandomGenerators::BoostInvariantMomentumGenerator(new CracowFreezeoutParametrization(m_RoverTauH), GetTkin(), GetEtaMax(), part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
+        m_MomentumGens.push_back(new RandomGenerators::BoostInvariantMomentumGenerator(new CracowFreezeoutParametrization(m_RoverTauH, tauH), GetTkin(), GetEtaMax(), part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
 
         double T = m_THM->Parameters().T;
         double Mu = m_THM->FullIdealChemicalPotential(i);

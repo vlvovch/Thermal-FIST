@@ -123,7 +123,9 @@ QVariant SpectraModel::data(const QModelIndex &index, int role) const
         if (col == 7) return QString::number(spectra->fNegativeCharges[tind].GetKurtosis(), 'f', 3) + " ± " + QString::number(spectra->fNegativeCharges[tind].GetKurtosisError(), 'f', 3);
       }
     }
-    if (col == 8 && row < spectra->fParticles.size() && spectra->fParticles[RowToParticle[row]].GetAcceptance()) return "*";
+    if (col == 8 && row < spectra->fParticles.size()) 
+      return QString::number(spectra->fParticles[RowToParticle[row]].GetMeanPt(), 'f', 3) + " ± " + QString::number(spectra->fParticles[RowToParticle[row]].GetMeanPtError(), 'f', 3);
+    //if (col == 8 && row < spectra->fParticles.size() && spectra->fParticles[RowToParticle[row]].GetAcceptance()) return "*";
     break;
   case Qt::FontRole:
     //            if (model->TPS()->Particles()[RowToParticle[row]].IsStable()) //change font only for cell(0,0)
@@ -172,7 +174,7 @@ QVariant SpectraModel::headerData(int section, Qt::Orientation orientation, int 
       case 0:
         return tr("Name");
       case 2:
-        return tr("Mass");
+        return tr("m [GeV]");
       case 3:
         return tr("Multiplicity");
       case 4:
@@ -184,7 +186,7 @@ QVariant SpectraModel::headerData(int section, Qt::Orientation orientation, int 
       case 7:
         return tr("Kurtosis");
       case 8:
-        return tr("Acceptance");
+        return tr("<pT> [GeV]");
       }
     }
     else if (orientation == Qt::Vertical) return section + 1;
