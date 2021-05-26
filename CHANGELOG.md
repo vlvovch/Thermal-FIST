@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Version 1.3.1] 
 
-Date: 2021-05-25
+Date: 2021-05-26
 
 Minor enhancements and bugfixes
 
