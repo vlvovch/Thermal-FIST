@@ -176,3 +176,5 @@ All changes can be saved to a file.
 - Program outputs warnings about the Bose-Einstein condensation. This occurs if chemical potentials of bosons at some point exceed their mass. This sometimes happens in the process of constaining electric/strange chemical potentials through conservation laws. If these warnings eventually disappear and final values of chemical potentials are reasonable, things should be fine.
 
 - Accuracy of the calculations in the canonical ensemble will eventually break down as the system volume is increased to a large value, such as that corresponding to central heavy-ion collisions. Accuracy of a canonical ensemble calculation can be verified by comparing the values of the exactly conserved charges computed in the model with the given ones.
+
+- Canonical ensemble calculations seem to take forever. Canonical ensemble calculations are slow if the particle list contains multi-baryon states (light nuclei) or if quantum statistical effects for baryons are included. Unless required, it is recommended to use particle list without light nuclei and use Boltzmann approximation for baryons in the canonical ensemble.
