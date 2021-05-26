@@ -22,6 +22,8 @@ Please see the [**Quick Start Guide**](docs/quickstart.md) to get started.
 
 For more details please see the [**Thermal-FIST documentation**](https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/)
 
+It is recommended to use the latest version of the package. See the [CHANGELOG](CHANGELOG.md)
+
 <p align="center">
   <img src="src/gui/QtThermalFIST/images/QtThermalFIST.png" alt="QtThermalFIST"/>
 </p>
@@ -46,4 +48,4 @@ Please cite the following paper when using this code:
 
 It is expected that changes to the code are documented.
 
-*Copyright (C) 2018-2019  Volodymyr Vovchenko*
+*Copyright (C) 2018-2021  Volodymyr Vovchenko*
