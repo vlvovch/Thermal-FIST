@@ -45,6 +45,28 @@
 
 using namespace thermalfist;
 
+EventGeneratorWorker::EventGeneratorWorker(
+  thermalfist::EventGeneratorBase* gen,
+  ParticlesSpectra* spec,
+  QMutex* mut,
+  int totalEvents,
+  int* evproc,
+  int* stopo,
+  double* nEp,
+  bool pDecays,
+  std::string fileout,
+  QObject* parent):
+      QThread(parent), generator(gen), spectra(spec), mutex(mut),
+          events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)/*,
+          hepmcout(fileout + ".hepmc3")*/
+  {
+      wsum = w2sum = 0.;
+      fout.clear();
+      if (fileout != "") 
+        fout.open(fileout.c_str());
+
+  }
+
 void EventGeneratorWorker::run()
 {
      if (mutex!=NULL) {
@@ -64,6 +86,8 @@ void EventGeneratorWorker::run()
 
             if (fout.is_open())
               ev.writeToFile(fout, outconfig, (*eventsProcessed));
+
+            //hepmcout.WriteEvent(ev);
 
             mutex->unlock();
         }

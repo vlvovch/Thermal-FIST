@@ -30,6 +30,7 @@
 #include "HRGEventGenerator/EventGeneratorBase.h"
 #include "BaseStructures.h"
 #include "configwidgets.h"
+#include "HRGEventGenerator/HepMCEventWriter.h"
 
 #include <cmath>
 #include <fstream>
@@ -59,28 +60,23 @@ class EventGeneratorWorker : public QThread
 
     std::ofstream fout;
 
+    thermalfist::HepMCEventWriter hepmcout;
+
     void run() Q_DECL_OVERRIDE;
 
 public:
-    EventGeneratorWorker(
-           thermalfist::EventGeneratorBase *gen=NULL,
-           ParticlesSpectra *spec=NULL,
-           QMutex *mut=NULL,
-           int totalEvents = 0,
-           int *evproc = NULL,
-           int *stopo = NULL,
-           double *nEp = NULL,
-           bool pDecays = false,
-           std::string fileout = "",
-           QObject * parent = 0) :
-        QThread(parent), generator(gen), spectra(spec), mutex(mut),
-            events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)
-    {
-        wsum = w2sum = 0.;
-        fout.clear();
-        if (fileout != "")
-          fout.open(fileout.c_str());
-    }
+  EventGeneratorWorker(
+    thermalfist::EventGeneratorBase* gen = NULL,
+    ParticlesSpectra* spec = NULL,
+    QMutex* mut = NULL,
+    int totalEvents = 0,
+    int* evproc = NULL,
+    int* stopo = NULL,
+    double* nEp = NULL,
+    bool pDecays = false,
+    std::string fileout = "",
+    QObject* parent = 0);
+
 signals:
     void calculated();
 };

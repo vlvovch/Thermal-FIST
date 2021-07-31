@@ -120,12 +120,6 @@ namespace thermalfist {
       m_ycm = 0.5 * log((m_elab + xMath::mnucleon() + plab) / (m_elab + xMath::mnucleon() - plab));
     }
 
-    /// The y-pT acceptance map (not used by default).
-    //std::vector<Acceptance::AcceptanceFunction>& GetAcceptance() { return m_acc; }
-
-    /// Read the acceptance map from file.
-    //virtual void ReadAcceptance(std::string accfolder);
-
     /// The center-of-mass longitudinal rapidity relative to the lab frame.
     double getYcm() const { return m_ycm; }
 
@@ -169,7 +163,7 @@ namespace thermalfist {
      * \param TPS   Pointer to the particle list instance that contains all the decay properties.
      * \return      A SimpleEvent instance containing all particles after resonance decays.
      */
-    static SimpleEvent PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
+    static SimpleEvent PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS);
 
     /**
      * \brief The grand-canonical mean yields.
@@ -205,6 +199,8 @@ namespace thermalfist {
     double ComputeWeight(const std::vector<int>& totals) const;
     double ComputeWeightNew(const std::vector<int>& totals) const;
 
+    const EventGeneratorConfiguration& GetConfiguration() const { return m_Config; }
+
   protected:
     /**
      * \brief Sets the event generator configuration.
@@ -216,6 +212,7 @@ namespace thermalfist {
      */
     void SetConfiguration(ThermalParticleSystem *TPS,
       const EventGeneratorConfiguration& config);
+
 
     /// Prepares the parameters of multinomial distribution used
     /// for sampling the yields in the canonical ensemble

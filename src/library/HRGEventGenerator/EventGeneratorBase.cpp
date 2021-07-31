@@ -152,13 +152,13 @@ namespace thermalfist {
           m_THM->SetBaryonChemicalPotential(left);
           m_THM->SetQoverB(QBrat);
           m_THM->FixParameters();
-          m_THM->CalculateDensities();
+          m_THM->CalculatePrimordialDensities();
           double valleft = m_THM->CalculateBaryonDensity() * m_THM->Volume() - m_Config.B;
 
           m_THM->SetBaryonChemicalPotential(right);
           m_THM->SetQoverB(QBrat);
           m_THM->FixParameters();
-          m_THM->CalculateDensities();
+          m_THM->CalculatePrimordialDensities();
           double valright = m_THM->CalculateBaryonDensity() * m_THM->Volume() - m_Config.B;
 
           double valcenter;
@@ -168,7 +168,7 @@ namespace thermalfist {
             m_THM->SetBaryonChemicalPotential(center);
             m_THM->SetQoverB(QBrat);
             m_THM->FixParameters();
-            m_THM->CalculateDensities();
+            m_THM->CalculatePrimordialDensities();
             valcenter = m_THM->CalculateBaryonDensity() * m_THM->Volume() - m_Config.B;
 
             if (valleft*valcenter > 0.) {
@@ -262,27 +262,20 @@ namespace thermalfist {
       m_Config.CFOParameters.muC = m_THM->Parameters().muC;
     }
 
-    m_THM->CalculateDensitiesGCE();
+    //m_THM->CalculateDensitiesGCE();
+    m_THM->CalculatePrimordialDensities();
     m_DensitiesIdeal = m_THM->GetIdealGasDensities();
 
     if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
       PrepareMultinomials();
-
-    //m_acc.resize(m_THM->ComponentsNumber());
   }
 
-  //void EventGeneratorBase::ReadAcceptance(std::string accfolder)
-  //{
-  //  //m_acc.resize(m_THM->TPS()->Particles().size());
-  //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-  //    std::string filename = accfolder + "pty_acc_" + to_string_fix(m_THM->TPS()->Particles()[i].PdgId()) + ".txt";
-  //    Acceptance::ReadAcceptanceFunction(m_acc[i], filename);
-  //  }
-  //}
 
   void EventGeneratorBase::PrepareMultinomials() {
-    if (!m_THM->IsGCECalculated())
-      m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated()) {
+      m_THM->CalculatePrimordialDensities();
+      //m_THM->CalculateDensitiesGCE();
+    }
 
     m_Baryons.resize(0);
     m_AntiBaryons.resize(0);
@@ -378,8 +371,9 @@ namespace thermalfist {
   }
 
   std::vector<int> EventGeneratorBase::GenerateTotals() const {
-    if (!m_THM->IsGCECalculated())
-      m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
+      //m_THM->CalculateDensitiesGCE();
 
     std::vector<int> totals(m_THM->TPS()->Particles().size());
 
@@ -553,7 +547,10 @@ namespace thermalfist {
   {
     fCETotal++;
 
-    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
+    //if (!m_THM->IsGCECalculated()) 
+    //  m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
     const std::vector<double>& densities = m_THM->Densities();
@@ -568,8 +565,8 @@ namespace thermalfist {
 
   std::vector<int> EventGeneratorBase::GenerateTotalsSCE() const
   {
-    if (!m_THM->IsGCECalculated())
-      m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
 
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
@@ -692,7 +689,8 @@ namespace thermalfist {
 
   std::vector<int> EventGeneratorBase::GenerateTotalsSCESubVolume(double VolumeSC) const
   {
-    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
     std::vector< std::pair<double, int> > fStrangeMesonsc = m_StrangeMesons;
@@ -759,8 +757,8 @@ namespace thermalfist {
 
   std::vector<int> EventGeneratorBase::GenerateTotalsCCE() const
   {
-    if (!m_THM->IsGCECalculated())
-      m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
 
     // Check there are no multi-charmed particles, otherwise error
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
@@ -887,8 +885,8 @@ namespace thermalfist {
 
   std::vector<int> EventGeneratorBase::GenerateTotalsCCESubVolume(double VolumeSC) const
   {
-    if (!m_THM->IsGCECalculated()) 
-      m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
 
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
@@ -910,7 +908,7 @@ namespace thermalfist {
     int netC = 0;
     int tC = RandomGenerators::RandomPoisson(fMeanCharmc);
     int tAC = RandomGenerators::RandomPoisson(fMeanAntiCharmc);
-    while (tC - tAC != m_THM->Parameters().C - netC) {
+    while (tC - tAC != m_Config.C - netC) {
       fCETotal++;
       tC = RandomGenerators::RandomPoisson(fMeanCharmc);
       tAC = RandomGenerators::RandomPoisson(fMeanAntiCharmc);
@@ -937,7 +935,7 @@ namespace thermalfist {
       finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
     }
 
-    if (finC != m_THM->Parameters().C) {
+    if (finC != m_Config.C) {
       printf("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
       exit(1);
     }
@@ -947,7 +945,8 @@ namespace thermalfist {
 
 
   std::vector<int> EventGeneratorBase::GenerateTotalsCE() const {
-    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
     std::vector<int> totals(m_THM->TPS()->Particles().size(), 0);
 
     const std::vector< std::pair<double, int> >& fBaryonsc = m_Baryons;
@@ -972,10 +971,17 @@ namespace thermalfist {
         netQ += totals[i] * m_THM->TPS()->Particles()[i].ElectricCharge();
         netC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
       }
-      if ((!m_Config.CanonicalB || netB == m_THM->Parameters().B) 
-        && (!m_Config.CanonicalS || netS == m_THM->Parameters().S)
-        && (!m_Config.CanonicalQ || netQ == m_THM->Parameters().Q)
-        && (!m_Config.CanonicalC || netC == m_THM->Parameters().C)) {
+      //if ((!m_Config.CanonicalB || netB == m_THM->Parameters().B) 
+      //  && (!m_Config.CanonicalS || netS == m_THM->Parameters().S)
+      //  && (!m_Config.CanonicalQ || netQ == m_THM->Parameters().Q)
+      //  && (!m_Config.CanonicalC || netC == m_THM->Parameters().C)) {
+      //  fCEAccepted++;
+      //  return totals;
+      //}
+      if ((!m_Config.CanonicalB || netB == m_Config.B)
+        && (!m_Config.CanonicalS || netS == m_Config.S)
+        && (!m_Config.CanonicalQ || netQ == m_Config.Q)
+        && (!m_Config.CanonicalC || netC == m_Config.C)) {
         fCEAccepted++;
         return totals;
       }
@@ -1014,21 +1020,21 @@ namespace thermalfist {
       if (flNuclei || !m_Config.CanonicalB) {
         tB = RandomGenerators::RandomPoisson(m_MeanB);
         tAB = RandomGenerators::RandomPoisson(m_MeanAB);
-        if (m_Config.CanonicalB && tB - tAB != m_THM->Parameters().B - netB) continue;
+        if (m_Config.CanonicalB && tB - tAB != m_Config.B - netB) continue;
         //if (RandomGenerators::randgenMT.rand() > RandomGenerators::SkellamProbability(m_THM->Parameters().B - netB, m_MeanB, m_MeanAB))
         //  continue;
       }
       else
       // Generate from the Bessel distribution, using Devroye's method, if no light nuclei
       {
-        int nu = m_THM->Parameters().B - netB;
+        int nu = m_Config.B - netB;
         if (nu < 0) nu = -nu;
         double a = 2. * sqrt(m_MeanB * m_MeanAB);
         //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye3(a, nu);
         //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselPoisson(a, nu);
         //int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselCombined(a, nu);
         int BessN = RandomGenerators::BesselDistributionGenerator::RandomBesselDevroye1(a, nu);
-        if (m_THM->Parameters().B - netB < 0) {
+        if (m_Config.B - netB < 0) {
           tB = BessN;
           tAB = nu + tB;
         }
@@ -1064,7 +1070,7 @@ namespace thermalfist {
       
       int tSM = RandomGenerators::RandomPoisson(m_MeanSM);
       int tASM = RandomGenerators::RandomPoisson(m_MeanASM);
-      if (m_Config.CanonicalS && netS != tASM - tSM + m_THM->Parameters().S) continue;
+      if (m_Config.CanonicalS && netS != tASM - tSM + m_Config.S) continue;
 
 
       // Multinomial distribution for individual numbers of (anti)strange mesons
@@ -1090,7 +1096,7 @@ namespace thermalfist {
       // Total numbers of remaining electrically charged mesons
       int tCM = RandomGenerators::RandomPoisson(m_MeanCM);
       int tACM = RandomGenerators::RandomPoisson(m_MeanACM);
-      if (m_Config.CanonicalQ && netQ != tACM - tCM + m_THM->Parameters().Q) continue;
+      if (m_Config.CanonicalQ && netQ != tACM - tCM + m_Config.Q) continue;
 
       // Multinomial distribution for individual numbers of remaining electrically charged mesons
       for (int i = 0; i < tCM; ++i) {
@@ -1114,7 +1120,7 @@ namespace thermalfist {
       int tCHRMM = RandomGenerators::RandomPoisson(m_MeanCHRMM);
       int tACHRNMM = RandomGenerators::RandomPoisson(m_MeanACHRMM);
 
-      if (m_Config.CanonicalC && netC != tACHRNMM - tCHRMM + m_THM->Parameters().C) continue;
+      if (m_Config.CanonicalC && netC != tACHRNMM - tCHRMM + m_Config.C) continue;
 
       // Multinomial distribution for individual numbers of the remaining charmed mesons
       for (int i = 0; i < tCHRMM; ++i) {
@@ -1153,22 +1159,22 @@ namespace thermalfist {
         finC += totals[i] * m_THM->TPS()->Particles()[i].Charm();
       }
 
-      if (m_Config.CanonicalB && finB != m_THM->Parameters().B) {
+      if (m_Config.CanonicalB && finB != m_Config.B) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
         exit(1);
       }
 
-      if (m_Config.CanonicalQ && finQ != m_THM->Parameters().Q) {
+      if (m_Config.CanonicalQ && finQ != m_Config.Q) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
         exit(1);
       }
 
-      if (m_Config.CanonicalS && finS != m_THM->Parameters().S) {
+      if (m_Config.CanonicalS && finS != m_Config.S) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
         exit(1);
       }
 
-      if (m_Config.CanonicalC && finC != m_THM->Parameters().C) {
+      if (m_Config.CanonicalC && finC != m_Config.C) {
         printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
         exit(1);
       }
@@ -1234,7 +1240,8 @@ namespace thermalfist {
 
   SimpleEvent EventGeneratorBase::GetEvent(bool DoDecays) const
   {
-    if (!m_THM->IsGCECalculated()) m_THM->CalculateDensitiesGCE();
+    if (!m_THM->IsCalculated())
+      m_THM->CalculatePrimordialDensities();
 
     std::vector<int> totals = GenerateTotals();
 
@@ -1381,7 +1388,7 @@ namespace thermalfist {
   //   return ret;
   // }
 
-  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, ThermalParticleSystem* TPS)
+  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS)
   {
     SimpleEvent ret;
     ret.weight = evtin.weight;
