@@ -232,17 +232,17 @@ namespace thermalfist {
         m_Config.CFOParameters.muQ = m_THM->Parameters().muQ;
         m_Config.CFOParameters.muC = m_THM->Parameters().muC;
 
-        std::cout << "Chemical potentials constrained!\n" 
-          <<  "muB = " << m_Config.CFOParameters.muB 
-          << " muQ = " << m_Config.CFOParameters.muQ 
-          << " muS = " << m_Config.CFOParameters.muS 
-          << " muC = " << m_Config.CFOParameters.muC << "\n";
+        //std::cout << "Chemical potentials constrained!\n" 
+        //  <<  "muB = " << m_Config.CFOParameters.muB 
+        //  << " muQ = " << m_Config.CFOParameters.muQ 
+        //  << " muS = " << m_Config.CFOParameters.muS 
+        //  << " muC = " << m_Config.CFOParameters.muC << "\n";
 
-        std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V
-          << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V
-          << " S = " << m_THM->CalculateStrangenessDensity() * m_THM->Parameters().V
-          << " C = " << m_THM->CalculateCharmDensity() * m_THM->Parameters().V
-          << "\n";
+        //std::cout << "B = " << m_THM->CalculateBaryonDensity() * m_THM->Parameters().V
+        //  << " Q = " << m_THM->CalculateChargeDensity() * m_THM->Parameters().V
+        //  << " S = " << m_THM->CalculateStrangenessDensity() * m_THM->Parameters().V
+        //  << " C = " << m_THM->CalculateCharmDensity() * m_THM->Parameters().V
+        //  << "\n";
       }
     }
 

@@ -112,6 +112,7 @@ HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CylindricalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CracowFreezeoutEventGenerator.cpp
 HRGEventGenerator/HepMCEventWriter.cpp
+HRGEventGenerator/HypersurfaceSampler.cpp
 )
 
 source_group("HRGEventGenerator\\Source Files" FILES ${SRCS_HRGEventGenerator})
@@ -129,6 +130,7 @@ ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CracowFreezeoutEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleEvent.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/HepMCEventWriter.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/HypersurfaceSampler.h
 )	
 
 source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator})
