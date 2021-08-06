@@ -10,7 +10,7 @@
 
 #include <fstream>
 
-#include "SimpleEvent.h"
+#include "EventWriter.h"
 
 
 namespace thermalfist {
@@ -20,19 +20,17 @@ namespace thermalfist {
   /// Assumes that all particles are final (status code = 1) and come from the root vertex.
   /// Has to be checked if this actually works
   class HepMCEventWriter
+    : public EventWriter
   {
   public:
     HepMCEventWriter(const std::string & filename = "");
-    ~HepMCEventWriter();
+    virtual ~HepMCEventWriter();
 
-    bool OpenFile(const std::string& filename);
+    virtual bool OpenFile(const std::string& filename);
     
-    void CloseFile();
+    virtual void CloseFile();
 
-    bool WriteEvent(const SimpleEvent& evt);
-  private:
-    std::ofstream m_fout;
-    int m_EventNumber;
+    virtual bool WriteEvent(const SimpleEvent& evt);
   };
 
 } // namespace thermalfist

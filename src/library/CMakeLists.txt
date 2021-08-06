@@ -111,6 +111,7 @@ HRGEventGenerator/SimpleEvent.cpp
 HRGEventGenerator/SphericalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CylindricalBlastWaveEventGenerator.cpp
 HRGEventGenerator/CracowFreezeoutEventGenerator.cpp
+HRGEventGenerator/EventWriter.cpp
 HRGEventGenerator/HepMCEventWriter.cpp
 HRGEventGenerator/HypersurfaceSampler.cpp
 )
@@ -129,6 +130,7 @@ ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CylindricalBlastWaveEventGenerat
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/CracowFreezeoutEventGenerator.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleEvent.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/SimpleParticle.h
+${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/EventWriter.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/HepMCEventWriter.h
 ${PROJECT_SOURCE_DIR}/include/HRGEventGenerator/HypersurfaceSampler.h
 )	

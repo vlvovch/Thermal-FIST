@@ -11,7 +11,7 @@
 
 namespace thermalfist {
 
-  void SimpleEvent::writeToFile(std::ofstream& fout, const EventOutputConfig& config, int eventnumber)
+  void SimpleEvent::writeToFile(std::ofstream& fout, const EventOutputConfig& config, int eventnumber) const
   {
     fout << "Event " << eventnumber << std::endl;
 
@@ -101,7 +101,7 @@ namespace thermalfist {
     fout << std::fixed;
   }
 
-  void SimpleEvent::writeToFileForUrqmd(std::ofstream& fout)
+  void SimpleEvent::writeToFileForUrqmd(std::ofstream& fout) const
   {
     fout << "# " << Particles.size() << std::endl;
 

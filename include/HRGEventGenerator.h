@@ -15,5 +15,6 @@
 #include "HRGEventGenerator/SREventGenerator.h"
 #include "HRGEventGenerator/SSHEventGenerator.h"
 #include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"
+#include "HRGEventGenerator/EventWriter.h"
 #include "HRGEventGenerator/HepMCEventWriter.h"
 #include "HRGEventGenerator/HypersurfaceSampler.h"
