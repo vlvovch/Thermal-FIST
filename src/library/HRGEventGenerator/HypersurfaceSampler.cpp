@@ -148,6 +148,15 @@ namespace thermalfist {
       m_THM->SetElectricChemicalPotential(elem.muQ);
       m_THM->SetStrangenessChemicalPotential(elem.muS);
 
+      if (m_Config.CFOParameters.gammaq != 1.0)
+        m_THM->SetGammaq(m_Config.CFOParameters.gammaq);
+
+      if (m_Config.CFOParameters.gammaS != 1.0)
+        m_THM->SetGammaS(m_Config.CFOParameters.gammaS);
+
+      if (m_Config.CFOParameters.gammaC != 1.0)
+        m_THM->SetGammaC(m_Config.CFOParameters.gammaC);
+
       double dVeff = 0.;
       for (int mu = 0; mu < 4; ++mu)
         dVeff += elem.dsigma[mu] * elem.u[mu];
