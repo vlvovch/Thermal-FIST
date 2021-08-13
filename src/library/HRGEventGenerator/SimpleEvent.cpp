@@ -54,12 +54,12 @@ namespace thermalfist {
         << std::setw(20) << Particles[i].rz;
 
 
+      if (config.printEnergy)
+        fout << std::setw(20) << Particles[i].p0;
+
       fout << std::setw(20) << Particles[i].px
         << std::setw(20) << Particles[i].py
         << std::setw(20) << Particles[i].pz;
-
-      if (config.printEnergy)
-        fout << std::setw(20) << Particles[i].p0;
 
       if (config.printMotherPdg)
         fout << std::setw(20) << Particles[i].MotherPDGID;
@@ -81,12 +81,13 @@ namespace thermalfist {
           << std::setw(20) << PhotonsLeptons[i].ry
           << std::setw(20) << PhotonsLeptons[i].rz;
 
+        if (config.printEnergy)
+          fout << std::setw(20) << PhotonsLeptons[i].p0;
+
         fout << std::setw(20) << PhotonsLeptons[i].px
           << std::setw(20) << PhotonsLeptons[i].py
           << std::setw(20) << PhotonsLeptons[i].pz;
 
-        if (config.printEnergy)
-          fout << std::setw(20) << PhotonsLeptons[i].p0;
 
         if (config.printMotherPdg)
           fout << std::setw(20) << PhotonsLeptons[i].MotherPDGID;
