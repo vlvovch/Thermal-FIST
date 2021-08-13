@@ -71,12 +71,11 @@ namespace thermalfist {
 
       m_fout << std::setw(tabsize) << part.PDGID;
 
+      m_fout << std::setw(tabsize) << part.p0;
 
       m_fout << std::setw(tabsize) << part.px
         << std::setw(tabsize) << part.py
         << std::setw(tabsize) << part.pz;
-
-      m_fout << std::setw(tabsize) << part.p0;
 
       m_fout << std::endl;
     }
