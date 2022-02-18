@@ -167,81 +167,8 @@ double ParticleSpectrum::GetMeanPtError() const
   return sqrt((pT2mean - pTmean * pTmean) / (nEpT - 1.));
 }
 
-ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, double T, double beta, int distrtype, double etamax) {
-    fEtaMax = etamax;
-    fDistributionType = distrtype;
-    fPDGtoID.clear();
-    fPDGtoIDnet.clear();
-    fPDGtoIDall.clear();
-    fNetParticles.resize(0);
-    fNetCharges.resize(0);
-    fTotalCharges.resize(0);
-    fPositiveCharges.resize(0);
-    fNegativeCharges.resize(0);
-    fParticleCharges.resize(0);
-    if (model!=NULL) {
-        for(int i=0;i<model->TPS()->Particles().size();++i) {
-            if (model->TPS()->Particles()[i].IsStable()) {
-                if (distrtype==0) fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass()));
-                else fParticles.push_back(ParticleSpectrum(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), etamax));
-                MomentumDistributionBase *ptr;
-                if (distrtype == 0) ptr = new SiemensRasmussenDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta);
-                //else if (distrtype == 1) ptr = new SSHDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, npow, false);
-                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, 1.0), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
-                //else ptr = new CracowFreezeoutDistribution(model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, beta, etamax, false);
-                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), model->TPS()->Particles()[i].PdgId(), model->TPS()->Particles()[i].Mass(), T, etamax, false);
-                distrs.push_back(ptr);
-                fParticles[fParticles.size()-1].SetDistribution(ptr);
-                fNames.push_back(model->TPS()->Particles()[i].Name());
-                fMasses.push_back(model->TPS()->Particles()[i].Mass());
-                fPDGtoID[model->TPS()->Particles()[i].PdgId()] = fMasses.size()-1;
-
-                if (model->TPS()->Particles()[i].PdgId()>0 && model->TPS()->PdgToId(-model->TPS()->Particles()[i].PdgId())!=-1) {
-                    fNetParticles.push_back(NumberStatistics("net-" + model->TPS()->Particles()[i].Name()));
-                    fPDGtoIDnet[model->TPS()->Particles()[i].PdgId()] = fNetParticles.size()-1;
-                }
-            }
-            fPDGtoIDall[model->TPS()->Particles()[i].PdgId()] = i;
-
-            std::vector<int> tchr(4,0);
-            tchr[0] = model->TPS()->Particles()[i].BaryonCharge();
-            tchr[1] = model->TPS()->Particles()[i].ElectricCharge();
-            tchr[2] = model->TPS()->Particles()[i].Strangeness();
-            tchr[3] = model->TPS()->Particles()[i].Charm();
-            fParticleCharges.push_back(tchr);
-        }
-
-        fNetCharges.push_back(NumberStatistics("net-baryon"));
-        fNetCharges.push_back(NumberStatistics("net-charge"));
-        fNetCharges.push_back(NumberStatistics("net-strangeness"));
-        fNetCharges.push_back(NumberStatistics("net-charm"));
-        fTotalCharges.push_back(NumberStatistics("baryonic hadrons"));
-        fTotalCharges.push_back(NumberStatistics("charged hadrons"));
-        fTotalCharges.push_back(NumberStatistics("strange hadrons"));
-        fTotalCharges.push_back(NumberStatistics("charmed hadrons"));
-        fPositiveCharges.push_back(NumberStatistics("baryon+ hadrons"));
-        fPositiveCharges.push_back(NumberStatistics("charge+ hadrons"));
-        fPositiveCharges.push_back(NumberStatistics("strange+ hadrons"));
-        fPositiveCharges.push_back(NumberStatistics("charm+ hadrons"));
-        fNegativeCharges.push_back(NumberStatistics("baryon- hadrons"));
-        fNegativeCharges.push_back(NumberStatistics("charge- hadrons"));
-        fNegativeCharges.push_back(NumberStatistics("strange- hadrons"));
-        fNegativeCharges.push_back(NumberStatistics("charm- hadrons"));
-    }
-    else {
-        fParticles.resize(0);
-        fNames.resize(0);
-        fMasses.resize(0);
-        fNetParticles.resize(0);
-        fNetCharges.resize(0);
-        fTotalCharges.resize(0);
-        fPositiveCharges.resize(0);
-        fNegativeCharges.resize(0);
-        fParticleCharges.resize(0);
-        for(int i=0;i<distrs.size();++i)
-            delete distrs[i];
-        distrs.resize(0);
-    }
+ParticlesSpectra::ParticlesSpectra(ThermalModelBase *model, const ParticleSpectraConfig& config) {
+  Reset(model, config);
 }
 
 ParticlesSpectra::~ParticlesSpectra() {
@@ -256,15 +183,32 @@ void ParticlesSpectra::ProcessEvent(const SimpleEvent &evt) {
     std::vector<int> positivecharges(4, 0);
     std::vector<int> negativecharges(4, 0);
 
+    const std::vector<SimpleParticle>* particles = &evt.Particles;
+    if (fConfig.fStableOnly != 1)
+      particles = &evt.AllParticles;
+
+
+
+    for (int i = 0; i < particles->size(); ++i) {
+      const SimpleParticle& part = particles->operator[](i);
+      if (fPDGtoID.count(part.PDGID) != 0)
+        fParticles[fPDGtoID[part.PDGID]].AddParticle(part);
+
+      if (fPDGtoIDnet.count(part.PDGID) != 0)
+        netparts[fPDGtoIDnet[part.PDGID]]++;
+      if (fPDGtoIDnet.count(-part.PDGID) != 0)
+        netparts[fPDGtoIDnet[-part.PDGID]]--;
+    }
+
     for(int i=0;i<evt.Particles.size();++i) {
         {
-            if (fPDGtoID.count(evt.Particles[i].PDGID)!=0)
-                fParticles[fPDGtoID[evt.Particles[i].PDGID]].AddParticle(evt.Particles[i]);
+            //if (fPDGtoID.count(evt.Particles[i].PDGID)!=0)
+            //    fParticles[fPDGtoID[evt.Particles[i].PDGID]].AddParticle(evt.Particles[i]);
 
-            if (fPDGtoIDnet.count(evt.Particles[i].PDGID)!=0)
-                netparts[fPDGtoIDnet[evt.Particles[i].PDGID]]++;
-            if (fPDGtoIDnet.count(-evt.Particles[i].PDGID)!=0)
-                netparts[fPDGtoIDnet[-evt.Particles[i].PDGID]]--;
+            //if (fPDGtoIDnet.count(evt.Particles[i].PDGID)!=0)
+            //    netparts[fPDGtoIDnet[evt.Particles[i].PDGID]]++;
+            //if (fPDGtoIDnet.count(-evt.Particles[i].PDGID)!=0)
+            //    netparts[fPDGtoIDnet[-evt.Particles[i].PDGID]]--;
 
             if (fPDGtoIDall.count(evt.Particles[i].PDGID)!=0) {
                 for(int ii=0;ii<4;++ii) {
@@ -279,6 +223,7 @@ void ParticlesSpectra::ProcessEvent(const SimpleEvent &evt) {
             }
         }
     }
+
     for(int i=0;i<fParticles.size();++i)
         fParticles[i].FinishEvent(evt.weight);
 
@@ -306,16 +251,18 @@ void ParticlesSpectra::Reset() {
     }
 }
 
-void ParticlesSpectra::Reset(ThermalModelBase* model, double T, double beta, int distrtype, double etamax, double npow) {
+void ParticlesSpectra::Reset(ThermalModelBase* model, const ParticleSpectraConfig& config) {
   ThermalParticleSystem* TPS = NULL;
   if (model != NULL)
     TPS = model->TPS();
-  Reset(TPS, T, beta, distrtype, etamax, npow);
+  Reset(TPS, config);
+  //Reset(TPS, T, beta, distrtype, etamax, npow);
 }
 
-void ParticlesSpectra::Reset(ThermalParticleSystem *TPS, double T, double beta, int distrtype, double etamax, double npow) {
-    fEtaMax = etamax;
-    fDistributionType = distrtype;
+void ParticlesSpectra::Reset(ThermalParticleSystem *TPS, const ParticleSpectraConfig& config) {
+    fConfig = config;
+    fEtaMax = config.fEtaMax;
+    fDistributionType = config.fDistrType;
     fPDGtoID.clear();
     fPDGtoIDnet.clear();
     fPDGtoIDall.clear();
@@ -333,23 +280,27 @@ void ParticlesSpectra::Reset(ThermalParticleSystem *TPS, double T, double beta, 
     distrs.resize(0);
     if (TPS != NULL) {
         for(int i=0;i<TPS->Particles().size();++i) {
-            if (TPS->Particles()[i].IsStable()) {
-                if (distrtype==0) fParticles.push_back(ParticleSpectrum(TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass()));
-                else fParticles.push_back(ParticleSpectrum(TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), etamax));
-                MomentumDistributionBase *ptr;
-                if (distrtype==0) ptr = new SiemensRasmussenDistribution(TPS->Particles()[i].PdgId(),TPS->Particles()[i].Mass(),T,beta);
-                else if (distrtype == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(beta, npow), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), T, etamax, false);
-                else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(beta), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), T, etamax, false);
-                distrs.push_back(ptr);
-                fParticles[fParticles.size()-1].SetDistribution(ptr);
-                fNames.push_back(TPS->Particles()[i].Name());
-                fMasses.push_back(TPS->Particles()[i].Mass());
-                fPDGtoID[TPS->Particles()[i].PdgId()] = fMasses.size()-1;
+            if (config.fStableOnly == 0 || TPS->Particles()[i].IsStable() 
+              || (config.fStableOnly == 2 && config.fPdgCodes.count(std::abs(TPS->Particles()[i].PdgId())))) {
+              double etamax = config.fEtaMax;
+              if (fDistributionType == 0)
+                etamax = 0.;
+              fParticles.push_back(ParticleSpectrum(TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), etamax,
+                fConfig.fBins, fConfig.fBinsX, fConfig.fBinsY));
+              MomentumDistributionBase *ptr;
+              if (fDistributionType == 0) ptr = new SiemensRasmussenDistribution(TPS->Particles()[i].PdgId(),TPS->Particles()[i].Mass(), config.fT, config.fBeta);
+              else if (fDistributionType == 1) ptr = new BoostInvariantMomentumDistribution(new CylindricalBlastWaveParametrization(config.fBeta, config.fNPow), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), config.fT, config.fEtaMax, false);
+              else ptr = new BoostInvariantMomentumDistribution(new CracowFreezeoutParametrization(config.fBeta), TPS->Particles()[i].PdgId(), TPS->Particles()[i].Mass(), config.fT, config.fEtaMax, false);
+              distrs.push_back(ptr);
+              fParticles[fParticles.size()-1].SetDistribution(ptr);
+              fNames.push_back(TPS->Particles()[i].Name());
+              fMasses.push_back(TPS->Particles()[i].Mass());
+              fPDGtoID[TPS->Particles()[i].PdgId()] = fMasses.size()-1;
 
-                if (TPS->Particles()[i].PdgId()>0 && TPS->PdgToId(-TPS->Particles()[i].PdgId())!=-1) {
-                    fNetParticles.push_back(NumberStatistics("net-" + TPS->Particles()[i].Name()));
-                    fPDGtoIDnet[TPS->Particles()[i].PdgId()] = fNetParticles.size()-1;
-                }
+              if (TPS->Particles()[i].PdgId()>0 && TPS->PdgToId(-TPS->Particles()[i].PdgId())!=-1) {
+                  fNetParticles.push_back(NumberStatistics("net-" + TPS->Particles()[i].Name()));
+                  fPDGtoIDnet[TPS->Particles()[i].PdgId()] = fNetParticles.size()-1;
+              }
             }
 
             fPDGtoIDall[TPS->Particles()[i].PdgId()] = i;
@@ -377,5 +328,19 @@ void ParticlesSpectra::Reset(ThermalParticleSystem *TPS, double T, double beta, 
         fNegativeCharges.push_back(NumberStatistics("charge- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("strange- hadrons"));
         fNegativeCharges.push_back(NumberStatistics("charm- hadrons"));
+    }
+    else {
+      fParticles.resize(0);
+      fNames.resize(0);
+      fMasses.resize(0);
+      fNetParticles.resize(0);
+      fNetCharges.resize(0);
+      fTotalCharges.resize(0);
+      fPositiveCharges.resize(0);
+      fNegativeCharges.resize(0);
+      fParticleCharges.resize(0);
+      for (int i = 0; i < distrs.size(); ++i)
+        delete distrs[i];
+      distrs.resize(0);
     }
 }

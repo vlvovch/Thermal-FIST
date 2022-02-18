@@ -884,6 +884,8 @@ namespace thermalfist {
     virtual double CalculateAbsoluteChargeDensity();
     virtual double CalculateAbsoluteStrangenessDensity();
     virtual double CalculateAbsoluteCharmDensity();
+    virtual double CalculateAbsoluteStrangenessDensityModulo();
+    virtual double CalculateAbsoluteCharmDensityModulo();
     //@}
 
     /// Computes the density of the auxiliary ArbitraryCharge()

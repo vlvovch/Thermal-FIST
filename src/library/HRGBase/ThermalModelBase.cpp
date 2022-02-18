@@ -677,11 +677,27 @@ namespace thermalfist {
     return ret;
   }
 
+  double ThermalModelBase::CalculateAbsoluteStrangenessDensityModulo() {
+    if (!m_Calculated) CalculateDensities();
+    double ret = 0.;
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      ret += fabs((double)m_TPS->Particles()[i].Strangeness()) * m_densities[i];
+    return ret;
+  }
+
   double ThermalModelBase::CalculateAbsoluteCharmDensity() {
     if (!m_Calculated) CalculateDensities();
     double ret = 0.;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
       ret += m_TPS->Particles()[i].AbsoluteCharm() * m_densities[i];
+    return ret;
+  }
+
+  double ThermalModelBase::CalculateAbsoluteCharmDensityModulo() {
+    if (!m_Calculated) CalculateDensities();
+    double ret = 0.;
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      ret += fabs((double)m_TPS->Particles()[i].Charm()) * m_densities[i];
     return ret;
   }
 
@@ -1319,6 +1335,8 @@ namespace thermalfist {
     if (m_THM->ConstrainMuS()) {
       double fSd = m_THM->CalculateStrangenessDensity();
       double fASd = m_THM->CalculateAbsoluteStrangenessDensity();
+      if (fASd < 1.e-25)
+        fASd = m_THM->CalculateAbsoluteStrangenessDensityModulo();
 
       ret[i1] = fSd / fASd;
 
@@ -1330,6 +1348,8 @@ namespace thermalfist {
     if (m_THM->ConstrainMuC()) {
       double fCd = m_THM->CalculateCharmDensity();
       double fACd = m_THM->CalculateAbsoluteCharmDensity();
+      if (fACd < 1.e-25)
+        fACd = m_THM->CalculateAbsoluteCharmDensityModulo();
 
       ret[i1] = fCd / fACd;
 
@@ -1358,9 +1378,15 @@ namespace thermalfist {
     double fQd  = m_THM->CalculateChargeDensity();
     double fSd  = m_THM->CalculateStrangenessDensity();
     double fASd = m_THM->CalculateAbsoluteStrangenessDensity();
+    if (fASd < 1.e-25) {
+      fASd = m_THM->CalculateAbsoluteStrangenessDensityModulo();
+    }
     double fCd  = m_THM->CalculateCharmDensity();
     double fACd = m_THM->CalculateAbsoluteCharmDensity();
-    
+    if (fACd < 1.e-25) {
+      fACd = m_THM->CalculateAbsoluteCharmDensityModulo();
+    }
+
     vector<double> wprim;
     wprim.resize(m_THM->Densities().size());
     for (size_t i = 0; i < wprim.size(); ++i)
@@ -1643,6 +1669,7 @@ namespace thermalfist {
         if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuS(false); }
 
       double nS = m_THM->CalculateAbsoluteStrangenessDensity();
+      if (abs(nS) < 1.e-25) { nS = m_THM->CalculateAbsoluteStrangenessDensityModulo();  }
       if (abs(nS) < 1.e-25) { repeat = true; m_THM->ConstrainMuS(false); }
       NNN++;
     }
@@ -1650,6 +1677,7 @@ namespace thermalfist {
       for (int j = 0; j < Jac.rows(); ++j)
         if (Jac(NNN, j) > 1.e8) { repeat = true; m_THM->ConstrainMuC(false); }
       double nC = m_THM->CalculateAbsoluteCharmDensity();
+      if (abs(nC) < 1.e-25) { nC = m_THM->CalculateAbsoluteCharmDensityModulo(); }
       if (abs(nC) < 1.e-25) { repeat = true; m_THM->ConstrainMuC(false); }
       NNN++;
     }
@@ -1769,10 +1797,16 @@ namespace thermalfist {
     if (m_Constr[2]) {
       dens[2] = m_THM->CalculateStrangenessDensity();
       absdens[2] = m_THM->CalculateAbsoluteStrangenessDensity();
+      if (absdens[2] < 1.e-25) {
+        absdens[2] = m_THM->CalculateAbsoluteStrangenessDensityModulo();
+      }
     }
     if (m_Constr[3]) {
       dens[3] = m_THM->CalculateCharmDensity();
       absdens[3] = m_THM->CalculateAbsoluteCharmDensity();
+      if (absdens[3] < 1.e-25) {
+        absdens[3] = m_THM->CalculateAbsoluteCharmDensityModulo();
+      }
     }
 
     i1 = 0;
@@ -1828,10 +1862,16 @@ namespace thermalfist {
     if (m_Constr[2]) {
       dens[2] = m_THM->CalculateStrangenessDensity();
       absdens[2] = m_THM->CalculateAbsoluteStrangenessDensity();
+      if (absdens[2] < 1.e-25) {
+        absdens[2] = m_THM->CalculateAbsoluteStrangenessDensityModulo();
+      }
     }
     if (m_Constr[3]) {
       dens[3] = m_THM->CalculateCharmDensity();
       absdens[3] = m_THM->CalculateAbsoluteCharmDensity();
+      if (absdens[3] < 1.e-25) {
+        absdens[3] = m_THM->CalculateAbsoluteCharmDensityModulo();
+      }
     }
 
     vector<double> wprim;

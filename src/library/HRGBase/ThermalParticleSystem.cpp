@@ -975,6 +975,7 @@ namespace thermalfist {
     SetCalculationType(m_QStatsCalculationType);
 
     CheckDecayChannelsAreSpecified();
+    CheckAbsoluteQuarkNumbers();
   }
 
   void ThermalParticleSystem::FinalizeDecaysLoad()
@@ -1416,6 +1417,28 @@ namespace thermalfist {
         if (cnt == 10) {
           printf("**WARNING** Further warnings are discarded...\n");
         }
+      }
+    }
+    return ret;
+  }
+
+  bool ThermalParticleSystem::CheckAbsoluteQuarkNumbers() const
+  {
+    bool ret = true;
+    for (int i = 0; i < Particles().size(); ++i) {
+      const ThermalParticle& part = Particles()[i];
+      if (part.AbsoluteStrangeness() == 0 && part.Strangeness() != 0) {
+        printf("**WARNING** %s (%lld): Particle with non-zero strangeness has zero strange quark content |s|!\n",
+          part.Name().c_str(),
+          part.PdgId());
+        ret = false;
+      }
+
+      if (part.AbsoluteCharm() == 0 && part.Charm() != 0) {
+        printf("**WARNING** %s (%lld): Particle with non-zero charm has zero charm quark content |s|!\n",
+          part.Name().c_str(),
+          part.PdgId());
+        ret = false;
       }
     }
     return ret;

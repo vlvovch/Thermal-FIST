@@ -476,6 +476,11 @@ namespace thermalfist {
     bool CheckDecayChannelsAreSpecified() const;
 
     /**
+     * Checks absolute quark numbers
+     */
+    bool CheckAbsoluteQuarkNumbers() const;
+
+    /**
      * Checks whether cumulative charges (B, Q, S, C) of decay products match those of decaying particle with index ind.
      * Returns a 4-element vector of integers, an element is zero if the correspomnding conserved charge is not conserved
      * and unity otherwise.

@@ -159,7 +159,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     QGroupBox *grModelConfig = new QGroupBox(tr("HRG model configuration:"));
 
-    configWidget = new ModelConfigWidget(NULL, model);
+    configWidget = new ModelConfigWidget(NULL, model, false, true);
     connect(configWidget, SIGNAL(changed()), this, SLOT(modelChanged()));
 
     QHBoxLayout *layModelConfig = new QHBoxLayout();
@@ -621,7 +621,7 @@ void FitToExperimentTab::modelChanged()
   tableFitParameters->setRowHidden(m_FitParameters.IndexByName("Tkin"),
     !(configWidget->currentConfig.UsePCE));
 
-  m_FitParameters.Tkin.value = configWidget->currentConfig.Tkin;
+  //m_FitParameters.Tkin.value = configWidget->currentConfig.Tkin;
 
   //tableParameters->hideRow(1);
   //tableParameters->setRowHidden(0, true);

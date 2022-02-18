@@ -240,13 +240,14 @@ public:
     density   dndmt;
     density   dndpt;
     density2d d2ndptdy;
-    ParticleSpectrum(int PDGID_=0, double mass_=1., double etamax = 0.):n(0),n2(0),n3(0),n4(0),n5(0),n6(0),n7(0),n8(0),wsum(0.),w2sum(0.),events(0),PDGID(PDGID_),mass(mass_),tmpn(0) {
+    ParticleSpectrum(int PDGID_ = 0, double mass_ = 1., double etamax = 0.,
+      int bins = 500, int binsx = 40, int binsy = 40) :n(0), n2(0), n3(0), n4(0), n5(0), n6(0), n7(0), n8(0), wsum(0.), w2sum(0.), events(0), PDGID(PDGID_), mass(mass_), tmpn(0) {
         fDistribution = NULL;
-        dndp     = density(0., 2. + mass, 500);
-        dndy     = density(-3. - etamax, 3. + etamax, 500);
-        dndmt    = density(mass, 2.+mass, 500);
-        dndpt    = density(0., 3. + mass, 500);
-        d2ndptdy = density2d(-3. - etamax, 3. + etamax, 40, 0., 2., 40);
+        dndp     = density(0., 2. + mass, bins);
+        dndy     = density(-3. - etamax, 3. + etamax, bins);
+        dndmt    = density(mass, 2.+mass, bins);
+        dndpt    = density(0., 3. + mass, bins);
+        d2ndptdy = density2d(-3. - etamax, 3. + etamax, binsx, 0., 2., binsy);
         acc      = false;
         isAveragesCalculated = false;
         tmpn = 0;
@@ -256,18 +257,18 @@ public:
     }
     ~ParticleSpectrum() {
     }
-    void Reset() {
+    void Reset(int bins = 500, int binsx = 40, int binsy = 40) {
         n = n2 = n3 = n4 = 0;
         n5 = n6 = n7 = n8 = 0;
         events = 0;
         wsum = 0.;
         w2sum = 0.;
         tmpn = 0;
-        dndp = density(0., 2. + mass, 500);
-        dndy = density(-3., 3., 500);
-        dndmt = density(mass, 2.+mass, 500);
-        dndpt = density(0., 3. + mass, 500);
-        d2ndptdy = density2d(-3., 3., 40, 0., 2., 40);
+        dndp = density(0., 2. + mass, bins);
+        dndy = density(-3., 3., bins);
+        dndmt = density(mass, 2.+mass, bins);
+        dndpt = density(0., 3. + mass, bins);
+        d2ndptdy = density2d(-3., 3., binsx, 0., 2., binsy);
         pTsum = pT2sum = pTcnt = pTcnt2 = 0.;
         pTsum_event = pT2sum_event = 0.;
     }
@@ -413,6 +414,20 @@ public:
     }
 };
 
+struct ParticleSpectraConfig {
+  int fDistrType;
+  double fEtaMax;
+  int fStableOnly; // 0 - all, 1 - only stable, 2 - stable + list
+  std::set<long long> fPdgCodes;
+  double fT, fBeta, fNPow;
+  int fBins, fBinsX, fBinsY;
+  ParticleSpectraConfig(int distrtype = 0, double etamax = 0.5, int stableonly = 1,
+    double T = 0.120, double beta = 0.5, double npow = 1.0,
+    int bins = 500, int binsX = 40, int binsY = 40) :
+    fDistrType(distrtype), fEtaMax(etamax), fStableOnly(stableonly),
+    fT(T), fBeta(beta), fNPow(npow), fBins(bins), fBinsX(binsX), fBinsY(binsY) { }
+};
+
 class ParticlesSpectra {
 public:
     std::vector<ParticleSpectrum> fParticles;
@@ -430,12 +445,20 @@ public:
     std::vector<thermalfist::MomentumDistributionBase*> distrs;
     double fEtaMax;
     int fDistributionType;
-    ParticlesSpectra(thermalfist::ThermalModelBase *model=NULL, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5);
+    ParticleSpectraConfig fConfig;
+    ParticlesSpectra(thermalfist::ThermalModelBase* model = NULL,
+      const ParticleSpectraConfig& config = ParticleSpectraConfig());
+      //double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5);
     ~ParticlesSpectra();
     void ProcessEvent(const thermalfist::SimpleEvent &evt);
     void Reset();
-    void Reset(thermalfist::ThermalParticleSystem* TPS, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
-    void Reset(thermalfist::ThermalModelBase *model, double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
+    void Reset(thermalfist::ThermalParticleSystem* TPS,
+      const ParticleSpectraConfig& config = ParticleSpectraConfig());
+
+      //double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
+    void Reset(thermalfist::ThermalModelBase *model,
+      const ParticleSpectraConfig& config = ParticleSpectraConfig());
+      //double T = 0.120, double beta = 0.5, int distrtype = 0, double etamax = 0.5, double npow = 1.);
 };
 
 

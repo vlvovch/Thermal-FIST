@@ -47,8 +47,8 @@ namespace {
   const QString ModelQvdW = "Quantum van der Waals";
 }
 
-ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode)
-  : QWidget(parent), m_eventGeneratorMode(eventGeneratorMode)
+ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode, bool thermalFitMode)
+  : QWidget(parent), m_eventGeneratorMode(eventGeneratorMode), m_thermalFitMode(thermalFitMode)
 {
   model = modelop;
 
@@ -787,7 +787,8 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   CBSahaNuclei->setToolTip(tr("Check to calculate light nuclei yields at T<sub>kin</sub> using the Saha equation. Otherwise their yields are frozen at T<sub>ch</sub>."));
 
   PCELayout->addWidget(CBUsePCE);
-  PCELayout->addLayout(layTkin);
+  if (!parent->m_thermalFitMode)
+    PCELayout->addLayout(layTkin);
   PCELayout->addSpacing(10);
   PCELayout->addWidget(CBFreezeLongLived);
   PCELayout->addLayout(layGammaLim);

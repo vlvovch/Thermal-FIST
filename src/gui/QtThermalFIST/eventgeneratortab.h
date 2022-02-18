@@ -81,11 +81,74 @@ signals:
     void calculated();
 };
 
+
+class BinningDialog : public QDialog
+{
+  Q_OBJECT
+public:
+  struct BinningConfig {
+    int bins1D;
+    int bins2D_x, bins2D_y;
+    BinningConfig(int b1d = 500, int b2dx = 40, int b2dy = 40) :
+      bins1D(b1d), bins2D_x(b2dx), bins2D_y(b2dy) { }
+  };
+
+  BinningConfig* m_config;
+  QSpinBox* spinBins;
+  QSpinBox* spinBinsX;
+  QSpinBox* spinBinsY;
+
+public:
+  explicit  BinningDialog(BinningConfig* config = 0, QWidget* parent = 0);
+
+signals:
+
+public slots:
+  void OK();
+  void Discard() { QDialog::reject(); };
+};
+
+
+class ParticlesAnalyzeDialog : public QDialog
+{
+  Q_OBJECT
+public:
+  struct ParticlesAnalyzeConfig {
+    int type;
+    std::set<long long> pdgCodes;
+    ParticlesAnalyzeConfig() :
+      type(1) {
+      pdgCodes.insert(221);
+      pdgCodes.insert(113);
+      pdgCodes.insert(313);
+    }
+  };
+
+  ParticlesAnalyzeConfig* m_config;
+  QRadioButton* RBAll;
+  QRadioButton* RBStable;
+  QRadioButton* RBStablePlus;
+  QLineEdit* lePdgs;
+
+public:
+  explicit  ParticlesAnalyzeDialog(ParticlesAnalyzeConfig* config = 0, QWidget* parent = 0);
+
+signals:
+
+public slots:
+  void OK();
+  void Discard() { QDialog::reject(); };
+};
+
 class EventGeneratorTab : public QWidget
 {
     Q_OBJECT
 
     QTableView *tableSpectra;
+    ParticlesAnalyzeDialog::ParticlesAnalyzeConfig partsConfig;
+    //QCheckBox* checkStableOnly;
+    //int particlesAnalyzeInclude;
+    //std::set<int> pdgCodes;
 
     QComboBox *comboDistr;
     QStackedWidget *plot;
@@ -96,6 +159,7 @@ class EventGeneratorTab : public QWidget
     QCPErrorBars *errorBars;
     std::map<QString, int> parammap;
     std::vector<QString> paramnames, paramnamesx;
+
 
 
     QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
@@ -151,6 +215,13 @@ class EventGeneratorTab : public QWidget
     QPushButton *buttonChooseFile;
 
     ModelConfigWidget *configWidget;
+
+    QString cpath;
+
+    std::vector<double> fXv, fYv, fZv;
+    std::vector<double> fZvErr;
+
+    BinningDialog::BinningConfig binConfig;
 public:
     EventGeneratorTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EventGeneratorTab();
@@ -177,6 +248,24 @@ public slots:
     void changeTkin(double);
 
     void generateEvents(const ThermalModelConfig & config);
+
+
+    void contextMenuRequestPlot1D(QPoint pos);
+    void saveAsPdf1D() { return saveAs1D(0); }
+    void saveAsPng1D() { return saveAs1D(1); }
+    void saveAsAscii1D() { return saveAs1D(2); }
+    // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
+    void saveAs1D(int type);
+
+    void contextMenuRequestPlot2D(QPoint pos);
+    void saveAsPdf2D() { return saveAs2D(0); }
+    void saveAsPng2D() { return saveAs2D(1); }
+    void saveAsAscii2D() { return saveAs2D(2); }
+    // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
+    void saveAs2D(int type);
+
+    void changeParticles();
+    void changeBinning();
 };
 
 #endif // FITTOEXPERIMENTTAB_H

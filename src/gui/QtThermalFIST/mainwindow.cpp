@@ -236,7 +236,7 @@ void MainWindow::loadList()
     std::vector<std::string> paths(0);
     for (int i = 0; i < pathlist.length(); ++i)
       paths.push_back(pathlist[i].toStdString());
-    *TPS = ThermalParticleSystem(paths);
+    //*TPS = ThermalParticleSystem(paths);
     //*TPS = ThermalParticleSystem(
     //  { path.toStdString() }, 
     //  { "" }, 
@@ -244,13 +244,17 @@ void MainWindow::loadList()
     //);
 
     QString decpath = QFileInfo(pathlist[0]).absolutePath() + "/decays.dat";
-    if (!TPS->CheckDecayChannelsAreSpecified() &&  !QFileInfo(decpath).exists()) {
+    //if (!TPS->CheckDecayChannelsAreSpecified() &&  !QFileInfo(decpath).exists()) {
+    if (!QFileInfo(decpath).exists()) {
       decpath = QFileDialog::getOpenFileName(this, tr("Open file with decays"), decpath);
       if (decpath.length() > 0)
       {
         TPS->LoadDecays(decpath.toStdString());
       }
     }
+    std::vector<std::string> decays;
+    decays.push_back(decpath.toStdString());
+    *TPS = ThermalParticleSystem(paths, decays);
 
     //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
     model->ChangeTPS(TPS);
