@@ -16,7 +16,7 @@ Minor enhancements and bugfixes
 - GUI: Show lattice data for ratios of quantities for the equation of state tab in the GUI, where available
 - GUI: Display mean pT in the event generator tab
 - Event generator: Sampling of the space-time coordinates in addition to the momenta (*not yet supported for the Siemens-Rasmussen model*)
-- Event generator: Write the output in the format tailor for UrQMD afterburner from https://github.com/jbernhard/urqmd-afterburner
+- Event generator: Write the output in the format tailored for UrQMD afterburner from https://github.com/jbernhard/urqmd-afterburner
 - Event generator: Output particle energy (p0) by default when writing to file
 
 
