@@ -14,7 +14,6 @@ script:
   - cd build
   - cmake -DINCLUDE_TESTS=OFF ../
   - make -j$(nproc)
-  - make test
   - cd bin/examples
   - ./CalculationTmu
   - ./BagModelFit 0.50 0.100 0.301 0.005
