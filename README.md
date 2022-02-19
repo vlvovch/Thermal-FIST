@@ -24,6 +24,8 @@ For more details please see the [**Thermal-FIST documentation**](https://fias.un
 
 It is recommended to use the latest version of the package. See the [CHANGELOG](CHANGELOG.md)
 
+Undocumented new features and bugfixes often first appear in the [devel branch](https://github.com/vlvovch/Thermal-FIST/tree/devel)
+
 <p align="center">
   <img src="src/gui/QtThermalFIST/images/QtThermalFIST.png" alt="QtThermalFIST"/>
 </p>
@@ -48,4 +50,4 @@ Please cite the following paper when using this code:
 
 It is expected that changes to the code are documented.
 
-*Copyright (C) 2018-2021  Volodymyr Vovchenko*
+*Copyright (C) 2018-2022  Volodymyr Vovchenko*
