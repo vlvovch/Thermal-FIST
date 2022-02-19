@@ -45,6 +45,28 @@
 
 using namespace thermalfist;
 
+EventGeneratorWorker::EventGeneratorWorker(
+  thermalfist::EventGeneratorBase* gen,
+  ParticlesSpectra* spec,
+  QMutex* mut,
+  int totalEvents,
+  int* evproc,
+  int* stopo,
+  double* nEp,
+  bool pDecays,
+  std::string fileout,
+  QObject* parent):
+      QThread(parent), generator(gen), spectra(spec), mutex(mut),
+          events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)/*,
+          hepmcout(fileout + ".hepmc3")*/
+  {
+      wsum = w2sum = 0.;
+      fout.clear();
+      if (fileout != "") 
+        fout.open(fileout.c_str());
+
+  }
+
 void EventGeneratorWorker::run()
 {
      if (mutex!=NULL) {
@@ -65,6 +87,8 @@ void EventGeneratorWorker::run()
             if (fout.is_open())
               ev.writeToFile(fout, outconfig, (*eventsProcessed));
 
+            //hepmcout.WriteEvent(ev);
+
             mutex->unlock();
         }
      }
@@ -73,6 +97,137 @@ void EventGeneratorWorker::run()
      *nE = wsum * wsum / w2sum;
      emit calculated();
  }
+
+BinningDialog::BinningDialog(BinningConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
+{
+  if (config == 0) {
+    QMessageBox msgBox;
+    msgBox.setText(tr("Empty binning config!"));
+    msgBox.exec();
+    QDialog::reject();
+  }
+  
+  QVBoxLayout* layout = new QVBoxLayout();
+
+  QGroupBox* gr1D = new QGroupBox(tr("1D plots"));
+  QHBoxLayout* grLayout = new QHBoxLayout();
+  grLayout->addWidget(new QLabel(tr("Number of bins:")));
+  spinBins = new QSpinBox();
+  spinBins->setMinimum(1);
+  spinBins->setMaximum(10000);
+  spinBins->setValue(m_config->bins1D);
+  grLayout->addWidget(spinBins);
+  gr1D->setLayout(grLayout);
+
+  QGroupBox* gr2D = new QGroupBox(tr("2D plots"));
+  QGridLayout* gr2Layout = new QGridLayout();
+  gr2Layout->addWidget(new QLabel(tr("Number of X bins:")), 0, 0);
+  spinBinsX = new QSpinBox();
+  spinBinsX->setMinimum(1);
+  spinBinsX->setMaximum(10000);
+  spinBinsX->setValue(m_config->bins2D_x);
+  gr2Layout->addWidget(spinBinsX, 0, 1);
+  gr2Layout->addWidget(new QLabel(tr("Number of Y bins:")), 1, 0);
+  spinBinsY = new QSpinBox();
+  spinBinsY->setMinimum(1);
+  spinBinsY->setMaximum(10000);
+  spinBinsY->setValue(m_config->bins2D_y);
+  gr2Layout->addWidget(spinBinsY, 1, 1);
+  gr2D->setLayout(gr2Layout);
+
+  std::cout << m_config->bins1D << " " << m_config->bins2D_x << " " << m_config->bins2D_y << std::endl;
+
+  layout->addWidget(gr1D);
+  layout->addWidget(gr2D);
+  setLayout(layout);
+
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+    | QDialogButtonBox::Cancel);
+  connect(buttonBox, &QDialogButtonBox::accepted, this, &BinningDialog::OK);
+  connect(buttonBox, &QDialogButtonBox::rejected, this, &BinningDialog::Discard);
+
+  layout->addWidget(buttonBox);
+
+  setWindowTitle(tr("Binning configuration"));
+}
+
+void BinningDialog::OK()
+{
+  m_config->bins1D = spinBins->value();
+  m_config->bins2D_x = spinBinsX->value();
+  m_config->bins2D_y = spinBinsY->value();
+  QDialog::accept();
+}
+
+
+
+ParticlesAnalyzeDialog::ParticlesAnalyzeDialog(ParticlesAnalyzeConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
+{
+  if (config == 0) {
+    QMessageBox msgBox;
+    msgBox.setText(tr("Empty particle list config!"));
+    msgBox.exec();
+    QDialog::reject();
+  }
+
+  QVBoxLayout* layout = new QVBoxLayout();
+
+  RBAll = new QRadioButton(tr("All hadrons and resonances"));
+  RBStable = new QRadioButton(tr("Only stable"));
+  RBStablePlus = new QRadioButton(tr("Only stable plus specified (enter comma-separated list of pdg codes)"));
+  if (m_config->type == 0)
+    RBAll->setChecked(true);
+  else if (m_config->type == 1)
+    RBStable->setChecked(true);
+  else
+    RBStablePlus->setChecked(true);
+
+  lePdgs = new QLineEdit();
+  {
+    std::set<long long>::iterator it = m_config->pdgCodes.begin();
+    while (it != m_config->pdgCodes.end())
+    {
+      if (it != m_config->pdgCodes.begin()) {
+        lePdgs->setText(lePdgs->text() + ",");
+      }
+      lePdgs->setText(lePdgs->text() + QString::number(*it));
+      it++;
+    }
+  }
+
+  layout->addWidget(RBAll);
+  layout->addWidget(RBStable);
+  layout->addWidget(RBStablePlus);
+  layout->addWidget(lePdgs);
+
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+    | QDialogButtonBox::Cancel);
+  connect(buttonBox, &QDialogButtonBox::accepted, this, &ParticlesAnalyzeDialog::OK);
+  connect(buttonBox, &QDialogButtonBox::rejected, this, &ParticlesAnalyzeDialog::Discard);
+
+  layout->addWidget(buttonBox);
+
+  setLayout(layout);
+
+  setWindowTitle(tr("Particle list configuration"));
+}
+
+void ParticlesAnalyzeDialog::OK()
+{
+  if (RBAll->isChecked())
+    m_config->type = 0;
+  else if (RBStable->isChecked())
+    m_config->type = 1;
+  else
+    m_config->type = 2;
+
+  std::vector<std::string> pdgs = CuteHRGHelper::split(lePdgs->text().toStdString(), ',');
+  m_config->pdgCodes.clear();
+  for (int i = 0; i < pdgs.size(); ++i)
+    m_config->pdgCodes.insert(std::stoll(pdgs[i]));
+  QDialog::accept();
+}
+
 
 EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop) :
     QWidget(parent)
@@ -124,7 +279,17 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     QVBoxLayout *dataLayv = new QVBoxLayout();
     QVBoxLayout *dataLayv2 = new QVBoxLayout();
 
+    QHBoxLayout* layTop = new QHBoxLayout();
     QLabel *labelParticleList = new QLabel(tr("Particle list:"));
+    //checkStableOnly = new QCheckBox(tr("Analyze only stable hadrons"));
+    //checkStableOnly->setChecked(true);
+    //layTop->addLayout(labelParticleList, 1);
+    QPushButton* buttonPartsConfig = new QPushButton(tr("Edit particle list for analysis..."));
+    connect(buttonPartsConfig, SIGNAL(clicked()), this, SLOT(changeParticles()));
+    layTop->addWidget(labelParticleList, 1);
+    layTop->addWidget(buttonPartsConfig);
+
+
     myModel = new SpectraModel(this);
     myModel->setSpectra(spectra);
     tableSpectra = new QTableView();
@@ -143,8 +308,13 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     for(int i=0;i<index;++i) comboDistr->addItem(paramnames[i]);
     comboDistr->setCurrentIndex(0);
     connect(comboDistr, SIGNAL(currentIndexChanged(int)), this, SLOT(changePlot()));
+
+    QPushButton* buttonBinning = new QPushButton(tr("Binning..."));
+    connect(buttonBinning, SIGNAL(clicked()), this, SLOT(changeBinning()));
+
     selLay->addWidget(labelSel);
     selLay->addWidget(comboDistr);
+    selLay->addWidget(buttonBinning, 1, Qt::AlignRight);
 
     plotDistr = new QCustomPlot();
     plotDistr->xAxis->setLabel("p (GeV)");
@@ -160,17 +330,21 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     plotDistr->graph(1)->setName(comboDistr->currentText());
     plotDistr->graph(1)->setPen(QPen(Qt::blue, 2, Qt::DashLine));
 
+    plotDistr->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(plotDistr, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequestPlot1D(QPoint)));
+
     errorBars = new QCPErrorBars(plotDistr->xAxis, plotDistr->yAxis);
     errorBars->removeFromLegend();
     errorBars->setErrorType(QCPErrorBars::etValueError);
     errorBars->setPen(QPen(Qt::blue));
     errorBars->setSymbolGap(5);
-    //errorBars->set
-    //errorBars->setDataPlottable(plotDistr->graph(0));
 
     plot2D = new QCustomPlot();
     plot2D->xAxis->setLabel(tr("y"));
     plot2D->yAxis->setLabel(tr("pT (GeV)"));
+
+    plot2D->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(plot2D, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequestPlot2D(QPoint)));
 
     colormap = new QCPColorMap(plot2D->xAxis, plot2D->yAxis);
 
@@ -186,7 +360,8 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     if (comboDistr->currentIndex()==3) plot->setCurrentIndex(1);
     else plot->setCurrentIndex(0);
 
-    dataLayv->addWidget(labelParticleList);
+    //dataLayv->addWidget(labelParticleList);
+    dataLayv->addLayout(layTop, 1);
     dataLayv->addWidget(tableSpectra,1);
     dataLayv2->addLayout(selLay);
     dataLayv2->addWidget(plot, 1);
@@ -392,13 +567,13 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinBeta->setDecimals(3);
     spinBeta->setValue(0.5);
     spinBeta->setToolTip(tr("Radial flow velocity"));
-    labelBetat = new QLabel(tr("β<sub>T</sub>:"));
+    labelBetat = new QLabel(tr("〈β〉<sub>T</sub>:"));
     spinBetat = new QDoubleSpinBox();
     spinBetat->setMinimum(0.);
     spinBetat->setMaximum(1.);
     spinBetat->setDecimals(3);
     spinBetat->setValue(0.5);
-    spinBetat->setToolTip(tr("Transverse radial flow parameter"));
+    spinBetat->setToolTip(tr("Transverse flow parameter"));
     QLabel *labelEtaMax = new QLabel(tr("η<sub>max</sub>:"));
     spinEtaMax = new QDoubleSpinBox();
     spinEtaMax->setMinimum(0.);
@@ -527,6 +702,8 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spingammaS->setValue(1.0);
     spingammaq->setValue(1.0);
     spinVolumeR->setValue(8.0);
+
+    cpath = QApplication::applicationDirPath();
 }
 
 
@@ -693,11 +870,12 @@ void EventGeneratorTab::replot() {
                                                     plot2D->xAxis->range(),
                                                     plot2D->yAxis->range());
 
-        std::vector<double> xv = spectra->fParticles[id].GetXVector(3);
-        std::vector<double> yv = spectra->fParticles[id].GetYVector(3);
-        std::vector<double> zv = spectra->fParticles[id].GetZVector(3);
-        for(int i=0;i<xv.size();++i) {
-           data->setData(xv[i], yv[i], zv[i]);
+        fXv = spectra->fParticles[id].GetXVector(3);
+        fYv = spectra->fParticles[id].GetYVector(3);
+        fZv = spectra->fParticles[id].GetZVector(3);
+        fZvErr = spectra->fParticles[id].GetZErrorVector(3);
+        for(int i=0;i<fXv.size();++i) {
+           data->setData(fXv[i], fYv[i], fZv[i]);
         }
 
         colormap->setGradient(QCPColorGradient::gpPolar);
@@ -812,6 +990,18 @@ void EventGeneratorTab::replot2D(const QVector<double> &xv, const QVector<double
 
 void EventGeneratorTab::calculate() {
     if (!fRunning) {
+      if (radioSSH->isChecked()) {
+        double betaT = spinBetat->value();
+        double npow = spinn->value();
+        double betaS = (2. + npow) / 2. * betaT;
+        if (betaS >= 1.0) {
+          QMessageBox msgBox;
+          msgBox.setText(QString("Too high transverse flow! The flow velocity at the surface exceeds the speed of light, β<sub>s</sub> = %1").arg(betaS));
+          msgBox.exec();
+          return;
+        }
+      }
+
       generateEvents(getConfig());
     }
     else {
@@ -1022,7 +1212,7 @@ void EventGeneratorTab::modelChanged()
     labelBetat->setText("R/τ<sub>H</sub>:");
   }
   else {
-    labelBetat->setText("β<sub>T</sub>:");
+    labelBetat->setText("〈β〉<sub>T</sub>:");
   }
 
   if (checkFile->isChecked()) {
@@ -1104,12 +1294,38 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     // Convert the mean transverse velocity into the one at the surface
     double betaS = (2. + spinn->value()) / 2. * spinBetat->value();
 
-    if (radioSR->isChecked()) 
-      spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
-    else if (radioSSH->isChecked()) 
-      spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
-    else 
-      spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 2, spinEtaMax->value());
+    ParticleSpectraConfig config_spectra;
+    config_spectra.fT = spinTkin->value() * 1.e-3;
+    config_spectra.fEtaMax = spinEtaMax->value();
+    config_spectra.fNPow = spinn->value();
+    if (radioSR->isChecked()) {
+      config_spectra.fBeta = spinBeta->value();
+      config_spectra.fDistrType = 0;
+    }
+    else if (radioSSH->isChecked()) {
+      config_spectra.fBeta = betaS;
+      config_spectra.fDistrType = 1;
+    }
+    else {
+      config_spectra.fBeta = betaS;
+      config_spectra.fDistrType = 2;
+    }
+
+    config_spectra.fStableOnly = partsConfig.type;
+    config_spectra.fPdgCodes = partsConfig.pdgCodes;
+
+    config_spectra.fBins  = binConfig.bins1D;
+    config_spectra.fBinsX = binConfig.bins2D_x;
+    config_spectra.fBinsY = binConfig.bins2D_y;
+
+    spectra->Reset(model, config_spectra);
+
+    //if (radioSR->isChecked()) 
+    //  spectra->Reset(model, spinTkin->value() * 1.e-3, spinBeta->value());
+    //else if (radioSSH->isChecked()) 
+    //  spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 1, spinEtaMax->value(), spinn->value());
+    //else 
+    //  spectra->Reset(model, spinTkin->value() * 1.e-3, betaS, 2, spinEtaMax->value());
 
     int id = getCurrentRow();
     if (id<0) id = 0;
@@ -1236,4 +1452,160 @@ void EventGeneratorTab::changeTkin(double Tch)
 {
   if (!configWidget->currentConfig.UsePCE) 
     spinTkin->setValue(Tch);
+}
+
+void EventGeneratorTab::contextMenuRequestPlot1D(QPoint pos)
+{
+  QMenu* menu = new QMenu(this);
+  menu->setAttribute(Qt::WA_DeleteOnClose);
+
+  menu->addAction("Save as pdf", this, SLOT(saveAsPdf1D()));
+  menu->addAction("Save as png", this, SLOT(saveAsPng1D()));
+  menu->addAction("Write computed values to file", this, SLOT(saveAsAscii1D()));
+
+  menu->popup(plotDistr->mapToGlobal(pos));
+}
+
+void EventGeneratorTab::saveAs1D(int type)
+{
+  QString tname = plotDistr->yAxis->label();
+  for (int i = 0; i < tname.size(); ++i) {
+    if (tname[i] == '/')
+      tname[i] = '.';
+  }
+
+  {
+    int id = getCurrentRow();
+    if (id >= 0 && id < spectra->fParticles.size()) {
+      if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
+        tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
+      }
+    }
+  }
+
+  QVector<QString> exts;
+  exts.push_back("pdf");
+  exts.push_back("png");
+  exts.push_back("dat");
+
+  QString listpathprefix = cpath + "/" + tname + "." + exts[type];
+  QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
+
+  if (path.length() > 0)
+  {
+    if (type == 0)
+      plotDistr->savePdf(path, plotDistr->width(), plotDistr->height());
+    else if (type == 1)
+      plotDistr->savePng(path, plotDistr->width(), plotDistr->height());
+    else {
+      QFile fout(path);
+
+      if (fout.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&fout);
+        out.setFieldWidth(15);
+        out.setFieldAlignment(QTextStream::AlignLeft);
+        out << plotDistr->xAxis->label();
+        out << plotDistr->yAxis->label();
+        out << "error";
+        out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        for (int i = 0; i < plotDistr->graph(0)->data()->size(); ++i) {
+          out.setFieldWidth(15);
+          out.setFieldAlignment(QTextStream::AlignLeft);
+          double x = plotDistr->graph(0)->data()->at(i)->key;
+          double y = plotDistr->graph(0)->data()->at(i)->value;
+          double yerr = errorBars->data()->at(i).errorPlus;
+          out << x << y << yerr;
+          out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        }
+      }
+    }
+
+    QFileInfo saved(path);
+    cpath = saved.absolutePath();
+  }
+}
+
+void EventGeneratorTab::contextMenuRequestPlot2D(QPoint pos)
+{
+  QMenu* menu = new QMenu(this);
+  menu->setAttribute(Qt::WA_DeleteOnClose);
+
+  menu->addAction("Save as pdf", this, SLOT(saveAsPdf2D()));
+  menu->addAction("Save as png", this, SLOT(saveAsPng2D()));
+  menu->addAction("Write computed values to file", this, SLOT(saveAsAscii2D()));
+
+  menu->popup(plot2D->mapToGlobal(pos));
+}
+
+void EventGeneratorTab::saveAs2D(int type)
+{
+  QString plotName = "d2N/dpTdy";
+  QString tname = plotName;
+  for (int i = 0; i < tname.size(); ++i) {
+    if (tname[i] == '/')
+      tname[i] = '.';
+  }
+
+  {
+    int id = getCurrentRow();
+    if (id >= 0 && id < spectra->fParticles.size()) {
+      if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
+        tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
+      }
+    }
+  }
+
+  QVector<QString> exts;
+  exts.push_back("pdf");
+  exts.push_back("png");
+  exts.push_back("dat");
+
+  QString listpathprefix = cpath + "/" + tname + "." + exts[type];
+  QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
+
+  if (path.length() > 0)
+  {
+    if (type == 0)
+      plot2D->savePdf(path, plotDistr->width(), plotDistr->height());
+    else if (type == 1)
+      plot2D->savePng(path, plotDistr->width(), plotDistr->height());
+    else {
+      QFile fout(path);
+
+      if (fout.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&fout);
+        out.setFieldWidth(15);
+        out.setFieldAlignment(QTextStream::AlignLeft);
+        out << plot2D->xAxis->label();
+        out << plot2D->yAxis->label();
+        out << plotName;
+        out << "error";
+        out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        for (int i = 0; i < fXv.size(); ++i) {
+          out.setFieldWidth(15);
+          out.setFieldAlignment(QTextStream::AlignLeft);
+          out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
+          out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        }
+      }
+    }
+
+    QFileInfo saved(path);
+    cpath = saved.absolutePath();
+  }
+}
+
+void EventGeneratorTab::changeParticles()
+{
+  ParticlesAnalyzeDialog dialog(&partsConfig, this);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.exec();
+}
+
+
+void EventGeneratorTab::changeBinning()
+{
+  BinningDialog dialog(&binConfig, this);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.exec();
 }

@@ -54,11 +54,12 @@ public:
   ThermalModelConfig currentConfig;
 
   bool m_eventGeneratorMode;
+  bool m_thermalFitMode;
 
   thermalfist::ThermalModelBase *model;
 
 
-  ModelConfigWidget(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL, bool eventGeneratorMode = false);
+  ModelConfigWidget(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL, bool eventGeneratorMode = false, bool thermalFitMode = false);
   ~ModelConfigWidget();
   ThermalModelConfig updatedConfig();
 private slots:

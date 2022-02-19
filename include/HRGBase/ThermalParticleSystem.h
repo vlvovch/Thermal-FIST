@@ -425,6 +425,7 @@ namespace thermalfist {
      * \param pdgid PDG ID of a particle specie.
      * \return ThermalParticle& ThermalParticle object reference.
      */
+    const ThermalParticle& ParticleByPDG(long long pdgid) const;
     ThermalParticle& ParticleByPDG(long long pdgid);
 
     /**
@@ -435,7 +436,7 @@ namespace thermalfist {
      * \param pdgid PDG ID.
      * \return int  0-based particle id number.
      */
-    int  PdgToId(long long pdgid)    /*const*/ { return (m_PDGtoID.count(pdgid) > 0) ? m_PDGtoID[pdgid] : -1; }
+    int  PdgToId(long long pdgid)    const;// { return (m_PDGtoID.count(pdgid) > 0) ? m_PDGtoID[pdgid] : -1; }
     
     /**
      * \brief Transforms 0-based particle id number to a PDG ID.
@@ -473,6 +474,11 @@ namespace thermalfist {
      * Checks if all particles marked as unstable have decay channels
      */
     bool CheckDecayChannelsAreSpecified() const;
+
+    /**
+     * Checks absolute quark numbers
+     */
+    bool CheckAbsoluteQuarkNumbers() const;
 
     /**
      * Checks whether cumulative charges (B, Q, S, C) of decay products match those of decaying particle with index ind.

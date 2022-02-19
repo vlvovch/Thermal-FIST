@@ -16,7 +16,7 @@ Minor enhancements and bugfixes
 - GUI: Show lattice data for ratios of quantities for the equation of state tab in the GUI, where available
 - GUI: Display mean pT in the event generator tab
 - Event generator: Sampling of the space-time coordinates in addition to the momenta (*not yet supported for the Siemens-Rasmussen model*)
-- Event generator: Write the output in the format tailor for UrQMD afterburner from https://github.com/jbernhard/urqmd-afterburner
+- Event generator: Write the output in the format tailored for UrQMD afterburner from https://github.com/jbernhard/urqmd-afterburner
 - Event generator: Output particle energy (p0) by default when writing to file
 
 
@@ -174,21 +174,21 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
-[Version 1.3.1]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v1.3.1
+[Version 1.3.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3...v1.3.1
 
-[Version 1.3]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v1.3
+[Version 1.3]: https://github.com/vlvovch/Thermal-FIST/compare/v1.2(cpc)...v1.3
 
-[Version 1.2]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v1.2
+[Version 1.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.1...v1.2(cpc)
 
-[Version 1.1]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v1.1
+[Version 1.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.0...v1.1
 
-[Version 1.0]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v1.0
+[Version 1.0]: https://github.com/vlvovch/Thermal-FIST/compare/v0.9...v1.0
 
-[Version 0.9]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.9
+[Version 0.9]: https://github.com/vlvovch/Thermal-FIST/compare/v0.8...v0.9
 
-[Version 0.8]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.8
+[Version 0.8]: https://github.com/vlvovch/Thermal-FIST/compare/v0.7...v0.8
 
-[Version 0.7]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.7
+[Version 0.7]: https://github.com/vlvovch/Thermal-FIST/compare/v0.6...v0.7
 
 [Version 0.6]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.6
 

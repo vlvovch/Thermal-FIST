@@ -74,13 +74,13 @@ namespace thermalfist {
     };
 
     /// Writes the event to an output file stream
-    void writeToFile(std::ofstream& fout, const EventOutputConfig& config = EventOutputConfig(), int eventnumber = 1);
+    void writeToFile(std::ofstream& fout, const EventOutputConfig& config = EventOutputConfig(), int eventnumber = 1) const;
 
     /// Writes the event to an output file stream
-    void writeToFile(std::ofstream& fout, int eventnumber = 1) { writeToFile(fout, EventOutputConfig(), eventnumber); }
+    void writeToFile(std::ofstream& fout, int eventnumber = 1) const { writeToFile(fout, EventOutputConfig(), eventnumber); }
 
     /// Writes the event in a format suitable for UrQMD afterburner, as described here https://github.com/jbernhard/urqmd-afterburner
-    void writeToFileForUrqmd(std::ofstream& fout);
+    void writeToFileForUrqmd(std::ofstream& fout) const;
   };
 
 } // namespace thermalfist
