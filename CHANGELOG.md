@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 
+## [Version 1.3.2] 
+
+Date: 2022-02-18
+
+Minor enhancements and bugfixes
+
+## Enhancements
+- GUI: Binning options in event generator
+- GUI: Ability to add resonances and other particles to online analysis
+- GUI: Export Monte Carlo momentum distributions to file
+- Event generator: Monte Carlo sampler of ideal HRG from an arbitrary (numerical) hypersurface
+- Event generator: Event generator output through a new event writer class
+- Event generator: Experimental support for HepMC format
+- Lists: Checks the list for particles with non-zero strangeness/charm but zero strangeness/charm quark content and outputs warnings
+
+## Bugfixes
+- Fix the ordering of p0 and px,py,pz output in ascii event generator output. Was px,py,pz,p0, now it is p0,px,py,pz which is consistent with the header line
+- Strangeness/charm neutrality equations will now be solved properly for lists with incorrect zero |s| and |c| columns
+
 ## [Version 1.3.1] 
 
 Date: 2021-05-26
@@ -173,6 +192,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.3.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.1...v1.3.2
 
 [Version 1.3.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3...v1.3.1
 
