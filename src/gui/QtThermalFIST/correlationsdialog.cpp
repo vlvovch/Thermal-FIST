@@ -52,6 +52,8 @@ CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
   comboQuantity = new QComboBox();
   comboQuantity->addItem(tr("Susceptibility"));
   comboQuantity->addItem(tr("Moment"));
+  comboQuantity->addItem(tr("Scaled moment"));
+  comboQuantity->addItem(tr("Pearson correlation"));
   comboQuantity->addItem(tr("Delta[N1,N2]"));
   comboQuantity->addItem(tr("Sigma[N1,N2]"));
   comboQuantity->setCurrentIndex(0);
@@ -149,11 +151,27 @@ void CorrelationsDialog::recalculate()
           tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr)));
         else if (comboQuantity->currentIndex() == 1)
           tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
+        //else if (comboQuantity->currentIndex() == 2) {
+        //  double val = corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
+        //  double yld1 = model->GetYield(pdg1, Feeddown::Primordial);
+        //  double yld2 = model->GetYield(pdg2, Feeddown::Primordial);
+        //  if (comboFeeddown->currentIndex() == 1) {
+        //    yld1 = model->GetYield(pdg1, Feeddown::StabilityFlag);
+        //    yld2 = model->GetYield(pdg2, Feeddown::StabilityFlag);
+        //  }
+        //  tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(val / sqrt(yld1 * yld2))));
+        //}
+        //else if (comboQuantity->currentIndex() == 3) {
+        //  double val = corr;
+        //  double var1 = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg1);
+        //  double var2 = model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, pdg2);
+        //  if (comboFeeddown->currentIndex() == 1) {
+        //    var1 = model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg1);
+        //    var2 = model->TwoParticleSusceptibilityFinalByPdg(pdg2, pdg2);
+        //  }
+        //  tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(val / sqrt(var1 * var2))));
+        //}
         else {
-          if (pdg1 == pdg2) {
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(0.)));
-            continue;
-          }
 
           double N1 = 0., N2 = 0.;
           double wn1 = 0., wn2 = 0.;
@@ -209,17 +227,36 @@ void CorrelationsDialog::recalculate()
 
           corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
-          // Delta
+          // Scaled moment
           if (comboQuantity->currentIndex() == 2) {
-            double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
-            continue;
+            if (pdg1 == pdg2) {
+              qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
+            }
+            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
           }
-          // Sigma
+          // Pearson
+          else if (comboQuantity->currentIndex() == 3) {
+            double var1 = wn1 * N1, var2 = wn2 * N2;
+            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+          }
           else {
-            double SigmaN1N2 = (N1 * wn2 + N2 * wn1 - 2. * corr) / (N2 + N1);
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(SigmaN1N2)));
-            continue;
+            if (pdg1 == pdg2) {
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(0.)));
+              continue;
+            }
+
+            // Delta
+            if (comboQuantity->currentIndex() == 4) {
+              double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
+              continue;
+            }
+            // Sigma
+            else {
+              double SigmaN1N2 = (N1 * wn2 + N2 * wn1 - 2. * corr) / (N2 + N1);
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(SigmaN1N2)));
+              continue;
+            }
           }
         }
       }
@@ -264,8 +301,17 @@ void CorrelationsDialog::recalculate()
               double wn1 = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)i) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N1;
               double wn2 = model->Susc((ConservedCharge::Name)j, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
               double corr = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
-              // Delta
+              // Scaled moment
               if (comboQuantity->currentIndex() == 2) {
+                tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+              }
+              // Pearson
+              else if (comboQuantity->currentIndex() == 3) {
+                double var1 = wn1 * N1, var2 = wn2 * N2;
+                tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+              }
+              // Delta
+              if (comboQuantity->currentIndex() == 4) {
                 double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
@@ -386,8 +432,17 @@ void CorrelationsDialog::recalculate()
 
             corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
-            // Delta
+            // Scaled moment
             if (comboQuantity->currentIndex() == 2) {
+              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+            }
+            // Pearson
+            else if (comboQuantity->currentIndex() == 3) {
+              double var1 = wn1 * N1, var2 = wn2 * N2;
+              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+            }
+            // Delta
+            if (comboQuantity->currentIndex() == 4) {
               double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }
