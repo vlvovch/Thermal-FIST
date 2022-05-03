@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.3.3] 
+
+Date: 2022-05-03
+
+GUI: Added scaled moments and Pearson correlation coefficients into the correlations dialog
 
 ## [Version 1.3.2] 
 
@@ -192,6 +197,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.3.3]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.2...v1.3.3
 
 [Version 1.3.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.1...v1.3.2
 
