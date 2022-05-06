@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.3.4] 
+
+Date: 2022-05-05
+
+GUI: Fixed a bug with the calculation of scaled moments and Pearson correlation coefficients that was introduced in the previous version 1.3.3
+
 ## [Version 1.3.3] 
 
 Date: 2022-05-03
