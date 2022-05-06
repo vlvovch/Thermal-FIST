@@ -916,15 +916,27 @@ namespace thermalfist {
       for (size_t r = 0; r < decayContributions.size(); ++r) {
         int rr = decayContributions[r].second;
       
-        m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->DecayCumulants()[i][r].first[1];
-        //m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
-      
         m_TotalCorrel[i][i] += 2. * m_PrimCorrel[i][rr] * decayContributions[r].first;
       
         for (size_t r2 = 0; r2 < decayContributions.size(); ++r2) {
           int rr2 = decayContributions[r2].second;
           m_TotalCorrel[i][i] += m_PrimCorrel[rr][rr2] * decayContributions[r].first * decayContributions[r2].first;
         }
+
+        // Probabilistic decays
+        m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->DecayCumulants()[i][r].first[1];
+        //m_TotalCorrel[i][i] += m_densities[rr] / m_Parameters.T * m_TPS->Particles()[i].DecayCumulants()[r].first[1];
+        //if (rr != i) { // && !m_TPS->Particles()[r].IsStable()) {
+        //  double nij = 0., ni = 0., nj = 0., dnij = 0.;
+        //  const auto& decayDistributions = TPS()->ResonanceFinalStatesDistributions()[rr];
+        //  for (size_t br = 0; br < decayDistributions.size(); ++br) {
+        //    nij += decayDistributions[br].first * decayDistributions[br].second[i] * decayDistributions[br].second[i];
+        //    ni += decayDistributions[br].first * decayDistributions[br].second[i];
+        //    nj += decayDistributions[br].first * decayDistributions[br].second[i];
+        //  }
+        //  dnij = nij - ni * nj;
+        //  m_TotalCorrel[i][i] += m_densities[rr] / Parameters().T * dnij;
+        //}
       }
     }
 
@@ -958,7 +970,7 @@ namespace thermalfist {
               }
             }
 
-          
+            // Contribution from probabilistic decays
             for (int r = 0; r < m_TPS->ComponentsNumber(); ++r) {
               if (r != i && r != j) { // && !m_TPS->Particles()[r].IsStable()) {
                 double nij = 0., ni = 0., nj = 0., dnij = 0.;

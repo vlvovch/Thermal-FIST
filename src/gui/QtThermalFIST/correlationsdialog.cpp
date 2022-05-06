@@ -232,7 +232,12 @@ void CorrelationsDialog::recalculate()
             if (pdg1 == pdg2) {
               qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
             }
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+            if (i != j) {
+              tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
+            }
+            else {
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / N1)));
+            }
           }
           // Pearson
           else if (comboQuantity->currentIndex() == 3) {
@@ -303,7 +308,12 @@ void CorrelationsDialog::recalculate()
               double corr = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
               // Scaled moment
               if (comboQuantity->currentIndex() == 2) {
-                tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+                if (i != j) {
+                  tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
+                }
+                else {
+                  tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / N1)));
+                }
               }
               // Pearson
               else if (comboQuantity->currentIndex() == 3) {
@@ -311,7 +321,7 @@ void CorrelationsDialog::recalculate()
                 tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
               }
               // Delta
-              if (comboQuantity->currentIndex() == 4) {
+              else if (comboQuantity->currentIndex() == 4) {
                 double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
@@ -434,7 +444,7 @@ void CorrelationsDialog::recalculate()
 
             // Scaled moment
             if (comboQuantity->currentIndex() == 2) {
-              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+              tableCorr->setItem(i, i2, new QTableWidgetItem("N/A"));
             }
             // Pearson
             else if (comboQuantity->currentIndex() == 3) {
@@ -442,7 +452,7 @@ void CorrelationsDialog::recalculate()
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
             }
             // Delta
-            if (comboQuantity->currentIndex() == 4) {
+            else if (comboQuantity->currentIndex() == 4) {
               double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }
