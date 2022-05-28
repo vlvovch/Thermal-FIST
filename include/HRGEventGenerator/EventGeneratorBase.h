@@ -133,6 +133,24 @@ namespace thermalfist {
     virtual std::pair< std::vector<int>, double > SampleYields() const;
 
     /**
+     * \brief Samples the position and momentum of a particle species i.
+     *
+     * \param  id              Id (0-indexed) of the particle species to be sampled
+     * \return SimpleParticle  The sampled particle.
+     */
+    virtual SimpleParticle SampleParticle(int id) const;
+
+    /**
+     * \brief Samples the position and momentum of a particle species with given pdg code.
+     *
+     *        Calls SampleParticle() if pdg code is valid. Throws an errors and quits otherwise.
+     *
+     * \param  ppdgid          PDG code of the particle species to be sampled
+     * \return SimpleParticle  The sampled particle.
+     */
+    virtual SimpleParticle SampleParticleByPdg(long long pdgid) const;
+
+    /**
      * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
      *
      * The sampled SimpleEvent is assigned the weight of unity. 
@@ -143,6 +161,22 @@ namespace thermalfist {
      * \return SimpleEvent  The generated event containing the primordial particles.
      */
     virtual SimpleEvent SampleMomenta(const std::vector<int>& yields) const;
+
+    /**
+     * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
+     *
+     * The sampled SimpleEvent is assigned the weight of unity.
+     * This weight should be overriden if importance sampling is used.
+     *
+     * Same as SampleMomenta() but randomly shuffles the order particles +
+     * implements baryon hard-core radius
+     *
+     *
+     * \param  yields       Vector of yields for each particle species for the given event.
+     *                      Make sure the indices match the particle list pointed to by \ref m_THM.
+     * \return SimpleEvent  The generated event containing the primordial particles.
+     */
+    virtual SimpleEvent SampleMomentaWithShuffle(const std::vector<int>& yields) const;
 
     /**
      * \brief Generates a single event.

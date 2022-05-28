@@ -1192,6 +1192,36 @@ namespace thermalfist {
     //return make_pair(totals, 1.);
   }
 
+  SimpleParticle EventGeneratorBase::SampleParticle(int id) const
+  {
+    const ThermalParticle& species = m_THM->TPS()->Particles()[id];
+    double tmass = species.Mass();
+    if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
+      tmass = m_BWGens[id]->GetRandom();
+
+    // Check for Bose-Einstein condensation
+    // Force m = mu if the sampled mass is too small
+    double tmu = m_THM->FullIdealChemicalPotential(id);
+    if (species.Statistics() == -1 && tmu > tmass) {
+      tmass = tmu;
+    }
+
+    std::vector<double> momentum = m_MomentumGens[id]->GetMomentum(tmass);
+
+    return SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId(), 0,
+      momentum[3], momentum[4], momentum[5], momentum[6]);
+  }
+
+  SimpleParticle EventGeneratorBase::SampleParticleByPdg(long long pdgid) const
+  {
+    int id = m_THM->TPS()->PdgToId(pdgid);
+    if (id == -1) {
+      printf("**ERROR** EventGeneratorBase::SampleParticleByPdg(): The input pdg code does not exist in the particle list!");
+      exit(1);
+    }
+    return SampleParticle(id);
+  }
+
   SimpleEvent EventGeneratorBase::SampleMomenta(const std::vector<int>& yields) const
   {
     SimpleEvent ret;
@@ -1203,27 +1233,61 @@ namespace thermalfist {
       primParticles[i].resize(0);
       int total = yields[i];
       for (int part = 0; part < total; ++part) {
-        double tmass = species.Mass();
-        if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
-          tmass = m_BWGens[i]->GetRandom();
+        //double tmass = species.Mass();
+        //if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
+        //  tmass = m_BWGens[i]->GetRandom();
 
-        // Check for Bose-Einstein condensation
-        // Force m = mu if the sampled mass is too small
-        double tmu = m_THM->FullIdealChemicalPotential(i);
-        if (species.Statistics() == -1 && tmu > tmass) {
-          tmass = tmu;
-        }
+        //// Check for Bose-Einstein condensation
+        //// Force m = mu if the sampled mass is too small
+        //double tmu = m_THM->FullIdealChemicalPotential(i);
+        //if (species.Statistics() == -1 && tmu > tmass) {
+        //  tmass = tmu;
+        //}
 
-        std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
-        //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
+        //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
+        ////std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
 
-        primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId(), 0,
-          momentum[3], momentum[4], momentum[5], momentum[6]));
+        //primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId(), 0,
+        //  momentum[3], momentum[4], momentum[5], momentum[6]));
+        primParticles[i].push_back(SampleParticle(i));
       }
     }
 
     for (int i = primParticles.size() - 1; i >= 0; --i) {
       ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
+    }
+
+    ret.AllParticles = ret.Particles;
+
+    ret.DecayMap.resize(ret.Particles.size());
+    fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+
+    ret.DecayMapFinal.resize(ret.Particles.size());
+    for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+      ret.DecayMapFinal[i] = i;
+
+    return ret;
+  }
+
+  SimpleEvent EventGeneratorBase::SampleMomentaWithShuffle(const std::vector<int>& yields) const
+  {
+    SimpleEvent ret;
+
+    //std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size(), std::vector<SimpleParticle>(0));
+    std::vector<int> ids;
+    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      for (int part = 0; part < yields[i]; ++part)
+        ids.push_back(i);
+    std::random_shuffle(ids.begin(), ids.end());
+
+    int sampled = 0;
+    while (sampled < ids.size()) {
+      int i = ids[sampled];
+      const ThermalParticle& species = m_THM->TPS()->Particles()[i];
+      SimpleParticle part = SampleParticle(i);
+
+      ret.Particles.push_back(part);
+      sampled++;
     }
 
     ret.AllParticles = ret.Particles;
@@ -1246,46 +1310,10 @@ namespace thermalfist {
     std::vector<int> totals = GenerateTotals();
 
     SimpleEvent ret = SampleMomenta(totals);
+    //SimpleEvent ret = SampleMomentaWithShuffle(totals);
     ret.weight = m_LastWeight;
     ret.logweight = m_LastLogWeight;
     ret.weight = m_LastNormWeight;
-
-    //std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
-    //for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-    //  primParticles[i].resize(0);
-    //  int total = totals[i];
-    //  for (int part = 0; part < total; ++part) {
-    //    const ThermalParticle& tpart = m_THM->TPS()->Particles()[i];
-    //    double tmass = tpart.Mass();
-    //    if (m_THM->UseWidth() && !tpart.ZeroWidthEnforced() && !(tpart.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
-    //      tmass = m_BWGens[i]->GetRandom();
-
-    //    // Check for Bose-Einstein condensation
-    //    // Force m = mu if the sampled mass is too small
-    //    double tmu = m_THM->FullIdealChemicalPotential(i);
-    //    if (tpart.Statistics() == -1 && tmu > tmass) {
-    //      tmass = tmu;
-    //    }
-
-    //    std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
-    //    //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
-
-    //    primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, m_THM->TPS()->Particles()[i].PdgId()));
-    //  }
-    //}
-    //
-    //for (int i = primParticles.size() - 1; i >= 0; --i) {
-    //  ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
-    //}
-
-    //ret.AllParticles = ret.Particles;
-
-    //ret.DecayMap.resize(ret.Particles.size());
-    //fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
-
-    //ret.DecayMapFinal.resize(ret.Particles.size());
-    //for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
-    //  ret.DecayMapFinal[i] = i;
 
     if (DoDecays)
       return PerformDecays(ret, m_THM->TPS());

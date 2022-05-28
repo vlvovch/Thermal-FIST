@@ -371,7 +371,7 @@ namespace thermalfist {
       }
 
       if (betar != 0.0 || eta != 0.0)
-          part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+          part = ParticleDecaysMC::LorentzBoostMomentumOnly(part, -vx, -vy, -vz);
 
 
       std::vector<double> ret(3, 0.);
@@ -842,7 +842,7 @@ namespace thermalfist {
       part.p0 = sqrt(mass * mass + tp * tp);
 
       if (GetBeta() != 0.0)
-        part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+        part = ParticleDecaysMC::LorentzBoostMomentumOnly(part, -vx, -vy, -vz);
 
       std::vector<double> ret(7);
       ret[0] = part.px;

@@ -62,15 +62,39 @@ namespace thermalfist {
     double GetRandomThreeBodym12(double M, double m1, double m2, double m3, double fm12max);
 
     /**
-     * \brief Lorentz boost of the 4-momentum of a particle
+     * \brief Lorentz boost of the 4-momentum and 4-coordinate of a particle
      * 
+     * \param[in] part Input particle with a 4-momentum
+     * \param[in] vx   Lorentz boost velocity x component
+     * \param[in] vy   Lorentz boost velocity y component
+     * \param[in] vz   Lorentz boost velocity z component
+     * \return SimpleParticle Particle with Lorentz-boosted 4-momentum and 4-coordinate
+     */
+    SimpleParticle LorentzBoost(const SimpleParticle& part, double vx, double vy, double vz);
+
+    /**
+     * \brief Lorentz boost of the 4-momentum of a particle
+     *
+     *        Does *not* boost the coordinates!
+     *
      * \param[in] part Input particle with a 4-momentum
      * \param[in] vx   Lorentz boost velocity x component
      * \param[in] vy   Lorentz boost velocity y component
      * \param[in] vz   Lorentz boost velocity z component
      * \return SimpleParticle Particle with Lorentz-boosted 4-momentum
      */
-    SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz);
+    SimpleParticle LorentzBoostMomentumOnly(const SimpleParticle& part, double vx, double vy, double vz);
+
+    /**
+     * \brief Lorentz boost of the 4-coordinate and 4-momentum of a particle
+     *
+     * \param[in] part Input particle with a 4-momentum
+     * \param[in] vx   Lorentz boost velocity x component
+     * \param[in] vy   Lorentz boost velocity y component
+     * \param[in] vz   Lorentz boost velocity z component
+     * \return SimpleParticle Particle with Lorentz-boosted 4-momentum
+     */
+    SimpleParticle LorentzBoostMomentaAndCoordinates(const SimpleParticle& part, double vx, double vy, double vz);
 
     /**
      * \brief Samples the decay products of a two-body decay.
@@ -114,6 +138,18 @@ namespace thermalfist {
      * \param pdgs   Pdg codes of the decay products
      */
     void ShuffleDecayProducts(std::vector<double> &masses, std::vector<long long> &pdgs); // TODO: proper implementation for 4+ - body decays
+  
+    
+    /**
+     * \brief Return the square of the distance between particles at equal time.
+     *
+     * Makes Lorentz boost into the pair rest frame, then propagates the earlier particle
+     * to other particle's time, and computed the square of the distance between particles at that time.
+     *
+     * \param part1  First particle
+     * \param part2  Second particle
+     */
+    double ParticleDistanceSquared(const SimpleParticle& part1, const SimpleParticle& part2);
   }
 
 } // namespace thermalfist

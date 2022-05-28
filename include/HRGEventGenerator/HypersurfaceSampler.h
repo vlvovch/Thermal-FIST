@@ -9,6 +9,7 @@
  * GNU General Public License (GPLv3 or later)
  */
 
+#include "HRGBase/SplineFunction.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGEventGenerator/RandomGenerators.h"
 #include "HRGEventGenerator/SphericalBlastWaveEventGenerator.h"
@@ -175,6 +176,8 @@ namespace thermalfist {
 
   }
 
+  
+
   ///// \brief Class implementing the sampling of momenta of HRG particles
   /////        from an arbitrary hydro hypersurface
   /////
@@ -197,7 +200,11 @@ namespace thermalfist {
       ThermalModelBase* model = NULL,
       double etasmear = 0.0) 
     {
-        SetParameters(hypersurface, model, etasmear);
+      SetHypersurface(hypersurface);
+      SetEtaSmear(etasmear);
+      SetRescaleTmu();
+      m_THM = model;
+      //SetParameters(hypersurface, model, etasmear);
     }
 
     /**
@@ -225,10 +232,32 @@ namespace thermalfist {
 
     /// End override
 
-    /// Sets the hypersurface parameters
-    void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
+    
 
+    void SetModel(ThermalModelBase* model) { m_THM = model; m_ParametersSet = false; }
+
+    void SetHypersurface(const ParticlizationHypersurface* hypersurface) { m_ParticlizationHypersurface = hypersurface; m_ParametersSet = false; }
+
+    void SetEtaSmear(double etaSmear) { m_EtaSmear = etaSmear; m_ParametersSet = false; }
     double GetEtaSmear() const { return m_EtaSmear; }
+
+    void SetRescaleTmu(bool rescale = false, double edens = 0.26);
+
+    /// Sets the hypersurface parameters
+    //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
+    //virtual void SetParameters();
+
+    /**
+     * \brief Generates a single event.
+     *
+     * \param PerformDecays If set to true, the decays of all particles
+     *                      marked unstable are performed until
+     *                      only stable particles remain.
+     *                      Otherwise only primordial particles are
+     *                      generated and appear in the output
+     * \return SimpleEvent  The generated event
+     */
+    virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
 
   protected:
     /// Sets up the random generators of particle momenta
@@ -238,6 +267,21 @@ namespace thermalfist {
     /// Processes the volume elements to calculate the multinomial volume element sampling probabilities and the full-space yields
     void ProcessVolumeElements();
 
+    /// Calculates the (T,muB,muS,muQ) values as function of baryon density at fixed constant energy density
+    static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001);
+
+    /// Sets the hypersurface parameters
+    //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
+    virtual void SetParameters();
+
+    /// Sets the hypersurface parameters
+    virtual void CheckSetParameters() { if (!m_ParametersSet) SetParameters(); }
+
+    /// The computed grand-canonical yields in 4pi
+    const std::vector<double>& FullSpaceYields() const { return m_FullSpaceYields; }
+    
+    bool m_ParametersSet;
+
   private:
     const ParticlizationHypersurface* m_ParticlizationHypersurface;
     std::vector<RandomGenerators::VolumeElementSampler> m_VolumeElementSamplers;
@@ -245,8 +289,178 @@ namespace thermalfist {
     double m_EtaSmear;
     double m_Tav;
     std::vector<double> m_Musav;
+    bool m_RescaleTmu;
+    double m_edens;
+    std::vector<SplineFunction> m_SplinesTMu;
+
+    // Find T and muB = 0 to match energy density
+    class BroydenEquationsTen : public BroydenEquations
+    {
+    public:
+      BroydenEquationsTen(ThermalModelBase* model, double edens = 0.5) : BroydenEquations(),
+        m_THM(model), m_edens(edens) {
+        m_N = 1;
+      }
+
+      std::vector<double> Equations(const std::vector<double>& x) {
+        const double& T = x[0];
+
+        m_THM->SetTemperature(T);
+        m_THM->SetBaryonChemicalPotential(0.);
+        m_THM->SetElectricChemicalPotential(0.);
+        m_THM->SetStrangenessChemicalPotential(0.);
+        m_THM->CalculatePrimordialDensities();
+
+        double en = m_THM->EnergyDensity();
+
+        std::vector<double> ret(1, 0);
+        ret[0] = (en / m_edens - 1.);
+
+        return ret;
+      }
+    private:
+      ThermalModelBase* m_THM;
+      double m_edens;
+    };
+
+    // Find T,muB to match energy and baryon densities
+    class BroydenEquationsTmuB : public BroydenEquations
+    {
+    public:
+      BroydenEquationsTmuB(ThermalModelBase* model, double edens = 0.5, double rhoB = 0.16, int zeroMuBmode = 0) : BroydenEquations(),
+        m_THM(model), m_edens(edens), m_rhoB(rhoB), m_zeroMuBmode(zeroMuBmode)
+      {
+        //m_N = 2;
+        m_N = 4;
+      }
+      std::vector<double> Equations(const std::vector<double>& x) {
+        const double& T = x[0];
+        const double& muB = x[1];
+        const double& muS = x[2];
+        const double& muQ = x[3];
+
+        //m_THM->SetQoverB(0.4);
+        //m_THM->ConstrainMuQ(true);
+        //m_THM->ConstrainMuS(true);
+
+        m_THM->SetTemperature(T);
+        if (!m_zeroMuBmode) {
+          //m_THM->SetBaryonChemicalPotential(muB);
+          //m_THM->ConstrainChemicalPotentials(false);
+          m_THM->SetBaryonChemicalPotential(muB);
+          m_THM->SetStrangenessChemicalPotential(muS);
+          m_THM->SetElectricChemicalPotential(muQ);
+          m_THM->CalculatePrimordialDensities();
+        }
+        else {
+          m_THM->SetBaryonChemicalPotential(0.);
+          m_THM->SetElectricChemicalPotential(0.);
+          m_THM->SetStrangenessChemicalPotential(0.);
+          m_THM->CalculatePrimordialDensities();
+        }
+
+        double en = m_THM->EnergyDensity();
+        double rhoB = m_THM->BaryonDensity();
+
+        std::vector<double> ret(4, 0);
+        ret[0] = (en / m_edens - 1.);
+
+        if (!m_zeroMuBmode) {
+          ret[1] = rhoB / m_rhoB - 1.;
+          ret[2] = m_THM->StrangenessDensity() / m_THM->AbsoluteStrangenessDensity();
+          ret[3] = m_THM->ElectricChargeDensity() / m_THM->BaryonDensity() / 0.4 - 1.;
+        }
+        else {
+          ret[1] = 0.;
+          ret[2] = 0.;
+          ret[3] = 0.;
+        }
+        return ret;
+      }
+    private:
+      ThermalModelBase* m_THM;
+      double m_edens, m_rhoB;
+      int m_zeroMuBmode;
+    };
+
+    // returns (T,muB,muS,muQ) from given energy and baryon densities, assuming Q/B = 0.4, S = 0
+    static std::vector<double> MatchEnergyBaryonDensities(ThermalModelBase* model, double edens, double rhoB) {
+      if (edens == 0.0)
+        return { 0.,0.,0.,0. };
+
+      int zeromuBmode = 0;
+      if (rhoB == 0.0)
+        zeromuBmode = 1;
+
+      if (!zeromuBmode) {
+        BroydenEquationsTmuB eqs(model, edens, rhoB, zeromuBmode);
+        Broyden broydn(&eqs);
+        if (model->Parameters().muB == 0.0)
+          model->SetBaryonChemicalPotential(0.010);
+        //broydn.Solve({ model->Parameters().T, model->Parameters().muB });
+        broydn.Solve({ model->Parameters().T, model->Parameters().muB, model->Parameters().muS, model->Parameters().muQ });
+      }
+      else {
+        BroydenEquationsTen eqs(model, edens);
+        Broyden broydn(&eqs);
+        broydn.Solve({ model->Parameters().T });
+      }
+
+      return {
+        model->Parameters().T,
+        model->Parameters().muB,
+        model->Parameters().muS,
+        model->Parameters().muQ
+      };
+    }
   };
 
+  ///// \brief Class implementing the sampling of momenta of HRG particles
+  /////        from an arbitrary hydro hypersurface
+  /////
+  /////        Calculates the multinomial weights for sampling the hypersurface element.
+  /////        Samples the momenta of all the hadrons given the multiplcites in the current event externally.
+  /////        
+  class HypersurfaceEventGeneratorEVHRG : public HypersurfaceEventGenerator
+  {
+  public:
+    HypersurfaceEventGeneratorEVHRG(
+      ThermalParticleSystem* TPS,
+      const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
+      const ParticlizationHypersurface* hypersurface = NULL,
+      double etasmear = 0.0) : HypersurfaceEventGenerator(TPS, config, hypersurface, etasmear) {
+      m_b = 0.0;
+      m_rad = 0.0;
+      m_MeanB = m_MeanAB = m_VEff = 0.0;
+    }
+
+    /**
+     * \brief Generates a single event.
+     *
+     * \param PerformDecays If set to true, the decays of all particles
+     *                      marked unstable are performed until
+     *                      only stable particles remain.
+     *                      Otherwise only primordial particles are
+     *                      generated and appear in the output
+     * \return SimpleEvent  The generated event
+     */
+    virtual SimpleEvent GetEvent(bool DoDecays = true) const;
+
+    void SetExcludedVolume(double b) { m_b = b; m_ParametersSet = false; }
+    void SetBaryonRadius(double r) { m_rad = r; m_ParametersSet = false; }
+  protected:
+    static double EVHRGWeight(int sampledN, double meanN, double V, double b);
+    virtual void SetParameters();
+
+    virtual SimpleEvent SampleParticles(const std::vector<int>& yields) const;
+
+  private:
+
+    std::pair<int, int> ComputeNBNBbar(const std::vector<int>& yields) const;
+
+    double m_b, m_rad;
+    double m_MeanB, m_MeanAB, m_VEff;
+  };
 
   /// \brief Class implementing the Thermal Event Generator for
   ///        the boost-invariant (2+1)-d hydro hypersurface

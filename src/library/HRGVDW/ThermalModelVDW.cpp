@@ -32,7 +32,7 @@ using namespace std;
 namespace thermalfist {
 
   ThermalModelVDW::ThermalModelVDW(ThermalParticleSystem *TPS_, const ThermalModelParameters& params):
-      ThermalModelBase(TPS_, params), m_SearchMultipleSolutions(false), m_TemperatureDependentAB(false)
+      ThermalModelBase(TPS_, params), m_SearchMultipleSolutions(false), m_TemperatureDependentAB(false), m_VDWComponentMapCalculated(false)
   {
     m_chi.resize(6);
     for(int i=0;i<6;++i) m_chi[i].resize(3);
@@ -90,6 +90,8 @@ namespace thermalfist {
 
     m_VirialdT = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(),0.));
     m_AttrdT   = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
+
+    m_VDWComponentMapCalculated = false;
   }
 
   void ThermalModelVDW::FillVirialEV(const vector< vector<double> >& bij)
@@ -99,6 +101,8 @@ namespace thermalfist {
       return;
     }
     m_Virial = bij;
+
+    m_VDWComponentMapCalculated = false;
   }
 
   void ThermalModelVDW::FillAttraction(const vector<vector<double> >& aij)
@@ -108,6 +112,8 @@ namespace thermalfist {
       return;
     }
     m_Attr = aij;
+
+    m_VDWComponentMapCalculated = false;
   }
 
   void ThermalModelVDW::ReadInteractionParameters(const string & filename)
@@ -138,6 +144,8 @@ namespace thermalfist {
       }
     }
     fin.close();
+
+    m_VDWComponentMapCalculated = false;
   }
 
   void ThermalModelVDW::WriteInteractionParameters(const string & filename)
@@ -182,6 +190,7 @@ namespace thermalfist {
       m_Attr = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
       m_VirialdT = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
       m_AttrdT = vector< vector<double> >(m_TPS->Particles().size(), vector<double>(m_TPS->Particles().size(), 0.));
+      m_VDWComponentMapCalculated = false;
   }
 
   std::vector<double> ThermalModelVDW::ComputeNp(const std::vector<double>& dmustar)
@@ -239,6 +248,43 @@ namespace thermalfist {
     }
 
     return np;
+  }
+
+  void ThermalModelVDW::CalculateVDWComponentsMap()
+  {
+    map< vector<double>, int> MapVDW;
+
+    int NN = m_densities.size();
+
+    m_MapTodMuStar.resize(NN);
+    m_MapFromdMuStar.clear();
+    MapVDW.clear();
+    m_dMuStarIndices.clear();
+
+    int tind = 0;
+    for (int i = 0; i < NN; ++i) {
+      vector<double> VDWParam(0);
+      for (int j = 0; j < NN; ++j) {
+        VDWParam.push_back(m_Virial[i][j]);
+      }
+      for (int j = 0; j < NN; ++j) {
+        VDWParam.push_back(m_Attr[i][j] + m_Attr[j][i]);
+      }
+
+      if (MapVDW.count(VDWParam) == 0) {
+        MapVDW[VDWParam] = tind;
+        m_MapTodMuStar[i] = tind;
+        m_MapFromdMuStar.push_back(i);
+        m_dMuStarIndices.push_back(vector<int>(1, i));
+        tind++;
+      }
+      else {
+        m_MapTodMuStar[i] = MapVDW[VDWParam];
+        m_dMuStarIndices[MapVDW[VDWParam]].push_back(i);
+      }
+    }
+
+    m_VDWComponentMapCalculated = true;
   }
 
   vector<double> ThermalModelVDW::SearchSingleSolution(const vector<double>& muStarInit)
@@ -364,41 +410,43 @@ namespace thermalfist {
   void ThermalModelVDW::CalculatePrimordialDensitiesOld() {
     m_FluctuationsCalculated = false;
 
-    map< vector<double> , int> m_MapVDW;
+    if (!m_VDWComponentMapCalculated)
+      CalculateVDWComponentsMap();
 
     int NN = m_densities.size();
+    
+    //map< vector<double>, int> m_MapVDW;
+    //{
+    //  m_MapTodMuStar.resize(NN);
+    //  m_MapFromdMuStar.clear();
+    //  m_MapVDW.clear();
+    //  m_dMuStarIndices.clear();
 
-    {
-      m_MapTodMuStar.resize(NN);
-      m_MapFromdMuStar.clear();
-      m_MapVDW.clear();
-      m_dMuStarIndices.clear();
+    //  int tind = 0;
+    //  for (int i = 0; i < NN; ++i) {
+    //    vector<double> VDWParam(0);
+    //    for (int j = 0; j < NN; ++j) {
+    //      VDWParam.push_back(m_Virial[i][j]);
+    //    }
+    //    for (int j = 0; j < NN; ++j) {
+    //      VDWParam.push_back(m_Attr[i][j] + m_Attr[j][i]);
+    //    }
 
-      int tind = 0;
-      for (int i = 0; i < NN; ++i) {
-        vector<double> VDWParam(0);
-        for (int j = 0; j < NN; ++j) {
-          VDWParam.push_back(m_Virial[i][j]);
-        }
-        for (int j = 0; j < NN; ++j) {
-          VDWParam.push_back(m_Attr[i][j] + m_Attr[j][i]);
-        }
+    //    if (m_MapVDW.count(VDWParam) == 0) {
+    //      m_MapVDW[VDWParam] = tind;
+    //      m_MapTodMuStar[i]  = tind;
+    //      m_MapFromdMuStar.push_back(i);
+    //      m_dMuStarIndices.push_back(vector<int>(1, i));
+    //      tind++;
+    //    }
+    //    else {
+    //      m_MapTodMuStar[i] = m_MapVDW[VDWParam];
+    //      m_dMuStarIndices[m_MapVDW[VDWParam]].push_back(i);
+    //    }
+    //  }
 
-        if (m_MapVDW.count(VDWParam) == 0) {
-          m_MapVDW[VDWParam] = tind;
-          m_MapTodMuStar[i]  = tind;
-          m_MapFromdMuStar.push_back(i);
-          m_dMuStarIndices.push_back(vector<int>(1, i));
-          tind++;
-        }
-        else {
-          m_MapTodMuStar[i] = m_MapVDW[VDWParam];
-          m_dMuStarIndices[m_MapVDW[VDWParam]].push_back(i);
-        }
-      }
-
-      printf("Optimization: %d --> %d\n", NN, static_cast<int>(m_MapFromdMuStar.size()));
-    }
+    //  printf("Optimization: %d --> %d\n", NN, static_cast<int>(m_MapFromdMuStar.size()));
+    //}
 
     clock_t tbeg = clock();
 
@@ -453,39 +501,10 @@ namespace thermalfist {
   void ThermalModelVDW::CalculatePrimordialDensitiesNew() {
     m_FluctuationsCalculated = false;
 
-    map< vector<double>, int> m_MapVDW;
+    if (!m_VDWComponentMapCalculated)
+      CalculateVDWComponentsMap();
 
     int NN = m_densities.size();
-
-    {
-      m_MapTodMuStar.resize(NN);
-      m_MapFromdMuStar.clear();
-      m_MapVDW.clear();
-      m_dMuStarIndices.clear();
-
-      int tind = 0;
-      for (int i = 0; i < NN; ++i) {
-        vector<double> VDWParam(0);
-        for (int j = 0; j < NN; ++j) {
-          VDWParam.push_back(m_Virial[i][j]);
-        }
-        for (int j = 0; j < NN; ++j) {
-          VDWParam.push_back(m_Attr[i][j] + m_Attr[j][i]);
-        }
-
-        if (m_MapVDW.count(VDWParam) == 0) {
-          m_MapVDW[VDWParam] = tind;
-          m_MapTodMuStar[i] = tind;
-          m_MapFromdMuStar.push_back(i);
-          m_dMuStarIndices.push_back(vector<int>(1, i));
-          tind++;
-        }
-        else {
-          m_MapTodMuStar[i] = m_MapVDW[VDWParam];
-          m_dMuStarIndices[m_MapVDW[VDWParam]].push_back(i);
-        }
-      }
-    }
 
     clock_t tbeg = clock();
 

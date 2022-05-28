@@ -161,9 +161,9 @@ namespace thermalfist {
 
     virtual void WriteInteractionParameters(const std::string &filename);
 
-    void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; }
+    void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; m_VDWComponentMapCalculated = false; }
     
-    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; }
+    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; m_VDWComponentMapCalculated = false; }
 
     double VirialCoefficient(int i, int j) const;
 
@@ -211,6 +211,9 @@ namespace thermalfist {
     /// the vector of ideal gas densities as input instead of
     /// calculating it
     std::vector<double> ComputeNp(const std::vector<double>& dmustar, const std::vector<double>& ns);
+
+    /// Partitions particles species into sets that have identical VDW parameters
+    void CalculateVDWComponentsMap();
 
     /**
      * \brief Uses the Broyden method with a provided initial guess
@@ -279,6 +282,9 @@ namespace thermalfist {
 
     /// Whether Broyden's method was successfull
     bool   m_LastBroydenSuccessFlag;
+
+    /// Whether the mapping to components with the same VDW parameters has been calculated
+    bool   m_VDWComponentMapCalculated;
 
     /// Vector of the shifted chemical potentials
     std::vector<double> m_MuStar;
