@@ -288,7 +288,7 @@ namespace thermalfist {
 
   std::vector<std::vector<double>> HypersurfaceEventGenerator::CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin, double rhomax, double drho)
   {
-    cout << "Remapping T and mu along e = " << edens << " surface" << endl;
+    cout << "Remapping T and mu along e = " << edens << " surface..." << endl;
     vector<double> rhos, Ts, muBs, muSs, muQs;
     vector<double> Tmusini = { 0.150, 0.100, 0.033, -0.05 };
     for (double rho = rhomin; rho < rhomax + 1.e-9; rho += drho) {
