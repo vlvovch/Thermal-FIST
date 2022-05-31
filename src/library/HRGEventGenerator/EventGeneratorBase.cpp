@@ -846,7 +846,9 @@ namespace thermalfist {
     const std::vector<std::vector<double>>& radii)
    const
   {
-    if (m_Config.fModelType == EventGeneratorConfiguration::PointParticle)
+    if (m_Config.fModelType != EventGeneratorConfiguration::DiagonalEV 
+      && m_Config.fModelType != EventGeneratorConfiguration::CrosstermsEV
+      && m_Config.fModelType != EventGeneratorConfiguration::QvdW)
       return false;
     int idcand = m_THM->TPS()->PdgToId(cand.PDGID);
     for (int ipart = 0; ipart < particles.size(); ++ipart) {
@@ -1204,14 +1206,41 @@ namespace thermalfist {
         ids.push_back(i);
     std::random_shuffle(ids.begin(), ids.end());
 
-    int sampled = 0;
-    while (sampled < ids.size()) {
-      int i = ids[sampled];
-      const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-      SimpleParticle cand = SampleParticle(i);
-      if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
+    //int sampled = 0;
+    //while (sampled < ids.size()) {
+    //  int i = ids[sampled];
+    //  const ThermalParticle& species = m_THM->TPS()->Particles()[i];
+    //  SimpleParticle cand = SampleParticle(i);
+    //  if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
+    //    ret.Particles.push_back(cand);
+    //    sampled++;
+    //  }
+    //}
+    bool flOverlap = true;
+    while (flOverlap) {
+      flOverlap = false;
+      ret.Particles.clear();
+
+      int sampled = 0;
+      while (sampled < ids.size()) {
+        int i = ids[sampled];
+        const ThermalParticle& species = m_THM->TPS()->Particles()[i];
+        SimpleParticle cand = SampleParticle(i);
         ret.Particles.push_back(cand);
         sampled++;
+      }
+
+      if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
+        || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV
+        || m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
+        for (int i = 0; i < ids.size() - 1; ++i) {
+          for (int j = i + 1; j < ids.size(); ++j) {
+            double r = m_Radii[ids[i]][ids[j]];
+            if (r != 0.0) {
+              flOverlap |= (ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[i], ret.Particles[j]) <= 4. * r * r);
+            }
+          }
+        }
       }
     }
 
