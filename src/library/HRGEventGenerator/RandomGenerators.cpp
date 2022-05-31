@@ -849,11 +849,11 @@ namespace thermalfist {
       ret[1] = part.py;
       ret[2] = part.pz;
 
-      // Assume unit sphere at t = 0
+      // Assume a sphere at t = 0
       ret[3] = 0.;
-      ret[4] = sinth * cos(ph);
-      ret[5] = sinth * sin(ph);
-      ret[6] = costh;
+      ret[4] = GetR() * sinth * cos(ph);
+      ret[5] = GetR() * sinth * sin(ph);
+      ret[6] = GetR() * costh;
 
       return ret;
     }

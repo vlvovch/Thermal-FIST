@@ -93,35 +93,16 @@ namespace thermalfist {
   {
   public:
     /// Constructor
-    EventGeneratorBase() { m_THM = NULL; fCEAccepted = fCETotal = 0; }
-
+    EventGeneratorBase();
+    
     /// Destructor
     virtual ~EventGeneratorBase();
 
+    /// Sets the momentum generators for all particles. Overloaded
+    virtual void SetMomentumGenerators() {}
+
     /// Clears the momentum generators for all particles
     void ClearMomentumGenerators();
-
-    /// Sets the projectile laboratory kinetic energy per nucleon of the collision
-    void SetCollisionKineticEnergy(double ekin) {
-      SetCollisionCMSEnergy(sqrt(2.*xMath::mnucleon()*(ekin + 2. * xMath::mnucleon())));
-    }
-
-    /// Sets the projectile laboratory energy per nucleon of the collision
-    void SetCollisionLabEnergy(double elab) {
-      SetCollisionCMSEnergy(sqrt(2.*xMath::mnucleon()*(elab + xMath::mnucleon())));
-    }
-
-    /// Sets the center of mass energy \f$ \sqrt{s_{_{NN}}} \f$ of the collision
-    void SetCollisionCMSEnergy(double ssqrt) {
-      m_ssqrt = ssqrt;
-      m_ekin = m_ssqrt * m_ssqrt / 2. / xMath::mnucleon() - 2. * xMath::mnucleon();
-      m_elab = xMath::mnucleon() + m_ekin;
-      double plab = sqrt(m_elab*m_elab - xMath::mnucleon() * xMath::mnucleon());
-      m_ycm = 0.5 * log((m_elab + xMath::mnucleon() + plab) / (m_elab + xMath::mnucleon() - plab));
-    }
-
-    /// The center-of-mass longitudinal rapidity relative to the lab frame.
-    double getYcm() const { return m_ycm; }
 
     /**
      * \brief Samples the primordial yields for each particle species.
@@ -235,6 +216,9 @@ namespace thermalfist {
 
     const EventGeneratorConfiguration& GetConfiguration() const { return m_Config; }
 
+    /// Sets the hypersurface parameters
+    virtual void CheckSetParameters() { if (!m_ParametersSet) SetParameters(); }
+
   protected:
     /**
      * \brief Sets the event generator configuration.
@@ -315,17 +299,25 @@ namespace thermalfist {
     /// Used if finite resonance widths are considered
     std::vector<RandomGenerators::ThermalBreitWignerGenerator*>  m_BWGens;
 
+    bool m_ParametersSet;
+    /// Sets up the event generator ready for production
+    virtual void SetParameters();
+
+    std::vector<std::vector<double>> ComputeEVRadii() const;
+
+    bool CheckEVOverlap(const std::vector<SimpleParticle>& evt, 
+      const SimpleParticle& cand,
+      const std::vector<int>& ids = std::vector<int>(),
+      const std::vector<std::vector<double>>& radii = std::vector<std::vector<double>>()
+      ) const;
+
   private:
 
     /// Currently not used
     //static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
-    double m_ekin, m_ycm, m_ssqrt, m_elab;
-    // Acceptance discontinued
-    //std::vector<Acceptance::AcceptanceFunction> m_acc;
-
     //@{
-    /// Indices and multinomial probabilities for an efficient CE sampling
+    /// Indices and multinomial probabilities for efficient CE sampling
     std::vector< std::pair<double, int> > m_Baryons;
     std::vector< std::pair<double, int> > m_AntiBaryons;
     std::vector< std::pair<double, int> > m_StrangeMesons;
@@ -354,6 +346,8 @@ namespace thermalfist {
     double m_MeanCM, m_MeanACM; 
     double m_MeanCHRMM, m_MeanACHRMM;
     double m_MeanCHRM, m_MeanACHRM;
+
+    std::vector<std::vector<double>> m_Radii;
 
     static double m_LastWeight;
     static double m_LastLogWeight;

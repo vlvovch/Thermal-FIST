@@ -56,6 +56,8 @@ namespace thermalfist {
     double GetTkin() { return m_T; }
     double GetBeta() { return m_Beta; }
 
+    //virtual void SetParameters();
+
   private:
     double m_T;
     double m_Beta;

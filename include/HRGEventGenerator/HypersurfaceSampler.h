@@ -198,7 +198,7 @@ namespace thermalfist {
     HypersurfaceEventGenerator(
       const ParticlizationHypersurface* hypersurface = NULL,
       ThermalModelBase* model = NULL,
-      double etasmear = 0.0) 
+      double etasmear = 0.0) : EventGeneratorBase()
     {
       SetHypersurface(hypersurface);
       SetEtaSmear(etasmear);
@@ -259,6 +259,10 @@ namespace thermalfist {
      */
     virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
 
+
+    /// Sets the hypersurface parameters
+    //virtual void CheckSetParameters() { if (!m_ParametersSet) SetParameters(); }
+
   protected:
     /// Sets up the random generators of particle momenta
     /// and resonances masses
@@ -268,19 +272,16 @@ namespace thermalfist {
     void ProcessVolumeElements();
 
     /// Calculates the (T,muB,muS,muQ) values as function of baryon density at fixed constant energy density
-    static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001);
+    static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.01);
 
     /// Sets the hypersurface parameters
     //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
     virtual void SetParameters();
 
-    /// Sets the hypersurface parameters
-    virtual void CheckSetParameters() { if (!m_ParametersSet) SetParameters(); }
-
     /// The computed grand-canonical yields in 4pi
     const std::vector<double>& FullSpaceYields() const { return m_FullSpaceYields; }
     
-    bool m_ParametersSet;
+    //bool m_ParametersSet;
 
   private:
     const ParticlizationHypersurface* m_ParticlizationHypersurface;

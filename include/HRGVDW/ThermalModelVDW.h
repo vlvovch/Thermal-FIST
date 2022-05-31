@@ -200,6 +200,11 @@ namespace thermalfist {
 
     // Override functions end
 
+    const std::vector< std::vector<int> >& VDWComponentIndices() const { return m_dMuStarIndices; }
+    virtual double DeltaMu(int i) const { return MuShift(i); }
+    const std::vector< std::vector<double> >& VirialMatrix() const { return m_Virial; }
+    const std::vector< std::vector<double> >& AttractionMatrix() const { return m_Attr; }
+
   protected:
     /// Returns vector of particle densities
     /// for given values of shifted chemical potentials

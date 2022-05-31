@@ -17,19 +17,18 @@
 
 namespace thermalfist {
 
-  //CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator() {
-  //  m_THM = NULL;
-  //}
-
   CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double betas, double etamax, double npow, double Rperp) : 
+    EventGeneratorBase(),
     m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(Rperp)
   {
     SetConfiguration(TPS, config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double betas, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(6.5) {
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double betas, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :
+    EventGeneratorBase(),
+    m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(6.5) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)
@@ -67,7 +66,7 @@ namespace thermalfist {
 
     SetConfiguration(THMEVVDW->TPS(), config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetParameters(double T, double betas, double etamax, double npow) {
@@ -75,15 +74,17 @@ namespace thermalfist {
     m_BetaS = betas;
     m_EtaMax = etamax;
     m_n = npow;
+    m_ParametersSet = false;
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetMeanBetaT(double betaT)
   {
     m_BetaS = (2. + m_n) / 2. * betaT;
+    m_ParametersSet = false;
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetMomentumGenerators()
@@ -108,6 +109,12 @@ namespace thermalfist {
       }
     }
   }
+
+  //void CylindricalBlastWaveEventGenerator::SetParameters()
+  //{
+  //  SetMomentumGenerators();
+  //  m_ParametersSet = true;
+  //}
 
   double CylindricalBlastWaveEventGenerator::GetVeffIntegral() const
   {

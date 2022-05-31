@@ -18,6 +18,7 @@
 #include "HRGBase/ThermalModelCanonical.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
+#include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGVDW/ThermalModelVDW.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 
@@ -48,6 +49,17 @@ namespace thermalfist {
       (gamma - 1.) * vz * vx / v2 * rx + (gamma - 1.) * vz * vy / v2 * ry;
 
     return ret;
+  }
+
+  EventGeneratorBase::EventGeneratorBase() : 
+    m_THM(NULL), m_ParametersSet(false),
+    m_MeanB(0.), m_MeanAB(0.),
+    m_MeanSM(0.), m_MeanASM(0.),
+    m_MeanCM(0.), m_MeanACM(0.),
+    m_MeanCHRM(0.), m_MeanACHRM(0.),
+    m_MeanCHRMM(0.), m_MeanACHRMM(0.)
+  {
+    fCEAccepted = fCETotal = 0; 
   }
 
   EventGeneratorBase::~EventGeneratorBase()
@@ -112,7 +124,6 @@ namespace thermalfist {
     }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
-    //m_THM->SetStatistics(false);
 
     m_THM->ConstrainMuB(false);
     m_THM->ConstrainMuQ(false);
@@ -268,13 +279,14 @@ namespace thermalfist {
 
     if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
       PrepareMultinomials();
+
+    m_Radii = ComputeEVRadii();
   }
 
 
   void EventGeneratorBase::PrepareMultinomials() {
     if (!m_THM->IsCalculated()) {
       m_THM->CalculatePrimordialDensities();
-      //m_THM->CalculateDensitiesGCE();
     }
 
     m_Baryons.resize(0);
@@ -371,9 +383,10 @@ namespace thermalfist {
   }
 
   std::vector<int> EventGeneratorBase::GenerateTotals() const {
+    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
+
     if (!m_THM->IsCalculated())
       m_THM->CalculatePrimordialDensities();
-      //m_THM->CalculateDensitiesGCE();
 
     std::vector<int> totals(m_THM->TPS()->Particles().size());
 
@@ -392,150 +405,11 @@ namespace thermalfist {
         totals = GenerateTotalsGCE();
 
       double weight = ComputeWeightNew(totals);
-      //std::cout << weight << " " << ComputeWeightNew(totals) << "\n";
+      //std::cout << ComputeWeight(totals) << " " << ComputeWeightNew(totals) << "\n";
       if (weight < 0.)
         continue;
 
       break;
-
-      //// Then take into account EV/vdW interactions using importance sampling
-      //std::vector<double> *densitiesid = NULL;
-      //std::vector<double> tmpdens;
-      //const std::vector<double>& densities = m_THM->Densities();
-      //if (m_THM->InteractionModel() != ThermalModelBase::Ideal) {
-      //  tmpdens = m_DensitiesIdeal;
-      //  densitiesid = &tmpdens;
-      //}
-
-      //if (m_THM->InteractionModel() == ThermalModelBase::DiagonalEV) {
-      //  ThermalModelEVDiagonal *model = static_cast<ThermalModelEVDiagonal*>(m_THM);
-      //  double V   = m_THM->Volume();
-      //  double VVN = m_THM->Volume();
-
-      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-      //    VVN -= model->ExcludedVolume(i) * totals[i];
-
-      //  if (VVN < 0.) continue;
-      //  double weight = 1.;
-      //  double logweight = 0.;
-
-      //  double normweight = 1.;
-      //  double weightev = 1.;
-      //  double VVNev = m_THM->Volume();
-      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-      //    VVNev -= model->ExcludedVolume(i) * densities[i] * m_THM->Volume();
-
-      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-      //    weightev *= pow(VVNev / V * densitiesid->operator[](i) / densities[i], densities[i] * V);
-
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      //normweight *= pow(VVN / V, totals[i]) / pow(VVNev / V, densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-      //  }
-
-      //  m_LastWeight = weight;
-      //  m_LastLogWeight = logweight;
-      //  m_LastNormWeight = normweight;
-
-      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      //}
-
-
-      //if (m_THM->InteractionModel() == ThermalModelBase::CrosstermsEV) {
-      //  ThermalModelEVCrossterms *model = static_cast<ThermalModelEVCrossterms*>(m_THM);
-      //  double V = m_THM->Volume();
-
-      //  double weight = 1.;
-      //  double logweight = 0.;
-      //  double normweight = 1.;
-      //  double weightev = 1.;
-      //  bool fl = 1;
-      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      //    double VVN = m_THM->Volume();
-
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-      //      VVN -= model->VirialCoefficient(j, i) * totals[j];
-
-      //    if (VVN < 0.) { fl = false; break; }
-
-      //    double VVNev = m_THM->Volume();
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-      //      VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-      //    weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-      //  }
-      //  if (!fl) continue;
-      //  m_LastWeight = weight;
-      //  m_LastLogWeight = logweight;
-      //  m_LastNormWeight = normweight;
-
-      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightev << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      //}
-
-      //if (m_THM->InteractionModel() == ThermalModelBase::QvdW) {
-      //  ThermalModelVDW *model = static_cast<ThermalModelVDW*>(m_THM);
-      //  double V = m_THM->Volume();
-
-      //  double weight = 1.;
-      //  double logweight = 0.;
-      //  double normweight = 1.;
-      //  double weightvdw = 1.;
-      //  bool fl = 1;
-      //  for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      //    double VVN = m_THM->Volume();
-
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-      //      VVN -= model->VirialCoefficient(j, i) * totals[j];
-
-      //    if (VVN < 0.) { fl = false; break; }
-
-      //    double VVNev = m_THM->Volume();
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-      //      VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-      //    weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-      //      double aij = model->AttractionCoefficient(i, j);
-      //      weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
-      //      logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
-      //    }
-
-      //    weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-      //    if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //      normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-
-      //    for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-      //      double aij = model->AttractionCoefficient(i, j);
-      //      weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
-      //      normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
-      //    }
-
-      //  }
-      //  if (!fl) continue;
-      //  m_LastWeight = weight;
-      //  m_LastLogWeight = logweight;
-      //  m_LastNormWeight = normweight;
-
-      //  //if (normweight > 1.)
-      //  //  std::cout << std::scientific << normweight - 1. << std::fixed << "\n";
-
-      //  //std::cout << "Norm weight = " << normweight << " " << weight / weightvdw << " " << std::scientific << normweight - 1. << std::fixed << "\n";
-      //}
-
-      //break;
     }
 
     fCEAccepted++;
@@ -943,6 +817,65 @@ namespace thermalfist {
     return totals;
   }
 
+  void EventGeneratorBase::SetParameters()
+  {
+    SetMomentumGenerators();
+    m_ParametersSet = true;
+  }
+
+  std::vector<std::vector<double>> EventGeneratorBase::ComputeEVRadii() const
+  {
+    int Nspecies = m_THM->TPS()->ComponentsNumber();
+    std::vector<std::vector<double>> radii = std::vector<std::vector<double>>(Nspecies,
+      std::vector<double>(Nspecies, 0.0));
+
+    for (int i = 0; i < Nspecies; ++i) {
+      for (int j = 0; j < Nspecies; ++j) {
+        double b = 0.5 * (m_Config.bij[i][j] + m_Config.bij[j][i]);
+        radii[i][j] = CuteHRGHelper::rv(b);
+      }
+    }
+
+    return radii;
+  }
+
+  bool EventGeneratorBase::CheckEVOverlap(
+    const std::vector<SimpleParticle>& particles,
+    const SimpleParticle& cand,
+    const std::vector<int>& ids,
+    const std::vector<std::vector<double>>& radii)
+   const
+  {
+    if (m_Config.fModelType == EventGeneratorConfiguration::PointParticle)
+      return false;
+    int idcand = m_THM->TPS()->PdgToId(cand.PDGID);
+    for (int ipart = 0; ipart < particles.size(); ++ipart) {
+      const SimpleParticle& part = particles[ipart];
+      int idpart = 0;
+      if (ids.size())
+        idpart = ids[ipart];
+      else
+        idpart = m_THM->TPS()->PdgToId(part.PDGID);
+
+      double r = 0.0;
+      if (radii.size()) {
+        r = radii[idpart][idcand];
+      }
+      else {
+        double b = 0.5 * (m_Config.bij[idpart][idcand] + m_Config.bij[idcand][idpart]);
+        r = CuteHRGHelper::rv(b);
+      }
+
+      if (r == 0.0)
+        continue;
+
+      double dist2 = ParticleDecaysMC::ParticleDistanceSquared(part, cand);
+      if (dist2 <= 4. * r * r)
+        return true;
+    }
+    return false;
+  }
+
 
   std::vector<int> EventGeneratorBase::GenerateTotalsCE() const {
     if (!m_THM->IsCalculated())
@@ -1194,6 +1127,7 @@ namespace thermalfist {
 
   SimpleParticle EventGeneratorBase::SampleParticle(int id) const
   {
+    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
     const ThermalParticle& species = m_THM->TPS()->Particles()[id];
     double tmass = species.Mass();
     if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
@@ -1224,37 +1158,26 @@ namespace thermalfist {
 
   SimpleEvent EventGeneratorBase::SampleMomenta(const std::vector<int>& yields) const
   {
+    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
+
     SimpleEvent ret;
 
-    std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size());
+    std::vector<int> ids;
 
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-      primParticles[i].resize(0);
+      //primParticles[i].resize(0);
       int total = yields[i];
       for (int part = 0; part < total; ++part) {
-        //double tmass = species.Mass();
-        //if (m_THM->UseWidth() && !species.ZeroWidthEnforced() && !(species.GetResonanceWidthIntegrationType() == ThermalParticle::ZeroWidth))
-        //  tmass = m_BWGens[i]->GetRandom();
-
-        //// Check for Bose-Einstein condensation
-        //// Force m = mu if the sampled mass is too small
-        //double tmu = m_THM->FullIdealChemicalPotential(i);
-        //if (species.Statistics() == -1 && tmu > tmass) {
-        //  tmass = tmu;
-        //}
-
-        //std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(tmass);
-        ////std::vector<double> momentum = m_MomentumGens[i]->GetMomentum(0.99999 * m_THM->TPS()->Particles()[i].Mass());
-
-        //primParticles[i].push_back(SimpleParticle(momentum[0], momentum[1], momentum[2], tmass, species.PdgId(), 0,
-        //  momentum[3], momentum[4], momentum[5], momentum[6]));
-        primParticles[i].push_back(SampleParticle(i));
+        SimpleParticle cand = SampleParticle(i);
+        if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
+          ret.Particles.push_back(cand);
+          ids.push_back(i);
+        }
+        else {
+          part--;
+        }
       }
-    }
-
-    for (int i = primParticles.size() - 1; i >= 0; --i) {
-      ret.Particles.insert(ret.Particles.end(), primParticles[i].begin(), primParticles[i].end());
     }
 
     ret.AllParticles = ret.Particles;
@@ -1271,9 +1194,10 @@ namespace thermalfist {
 
   SimpleEvent EventGeneratorBase::SampleMomentaWithShuffle(const std::vector<int>& yields) const
   {
+    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
+
     SimpleEvent ret;
 
-    //std::vector< std::vector<SimpleParticle> > primParticles(m_THM->TPS()->Particles().size(), std::vector<SimpleParticle>(0));
     std::vector<int> ids;
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       for (int part = 0; part < yields[i]; ++part)
@@ -1284,10 +1208,11 @@ namespace thermalfist {
     while (sampled < ids.size()) {
       int i = ids[sampled];
       const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-      SimpleParticle part = SampleParticle(i);
-
-      ret.Particles.push_back(part);
-      sampled++;
+      SimpleParticle cand = SampleParticle(i);
+      if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
+        ret.Particles.push_back(cand);
+        sampled++;
+      }
     }
 
     ret.AllParticles = ret.Particles;
@@ -1304,13 +1229,27 @@ namespace thermalfist {
 
   SimpleEvent EventGeneratorBase::GetEvent(bool DoDecays) const
   {
+    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
+    
     if (!m_THM->IsCalculated())
       m_THM->CalculatePrimordialDensities();
 
     std::vector<int> totals = GenerateTotals();
+    if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
+      || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV) {
+      while (RandomGenerators::randgenMT.rand() > m_LastNormWeight) {
+        if (m_LastNormWeight > 1.) {
+          printf("**WARNING** Event weight %lf > 1 in Monte Carlo rejection sampling!", m_LastNormWeight);
+        }
+        totals = GenerateTotals();
+      }
+      m_LastWeight = 1.0;
+      m_LastLogWeight = 0.;
+      m_LastNormWeight = 1.0;
+    }
 
-    SimpleEvent ret = SampleMomenta(totals);
-    //SimpleEvent ret = SampleMomentaWithShuffle(totals);
+    //SimpleEvent ret = SampleMomenta(totals);
+    SimpleEvent ret = SampleMomentaWithShuffle(totals);
     ret.weight = m_LastWeight;
     ret.logweight = m_LastLogWeight;
     ret.weight = m_LastNormWeight;
@@ -1569,7 +1508,7 @@ namespace thermalfist {
 
   double EventGeneratorBase::ComputeWeight(const std::vector<int>& totals) const
   {
-    // Compute the normlaized weight factor due to EV/vdW interactions
+    // Compute the normalized weight factor due to EV/vdW interactions
     // If V - bN < 0, returns -1.
     std::vector<double>* densitiesid = NULL;
     std::vector<double> tmpdens;
@@ -1811,33 +1750,13 @@ namespace thermalfist {
           if (bns[icomp] > 1.)
             fl = false;
 
-          dmuTs[icomp] = model->DeltaMu(i1) / model->Parameters().T;
+          //dmuTs[icomp] = model->DeltaMu(i1) / model->Parameters().T;
+          dmuTs[icomp] = log(densities[i1] / densitiesid->operator[](i1) / (1. - bnevs[icomp]));
         }
 
         normweight *= pow((1. - bns[icomp]) / (1. - bnevs[icomp]), Nscomp[icomp]) * exp(-dmuTs[icomp] * (Nscomp[icomp] - Nevscomp[icomp]));
 
       }
-
-      //for (size_t i = 0; i < Nspecies; ++i) {
-      //  double VVN = m_THM->Volume();
-
-      //  for (size_t j = 0; j < Nspecies; ++j)
-      //    VVN -= model->VirialCoefficient(j, i) * totals[j];
-
-      //  if (VVN < 0.) { fl = false; break; }
-
-      //  double VVNev = m_THM->Volume();
-      //  for (size_t j = 0; j < Nspecies; ++j)
-      //    VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-      //  weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-      //  if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //    logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-      //  weightev *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-      //  if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-      //    normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
-      //}
 
       if (!fl)
         return -1.;
@@ -1857,45 +1776,60 @@ namespace thermalfist {
       double logweight = 0.;
       double normweight = 1.;
       double weightvdw = 1.;
-      bool fl = 1;
-      for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-        double VVN = m_THM->Volume();
+      bool fl = true;
 
-        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-          VVN -= model->VirialCoefficient(j, i) * totals[j];
+      int Nspecies = m_THM->TPS()->Particles().size();
 
-        if (VVN < 0.) { fl = false; break; }
+      int NVDWcomp = model->VDWComponentIndices().size();
+      std::vector<int> Nscomp(NVDWcomp, 0);
+      std::vector<double> Nvdwscomp(NVDWcomp, 0.);
+      std::vector<double> bns(NVDWcomp, 0.), bnvdws(NVDWcomp, 0.), dmuTs(NVDWcomp, 0.), aijs(NVDWcomp, 0.), aijvdws(NVDWcomp, 0.);
+      const std::vector< std::vector<double> >& virial = model->VirialMatrix();
+      const std::vector< std::vector<double> >& attr   = model->AttractionMatrix();
 
-        double VVNev = m_THM->Volume();
-        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j)
-          VVNev -= model->VirialCoefficient(j, i) * densities[j] * V;
-
-        weight *= pow(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i], totals[i]);
-        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-          logweight += totals[i] * log(VVN / m_THM->Volume() * densitiesid->operator[](i) / densities[i]);
-
-        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-          double aij = model->AttractionCoefficient(i, j);
-          weight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i]);
-          logweight += totals[i] * aij * totals[j] / m_THM->Parameters().T / m_THM->Volume();
+      for (size_t icomp = 0; icomp < NVDWcomp; ++icomp) {
+        const std::vector<int>& indis = model->VDWComponentIndices()[icomp];
+        int Nlocal = indis.size();
+        for (size_t ilocal = 0; ilocal < Nlocal; ++ilocal) {
+          int ip = indis[ilocal];
+          Nscomp[icomp] += totals[ip];
+          Nvdwscomp[icomp] += densities[ip] * V;
         }
 
-        weightvdw *= pow(VVNev / m_THM->Volume() * densitiesid->operator[](i) / densities[i], densities[i] * V);
-        if (densitiesid->operator[](i) > 0. && densities[i] > 0.)
-          normweight *= pow(VVN / VVNev, totals[i]) * pow(VVNev / V, totals[i] - densities[i] * V) * pow(densitiesid->operator[](i) / densities[i], totals[i] - (densities[i] * V));
+        if (indis.size()) {
+          int i1 = indis[0];
 
-        for (size_t j = 0; j < m_THM->TPS()->Particles().size(); ++j) {
-          double aij = model->AttractionCoefficient(i, j);
-          weightvdw *= exp(aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
-          normweight *= exp(aij * totals[j] / m_THM->Parameters().T / m_THM->Volume() * totals[i] - aij * densities[j] / m_THM->Parameters().T * densities[i] * V);
+          for (size_t j = 0; j < Nspecies; ++j) {
+            //bns[icomp] += model->VirialCoefficient(j, i1) * totals[j] / V;
+            //bnevs[icomp] += model->VirialCoefficient(j, i1) * densities[j];
+            bns[icomp] += virial[j][i1] * totals[j];// / V;
+            bnvdws[icomp] += virial[j][i1] * densities[j];
+
+            aijs[icomp]     += attr[i1][j] * totals[j];
+            aijvdws[icomp]  += attr[i1][j] * densities[j];
+          }
+          bns[icomp] /= V;
+          aijs[icomp] /= V * model->Parameters().T;
+          aijvdws[icomp] /= model->Parameters().T;
+
+
+          if (bns[icomp] > 1.)
+            fl = false;
+
+          //dmuTs[icomp] = model->DeltaMu(i1) / model->Parameters().T;          
+          dmuTs[icomp] = log(densities[i1] / densitiesid->operator[](i1) / (1. - bnvdws[icomp]));
         }
 
+        normweight *= pow((1. - bns[icomp]) / (1. - bnvdws[icomp]), Nscomp[icomp]) 
+          * exp(-dmuTs[icomp] * (Nscomp[icomp] - Nvdwscomp[icomp]))
+          * exp(aijs[icomp] * Nscomp[icomp] - aijvdws[icomp] * Nvdwscomp[icomp]);
       }
+
       if (!fl)
         return -1.;
 
-      m_LastWeight = weight;
-      m_LastLogWeight = logweight;
+      m_LastWeight = normweight;
+      m_LastLogWeight = log(normweight);
       m_LastNormWeight = normweight;
 
       ret = normweight;

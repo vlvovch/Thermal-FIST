@@ -98,7 +98,8 @@ namespace thermalfist {
     return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear());
   }
 
-  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear)
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear) :
+    EventGeneratorBase()
   {
     SetConfiguration(TPS, config);
     SetHypersurface(hypersurface);
