@@ -477,7 +477,13 @@ namespace thermalfist {
 
   void ThermalModelBase::FixParametersNoReset() {
     if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
-      m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
+      if (m_ConstrainMuS)
+        m_Parameters.muS = 0.;
+      if (m_ConstrainMuQ)
+        m_Parameters.muQ = 0.;
+      if (m_ConstrainMuC)
+        m_Parameters.muC = 0.;
+      //m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
       CalculatePrimordialDensities();
       return;
