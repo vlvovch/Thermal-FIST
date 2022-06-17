@@ -708,6 +708,9 @@ namespace thermalfist {
     ids.insert(ids.begin(), idsB.begin(), idsB.end());
     ids.insert(ids.begin(), idsaB.begin(), idsaB.end());
 
+    int idBstart = idsM.size();
+    int idaBstart = idsM.size() + idsB.size();
+
     ret.Particles.resize(ids.size());
     for (int ip = 0; ip < ids.size(); ++ip) {
       int pid = ids[ip];
@@ -725,7 +728,15 @@ namespace thermalfist {
           }
 
           if (flOverlap) {
-            ip--;
+            if (EVFastMode()) {
+              ip--;
+            }
+            else {
+              if (species.BaryonCharge() == 1)
+                ip = idBstart - 1;
+              else
+                ip = idaBstart - 1;
+            }
             continue;
           }
         }
