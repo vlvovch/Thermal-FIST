@@ -832,7 +832,9 @@ namespace thermalfist {
 
     for (int i = 0; i < Nspecies; ++i) {
       for (int j = 0; j < Nspecies; ++j) {
-        double b = 0.5 * (m_Config.bij[i][j] + m_Config.bij[j][i]);
+        double b = 0.0;
+        if (i < m_Config.bij.size() && j < m_Config.bij[i].size()) 
+          b = 0.5 * (m_Config.bij[i][j] + m_Config.bij[j][i]);
         radii[i][j] = CuteHRGHelper::rv(b);
       }
     }

@@ -676,6 +676,77 @@ namespace thermalfist {
     cout << "naB = " << m_MeanAB / m_VEff << endl;
   }
 
+  SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
+  {
+    SimpleEvent ret;
+
+    // Hard-core radius for (anti)baryons in the sampling procedure
+    double radB = m_rad;
+    if (radB < 0.0)
+      radB = CuteHRGHelper::rv(m_b);
+
+    // Reshuffle the order of particles to be sampled
+    std::vector<int> idsM, idsB, idsaB;
+    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      if (m_THM->TPS()->Particles()[i].BaryonCharge() != 1 && m_THM->TPS()->Particles()[i].BaryonCharge() != -1)
+        for (int part = 0; part < yields[i]; ++part)
+          idsM.push_back(i);
+    std::random_shuffle(idsM.begin(), idsM.end());
+    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      if (m_THM->TPS()->Particles()[i].BaryonCharge() == 1)
+        for (int part = 0; part < yields[i]; ++part)
+          idsB.push_back(i);
+    std::random_shuffle(idsB.begin(), idsB.end());
+    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+      if (m_THM->TPS()->Particles()[i].BaryonCharge() == -1)
+        for (int part = 0; part < yields[i]; ++part)
+          idsaB.push_back(i);
+    std::random_shuffle(idsaB.begin(), idsaB.end());
+
+    std::vector<int> ids;
+    ids.insert(ids.begin(), idsM.begin(), idsM.end());
+    ids.insert(ids.begin(), idsB.begin(), idsB.end());
+    ids.insert(ids.begin(), idsaB.begin(), idsaB.end());
+
+    ret.Particles.resize(ids.size());
+    for (int ip = 0; ip < ids.size(); ++ip) {
+      int pid = ids[ip];
+      const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
+      SimpleParticle part = SampleParticle(pid);
+
+      if (radB > 0.0) {
+        if (species.BaryonCharge() == 1 || species.BaryonCharge() == -1) {
+          bool flOverlap = false;
+          int tip = ip - 1;
+          while (tip >= 0 && m_THM->TPS()->Particles()[ids[tip]].BaryonCharge() == species.BaryonCharge()) {
+            double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[tip], part);
+            flOverlap |= (dist2 <= 4. * radB * radB);
+            tip--;
+          }
+
+          if (flOverlap) {
+            ip--;
+            continue;
+          }
+        }
+      }
+
+      ret.Particles[ip] = part;
+    }
+
+    ret.AllParticles = ret.Particles;
+
+    ret.DecayMap.resize(ret.Particles.size());
+    fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+
+    ret.DecayMapFinal.resize(ret.Particles.size());
+    for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+      ret.DecayMapFinal[i] = i;
+
+    return ret;
+  }
+
+
   
   //SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
   //{
@@ -755,124 +826,124 @@ namespace thermalfist {
   //}
   //
 
-  SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
-  {
-    SimpleEvent ret;
+  //SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
+  //{
+  //  SimpleEvent ret;
 
-    // Hard-core radius for (anti)baryons in the sampling procedure
-    double radB = m_rad;
-    if (radB < 0.0)
-      radB = CuteHRGHelper::rv(m_b);
+  //  // Hard-core radius for (anti)baryons in the sampling procedure
+  //  double radB = m_rad;
+  //  if (radB < 0.0)
+  //    radB = CuteHRGHelper::rv(m_b);
 
-    // Reshuffle the order of particles to be sampled
-    std::vector<int> ids;
-    for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-      for (int part = 0; part < yields[i]; ++part)
-        ids.push_back(i);
-    std::random_shuffle(ids.begin(), ids.end());
+  //  // Reshuffle the order of particles to be sampled
+  //  std::vector<int> ids;
+  //  for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
+  //    for (int part = 0; part < yields[i]; ++part)
+  //      ids.push_back(i);
+  //  std::random_shuffle(ids.begin(), ids.end());
 
-    // Sample the particles
+  //  // Sample the particles
 
-    // First the mesons (and light nuclei if applicable)
-    int sampled = 0;
-    ret.Particles.resize(ids.size());
-    for (int ip = 0; ip < ids.size(); ++ip) {
-      int pid = ids[ip];
-      const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-      if (species.BaryonCharge() != 1 && species.BaryonCharge() != -1) {
-        ret.Particles[sampled] = SampleParticle(pid);
-        sampled++;
-      }
-    }
+  //  // First the mesons (and light nuclei if applicable)
+  //  int sampled = 0;
+  //  ret.Particles.resize(ids.size());
+  //  for (int ip = 0; ip < ids.size(); ++ip) {
+  //    int pid = ids[ip];
+  //    const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
+  //    if (species.BaryonCharge() != 1 && species.BaryonCharge() != -1) {
+  //      ret.Particles[sampled] = SampleParticle(pid);
+  //      sampled++;
+  //    }
+  //  }
 
-    // Then, the (anti)baryons
-    int sampledSoFar = sampled;
+  //  // Then, the (anti)baryons
+  //  int sampledSoFar = sampled;
 
-    //std::vector<int> idBaryons, idAntiBaryons;
-    //for (int ip = 0; ip < ids.size(); ++ip) {
-    //  int pid = ids[ip];
-    //  const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-    //  if (species.BaryonCharge() == 1)
-    //    idBaryons.push_back(sampled);
-    //  if (species.BaryonCharge() == -1)
-    //    idAntiBaryons.push_back(sampled);
+  //  //std::vector<int> idBaryons, idAntiBaryons;
+  //  //for (int ip = 0; ip < ids.size(); ++ip) {
+  //  //  int pid = ids[ip];
+  //  //  const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
+  //  //  if (species.BaryonCharge() == 1)
+  //  //    idBaryons.push_back(sampled);
+  //  //  if (species.BaryonCharge() == -1)
+  //  //    idAntiBaryons.push_back(sampled);
 
-    //  sampled++;
-    //}
+  //  //  sampled++;
+  //  //}
 
-    for (int idB = 0; idB < 2; idB++) {
+  //  for (int idB = 0; idB < 2; idB++) {
 
-      int Bcharge = 1;
-      if (idB == 1)
-        Bcharge = -1;
+  //    int Bcharge = 1;
+  //    if (idB == 1)
+  //      Bcharge = -1;
 
-      sampled = sampledSoFar;
+  //    sampled = sampledSoFar;
 
-      std::vector<int> idBaryons;
-      for (int ip = 0; ip < ids.size(); ++ip) {
-        int pid = ids[ip];
-        const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-        if (species.BaryonCharge() == Bcharge)
-          idBaryons.push_back(sampled);
+  //    std::vector<int> idBaryons;
+  //    for (int ip = 0; ip < ids.size(); ++ip) {
+  //      int pid = ids[ip];
+  //      const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
+  //      if (species.BaryonCharge() == Bcharge)
+  //        idBaryons.push_back(sampled);
 
-        sampled++;
-      }
+  //      sampled++;
+  //    }
 
-      bool flOverlap = true;
+  //    bool flOverlap = true;
 
-      while (flOverlap) {
-        sampled = sampledSoFar;
-        for (int ip = 0; ip < ids.size(); ++ip) {
-          flOverlap = false;
-          int pid = ids[ip];
-          const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-          if (species.BaryonCharge() != Bcharge)
-            continue;
+  //    while (flOverlap) {
+  //      sampled = sampledSoFar;
+  //      for (int ip = 0; ip < ids.size(); ++ip) {
+  //        flOverlap = false;
+  //        int pid = ids[ip];
+  //        const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
+  //        if (species.BaryonCharge() != Bcharge)
+  //          continue;
 
-          SimpleParticle part = SampleParticle(pid);
+  //        SimpleParticle part = SampleParticle(pid);
 
-          // Reject the (anti)baryon if it overlaps with another (anti)baryon
-          if (radB > 0.0) {
+  //        // Reject the (anti)baryon if it overlaps with another (anti)baryon
+  //        if (radB > 0.0) {
 
-            for (int iip = 0; iip < idBaryons.size(); ++iip) {
-              if (idBaryons[iip] >= sampled)
-                break;
-              double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[idBaryons[iip]], part);
-              flOverlap |= (dist2 <= 4. * radB * radB);
-            }
+  //          for (int iip = 0; iip < idBaryons.size(); ++iip) {
+  //            if (idBaryons[iip] >= sampled)
+  //              break;
+  //            double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[idBaryons[iip]], part);
+  //            flOverlap |= (dist2 <= 4. * radB * radB);
+  //          }
 
-            if (flOverlap) {
-              //printf("Reject baryon  ");
-              if (!EVFastMode()) {
-                break;
-              }
-              else {
-                ip--;
-                continue;
-              }
-            }
+  //          if (flOverlap) {
+  //            //printf("Reject baryon  ");
+  //            if (!EVFastMode()) {
+  //              break;
+  //            }
+  //            else {
+  //              ip--;
+  //              continue;
+  //            }
+  //          }
 
-          }
+  //        }
 
-          ret.Particles[sampled] = part;
-          sampled++;
-        }
-      }
+  //        ret.Particles[sampled] = part;
+  //        sampled++;
+  //      }
+  //    }
 
-      sampledSoFar = sampled;
-    }
+  //    sampledSoFar = sampled;
+  //  }
 
-    ret.AllParticles = ret.Particles;
+  //  ret.AllParticles = ret.Particles;
 
-    ret.DecayMap.resize(ret.Particles.size());
-    fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+  //  ret.DecayMap.resize(ret.Particles.size());
+  //  fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
 
-    ret.DecayMapFinal.resize(ret.Particles.size());
-    for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
-      ret.DecayMapFinal[i] = i;
+  //  ret.DecayMapFinal.resize(ret.Particles.size());
+  //  for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+  //    ret.DecayMapFinal[i] = i;
 
-    return ret;
-  }
+  //  return ret;
+  //}
 
   std::pair<int, int> HypersurfaceEventGeneratorEVHRG::ComputeNBNBbar(const std::vector<int>& yields) const
   {
