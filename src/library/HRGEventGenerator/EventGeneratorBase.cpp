@@ -57,7 +57,8 @@ namespace thermalfist {
     m_MeanSM(0.), m_MeanASM(0.),
     m_MeanCM(0.), m_MeanACM(0.),
     m_MeanCHRM(0.), m_MeanACHRM(0.),
-    m_MeanCHRMM(0.), m_MeanACHRMM(0.)
+    m_MeanCHRMM(0.), m_MeanACHRMM(0.),
+    m_EVFastMode(false)
   {
     fCEAccepted = fCETotal = 0; 
   }

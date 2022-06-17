@@ -214,6 +214,9 @@ namespace thermalfist {
     double ComputeWeight(const std::vector<int>& totals) const;
     double ComputeWeightNew(const std::vector<int>& totals) const;
 
+    void SetEVFastMode(bool EVfastmode)    { m_EVFastMode = EVfastmode; }
+    bool EVFastMode() const                { return m_EVFastMode; }
+
     const EventGeneratorConfiguration& GetConfiguration() const { return m_Config; }
 
     /// Sets the hypersurface parameters
@@ -348,6 +351,7 @@ namespace thermalfist {
     double m_MeanCHRM, m_MeanACHRM;
 
     std::vector<std::vector<double>> m_Radii;
+    bool m_EVFastMode;
 
     static double m_LastWeight;
     static double m_LastLogWeight;

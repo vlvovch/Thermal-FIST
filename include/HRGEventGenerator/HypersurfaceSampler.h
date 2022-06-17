@@ -417,10 +417,10 @@ namespace thermalfist {
   };
 
   ///// \brief Class implementing the sampling of momenta of HRG particles
-  /////        from an arbitrary hydro hypersurface
+  /////        from an arbitrary hydro hypersurface with excluded volume effect for baryons.
   /////
-  /////        Calculates the multinomial weights for sampling the hypersurface element.
-  /////        Samples the momenta of all the hadrons given the multiplcites in the current event externally.
+  /////        Corresponds to the EV-HRG model from https://arxiv.org/abs/1708.02852 and https://arxiv.org/abs/2107.00588
+  /////        abd optimized accordingly
   /////        
   class HypersurfaceEventGeneratorEVHRG : public HypersurfaceEventGenerator
   {
