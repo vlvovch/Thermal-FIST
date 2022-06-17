@@ -280,6 +280,8 @@ namespace thermalfist {
       }
     }
 
+    cout.flush();
+
 
     m_THM->SetVolume(Veff);
     m_THM->SetCanonicalVolume(Veff);
