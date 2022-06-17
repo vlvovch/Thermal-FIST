@@ -149,8 +149,10 @@ namespace thermalfist {
 
     //for (const auto& elem : *m_ParticlizationHypersurface) {
     for (size_t ielem = 0; ielem < m_ParticlizationHypersurface->size(); ++ielem) {
-      if (ielem % 10000 == 0)
+      if (ielem % 10000 == 0) {
         cout << ielem << " ";
+        cout.flush();
+      }
       const auto& elem = m_ParticlizationHypersurface->operator[](ielem);
 
       if (!m_RescaleTmu || abs(elem.edens - m_edens) > 1.e-3 || elem.rhoB < 0.0 || elem.rhoB > 0.25) {
