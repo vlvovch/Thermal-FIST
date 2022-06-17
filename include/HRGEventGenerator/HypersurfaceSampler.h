@@ -272,7 +272,7 @@ namespace thermalfist {
     void ProcessVolumeElements();
 
     /// Calculates the (T,muB,muS,muQ) values as function of baryon density at fixed constant energy density
-    static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.01);
+    static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001);
 
     /// Sets the hypersurface parameters
     //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
