@@ -704,9 +704,9 @@ namespace thermalfist {
     std::random_shuffle(idsaB.begin(), idsaB.end());
 
     std::vector<int> ids;
-    ids.insert(ids.begin(), idsM.begin(), idsM.end());
-    ids.insert(ids.begin(), idsB.begin(), idsB.end());
-    ids.insert(ids.begin(), idsaB.begin(), idsaB.end());
+    ids.insert(ids.end(), idsM.begin(), idsM.end());
+    ids.insert(ids.end(), idsB.begin(), idsB.end());
+    ids.insert(ids.end(), idsaB.begin(), idsaB.end());
 
     int idBstart = idsM.size();
     int idaBstart = idsM.size() + idsB.size();
