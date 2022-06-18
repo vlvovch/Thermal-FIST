@@ -1219,31 +1219,39 @@ namespace thermalfist {
     //    sampled++;
     //  }
     //}
+    ret.Particles.resize(ids.size());
+
     bool flOverlap = true;
     while (flOverlap) {
-      flOverlap = false;
-      ret.Particles.clear();
-
       int sampled = 0;
       while (sampled < ids.size()) {
+        flOverlap = false;
         int i = ids[sampled];
         const ThermalParticle& species = m_THM->TPS()->Particles()[i];
         SimpleParticle cand = SampleParticle(i);
-        ret.Particles.push_back(cand);
-        sampled++;
-      }
 
-      if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
-        || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV
-        || m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
-        for (int i = 0; i < ids.size() - 1; ++i) {
-          for (int j = i + 1; j < ids.size(); ++j) {
-            double r = m_Radii[ids[i]][ids[j]];
+        if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
+          || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV
+          || m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
+          for (int i = 0; i < sampled; ++i) {
+            double r = m_Radii[ids[i]][ids[sampled]];
             if (r != 0.0) {
-              flOverlap |= (ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[i], ret.Particles[j]) <= 4. * r * r);
+              flOverlap |= (ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[i], cand) <= 4. * r * r);
+            }
+          }
+
+          if (flOverlap) {
+            if (EVFastMode()) {
+              continue;
+            }
+            else {
+              break;
             }
           }
         }
+
+        ret.Particles[sampled] = cand;
+        sampled++;
       }
     }
 
