@@ -252,7 +252,7 @@ void CorrelationsDialog::recalculate()
 
             // Delta
             if (comboQuantity->currentIndex() == 4) {
-              double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
+              double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
               continue;
             }
@@ -322,7 +322,7 @@ void CorrelationsDialog::recalculate()
               }
               // Delta
               else if (comboQuantity->currentIndex() == 4) {
-                double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
+                double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
               // Sigma
@@ -453,7 +453,7 @@ void CorrelationsDialog::recalculate()
             }
             // Delta
             else if (comboQuantity->currentIndex() == 4) {
-              double DeltaN1N2 = (N1 * wn2 - N2 * wn1) / (N2 - N1);
+              double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }
             // Sigma
