@@ -12,7 +12,7 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake -DINCLUDE_TESTS=OFF ../
+  - cmake -DINCLUDE_TESTS=ON ../
   - make -j$(nproc)
   - cd bin/examples
   - ./CalculationTmu
