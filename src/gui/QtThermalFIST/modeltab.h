@@ -45,6 +45,7 @@ class ModelTab : public QWidget
     QLabel *labelgammaS, *labelgammaC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
     QDoubleSpinBox *spinVolumeRSC;
+    QLabel *labelVolumeVal;
     QLabel *labelB, *labelQ, *labelS, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 

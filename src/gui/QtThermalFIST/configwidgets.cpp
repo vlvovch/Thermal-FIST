@@ -167,7 +167,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   comboWidth->addItem(tr("eBW"));
   comboWidth->addItem(tr("eBW (const BRs)"));
   comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
-  comboWidth->setToolTip(tr("Prescription for treatment of resonance widths"));
+  comboWidth->setToolTip(tr("Prescription for the treatment of resonance widths"));
 
 
   layOptions2->addWidget(labelWidth);
@@ -924,6 +924,22 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layout->addWidget(radLoad, 0, Qt::AlignLeft);
   layout->addLayout(layFile);
 
+  
+  groupMC = new QGroupBox(tr("Event generator options"));
+  QVBoxLayout* layoutMC = new QVBoxLayout();
+  CBEVMult  = new QCheckBox(tr("Use rejection sampling for excluded volume multiplicities"));
+  CBEVMult->setChecked(parent->currentConfig.fUseEVRejectionMultiplicity);
+  CBEVCoord = new QCheckBox(tr("Use rejection sampling for excluded volume in coordinate space"));
+  CBEVCoord->setChecked(parent->currentConfig.fUseEVRejectionCoordinates);
+  CBEVSPR   = new QCheckBox(tr("Apply the SPR approximation"));
+  CBEVSPR->setChecked(parent->currentConfig.fUseEVUseSPRApproximation);
+  connect(CBEVCoord, SIGNAL(toggled(bool)), this, SLOT(updateSPR()));
+  layoutMC->addWidget(CBEVMult);
+  layoutMC->addWidget(CBEVCoord);
+  layoutMC->addWidget(CBEVSPR);
+  groupMC->setLayout(layoutMC);
+  layout->addWidget(groupMC);
+
   QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
     | QDialogButtonBox::Cancel);
 
@@ -983,6 +999,23 @@ void InteractionsDialog::modeToggled()
       //  chooseInputFile();
     }
   }
+
+  if (!m_parent->m_eventGeneratorMode || m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionIdeal)
+  {
+    groupMC->setVisible(false);
+  }
+  else {
+    groupMC->setVisible(true);
+    CBEVMult->setVisible(true);
+    CBEVCoord->setVisible(true);
+    CBEVSPR->setVisible(true);
+  }
+
+  if (m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionQVDW) {
+    CBEVMult->setVisible(false);
+  }
+
+  updateSPR();
 }
 
 
@@ -1003,6 +1036,11 @@ void InteractionsDialog::updateRadius()
   labelRadiusValue->setText(QString::number(CuteHRGHelper::rv(spinB->value()), 'g', 4) + " fm");
 }
 
+void InteractionsDialog::updateSPR()
+{
+  CBEVSPR->setEnabled(CBEVCoord->isChecked());
+}
+
 
 void InteractionsDialog::OK()
 {
@@ -1019,6 +1057,10 @@ void InteractionsDialog::OK()
   m_parent->currentConfig.DisableMB = CBMB->isChecked();
   m_parent->currentConfig.DisableBB = CBBB->isChecked();
   m_parent->currentConfig.DisableBantiB = CBBaB->isChecked();
+
+  m_parent->currentConfig.fUseEVRejectionMultiplicity = CBEVMult->isChecked();
+  m_parent->currentConfig.fUseEVRejectionCoordinates  = CBEVCoord->isChecked();
+  m_parent->currentConfig.fUseEVUseSPRApproximation   = CBEVSPR->isChecked();
 
   QDialog::accept();
 }

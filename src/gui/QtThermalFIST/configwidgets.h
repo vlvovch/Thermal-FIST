@@ -21,6 +21,7 @@
 #include <QRadioButton>
 #include <QTextEdit>
 #include <QLayout>
+#include <QGroupBox>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
@@ -120,6 +121,9 @@ public:
   QLineEdit *leFilePath;
   QPushButton *buttonChooseFile;
 
+  QGroupBox *groupMC;
+  QCheckBox *CBEVMult, *CBEVCoord, *CBEVSPR;
+
 public:
   explicit  InteractionsDialog(ModelConfigWidget *parent = 0);
 
@@ -127,6 +131,7 @@ private slots :
   void modeToggled();
   void chooseInputFile();
   void updateRadius();
+  void updateSPR();
 public slots :
   void OK();
   void Discard() { QDialog::reject(); };

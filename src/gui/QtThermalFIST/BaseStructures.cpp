@@ -124,6 +124,10 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.PCEWidthCut = 0.015;
   ret.PCESahaForNuclei = true;
 
+  ret.fUseEVRejectionMultiplicity = true;
+  ret.fUseEVRejectionCoordinates  = true;
+  ret.fUseEVUseSPRApproximation   = true;
+
   return ret;
 }
 
@@ -245,31 +249,33 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
 
     // Now attraction
 
-    std::vector<double> as(model->TPS()->Particles().size(), config.vdWA);
+    if (config.InteractionModel == ThermalModelConfig::InteractionQVDW) {
+      std::vector<double> as(model->TPS()->Particles().size(), config.vdWA);
 
-    // Mass-proportional, nucleon mass here equals 0.938 GeV
-    if (config.InteractionScaling == 1) {
-      for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-        ThermalParticle &part = model->TPS()->Particle(i);
-        as[i] = config.vdWA * part.Mass() / xMath::mnucleon();
+      // Mass-proportional, nucleon mass here equals 0.938 GeV
+      if (config.InteractionScaling == 1) {
+        for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+          ThermalParticle& part = model->TPS()->Particle(i);
+          as[i] = config.vdWA * part.Mass() / xMath::mnucleon();
+        }
       }
-    }
 
-    // Linear in baryon content
-    if (config.InteractionScaling == 2) {
-      for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-        ThermalParticle &part = model->TPS()->Particle(i);
-        if (part.BaryonCharge() != 0)
-          as[i] = config.vdWA * abs(part.BaryonCharge());
-        else
-          as[i] = 0.;
+      // Linear in baryon content
+      if (config.InteractionScaling == 2) {
+        for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+          ThermalParticle& part = model->TPS()->Particle(i);
+          if (part.BaryonCharge() != 0)
+            as[i] = config.vdWA * abs(part.BaryonCharge());
+          else
+            as[i] = 0.;
+        }
       }
-    }
 
-    // Fill aij assuming "chemistry rule" aij = \sqrt{ai * aj}
-    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
-      for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
-        model->SetAttraction(i, j, sqrt(as[i] * as[j]));
+      // Fill aij assuming "chemistry rule" aij = \sqrt{ai * aj}
+      for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+        for (int j = 0; j < model->TPS()->Particles().size(); ++j) {
+          model->SetAttraction(i, j, sqrt(as[i] * as[j]));
+        }
       }
     }
 

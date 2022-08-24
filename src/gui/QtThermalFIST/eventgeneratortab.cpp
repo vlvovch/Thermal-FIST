@@ -317,7 +317,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     selLay->addWidget(buttonBinning, 1, Qt::AlignRight);
 
     plotDistr = new QCustomPlot();
-    plotDistr->xAxis->setLabel("p (GeV)");
+    plotDistr->xAxis->setLabel("p (GeV/c)");
     plotDistr->yAxis->setLabel(comboDistr->currentText());
 
     plotDistr->addGraph();
@@ -341,7 +341,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
 
     plot2D = new QCustomPlot();
     plot2D->xAxis->setLabel(tr("y"));
-    plot2D->yAxis->setLabel(tr("pT (GeV)"));
+    plot2D->yAxis->setLabel(tr("pT (GeV/c)"));
 
     plot2D->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(plot2D, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequestPlot2D(QPoint)));
@@ -451,7 +451,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinmuC->setMaximum(1000.);
     spinmuC->setValue(model->Parameters().muC * 1e3);
     spinmuC->setToolTip(tr("Charm chemical potential"));
-    QLabel *labelVolume = new QLabel(tr("R (fm):"));
+    QLabel *labelVolumeR = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
     spinVolumeR->setMinimum(0.);
     spinVolumeR->setMaximum(25.);
@@ -496,6 +496,13 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinVolumeRSC->setToolTip(tr("Correlation radius: the (canonical) correlation volume is a sphere of this radius"));
 
 
+    QLabel* labelVolume    = new QLabel(tr("V (fm<sup>3</sup>):"));
+    labelVolumeVal = new QLabel("4000");
+    QLabel* labelVolumeSC = new QLabel(tr("V<sub>SC</sub> (fm<sup>3</sup>):"));
+    labelVolumeSCVal = new QLabel("4000");
+
+    changeVolumeRSC(spinVolumeRSC->value());
+
     layParameters->addWidget(labelTemperature, 0, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinTemperature, 0, 1);
     layParameters->addWidget(labelmuB, 1, 0, 1, 1, Qt::AlignRight);
@@ -513,10 +520,14 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinmuQ, 1, 3);
     layParameters->addWidget(labelmuC, 1, 6, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinmuC, 1, 7);
-    layParameters->addWidget(labelVolume, 2, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelVolumeR, 2, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeR, 2, 1);
     layParameters->addWidget(labelVolumeRSC, 2, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeRSC, 2, 3);
+    layParameters->addWidget(labelVolume, 2, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelVolumeVal, 2, 5);
+    //layParameters->addWidget(labelVolumeSC, 2, 6, 1, 1, Qt::AlignRight);
+    //layParameters->addWidget(labelVolumeSCVal, 2, 7);
 
     layParameters->addWidget(labelB, 3, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinB, 3, 1);
@@ -560,12 +571,14 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinTkin->setMaximum(10000.);
     spinTkin->setValue(model->Parameters().T * 1e3);
     spinTkin->setToolTip(tr("Blast-wave temperature which fixes the momentum spectrum. Set it after T<sub>ch</sub> ans T<sub>kin</sub> (PCE) is fixed."));
-    QLabel *labelBeta = new QLabel(tr("β:"));
+    labelBeta = new QLabel(tr("β:"));
     spinBeta = new QDoubleSpinBox();
     spinBeta->setMinimum(0.);
     spinBeta->setMaximum(1.);
     spinBeta->setDecimals(3);
-    spinBeta->setValue(0.5);
+    prevBeta = 0.5;
+    prevRmax = 9.0;
+    spinBeta->setValue(prevBeta);
     spinBeta->setToolTip(tr("Radial flow velocity"));
     labelBetat = new QLabel(tr("〈β〉<sub>T</sub>:"));
     spinBetat = new QDoubleSpinBox();
@@ -580,7 +593,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     spinEtaMax->setMaximum(100.);
     spinEtaMax->setDecimals(3);
     spinEtaMax->setValue(1.);
-    spinEtaMax->setToolTip(tr("Longitudinal space-time rapidity cut-off"));
+    spinEtaMax->setToolTip(tr("Longitudinal space-time rapidity cut-off |η|<η<sub>max</sub>"));
     QLabel *labeln = new QLabel(tr("n:"));
     spinn = new QDoubleSpinBox();
     spinn->setMinimum(0.);
@@ -1208,6 +1221,29 @@ void EventGeneratorTab::modelChanged()
       spinn->setEnabled(false);
   }
 
+  if (labelBeta->text() == "β:") {
+    prevBeta = spinBeta->value();
+  }
+  else {
+    prevRmax = spinBeta->value();
+  }
+
+  if (radioSR->isChecked()) {
+    labelBeta->setText("β:");
+    spinBeta->setToolTip(tr("Radial flow velocity"));
+    spinBeta->setMaximum(1.0);
+    spinBeta->setValue(prevBeta);
+  }
+  else {
+    labelBeta->setText("R<sub>T</sub>(fm):");
+    spinBeta->setToolTip(tr("Maximum transverse radius"));
+    spinBeta->setMaximum(25.);
+    spinBeta->setValue(prevRmax);
+    if (radioSSH->isChecked()) {
+      spinBeta->setEnabled(true);
+    }
+  }
+
   if (radioCracow->isChecked()) {
     labelBetat->setText("R/τ<sub>H</sub>:");
   }
@@ -1400,10 +1436,14 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
       configMC.CFOParameters = modelEVVDW->Parameters();
     }
 
+    configMC.fUseEVRejectionMultiplicity = config.fUseEVRejectionMultiplicity;
+    configMC.fUseEVRejectionCoordinates = config.fUseEVRejectionCoordinates;
+    configMC.fUseEVUseSPRApproximation = config.fUseEVUseSPRApproximation;
+
     if (radioSR->isChecked())
       generator = new SphericalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, spinBeta->value());
     else if (radioSSH->isChecked())
-      generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value(), spinn->value());
+      generator = new CylindricalBlastWaveEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value(), spinn->value(), spinBeta->value());
     else
       generator = new CracowFreezeoutEventGenerator(model->TPS(), configMC, spinTkin->value() * 1.e-3, betaS, spinEtaMax->value());
 
@@ -1446,6 +1486,19 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 void EventGeneratorTab::changeVolumeRSC(double VRSC)
 {
   spinVolumeRSC->setValue(VRSC);
+  double R = spinVolumeR->value();
+  double V = 4. / 3. * xMath::Pi() * R * R * R;
+  //spinVolumeR->setToolTip(tr("System radius, current value corresponds to the volume V = ")
+  //  + QString("%1").arg(V)
+  //  + tr(" fm^3"));
+  labelVolumeVal->setText(QString("%1").arg(V));
+
+  double Rc = spinVolumeRSC->value();
+  double Vc = 4. / 3. * xMath::Pi() * Rc * Rc * Rc;
+  //spinVolumeRSC->setToolTip(tr("System correlation radius, current value corresponds to the volume Vc = ")
+  //  + QString("%1").arg(Vc)
+  //  + tr(" fm^3"));
+  labelVolumeSCVal->setText(QString("%1").arg(Vc));
 }
 
 void EventGeneratorTab::changeTkin(double Tch)

@@ -728,7 +728,7 @@ namespace thermalfist {
           }
 
           if (flOverlap) {
-            if (EVFastMode()) {
+            if (EVUseSPR()) {
               ip--;
             }
             else {

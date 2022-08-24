@@ -65,12 +65,22 @@ struct ThermalModelConfig {
   bool ComputeFluctations;
   bool ResetMus;
 
+
   /// Partial chemical equilibrium
   bool UsePCE;
   double Tkin;
   bool PCEFreezeLongLived;
   double PCEWidthCut;
   bool PCESahaForNuclei;
+
+  /// Whether to use rejection sampling instead of importance sampling for the EV multiplicity sampling
+  bool fUseEVRejectionMultiplicity;
+
+  /// Whether to use rejection sampling in the coordinate space to model EV effects
+  bool fUseEVRejectionCoordinates;
+
+  /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
+  bool fUseEVUseSPRApproximation;
 
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };

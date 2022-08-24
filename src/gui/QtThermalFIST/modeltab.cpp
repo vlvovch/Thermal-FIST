@@ -173,7 +173,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinmuC->setMaximum(1000.);
     spinmuC->setValue(model->Parameters().muC * 1e3);
     spinmuC->setToolTip(tr("Charm chemical potential"));
-    QLabel *labelVolume = new QLabel(tr("R (fm):"));
+    QLabel *labelVolumeR = new QLabel(tr("R (fm):"));
     spinVolumeR = new QDoubleSpinBox();
     spinVolumeR->setMinimum(0.);
     spinVolumeR->setMaximum(25.);
@@ -189,6 +189,11 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinVolumeRSC->setValue(spinVolumeR->value());
     spinVolumeRSC->setEnabled(false);
     spinVolumeRSC->setToolTip(tr("Correlation radius: the (canonical) correlation volume is a sphere of this radius"));
+
+    QLabel* labelVolume = new QLabel(tr("V (fm<sup>3</sup>):"));
+    labelVolumeVal = new QLabel("4000");
+
+    changeVolumeRSC(spinVolumeR->value());
 
 
     labelB = new QLabel(tr("B:"));
@@ -234,10 +239,12 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinmuQ, 1, 3);
     layParameters->addWidget(labelmuC, 1, 6, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinmuC, 1, 7); 
-    layParameters->addWidget(labelVolume, 2, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelVolumeR, 2, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeR, 2, 1);
     layParameters->addWidget(labelVolumeRSC, 2, 2, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinVolumeRSC, 2, 3);
+    layParameters->addWidget(labelVolume, 2, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelVolumeVal, 2, 5);
 
     layParameters->addWidget(labelB, 3, 0, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinB, 3, 1);
@@ -335,6 +342,10 @@ void ModelTab::particleInfoDoubleClick(const QModelIndex & index) {
 void ModelTab::changeVolumeRSC(double VRSC)
 {
   spinVolumeRSC->setValue(VRSC);
+
+  double R = spinVolumeR->value();
+  double V = 4. / 3. * xMath::Pi() * R * R * R;
+  labelVolumeVal->setText(QString("%1").arg(V));
 }
 
 

@@ -84,6 +84,15 @@ namespace thermalfist {
     /// PCE chemical potentials
     std::vector<double> fPCEChems;
 
+    /// Whether to use rejection sampling instead of importance sampling for the EV multiplicity sampling
+    bool fUseEVRejectionMultiplicity;
+
+    /// Whether to use rejection sampling in the coordinate space to model EV effects
+    bool fUseEVRejectionCoordinates;
+
+    /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
+    bool fUseEVUseSPRApproximation;
+
     /// Default configuration
     EventGeneratorConfiguration();
   };
@@ -214,8 +223,8 @@ namespace thermalfist {
     double ComputeWeight(const std::vector<int>& totals) const;
     double ComputeWeightNew(const std::vector<int>& totals) const;
 
-    void SetEVFastMode(bool EVfastmode)    { m_EVFastMode = EVfastmode; }
-    bool EVFastMode() const                { return m_EVFastMode; }
+    void SetEVUseSPR(bool EVfastmode)    { m_Config.fUseEVUseSPRApproximation = EVfastmode; }
+    bool EVUseSPR() const                { return m_Config.fUseEVUseSPRApproximation; }
 
     const EventGeneratorConfiguration& GetConfiguration() const { return m_Config; }
 
@@ -351,7 +360,6 @@ namespace thermalfist {
     double m_MeanCHRM, m_MeanACHRM;
 
     std::vector<std::vector<double>> m_Radii;
-    bool m_EVFastMode;
 
     static double m_LastWeight;
     static double m_LastLogWeight;

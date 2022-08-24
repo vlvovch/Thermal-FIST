@@ -57,8 +57,7 @@ namespace thermalfist {
     m_MeanSM(0.), m_MeanASM(0.),
     m_MeanCM(0.), m_MeanACM(0.),
     m_MeanCHRM(0.), m_MeanACHRM(0.),
-    m_MeanCHRMM(0.), m_MeanACHRMM(0.),
-    m_EVFastMode(false)
+    m_MeanCHRMM(0.), m_MeanACHRMM(0.)
   {
     fCEAccepted = fCETotal = 0; 
   }
@@ -88,6 +87,7 @@ namespace thermalfist {
       const EventGeneratorConfiguration& config)
   {
     m_Config = config;
+    SetEVUseSPR(config.fUseEVUseSPRApproximation);
 
     if (TPS == NULL)
       return;
@@ -1163,38 +1163,39 @@ namespace thermalfist {
 
   SimpleEvent EventGeneratorBase::SampleMomenta(const std::vector<int>& yields) const
   {
-    const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
+    return SampleMomentaWithShuffle(yields);
+    //const_cast<EventGeneratorBase*>(this)->CheckSetParameters();
 
-    SimpleEvent ret;
+    //SimpleEvent ret;
 
-    std::vector<int> ids;
+    //std::vector<int> ids;
 
-    for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
-      const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-      //primParticles[i].resize(0);
-      int total = yields[i];
-      for (int part = 0; part < total; ++part) {
-        SimpleParticle cand = SampleParticle(i);
-        if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
-          ret.Particles.push_back(cand);
-          ids.push_back(i);
-        }
-        else {
-          part--;
-        }
-      }
-    }
+    //for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
+    //  const ThermalParticle& species = m_THM->TPS()->Particles()[i];
+    //  //primParticles[i].resize(0);
+    //  int total = yields[i];
+    //  for (int part = 0; part < total; ++part) {
+    //    SimpleParticle cand = SampleParticle(i);
+    //    if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
+    //      ret.Particles.push_back(cand);
+    //      ids.push_back(i);
+    //    }
+    //    else {
+    //      part--;
+    //    }
+    //  }
+    //}
 
-    ret.AllParticles = ret.Particles;
+    //ret.AllParticles = ret.Particles;
 
-    ret.DecayMap.resize(ret.Particles.size());
-    fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
+    //ret.DecayMap.resize(ret.Particles.size());
+    //fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
 
-    ret.DecayMapFinal.resize(ret.Particles.size());
-    for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
-      ret.DecayMapFinal[i] = i;
+    //ret.DecayMapFinal.resize(ret.Particles.size());
+    //for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
+    //  ret.DecayMapFinal[i] = i;
 
-    return ret;
+    //return ret;
   }
 
   SimpleEvent EventGeneratorBase::SampleMomentaWithShuffle(const std::vector<int>& yields) const
@@ -1209,16 +1210,6 @@ namespace thermalfist {
         ids.push_back(i);
     std::random_shuffle(ids.begin(), ids.end());
 
-    //int sampled = 0;
-    //while (sampled < ids.size()) {
-    //  int i = ids[sampled];
-    //  const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-    //  SimpleParticle cand = SampleParticle(i);
-    //  if (!CheckEVOverlap(ret.Particles, cand, ids, m_Radii)) {
-    //    ret.Particles.push_back(cand);
-    //    sampled++;
-    //  }
-    //}
     ret.Particles.resize(ids.size());
 
     bool flOverlap = true;
@@ -1230,9 +1221,10 @@ namespace thermalfist {
         const ThermalParticle& species = m_THM->TPS()->Particles()[i];
         SimpleParticle cand = SampleParticle(i);
 
-        if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
+        if (m_Config.fUseEVRejectionCoordinates && 
+          (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
           || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV
-          || m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
+          || m_Config.fModelType == EventGeneratorConfiguration::QvdW)) {
           for (int i = 0; i < sampled; ++i) {
             double r = m_Radii[ids[i]][ids[sampled]];
             if (r != 0.0) {
@@ -1241,7 +1233,7 @@ namespace thermalfist {
           }
 
           if (flOverlap) {
-            if (EVFastMode()) {
+            if (EVUseSPR()) {
               continue;
             }
             else {
@@ -1275,9 +1267,11 @@ namespace thermalfist {
       m_THM->CalculatePrimordialDensities();
 
     std::vector<int> totals = GenerateTotals();
-    if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
-      || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV) {
+    if ((m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV
+      || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV)
+      && m_Config.fUseEVRejectionMultiplicity) {
       while (RandomGenerators::randgenMT.rand() > m_LastNormWeight) {
+        printf("A");
         if (m_LastNormWeight > 1.) {
           printf("**WARNING** Event weight %lf > 1 in Monte Carlo rejection sampling!", m_LastNormWeight);
         }
@@ -1288,8 +1282,7 @@ namespace thermalfist {
       m_LastNormWeight = 1.0;
     }
 
-    //SimpleEvent ret = SampleMomenta(totals);
-    SimpleEvent ret = SampleMomentaWithShuffle(totals);
+    SimpleEvent ret = SampleMomenta(totals);
     ret.weight = m_LastWeight;
     ret.logweight = m_LastLogWeight;
     ret.weight = m_LastNormWeight;
@@ -1885,6 +1878,9 @@ namespace thermalfist {
     B = Q = S = C = 0;
     CanonicalB = CanonicalQ = CanonicalS = CanonicalC = true;
     fUsePCE = false;
+    fUseEVRejectionMultiplicity = true;
+    fUseEVRejectionCoordinates = true;
+    fUseEVUseSPRApproximation = true;
   }
 
 } // namespace thermalfist

@@ -70,6 +70,8 @@ namespace thermalfist {
     /// and resonances masses
     virtual void SetMomentumGenerators();
 
+    void RecalculateTotalConservedNumbers();
+
     //virtual void SetParameters();
 
     double GetTkin() const { return m_T; }

@@ -126,7 +126,7 @@ namespace thermalfist {
      * \param search Whether multiple solutions of the QvdW equations
      *               should be considered. False by default.
      */
-    void SetMultipleSolutionsMode(bool search) { m_SearchMultipleSolutions = search; }
+    virtual void SetMultipleSolutionsMode(bool search) { m_SearchMultipleSolutions = search; }
 
     /**
      * \brief Whether to search for multiple solutions of the QvdW equations
@@ -153,17 +153,17 @@ namespace thermalfist {
 
     virtual void SetChemicalPotentials(const std::vector<double> & chem = std::vector<double>(0));
 
-    void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
+    virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
 
-    void FillAttraction(const std::vector< std::vector<double> > & aij = std::vector< std::vector<double> >(0));
+    virtual void FillAttraction(const std::vector< std::vector<double> > & aij = std::vector< std::vector<double> >(0));
 
     virtual void ReadInteractionParameters(const std::string &filename);
 
     virtual void WriteInteractionParameters(const std::string &filename);
 
-    void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; m_VDWComponentMapCalculated = false; }
+    virtual void SetVirial(int i, int j, double b) { if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial[i].size())) m_Virial[i][j] = b; m_VDWComponentMapCalculated = false; }
     
-    void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; m_VDWComponentMapCalculated = false; }
+    virtual void SetAttraction(int i, int j, double a) { if (i >= 0 && i < static_cast<int>(m_Attr.size()) && j >= 0 && j < static_cast<int>(m_Attr[i].size()))     m_Attr[i][j] = a; m_VDWComponentMapCalculated = false; }
 
     double VirialCoefficient(int i, int j) const;
 
