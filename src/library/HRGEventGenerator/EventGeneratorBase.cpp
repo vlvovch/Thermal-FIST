@@ -1271,7 +1271,6 @@ namespace thermalfist {
       || m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV)
       && m_Config.fUseEVRejectionMultiplicity) {
       while (RandomGenerators::randgenMT.rand() > m_LastNormWeight) {
-        printf("A");
         if (m_LastNormWeight > 1.) {
           printf("**WARNING** Event weight %lf > 1 in Monte Carlo rejection sampling!", m_LastNormWeight);
         }
