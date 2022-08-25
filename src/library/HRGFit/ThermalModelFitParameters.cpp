@@ -49,7 +49,7 @@ namespace thermalfist {
     S = params.S;
     C = params.C;
 
-    Tkin = FitParameter("Tkin", false, params.T, 0.05, 0.02, 0.300);
+    Tkin = FitParameter("Tkin", false, params.T, 0.05, 0.050, 0.200);
 
     FillParameterList();
   }

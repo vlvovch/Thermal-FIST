@@ -908,7 +908,7 @@ void FitToExperimentTab::finalize() {
   if (model->UsePartialChemicalEquilibrium()) {
     tableParameters->setItem(cRow, 0, new QTableWidgetItem("Tkin (MeV)"));
     tableParameters->setItem(cRow, 1, new QTableWidgetItem(QString::number(result.Tkin.value * 1.e3)));
-    if (result.T.toFit == true)
+    if (result.Tkin.toFit == true)
       tableParameters->setItem(cRow, 2, new QTableWidgetItem(QString::number(result.Tkin.error * 1.e3)));
     else
       tableParameters->setItem(cRow, 2, new QTableWidgetItem("--"));

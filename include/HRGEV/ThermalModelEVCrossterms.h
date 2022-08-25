@@ -1,14 +1,14 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2015-2018 Volodymyr Vovchenko
+ * Copyright (c) 2022 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
 #ifndef THERMALMODELEVCROSSTERMS_H
 #define THERMALMODELEVCROSSTERMS_H
 
-#include "HRGBase/ThermalModelBase.h"
+#include "HRGVDW/ThermalModelVDW.h"
 
 namespace thermalfist {
 
@@ -28,12 +28,11 @@ namespace thermalfist {
    * Phys. Rev. C **95**, 044904 (2017),
    * [http://arxiv.org/pdf/1606.06218.pdf](http://arxiv.org/pdf/1606.06218.pdf) 
    * 
-   * The system of transcendental equations for 
-   * "partial pressures" of hadrons
-   * is solved using the Broyden's method.
+   * This class implements the crossterms excluded-volume model as a partial case of
+   * the van der Waals HRG model where all the attraction terms are set to zero.
    * 
    */
-  class ThermalModelEVCrossterms : public ThermalModelBase
+  class ThermalModelEVCrossterms : public ThermalModelVDW
   {
   public:
     /**
@@ -42,207 +41,34 @@ namespace thermalfist {
      * \param TPS A pointer to the ThermalParticleSystem object containing the particle list
      * \param params ThermalModelParameters object with current thermal parameters
      */
-    ThermalModelEVCrossterms(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters());
+    ThermalModelEVCrossterms(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters()) :
+      ThermalModelVDW(TPS, params) {
+      m_TAG = "ThermalModelEVCrossterms";
+      m_InteractionModel = CrosstermsEV;
+    }
 
     /**
      * \brief Destroy the ThermalModelEVCrossterms object
      * 
      */
-    virtual ~ThermalModelEVCrossterms(void);
+    virtual ~ThermalModelEVCrossterms(void) { }
 
     // Override functions begin
-
-    virtual void FillVirial(const std::vector<double> & ri = std::vector<double>(0));
 
     virtual void ReadInteractionParameters(const std::string &filename);
 
     virtual void WriteInteractionParameters(const std::string &filename);
 
-    void SetRadius(double rad);
+    virtual void SetRadius(double rad) { FillVirial(std::vector<double>(m_TPS->Particles().size(), rad)); }
 
-    double VirialCoefficient(int i, int j) const;
+    virtual void SetAttraction(int i, int j, double a);
 
-    void SetVirial(int i, int j, double b);
-
-    virtual void ChangeTPS(ThermalParticleSystem *TPS);
-    
-    virtual void CalculatePrimordialDensities();
-
-    void CalculateTwoParticleCorrelations();
-
-    void CalculateFluctuations();
-
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
-
-    virtual double CalculatePressure();
-
-    virtual double CalculateEnergyDensity();
-
-    virtual double CalculateEntropyDensity();
-
-    // Dummy
-    virtual double CalculateBaryonMatterEntropyDensity() { return 0.; }
-    virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
-
-    // TODO properly with excluded volume
-    virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
-
-    // TODO properly with excluded volume
-    virtual double ParticleSkewness(int part) { return m_skewprim[part]; }
-
-    // TODO properly with excluded volume
-    virtual double ParticleKurtosis(int part) { return m_kurtprim[part]; }
-
-    // TODO properly with excluded volume
-    virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
+    /// No need to search for multiple soultions in EV-HRG model
+    virtual void SetMultipleSolutionsMode(bool search);
 
     // Override functions end
 
-
-    const std::vector< std::vector<int> >& EVComponentIndices() const { return m_EVComponentIndices; }
-    virtual double DeltaMu(int i) const { return MuShift(i); }
-    const std::vector< std::vector<double> >& VirialMatrix() const { return m_Virial; }
-
-  protected:
-    /**
-     * \brief Solves the system of transcdental equations 
-     *        for the pressure using the Broyden's method.
-     * 
-     * Solves \f$ p_i(T,\mu) = p_i^{\rm id} (T, \mu_i - \sum_j \tilde{b_{ij}} p_j). \f$
-     * 
-     */
-    virtual void SolvePressure(bool resetPartials = true);  // Using Broyden's method
-
-    void SolvePressureIter();  // Using iteration method
-    
-    virtual void CalculatePrimordialDensitiesNoReset();
-
-    virtual void CalculatePrimordialDensitiesIter();
-
-    /**
-     * \brief Solves the transcendental equation of 
-     *        the corresponding diagonal EV model.
-     * 
-     * The diagonal EV model here has \f$v_i = \tilde{b}_{ii}\f$.
-     * 
-     * The partial pressures of the diagonal model
-     * will be recorded into m_Ps.
-     * 
-     */
-    virtual void SolveDiagonal();
-
-    /**
-     * \brief The "partial pressure" of hadron species i
-     *        for the given total pressure in the diagonal model.
-     * 
-     * \param i 0-based particle species index.
-     * \param P Input pressure (GeV fm\f$^{-3}\f$)
-     * \return  Computed partial pressure (GeV fm\f$^{-3}\f$)
-     */
-    double PartialPressureDiagonal(int i, double P);
-
-    /**
-     * \brief The total pressure 
-     *        for the given input pressure in the diagonal model.
-     * 
-     * \param   Input pressure (GeV fm\f$^{-3}\f$)
-     * \return  Computed pressure (GeV fm\f$^{-3}\f$)
-     */
-    double PressureDiagonalTotal(double P);
-
-    /**
-     * \brief Calculate the ideal gas density of
-     *        particle species i for the given values
-     *        of partial pressures.
-     * 
-     * \param i        0-based particle specie index
-     * \param Pressure Input vector of partial pressures (GeV fm\f$^{-3}\f$)
-     * \return         Ideal gas density (fm\f$^{-3}\f$)
-     */
-    virtual double DensityId(int i, const std::vector<double>& pstars = std::vector<double>());
-
-    /**
-     * \brief Calculate the ideal gas pressure of
-     *        particle species i for the given values
-     *        of partial pressures.
-     * 
-     * \param i        0-based particle specie index
-     * \param Pressure Input vector of partial pressures (GeV fm\f$^{-3}\f$)
-     * \return         Ideal gas pressure (fm\f$^{-3}\f$)
-     */
-    virtual double Pressure(int i, const std::vector<double>& pstars = std::vector<double>());
-
-    /**
-     * \brief Calculate the ideal gas scaled variance of
-     *        particle species i number fluctuations 
-     *        for the given values
-     *        of partial pressures.
-     * 
-     * \param i        0-based particle specie index
-     * \param Pressure Input vector of partial pressures (GeV fm\f$^{-3}\f$)
-     * \return         Ideal gas scaled variance
-     */
-    double ScaledVarianceId(int ind);
-    
-    /**
-     * \brief The shift in the chemical potential
-     *        of particle species i due to the
-     *        excluded volume interactions.
-     * 
-     * Equal to \f$- \sum_j \tilde{b_{ij}} p_j\f$
-     * 
-     * \param i 0-based particle specie index
-     * \return  The shift in the chemical potential
-     */
-    virtual double MuShift(int i) const;
-
-    std::vector<double> m_densitiesid;            /**< Vector of ideal gas densities with shifted chemical potentials */
-    std::vector<double> m_Ps;                     /**< Vector of (solved) partial pressures */
-    std::vector< std::vector<double> > m_Virial;  /**< Matrix of virial (excluded-volume) coefficients \f$ \tilde{b}_{ij} \f$ */
-    double m_Pressure;                            /**< The (solved) total pressure */
-    double m_TotalEntropyDensity;                 /**< The (solved) entropy pressure */
-
-
-    std::vector<int> m_MapToEVComponent;
-    std::vector<int> m_MapFromEVComponent;
-    std::vector< std::vector<int> > m_EVComponentIndices;
-
-  private:
-    class BroydenEquationsCRS : public BroydenEquations
-    {
-    public:
-      BroydenEquationsCRS(ThermalModelEVCrossterms *model) : BroydenEquations(), m_THM(model) { m_N = model->Densities().size(); }
-      std::vector<double> Equations(const std::vector<double> &x);
-    private:
-      ThermalModelEVCrossterms *m_THM;
-    };
-
-    class BroydenEquationsCRSDEV : public BroydenEquations
-    {
-    public:
-      BroydenEquationsCRSDEV(ThermalModelEVCrossterms *model) : BroydenEquations(), m_THM(model) { m_N = 1; }
-      std::vector<double> Equations(const std::vector<double> &x);
-    private:
-      ThermalModelEVCrossterms *m_THM;
-    };
-
-    class BroydenJacobianCRS : public BroydenJacobian
-    {
-    public:
-      BroydenJacobianCRS(ThermalModelEVCrossterms *model) : BroydenJacobian(), m_THM(model) { }
-      std::vector<double> Jacobian(const std::vector<double> &x);
-    private:
-      ThermalModelEVCrossterms *m_THM;
-    };
-
-    class BroydenSolutionCriteriumCRS : public Broyden::BroydenSolutionCriterium
-    {
-    public:
-      BroydenSolutionCriteriumCRS(ThermalModelEVCrossterms *model, double relative_error = Broyden::TOL) : Broyden::BroydenSolutionCriterium(relative_error), m_THM(model) { }
-      virtual bool IsSolved(const std::vector<double>& x, const std::vector<double>& f, const std::vector<double>& xdelta = std::vector<double>()) const;
-    protected:
-      ThermalModelEVCrossterms *m_THM;
-    };
+    const std::vector< std::vector<int> >& EVComponentIndices() const { return VDWComponentIndices(); }
   };
 
 } // namespace thermalfist

@@ -336,12 +336,16 @@ namespace thermalfist {
   {
     for (int ipart = 0; ipart < m_EffectiveCharges.size(); ++ipart) {
       ThermalParticle& part = m_model->TPS()->Particle(ipart);
+      part.CalculateAndSetDynamicalThreshold();
       if (part.ZeroWidthEnforced() || part.Statistics() != -1)
         continue;
 
       double totmu = 0.;
+      int nonzerocharges = 0;
       for (int ifeed = 0; ifeed < m_EffectiveCharges[ipart].size(); ++ifeed) {
         totmu += m_EffectiveCharges[ipart][ifeed] * m_model->TPS()->Particle(m_StableMapTo[ifeed]).Mass();
+        if (m_EffectiveCharges[ipart][ifeed] != 0.0)
+          nonzerocharges++;
       }
 
       if (totmu > part.DecayThresholdMassDynamical()) {

@@ -7,6 +7,7 @@
  */
 #include "HRGEventGenerator/CylindricalBlastWaveEventGenerator.h"
 
+#include <iostream>
 #include <algorithm>
 
 #include "HRGBase/xMath.h"
@@ -15,21 +16,22 @@
 #include "HRGEV/ExcludedVolumeModel.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 
+using namespace std;
+
 namespace thermalfist {
 
-  //CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator() {
-  //  m_THM = NULL;
-  //}
-
   CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double betas, double etamax, double npow, double Rperp) : 
+    EventGeneratorBase(),
     m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(Rperp)
   {
     SetConfiguration(TPS, config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
-  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double betas, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(6.5) {
+  CylindricalBlastWaveEventGenerator::CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double betas, double etamax, double npow, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) :
+    EventGeneratorBase(),
+    m_T(T), m_BetaS(betas), m_EtaMax(etamax), m_n(npow), m_Rperp(6.5) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)
@@ -67,7 +69,7 @@ namespace thermalfist {
 
     SetConfiguration(THMEVVDW->TPS(), config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetParameters(double T, double betas, double etamax, double npow) {
@@ -75,15 +77,17 @@ namespace thermalfist {
     m_BetaS = betas;
     m_EtaMax = etamax;
     m_n = npow;
+    m_ParametersSet = false;
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetMeanBetaT(double betaT)
   {
     m_BetaS = (2. + m_n) / 2. * betaT;
+    m_ParametersSet = false;
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CylindricalBlastWaveEventGenerator::SetMomentumGenerators()
@@ -107,6 +111,73 @@ namespace thermalfist {
           m_BWGens.push_back(new RandomGenerators::ThermalBreitWignerGenerator(&m_THM->TPS()->Particle(i), T, Mu));
       }
     }
+  }
+
+  void CylindricalBlastWaveEventGenerator::RecalculateTotalConservedNumbers()
+  {
+    m_THM->SetTemperature(m_Config.CFOParameters.T);
+    m_THM->SetBaryonChemicalPotential(m_Config.CFOParameters.muB);
+    m_THM->SetElectricChemicalPotential(m_Config.CFOParameters.muQ);
+    m_THM->SetStrangenessChemicalPotential(m_Config.CFOParameters.muS);
+
+    if (m_Config.CFOParameters.gammaq != 1.0)
+      m_THM->SetGammaq(m_Config.CFOParameters.gammaq);
+
+    if (m_Config.CFOParameters.gammaS != 1.0)
+      m_THM->SetGammaS(m_Config.CFOParameters.gammaS);
+
+    if (m_Config.CFOParameters.gammaC != 1.0)
+      m_THM->SetGammaC(m_Config.CFOParameters.gammaC);
+
+    double Veff = m_Config.CFOParameters.V;
+
+    m_THM->CalculatePrimordialDensities();
+    double totB = m_THM->BaryonDensity() * Veff;
+    double totQ = m_THM->ElectricChargeDensity() * Veff;
+    double totS = m_THM->StrangenessDensity() * Veff;
+    double totC = m_THM->CharmDensity() * Veff;
+
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
+      cout << endl;
+      cout << "Integrated values of conserved charges:" << endl;
+      cout << "B = " << totB << endl;
+      cout << "Q = " << totQ << endl;
+      cout << "S = " << totS << endl;
+      cout << "C = " << totC << endl;
+
+      double Vcorr = 1.;
+      if (m_Config.CanonicalB) {
+
+        if (abs(totB) > 1.e-6) {
+          Vcorr = round(totB) / totB;
+          Veff *= Vcorr;
+          cout << "Volume rescaling factor Vcorr = " << Vcorr << endl;
+          cout << "B: " << totB << " -> " << round(totB) << endl;
+        }
+
+        m_Config.B = round(totB);
+      }
+
+      if (m_Config.CanonicalQ) {
+        cout << "Q: " << totQ * Vcorr << " -> " << round(totQ * Vcorr) << endl;
+        m_Config.Q = round(totQ * Vcorr);
+      }
+
+      if (m_Config.CanonicalS && m_Config.S != 0) {
+        cout << "S: " << totS * Vcorr << " -> " << round(totS * Vcorr) << endl;
+        m_Config.S = round(totS * Vcorr);
+      }
+
+      if (m_Config.CanonicalC && m_Config.C != 0) {
+        cout << "C: " << totC * Vcorr << " -> " << round(totC * Vcorr) << endl;
+        m_Config.C = round(totC * Vcorr);
+      }
+    }
+
+    m_THM->SetVolume(Veff);
+    m_THM->SetCanonicalVolume(Veff);
+    if (m_Config.fEnsemble != EventGeneratorConfiguration::GCE)
+      PrepareMultinomials();
   }
 
   double CylindricalBlastWaveEventGenerator::GetVeffIntegral() const

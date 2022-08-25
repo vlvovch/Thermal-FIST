@@ -57,22 +57,53 @@ namespace thermalfist {
       return 0.;
     }
 
-
-
-
     SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz) {
+      return LorentzBoostMomentaAndCoordinates(part, vx, vy, vz);
+    }
+
+    SimpleParticle LorentzBoostMomentumOnly(const SimpleParticle& part, double vx, double vy, double vz)
+    {
       SimpleParticle ret = part;
       double v2 = vx * vx + vy * vy + vz * vz;
       if (v2 == 0.0)
         return part;
       double gamma = 1. / sqrt(1. - v2);
       ret.p0 = gamma * part.p0 - gamma * (vx * part.px + vy * part.py + vz * part.pz);
-      ret.px = -gamma * vx * part.p0 + (1. + (gamma - 1.)*vx*vx / v2) * part.px +
-        (gamma - 1.)*vx*vy / v2 * part.py + (gamma - 1.)*vx*vz / v2 * part.pz;
-      ret.py = -gamma * vy * part.p0 + (1. + (gamma - 1.)*vy*vy / v2) * part.py +
-        (gamma - 1.)*vy*vx / v2 * part.px + (gamma - 1.)*vy*vz / v2 * part.pz;
-      ret.pz = -gamma * vz * part.p0 + (1. + (gamma - 1.)*vz*vz / v2) * part.pz +
-        (gamma - 1.)*vz*vx / v2 * part.px + (gamma - 1.)*vz*vy / v2 * part.py;
+      ret.px = -gamma * vx * part.p0 + (1. + (gamma - 1.) * vx * vx / v2) * part.px +
+        (gamma - 1.) * vx * vy / v2 * part.py + (gamma - 1.) * vx * vz / v2 * part.pz;
+      ret.py = -gamma * vy * part.p0 + (1. + (gamma - 1.) * vy * vy / v2) * part.py +
+        (gamma - 1.) * vy * vx / v2 * part.px + (gamma - 1.) * vy * vz / v2 * part.pz;
+      ret.pz = -gamma * vz * part.p0 + (1. + (gamma - 1.) * vz * vz / v2) * part.pz +
+        (gamma - 1.) * vz * vx / v2 * part.px + (gamma - 1.) * vz * vy / v2 * part.py;
+
+
+      return ret;
+    }
+
+    SimpleParticle LorentzBoostMomentaAndCoordinates(const SimpleParticle& part, double vx, double vy, double vz)
+    {
+      SimpleParticle ret = part;
+      double v2 = vx * vx + vy * vy + vz * vz;
+      if (v2 == 0.0)
+        return part;
+      double gamma = 1. / sqrt(1. - v2);
+      ret.p0 = gamma * part.p0 - gamma * (vx * part.px + vy * part.py + vz * part.pz);
+      ret.px = -gamma * vx * part.p0 + (1. + (gamma - 1.) * vx * vx / v2) * part.px +
+        (gamma - 1.) * vx * vy / v2 * part.py + (gamma - 1.) * vx * vz / v2 * part.pz;
+      ret.py = -gamma * vy * part.p0 + (1. + (gamma - 1.) * vy * vy / v2) * part.py +
+        (gamma - 1.) * vy * vx / v2 * part.px + (gamma - 1.) * vy * vz / v2 * part.pz;
+      ret.pz = -gamma * vz * part.p0 + (1. + (gamma - 1.) * vz * vz / v2) * part.pz +
+        (gamma - 1.) * vz * vx / v2 * part.px + (gamma - 1.) * vz * vy / v2 * part.py;
+
+      ret.r0 = gamma * part.r0 - gamma * (vx * part.rx + vy * part.ry + vz * part.rz);
+      ret.rx = -gamma * vx * part.r0 + (1. + (gamma - 1.) * vx * vx / v2) * part.rx +
+        (gamma - 1.) * vx * vy / v2 * part.ry + (gamma - 1.) * vx * vz / v2 * part.rz;
+      ret.ry = -gamma * vy * part.r0 + (1. + (gamma - 1.) * vy * vy / v2) * part.ry +
+        (gamma - 1.) * vy * vx / v2 * part.rx + (gamma - 1.) * vy * vz / v2 * part.rz;
+      ret.rz = -gamma * vz * part.r0 + (1. + (gamma - 1.) * vz * vz / v2) * part.rz +
+        (gamma - 1.) * vz * vx / v2 * part.rx + (gamma - 1.) * vz * vy / v2 * part.ry;
+
+
       return ret;
     }
 
@@ -89,7 +120,8 @@ namespace thermalfist {
       double vx = Mother.px / Mother.p0;
       double vy = Mother.py / Mother.p0;
       double vz = Mother.pz / Mother.p0;
-      SimpleParticle Mo = LorentzBoost(Mother, vx, vy, vz);
+      //SimpleParticle Mo = LorentzBoost(Mother, vx, vy, vz);
+      SimpleParticle Mo = LorentzBoostMomentumOnly(Mother, vx, vy, vz);
       double ten1 = (Mo.m*Mo.m - m2 * m2 + m1 * m1) / 2. / Mo.m;
       double tp = sqrt(ten1*ten1 - m1 * m1);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -106,8 +138,10 @@ namespace thermalfist {
 
       double ten2 = ret[1].p0;
 
-      ret[0] = LorentzBoost(ret[0], -vx, -vy, -vz);
-      ret[1] = LorentzBoost(ret[1], -vx, -vy, -vz);
+      //ret[0] = LorentzBoost(ret[0], -vx, -vy, -vz);
+      //ret[1] = LorentzBoost(ret[1], -vx, -vy, -vz);
+      ret[0] = LorentzBoostMomentumOnly(ret[0], -vx, -vy, -vz);
+      ret[1] = LorentzBoostMomentumOnly(ret[1], -vx, -vy, -vz);
 
       ret[0].MotherPDGID = Mother.PDGID;
       ret[1].MotherPDGID = Mother.PDGID;
@@ -204,6 +238,33 @@ namespace thermalfist {
         std::swap(masses[j], masses[i]);
         std::swap(pdgs[j], pdgs[i]);
       }
+    }
+
+    double ParticleDistanceSquared(const SimpleParticle& part1, const SimpleParticle& part2)
+    {
+      double totP0 = part1.p0 + part2.p0;
+      double totPx = part1.px + part2.px;
+      double totPy = part1.py + part2.py;
+      double totPz = part1.pz + part2.pz;
+
+      double vx = totPx / totP0;
+      double vy = totPy / totP0;
+      double vz = totPz / totP0;
+
+      SimpleParticle npart1 = LorentzBoostMomentaAndCoordinates(part1, vx, vy, vz);
+      SimpleParticle npart2 = LorentzBoostMomentaAndCoordinates(part2, vx, vy, vz);
+
+      if (npart1.r0 < npart2.r0)
+        std::swap(npart1, npart2);
+
+      npart2.rx += npart2.px / npart2.p0 * (npart1.r0 - npart2.r0);
+      npart2.ry += npart2.py / npart2.p0 * (npart1.r0 - npart2.r0);
+      npart2.rz += npart2.pz / npart2.p0 * (npart1.r0 - npart2.r0);
+      npart2.r0  = npart1.r0;
+
+      return (npart1.rx - npart2.rx) * (npart1.rx - npart2.rx)
+        + (npart1.ry - npart2.ry) * (npart1.ry - npart2.ry)
+        + (npart1.rz - npart2.rz) * (npart1.rz - npart2.rz);
     }
 
   }

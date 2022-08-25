@@ -18,7 +18,7 @@ namespace thermalfist {
     double p0;               ///< Energy (in GeV)
     long long PDGID;         ///< PDG code
     long long MotherPDGID;   ///< PDG code of a mother particle, if applicable
-    int epoch;               ///< 0 - primary particle, 1 - after decay of primary particles, 2 - after a casacde of two decays and so on...
+    int epoch;               ///< 0 - primary particle, 1 - after decay of primary particles, 2 - after a cascade of two decays and so on...
     bool processed;          ///< Used in event generator
 
     double r0, rx, ry, rz;   ///< Space-time coordinates

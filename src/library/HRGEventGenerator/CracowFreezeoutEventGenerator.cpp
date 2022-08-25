@@ -16,17 +16,18 @@
 
 namespace thermalfist {
 
-  CracowFreezeoutEventGenerator::CracowFreezeoutEventGenerator()
+  CracowFreezeoutEventGenerator::CracowFreezeoutEventGenerator() : EventGeneratorBase(),
+    m_T(0.150), m_RoverTauH(1.0), m_EtaMax(0.5)
   {
-    m_THM = NULL;
   }
 
   CracowFreezeoutEventGenerator::CracowFreezeoutEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, double T, double RoverTauH, double etamax) :
+    EventGeneratorBase(),
     m_T(T), m_RoverTauH(RoverTauH), m_EtaMax(etamax)
   {
     SetConfiguration(TPS, config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
   void CracowFreezeoutEventGenerator::SetParameters(double T, double RoverTauH, double etamax)
@@ -35,7 +36,8 @@ namespace thermalfist {
     m_RoverTauH = RoverTauH;
     m_EtaMax = etamax;
 
-    SetMomentumGenerators();
+    m_ParametersSet = false;
+    //SetMomentumGenerators();
   }
 
   void CracowFreezeoutEventGenerator::SetMomentumGenerators()

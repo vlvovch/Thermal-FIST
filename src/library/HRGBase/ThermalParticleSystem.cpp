@@ -616,6 +616,10 @@ namespace thermalfist {
         ThermalParticle part_candidate = ThermalParticle(static_cast<bool>(stable), name, pdgid, static_cast<double>(spin), stat, mass, str, bary, chg, abss, width, threshold, charm, absc);
 
         //if (mcut >= 0. && mass > mcut) {
+        if (m_PDGtoID.count(pdgid) != 0) {
+          printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
+          exit(1);
+        }
         if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0) {
           fin.getline(tmpc, 500);
           tmp = string(tmpc);
@@ -692,6 +696,11 @@ namespace thermalfist {
           ThermalParticle part_candidate = ThermalParticle((bool)stable, name, pdgid, degeneracy, stat, mass, str, bary, chg, abss, width, threshold, charm, absc);
 
           //if (mcut >= 0. && mass > mcut)
+          if (m_PDGtoID.count(pdgid) != 0) {
+            printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
+            exit(1);
+          }
+
           if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0)
             continue;
 

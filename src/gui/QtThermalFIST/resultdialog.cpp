@@ -205,7 +205,8 @@ QString ResultDialog::GetResults() {
 
   sprintf(cc, "%-25s = ", "Pressure");
   ret += QString(cc);
-  ret += QString::number(model->CalculatePressure()*1.e3) + " MeV/fm^3\r\n";
+  ret += QString::number(model->CalculatePressure()*1.e3, 'g', 15) + " MeV/fm^3\r\n";
+  //ret += QString::number(model->CalculatePressure() * 1.e3) + " MeV/fm^3\r\n";
 
   sprintf(cc, "%-25s = ", "Entropy density");
   ret += QString(cc);

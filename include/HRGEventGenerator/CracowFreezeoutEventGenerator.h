@@ -46,7 +46,7 @@ namespace thermalfist {
 
     /// Sets up the random generators of particle momenta
     /// and resonances masses
-    void SetMomentumGenerators();
+    virtual void SetMomentumGenerators();
 
     double GetTkin() const { return m_T; }
     double GetRoverTauH() const { return m_RoverTauH; }

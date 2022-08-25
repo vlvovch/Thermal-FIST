@@ -84,6 +84,15 @@ namespace thermalfist {
     /// PCE chemical potentials
     std::vector<double> fPCEChems;
 
+    /// Whether to use rejection sampling instead of importance sampling for the EV multiplicity sampling
+    bool fUseEVRejectionMultiplicity;
+
+    /// Whether to use rejection sampling in the coordinate space to model EV effects
+    bool fUseEVRejectionCoordinates;
+
+    /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
+    bool fUseEVUseSPRApproximation;
+
     /// Default configuration
     EventGeneratorConfiguration();
   };
@@ -93,35 +102,16 @@ namespace thermalfist {
   {
   public:
     /// Constructor
-    EventGeneratorBase() { m_THM = NULL; fCEAccepted = fCETotal = 0; }
-
+    EventGeneratorBase();
+    
     /// Destructor
     virtual ~EventGeneratorBase();
 
+    /// Sets the momentum generators for all particles. Overloaded
+    virtual void SetMomentumGenerators() {}
+
     /// Clears the momentum generators for all particles
     void ClearMomentumGenerators();
-
-    /// Sets the projectile laboratory kinetic energy per nucleon of the collision
-    void SetCollisionKineticEnergy(double ekin) {
-      SetCollisionCMSEnergy(sqrt(2.*xMath::mnucleon()*(ekin + 2. * xMath::mnucleon())));
-    }
-
-    /// Sets the projectile laboratory energy per nucleon of the collision
-    void SetCollisionLabEnergy(double elab) {
-      SetCollisionCMSEnergy(sqrt(2.*xMath::mnucleon()*(elab + xMath::mnucleon())));
-    }
-
-    /// Sets the center of mass energy \f$ \sqrt{s_{_{NN}}} \f$ of the collision
-    void SetCollisionCMSEnergy(double ssqrt) {
-      m_ssqrt = ssqrt;
-      m_ekin = m_ssqrt * m_ssqrt / 2. / xMath::mnucleon() - 2. * xMath::mnucleon();
-      m_elab = xMath::mnucleon() + m_ekin;
-      double plab = sqrt(m_elab*m_elab - xMath::mnucleon() * xMath::mnucleon());
-      m_ycm = 0.5 * log((m_elab + xMath::mnucleon() + plab) / (m_elab + xMath::mnucleon() - plab));
-    }
-
-    /// The center-of-mass longitudinal rapidity relative to the lab frame.
-    double getYcm() const { return m_ycm; }
 
     /**
      * \brief Samples the primordial yields for each particle species.
@@ -131,6 +121,24 @@ namespace thermalfist {
      *                                          The second element is the weight.
      */
     virtual std::pair< std::vector<int>, double > SampleYields() const;
+
+    /**
+     * \brief Samples the position and momentum of a particle species i.
+     *
+     * \param  id              Id (0-indexed) of the particle species to be sampled
+     * \return SimpleParticle  The sampled particle.
+     */
+    virtual SimpleParticle SampleParticle(int id) const;
+
+    /**
+     * \brief Samples the position and momentum of a particle species with given pdg code.
+     *
+     *        Calls SampleParticle() if pdg code is valid. Throws an errors and quits otherwise.
+     *
+     * \param  ppdgid          PDG code of the particle species to be sampled
+     * \return SimpleParticle  The sampled particle.
+     */
+    virtual SimpleParticle SampleParticleByPdg(long long pdgid) const;
 
     /**
      * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
@@ -143,6 +151,22 @@ namespace thermalfist {
      * \return SimpleEvent  The generated event containing the primordial particles.
      */
     virtual SimpleEvent SampleMomenta(const std::vector<int>& yields) const;
+
+    /**
+     * \brief Samples the momenta of the particles and returns the sampled list of particles as an event.
+     *
+     * The sampled SimpleEvent is assigned the weight of unity.
+     * This weight should be overriden if importance sampling is used.
+     *
+     * Same as SampleMomenta() but randomly shuffles the order particles +
+     * implements baryon hard-core radius
+     *
+     *
+     * \param  yields       Vector of yields for each particle species for the given event.
+     *                      Make sure the indices match the particle list pointed to by \ref m_THM.
+     * \return SimpleEvent  The generated event containing the primordial particles.
+     */
+    virtual SimpleEvent SampleMomentaWithShuffle(const std::vector<int>& yields) const;
 
     /**
      * \brief Generates a single event.
@@ -199,7 +223,13 @@ namespace thermalfist {
     double ComputeWeight(const std::vector<int>& totals) const;
     double ComputeWeightNew(const std::vector<int>& totals) const;
 
+    void SetEVUseSPR(bool EVfastmode)    { m_Config.fUseEVUseSPRApproximation = EVfastmode; }
+    bool EVUseSPR() const                { return m_Config.fUseEVUseSPRApproximation; }
+
     const EventGeneratorConfiguration& GetConfiguration() const { return m_Config; }
+
+    /// Sets the hypersurface parameters
+    virtual void CheckSetParameters() { if (!m_ParametersSet) SetParameters(); }
 
   protected:
     /**
@@ -281,17 +311,25 @@ namespace thermalfist {
     /// Used if finite resonance widths are considered
     std::vector<RandomGenerators::ThermalBreitWignerGenerator*>  m_BWGens;
 
+    bool m_ParametersSet;
+    /// Sets up the event generator ready for production
+    virtual void SetParameters();
+
+    std::vector<std::vector<double>> ComputeEVRadii() const;
+
+    bool CheckEVOverlap(const std::vector<SimpleParticle>& evt, 
+      const SimpleParticle& cand,
+      const std::vector<int>& ids = std::vector<int>(),
+      const std::vector<std::vector<double>>& radii = std::vector<std::vector<double>>()
+      ) const;
+
   private:
 
     /// Currently not used
     //static SimpleEvent PerformDecaysAlternativeWay(const SimpleEvent& evtin, ThermalParticleSystem* TPS);
 
-    double m_ekin, m_ycm, m_ssqrt, m_elab;
-    // Acceptance discontinued
-    //std::vector<Acceptance::AcceptanceFunction> m_acc;
-
     //@{
-    /// Indices and multinomial probabilities for an efficient CE sampling
+    /// Indices and multinomial probabilities for efficient CE sampling
     std::vector< std::pair<double, int> > m_Baryons;
     std::vector< std::pair<double, int> > m_AntiBaryons;
     std::vector< std::pair<double, int> > m_StrangeMesons;
@@ -320,6 +358,8 @@ namespace thermalfist {
     double m_MeanCM, m_MeanACM; 
     double m_MeanCHRMM, m_MeanACHRMM;
     double m_MeanCHRM, m_MeanACHRM;
+
+    std::vector<std::vector<double>> m_Radii;
 
     static double m_LastWeight;
     static double m_LastLogWeight;

@@ -49,6 +49,7 @@ source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})
 # Excluded-volume part of the library
 set(SRCS_HRGEV
 HRGEV/ThermalModelEVCrossterms.cpp
+HRGEV/ThermalModelEVCrosstermsLegacy.cpp
 HRGEV/ThermalModelEVDiagonal.cpp
 HRGEV/ExcludedVolumeHelper.cpp
 HRGEV/ThermalModelEVCanonicalStrangeness.cpp
@@ -58,6 +59,7 @@ source_group("HRGEV\\Source Files" FILES ${SRCS_HRGEV})
 
 set(HEADERS_HRGEV
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrossterms.h
+${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrosstermsLegacy.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVDiagonal.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeModel.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeHelper.h

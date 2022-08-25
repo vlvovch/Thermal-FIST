@@ -16,19 +16,24 @@
 
 namespace thermalfist {
 
-  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator() {
-    m_THM = NULL;
+  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator() : 
+    EventGeneratorBase() 
+  {
   }
 
-  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double beta) : m_T(T), m_Beta(beta)
+  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalParticleSystem * TPS, const EventGeneratorConfiguration & config, double T, double beta) : 
+    EventGeneratorBase(),
+    m_T(T), m_Beta(beta)
   {
     SetConfiguration(TPS, config);
 
-    SetMomentumGenerators();
+    //SetMomentumGenerators();
   }
 
 
-  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) : m_T(T), m_Beta(beta) {
+  SphericalBlastWaveEventGenerator::SphericalBlastWaveEventGenerator(ThermalModelBase *THM, double T, double beta, bool /*onlyStable*/, EventGeneratorConfiguration::ModelType EV, ThermalModelBase *THMEVVDW) : 
+    EventGeneratorBase(),
+    m_T(T), m_Beta(beta) {
     EventGeneratorConfiguration::ModelType modeltype = EV;
     EventGeneratorConfiguration::Ensemble ensemble = EventGeneratorConfiguration::GCE;
     if (THM->Ensemble() == ThermalModelBase::CE)
@@ -72,19 +77,23 @@ namespace thermalfist {
   void SphericalBlastWaveEventGenerator::SetBlastWaveParameters(double T, double beta) {
     m_T = T;
     m_Beta = beta;
-
-    SetMomentumGenerators();
+    m_ParametersSet = false;
+    //SetMomentumGenerators();
   }
 
   void SphericalBlastWaveEventGenerator::SetMomentumGenerators()
   {
     ClearMomentumGenerators();
     m_BWGens.resize(0);
+
+    double gamma = 1. / sqrt(1 - GetBeta() * GetBeta());
+    double R = pow(3. * m_THM->Volume() / (4. * xMath::Pi()) / gamma, 1. / 3.);
+
     if (m_THM != NULL) {
       for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
         const ThermalParticle& part = m_THM->TPS()->Particles()[i];
         //m_MomentumGens.push_back(new RandomGenerators::SiemensRasmussenMomentumGeneratorGeneralized(m_T, m_Beta, m_THM->TPS()->Particles()[i].Mass()));
-        m_MomentumGens.push_back(new RandomGenerators::SiemensRasmussenMomentumGeneratorGeneralized(m_T, m_Beta, part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
+        m_MomentumGens.push_back(new RandomGenerators::SiemensRasmussenMomentumGeneratorGeneralized(m_T, m_Beta, R, part.Mass(), part.Statistics(), m_THM->FullIdealChemicalPotential(i)));
 
         double T = m_THM->Parameters().T;
         double Mu = m_THM->FullIdealChemicalPotential(i);
@@ -95,5 +104,11 @@ namespace thermalfist {
       }
     }
   }
+
+  //void SphericalBlastWaveEventGenerator::SetParameters()
+  //{
+  //  SetMomentumGenerators();
+  //  m_ParametersSet = true;
+  //}
 
 } // namespace thermalfist

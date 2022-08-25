@@ -43,7 +43,14 @@ namespace thermalfist {
     
     /// \deprecated
     /// \brief Old constructor. Included for backward compatibility.
-    CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, double T = 0.120, double betas = 0.5, double etamax = 0.5, double npow = 1., bool onlyStable = false, EventGeneratorConfiguration::ModelType EV = EventGeneratorConfiguration::PointParticle, ThermalModelBase *THMEVVDW = NULL);
+    CylindricalBlastWaveEventGenerator(ThermalModelBase *THM, 
+      double T = 0.120, 
+      double betas = 0.5, 
+      double etamax = 0.5, 
+      double npow = 1., 
+      bool onlyStable = false, 
+      EventGeneratorConfiguration::ModelType EV = EventGeneratorConfiguration::PointParticle, 
+      ThermalModelBase *THMEVVDW = NULL);
     
     ~CylindricalBlastWaveEventGenerator() { }
 
@@ -61,7 +68,11 @@ namespace thermalfist {
 
     /// Sets up the random generators of particle momenta
     /// and resonances masses
-    void SetMomentumGenerators();
+    virtual void SetMomentumGenerators();
+
+    void RecalculateTotalConservedNumbers();
+
+    //virtual void SetParameters();
 
     double GetTkin() const { return m_T; }
     double GetBetaSurface() const { return m_BetaS; }

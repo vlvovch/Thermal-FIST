@@ -182,7 +182,7 @@ namespace thermalfist {
        * \param beta Transverse flow velocity
        * \param mass Particle mass (in GeV)
        */
-      SiemensRasmussenMomentumGenerator(double T, double beta, double mass) :m_T(T), m_Beta(beta), m_Mass(mass) {
+      SiemensRasmussenMomentumGenerator(double T, double beta, double R, double mass) :m_T(T), m_Beta(beta), m_R(R), m_Mass(mass) {
         m_Gamma = 1. / sqrt(1. - m_Beta * m_Beta);
         FixParameters();
       }
@@ -196,15 +196,17 @@ namespace thermalfist {
        * \param beta Transverse flow velocity
        * \param mass Particle mass (in GeV)
        */
-      void SetParameters(double T, double beta, double mass) {
+      void SetParameters(double T, double beta, double R, double mass) {
         m_T = T;
         m_Beta = beta;
+        m_R = R;
         m_Mass = mass;
         m_Gamma = 1. / sqrt(1. - m_Beta * m_Beta);
         FixParameters();
       }
 
       double GetBeta() const { return m_Beta; }
+      double GetR() const { return m_R; }
       double GetMass() const { return m_Mass; }
 
       // Override functions begin
@@ -238,6 +240,7 @@ namespace thermalfist {
 
       double m_T;
       double m_Beta;
+      double m_R;
       double m_Mass;
       double m_Gamma;
       double m_Norm;
@@ -248,7 +251,7 @@ namespace thermalfist {
     /**
      * \brief A generalized class for generating the momentum of a particle
      *        in accordance with the Siemens-Rasmussen spherically symmetric blast-wave model
-     *        which is able to incoporate Fermi-Dirac and Bose-Einstein statistics.
+     *        which is able to incorporate Fermi-Dirac and Bose-Einstein statistics.
      *
      * Used in the spherically symmetric blast-wave event generator.
      *
@@ -268,8 +271,8 @@ namespace thermalfist {
        * \param statistics Statistics (0: Maxwell-Boltzmann, +1: Fermi-Dirac, -1: Bose-Einstein)
        * \param mu   The chemical potential
        */
-      SiemensRasmussenMomentumGeneratorGeneralized(double T, double beta, double mass, int statistics = 0, double mu = 0) :
-        SiemensRasmussenMomentumGenerator(T, beta, mass),
+      SiemensRasmussenMomentumGeneratorGeneralized(double T, double beta, double R, double mass, int statistics = 0, double mu = 0) :
+        SiemensRasmussenMomentumGenerator(T, beta, R, mass),
         m_Generator(mass, statistics, T, mu)
       {
 

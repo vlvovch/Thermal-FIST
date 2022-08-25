@@ -163,9 +163,10 @@ class EventGeneratorTab : public QWidget
 
 
     QLabel *labelmuS, *labelmuC, *labelgammaS, *labelgammaC;
-    QLabel *labelBetat;
+    QLabel *labelBeta, *labelBetat;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
     QDoubleSpinBox *spinVolumeRSC;
+    QLabel *labelVolumeVal, *labelVolumeSCVal;
     QLabel *labelB, *labelQ, *labelS, *labelC;
     QSpinBox *spinB, *spinS, *spinQ, *spinC;
 
@@ -222,6 +223,8 @@ class EventGeneratorTab : public QWidget
     std::vector<double> fZvErr;
 
     BinningDialog::BinningConfig binConfig;
+
+    double prevBeta, prevRmax;
 public:
     EventGeneratorTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EventGeneratorTab();

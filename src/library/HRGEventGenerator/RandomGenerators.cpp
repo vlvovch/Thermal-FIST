@@ -371,7 +371,7 @@ namespace thermalfist {
       }
 
       if (betar != 0.0 || eta != 0.0)
-          part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+          part = ParticleDecaysMC::LorentzBoostMomentumOnly(part, -vx, -vy, -vz);
 
 
       std::vector<double> ret(3, 0.);
@@ -842,18 +842,18 @@ namespace thermalfist {
       part.p0 = sqrt(mass * mass + tp * tp);
 
       if (GetBeta() != 0.0)
-        part = ParticleDecaysMC::LorentzBoost(part, -vx, -vy, -vz);
+        part = ParticleDecaysMC::LorentzBoostMomentumOnly(part, -vx, -vy, -vz);
 
       std::vector<double> ret(7);
       ret[0] = part.px;
       ret[1] = part.py;
       ret[2] = part.pz;
 
-      // Assume unit sphere at t = 0
+      // Assume a sphere at t = 0
       ret[3] = 0.;
-      ret[4] = sinth * cos(ph);
-      ret[5] = sinth * sin(ph);
-      ret[6] = costh;
+      ret[4] = GetR() * sinth * cos(ph);
+      ret[5] = GetR() * sinth * sin(ph);
+      ret[6] = GetR() * costh;
 
       return ret;
     }
