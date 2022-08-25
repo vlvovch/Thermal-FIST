@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+
+## [Version 1.4] 
+
+Date: 2022-08-25
+
+Main new feature: Excluded volume effect in the Monte Carlo event generator
+
+## Enhancements
+- Hard-core repulsion in event generator (see [FIST sampler](https://github.com/vlvovch/fist-sampler))
+- Crossterms EV-HRG model is now implemented as partial case of QvdW-HRG model (for a = 0)
+- GUI: Blast-wave model: Option to set the value of parameter r_max (the maximim transverse radius)
+- GUI: Minor improvements for PCE-HRG model thermal fits
+
+## Bugfixes
+- GUI: Fix bug with the sign of strongly intensive quantity Delta
+- GUI: Options for different treatments of hard-core repulsion in event generator
+
 ## [Version 1.3.4] 
 
 Date: 2022-05-05
