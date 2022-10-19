@@ -423,6 +423,15 @@ namespace thermalfist {
     double ChemicalPotential(int i) const;
 
     /**
+     * \brief Sets the chemical potential of  particle species i.
+     *
+     *
+     * \param i    0-based index of particle species
+     * \param chem value of the chemical potential
+     */
+    virtual void SetChemicalPotential(int i, double chem);
+
+    /**
      * \brief Chemical potential entering the ideal gas expressions of particle species i.
      *
      * Includes chemical non-equilibrium and EV/vdW effects

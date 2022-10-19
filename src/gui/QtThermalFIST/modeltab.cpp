@@ -123,14 +123,14 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->setAlignment(Qt::AlignLeft);
     QLabel *labelTemperature = new QLabel(tr("T (MeV):"));
     spinTemperature = new QDoubleSpinBox();
-    spinTemperature->setMinimum(1.);
+    spinTemperature->setMinimum(0.);
     spinTemperature->setMaximum(10000.);
     spinTemperature->setValue(model->Parameters().T * 1e3);
     spinTemperature->setToolTip(tr("Temperature"));
     QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
-    spinmuB->setMinimum(-1000.);
-    spinmuB->setMaximum(2000.);
+    spinmuB->setMinimum(-10000.);
+    spinmuB->setMaximum(10000.);
     spinmuB->setValue(model->Parameters().muB * 1e3);
     spinmuB->setToolTip(tr("Baryochemical potential"));
     QLabel *labelgammaq = new QLabel(tr("γ<sub>q</sub>:"));

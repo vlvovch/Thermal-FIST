@@ -374,6 +374,15 @@ namespace thermalfist {
     return m_Chem[i];
   }
 
+  void ThermalModelBase::SetChemicalPotential(int i, double chem)
+  {
+    if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
+      printf("**ERROR** ThermalModelBase::SetChemicalPotential(int i): i is out of bounds!");
+      exit(1);
+    }
+    m_Chem[i] = chem;
+  }
+
   double ThermalModelBase::FullIdealChemicalPotential(int i) const
   {
     if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
@@ -1405,10 +1414,12 @@ namespace thermalfist {
       fACd = m_THM->CalculateAbsoluteCharmDensityModulo();
     }
 
-    vector<double> wprim;
-    wprim.resize(m_THM->Densities().size());
-    for (size_t i = 0; i < wprim.size(); ++i)
-      wprim[i] = m_THM->ParticleScaledVariance(i);
+    vector<double> chi2s;
+    chi2s.resize(m_THM->Densities().size());
+    for (size_t i = 0; i < chi2s.size(); ++i) {
+      chi2s[i] = m_THM->TPS()->Particle(i).chiDimensionfull(2, m_THM->Parameters(), m_THM->UseWidth(), m_THM->ChemicalPotential(i) + m_THM->MuShift(i))
+        * xMath::GeVtoifm3();
+    }
 
     int NNN = 0;
     if (m_THM->ConstrainMuQ()) NNN++;
@@ -1425,14 +1436,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).ElectricCharge() * chi2s[i];
 
         // Update: remove division by Q/B to allow for charge neutrality
         ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
@@ -1444,14 +1453,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         // Update: remove division by Q/B to allow for charge neutrality
         ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
@@ -1463,14 +1470,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).BaryonCharge() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         // Update: remove division by Q/B to allow for charge neutrality
         ret(i1, i2) = (d1 / fBd - fQd / fBd / fBd * d2);
@@ -1491,14 +1496,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness() * m_THM->TPS()->Particle(i).ElectricCharge() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).ElectricCharge() * chi2s[i];
 
         ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
 
@@ -1508,14 +1511,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
 
@@ -1525,14 +1526,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Strangeness()    * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Strangeness() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteStrangeness() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         ret(i1, i2) = d1 / fASd - fSd / fASd / fASd * d2;
 
@@ -1551,14 +1550,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuQ()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).ElectricCharge() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).ElectricCharge() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm() * m_THM->TPS()->Particle(i).ElectricCharge() *chi2s[i];
 
         ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
 
@@ -1568,14 +1565,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuS()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Strangeness() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm() * m_THM->TPS()->Particle(i).Strangeness() * chi2s[i];
 
         ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
 
@@ -1585,14 +1580,12 @@ namespace thermalfist {
 
       if (m_THM->ConstrainMuC()) {
         d1 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d1 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d1 += m_THM->TPS()->Particle(i).Charm() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         d2 = 0.;
-        for (size_t i = 0; i < wprim.size(); ++i)
-          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm()  * m_THM->TPS()->Particle(i).Charm() * m_THM->Densities()[i] * wprim[i];
-        d2 /= m_THM->Parameters().T;
+        for (size_t i = 0; i < chi2s.size(); ++i)
+          d2 += m_THM->TPS()->Particle(i).AbsoluteCharm() * m_THM->TPS()->Particle(i).Charm() * chi2s[i];
 
         ret(i1, i2) = d1 / fACd - fCd / fACd / fACd * d2;
 
@@ -1859,12 +1852,6 @@ namespace thermalfist {
       }
     }
 
-    vector<double> tfug(4, 0.);
-    tfug[0] = exp(m_THM->Parameters().muB / m_THM->Parameters().T);
-    tfug[1] = exp(m_THM->Parameters().muQ / m_THM->Parameters().T);
-    tfug[2] = exp(m_THM->Parameters().muS / m_THM->Parameters().T);
-    tfug[3] = exp(m_THM->Parameters().muC / m_THM->Parameters().T);
-
     m_THM->FillChemicalPotentials();
     m_THM->CalculatePrimordialDensities();
 
@@ -1892,22 +1879,23 @@ namespace thermalfist {
       }
     }
 
-    vector<double> wprim;
-    wprim.resize(m_THM->Densities().size());
-    for (size_t i = 0; i < wprim.size(); ++i) wprim[i] = m_THM->ParticleScaledVariance(i);
+    vector<double> chi2s;
+    chi2s.resize(m_THM->Densities().size());
+    for (size_t i = 0; i < chi2s.size(); ++i) {
+      chi2s[i] = m_THM->TPS()->Particle(i).chiDimensionfull(2, m_THM->Parameters(), m_THM->UseWidth(), m_THM->ChemicalPotential(i) + m_THM->MuShift(i))
+        * xMath::GeVtoifm3();
+    }
 
     vector< vector<double> > deriv(4, vector<double>(4)), derivabs(4, vector<double>(4));
     for (int i = 0; i < 4; ++i)
       for (int j = 0; j < 4; ++j) {
         deriv[i][j] = 0.;
-        for (size_t part = 0; part < wprim.size(); ++part)
-          deriv[i][j] += m_THM->TPS()->Particles()[part].GetCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * wprim[part];
-        deriv[i][j] /= m_THM->Parameters().T;
+        for (size_t part = 0; part < chi2s.size(); ++part)
+          deriv[i][j] += m_THM->TPS()->Particles()[part].GetCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * chi2s[part];
 
         derivabs[i][j] = 0.;
-        for (size_t part = 0; part < wprim.size(); ++part)
-          derivabs[i][j] += m_THM->TPS()->Particles()[part].GetAbsCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * m_THM->Densities()[part] * wprim[part];
-        derivabs[i][j] /= m_THM->Parameters().T;
+        for (size_t part = 0; part < chi2s.size(); ++part)
+          derivabs[i][j] += m_THM->TPS()->Particles()[part].GetAbsCharge(i) * m_THM->TPS()->Particles()[part].GetCharge(j) * chi2s[part];
       }
 
 

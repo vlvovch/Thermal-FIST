@@ -49,6 +49,8 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
             if (col==2) return model->TPS()->Particles()[RowToParticle[row]].Mass();
             if ((col==3 && model->TPS()->Particles()[RowToParticle[row]].IsStable()) ||
                 (col==4 && model->TPS()->Particles()[RowToParticle[row]].IsNeutral()!=0)) return "*";
+            if (col == 3 && !model->TPS()->Particles()[RowToParticle[row]].IsStable())
+              return QString("%1 decays").arg(model->TPS()->Particles()[RowToParticle[row]].Decays().size());
             if (col==5) {
                 if (model->TPS()->Particles()[RowToParticle[row]].BaryonCharge()>0) return "+" + QString::number(model->TPS()->Particles()[RowToParticle[row]].BaryonCharge());
                 else if (model->TPS()->Particles()[RowToParticle[row]].BaryonCharge()<0) return QString::number(model->TPS()->Particles()[RowToParticle[row]].BaryonCharge());

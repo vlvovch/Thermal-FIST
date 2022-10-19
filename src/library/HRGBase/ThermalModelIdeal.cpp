@@ -45,10 +45,13 @@ namespace thermalfist {
 
   void ThermalModelIdeal::CalculateTwoParticleCorrelations() {
     int NN = m_densities.size();
-    vector<double> tN(NN), tW(NN);
-    for (int i = 0; i < NN; ++i) tN[i] = m_densities[i];
+    vector<double> tN(NN);
+    for (int i = 0; i < NN; ++i) 
+      tN[i] = m_densities[i];
 
-    for (int i = 0; i < NN; ++i) tW[i] = ParticleScaledVariance(i);
+    vector<double> chi2s(NN);
+    for (int i = 0; i < NN; ++i) 
+      chi2s[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_Chem[i]);
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
@@ -57,8 +60,7 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
         m_PrimCorrel[i][j] = 0.;
-        if (i == j) m_PrimCorrel[i][j] += m_densities[i] * tW[i];
-        m_PrimCorrel[i][j] /= m_Parameters.T;
+        if (i == j) m_PrimCorrel[i][j] += m_densities[i] * chi2s[i];
       }
 
     for (int i = 0; i < NN; ++i) {

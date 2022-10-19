@@ -50,7 +50,8 @@ class MainWindow : public QMainWindow
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
 
-    QString cpath = "";
+    QString cpath  = "";
+    QString clists = "";
 
 public:
     MainWindow(QWidget *parent = 0);

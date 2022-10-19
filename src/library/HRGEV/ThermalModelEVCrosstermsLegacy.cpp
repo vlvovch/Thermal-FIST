@@ -489,9 +489,16 @@ namespace thermalfist {
 
   void ThermalModelEVCrosstermsLegacy::CalculateTwoParticleCorrelations() {
     int NN = m_densities.size();
-    vector<double> tN(NN), tW(NN);
+    vector<double> tN(NN);// , tW(NN);
     for (int i = 0; i < NN; ++i) tN[i] = DensityId(i);
-    for (int i = 0; i < NN; ++i) tW[i] = ScaledVarianceId(i);
+    //for (int i = 0; i < NN; ++i) tW[i] = ScaledVarianceId(i);
+    vector<double> chi2id(NN);
+    for (int i = 0; i < NN; ++i) {
+      double dMu = 0.;
+      for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) dMu += -m_Virial[i][j] * m_Ps[j];
+      chi2id[i] = m_densities[i] / tN[i] * m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_Chem[i] + dMu) * xMath::GeVtoifm3();
+    }
+
     MatrixXd densMatrix(NN, NN);
     VectorXd solVector(NN), xVector(NN), xVector2(NN);
 
@@ -545,7 +552,8 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       for (int j = i; j < NN; ++j) {
         for (int l = 0; l < NN; ++l)
-          xVector[l] = tN[l] / m_Parameters.T * tW[l] * coefs[l][i] * coefs[l][j];
+          //xVector[l] = tN[l] / m_Parameters.T * tW[l] * coefs[l][i] * coefs[l][j];
+          xVector[l] = chi2id[l] * coefs[l][i] * coefs[l][j];
         solVector = decomp.solve(xVector);
         if (1) {
           //if (decomp.info()==Eigen::Success) {

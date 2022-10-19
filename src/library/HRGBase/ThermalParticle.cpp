@@ -707,12 +707,22 @@ namespace thermalfist {
   }
 
 
+  double ThermalParticle::chiDimensionfull(int index, const ThermalModelParameters& params, bool useWidth, double mu) const
+  {
+    if (index == 0) return Density(params, IdealGasFunctions::Pressure, useWidth, mu) / pow(xMath::GeVtoifm(), 3);
+    if (index == 1) return Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu) / pow(xMath::GeVtoifm(), 3);
+    if (index == 2) return Density(params, IdealGasFunctions::chi2difull, useWidth, mu);
+    if (index == 3) return Density(params, IdealGasFunctions::chi3difull, useWidth, mu);
+    if (index == 4) return Density(params, IdealGasFunctions::chi4difull, useWidth, mu);
+    return 1.;
+  }
+
   double ThermalParticle::ScaledVariance(const ThermalModelParameters &params, bool useWidth, double mu) const {
     if (m_Degeneracy == 0.0) return 1.;
     if (m_Statistics == 0) return 1.;
     double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(2, params, useWidth, mu) / chi(1, params, useWidth, mu);
+    double ret = params.T * chiDimensionfull(2, params, useWidth, mu) / chiDimensionfull(1, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
@@ -723,7 +733,7 @@ namespace thermalfist {
     if (m_Statistics == 0) return 1.;
     double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(3, params, useWidth, mu) / chi(2, params, useWidth, mu);
+    double ret = params.T * chiDimensionfull(3, params, useWidth, mu) / chiDimensionfull(2, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
@@ -734,7 +744,7 @@ namespace thermalfist {
     if (m_Statistics == 0) return 1.;
     double dens = Density(params, IdealGasFunctions::ParticleDensity, useWidth, mu);
     if (dens == 0.) return 1.;
-    double ret = chi(4, params, useWidth, mu) / chi(2, params, useWidth, mu);
+    double ret = params.T * params.T * chiDimensionfull(4, params, useWidth, mu) / chiDimensionfull(2, params, useWidth, mu);
     if (ret != ret) ret = 1.;
     return ret;
   }
