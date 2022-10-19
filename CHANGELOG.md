@@ -228,6 +228,8 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
+[Version 1.4.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4...v1.4.1
+
 [Version 1.4]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.4...v1.4
 
 [Version 1.3.4]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.3...v1.3.4
