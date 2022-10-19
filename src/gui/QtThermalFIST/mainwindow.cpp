@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
   leList = new QLineEdit("");//QApplication::applicationDirPath());
   leList->setReadOnly(true);
   if (TPS->Particles().size() > 0)
-    leList->setText(listpath);
+    leList->setText(listpath + " + decays.dat");
 
   buttonLoad = new QPushButton(tr("Load particle list..."));
   connect(buttonLoad, SIGNAL(clicked()), this, SLOT(loadList()));
@@ -157,15 +157,30 @@ void MainWindow::loadDecays()
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
   if (leList->text().size() != 0)
     listpathprefix = leList->text();
-  QString path = QFileDialog::getOpenFileName(this, tr("Open file with decays"), listpathprefix);
-  if (path.length() > 0)
+  QStringList pathdecays = QFileDialog::getOpenFileNames(this, tr("Open file with decays"), listpathprefix);
+  if (pathdecays.length() > 0)
   {
-    TPS->LoadDecays(path.toStdString());
+    std::vector<std::string> decayspaths;
+    for (int i = 0; i < pathdecays.length(); ++i)
+      decayspaths.push_back(pathdecays[i].toStdString());
+    TPS->LoadDecays(decayspaths);
     model->ChangeTPS(TPS);
     tab1->resetTPS();
     tab2->resetTPS();
     tab5->resetTPS();
     tabEditor->resetTPS();
+
+    leList->setText(clists);
+
+    if (QFileInfo(QString::fromStdString(decayspaths[0])).dir().absolutePath() !=
+      QFileInfo(clists).dir().absolutePath())
+      leList->setText(leList->text() + " + " + QString::fromStdString(decayspaths[0]));
+    else
+      leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decayspaths[0])).fileName());
+
+    for (int idec = 1; idec < decayspaths.size(); ++idec) {
+      leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decayspaths[idec])).fileName());
+    }
   }
 }
 
@@ -243,22 +258,54 @@ void MainWindow::loadList()
     //  { ThermalParticleSystem::flag_noexcitednuclei, ThermalParticleSystem::flag_nonuclei }
     //);
 
-    QString decpath = QFileInfo(pathlist[0]).absolutePath() + "/decays.dat";
+    std::vector<std::string> decays;
+    QStringList decpath;
+    decpath.push_back(QFileInfo(pathlist[0]).absolutePath() + "/decays.dat");
     //if (!TPS->CheckDecayChannelsAreSpecified() &&  !QFileInfo(decpath).exists()) {
-    if (!QFileInfo(decpath).exists()) {
-      decpath = QFileDialog::getOpenFileName(this, tr("Open file with decays"), decpath);
-      if (decpath.length() > 0)
-      {
-        TPS->LoadDecays(decpath.toStdString());
+    if (!QFileInfo(decpath[0]).exists()) {
+
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question(this, 
+        "Decays", 
+        "Decays file was not found at `decays.dat`. Would you like to load decays from another file?",
+        QMessageBox::Yes | QMessageBox::No);
+      if (reply == QMessageBox::Yes) {
+        decpath = QFileDialog::getOpenFileNames(this, tr("Open file with decays"), decpath[0]);
+        if (decpath.length() > 0)
+        {
+          for (int i = 0; i < decpath.length(); ++i)
+            decays.push_back(decpath[i].toStdString());
+        }
       }
     }
-    std::vector<std::string> decays;
-    decays.push_back(decpath.toStdString());
+    else {
+      decays.push_back(decpath[0].toStdString());
+    }
     *TPS = ThermalParticleSystem(paths, decays);
 
     //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
     model->ChangeTPS(TPS);
     leList->setText(pathlist[0]);
+    if (pathlist.size() > 1) {
+      for (int il = 1; il < pathlist.size(); ++il) {
+        leList->setText(leList->text() + " + " + QFileInfo(pathlist[il]).fileName());
+      }
+    }
+    clists = leList->text();
+
+    if (decays.size() > 0) {
+
+      if (QFileInfo(QString::fromStdString(decays[0])).dir().absolutePath() !=
+        QFileInfo(clists).dir().absolutePath())
+        leList->setText(leList->text() + " + " + QString::fromStdString(decays[0]));
+      else
+        leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[0])).fileName());
+
+      for (int idec = 1; idec < decays.size(); ++idec) {
+        leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[idec])).fileName());
+      }
+    }
+
     tab1->resetTPS();
     tab2->resetTPS();
 

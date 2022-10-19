@@ -154,6 +154,7 @@ namespace thermalfist {
      * \return Vector of chemical potentials of all particles species, as resulted from the last CalculatePCE() call
      */
     const std::vector<double>& ChemicalPotentials() const { return m_ChemCurrent; }
+          std::vector<double>& ChemicalPotentials() { return m_ChemCurrent; }
 
     /**
      * \return The system volume, as resulted from the last CalculatePCE() call
@@ -187,6 +188,9 @@ namespace thermalfist {
      *        This is only necessary if energy-dependent Breit-Wigner widths are used.
      */
     void ApplyFixForBoseCondensation();
+
+    const std::vector< std::vector<double> >& EffectiveCharges() const { return m_EffectiveCharges; }
+    const std::vector<int>& StableMapTo() const { return m_StableMapTo; }
     
 
   protected:

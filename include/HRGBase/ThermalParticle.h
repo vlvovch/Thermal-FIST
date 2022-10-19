@@ -217,6 +217,22 @@ namespace thermalfist {
     double chi(int index, const ThermalModelParameters &params, bool useWidth = 0, double mu = 0.) const;
 
     /**
+     * \brief Computes the ideal gas dimensionfull susceptibility \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$.
+     *
+     * Computes the dimensionfull susceptibility \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$
+     * of the corresponding ideal gas.
+     * Takes into account chemical non-equilibrium fugacity factors
+     * and finite resonance widths.
+     *
+     * \param index    Order of the susceptibility.
+     * \param params   Structure containing the temperature value and the chemical factors.
+     * \param useWidth Whether finite widths are taken into account.
+     * \param mu       Chemical potential.
+     * \return         Value of the computed susceptility [GeV^{4-n].
+     */
+    double chiDimensionfull(int index, const ThermalModelParameters& params, bool useWidth = 0, double mu = 0.) const;
+
+    /**
      * \brief Computes the scaled variance of particle number fluctuations
      *        in the ideal gas.
      * Computes the scaled variance (\chi_2 / \chi_1) of particle number fluctuations

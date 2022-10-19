@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.4.1] 
+
+Date: 2022-10-18
+
+- GUI: Added more clarity concerning the loading of the decays list
+- GUI: Number of known decays channels shown in the table for unstable hadrons
+- Added explicit calculation of Fermi-Dirac integrals at T = 0
 
 ## [Version 1.4] 
 

@@ -170,6 +170,8 @@ namespace thermalfist {
 
     m_Pressure = Pressure(0.);
     double mnc = pow(m_Parameters.T, 4.) * pow(xMath::GeVtoifm(), 3.);
+    if (m_Parameters.T == 0.0)
+      mnc = pow(xMath::mnucleon(), 4.) * pow(xMath::GeVtoifm(), 3.);
     eqs.SetMnc(mnc);
     jac.SetMnc(mnc);
     double x0 = log(m_Pressure / mnc);
@@ -241,26 +243,32 @@ namespace thermalfist {
 
   void ThermalModelEVDiagonal::CalculateTwoParticleCorrelations() {
     int NN = m_densities.size();
-    vector<double> tN(NN), tW(NN);
+    vector<double> tN(NN);
     for (int i = 0; i < NN; ++i) tN[i] = DensityId(i, m_Pressure);
-    for (int i = 0; i < NN; ++i) tW[i] = ScaledVarianceId(i, m_Pressure);
+
+    vector<double> chi2id(NN);
+    for (int i = 0; i < NN; ++i) {
+      chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure) * xMath::GeVtoifm3();
+      if (tN[i] > 0.0)
+        chi2id[i] *= m_densities[i] / tN[i];
+    }
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
     m_TotalCorrel = m_PrimCorrel;
 
-    for (int i = 0; i < NN; ++i)
+    for (int i = 0; i < NN; ++i) {
       for (int j = 0; j < NN; ++j) {
         m_PrimCorrel[i][j] = 0.;
-        if (i == j) m_PrimCorrel[i][j] += m_densities[i] * tW[i];
-        m_PrimCorrel[i][j] += -m_v[i] * m_densities[i] * m_densities[j] * tW[i];
-        m_PrimCorrel[i][j] += -m_v[j] * m_densities[i] * m_densities[j] * tW[j];
+        if (i == j) m_PrimCorrel[i][j] += chi2id[i];
+        m_PrimCorrel[i][j] += -m_v[i] * m_densities[j] * chi2id[i];
+        m_PrimCorrel[i][j] += -m_v[j] * m_densities[i] * chi2id[j];
         double tmp = 0.;
         for (size_t k = 0; k < m_densities.size(); ++k)
-          tmp += m_v[k] * m_v[k] * tW[k] * m_densities[k];
+          tmp += m_v[k] * m_v[k] * chi2id[k];
         m_PrimCorrel[i][j] += m_densities[i] * m_densities[j] * tmp;
-        m_PrimCorrel[i][j] /= m_Parameters.T;
       }
+    }
 
     for (int i = 0; i < NN; ++i) {
       m_wprim[i] = m_PrimCorrel[i][i];

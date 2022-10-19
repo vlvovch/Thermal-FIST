@@ -28,7 +28,9 @@ namespace thermalfist {
      * \brief Identifies the thermodynamic function.
      * 
      */
-    enum Quantity { ParticleDensity, EnergyDensity, EntropyDensity, Pressure, chi2, chi3, chi4, ScalarDensity };
+    enum Quantity { ParticleDensity, EnergyDensity, EntropyDensity, Pressure, chi2, chi3, chi4, ScalarDensity, 
+      chi2difull, chi3difull, chi4difull
+    };
     /**
      * \brief Identifies whether quantum statistics
      *        are to be computed using the cluster expansion
@@ -109,11 +111,12 @@ namespace thermalfist {
     double BoltzmannTdndmu(int N, double T, double mu, double m, double deg);
 
     /**
-     * \brief Computes the n-th order susceptibility for a Maxwell-Boltzmann gas.
+     * \brief Computes the n-th order dimensionless susceptibility for a Maxwell-Boltzmann gas.
      * 
      * Computes \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$ 
      * for a Maxwell-Boltzmann gas.
      * 
+     * \param N Susceptibility order.
      * \param T Temperature [GeV].
      * \param mu Chemical potential [GeV].
      * \param m  Particle's mass [GeV].
@@ -121,6 +124,21 @@ namespace thermalfist {
      * \return \f$ \chi_n \f$.
      */
     double BoltzmannChiN(int N, double T, double mu, double m, double deg);
+
+    /**
+     * \brief Computes the n-th order dimensionfull susceptibility for a Maxwell-Boltzmann gas.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$
+     * for a Maxwell-Boltzmann gas.
+     *
+     * \param N Susceptibility order.
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$.
+     */
+    double BoltzmannChiNDimensionfull(int N, double T, double mu, double m, double deg);
 
     /**
      * \brief Computes the particle number density of a quantum ideal gas using cluster expansion.
@@ -191,11 +209,12 @@ namespace thermalfist {
     double QuantumClusterExpansionTdndmu(int N, int statistics, double T, double mu, double m, double deg, int order = 1);
     
     /**
-     * \brief Computes the n-th order susceptibility for a quantum ideal gas using cluster expansion.
+     * \brief Computes the n-th order dimensionless susceptibility for a quantum ideal gas using cluster expansion.
      * 
      * Computes \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$ 
      * for a quantum ideal gas using cluster expansion.
      * 
+     * \param N Susceptibility order.
      * \param T Temperature [GeV].
      * \param mu Chemical potential [GeV].
      * \param m  Particle's mass [GeV].
@@ -203,6 +222,21 @@ namespace thermalfist {
      * \return \f$ \chi_n \f$.
      */
     double QuantumClusterExpansionChiN(int N, int statistics, double T, double mu, double m, double deg, int order = 1);
+
+    /**
+     * \brief Computes the n-th order dimensionfull susceptibility for a quantum ideal gas using cluster expansion.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$
+     * for a quantum ideal gas using cluster expansion.
+     *
+     * \param N Susceptibility order.
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$ [GeV^{4-N}].
+     */
+    double QuantumClusterExpansionChiNDimensionfull(int N, int statistics, double T, double mu, double m, double deg, int order = 1);
 
     /**
      * \brief Computes the particle number density of a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
@@ -265,11 +299,12 @@ namespace thermalfist {
     double QuantumNumericalIntegrationTdndmu(int N, int statistics, double T, double mu, double m, double deg);
     
     /**
-     * \brief Computes the n-th order susceptibility for a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
+     * \brief Computes the n-th order dimensionless susceptibility for a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
      * 
      * Computes \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$ 
      * for a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
      * 
+     * \param N Susceptibility order.
      * \param T Temperature [GeV].
      * \param mu Chemical potential [GeV].
      * \param m  Particle's mass [GeV].
@@ -277,6 +312,21 @@ namespace thermalfist {
      * \return \f$ \chi_n \f$.
      */
     double QuantumNumericalIntegrationChiN(int N, int statistics, double T, double mu, double m, double deg);
+
+    /**
+     * \brief Computes the n-th order dimensionfull susceptibility for a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$
+     * for a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
+     *
+     * \param N Susceptibility order.
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$ [GeV^{n-4}.
+     */
+    double QuantumNumericalIntegrationChiNDimensionfull(int N, int statistics, double T, double mu, double m, double deg);
 
     /**
      * \brief Auxiliary function.
@@ -365,12 +415,13 @@ namespace thermalfist {
     double FermiNumericalIntegrationLargeMuTdndmu(int N, double T, double mu, double m, double deg);
     
     /**
-     * \brief Computes the n-th order susceptibility for a Fermi-Dirac ideal gas 
+     * \brief Computes the n-th order dimensionless susceptibility for a Fermi-Dirac ideal gas 
      *        at mu > m.
      * 
      * Computes \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$ 
      * for a Fermi-Dirac ideal gas at mu > m.
      * 
+     * \param N Susceptibility order.
      * \param T Temperature [GeV].
      * \param mu Chemical potential [GeV].
      * \param m  Particle's mass [GeV].
@@ -378,6 +429,108 @@ namespace thermalfist {
      * \return \f$ \chi_n \f$.
      */
     double FermiNumericalIntegrationLargeMuChiN(int N, double T, double mu, double m, double deg);
+
+    /**
+     * \brief Computes the n-th order dimensionfull susceptibility for a Fermi-Dirac ideal gas
+     *        at mu > m.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p}{\partial mu^n} \f$
+     * for a Fermi-Dirac ideal gas at mu > m.
+     *
+     * \param N Susceptibility order.
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$.
+     */
+    double FermiNumericalIntegrationLargeMuChiNDimensionfull(int N, double T, double mu, double m, double deg);
+
+
+    /**
+     * \brief Computes the particle number density of a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Particle number density [fm-3].
+     */
+    double FermiZeroTDensity(double mu, double m, double deg);
+
+    /**
+     * \brief Computes the pressure of a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Pressure [GeV fm-3].
+     */
+    double FermiZeroTPressure(double mu, double m, double deg);
+
+    /**
+     * \brief Computes the energy density of a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Energy density [GeV fm-3].
+     */
+    double FermiZeroTEnergyDensity(double mu, double m, double deg);
+
+    /**
+     * \brief Computes the entropy density of a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Entropy density [GeV fm-3].
+     */
+    double FermiZeroTEntropyDensity(double mu, double m, double deg);
+
+    /**
+     * \brief Computes the scalar density of a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Scalar density [fm-3].
+     */
+    double FermiZeroTScalarDensity(double mu, double m, double deg);  // TODO: Check for correctness
+
+    double FermiZeroTdn1dmu1(double mu, double m, double deg);
+    double FermiZeroTdn2dmu2(double mu, double m, double deg);
+    double FermiZeroTdn3dmu3(double mu, double m, double deg);
+    double FermiZeroTdndmu(int N, double mu, double m, double deg);
+
+    /**
+     * \brief Computes the n-th order susceptibility for a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p/T^4}{\partial (mu/T)^n} \f$
+     * for a Fermi-Dirac ideal gas at mu > m.
+     *
+     * \param N Susceptibility order.
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$.
+     */
+    double FermiZeroTChiN(int N, double mu, double m, double deg);
+
+    /**
+     * \brief Computes the n-th order susceptibility scaled by T^n for a Fermi-Dirac ideal gas at zero temperature.
+     *
+     * Computes \f$ \chi_n \equiv \frac{\partial^n p}{\partial (mu)^n} \f$
+     * for a Fermi-Dirac ideal gas at mu > m.
+     * Useful for zero temperature where the dimensionless susceptibility would be singular.
+     *
+     * \param N Susceptibility order.
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return \f$ \chi_n \f$ [GeV^{4-N}].
+     */
+    double FermiZeroTChiNDimensionfull(int N, double mu, double m, double deg);
 
     /**
      * \brief Calculation of a generic ideal gas function.

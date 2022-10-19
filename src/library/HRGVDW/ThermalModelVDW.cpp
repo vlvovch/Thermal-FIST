@@ -795,7 +795,8 @@ namespace thermalfist {
 
     vector<double> chi2id(m_densities.size());
     for (int i = 0; i<NN; ++i)
-      chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      //chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     for (int i = 0; i<NN; ++i)
       for (int j = 0; j<NN; ++j) {
@@ -812,7 +813,8 @@ namespace thermalfist {
       for (int k = 0; k<NN; ++k) {
         densMatrix(i, NN + i) += m_Virial[k][i] * m_densities[k];
       }
-      densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+      //densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+      densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3);
     }
 
     for (int i = 0; i<NN; ++i)
@@ -1046,7 +1048,7 @@ namespace thermalfist {
 
       vector<double> chi2s(NN, 0.);
       for (int i = 0; i<NN; ++i)
-        chi2s[i] = m_THM->TPS()->Particles()[i].chi(2, m_THM->Parameters(),
+        chi2s[i] = m_THM->TPS()->Particles()[i].chiDimensionfull(2, m_THM->Parameters(),
           m_THM->UseWidth(),
           m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
         );
@@ -1102,7 +1104,7 @@ namespace thermalfist {
               double tmps = 1.;
               if (ns[ti] != 0.)
                 tmps = np[ti] / ns[ti];
-              xVector[l] += chi2s[ti] * m_THM->m_Parameters.T * m_THM->m_Parameters.T * pow(xMath::GeVtoifm(), 3) * tmps;
+              xVector[l] += chi2s[ti] * pow(xMath::GeVtoifm(), 3) * tmps;
             }
           }
 
@@ -1122,7 +1124,7 @@ namespace thermalfist {
               double tmps = 1.;
               if (ns[j] != 0.)
                 tmps = np[j] / ns[j];
-              dnjdmukp[j] += tmps * chi2s[j] * m_THM->m_Parameters.T * m_THM->m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+              dnjdmukp[j] += tmps * chi2s[j] * pow(xMath::GeVtoifm(), 3);
             }
           }
         }

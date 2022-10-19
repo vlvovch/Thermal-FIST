@@ -1,0 +1,5 @@
+# leptons
+#         pdgid                name         stable       mass[GeV]     degeneracy     statistics              B              Q              S              C            |S|            |C|     width[GeV] threshold[GeV]
+             11                  e-              1 5.109989461E-04              2              1              0             -1              0              0              0              0              0              0
+             13                 mu-              1 1.056583745E-01              2              1              0             -1              0              0              0              0              0              0
+             15                tau-              1     1.77686E+00              2              1              0             -1              0              0              0              0              0              0
