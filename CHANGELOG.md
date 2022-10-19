@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.4.1] 
+
+Date: 2022-10-18
+
+- GUI: Added more clarity concerning the loading of the decays list
+- GUI: Number of known decays channels shown in the table for unstable hadrons
+- Added explicit calculation of Fermi-Dirac integrals at T = 0
+
 
 ## [Version 1.4] 
 
@@ -220,6 +228,10 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.4]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.4...v1.4
+
+[Version 1.3.4]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.3...v1.3.4
 
 [Version 1.3.3]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.2...v1.3.3
 
