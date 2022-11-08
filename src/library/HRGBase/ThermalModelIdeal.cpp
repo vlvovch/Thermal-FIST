@@ -60,7 +60,7 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
         m_PrimCorrel[i][j] = 0.;
-        if (i == j) m_PrimCorrel[i][j] += m_densities[i] * chi2s[i];
+        if (i == j) m_PrimCorrel[i][j] += chi2s[i] * pow(xMath::GeVtoifm(), 3);
       }
 
     for (int i = 0; i < NN; ++i) {

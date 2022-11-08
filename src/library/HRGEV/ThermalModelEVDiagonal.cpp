@@ -88,7 +88,7 @@ namespace thermalfist {
       if (elems.size() < 1)
         continue;
       istringstream iss(elems[0]);
-      int pdgid;
+      long long pdgid;
       double b;
       if (iss >> pdgid >> b) {
         int ind = m_TPS->PdgToId(pdgid);

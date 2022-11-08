@@ -130,7 +130,7 @@ namespace thermalfist {
       if (elems.size() < 1)
         continue;
       istringstream iss(elems[0]);
-      int pdgid1, pdgid2;
+      long long pdgid1, pdgid2;
       double b, a;
       if (iss >> pdgid1 >> pdgid2 >> b) {
         if (!(iss >> a))
@@ -393,9 +393,7 @@ namespace thermalfist {
         if (m_TPS->Particles()[i].Statistics()==-1 && muStarInit[i] > m_TPS->Particles()[i].Mass()) 
           muStarInit[i] = 0.98 * m_TPS->Particles()[i].Mass();
       }
-
       m_MuStar = SearchSingleSolution(muStarInit);
-
     }
     else {
       m_MuStar = SearchMultipleSolutions(100);
