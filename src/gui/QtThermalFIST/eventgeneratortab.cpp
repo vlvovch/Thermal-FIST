@@ -1271,6 +1271,7 @@ void EventGeneratorTab::resetTPS() {
     tableSpectra->resizeColumnsToContents();
     
     configWidget->setModel(model);
+    configWidget->currentConfig.vdWparams = QvdWParameters::GetParameters(model->TPS(), &configWidget->currentConfig);
 }
 
 

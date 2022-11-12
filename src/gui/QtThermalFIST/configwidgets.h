@@ -44,6 +44,8 @@ public:
   QComboBox *comboQuant;
   QCheckBox *CBQuadratures;
 
+  QPushButton* buttonQvdWparameters;
+
   QPushButton *buttonConservationLaws;
 
   QPushButton *buttonInteractions;
@@ -66,6 +68,7 @@ public:
 private slots:
   void conservationLawsDialog();
   void interactionsDialog();
+  void QvdWparametersDialog();
   void otherOptionsDialog();
   void modelTypeChanged();
   void ensembleChanged();
@@ -104,38 +107,6 @@ public slots :
   void Discard() { QDialog::reject(); };
 };
 
-
-class InteractionsDialog : public QDialog
-{
-  Q_OBJECT
-public:
-  ModelConfigWidget *m_parent;
-  QRadioButton *radSet, *radLoad;
-  QDoubleSpinBox *spinB;
-  QDoubleSpinBox *spinA;
-  QLabel *labelRadiusValue;
-  //QDoubleSpinBox *spinRadius;
-  QComboBox *comboScaling;
-  QCheckBox *CBMM, *CBMB, *CBBaB, *CBBB;
-
-  QLineEdit *leFilePath;
-  QPushButton *buttonChooseFile;
-
-  QGroupBox *groupMC;
-  QCheckBox *CBEVMult, *CBEVCoord, *CBEVSPR;
-
-public:
-  explicit  InteractionsDialog(ModelConfigWidget *parent = 0);
-
-private slots :
-  void modeToggled();
-  void chooseInputFile();
-  void updateRadius();
-  void updateSPR();
-public slots :
-  void OK();
-  void Discard() { QDialog::reject(); };
-};
 
 class OtherOptionsDialog : public QDialog
 {

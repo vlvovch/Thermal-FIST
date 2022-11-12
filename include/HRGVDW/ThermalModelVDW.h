@@ -300,10 +300,10 @@ namespace thermalfist {
 
     std::vector< std::vector<int> > m_dMuStarIndices;
 
-  private:
     std::vector< std::vector<double> > m_chi;
 
     std::vector<double> m_chiarb;
+  private:
     
     
     virtual void CalculatePrimordialDensitiesOld();

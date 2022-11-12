@@ -48,7 +48,7 @@ namespace thermalfist {
       DiagonalEV = 1,   ///< Diagonal excluded volume model
       CrosstermsEV = 2, ///< Crossterms excluded volume model
       QvdW = 3,         ///< Quantum van der Waals model
-      RealGas = 4,      ///< Real gas model. Not yet fully implemented.
+      RealGas = 4,      ///< Real gas model.
       MeanField = 5     ///< Mean field model. Not yet fully implemented.
     };
 

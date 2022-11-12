@@ -61,7 +61,6 @@ set(HEADERS_HRGEV
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrossterms.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrosstermsLegacy.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVDiagonal.h
-${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeModel.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeHelper.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCanonicalStrangeness.h
 )	
@@ -82,6 +81,27 @@ ${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWCanonicalStrangeness.h
 )
 
 source_group("HRGVDW\\Header Files" FILES ${HEADERS_HRGVDW})
+
+# Real gas part of the library
+set(SRCS_HRGRealGas
+HRGRealGas/ThermalModelRealGas.cpp
+HRGRealGas/ExcludedVolumeModels.cpp
+HRGRealGas/ExcludedVolumeModelsMulti.cpp
+HRGRealGas/MeanFieldModels.cpp
+HRGRealGas/MeanFieldModelsMulti.cpp
+)
+
+source_group("HRGRealGas\\Source Files" FILES ${SRCS_HRGRealGas})
+
+set(HEADERS_HRGRealGas
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ThermalModelRealGas.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ExcludedVolumeModels.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ExcludedVolumeModelsMulti.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/MeanFieldModels.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/MeanFieldModelsMulti.h
+)
+
+source_group("HRGRealGas\\Header Files" FILES ${HEADERS_HRGRealGas})
 
 # Fitter
 	  
@@ -164,6 +184,7 @@ add_library(ThermalFIST
 ${SRCS_HRGBase} ${HEADERS_HRGBase} 
 ${SRCS_HRGEV} ${HEADERS_HRGEV} 
 ${SRCS_HRGVDW} ${HEADERS_HRGVDW} 
+${SRCS_HRGRealGas} ${HEADERS_HRGRealGas} 
 ${SRCS_HRGFit} ${HEADERS_HRGFit} 
 ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator}
 ${SRCS_HRGPCE} ${HEADERS_HRGPCE}

@@ -10,17 +10,18 @@
 #include <string>
 
 #include "HRGBase/ThermalModelBase.h"
+#include "configinteractions.h"
 
 /**
 *   A structure containing the current thermal model configuration.
 */
 struct ThermalModelConfig {
-  enum ThermalModelType { Ideal = 0, DiagonalEV = 1, CrosstermsEV = 2, QvdW = 3, CE = 4, SCE = 5, CCE = 6, EVSCE = 7, VDWSCE = 8 };
+  enum ThermalModelType { Ideal = 0, DiagonalEV = 1, CrosstermsEV = 2, QvdW = 3, CE = 4, SCE = 5, CCE = 6, EVSCE = 7, VDWSCE = 8, RealGas = 9 };
 
-  enum ThermalInteraction { InteractionIdeal = 0, InteractionEVDiagonal = 1, InteractionEVCrossterms = 2, InteractionQVDW = 3 };
+  enum ThermalInteraction { InteractionIdeal = 0, InteractionEVDiagonal = 1, InteractionEVCrossterms = 2, InteractionQVDW = 3, InteractionRealGas = 4 };
   enum ThermalEnsemble { EnsembleGCE = 0, EnsembleCE = 1, EnsembleSCE = 2, EnsembleCCE = 3 };
 
-  int ModelType;        /**< 0 - Ideal, 1 - Diagonal EV, 2 - Crossterms EV, 3 - QvdW, 4 - CE, 5 - SCE  */
+  int ModelType;        /**< 0 - Ideal, 1 - Diagonal EV, 2 - Crossterms EV, 3 - QvdW, 4 - CE, 5 - SCE, 6 - Real Gas  */
   int Ensemble;
   int InteractionModel;
   int QuantumStatistics; /**< 0 - Boltzmann, 1 - Quantum */
@@ -28,7 +29,7 @@ struct ThermalModelConfig {
   int QuantumStatisticsInclude; /**< 0 - All, 1 - Only mesons, 2 - Only pions */
 
 
-  int InteractionScaling; /**< 0 - constant EV, 1 - bag model EV, 2 - two-component EV, 3 - from file */
+  int InteractionScaling; /**< 0 - constant EV, 1 - bag model EV, 2 - two-component EV, 3 - from file, 4 - BB, B\bar{B}, MB, MM */
   //double EVRadius;
   double vdWA; /// QvdW attraction (in MeV * fm3)
   double vdWB; /// QvdW repulsion (in fm3)
@@ -37,6 +38,13 @@ struct ThermalModelConfig {
   int DisableMB;
   int DisableBB;
   int DisableBantiB;
+
+  double vdWaBB, vdWaBantiB, vdWaMB, vdWaMM;
+  double vdWbBB, vdWbBantiB, vdWbMB, vdWbMM;
+
+  QvdWParameters vdWparams;
+
+  int RealGasExcludedVolumePrescription; // 0 - vdW, 1 - CS, 2 - virial, 3 - TVM
 
   /// Thermal parameters
   double T;

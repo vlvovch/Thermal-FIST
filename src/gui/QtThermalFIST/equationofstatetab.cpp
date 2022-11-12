@@ -621,6 +621,7 @@ void EquationOfStateTab::resetTPS()
   fillParticleLists();
 
   configWidget->setModel(model);
+  configWidget->currentConfig.vdWparams = QvdWParameters::GetParameters(model->TPS(), &configWidget->currentConfig);
 }
 
 void EquationOfStateTab::plotLatticeData()

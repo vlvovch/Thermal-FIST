@@ -1,6 +1,9 @@
 #include "BaseStructures.h"
 
 #include "HRGEV/ExcludedVolumeHelper.h"
+#include "HRGEV.h"
+#include "HRGVDW.h""
+#include "HRGRealGas.h""
 #include "HRGBase/ThermalModelCanonical.h"
 
 using namespace thermalfist;
@@ -34,6 +37,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
     else
       ret.ModelType = ThermalModelConfig::QvdW;
   }
+  else if (model->InteractionModel() == ThermalModelBase::RealGas) {
+    ret.ModelType = ThermalModelConfig::RealGas;
+  }
 
   ret.Ensemble = model->Ensemble();
 
@@ -51,7 +57,18 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.vdWB = 1.;
 
+  ret.vdWbBB = 3.42;
+  ret.vdWbBantiB = ret.vdWbMB = ret.vdWbMM = 0.;
+
+  ret.vdWaBB = 0.329;
+  ret.vdWaBantiB = ret.vdWaMB = ret.vdWaMM = 0.;
+
+  ret.vdWparams.m_aij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 0.));
+  ret.vdWparams.m_bij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 1.));
   ret.InteractionInput = "";
+
+  ret.RealGasExcludedVolumePrescription = 0;
+  
 
   ret.DisableMM = 1;
 
@@ -214,6 +231,46 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
 
 void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConfig & config)
 {
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      model->SetVirial(i, i, config.vdWparams.m_bij[i][i]);
+    }
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVCrossterms) {
+    static_cast<ThermalModelEVCrossterms*>(model)->FillVirialEV(config.vdWparams.m_bij);
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionQVDW) {
+    static_cast<ThermalModelVDW*>(model)->FillVirialEV(config.vdWparams.m_bij);
+    static_cast<ThermalModelVDW*>(model)->FillAttraction(config.vdWparams.m_aij);
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionRealGas) {
+    //static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsVDW(config.vdWparams.m_bij));
+    //static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(new ExcludedVolumeModelVDW(), config.vdWparams.m_bij));
+    ExcludedVolumeModelBase* evmod;
+    if (config.RealGasExcludedVolumePrescription == 0) {
+      evmod = new ExcludedVolumeModelVDW();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 1) {
+      evmod = new ExcludedVolumeModelCS();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 2) {
+      evmod = new ExcludedVolumeModelVirial();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 3) {
+      evmod = new ExcludedVolumeModelTVM();
+    }
+    else {
+      evmod = new ExcludedVolumeModelVDW();
+    }
+    static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(evmod, config.vdWparams.m_bij));
+    static_cast<ThermalModelRealGas*>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(config.vdWparams.m_aij));
+  }
+
+  return;
+  
   if (config.InteractionScaling != 3) {
     // First repulsion
     double radius = CuteHRGHelper::rv(config.vdWB);

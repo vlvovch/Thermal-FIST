@@ -37,6 +37,7 @@
 #include "particledialog.h"
 #include "resultdialog.h"
 #include "fittoexperimenttab.h"
+#include "configinteractions.h"
 
 using namespace thermalfist;
 
@@ -45,6 +46,7 @@ namespace {
   const QString ModelDEV = "Excluded volume (Diagonal)";
   const QString ModelCRSEV = "Excluded volume (X-terms)";
   const QString ModelQvdW = "Quantum van der Waals";
+  const QString ModelRealGas = "Quantum real gas";
 }
 
 ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode, bool thermalFitMode)
@@ -67,6 +69,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   comboModel->addItem(ModelDEV);
   comboModel->addItem(ModelCRSEV);
   comboModel->addItem(ModelQvdW);
+  comboModel->addItem(ModelRealGas);
   comboModel->setCurrentIndex(0);
   comboModel->setToolTip(tr("Type of HRG model"));
 
@@ -169,9 +172,12 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
   comboWidth->setToolTip(tr("Prescription for the treatment of resonance widths"));
 
+  buttonQvdWparameters = new QPushButton(tr("EV/vdW parameter list..."));
+  connect(buttonQvdWparameters, &QPushButton::clicked, this, &ModelConfigWidget::QvdWparametersDialog);
 
   layOptions2->addWidget(labelWidth);
   layOptions2->addWidget(comboWidth);
+  layOptions2->addWidget(buttonQvdWparameters);
   if (0 && m_eventGeneratorMode) {
     layOptions2->addSpacing(10);
     layOptions2->addWidget(labelStats);
@@ -227,6 +233,8 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
       ret.ModelType = ThermalModelConfig::CrosstermsEV;
     if (comboModel->currentText() == ModelQvdW)
       ret.ModelType = ThermalModelConfig::QvdW;
+    if (comboModel->currentText() == ModelRealGas)
+      ret.ModelType = ThermalModelConfig::RealGas;
   }
 
   if (comboEnsemble->currentText() == tr("Canonical")) {
@@ -256,6 +264,9 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
   if (ret.ModelType == ThermalModelConfig::QvdW
     || ret.ModelType == ThermalModelConfig::VDWSCE) {
     ret.InteractionModel = ThermalModelConfig::InteractionQVDW;
+  }
+  if (ret.ModelType == ThermalModelConfig::RealGas) {
+    ret.InteractionModel = ThermalModelConfig::InteractionRealGas;
   }
 
   // Event generator mode
@@ -314,6 +325,16 @@ void ModelConfigWidget::interactionsDialog()
   emit changed();
 }
 
+void ModelConfigWidget::QvdWparametersDialog()
+{
+  currentConfig = updatedConfig();
+  QvdWParametersTableDialog dialog(this, &currentConfig, model->TPS());
+  dialog.setWindowFlags(Qt::Window);
+  dialog.showMaximized();
+  dialog.exec();
+  emit changed();
+}
+
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
@@ -360,10 +381,14 @@ void ModelConfigWidget::modelTypeChanged()
     comboEnsemble->blockSignals(false);
   }
 
-  if (comboModel->currentText() == ModelIdeal)
+  if (comboModel->currentText() == ModelIdeal) {
     buttonInteractions->setEnabled(false);
-  else
+    buttonQvdWparameters->setEnabled(false);
+  }
+  else {
     buttonInteractions->setEnabled(true);
+    buttonQvdWparameters->setEnabled(true);
+  }
 
   emit changed();
 }
@@ -390,6 +415,9 @@ void ModelConfigWidget::ensembleChanged()
   if (comboEnsemble->currentText() == tr("Grand-canonical")
     || comboEnsemble->currentText() == tr("Strangeness-canonical") || m_eventGeneratorMode)
     newitems.push_back(ModelQvdW);
+
+  if (comboEnsemble->currentText() == tr("Grand-canonical") || m_eventGeneratorMode)
+    newitems.push_back(ModelRealGas);
 
   if (newitems != olditems) {
     comboModel->blockSignals(true);
@@ -455,6 +483,7 @@ void ModelConfigWidget::setNewConfig(const ThermalModelConfig& config)
   comboModel->addItem(ModelDEV);
   comboModel->addItem(ModelCRSEV);
   comboModel->addItem(ModelQvdW);
+  comboModel->addItem(ModelRealGas);
   comboModel->setCurrentIndex(0);
   if (currentConfig.InteractionModel == ThermalModelConfig::DiagonalEV)
     comboModel->setCurrentIndex(1);
@@ -462,6 +491,8 @@ void ModelConfigWidget::setNewConfig(const ThermalModelConfig& config)
     comboModel->setCurrentIndex(2);
   if (currentConfig.InteractionModel == ThermalModelConfig::QvdW)
     comboModel->setCurrentIndex(3);
+  if (currentConfig.InteractionModel == ThermalModelConfig::RealGas)
+    comboModel->setCurrentIndex(4); 
   comboModel->blockSignals(false);
 
 
@@ -832,235 +863,5 @@ void OtherOptionsDialog::OK()
   config.PCEFreezeLongLived = CBFreezeLongLived->isChecked();
   config.PCEWidthCut = spinWidthCut->value() * 1.e-3;
   config.PCESahaForNuclei = CBSahaNuclei->isChecked();
-  QDialog::accept();
-}
-
-InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
-{
-  QVBoxLayout* layout = new QVBoxLayout();
-
-  radSet = new QRadioButton(tr("Set parameters manually"));
-
-  QHBoxLayout* layB = new QHBoxLayout();
-  layB->setAlignment(Qt::AlignLeft);
-  QLabel* labelvdWB = new QLabel(tr("b (fm<sup>3</sup>)"));
-  spinB = new QDoubleSpinBox();
-  spinB->setMinimum(0.);
-  spinB->setMaximum(100.);
-  spinB->setDecimals(4);
-  spinB->setValue(m_parent->currentConfig.vdWB);
-  QLabel* labelRadius = new QLabel(tr("Radius:"));
-  labelRadiusValue = new QLabel(QString::number(CuteHRGHelper::rv(spinB->value()), 'g', 4) + " fm");
-
-  connect(spinB, SIGNAL(valueChanged(double)), this, SLOT(updateRadius()));
-
-  layB->addWidget(labelvdWB);
-  layB->addWidget(spinB);
-  layB->addWidget(labelRadius);
-  layB->addWidget(labelRadiusValue);
-
-  QHBoxLayout* layA = new QHBoxLayout();
-  layA->setAlignment(Qt::AlignLeft);
-  QLabel* labelvdWA = new QLabel(tr("a (MeV fm<sup>3</sup>)"));
-  spinA = new QDoubleSpinBox();
-  spinA->setMinimum(0.);
-  spinA->setMaximum(10000.);
-  spinA->setDecimals(4);
-  spinA->setValue(m_parent->currentConfig.vdWA * 1.e3);
-
-  layA->addWidget(labelvdWA);
-  layA->addWidget(spinA);
-
-  QHBoxLayout* layScaling = new QHBoxLayout();
-  layScaling->setAlignment(Qt::AlignLeft);
-  QLabel* labelScaling = new QLabel(tr("EV/vdW parameters scaling:"));
-  comboScaling = new QComboBox();
-  comboScaling->addItem(tr("Same for all particles"));
-  comboScaling->addItem(tr("Mass-proportional (bag model)"));
-  comboScaling->addItem(tr("Proportional to baryon content (point-like mesons)"));
-
-  layScaling->addWidget(labelScaling);
-  layScaling->addWidget(comboScaling);
-
-  CBMM = new QCheckBox(tr("Switch off meson-meson EV/QvdW terms"));
-  CBMB = new QCheckBox(tr("Switch off meson-(anti)baryon EV/QvdW terms"));
-  CBBaB = new QCheckBox(tr("Switch off baryon-antibaryon EV/QvdW terms"));
-  CBBB = new QCheckBox(tr("Switch off baryon-baryon EV/QvdW terms"));
-
-  CBMM->setChecked(m_parent->currentConfig.DisableMM);
-  CBMB->setChecked(m_parent->currentConfig.DisableMB);
-  CBBB->setChecked(m_parent->currentConfig.DisableBB);
-  CBBaB->setChecked(m_parent->currentConfig.DisableBantiB);
-
-  radLoad = new QRadioButton(tr("Parameters read from external file"));
-
-  if (m_parent->currentConfig.InteractionScaling < 3) {
-    radSet->setChecked(true);
-    comboScaling->setCurrentIndex(m_parent->currentConfig.InteractionScaling);
-  }
-  else
-    radLoad->setChecked(true);
-
-  QHBoxLayout* layFile = new QHBoxLayout();
-  layFile->setAlignment(Qt::AlignLeft);
-  leFilePath = new QLineEdit("");
-  leFilePath->setReadOnly(true);
-  leFilePath->setText(QString::fromStdString(m_parent->currentConfig.InteractionInput));
-  leFilePath->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-  buttonChooseFile = new QPushButton(tr("Choose file..."));
-  connect(buttonChooseFile, SIGNAL(clicked()), this, SLOT(chooseInputFile()));
-  layFile->addWidget(leFilePath);
-  layFile->addWidget(buttonChooseFile);
-
-  layout->addWidget(radSet, 0, Qt::AlignLeft);
-  layout->addLayout(layB);
-  layout->addLayout(layA);
-  layout->addLayout(layScaling);
-  layout->addWidget(CBMM, 0, Qt::AlignLeft);
-  layout->addWidget(CBMB, 0, Qt::AlignLeft);
-  layout->addWidget(CBBaB, 0, Qt::AlignLeft);
-  layout->addWidget(CBBB, 0, Qt::AlignLeft);
-  layout->addSpacing(30);
-  layout->addWidget(radLoad, 0, Qt::AlignLeft);
-  layout->addLayout(layFile);
-
-  
-  groupMC = new QGroupBox(tr("Event generator options"));
-  QVBoxLayout* layoutMC = new QVBoxLayout();
-  CBEVMult  = new QCheckBox(tr("Use rejection sampling for excluded volume multiplicities"));
-  CBEVMult->setChecked(parent->currentConfig.fUseEVRejectionMultiplicity);
-  CBEVCoord = new QCheckBox(tr("Use rejection sampling for excluded volume in coordinate space"));
-  CBEVCoord->setChecked(parent->currentConfig.fUseEVRejectionCoordinates);
-  CBEVSPR   = new QCheckBox(tr("Apply the SPR approximation"));
-  CBEVSPR->setChecked(parent->currentConfig.fUseEVUseSPRApproximation);
-  connect(CBEVCoord, SIGNAL(toggled(bool)), this, SLOT(updateSPR()));
-  layoutMC->addWidget(CBEVMult);
-  layoutMC->addWidget(CBEVCoord);
-  layoutMC->addWidget(CBEVSPR);
-  groupMC->setLayout(layoutMC);
-  layout->addWidget(groupMC);
-
-  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-    | QDialogButtonBox::Cancel);
-
-  connect(buttonBox, &QDialogButtonBox::accepted, this, &InteractionsDialog::OK);
-  connect(buttonBox, &QDialogButtonBox::rejected, this, &InteractionsDialog::Discard);
-
-  layout->addWidget(buttonBox);
-
-  setLayout(layout);
-
-  setWindowTitle(tr("Excluded volume/van der Waals parameters"));
-
-  connect(radSet, &QRadioButton::toggled, this, &InteractionsDialog::modeToggled);
-  modeToggled();
-}
-
-void InteractionsDialog::modeToggled()
-{
-  CBMM->setEnabled(false);
-  CBMB->setEnabled(false);
-  CBBaB->setEnabled(false);
-  CBBB->setEnabled(false);
-
-  if (radSet->isChecked()) {
-    leFilePath->setEnabled(false);
-    buttonChooseFile->setEnabled(false);
-
-    spinB->setEnabled(true);
-    spinA->setEnabled(true);
-    comboScaling->setEnabled(true);
-    //if (m_parent->currentConfig.ModelType == ThermalModelConfig::CrosstermsEV
-    //  || m_parent->currentConfig.ModelType == ThermalModelConfig::QvdW
-    //  || m_parent->currentConfig.ModelType == ThermalModelConfig::VDWSCE) 
-    if (m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionEVCrossterms
-      || m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionQVDW)
-    {
-      CBMM->setEnabled(true);
-      CBMB->setEnabled(true);
-      CBBaB->setEnabled(true);
-      CBBB->setEnabled(true);
-    }
-  }
-  else {
-    leFilePath->setEnabled(true);
-    buttonChooseFile->setEnabled(true);
-
-    spinB->setEnabled(false);
-    spinA->setEnabled(false);
-    comboScaling->setEnabled(false);
-
-    CBMM->setEnabled(false);
-    CBMB->setEnabled(false);
-    CBBaB->setEnabled(false);
-    CBBB->setEnabled(false);
-
-    if (leFilePath->text() == "") {
-      //  chooseInputFile();
-    }
-  }
-
-  if (!m_parent->m_eventGeneratorMode || m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionIdeal)
-  {
-    groupMC->setVisible(false);
-  }
-  else {
-    groupMC->setVisible(true);
-    CBEVMult->setVisible(true);
-    CBEVCoord->setVisible(true);
-    CBEVSPR->setVisible(true);
-  }
-
-  if (m_parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionQVDW) {
-    CBEVMult->setVisible(false);
-  }
-
-  updateSPR();
-}
-
-
-void InteractionsDialog::chooseInputFile()
-{
-  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/interaction";
-  if (leFilePath->text().size() != 0)
-    listpathprefix = QString(leFilePath->text());
-  QString path = QFileDialog::getOpenFileName(this, tr("Open file with EV/vdW parameters"), listpathprefix);
-  if (path.length() > 0)
-  {
-    leFilePath->setText(path);
-  }
-}
-
-void InteractionsDialog::updateRadius()
-{
-  labelRadiusValue->setText(QString::number(CuteHRGHelper::rv(spinB->value()), 'g', 4) + " fm");
-}
-
-void InteractionsDialog::updateSPR()
-{
-  CBEVSPR->setEnabled(CBEVCoord->isChecked());
-}
-
-
-void InteractionsDialog::OK()
-{
-  if (radSet->isChecked())
-    m_parent->currentConfig.InteractionScaling = comboScaling->currentIndex();
-  else
-    m_parent->currentConfig.InteractionScaling = 3;
-
-  m_parent->currentConfig.vdWA = spinA->value() * 1.e-3;
-  m_parent->currentConfig.vdWB = spinB->value();
-  m_parent->currentConfig.InteractionInput = leFilePath->text().toStdString();
-
-  m_parent->currentConfig.DisableMM = CBMM->isChecked();
-  m_parent->currentConfig.DisableMB = CBMB->isChecked();
-  m_parent->currentConfig.DisableBB = CBBB->isChecked();
-  m_parent->currentConfig.DisableBantiB = CBBaB->isChecked();
-
-  m_parent->currentConfig.fUseEVRejectionMultiplicity = CBEVMult->isChecked();
-  m_parent->currentConfig.fUseEVRejectionCoordinates  = CBEVCoord->isChecked();
-  m_parent->currentConfig.fUseEVUseSPRApproximation   = CBEVSPR->isChecked();
-
   QDialog::accept();
 }

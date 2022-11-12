@@ -30,6 +30,7 @@
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 #include "HRGPCE/ThermalModelPCE.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 
 #include "DebugText.h"
 #include "tablemodel.h"
@@ -443,10 +444,15 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   else if (config.ModelType == ThermalModelConfig::QvdW) {
     modelnew = new ThermalModelVDW(model->TPS());
   }
-  else if (config.ModelType == ThermalModelConfig::CCE)
+  else if (config.ModelType == ThermalModelConfig::RealGas) {
+    modelnew = new ThermalModelRealGas(model->TPS());
+  }
+  else if (config.ModelType == ThermalModelConfig::CCE) {
     modelnew = new ThermalModelCanonicalCharm(model->TPS());
-  else
+  }
+  else {
     modelnew = new ThermalModelIdeal(model->TPS());
+  }
 
   myModel->setModel(modelnew);
   configWidget->setModel(modelnew);
@@ -777,6 +783,7 @@ void ModelTab::resetTPS() {
     labelValid->setVisible(false);
 
     configWidget->setModel(model);
+    configWidget->currentConfig.vdWparams = QvdWParameters::GetParameters(model->TPS(), &configWidget->currentConfig);
 
     modelChanged();
 }

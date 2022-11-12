@@ -635,6 +635,7 @@ void FitToExperimentTab::resetTPS() {
     labelValid->setVisible(false);
 
     configWidget->setModel(model);
+    configWidget->currentConfig.vdWparams = QvdWParameters::GetParameters(model->TPS(), &configWidget->currentConfig);
 }
 
 void FitToExperimentTab::writetofile() {
