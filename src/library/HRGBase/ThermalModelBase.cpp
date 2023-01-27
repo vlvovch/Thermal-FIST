@@ -520,6 +520,7 @@ namespace thermalfist {
       BroydenChem broydn(this, &eqs, &jaco);
       Broyden::BroydenSolutionCriterium crit(1.0E-8);
       broydn.Solve(x22, &crit);
+      //printf("Broyden iters: %d\n", broydn.Iterations());
       break;
     }
   }

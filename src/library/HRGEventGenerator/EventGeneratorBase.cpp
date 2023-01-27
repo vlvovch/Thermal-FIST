@@ -20,6 +20,7 @@
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGVDW/ThermalModelVDW.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 
 namespace thermalfist {
@@ -123,6 +124,9 @@ namespace thermalfist {
     else if (m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
       m_THM = new ThermalModelVDWFull(TPS, m_Config.CFOParameters);
     }
+    else if (m_Config.fModelType == EventGeneratorConfiguration::RealGas) {
+      m_THM = new ThermalModelRealGas(TPS, m_Config.CFOParameters);
+    }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
 
@@ -136,7 +140,9 @@ namespace thermalfist {
     else
       m_THM->SetChemicalPotentials(m_Config.fPCEChems);
 
-    if (m_Config.fModelType != EventGeneratorConfiguration::PointParticle) {
+    if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV ||
+      m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV ||
+      m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
       for (size_t i = 0; i < m_THM->Densities().size(); ++i) {
         for (size_t j = 0; j < m_THM->Densities().size(); ++j) {
           if (m_Config.bij.size() == m_THM->Densities().size()
@@ -148,6 +154,27 @@ namespace thermalfist {
             m_THM->SetAttraction(i, j, m_Config.aij[i][j]);
         }
       }
+    }
+
+    if (m_Config.fModelType == EventGeneratorConfiguration::RealGas) {
+      ExcludedVolumeModelBase* evmod;
+      if (config.RealGasExcludedVolumePrescription == 0) {
+        evmod = new ExcludedVolumeModelVDW();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 1) {
+        evmod = new ExcludedVolumeModelCS();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 2) {
+        evmod = new ExcludedVolumeModelVirial();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 3) {
+        evmod = new ExcludedVolumeModelTVM();
+      }
+      else {
+        evmod = new ExcludedVolumeModelVDW();
+      }
+      static_cast<ThermalModelRealGas*>(m_THM)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(evmod, m_Config.bij));
+      static_cast<ThermalModelRealGas*>(m_THM)->SetMeanFieldModel(new MeanFieldModelMultiVDW(m_Config.aij));
     }
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
@@ -1867,14 +1894,81 @@ namespace thermalfist {
       ret = normweight;
     }
 
+    if (m_THM->InteractionModel() == ThermalModelBase::RealGas) {
+      ThermalModelRealGas* model = static_cast<ThermalModelRealGas*>(m_THM);
+      double V = m_THM->Volume();
+
+      double weight = 1.;
+      double logweight = 0.;
+      double normweight = 1.;
+      double weightvdw = 1.;
+      bool fl = true;
+
+      int Nspecies = m_THM->TPS()->Particles().size();
+
+      ExcludedVolumeModelMultiBase* evmod = model->ExcludedVolumeModel();
+      int Nevcomp = evmod->ComponentsNumber();
+      const std::vector<int>& evinds = evmod->ComponentIndices();
+      const std::vector<int>& evindsfrom = evmod->ComponentIndicesFrom();
+      std::vector<int> Nscomp(Nevcomp, 0);
+      std::vector<double> Nvdwscomp(Nevcomp, 0.);
+      //std::vector<double> dmuTs(Nspecies, 0.);
+
+      std::vector<double> ev_favs(Nevcomp, 0.);
+      for (size_t icomp = 0; icomp < Nevcomp; ++icomp) {
+        ev_favs[icomp] = evmod->f(evindsfrom[icomp]);
+      }
+      std::vector<double> densities_sampled(Nspecies);
+      for (size_t j = 0; j < Nspecies; ++j) {
+        densities_sampled[j] = totals[j] / V;
+      }
+      evmod->SetDensities(densities_sampled);
+      std::vector<double> ev_fsampled(Nevcomp, 0.);
+      for (size_t icomp = 0; icomp < Nevcomp; ++icomp) {
+        ev_fsampled[icomp] = evmod->f(evindsfrom[icomp]);
+      }
+      evmod->SetDensities(m_THM->Densities());
+
+      MeanFieldModelMultiBase* mfmod = model->MeanFieldModel();
+      double mf_vav = mfmod->v();
+      mfmod->SetDensities(densities_sampled);
+      double mf_vsampled = mfmod->v();
+      mfmod->SetDensities(m_THM->Densities());
+
+      for (size_t j = 0; j < Nspecies; ++j) {
+        int jcomp = evinds[j];
+        normweight *= pow(ev_fsampled[jcomp] / ev_favs[jcomp], totals[j]);
+
+        double dmuT = 0.;
+        if (densitiesid->operator[](j))
+          dmuT = log(densities[j] / densitiesid->operator[](j) / ev_favs[jcomp]);
+        normweight *= exp(-dmuT * (totals[j] - densities[j] * V));
+      }
+
+      normweight *= exp(-V * (mf_vsampled - mf_vav) / m_THM->Parameters().T);
+
+      if (!fl)
+        return -1.;
+
+      m_LastWeight = normweight;
+      m_LastLogWeight = log(normweight);
+      m_LastNormWeight = normweight;
+
+      ret = normweight;
+    }
+
+    //printf("Weight: %lf\n", ret);
+
     return ret;
   }
+
   EventGeneratorConfiguration::EventGeneratorConfiguration()
   {
     fEnsemble = GCE;
     fModelType = PointParticle;
     CFOParameters = ThermalModelParameters();
     B = Q = S = C = 0;
+    RealGasExcludedVolumePrescription = 0;
     CanonicalB = CanonicalQ = CanonicalS = CanonicalC = true;
     fUsePCE = false;
     fUseEVRejectionMultiplicity = true;

@@ -279,6 +279,8 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
       ret.InteractionModel = ThermalModelConfig::InteractionEVCrossterms;
     if (comboModel->currentText() == ModelQvdW)
       ret.InteractionModel = ThermalModelConfig::InteractionQVDW;
+    if (comboModel->currentText() == ModelRealGas)
+      ret.InteractionModel = ThermalModelConfig::InteractionRealGas;
   }
 
   ret.Ensemble = ThermalModelConfig::EnsembleGCE;

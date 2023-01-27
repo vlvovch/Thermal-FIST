@@ -51,7 +51,8 @@ namespace thermalfist {
       DiagonalEV,    ///< Diagonal excluded-volume
       CrosstermsEV,  ///< Crossterms excluded-volume
       MeanFieldEV,   ///< Excluded-volume in the thermodynamic mean field approach (currently not used)
-      QvdW           ///< Quantum van der Waals
+      QvdW,          ///< Quantum van der Waals
+      RealGas        ///< Real gas
     };
     
     /// The statistical ensemble used
@@ -77,6 +78,9 @@ namespace thermalfist {
 
     /// The matrix of van der Waals attraction coefficients \f$ a_{ij} \f$
     std::vector< std::vector<double> > aij;
+
+    /// The type of generalized excluded volume model prescription
+    int RealGasExcludedVolumePrescription;
 
     /// Whether partial chemical equilibrium (PCE) is used
     bool fUsePCE;

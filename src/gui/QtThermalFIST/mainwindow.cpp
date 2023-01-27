@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
   dataLay->addWidget(buttonLoadDecays);
 
   tab1 = new ModelTab(NULL, model);
-  tab1->resetTPS();
+  //tab1->resetTPS();
 
   tab2 = new FitToExperimentTab(NULL, model);
   tab1->setFitTab(tab2);
@@ -103,6 +103,12 @@ MainWindow::MainWindow(QWidget *parent)
   QString title = "Thermal-FIST " + QString::number(ThermalFIST_VERSION_MAJOR) + "." + QString::number(ThermalFIST_VERSION_MINOR);
   if (ThermalFIST_VERSION_DEVEL != 0) title += "." + QString::number(ThermalFIST_VERSION_DEVEL);
   setWindowTitle(title);
+
+  tab1->resetTPS();
+  tab2->resetTPS();
+  tabEoS->resetTPS();
+  tab5->resetTPS();
+  tabEditor->resetTPS();
 }
 
 MainWindow::~MainWindow()

@@ -97,7 +97,9 @@ struct Thermodynamics {
   bool flag;
   double T, muB, muQ, muS, muC;
   double pT4, eT4, IT4, sT3;
-  double nhT3;
+  double p, e, I, s;
+  double rhoB, rhoQ, rhoS, rhoC;
+  double nh;
   std::vector< std::vector<double> > densities;
 };
 

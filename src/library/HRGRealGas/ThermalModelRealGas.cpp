@@ -93,6 +93,8 @@ namespace thermalfist {
       m_LastBroydenSuccessFlag = false;
     else m_LastBroydenSuccessFlag = true;
 
+    //printf("Iters: %d\n", broydn.Iterations());
+
     m_MaxDiff = broydn.MaxDifference();
 
     vector<double> ret(NN);
@@ -199,6 +201,642 @@ namespace thermalfist {
   }
 
   vector<double> ThermalModelRealGas::CalculateChargeFluctuations(const vector<double>& chgs, int order) {
+    vector<double> ret(order + 1, 0.);
+
+    // chi1
+    for (size_t i = 0; i < m_densities.size(); ++i)
+      ret[0] += chgs[i] * m_densities[i];
+
+    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+
+    if (order < 2) return ret;
+    // Preparing matrix for system of linear equations
+    int NN = m_densities.size();
+    int Nevcomp = m_exvolmod->ComponentsNumber();
+    const vector<int>& evinds = m_exvolmod->ComponentIndices();
+    const vector<int>& evindsfrom = m_exvolmod->ComponentIndicesFrom();
+
+    int Nmfcomp = m_mfmod->ComponentsNumber();
+    const vector<int>& mfinds = m_mfmod->ComponentIndices();
+    const vector<int>& mfindsfrom = m_mfmod->ComponentIndicesFrom();
+
+    MatrixXd densMatrix(2 * NN, 2 * NN);
+    VectorXd solVector(2 * NN), xVector(2 * NN);
+
+    vector<double> chi2id(m_densities.size()), Ps(m_densities.size());
+    for (int i = 0; i < NN; ++i) {
+      //chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      Ps[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
+      chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * pow(xMath::GeVtoifm(), 3);
+    }
+
+    vector<double> evc_chi2id(Nevcomp, 0.), evc_Ps(Nevcomp, 0.), evc_ns(Nevcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      evc_Ps[evinds[i]]     += Ps[i];
+      evc_ns[evinds[i]]     += m_DensitiesId[i];
+      evc_chi2id[evinds[i]] += chi2id[i];
+    }
+
+    vector<vector<double>> pkd2fkij(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      //int indi = evinds[i];
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        //int indj = evinds[j];
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  pkd2fkij[indi][indj] += Ps[k] * m_exvolmod->d2f(k, i, j);
+        //}
+        for (int k = 0; k < Nevcomp; ++k) {
+          pkd2fkij[indi][indj] += evc_Ps[k] *  m_exvolmod->d2f(evindsfrom[k], i, j);
+        }
+      }
+    }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(i, j) = -m_exvolmod->df(i, j) * m_DensitiesId[i];
+        if (i == j) densMatrix(i, j) += 1.;
+      }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j)
+        densMatrix(i, NN + j) = 0.;
+
+    for (int i = 0; i < NN; ++i) {
+      densMatrix(i, NN + i) = -m_exvolmod->f(i) * chi2id[i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, j) = m_mfmod->d2v(i, j);
+        //for (int k = 0; k < NN; ++k)
+        //  densMatrix(NN + i, j) += -m_exvolmod->d2f(k, i, j) * Ps[k];
+        densMatrix(NN + i, j) += -pkd2fkij[evinds[i]][evinds[j]];
+      }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, NN + j) = -m_exvolmod->df(j, i) * m_DensitiesId[j];
+        if (i == j) densMatrix(NN + i, NN + j) += 1.;
+      }
+
+    PartialPivLU<MatrixXd> decomp(densMatrix);
+
+    // chi2
+    vector<double> dni(NN, 0.), dmus(NN, 0.);
+
+    for (int i = 0; i < NN; ++i) {
+      xVector[i] = 0.;
+      xVector[NN + i] = chgs[i];
+    }
+
+    solVector = decomp.solve(xVector);
+
+    for (int i = 0; i < NN; ++i) {
+      dni[i] = solVector[i];
+      dmus[i] = solVector[NN + i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      ret[1] += chgs[i] * dni[i];
+
+    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+
+    if (order < 3) return ret;
+
+    vector<double> evc_dn(Nevcomp, 0.), evc_dmus(Nevcomp, 0.), evc_nsdmus(Nevcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      evc_dn[evinds[i]] += dni[i];
+      evc_dmus[evinds[i]] += dmus[i];
+      evc_nsdmus[evinds[i]] += m_DensitiesId[i] * dmus[i];
+    }
+
+    vector<double> mfc_dn(Nmfcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      mfc_dn[mfinds[i]] += dni[i];
+    }
+
+    // chi3
+    vector<double> d2ni(NN, 0.), d2mus(NN, 0.);
+
+    vector<double> chi3id(m_densities.size());
+    for (int i = 0; i < NN; ++i)
+      chi3id[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * pow(xMath::GeVtoifm(), 3);
+
+
+    vector<vector<double>> d2fijkdnk(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d2fijkdnk[indi][indj] += dni[k] * m_exvolmod->d2f(i, j, k);
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          d2fijkdnk[indi][indj] += evc_dn[indk] * m_exvolmod->d2f(i, j, k);
+        }
+      }
+    }
+
+    vector<double> dfikdnk(Nevcomp, 0.);
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      //for (int k = 0; k < NN; ++k) {
+      //  dfikdnk[indi] += dni[k] * m_exvolmod->df(i, k);
+      //}
+      for (int indk = 0; indk < Nevcomp; ++indk) {
+        int k = evindsfrom[indk];
+        dfikdnk[indi] += evc_dn[indk] * m_exvolmod->df(i, k);
+      }
+    }
+
+    vector<vector<double>> d2fkijnskmusk(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d2fkijnskmusk[indi][indj] += m_exvolmod->d2f(k, i, j) * m_DensitiesId[k] * dmus[k];
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          d2fkijnskmusk[indi][indj] += m_exvolmod->d2f(k, i, j) * evc_nsdmus[indk];
+        }
+      }
+    }
+
+    vector<vector<double>> pkd3fkijmdnm(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    pkd3fkijmdnm[indi][indj] += Ps[k] * m_exvolmod->d3f(k, i, j, m) * dni[m];
+        //  }
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk]; 
+          for (int indm = 0; indm < Nevcomp; ++indm) {
+            int m = evindsfrom[indm];
+            pkd3fkijmdnm[indi][indj] += evc_Ps[indk] * m_exvolmod->d3f(k, i, j, m) * evc_dn[indm];
+          }
+        }
+      }
+    }
+
+    vector<vector<double>> d3vijkdnk(Nmfcomp, vector<double>(Nmfcomp, 0.));
+    for (int indi = 0; indi < Nmfcomp; ++indi) {
+      int i = mfindsfrom[indi];
+      for (int indj = 0; indj < Nmfcomp; ++indj) {
+        int j = mfindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d3vijkdnk[indi][indj] += dni[k] * m_mfmod->d3v(i, j, k);
+        //}
+        for (int indk = 0; indk < Nmfcomp; ++indk) {
+          int k = mfindsfrom[indk];
+          d3vijkdnk[indi][indj] += mfc_dn[indk] * m_mfmod->d3v(i, j, k);
+        }
+      }
+    }
+
+    vector< vector<double> > daij11, daij12, daij21, daij22;
+
+    daij11.resize(NN);
+    daij12.resize(NN);
+    daij21.resize(NN);
+    daij22.resize(NN);
+    for (int i = 0; i < NN; ++i) {
+      //cout << "chi3 iter: " << i << "\n";
+      daij11[i].resize(NN);
+      daij12[i].resize(NN);
+      daij21[i].resize(NN);
+      daij22[i].resize(NN);
+      for (int j = 0; j < NN; ++j) {
+        daij11[i][j] = 0.;
+        //for (int k = 0; k < NN; ++k)
+        //  daij11[i][j] += -m_exvolmod->d2f(i, j, k) * dni[k] * m_DensitiesId[i];
+        daij11[i][j] += -d2fijkdnk[evinds[i]][evinds[j]] * m_DensitiesId[i];
+        daij11[i][j] += -m_exvolmod->df(i, j) * chi2id[i] * dmus[i];
+
+        daij12[i][j] = 0.;
+        if (i == j) {
+          //for (int k = 0; k < NN; ++k)
+          //  daij12[i][j] += -m_exvolmod->df(i, k) * chi2id[i] * dni[k];
+          daij12[i][j] += -dfikdnk[evinds[i]] * chi2id[i];
+          daij12[i][j] += -m_exvolmod->f(i) * chi3id[i] * dmus[i];
+        }
+
+
+        daij21[i][j] = 0.;
+        daij21[i][j] += d3vijkdnk[mfinds[i]][mfinds[j]];
+        //for (int k = 0; k < NN; ++k) {
+        //  daij21[i][j] += m_mfmod->d3v(i, j, k) * dni[k];
+        //  //daij21[i][j] += -m_exvolmod->d2f(k, i, j) * m_DensitiesId[k] * dmus[k];
+        //  //for (int m = 0; m < NN; ++m)
+        //  //  daij21[i][j] += -Ps[k] * m_exvolmod->d3f(k, i, j, m) * dni[m];
+        //}
+        daij21[i][j] += -d2fkijnskmusk[evinds[i]][evinds[j]];
+        daij21[i][j] += -pkd3fkijmdnm[evinds[i]][evinds[j]];
+
+        daij22[i][j] = 0.;
+        daij22[i][j] += -m_exvolmod->df(j, i) * chi2id[j] * dmus[j];
+        //for (int k = 0; k < NN; ++k)
+        //  daij22[i][j] += -m_exvolmod->d2f(j, i, k) * m_DensitiesId[j] * dni[k];
+        daij22[i][j] += -m_DensitiesId[j] * d2fijkdnk[evinds[j]][evinds[i]];
+      }
+    }
+
+
+    for (int i = 0; i < NN; ++i) {
+      xVector[i] = 0.;
+
+      for (int j = 0; j < NN; ++j)
+        xVector[i] += -daij11[i][j] * dni[j];
+
+      for (int j = 0; j < NN; ++j)
+        xVector[i] += -daij12[i][j] * dmus[j];
+    }
+    for (int i = 0; i < NN; ++i) {
+      xVector[NN + i] = 0.;
+
+      for (int j = 0; j < NN; ++j)
+        xVector[NN + i] += -daij21[i][j] * dni[j];
+
+      for (int j = 0; j < NN; ++j)
+        xVector[NN + i] += -daij22[i][j] * dmus[j];
+    }
+
+    solVector = decomp.solve(xVector);
+
+    for (int i = 0; i < NN; ++i) {
+      d2ni[i] = solVector[i];
+      d2mus[i] = solVector[NN + i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      ret[2] += chgs[i] * d2ni[i];
+
+    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+
+    if (order < 4) return ret;
+
+    vector<double> evc_d2n(Nevcomp, 0.), evc_d2mus(Nevcomp, 0.), evc_nsd2mus(Nevcomp, 0.), evc_chi2iddmus2(Nevcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      evc_d2n[evinds[i]] += d2ni[i];
+      evc_d2mus[evinds[i]] += d2mus[i];
+      evc_nsd2mus[evinds[i]] += m_DensitiesId[i] * d2mus[i];
+      evc_chi2iddmus2[evinds[i]] += chi2id[i] * dmus[i] * dmus[i];
+    }
+
+    vector<double> mfc_d2n(Nmfcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      mfc_d2n[mfinds[i]] += d2ni[i];
+    }
+
+    // chi4
+    vector<double> d3ni(NN, 0.), d3mus(NN, 0.);
+
+    vector<double> chi4id(m_densities.size());
+    for (int i = 0; i < NN; ++i)
+      chi4id[i] = m_TPS->Particles()[i].chiDimensionfull(4, m_Parameters, m_UseWidth, m_MuStar[i]) * pow(xMath::GeVtoifm(), 3);
+
+    vector<vector<double>> d2fijkd2nk(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d2fijkd2nk[indi][indj] += d2ni[k] * m_exvolmod->d2f(i, j, k);
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          d2fijkd2nk[indi][indj] += evc_d2n[indk] * m_exvolmod->d2f(i, j, k);
+        }
+      }
+    }
+
+    vector<vector<double>> d3fijkmdnkdnm(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    d3fijkmdnkdnm[indi][indj] += m_exvolmod->d3f(i, j, k, m) * dni[k] * dni[m];
+        //  }
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          for (int indm = 0; indm < Nevcomp; ++indm) {
+            int m = evindsfrom[indm];
+            d3fijkmdnkdnm[indi][indj] += m_exvolmod->d3f(i, j, k, m) * evc_dn[indk] * evc_dn[indm];
+          }
+        }
+      }
+    }
+
+    vector<double> dfikd2nk(Nevcomp, 0.);
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      //for (int k = 0; k < NN; ++k) {
+      //  dfikd2nk[indi] += d2ni[k] * m_exvolmod->df(i, k);
+      //}
+      for (int indk = 0; indk < Nevcomp; ++indk) {
+        int k = evindsfrom[indk];
+        dfikd2nk[indi] += evc_d2n[indk] * m_exvolmod->df(i, k);
+      }
+    }
+
+    vector<double> d2fikmdnkdnm(Nevcomp, 0.);
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      //for (int k = 0; k < NN; ++k) {
+      //  for (int m = 0; m < NN; ++m) {
+      //    d2fikmdnkdnm[indi] += m_exvolmod->d2f(i, k, m) * dni[k] * dni[m];
+      //  }
+      //}
+      for (int indk = 0; indk < Nevcomp; ++indk) {
+        int k = evindsfrom[indk];
+        for (int indm = 0; indm < Nevcomp; ++indm) {
+          int m = evindsfrom[indm];
+          d2fikmdnkdnm[indi] += m_exvolmod->d2f(i, k, m) * evc_dn[indk] * evc_dn[indm];
+        }
+      }
+    }
+
+    vector<vector<double>> d2fkijnskd2musk(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d2fkijnskd2musk[indi][indj] += m_exvolmod->d2f(k, i, j) * m_DensitiesId[k] * d2mus[k];
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          d2fkijnskd2musk[indi][indj] += m_exvolmod->d2f(k, i, j) * evc_nsd2mus[indk];
+        }
+      }
+    }
+
+    vector<vector<double>> d2fkijc2kdmuskdmusk(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d2fkijc2kdmuskdmusk[indi][indj] += m_exvolmod->d2f(k, i, j) * chi2id[k] * dmus[k] * dmus[k];
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          d2fkijc2kdmuskdmusk[indi][indj] += m_exvolmod->d2f(k, i, j) * evc_chi2iddmus2[indk];
+        }
+      }
+    }
+
+    vector<vector<double>> nskd3fkijmdmuskdnm(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    nskd3fkijmdmuskdnm[indi][indj] += m_DensitiesId[k] * m_exvolmod->d3f(k, i, j, m) * dmus[k] * dni[m];
+        //  }
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          for (int indm = 0; indm < Nevcomp; ++indm) {
+            int m = evindsfrom[indm];
+            nskd3fkijmdmuskdnm[indi][indj] += evc_nsdmus[indk] * m_exvolmod->d3f(k, i, j, m) * evc_dn[indm];
+          }
+        }
+      }
+    }
+
+    vector<vector<double>> pkd3fkijmd2nm(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    pkd3fkijmd2nm[indi][indj] += Ps[k] * m_exvolmod->d3f(k, i, j, m) * d2ni[m];
+        //  }
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          for (int indm = 0; indm < Nevcomp; ++indm) {
+            int m = evindsfrom[indm];
+            pkd3fkijmd2nm[indi][indj] += evc_Ps[indk] * m_exvolmod->d3f(k, i, j, m) * evc_d2n[indm];
+          }
+        }
+      }
+    }
+
+    vector<vector<double>> pkd4fkijmldnmdnl(Nevcomp, vector<double>(Nevcomp, 0.));
+    for (int indi = 0; indi < Nevcomp; ++indi) {
+      int i = evindsfrom[indi];
+      for (int indj = 0; indj < Nevcomp; ++indj) {
+        int j = evindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    for (int l = 0; m < NN; ++m) {
+        //      pkd4fkijmldnmdnl[indi][indj] += Ps[k] * m_exvolmod->d4f(k, i, j, m, l) * dni[m] * dni[l];
+        //    }
+        //  }
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          for (int indm = 0; indm < Nevcomp; ++indm) {
+            int m = evindsfrom[indm];
+            for (int indl = 0; indl < Nevcomp; ++indl) {
+              int l = evindsfrom[indl];
+              pkd4fkijmldnmdnl[indi][indj] += evc_Ps[indk] * m_exvolmod->d4f(k, i, j, m, l) * evc_dn[indm] * evc_dn[indl];
+            }
+          }
+        }
+      }
+    }
+
+    vector<vector<double>> d3vijkd2nk(Nmfcomp, vector<double>(Nmfcomp, 0.));
+    for (int indi = 0; indi < Nmfcomp; ++indi) {
+      int i = mfindsfrom[indi];
+      for (int indj = 0; indj < Nmfcomp; ++indj) {
+        int j = mfindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  d3vijkd2nk[indi][indj] += d2ni[k] * m_mfmod->d3v(i, j, k);
+        //}
+        for (int indk = 0; indk < Nmfcomp; ++indk) {
+          int k = mfindsfrom[indk];
+          d3vijkd2nk[indi][indj] += mfc_d2n[indk] * m_mfmod->d3v(i, j, k);
+        }
+      }
+    }
+
+    vector<vector<double>> d4vijkmdnkdnm(Nmfcomp, vector<double>(Nmfcomp, 0.));
+    for (int indi = 0; indi < Nmfcomp; ++indi) {
+      int i = mfindsfrom[indi];
+      for (int indj = 0; indj < Nmfcomp; ++indj) {
+        int j = mfindsfrom[indj];
+        //for (int k = 0; k < NN; ++k) {
+        //  for (int m = 0; m < NN; ++m) {
+        //    d4vijkmdnkdnm[indi][indj] += dni[k] * dni[m] * m_mfmod->d4v(i, j, k, m);
+        //  }
+        //}
+        for (int indk = 0; indk < Nmfcomp; ++indk) {
+          int k = mfindsfrom[indk];
+          for (int indm = 0; indm < Nmfcomp; ++indm) {
+            int m = mfindsfrom[indm];
+            d4vijkmdnkdnm[indi][indj] += mfc_dn[indk] * mfc_dn[indm] * m_mfmod->d4v(i, j, k, m);
+          }
+        }
+      }
+    }
+
+    vector< vector<double> > d2aij11, d2aij12, d2aij21, d2aij22;
+
+    d2aij11.resize(NN);
+    d2aij12.resize(NN);
+    d2aij21.resize(NN);
+    d2aij22.resize(NN);
+    for (int i = 0; i < NN; ++i) {
+      //cout << "chi4 iter: " << i << "\n";
+      d2aij11[i].resize(NN);
+      d2aij12[i].resize(NN);
+      d2aij21[i].resize(NN);
+      d2aij22[i].resize(NN);
+      for (int j = 0; j < NN; ++j) {
+        d2aij11[i][j] = 0.;
+        d2aij11[i][j] += -m_exvolmod->df(i, j) * chi3id[i] * dmus[i] * dmus[i];
+        d2aij11[i][j] += -m_exvolmod->df(i, j) * chi2id[i] * d2mus[i];
+
+        d2aij11[i][j] += -2. * d2fijkdnk[evinds[i]][evinds[j]] * chi2id[i] * dmus[i];
+        d2aij11[i][j] += -d2fijkd2nk[evinds[i]][evinds[j]] * m_DensitiesId[i];
+        d2aij11[i][j] += -d3fijkmdnkdnm[evinds[i]][evinds[j]] * m_DensitiesId[i];
+
+        //for (int k = 0; k < NN; ++k) {
+        //  //d2aij11[i][j] += -m_exvolmod->d2f(i, j, k) * chi2id[i] * dmus[i] * dni[k];
+        //  //d2aij11[i][j] += -m_exvolmod->d2f(i, j, k) * m_DensitiesId[i] * d2ni[k];
+        //  //d2aij11[i][j] += -m_exvolmod->d2f(i, j, k) * chi2id[i] * dmus[i] * dni[k];
+        //  //for (int m = 0; m < NN; ++m) {
+        //  //  d2aij11[i][j] += -m_exvolmod->d3f(i, j, k, m) * m_DensitiesId[i] * dni[k] * dni[m];
+        //  //}
+        //}
+
+        d2aij12[i][j] = 0.;
+        if (i == j) {
+          d2aij12[i][j] += -m_exvolmod->f(i) * chi3id[i] * d2mus[i];
+          d2aij12[i][j] += -m_exvolmod->f(i) * chi4id[i] * dmus[i] * dmus[i];
+
+          d2aij12[i][j] += -2. * dfikdnk[evinds[i]] * chi3id[i] * dmus[i];
+          d2aij12[i][j] += -dfikd2nk[evinds[i]] * chi2id[i];
+          d2aij12[i][j] += -d2fikmdnkdnm[evinds[i]] * chi2id[i];
+
+          //for (int k = 0; k < NN; ++k) {
+          //  d2aij12[i][j] += -2. * m_exvolmod->df(i, k) * chi3id[i] * dmus[i] * dni[k];
+          //  d2aij12[i][j] += -m_exvolmod->df(i, k) * chi2id[i] * d2ni[k];
+
+          //  //for (int m = 0; m < NN; ++m) {
+          //  //  d2aij12[i][j] += -m_exvolmod->d2f(i, k, m) * chi2id[i] * dni[k] * dni[m];
+          //  //}
+          //}
+        }
+
+        d2aij21[i][j] = 0.;
+
+        d2aij21[i][j] += -d2fkijnskd2musk[evinds[i]][evinds[j]];
+        d2aij21[i][j] += -d2fkijc2kdmuskdmusk[evinds[i]][evinds[j]];
+        d2aij21[i][j] += -2. * nskd3fkijmdmuskdnm[evinds[i]][evinds[j]];
+        d2aij21[i][j] += -pkd3fkijmd2nm[evinds[i]][evinds[j]];
+        d2aij21[i][j] += -pkd4fkijmldnmdnl[evinds[i]][evinds[j]];
+
+        d2aij21[i][j] += d3vijkd2nk[mfinds[i]][mfinds[j]];
+        d2aij21[i][j] += d4vijkmdnkdnm[mfinds[i]][mfinds[j]];
+
+        //for (int k = 0; k < NN; ++k) {
+        //  ////daij21[i][j] += m_mfmod->d3v(i, j, k) * dni[k];
+        //  d2aij21[i][j] += m_mfmod->d3v(i, j, k) * d2ni[k];
+        //  for (int m = 0; m < NN; ++m)
+        //    d2aij21[i][j] += m_mfmod->d4v(i, j, k, m) * dni[k] * dni[m];
+        //  ////daij21[i][j] += -m_exvolmod->d2f(k, i, j) * m_DensitiesId[k] * dmus[k];
+        //  //d2aij21[i][j] += -m_exvolmod->d2f(k, i, j) * m_DensitiesId[k] * d2mus[k];
+        //  //d2aij21[i][j] += -m_exvolmod->d2f(k, i, j) * chi2id[k] * dmus[k] * dmus[k];
+        //  //for (int m = 0; m < NN; ++m)
+        //  //  d2aij21[i][j] += -m_exvolmod->d3f(k, i, j, m) * m_DensitiesId[k] * dmus[k] * dni[m];
+
+        //  //for (int m = 0; m < NN; ++m) {
+        //  //  ////daij21[i][j] += -Ps[k] * m_exvolmod->d3f(k, i, j, m) * dni[m];
+        //  //  //d2aij21[i][j] += -m_DensitiesId[k] * m_exvolmod->d3f(k, i, j, m) * dni[m] * dmus[k];
+        //  //  //d2aij21[i][j] += -Ps[k] * m_exvolmod->d3f(k, i, j, m) * d2ni[m];
+        //  //  //for (int l = 0; l < NN; ++l)
+        //  //  //  d2aij21[i][j] += -Ps[k] * m_exvolmod->d4f(k, i, j, m, l) * dni[m] * dni[l];
+        //  //}
+        //}
+
+        d2aij22[i][j] = 0.;
+        //daij22[i][j] += -m_exvolmod->df(j, i) * chi2id[j] * dmus[j];
+        d2aij22[i][j] += -m_exvolmod->df(j, i) * chi3id[j] * dmus[j] * dmus[j];
+        d2aij22[i][j] += -m_exvolmod->df(j, i) * chi2id[j] * d2mus[j];
+
+        d2aij22[i][j] += -2. * d2fijkdnk[evinds[j]][evinds[i]] * chi2id[j] * dmus[j];
+
+        //for (int k = 0; k < NN; ++k)
+        //  d2aij22[i][j] += -m_exvolmod->d2f(j, i, k) * chi2id[j] * dmus[j] * dni[k];
+
+        d2aij22[i][j] += -d2fijkd2nk[evinds[j]][evinds[i]] * m_DensitiesId[j];
+        d2aij22[i][j] += -d3fijkmdnkdnm[evinds[j]][evinds[i]] * m_DensitiesId[j];
+
+        //for (int k = 0; k < NN; ++k) {
+        //  ////daij22[i][j] += -m_exvolmod->d2f(j, i, k) * m_DensitiesId[j] * dni[k];
+        //  //d2aij22[i][j] += -m_exvolmod->d2f(j, i, k) * chi2id[j] * dni[k] * dmus[j];
+        //  //d2aij22[i][j] += -m_exvolmod->d2f(j, i, k) * m_DensitiesId[j] * d2ni[k];
+        //  //for (int m = 0; m < NN; ++m) {
+        //  //  d2aij22[i][j] += -m_exvolmod->d3f(j, i, k, m) * m_DensitiesId[j] * dni[k] * dni[m];
+        //  //}
+        //}
+      }
+    }
+
+
+    for (int i = 0; i < NN; ++i) {
+      xVector[i] = 0.;
+
+      for (int j = 0; j < NN; ++j)
+        xVector[i] += -2. * daij11[i][j] * d2ni[j] - d2aij11[i][j] * dni[j];
+
+      for (int j = 0; j < NN; ++j)
+        xVector[i] += -2. * daij12[i][j] * d2mus[j] - d2aij12[i][j] * dmus[j];
+    }
+    for (int i = 0; i < NN; ++i) {
+      xVector[NN + i] = 0.;
+
+      for (int j = 0; j < NN; ++j)
+        xVector[NN + i] += -2. * daij21[i][j] * d2ni[j] - d2aij21[i][j] * dni[j];
+
+      for (int j = 0; j < NN; ++j)
+        xVector[NN + i] += -2. * daij22[i][j] * d2mus[j] - d2aij22[i][j] * dmus[j];
+    }
+
+    solVector = decomp.solve(xVector);
+
+    for (int i = 0; i < NN; ++i) {
+      d3ni[i] = solVector[i];
+      d3mus[i] = solVector[NN + i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      ret[3] += chgs[i] * d3ni[i];
+
+    ret[3] /= pow(xMath::GeVtoifm(), 3);
+
+    return ret;
+  }
+
+  vector<double> ThermalModelRealGas::CalculateChargeFluctuationsOld(const vector<double>& chgs, int order) {
     vector<double> ret(order + 1, 0.);
 
     // chi1
@@ -392,7 +1030,7 @@ namespace thermalfist {
           d2aij12[i][j] += -m_exvolmod->f(i) * chi3id[i] * d2mus[i];
           d2aij12[i][j] += -m_exvolmod->f(i) * chi4id[i] * dmus[i] * dmus[i];
           for (int k = 0; k < NN; ++k) {
-            d2aij12[i][j] += -2.* m_exvolmod->df(i, k) * chi3id[i] * dmus[i] * dni[k];
+            d2aij12[i][j] += -2. * m_exvolmod->df(i, k) * chi3id[i] * dmus[i] * dni[k];
             d2aij12[i][j] += -m_exvolmod->df(i, k) * chi2id[i] * d2ni[k];
             for (int m = 0; m < NN; ++m) {
               d2aij12[i][j] += -m_exvolmod->d2f(i, k, m) * chi2id[i] * dni[k] * dni[m];
@@ -473,6 +1111,7 @@ namespace thermalfist {
     return ret;
   }
 
+
   // TODO include correlations
   vector< vector<double> > ThermalModelRealGas::CalculateFluctuations(int order) {
     if (order < 1) return m_chi;
@@ -510,6 +1149,10 @@ namespace thermalfist {
   void ThermalModelRealGas::CalculateTwoParticleCorrelations()
   {
     int NN = m_densities.size();
+    int Nevcomp = m_exvolmod->ComponentsNumber();
+    const vector<int>& evinds = m_exvolmod->ComponentIndices();
+    const vector<int>& evindsfrom = m_exvolmod->ComponentIndicesFrom();
+
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i)
@@ -524,6 +1167,11 @@ namespace thermalfist {
       //chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
       Ps[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
       chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+    }
+
+    vector<double>  evc_Ps(Nevcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      evc_Ps[evinds[i]] += Ps[i];
     }
 
     for (int i = 0; i < NN; ++i)
@@ -543,8 +1191,12 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
         densMatrix(NN + i, j) = m_mfmod->d2v(i, j);
-        for (int k = 0; k < NN; ++k) {
-          densMatrix(NN + i, j) += -m_exvolmod->d2f(k, i, j) * Ps[k];
+        //for (int k = 0; k < NN; ++k) {
+        //  densMatrix(NN + i, j) += -m_exvolmod->d2f(k, i, j) * Ps[k];
+        //}
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          densMatrix(NN + i, j) += -m_exvolmod->d2f(k, i, j) * evc_Ps[indk];
         }
       }
 
@@ -707,7 +1359,6 @@ namespace thermalfist {
 
   std::vector<double> ThermalModelRealGas::BroydenJacobianRealGas::Jacobian(const std::vector<double>& x)
   {
-    cout << "AAA" << "\n";
     int NN = m_THM->m_densities.size();
 
     MatrixXd densMatrix(NN, NN);
@@ -752,11 +1403,23 @@ namespace thermalfist {
         }
       }
 
+      int Nevcomp = m_THM->m_exvolmod->ComponentsNumber();
+      const vector<int>& evinds = m_THM->m_exvolmod->ComponentIndices();
+      const vector<int>& evindsfrom = m_THM->m_exvolmod->ComponentIndicesFrom();
+
+      int Nmfcomp = m_THM->m_mfmod->ComponentsNumber();
+      const vector<int>& mfinds = m_THM->m_mfmod->ComponentIndices();
+      const vector<int>& mfindsfrom = m_THM->m_mfmod->ComponentIndicesFrom();
+
+      vector<double> evc_Ps(Nevcomp, 0.);
+      for (int i = 0; i < NN; ++i)
+        evc_Ps[m_THM->m_exvolmod->ComponentIndices()[i]] += Ps[i];
+
       PartialPivLU<MatrixXd> decomp(densMatrix);
 
       for (int kp = 0; kp < NN; ++kp) {
 
-        if (0 && 1 /*attrfl*/) {
+        if (1 /*attrfl*/) {
           for (int l = 0; l < NN; ++l) {
             xVector[l] = 0.;
             if (l == kp) {
@@ -770,9 +1433,33 @@ namespace thermalfist {
         }
 
         vector<double> dnjdmukp(NN, 0.);
-        if (0 && 1 /*attrfl*/) {
+        vector<double> evc_dnjdmukp(Nevcomp, 0.);
+        vector<double> evc_d2fmul(Nevcomp, 0.);
+        vector<double> mfc_dnjdmukp(Nmfcomp, 0.);
+        vector<double> mfc_d2vmul(Nmfcomp, 0.);
+        if (1 /*attrfl*/) {
           for (int j = 0; j < NN; ++j) {
             dnjdmukp[j] = solVector[j];
+            evc_dnjdmukp[evinds[j]] += solVector[j];
+            mfc_dnjdmukp[mfinds[j]] += solVector[j];
+          }
+          for (int nn = 0; nn < Nevcomp; ++nn) {
+            for (int in = 0; in < Nevcomp; ++in) {
+              for (int inp = 0; inp < Nevcomp; ++inp) {
+                int n  = evindsfrom[in];
+                int np = evindsfrom[inp];
+                int k  = evindsfrom[nn];
+                evc_d2fmul[nn] += -evc_Ps[in] * m_THM->m_exvolmod->d2f(n, k, np) * evc_dnjdmukp[inp];
+              }
+            }
+          }
+
+          for (int nn = 0; nn < Nmfcomp; ++nn) {
+            for (int in = 0; in < Nmfcomp; ++in) {
+              int n = mfindsfrom[in];
+              int k = mfindsfrom[nn];
+              mfc_d2vmul[nn] += m_THM->m_mfmod->d2v(k, n) * mfc_dnjdmukp[in];
+            }
           }
         }
 
@@ -782,16 +1469,32 @@ namespace thermalfist {
             ret[k * NN + kp] += 1.;
           ret[k * NN + kp] += -m_THM->m_exvolmod->df(kp, k) * ns[kp];
 
-          if (0 && 1 /*attrfl*/) {
-            for (int n = 0; n < NN; ++n) {
-              for (int np = 0; np < NN; ++np) {
-                ret[k * NN + kp] += -Ps[n] * m_THM->m_exvolmod->d2f(n, k, np) * dnjdmukp[np];
-              }
-            }
+          if (1 /*attrfl*/) {
+            //for (int n = 0; n < NN; ++n) {
+            //  for (int np = 0; np < NN; ++np) {
+            //    ret[k * NN + kp] += -Ps[n] * m_THM->m_exvolmod->d2f(n, k, np) * dnjdmukp[np];
+            //  }
+            //}
 
-            for (int n = 0; n < NN; ++n) {
-              ret[k * NN + kp] += m_THM->m_mfmod->d2v(k, n) * dnjdmukp[n];
-            }
+            ret[k * NN + kp] += evc_d2fmul[evinds[k]];
+            //for (int in = 0; in < Nevcomp; ++in) {
+            //  for (int inp = 0; inp < Nevcomp; ++inp) {
+            //    int n  = m_THM->m_exvolmod->ComponentIndicesFrom()[in];
+            //    int np = m_THM->m_exvolmod->ComponentIndicesFrom()[inp];
+            //    ret[k * NN + kp] += -evc_Ps[in] * m_THM->m_exvolmod->d2f(n, k, np) * evc_dnjdmukp[inp];
+            //  }
+            //}
+
+            //for (int n = 0; n < NN; ++n) {
+            //  ret[k * NN + kp] += m_THM->m_mfmod->d2v(k, n) * dnjdmukp[n];
+            //}
+
+            ret[k * NN + kp] += mfc_d2vmul[mfinds[k]];
+
+            //for (int in = 0; in < Nmfcomp; ++in) {
+            //  int n = m_THM->m_mfmod->ComponentIndicesFrom()[in];
+            //  ret[k * NN + kp] += m_THM->m_mfmod->d2v(k, n) * mfc_dnjdmukp[in];
+            //}
           }
         }
       }

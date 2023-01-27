@@ -29,6 +29,7 @@
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 
 #include "ItemDelegateCustom.h"
 
@@ -366,6 +367,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
     modelnew = new ThermalModelVDWCanonicalStrangeness(model->TPS());
   else if (config.ModelType == ThermalModelConfig::QvdW) {
     modelnew = new ThermalModelVDW(model->TPS());
+  }
+  else if (config.ModelType == ThermalModelConfig::RealGas) {
+    modelnew = new ThermalModelRealGas(model->TPS());
   }
   else if (config.ModelType == ThermalModelConfig::CCE)
     modelnew = new ThermalModelCanonicalCharm(model->TPS());

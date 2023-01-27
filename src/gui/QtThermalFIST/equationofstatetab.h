@@ -32,6 +32,8 @@ class EoSWorker : public QThread
 
   thermalfist::ThermalModelBase *model;
   double Tmin, Tmax, dT;
+  double cParam;
+  int mode;
   int *currentSize;
   int *stop;
 
@@ -46,19 +48,33 @@ public:
       double Tmin = 100., 
       double Tmax = 200.,
       double dT = 5.,
+      double cParamVal = 0.,
+      int mmode = 0,
       std::vector< Thermodynamics > *paramsTDo = NULL,
       std::vector< ChargesFluctuations > *paramsFlo = NULL,
       std::vector<double> *varvalueso = NULL,
       int *currentSizeo = NULL,
       int *stopo = NULL,
       QObject * parent = 0) :
-  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT) {
+  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParam(cParamVal), mode(mmode) {
       model = mod;
       paramsTD = paramsTDo;
       paramsFl = paramsFlo;
       varvalues = varvalueso;
       currentSize = currentSizeo;
       stop = stopo;
+
+      if (mode == 0) {
+        mod->SetBaryonChemicalPotential(cParam * 1.e-3);
+        mod->FillChemicalPotentials();
+      }
+      else if (mode == 1) {
+        mod->SetBaryonChemicalPotential(0.);
+        mod->FillChemicalPotentials();
+      }
+      else if (mode == 2) {
+        mod->SetTemperature(cParam * 1.e-3);
+      }
     }
 signals:
   void calculated();
@@ -78,6 +94,8 @@ class EquationOfStateTab : public QWidget
     QComboBox *comboFeeddown;
     QComboBox *comboFeeddown2;
     QLabel    *labelFeeddown, *labelFeeddown2;
+
+    QLabel *labelmuB, *labelTMin, *labelTMax, *labeldT;
 
     QCustomPlot *plotDependence;
 
@@ -106,6 +124,9 @@ class EquationOfStateTab : public QWidget
     QString cpath;
 
     ModelConfigWidget *configWidget;
+
+
+    QComboBox* comboMode; // 0 - const muB, 1 - const muB/T, 2 - const T
 
     // Wuppertal-Budapest lattice data
     QVector< QVector<double> > dataWBx, dataWBy, dataWByerrp, dataWByerrm;

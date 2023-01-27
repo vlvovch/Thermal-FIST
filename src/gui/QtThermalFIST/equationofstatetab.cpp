@@ -22,36 +22,55 @@
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
 #include "HRGBase/xMath.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 
 using namespace std;
 using namespace thermalfist;
 
 void EoSWorker::run() {
   int i = 0;
-  for (double T = Tmin; T <= Tmax + 1.e-10 && !(*stop); T += dT, ++i) {
+  for (double param = Tmin; param <= Tmax + 1.e-10 && !(*stop); param += dT, ++i) {
     if (i < paramsTD->size()) {
-      model->SetTemperature(T * 1.e-3);
+      if (mode == 0) {
+        model->SetTemperature(param * 1.e-3);
+      }
+      else if (mode == 1) {
+        model->SetTemperature(param * 1.e-3);
+        model->SetBaryonChemicalPotential(param * 1.e-3 * cParam);
+      }
+      else if (mode == 2) {
+        model->SetBaryonChemicalPotential(param * 1.e-3);
+      }
 
-      if (T == Tmin)
+      if (param == Tmin)
         model->ConstrainChemicalPotentials(true);
       else
         model->ConstrainChemicalPotentials(false);
 
       model->CalculateDensities();
 
-      varvalues->operator [](i) = T;
+      varvalues->operator [](i) = param;
+      double T = model->Parameters().T * 1.e3;
       Thermodynamics tTD;
+      tTD.p = model->Pressure();
+      tTD.e = model->EnergyDensity();
+      tTD.s = model->EntropyDensity();
+      tTD.I = tTD.e - 3. * tTD.p;
       tTD.pT4 = model->Pressure() / pow(T * 1.e-3, 4) / thermalfist::xMath::GeVtoifm3();
       tTD.eT4 = model->EnergyDensity() / pow(T * 1.e-3, 4) / thermalfist::xMath::GeVtoifm3();
       tTD.sT3 = model->EntropyDensity() / pow(T * 1.e-3, 3) / thermalfist::xMath::GeVtoifm3();
       tTD.IT4 = tTD.eT4 - 3. * tTD.pT4;
-      tTD.nhT3 = model->HadronDensity() / pow(T * 1.e-3, 3) / thermalfist::xMath::GeVtoifm3();
+      tTD.nh  = model->HadronDensity();
       tTD.T = model->Parameters().T;
       tTD.muB = model->Parameters().muB;
       tTD.muQ = model->Parameters().muQ;
       tTD.muS = model->Parameters().muS;
       tTD.muC = model->Parameters().muC;
       tTD.densities = model->AllDensities();
+      tTD.rhoB = model->BaryonDensity();
+      tTD.rhoQ = model->ElectricChargeDensity();
+      tTD.rhoS = model->StrangenessDensity();
+      tTD.rhoC = model->CharmDensity();
       tTD.flag = true;
       paramsTD->operator [](i) = tTD;
 
@@ -153,12 +172,37 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     parammap[tname] = index;
     index++;
 
+    tname = "s/T³";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
     tname = "(e-3P)/T⁴";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
 
-    tname = "s/T³";
+    tname = "Δ";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρB/T³";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρQ/T³";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρS/T³";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρC/T³";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -169,6 +213,56 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     index++;
 
     tname = "ni/T³";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "p[MeV/fm^3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "e[MeV/fm^3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "(e-3P)[MeV/fm^3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "s[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ntot[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ni[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρB[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρQ[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρS[fm^-3]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "ρC[fm^-3]";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -347,6 +441,16 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
 
     grModelConfig->setLayout(layModelConfig);
 
+    QHBoxLayout* layMode = new QHBoxLayout();
+    layMode->setAlignment(Qt::AlignLeft);
+    comboMode = new QComboBox();
+    comboMode->addItem(tr("Const. μ<sub>B</sub>"));
+    comboMode->addItem(tr("Const. μ<sub>B</sub>/T"));
+    comboMode->addItem(tr("Const. T"));
+    comboMode->setCurrentIndex(0);
+    connect(comboMode, SIGNAL(currentIndexChanged(int)), this, SLOT(modelChanged()));
+    layMode->addWidget(new QLabel(tr("Mode:")));
+    layMode->addWidget(comboMode);
 
     QGroupBox *grRange = new QGroupBox(tr("Parameter range:"));
 
@@ -354,28 +458,28 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     QGridLayout *layBounds = new QGridLayout();
     layBounds->setAlignment(Qt::AlignLeft);
 
-    QLabel *labelmuB = new QLabel("μ<sub>B</sub> (MeV):");
+    labelmuB = new QLabel("μ<sub>B</sub> (MeV):");
     spinmuB = new QDoubleSpinBox();
     spinmuB->setDecimals(3);
     spinmuB->setMinimum(-10000.);
     spinmuB->setMaximum(10000.);
     spinmuB->setValue(0.);
 
-    QLabel *labelTMin = new QLabel(tr("T<sub>min</sub> (MeV):"));
+    labelTMin = new QLabel(tr("T<sub>min</sub> (MeV):"));
     spinTMin = new QDoubleSpinBox();
     spinTMin->setDecimals(3);
     spinTMin->setMinimum(0.01);
     spinTMin->setMaximum(10000.);
     spinTMin->setValue(100.);
 
-    QLabel *labelTMax = new QLabel(tr("T<sub>max</sub> (MeV):"));
+    labelTMax = new QLabel(tr("T<sub>max</sub> (MeV):"));
     spinTMax = new QDoubleSpinBox();
     spinTMax->setDecimals(3);
     spinTMax->setMinimum(0.01);
     spinTMax->setMaximum(10000.);
     spinTMax->setValue(200.);
 
-    QLabel *labeldT = new QLabel(tr("∆T (MeV):"));
+    labeldT = new QLabel(tr("∆T (MeV):"));
     spindT = new QDoubleSpinBox();
     spindT->setDecimals(3);
     spindT->setMinimum(0.);
@@ -404,6 +508,7 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     connect(buttonCalculate, SIGNAL(clicked()), this, SLOT(calculate()));
 
     layRight->addWidget(grModelConfig);
+    layRight->addLayout(layMode);
     layRight->addWidget(grRange);
     layRight->addWidget(buttonCalculate, 0, Qt::AlignLeft);
 
@@ -473,6 +578,9 @@ void EquationOfStateTab::calculate() {
       else if (config.ModelType == ThermalModelConfig::QvdW) {
         modelnew = new ThermalModelVDW(model->TPS());
       }
+      else if (config.ModelType == ThermalModelConfig::RealGas) {
+        modelnew = new ThermalModelRealGas(model->TPS());
+      }
       else {
         modelnew = new ThermalModelIdeal(model->TPS());
       }
@@ -501,6 +609,10 @@ void EquationOfStateTab::calculate() {
 
       SetThermalModelInteraction(model, config);
 
+      if (comboMode->currentIndex() == 2) {
+        model->ConstrainMuB(false);
+      }
+
       paramsTD.resize(0);
       paramsFl.resize(0);
       varvalues.resize(0);
@@ -516,6 +628,7 @@ void EquationOfStateTab::calculate() {
       fStop = 0;
 
       EoSWorker *wrk = new EoSWorker(model, spinTMin->value(), spinTMax->value(), spindT->value(),
+        spinmuB->value(), comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
@@ -548,7 +661,7 @@ void EquationOfStateTab::modelChanged()
     comboQuantity2->setEnabled(false);
   }
 
-  if (comboQuantity->currentText() == "ni/T³") {
+  if (comboQuantity->currentText() == "ni/T³" || comboQuantity->currentText() == "ni[fm^-3]") {
     labelParticle->setVisible(true);
     comboParticle->setVisible(true);
     labelFeeddown->setVisible(true);
@@ -561,7 +674,7 @@ void EquationOfStateTab::modelChanged()
     comboFeeddown->setVisible(false);
   }
 
-  if (comboQuantity2->currentText() == "ni/T³"
+  if ((comboQuantity2->currentText() == "ni/T³" || comboQuantity2->currentText() == "ni[fm^-3]")
     && CBratio->isChecked()) {
     labelParticle2->setVisible(true);
     comboParticle2->setVisible(true);
@@ -575,16 +688,32 @@ void EquationOfStateTab::modelChanged()
     comboFeeddown2->setVisible(false);
   }
 
-  if (configWidget->currentConfig.ConstrainMuB) {
+  if (configWidget->currentConfig.ConstrainMuB && comboMode->currentIndex() != 2) {
     spinmuB->setEnabled(false);
   }
   else {
     spinmuB->setEnabled(true);
   }
 
+  if (comboMode->currentIndex() == 2) {
+    labelmuB->setText("T (MeV)");
+    labelTMin->setText("μB<sub>min</sub> (MeV)");
+    labelTMax->setText("μB<sub>max</sub> (MeV)");
+    labeldT->setText("∆μB (MeV)");
+  }
+  else {
+    labelmuB->setText("μ<sub>B</sub> (MeV)");
+    if (comboMode->currentIndex() == 1) {
+      labelmuB->setText("μ<sub>B</sub>/T");
+    }
+    labelTMin->setText("T<sub>min</sub> (MeV)");
+    labelTMax->setText("T<sub>max</sub> (MeV)");
+    labeldT->setText("∆T (MeV)");
+  }
+
   QString constr = "";
 
-  if (configWidget->currentConfig.ConstrainMuB && model->TPS()->hasBaryons()) {
+  if (configWidget->currentConfig.ConstrainMuB && model->TPS()->hasBaryons() && comboMode->currentIndex() != 2) {
     constr += "S/B = " + QString::number(configWidget->currentConfig.SoverB, 'g', 2);
   }
 
@@ -884,8 +1013,23 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
 
     return ret;
   }
+
+  if (index >= 0 && index < paramnames.size() && paramnames[index] == "ni[fm^-3]") {
+    int pid = comboParticle->currentIndex();
+    int feed = comboFeeddown->currentIndex();
+    if (num == 1) {
+      pid = comboParticle2->currentIndex();
+      feed = comboFeeddown2->currentIndex();
+    }
+
+    for (int j = 0; j < tsize; ++j) {
+      ret[j] = paramsTD[j].densities[feed][pid];
+    }
+
+    return ret;
+  }
   
-  for (int i = 0; i < paramnames.size(); ++i) {
+  //for (int i = 0; i < paramnames.size(); ++i) {
     int tind = parammap["p/T⁴"];
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
@@ -917,7 +1061,110 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
     tind = parammap["ntot/T³"];
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
-        ret[j] = paramsTD[j].nhT3;
+        ret[j] = paramsTD[j].nh;
+        ret[j] *= 1. / pow(paramsTD[j].T, 3) / xMath::GeVtoifm3();
+      }
+    }
+
+    tind = parammap["ρB/T³"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoB;
+        ret[j] *= 1. / pow(paramsTD[j].T, 3) / xMath::GeVtoifm3();
+      }
+    }
+
+    tind = parammap["ρQ/T³"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoQ;
+        ret[j] *= 1. / pow(paramsTD[j].T, 3) / xMath::GeVtoifm3();
+      }
+    }
+
+    tind = parammap["ρS/T³"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoS;
+        ret[j] *= 1. / pow(paramsTD[j].T, 3) / xMath::GeVtoifm3();
+      }
+    }
+
+    tind = parammap["ρC/T³"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoC;
+        ret[j] *= 1. / pow(paramsTD[j].T, 3) / xMath::GeVtoifm3();
+      }
+    }
+
+    tind = parammap["p[MeV/fm^3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].p * 1.e3;
+      }
+    }
+
+    tind = parammap["e[MeV/fm^3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].e * 1.e3;
+      }
+    }
+
+    tind = parammap["(e-3P)[MeV/fm^3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].I * 1.e3;
+      }
+    }
+
+    tind = parammap["Δ"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].I / paramsTD[j].e / 3.;
+      }
+    }
+
+    tind = parammap["s[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].s;
+      }
+    }
+
+    tind = parammap["ntot[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].nh;
+      }
+    }
+
+    tind = parammap["ρB[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoB;
+      }
+    }
+
+    tind = parammap["ρQ[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoQ;
+      }
+    }
+
+    tind = parammap["ρS[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoS;
+      }
+    }
+
+    tind = parammap["ρC[fm^-3]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].rhoC;
       }
     }
 
@@ -1032,7 +1279,7 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
         ret[j] = paramsFl[j].chi4S;
       }
     }
-  }
+  //}
 
   return ret;
 }
@@ -1653,6 +1900,13 @@ void EquationOfStateTab::readLatticeData()
 }
 
 void EquationOfStateTab::replot() {
+    if (comboMode->currentIndex() == 2) {
+      plotDependence->xAxis->setLabel("μB (MeV)");
+    }
+    else {
+      plotDependence->xAxis->setLabel("T (MeV)");
+    }
+
     int index = comboQuantity->currentIndex();
 
     plotDependence->clearGraphs();
@@ -1668,7 +1922,8 @@ void EquationOfStateTab::replot() {
         if (!(index2 >= 0 && index2 < paramnames.size()))
           return;
         plotDependence->yAxis->setLabel(paramnames[index] + "/" + paramnames[index2]);
-        if (paramnames[index] == "ni/T³" && paramnames[index2] == "ni/T³") {
+        if ((paramnames[index] == "ni/T³" && paramnames[index2] == "ni/T³") ||
+          (paramnames[index] == "ni[fm^-3]" && paramnames[index2] == "ni[fm^-3]")) {
           QString tname = paramnames[index] + "/" + paramnames[index2];
           int pid = comboParticle->currentIndex(), pid2 = comboParticle2->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size()
@@ -1686,6 +1941,13 @@ void EquationOfStateTab::replot() {
           int pid = comboParticle->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size())
             tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")/T³";
+          plotDependence->yAxis->setLabel(tname);
+        }
+        if (paramnames[index] == "ni[fm^-3]") {
+          QString tname = paramnames[index];
+          int pid = comboParticle->currentIndex();
+          if (pid >= 0 && pid < model->TPS()->Particles().size())
+            tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")[fm^-3]³";
           plotDependence->yAxis->setLabel(tname);
         }
         yvalues = getValues(index);

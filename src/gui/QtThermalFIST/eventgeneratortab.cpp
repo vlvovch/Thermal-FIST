@@ -35,6 +35,7 @@
 #include "HRGEventGenerator/SphericalBlastWaveEventGenerator.h"
 #include "HRGEventGenerator/CylindricalBlastWaveEventGenerator.h"
 #include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 
 //#include "EventGeneratorExtensions.h"
 
@@ -1317,7 +1318,9 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     else if (config.InteractionModel == ThermalModelConfig::InteractionEVCrossterms)
       modelEVVDW = new ThermalModelEVCrossterms(&TPSt);
     else if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
-      modelEVVDW = new ThermalModelEVDiagonal(&TPSt);
+      modelEVVDW = new ThermalModelEVDiagonal(&TPSt); 
+    else if (config.InteractionModel == ThermalModelConfig::InteractionRealGas)
+      modelEVVDW = new ThermalModelRealGas(&TPSt);
     else
       modelEVVDW = new ThermalModelIdeal(&TPSt);
 
@@ -1397,6 +1400,8 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
       configMC.fModelType = EventGeneratorConfiguration::CrosstermsEV;
     if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
       configMC.fModelType = EventGeneratorConfiguration::QvdW;
+    if (config.InteractionModel == ThermalModelConfig::InteractionRealGas)
+      configMC.fModelType = EventGeneratorConfiguration::RealGas;
 
     configMC.fEnsemble = EventGeneratorConfiguration::GCE;
     if (model->Ensemble() == ThermalModelBase::CE)
@@ -1416,9 +1421,11 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     configMC.CanonicalS = config.CanonicalS;
     configMC.CanonicalC = config.CanonicalC;
 
-    configMC.bij = CuteHRGHelper::bijMatrix(modelEVVDW);
+    configMC.bij = config.vdWparams.m_bij;  // CuteHRGHelper::bijMatrix(modelEVVDW);
 
-    configMC.aij = CuteHRGHelper::aijMatrix(modelEVVDW);
+    configMC.aij = config.vdWparams.m_aij;  // CuteHRGHelper::aijMatrix(modelEVVDW);
+
+    configMC.RealGasExcludedVolumePrescription = config.RealGasExcludedVolumePrescription;
 
     if (config.UsePCE) {
       modelEVVDW->SolveChemicalPotentials(

@@ -41,6 +41,9 @@ namespace thermalfist {
 		void SetExcludedVolumeModel(ExcludedVolumeModelMultiBase* exvolmod) { m_exvolmod = exvolmod; }
 		void SetMeanFieldModel(MeanFieldModelMultiBase* mfmod) { m_mfmod = mfmod; }
 
+		ExcludedVolumeModelMultiBase* ExcludedVolumeModel() const { return m_exvolmod; }
+		MeanFieldModelMultiBase* MeanFieldModel() const { return m_mfmod; }
+
 		//void SetExcludedVolumeModelCopy(const ExcludedVolumeModelMultiBase& exvolmod) { *m_exvolmod = exvolmod; }
 		//void SetMeanFieldModelCopy(const MeanFieldModelMultiBase& mfmod) { *m_mfmod = mfmod; }
 
@@ -84,6 +87,7 @@ namespace thermalfist {
 		virtual void CalculatePrimordialDensities();
 
 		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double>& chgs, int order = 4);
+		virtual std::vector<double> CalculateChargeFluctuationsOld(const std::vector<double>& chgs, int order = 4);
 
 		virtual std::vector< std::vector<double> >  CalculateFluctuations(int order);
 
