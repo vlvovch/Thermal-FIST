@@ -9,6 +9,8 @@ build*/*
 Debug*/*
 Release*/*
 local*/*
+cmake-*/*
+.idea/*
 
 # Visual Studio
 .vs/*
