@@ -74,6 +74,7 @@ namespace thermalfist {
     // e-mail obfuscation (just in case)
     string email = "";
     email += 'v';
+    email += 'v';
     email += char(email[0] - 7);
     email += email[0];
     email += char('a' + 2);
@@ -84,11 +85,14 @@ namespace thermalfist {
     char ch1 = email[email.size() - 2], ch2 = email[email.size() - 1];
     email[email.size() - 1] = ch1;
     email[email.size() - 2] = ch2;
-    email += "fias";
+//    email += "fias";
+//    email += ".";
+//    email += "uni-frankfurt.de";
+    email += "uh";
     email += ".";
-    email += "uni-frankfurt.de";
+    email += "edu";
 
-    tmpstr = "Copyright (c) 2021 Volodymyr Vovchenko <" + email + ">";
+    tmpstr = "Copyright (c) 2023 Volodymyr Vovchenko <" + email + ">";
 
     tmpstr = OutputString(tmpstr);
 

@@ -48,7 +48,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelVersion->setFont(fontDefault);
   layout->addWidget(labelVersion, 0, Qt::AlignCenter);
   layout->addSpacing(20);
-  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2022 Volodymyr Vovchenko"));
+  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2023 Volodymyr Vovchenko"));
   labelCC->setFont(fontDefault);
   layout->addWidget(labelCC, 0, Qt::AlignCenter);
   QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));
@@ -85,6 +85,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   // some obfuscation (just in case)
   QString email = "";
   email += 'v';
+  email += 'v';
   email += QChar(email[0].toLatin1() - 7);
   email += email[0];
   email += QChar('a' + 2);
@@ -95,9 +96,12 @@ AboutDialog::AboutDialog(QWidget *parent) :
   QChar ch1 = email[email.size() - 2], ch2 = email[email.size() - 1];
   email[email.size() - 1] = ch1;
   email[email.size() - 2] = ch2;
-  email += "fias";
+//  email += "fias";
+//  email += ".";
+//  email += "uni-frankfurt.de";
+  email += "uh";
   email += ".";
-  email += "uni-frankfurt.de";
+  email += "edu";
   
   QLabel *labelEmail = new QLabel("For questions, suggestions or bug reports please contact <a href='mailto:" + email + "?subject=About Thermal-FIST'>" + email + "</a>");
   labelEmail->setTextFormat(Qt::RichText);
