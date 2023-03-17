@@ -123,6 +123,9 @@ public:
   QDoubleSpinBox *spinWidthCut;
   QCheckBox *CBSahaNuclei;
 
+  QCheckBox *CBAnnihilation;
+  QDoubleSpinBox *spinPionsAnnihilation;
+
 public:
   explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);
 signals:

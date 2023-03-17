@@ -6,3 +6,4 @@
  * GNU General Public License (GPLv3 or later)
  */
 #include "HRGPCE/ThermalModelPCE.h"
+#include "HRGPCE/ThermalModelPCEAnnihilation.h"

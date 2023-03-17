@@ -162,12 +162,14 @@ source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator
 # Partial chemical equilibrium part
 set(SRCS_HRGPCE
 HRGPCE/ThermalModelPCE.cpp
+HRGPCE/ThermalModelPCEAnnihilation.cpp
 )
 
 source_group("HRGPCE\\Source Files" FILES ${SRCS_HRGPCE})
 
 set(HEADERS_HRGPCE
 ${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCE.h
+${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCEAnnihilation.h
 )	
 
 source_group("HRGPCE\\Header Files" FILES ${HEADERS_HRGPCE})

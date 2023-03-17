@@ -778,7 +778,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   grLayout->addLayout(layWidths);
 
 
-  grLayout->addWidget(buttonBox);
+  //grLayout->addWidget(buttonBox);
 
   grReso->setLayout(grLayout);
 
@@ -819,6 +819,19 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   CBSahaNuclei->setChecked(m_parent->currentConfig.PCESahaForNuclei);
   CBSahaNuclei->setToolTip(tr("Check to calculate light nuclei yields at T<sub>kin</sub> using the Saha equation. Otherwise their yields are frozen at T<sub>ch</sub>."));
 
+  CBAnnihilation = new QCheckBox(tr("Nucleon annihilation"));
+  CBAnnihilation->setChecked(m_parent->currentConfig.PCEAnnihilation);
+  CBAnnihilation->setToolTip(tr("Incorporate nucleon annihilation in PCE"));
+
+  QHBoxLayout* layPionAnnihilation = new QHBoxLayout();
+  layPionAnnihilation->setAlignment(Qt::AlignLeft);
+  QLabel* labelPionAnnihilation = new QLabel(tr("Average number of pions in annihilation:"));
+  spinPionsAnnihilation = new QDoubleSpinBox();
+  spinPionsAnnihilation->setRange(0., 10000.);
+  spinPionsAnnihilation->setValue(m_parent->currentConfig.PCEPionAnnihilationNumber);
+  layPionAnnihilation->addWidget(labelPionAnnihilation);
+  layPionAnnihilation->addWidget(spinPionsAnnihilation);
+
   PCELayout->addWidget(CBUsePCE);
   if (!parent->m_thermalFitMode)
     PCELayout->addLayout(layTkin);
@@ -827,6 +840,9 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   PCELayout->addLayout(layGammaLim);
   PCELayout->addSpacing(10);
   PCELayout->addWidget(CBSahaNuclei);
+  PCELayout->addSpacing(10);
+  PCELayout->addWidget(CBAnnihilation);
+  PCELayout->addLayout(layPionAnnihilation);
 
   grPCE->setLayout(PCELayout);
 
@@ -837,6 +853,8 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   }
   
   layout->addWidget(grPCE);
+
+  layout->addWidget(buttonBox);
 
   setLayout(layout);
 
@@ -852,6 +870,8 @@ void OtherOptionsDialog::UpdateControls()
   CBFreezeLongLived->setEnabled(PCEControlsEnabled);
   spinWidthCut->setEnabled(PCEControlsEnabled);
   CBSahaNuclei->setEnabled(PCEControlsEnabled);
+  CBAnnihilation->setEnabled(PCEControlsEnabled);
+  spinPionsAnnihilation->setEnabled(PCEControlsEnabled);
 }
 
 
@@ -865,5 +885,7 @@ void OtherOptionsDialog::OK()
   config.PCEFreezeLongLived = CBFreezeLongLived->isChecked();
   config.PCEWidthCut = spinWidthCut->value() * 1.e-3;
   config.PCESahaForNuclei = CBSahaNuclei->isChecked();
+  config.PCEAnnihilation = CBAnnihilation->isChecked();
+  config.PCEPionAnnihilationNumber = spinPionsAnnihilation->value();
   QDialog::accept();
 }

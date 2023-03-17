@@ -80,6 +80,8 @@ struct ThermalModelConfig {
   bool PCEFreezeLongLived;
   double PCEWidthCut;
   bool PCESahaForNuclei;
+  bool PCEAnnihilation;
+  double PCEPionAnnihilationNumber;
 
   /// Whether to use rejection sampling instead of importance sampling for the EV multiplicity sampling
   bool fUseEVRejectionMultiplicity;

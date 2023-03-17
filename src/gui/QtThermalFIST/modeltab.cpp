@@ -30,6 +30,7 @@
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 #include "HRGPCE/ThermalModelPCE.h"
+#include "HRGPCE/ThermalModelPCEAnnihilation.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
 
 #include "DebugText.h"
@@ -558,10 +559,25 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   if (config.UsePCE) {
     timerc.restart();
 
-    ThermalModelPCE modelpce(model);
-    modelpce.SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(model->TPS(), config.PCESahaForNuclei, config.PCEFreezeLongLived, config.PCEWidthCut));
-    modelpce.SetChemicalFreezeout(model->Parameters(), model->ChemicalPotentials());
-    modelpce.CalculatePCE(config.Tkin);
+    ThermalModelPCE *modelpce;
+    if (config.PCEAnnihilation) {
+      modelpce = new ThermalModelPCEAnnihilation(model);
+      static_cast<ThermalModelPCEAnnihilation*>(modelpce)->SetPionAnnihilationNumber(config.PCEPionAnnihilationNumber);
+    }
+    else {
+      modelpce = new ThermalModelPCE(model);
+    }
+
+    modelpce->UseSahaForNuclei(config.PCESahaForNuclei);
+    if (config.PCEAnnihilation) {
+      auto stability_flags = static_cast<ThermalModelPCEAnnihilation*>(modelpce)->RecalculateStabilityFlags();
+      modelpce->SetStabilityFlags(stability_flags);
+    }
+    //modelpce->SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(model->TPS(), config.PCESahaForNuclei,
+//                                                                          config.PCEFreezeLongLived,
+//                                                                          config.PCEWidthCut));
+    modelpce->SetChemicalFreezeout(model->Parameters(), model->ChemicalPotentials());
+    modelpce->CalculatePCE(config.Tkin);
 
     printf("PCE time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
   }

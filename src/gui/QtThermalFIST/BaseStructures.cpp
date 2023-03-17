@@ -140,6 +140,8 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.PCEFreezeLongLived = false;
   ret.PCEWidthCut = 0.015;
   ret.PCESahaForNuclei = true;
+  ret.PCEAnnihilation = false;
+  ret.PCEPionAnnihilationNumber = 5.;
 
   ret.fUseEVRejectionMultiplicity = true;
   ret.fUseEVRejectionCoordinates  = true;
