@@ -414,6 +414,8 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
   fit->UseSahaForNuclei(config.PCESahaForNuclei);
   fit->PCEFreezeLongLived(config.PCEFreezeLongLived);
   fit->SetPCEWidthCut(config.PCEWidthCut);
+  fit->PCEAnnihilation(config.PCEAnnihilation);
+  fit->SetPCEPionAnnihilationNumber(config.PCEPionAnnihilationNumber);
 
 
   SetThermalModelInteraction(model, config);

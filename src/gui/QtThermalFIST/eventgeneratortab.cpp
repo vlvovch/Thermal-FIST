@@ -36,6 +36,7 @@
 #include "HRGEventGenerator/CylindricalBlastWaveEventGenerator.h"
 #include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
+#include "HRGPCE/ThermalModelPCEAnnihilation.h"
 
 //#include "EventGeneratorExtensions.h"
 
@@ -1434,14 +1435,31 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
         config.CanonicalB, config.CanonicalQ, config.CanonicalS, config.CanonicalC
         );
 
-      ThermalModelPCE modelpce(modelEVVDW);
-      modelpce.SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(modelEVVDW->TPS(), config.PCESahaForNuclei, config.PCEFreezeLongLived, config.PCEWidthCut));
-      modelpce.SetChemicalFreezeout(modelEVVDW->Parameters(), modelEVVDW->ChemicalPotentials());
-      modelpce.CalculatePCE(config.Tkin);
+      if (!config.PCEAnnihilation) {
+        ThermalModelPCE modelpce(modelEVVDW);
+        modelpce.SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(modelEVVDW->TPS(), config.PCESahaForNuclei,
+                                                                             config.PCEFreezeLongLived,
+                                                                             config.PCEWidthCut));
+        modelpce.SetChemicalFreezeout(modelEVVDW->Parameters(), modelEVVDW->ChemicalPotentials());
+        modelpce.CalculatePCE(config.Tkin);
 
-      configMC.fUsePCE = true;
-      configMC.fPCEChems = modelpce.ChemicalPotentials();
-      configMC.CFOParameters = modelEVVDW->Parameters();
+        configMC.fUsePCE = true;
+        configMC.fPCEChems = modelpce.ChemicalPotentials();
+        configMC.CFOParameters = modelEVVDW->Parameters();
+      }
+      else {
+        ThermalModelPCEAnnihilation modelpce(modelEVVDW, config.PCEFreezeLongLived, config.PCEWidthCut);
+        modelpce.UseSahaForNuclei(config.PCESahaForNuclei);
+        modelpce.SetPionAnnihilationNumber(config.PCEPionAnnihilationNumber);
+        modelpce.SetStabilityFlags(modelpce.RecalculateStabilityFlags());
+
+        modelpce.SetChemicalFreezeout(modelEVVDW->Parameters(), modelEVVDW->ChemicalPotentials());
+        modelpce.CalculatePCE(config.Tkin);
+
+        configMC.fUsePCE = true;
+        configMC.fPCEChems = modelpce.ChemicalPotentials();
+        configMC.CFOParameters = modelEVVDW->Parameters();
+      }
     }
 
     configMC.fUseEVRejectionMultiplicity = config.fUseEVRejectionMultiplicity;

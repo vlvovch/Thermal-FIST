@@ -570,16 +570,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
     modelpce->UseSahaForNuclei(config.PCESahaForNuclei);
     if (config.PCEAnnihilation) {
-      auto stability_flags = static_cast<ThermalModelPCEAnnihilation*>(modelpce)->RecalculateStabilityFlags();
-      modelpce->SetStabilityFlags(stability_flags);
+      modelpce->SetStabilityFlags(static_cast<ThermalModelPCEAnnihilation*>(modelpce)->RecalculateStabilityFlags());
     }
-    //modelpce->SetStabilityFlags(ThermalModelPCE::ComputePCEStabilityFlags(model->TPS(), config.PCESahaForNuclei,
-//                                                                          config.PCEFreezeLongLived,
-//                                                                          config.PCEWidthCut));
     modelpce->SetChemicalFreezeout(model->Parameters(), model->ChemicalPotentials());
     modelpce->CalculatePCE(config.Tkin);
 
     printf("PCE time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+
+    delete modelpce;
   }
 
   timerc.restart();
@@ -610,6 +608,31 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     dbgstrm << "Tkin\t\t= " << config.Tkin * 1.e3 << " MeV" << endl;
     dbgstrm << "Vkin\t\t= " << model->Volume() << " fm^3" << endl;
     dbgstrm << "Vkin/Vch\t\t= " << model->Volume() / (4./3.*xMath::Pi()*pow(config.VolumeR,3)) << endl;
+    if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
+      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
+    dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+    nb = model->CalculateBaryonDensity();
+    dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
+    dbgstrm << "Net baryon number\t= " << nb * model->Volume() << endl;
+    if (model->TPS()->hasCharged())
+      dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
+    if (model->TPS()->hasStrange())
+      dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+    if (model->TPS()->hasCharmed())
+      dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
+    dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << endl;
+    dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
+    if (fabs(nb) > 1.e-10)
+      dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;
+    if (fabs(nb) > 1.e-10)
+      dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
+    dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << endl;
+    if (fabs(nb) > 1.e-10)
+      dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
+    if (model->TPS()->hasStrange())
+      dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+    if (model->TPS()->hasCharmed())
+      dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
     if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
       dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
     dbgstrm << endl;
