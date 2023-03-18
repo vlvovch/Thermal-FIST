@@ -193,10 +193,10 @@ namespace thermalfist {
   {
     SetParameters(T, mu);
     SolveMeff();
-    
+
     if (quantity == IdealGasFunctions::ParticleDensity)
       return Density();
-    
+
     if (quantity == IdealGasFunctions::EnergyDensity)
       return EnergyDensity();
 
@@ -211,13 +211,48 @@ namespace thermalfist {
       double dmu = 0.001 * m_Particle.Mass();
       double n1  = Quantity(IdealGasFunctions::ParticleDensity, T, mu - 0.5 * dmu);
       double n2 =  Quantity(IdealGasFunctions::ParticleDensity, T, mu + 0.5 * dmu);
+      SetParameters(T, mu);
       double ret = (n2 - n1) / dmu;
+      ret /= xMath::GeVtoifm3();
+      return ret;
+    }
+
+    // Chi3: evaluate using numerical derivative
+    if (quantity == IdealGasFunctions::chi3difull) {
+      double dmu = 0.001 * m_Particle.Mass();
+      double n0  = Quantity(IdealGasFunctions::ParticleDensity, T, mu);
+      double nm1 = Quantity(IdealGasFunctions::ParticleDensity, T, mu - dmu);
+      double np1 = Quantity(IdealGasFunctions::ParticleDensity, T, mu + dmu);
+      double ret = (np1 - 2.*n0 + nm1) / dmu / dmu;
+      SetParameters(T, mu);
+      ret /= xMath::GeVtoifm3();
+      return ret;
+    }
+
+    // Chi4: evaluate using numerical derivative
+    if (quantity == IdealGasFunctions::chi4difull) {
+      double dmu = 0.001 * m_Particle.Mass();
+      //double n0  = Quantity(IdealGasFunctions::ParticleDensity, T, mu);
+      double nm2 = Quantity(IdealGasFunctions::ParticleDensity, T, mu - 2. * dmu);
+      double nm1 = Quantity(IdealGasFunctions::ParticleDensity, T, mu - dmu);
+      double np1 = Quantity(IdealGasFunctions::ParticleDensity, T, mu + dmu);
+      double np2 = Quantity(IdealGasFunctions::ParticleDensity, T, mu + 2. * dmu);
+      double ret = (0.5 * np2 - np1 + nm1 - 0.5 * nm2) / dmu / dmu / dmu;
+      SetParameters(T, mu);
       ret /= xMath::GeVtoifm3();
       return ret;
     }
 
     if (quantity == IdealGasFunctions::chi2) {
       return Quantity(IdealGasFunctions::chi2difull, T, mu) / T / T;
+    }
+
+    if (quantity == IdealGasFunctions::chi3) {
+      return Quantity(IdealGasFunctions::chi3difull, T, mu) / T / T;
+    }
+
+    if (quantity == IdealGasFunctions::chi4) {
+      return Quantity(IdealGasFunctions::chi4difull, T, mu) / T / T;
     }
 
     printf("**ERROR** EffectiveMassModel::Quantity(): Calculate %d quantity is not implemented!", static_cast<int>(quantity));
@@ -262,7 +297,7 @@ namespace thermalfist {
     double n0 = m_FieldPressure->Dpf(m_Meff);
     if (m_T != 0.0)
       n0 -= IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures, m_Particle.Statistics(), m_T, m_Mu, m_Meff, m_Particle.Degeneracy());
-    
+
     return n0 / Density();
   }
 

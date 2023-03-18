@@ -561,6 +561,7 @@ namespace thermalfist {
 
     virtual double Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) = 0;
     virtual double EffectiveMass() const { return -1.; }
+    virtual bool   IsBECPhase() const { return false; }
     virtual double BECFraction() const { return 0.; }
   };
 

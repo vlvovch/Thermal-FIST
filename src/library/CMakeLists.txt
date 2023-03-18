@@ -182,12 +182,14 @@ endif (NOT STANDALONE_MINUIT)
 # Cosmic EoS part
 set(SRCS_COSMICEOS
 CosmicEos/EffectiveMassModel.cpp
+CosmicEos/CosmicEos.cpp
 )
 
 source_group("CosmicEos\\Source Files" FILES ${SRCS_HRGPCE})
 
 set(HEADERS_COSMICEOS
 ${PROJECT_SOURCE_DIR}/include/CosmicEos/EffectiveMassModel.h
+${PROJECT_SOURCE_DIR}/include/CosmicEos/CosmicEos.h
 )	
 
 source_group("CosmicEos\\Header Files" FILES ${HEADERS_HRGPCE})
