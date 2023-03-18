@@ -147,6 +147,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.fUseEVRejectionCoordinates  = true;
   ret.fUseEVUseSPRApproximation   = true;
 
+  ret.UseEMMPions = false;
+  ret.EMMPionFPi  = 0.133;
+
   return ret;
 }
 

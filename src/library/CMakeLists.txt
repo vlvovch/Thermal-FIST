@@ -179,6 +179,24 @@ include_directories ("$ENV{ROOTSYS}/include/root")
 include_directories ("$ENV{ROOTSYS}/include") 
 endif (NOT STANDALONE_MINUIT)
 
+# Cosmic EoS part
+set(SRCS_COSMICEOS
+CosmicEos/EffectiveMassModel.cpp
+)
+
+source_group("CosmicEos\\Source Files" FILES ${SRCS_HRGPCE})
+
+set(HEADERS_COSMICEOS
+${PROJECT_SOURCE_DIR}/include/CosmicEos/EffectiveMassModel.h
+)	
+
+source_group("CosmicEos\\Header Files" FILES ${HEADERS_HRGPCE})
+
+if (NOT STANDALONE_MINUIT)
+include_directories ("$ENV{ROOTSYS}/include/root") 
+include_directories ("$ENV{ROOTSYS}/include") 
+endif (NOT STANDALONE_MINUIT)
+
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
@@ -190,6 +208,7 @@ ${SRCS_HRGRealGas} ${HEADERS_HRGRealGas}
 ${SRCS_HRGFit} ${HEADERS_HRGFit} 
 ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator}
 ${SRCS_HRGPCE} ${HEADERS_HRGPCE}
+${SRCS_COSMICEOS} ${HEADERS_COSMICEOS}
 )
 
 if (NOT STANDALONE_MINUIT)

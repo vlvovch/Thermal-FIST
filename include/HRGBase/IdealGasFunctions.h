@@ -551,6 +551,19 @@ namespace thermalfist {
     double IdealGasQuantity(Quantity quantity, QStatsCalculationType calctype, int statistics, double T, double mu, double m, double deg, int order = 1);
   }
 
+  /// \brief Implements the possibility of a generalized calculation of the densities.
+  ///        For example, effective mass model.
+  ///        Abstract class.
+  class GeneralizedDensity {
+  public:
+    GeneralizedDensity() {}
+    virtual ~GeneralizedDensity() {}
+
+    virtual double Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) = 0;
+    virtual double EffectiveMass() const { return -1.; }
+    virtual double BECFraction() const { return 0.; }
+  };
+
 } // namespace thermalfist
 
 #endif // IDEALGASFUNCTIONS_H

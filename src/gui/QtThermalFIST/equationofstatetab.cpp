@@ -444,8 +444,8 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout* layMode = new QHBoxLayout();
     layMode->setAlignment(Qt::AlignLeft);
     comboMode = new QComboBox();
-    comboMode->addItem(tr("Const. μ<sub>B</sub>"));
-    comboMode->addItem(tr("Const. μ<sub>B</sub>/T"));
+    comboMode->addItem(tr("Const. μB"));
+    comboMode->addItem(tr("Const. μB/T"));
     comboMode->addItem(tr("Const. T"));
     comboMode->setCurrentIndex(0);
     connect(comboMode, SIGNAL(currentIndexChanged(int)), this, SLOT(modelChanged()));

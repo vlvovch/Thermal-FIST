@@ -148,7 +148,7 @@ namespace thermalfist {
   };
 
   /**
-  *   \brief Class implementing auxiliary functions for the vector density function (VDF) model from https://arxiv.org/pdf/2011.06635.
+  *   \brief Class implementing auxiliary functions for the vector density functional (VDF) model from https://arxiv.org/pdf/2011.06635.
   */
   class MeanFieldModelVDF : public MeanFieldModelBase
   {

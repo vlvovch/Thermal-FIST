@@ -665,6 +665,10 @@ namespace thermalfist {
     bool operator==(const ThermalParticle &rhs) const; // TODO: improve
     bool operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
 
+    /// \brief Getter/Setter for the generalized density object
+    GeneralizedDensity* GetGeneralizedDensity() const { return m_GeneralizedDensity; }
+    void SetGeneralizedDensity(GeneralizedDensity *density_model) { m_GeneralizedDensity = density_model; }
+
   private:
     /**
     *  Auxiliary coefficients used for numerical integration using quadratures
@@ -745,6 +749,9 @@ namespace thermalfist {
 
     /// Whether BEC was encountered
     bool m_LastDensityOk;
+
+    /// Whether to use an outside procedure for calculating densities
+    GeneralizedDensity *m_GeneralizedDensity;
   };
 
 } // namespace thermalfist

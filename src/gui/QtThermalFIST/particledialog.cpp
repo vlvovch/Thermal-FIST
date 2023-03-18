@@ -251,6 +251,34 @@ QString ParticleDialog::GetParticleInfo() {
     }
   }
 
+  if (model->IsCalculated()) {
+    ret += "\r\n";
+    ret += "\r\n";
+    ret += tr("Dynamical properties:") + "\r\n";
+    ret += tr("Effective chemical potential").leftJustified(20) + " = ";
+    ret += QString::number(1.e3 * model->FullIdealChemicalPotential(pid)) + " " + tr("MeV");
+    ret += "\r\n";
+    ret += tr("Effective mass").leftJustified(20) + " = ";
+    if (model->TPS()->Particles()[pid].GetGeneralizedDensity() != NULL) {
+      double meff = model->TPS()->Particles()[pid].GetGeneralizedDensity()->EffectiveMass();
+      if (meff < 0.)
+        meff = model->TPS()->Particles()[pid].Mass();
+      ret += QString::number(1.e3 * meff) + " " + tr("MeV");
+      ret += "\r\n";
+
+      double BECfraction = model->TPS()->Particles()[pid].GetGeneralizedDensity()->BECFraction();
+      if (BECfraction > 0.0) {
+        ret += tr("BEC fraction").leftJustified(20) + " = ";
+        ret += QString::number(BECfraction);
+        ret += "\r\n";
+      }
+    } else {
+      ret += QString::number(1.e3 * model->TPS()->Particles()[pid].Mass()) + " " + tr("MeV");
+      ret += "\r\n";
+    }
+
+  }
+
   return ret;
 }
 

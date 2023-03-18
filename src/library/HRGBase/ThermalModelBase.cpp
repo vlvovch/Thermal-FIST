@@ -1929,4 +1929,22 @@ namespace thermalfist {
     return retVec;
   }
 
+  void ThermalModelBase::SetDensityModelForParticleSpecies(int i, GeneralizedDensity *density_model)
+  {
+    if (i >= 0 && i < ComponentsNumber()) {
+      TPS()->Particle(i).SetGeneralizedDensity(density_model);
+    } else {
+      printf("**WARNING** ThermalModelBase::SetDensityModelForParticleSpecies(): Particle id %d is oustide the range!\n", i);
+    }
+  }
+
+  void ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(long long PDGID, GeneralizedDensity *density_model)
+  {
+    int id = TPS()->PdgToId(PDGID);
+    if (id != -1) {
+      TPS()->Particle(id).SetGeneralizedDensity(density_model);
+    } else {
+      printf("**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code %lld is oustide the range!\n", PDGID);
+    }
+  }
 } // namespace thermalfist

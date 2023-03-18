@@ -1170,6 +1170,17 @@ namespace thermalfist {
      */
     ThermalModelInteraction InteractionModel() { return m_InteractionModel; }
 
+
+    /**
+     * \brief Sets a generalized density model for particle species \param i
+     */
+    void SetDensityModelForParticleSpecies(int i, GeneralizedDensity* density_model = NULL);
+
+    /**
+     * \brief Sets a generalized density model for particle species with PDG code \param PDGID
+     */
+    void SetDensityModelForParticleSpeciesByPdg(long long PDGID, GeneralizedDensity* density_model = NULL);
+
   protected:
     ThermalModelParameters m_Parameters;
     ThermalParticleSystem* m_TPS;
@@ -1242,10 +1253,9 @@ namespace thermalfist {
     ThermalModelEnsemble m_Ensemble;
     ThermalModelInteraction m_InteractionModel;
 
-    
-
     /// Shift in chemical potential of particle species id due to interactions
     virtual double MuShift(int /*id*/) const { return 0.; }
+    
 
   private:
     void ResetChemicalPotentials();

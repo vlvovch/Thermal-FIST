@@ -27,7 +27,7 @@ namespace thermalfist {
     int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
     m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.),
-    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth)
+    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth), m_GeneralizedDensity(NULL)
   {
     if (!Disclaimer::DisclaimerPrinted) 
       Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
@@ -593,6 +593,12 @@ namespace thermalfist {
 
 
   double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type, bool useWidth, double mu) const {
+    if (m_GeneralizedDensity != NULL)
+      return m_GeneralizedDensity->Quantity(type, params.T, mu);
+    
+    if (m_Degeneracy == 0.0)
+      return 0.0;
+    
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;

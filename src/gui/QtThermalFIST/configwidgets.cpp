@@ -846,6 +846,25 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
 
   grPCE->setLayout(PCELayout);
 
+  QGroupBox* grPions = new QGroupBox(tr("Pion interactions"));
+  QVBoxLayout* PionsLayout = new QVBoxLayout();
+  
+  CBPionInteractions = new QCheckBox(tr("Effective mass model (a la ChPT)"));
+  CBPionInteractions->setChecked(m_parent->currentConfig.UseEMMPions);
+  connect(CBPionInteractions, SIGNAL(toggled(bool)), this, SLOT(UpdateControls()));
+  QHBoxLayout* layPionInteractions = new QHBoxLayout();
+  layPionInteractions->setAlignment(Qt::AlignLeft);
+  QLabel* labelPionInteractions = new QLabel(tr("f<sub>π</sub> [MeV]:"));
+  spinfPi = new QDoubleSpinBox();
+  spinfPi->setRange(0., 10000.);
+  spinfPi->setValue(m_parent->currentConfig.EMMPionFPi * 1.e3);
+  layPionInteractions->addWidget(labelPionInteractions);
+  layPionInteractions->addWidget(spinfPi);
+
+  PionsLayout->addWidget(CBPionInteractions);
+  PionsLayout->addLayout(layPionInteractions);
+  grPions->setLayout(PionsLayout);
+
   layout->addWidget(grReso);
   if (!parent->m_eventGeneratorMode && parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleGCE) {
     grPCE->setEnabled(false);
@@ -853,6 +872,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   }
   
   layout->addWidget(grPCE);
+  layout->addWidget(grPions);
 
   layout->addWidget(buttonBox);
 
@@ -872,6 +892,8 @@ void OtherOptionsDialog::UpdateControls()
   CBSahaNuclei->setEnabled(PCEControlsEnabled);
   CBAnnihilation->setEnabled(PCEControlsEnabled);
   spinPionsAnnihilation->setEnabled(PCEControlsEnabled);
+
+  spinfPi->setEnabled(CBPionInteractions->isChecked());
 }
 
 
@@ -887,5 +909,7 @@ void OtherOptionsDialog::OK()
   config.PCESahaForNuclei = CBSahaNuclei->isChecked();
   config.PCEAnnihilation = CBAnnihilation->isChecked();
   config.PCEPionAnnihilationNumber = spinPionsAnnihilation->value();
+  config.UseEMMPions = CBPionInteractions->isChecked();
+  config.EMMPionFPi  = spinfPi->value() * 1.e-3;
   QDialog::accept();
 }

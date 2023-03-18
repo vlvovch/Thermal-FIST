@@ -92,6 +92,11 @@ struct ThermalModelConfig {
   /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
   bool fUseEVUseSPRApproximation;
 
+
+  /// Effective mass model (pions)
+  bool  UseEMMPions;
+  double EMMPionFPi;
+
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };
 

@@ -32,6 +32,7 @@
 #include "HRGPCE/ThermalModelPCE.h"
 #include "HRGPCE/ThermalModelPCEAnnihilation.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
+#include "CosmicEos/EffectiveMassModel.h"
 
 #include "DebugText.h"
 #include "tablemodel.h"
@@ -421,6 +422,15 @@ void ModelTab::updateControlsWithConfig(const ThermalModelConfig & config)
   modelChanged();
 }
 
+void ModelTab::clearEMMs()
+{
+  for(auto& em : em_models) {
+    if (em != NULL)
+      delete em;
+    em = NULL;
+  }
+}
+
 void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
   QElapsedTimer timerc;
@@ -464,6 +474,27 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   QElapsedTimer timer;
   timer.start();
+
+  // EMM for pions
+  if (config.UseEMMPions) {
+    clearEMMs();
+    std::vector<long long> pdgs = {211, 111, -211};
+    em_models.resize(pdgs.size());
+    int emmid = 0;
+    for(auto tpdg : pdgs) {
+      const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
+      em_models[emmid] = new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMPionFPi));
+      model->SetDensityModelForParticleSpeciesByPdg(
+        tpdg, 
+        em_models[emmid]
+      );
+      emmid++;
+    }
+  } else {
+    clearEMMs();
+    for(int i = 0; i < model->ComponentsNumber(); ++i)
+      model->SetDensityModelForParticleSpecies(i, NULL);
+  }
 
 
   model->SetTemperature(config.T);
@@ -655,6 +686,17 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     labelValid->setStyleSheet("border : none; background-color : red;");
   }
   labelValid->setVisible(true);
+
+  // // Clean EMM for pions
+  // {
+  //   std::vector<long long> pdgs = {211, 111, -211};
+  //   for(auto tpdg : pdgs) {
+  //     GeneralizedDensity *mod = model->TPS()->ParticleByPDG(tpdg).GetGeneralizedDensity();
+  //     if (mod != NULL)
+  //       delete mod;
+  //     model->SetDensityModelForParticleSpeciesByPdg(tpdg, NULL);
+  //   }
+  // }
 
   myModel->updateAll();
 }
