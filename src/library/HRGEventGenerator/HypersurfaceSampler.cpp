@@ -478,12 +478,45 @@ namespace thermalfist {
     return ret;
   }
 
+  void fillBoostMatrix(double vx, double vy, double vz, double boostMatrix[4][4])
+  // Lorentz boost matrix
+  // here in boostMatrix [0]=t, [1]=x, [2]=y, [3]=z
+  {
+    const double vv [3] = {vx, vy, vz} ;
+    const double v2 = vx*vx+vy*vy+vz*vz ;
+    const double gamma = 1.0/sqrt(1.0-v2) ;
+    if(std::isinf(gamma)||std::isnan(gamma)){ cout<<"boost vector invalid; exiting\n" ; exit(1) ; }
+    boostMatrix[0][0] = gamma ;
+    boostMatrix[0][1] = boostMatrix[1][0] = vx*gamma ;
+    boostMatrix[0][2] = boostMatrix[2][0] = vy*gamma ;
+    boostMatrix[0][3] = boostMatrix[3][0] = vz*gamma ;
+    if(v2>0.0){
+    for(int i=1; i<4; i++)
+    for(int j=1; j<4; j++)
+    boostMatrix[i][j] = (gamma-1.0)*vv[i-1]*vv[j-1]/v2 ;
+    }else{
+    for(int i=1; i<4; i++)
+    for(int j=1; j<4; j++)
+    boostMatrix[i][j] = 0.0 ;
+    }
+    for(int i=1; i<4; i++) boostMatrix[i][i] += 1.0 ;
+  }
+
+  int index44(const int &i, const int &j){
+    // index44: returns an index of pi^{mu nu} mu,nu component in a plain 1D array
+    if(i>3 || j>3 || i<0 || j<0) {std::cout<<"index44: i j " <<i<<" "<<j<<endl ; exit(1) ; }
+    if(j<i) return (i*(i+1))/2 + j ;
+    else return (j*(j+1))/2 + i ;
+  }
+
   std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear)
   {
     if (particle == NULL) {
       printf("**ERROR** in HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!\n");
       return { 0., 0., 0., 0., 0., 0., 0. };
     }
+
+    bool shear_correction = true; // this parameter should be choosen from the input file
 
     double etaF = 0.5 * log((elem->u[0] + elem->u[3]) / (elem->u[0] - elem->u[3]));
 
@@ -506,6 +539,27 @@ namespace thermalfist {
     double mu = particle->BaryonCharge() * elem->muB + particle->ElectricCharge() * elem->muQ + particle->Strangeness() * elem->muS;
     ThermalMomentumGenerator Generator(mass, particle->Statistics(), T, mu);
 
+    const double gmumu[4] = {1., -1., -1., -1.};
+    const double C_Feq = pow(0.5*thermalfist::xMath::GeVtoifm() / M_PI, 3);
+    const double feq = C_Feq / (exp((part.p0-mu)/T) - particle->Statistics());
+    const double P = IdealGasFunctions::BoltzmannPressure(T, mu, mass, particle->Degeneracy());
+    double pi_lrf[10];
+    double boostMatrix[4][4];
+    if (shear_correction){
+      // boost pi^{mu nu} into the local rest frame
+      fillBoostMatrix(-vx, -vy, -vz, boostMatrix);
+      for (int i=0; i<4; i++){
+        for (int j=0; j<4; j++){
+          pi_lrf[index44(i,j)] = 0.0;
+          for (int k=0; k<4; k++){
+            for (int l=0; l<4; l++){
+              pi_lrf[index44(i,j)] += elem->pi[index44(k,l)] * boostMatrix[i][k] * boostMatrix[j][l];
+            }
+          }
+        }
+      }
+    }
+
     while (true) {
       double tp = Generator.GetP(mass);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -515,6 +569,23 @@ namespace thermalfist {
       part.py = tp * sin(tphi) * sthe;
       part.pz = tp * cthe;
       part.p0 = sqrt(mass * mass + tp * tp);
+
+      double Weight_visc;
+      if (shear_correction){
+        double mom[4] = {part.p0, part.px, part.py, part.pz};
+        double pipp = 0.0;
+        for (int i=0; i<4; i++){
+          for (int j=0; j<4; j++){
+            pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
+          }
+        }
+        // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+        // from this paper Phys.Rev.C 73 (2006) 064903
+        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (elem->edens + P)));
+      }
+      else {
+        Weight_visc = 1.0;
+      }
 
       double p0LRF = part.p0;
 
@@ -528,10 +599,15 @@ namespace thermalfist {
 
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
-      if (Weight > 1.) {
-        printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
-          Weight - 1.);
-      }
+      // update wheigt with viscosity factor
+      Weight *= Weight_visc;
+
+      // In the case of shear corrections this warning gets triggered many times. 
+      // So the maxWeight should be adapted as well. But I am not sure how.
+      // if (Weight > 1.) {
+      //   printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
+      //     Weight - 1.);
+      // }
 
       if (RandomGenerators::randgenMT.rand() < Weight)
         break;
