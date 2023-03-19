@@ -81,6 +81,9 @@ namespace thermalfist {
 
     /// Writes the event in a format suitable for UrQMD afterburner, as described here https://github.com/jbernhard/urqmd-afterburner
     void writeToFileForUrqmd(std::ofstream& fout) const;
+
+    /// Writes the event in a format suitable for SMASH afterburner
+    void writeToFileForSmash(std::ofstream& fout) const;
   };
 
 } // namespace thermalfist

@@ -57,6 +57,15 @@ namespace thermalfist {
     bool WriteEvent(const SimpleEvent& evt);
   };
 
+  /// \brief Event writer class outputting the list of particles suitable for SMASH afterburner
+  class EventWriterForSmash
+    : public EventWriter
+  {
+  public:
+    EventWriterForSmash(const std::string& filename = "") : EventWriter(filename) { }
+    bool WriteEvent(const SimpleEvent& evt);
+  };
+
 } // namespace thermalfist
 
 

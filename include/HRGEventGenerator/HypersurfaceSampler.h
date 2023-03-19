@@ -23,6 +23,7 @@ namespace thermalfist {
     double u[4];
     double T, muB, muQ, muS;
     double edens, rhoB;
+    double pi[10];
   };
 
   typedef std::vector<ParticlizationHypersurfaceElement> ParticlizationHypersurface;

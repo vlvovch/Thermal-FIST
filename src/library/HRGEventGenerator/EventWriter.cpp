@@ -101,4 +101,13 @@ namespace thermalfist {
     return true;
   }
 
+  bool EventWriterForSmash::WriteEvent(const SimpleEvent& evt)
+  {
+    if (!m_fout.is_open())
+      return false;
+    ++m_EventNumber;
+    evt.writeToFileForSmash(m_fout);
+    return true;
+  }
+
 }
