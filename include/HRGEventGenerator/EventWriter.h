@@ -11,6 +11,7 @@
 #include <fstream>
 
 #include "SimpleEvent.h"
+#include "HRGBase/ThermalParticleSystem.h"
 
 
 namespace thermalfist {
@@ -62,8 +63,10 @@ namespace thermalfist {
     : public EventWriter
   {
   public:
-    EventWriterForSmash(const std::string& filename = "") : EventWriter(filename) { }
+    EventWriterForSmash(const std::string& filename = "", const ThermalParticleSystem* TPS = NULL) : EventWriter(filename), m_TPS(TPS) { }
     bool WriteEvent(const SimpleEvent& evt);
+  private:
+    const ThermalParticleSystem* m_TPS;
   };
 
 } // namespace thermalfist

@@ -13,6 +13,7 @@
 #include <fstream>
 
 #include "HRGEventGenerator/SimpleParticle.h"
+#include "HRGBase/ThermalParticleSystem.h"
 
 namespace thermalfist {
   /// Structure holding information about a single event in the event generator.
@@ -83,7 +84,7 @@ namespace thermalfist {
     void writeToFileForUrqmd(std::ofstream& fout) const;
 
     /// Writes the event in a format suitable for SMASH afterburner
-    void writeToFileForSmash(std::ofstream& fout) const;
+    void writeToFileForSmash(std::ofstream& fout, const thermalfist::ThermalParticleSystem* TPS = NULL) const;
   };
 
 } // namespace thermalfist
