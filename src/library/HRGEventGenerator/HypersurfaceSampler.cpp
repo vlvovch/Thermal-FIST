@@ -72,11 +72,12 @@ namespace thermalfist {
   (const ParticlizationHypersurface* hypersurface,
     const ThermalParticle* particle,
     const VolumeElementSampler* positionsampler,
-    double etasmear) :
+    double etasmear, bool shear_correction) :
     m_ParticlizationHypersurface(hypersurface),
     m_Particle(particle),
     m_VolumeElementSampler(positionsampler),
-    m_EtaSmear(etasmear)
+    m_EtaSmear(etasmear),
+    m_ShearCorrection(shear_correction)
   {
 
   }
@@ -95,16 +96,17 @@ namespace thermalfist {
 
     const ParticlizationHypersurfaceElement& elem = (*m_ParticlizationHypersurface)[VolumeElementIndex];
 
-    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear());
+    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear(), ShearCorrection());
   }
 
-  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear) :
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear, bool shear_correction) :
     EventGeneratorBase()
   {
     SetConfiguration(TPS, config);
     SetHypersurface(hypersurface);
     SetEtaSmear(etasmear);
     SetRescaleTmu();
+    SetShearCorrection(shear_correction);
     //SetParameters(hypersurface, m_THM, etasmear);
   }
 
@@ -342,7 +344,8 @@ namespace thermalfist {
           m_ParticlizationHypersurface,
           &m_THM->TPS()->Particle(i),
           &m_VolumeElementSamplers[i],
-          GetEtaSmear()
+          GetEtaSmear(),
+          GetShearCorrection()
         ));
 
         // Should not be used
@@ -509,14 +512,12 @@ namespace thermalfist {
     else return (j*(j+1))/2 + i ;
   }
 
-  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear)
+  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear, const bool shear_correction)
   {
     if (particle == NULL) {
       printf("**ERROR** in HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!\n");
       return { 0., 0., 0., 0., 0., 0., 0. };
     }
-
-    bool shear_correction = true; // this parameter should be choosen from the input file
 
     double etaF = 0.5 * log((elem->u[0] + elem->u[3]) / (elem->u[0] - elem->u[3]));
 
@@ -540,9 +541,8 @@ namespace thermalfist {
     ThermalMomentumGenerator Generator(mass, particle->Statistics(), T, mu);
 
     const double gmumu[4] = {1., -1., -1., -1.};
-    const double C_Feq = pow(0.5*thermalfist::xMath::GeVtoifm() / M_PI, 3);
+    const double C_Feq = pow(0.5*thermalfist::xMath::GeVtoifm() / xMath::Pi(), 3);
     const double feq = C_Feq / (exp((part.p0-mu)/T) - particle->Statistics());
-    const double P = IdealGasFunctions::BoltzmannPressure(T, mu, mass, particle->Degeneracy());
     double pi_lrf[10];
     double boostMatrix[4][4];
     if (shear_correction){
@@ -581,7 +581,7 @@ namespace thermalfist {
         }
         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
         // from this paper Phys.Rev.C 73 (2006) 064903
-        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (elem->edens + P)));
+        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (elem->edens * 1.15)));
       }
       else {
         Weight_visc = 1.0;
@@ -597,17 +597,20 @@ namespace thermalfist {
 
       double dumu_pmu_loc = p0LRF;
 
+      if (shear_correction){
+        maxWeight *= 1.03; // some arbitrary value by trying
+      }
+
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
       // update wheigt with viscosity factor
       Weight *= Weight_visc;
-
       // In the case of shear corrections this warning gets triggered many times. 
       // So the maxWeight should be adapted as well. But I am not sure how.
-      // if (Weight > 1.) {
-      //   printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
-      //     Weight - 1.);
-      // }
+      if (Weight > 1.) {
+        printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
+          Weight - 1.);
+      }
 
       if (RandomGenerators::randgenMT.rand() < Weight)
         break;
