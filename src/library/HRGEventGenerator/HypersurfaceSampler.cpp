@@ -605,8 +605,7 @@ namespace thermalfist {
 
       // update wheigt with viscosity factor
       Weight *= Weight_visc;
-      // In the case of shear corrections this warning gets triggered many times. 
-      // So the maxWeight should be adapted as well. But I am not sure how.
+      
       if (Weight > 1.) {
         printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
           Weight - 1.);
