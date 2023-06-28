@@ -546,6 +546,7 @@ namespace thermalfist {
     double pi_lrf[10];
     double boostMatrix[4][4];
     if (shear_correction){
+      maxWeight *= 10.0; // some arbitrary value by trying
       // boost pi^{mu nu} into the local rest frame
       fillBoostMatrix(-vx, -vy, -vz, boostMatrix);
       for (int i=0; i<4; i++){
@@ -559,24 +560,7 @@ namespace thermalfist {
         }
       }
     }
-    double Weight_visc;
-    if (shear_correction){
-      double mom[4] = {part.p0, part.px, part.py, part.pz};
-      double pipp = 0.0;
-      for (int i=0; i<4; i++){
-        for (int j=0; j<4; j++){
-          pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
-        }
-      }
-      // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
-      // from this paper Phys.Rev.C 73 (2006) 064903
-      Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (0.5 * 1.15)));
-
-      maxWeight *= 1.2; // some arbitrary value by trying
-    }
-    else {
-      Weight_visc = 1.0;
-    }
+    
     while (true) {
       double tp = Generator.GetP(mass);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -598,6 +582,24 @@ namespace thermalfist {
 
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
+      double Weight_visc;
+      if (shear_correction){
+        double mom[4] = {part.p0, part.px, part.py, part.pz};
+        double pipp = 0.0;
+        for (int i=0; i<4; i++){
+          for (int j=0; j<4; j++){
+            pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
+          }
+        }
+        // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+        // from this paper Phys.Rev.C 73 (2006) 064903
+        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (0.5 * 1.15)));
+        if(Weight_visc<0.1) Weight_visc = 0.1 ;
+      }
+      else {
+        Weight_visc = 1.0;
+      }
+      
       // update wheigt with viscosity factor
       Weight *= Weight_visc;
 
