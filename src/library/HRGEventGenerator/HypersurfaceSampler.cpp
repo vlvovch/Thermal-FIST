@@ -559,7 +559,24 @@ namespace thermalfist {
         }
       }
     }
+    double Weight_visc;
+    if (shear_correction){
+      double mom[4] = {part.p0, part.px, part.py, part.pz};
+      double pipp = 0.0;
+      for (int i=0; i<4; i++){
+        for (int j=0; j<4; j++){
+          pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
+        }
+      }
+      // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+      // from this paper Phys.Rev.C 73 (2006) 064903
+      Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (0.5 * 1.15)));
 
+      maxWeight *= 1.2; // some arbitrary value by trying
+    }
+    else {
+      Weight_visc = 1.0;
+    }
     while (true) {
       double tp = Generator.GetP(mass);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -570,47 +587,24 @@ namespace thermalfist {
       part.pz = tp * cthe;
       part.p0 = sqrt(mass * mass + tp * tp);
 
-      double Weight_visc;
-      if (shear_correction){
-        double mom[4] = {part.p0, part.px, part.py, part.pz};
-        double pipp = 0.0;
-        for (int i=0; i<4; i++){
-          for (int j=0; j<4; j++){
-            pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
-          }
-        }
-        // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
-        // from this paper Phys.Rev.C 73 (2006) 064903
-        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (elem->edens * 1.15)));
-      }
-      else {
-        Weight_visc = 1.0;
-      }
-
       double p0LRF = part.p0;
 
       double dsigmamu_pmu_loc = dsigma_loc[0] * part.p0
         - dsigma_loc[1] * part.px - dsigma_loc[2] * part.py - dsigma_loc[3] * part.pz;
 
-
       double dsigmamu_umu_loc = dsigma_loc[0];
 
       double dumu_pmu_loc = p0LRF;
-
-      if (shear_correction){
-        maxWeight *= 1.03; // some arbitrary value by trying
-      }
 
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
       // update wheigt with viscosity factor
       Weight *= Weight_visc;
-      
+
       if (Weight > 1.) {
         printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
           Weight - 1.);
       }
-
       if (RandomGenerators::randgenMT.rand() < Weight)
         break;
     }
