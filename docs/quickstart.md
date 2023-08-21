@@ -38,6 +38,12 @@ From the build folder, run with
 ./bin/QtThermalFIST
 ```
 
+### Running in the cloud
+
+You can use [GitHub Codespaces](https://github.com/features/codespaces) to run Thermal-FIST in the cloud from a browser. To run the graphical user interface program QtThermalFIST from a browser, follow the guide [here](https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop).
+
+### Using QtThermalFIST
+
 Using the GUI should be self-explanatory for most part. 
 
 The particle list is read from a file.

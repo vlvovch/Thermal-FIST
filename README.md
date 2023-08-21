@@ -20,6 +20,8 @@ the equation of state properties or performing the thermal fits,
 can be done in GUI. Using the GUI can therefore be a good starting point.
 Please see the [**Quick Start Guide**](docs/quickstart.md) to get started.
 
+For running Thermal-FIST in the cloud, you may use [GitHub Codespaces](https://github.com/features/codespaces). It may even possible to run the GUI from a browser, see [https://github.com/devcontainers/features/tree/main/src/desktop-lite](https://github.com/devcontainers/features/tree/main/src/desktop-lite)
+
 For more details please see the [**Thermal-FIST documentation**](https://fias.uni-frankfurt.de/~vovchenko/project/thermal-fist/doc/)
 
 It is recommended to use the latest version of the package. See the [CHANGELOG](CHANGELOG.md)
