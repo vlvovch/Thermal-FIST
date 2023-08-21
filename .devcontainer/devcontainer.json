@@ -9,5 +9,5 @@
       "label": "desktop"
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install qt5-default"
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install qt5-default -y"
 }
