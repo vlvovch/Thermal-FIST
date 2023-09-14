@@ -93,7 +93,6 @@ namespace thermalfist {
     if (TPS == NULL)
       return;
 
-
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
       m_Config.CFOParameters.muC = 0.;
     }
@@ -101,7 +100,7 @@ namespace thermalfist {
       m_Config.CFOParameters.muS = 0.;
       m_Config.CFOParameters.muC = 0.;
     }
-    else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
+    else if (0 && m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
       if (m_Config.CanonicalB) 
         m_Config.CFOParameters.muB = 0.;
       if (m_Config.CanonicalS)
@@ -126,6 +125,19 @@ namespace thermalfist {
     }
     else if (m_Config.fModelType == EventGeneratorConfiguration::RealGas) {
       m_THM = new ThermalModelRealGas(TPS, m_Config.CFOParameters);
+    }
+
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CE && m_Config.fUseGCEConservedCharges) {
+        if (!m_Config.fUsePCE)
+          m_THM->FillChemicalPotentials();
+        else
+          m_THM->SetChemicalPotentials(m_Config.fPCEChems);
+          
+        m_THM->CalculatePrimordialDensities();
+        m_Config.B = static_cast<int>(m_THM->BaryonDensity() * m_THM->Volume());
+        m_Config.Q = static_cast<int>(m_THM->ElectricChargeDensity() * m_THM->Volume());
+        m_Config.S = static_cast<int>(m_THM->StrangenessDensity() * m_THM->Volume());
+        m_Config.C = static_cast<int>(m_THM->CharmDensity() * m_THM->Volume());
     }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
@@ -1974,6 +1986,7 @@ namespace thermalfist {
     fUseEVRejectionMultiplicity = true;
     fUseEVRejectionCoordinates = true;
     fUseEVUseSPRApproximation = true;
+    fUseGCEConservedCharges = false;
   }
 
 } // namespace thermalfist

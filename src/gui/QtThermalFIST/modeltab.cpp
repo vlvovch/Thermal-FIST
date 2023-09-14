@@ -422,15 +422,6 @@ void ModelTab::updateControlsWithConfig(const ThermalModelConfig & config)
   modelChanged();
 }
 
-void ModelTab::clearEMMs()
-{
-  for(auto& em : em_models) {
-    if (em != NULL)
-      delete em;
-    em = NULL;
-  }
-}
-
 void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
   QElapsedTimer timerc;
@@ -475,28 +466,6 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   QElapsedTimer timer;
   timer.start();
 
-  // EMM for pions
-  if (config.UseEMMPions) {
-    clearEMMs();
-    std::vector<long long> pdgs = {211, 111, -211};
-    em_models.resize(pdgs.size());
-    int emmid = 0;
-    for(auto tpdg : pdgs) {
-      const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
-      em_models[emmid] = new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMPionFPi));
-      model->SetDensityModelForParticleSpeciesByPdg(
-        tpdg, 
-        em_models[emmid]
-      );
-      emmid++;
-    }
-  } else {
-    clearEMMs();
-    for(int i = 0; i < model->ComponentsNumber(); ++i)
-      model->SetDensityModelForParticleSpecies(i, NULL);
-  }
-
-
   model->SetTemperature(config.T);
   model->SetBaryonChemicalPotential(config.muB);
   model->SetElectricChemicalPotential(config.muQ);
@@ -512,8 +481,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   SetThermalModelConfiguration(model, config);
 
-  if (config.InteractionModel != ThermalModelConfig::InteractionIdeal)
-    SetThermalModelInteraction(model, config);
+  //if (config.InteractionModel != ThermalModelConfig::InteractionIdeal)
+  SetThermalModelInteraction(model, config);
 
 
   // If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers

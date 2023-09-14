@@ -5,6 +5,7 @@
 #include "HRGVDW.h""
 #include "HRGRealGas.h""
 #include "HRGBase/ThermalModelCanonical.h"
+#include "CosmicEos/EffectiveMassModel.h"
 
 using namespace thermalfist;
 
@@ -232,6 +233,23 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
       }
     }
   }
+
+
+  // Effective mass model for pions
+  model->ClearDensityModels();
+  if (config.UseEMMPions) {
+    std::vector<long long> pdgs = {211, 111, -211};
+    int emmid = 0;
+    for(auto tpdg : pdgs) {
+      if (model->TPS()->PdgToId(tpdg) != -1) {
+        const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
+        model->SetDensityModelForParticleSpeciesByPdg(
+                tpdg,
+                new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMPionFPi))
+        );
+      }
+    }
+  }
 }
 
 void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConfig & config)
@@ -273,6 +291,7 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
     static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(evmod, config.vdWparams.m_bij));
     static_cast<ThermalModelRealGas*>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(config.vdWparams.m_aij));
   }
+
 
   return;
   

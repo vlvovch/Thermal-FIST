@@ -790,4 +790,16 @@ namespace thermalfist {
     return 1.;
   }
 
+  void ThermalParticle::ClearGeneralizedDensity() {
+    if (m_GeneralizedDensity != NULL) {
+      delete m_GeneralizedDensity;
+      m_GeneralizedDensity = NULL;
+    }
+  }
+
+  void ThermalParticle::SetGeneralizedDensity(GeneralizedDensity *density_model) {
+    ClearGeneralizedDensity();
+    m_GeneralizedDensity = density_model;
+  }
+
 } // namespace thermalfist

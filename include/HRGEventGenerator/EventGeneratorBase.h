@@ -97,6 +97,9 @@ namespace thermalfist {
     /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
     bool fUseEVUseSPRApproximation;
 
+    /// Whether to calculate total conserved charge values from GCE
+    bool fUseGCEConservedCharges;
+
     /// Default configuration
     EventGeneratorConfiguration();
   };

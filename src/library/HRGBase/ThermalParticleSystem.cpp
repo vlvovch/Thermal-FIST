@@ -763,6 +763,8 @@ namespace thermalfist {
       }
     }
 
+    FinalizeDecaysLoad();
+
     FillDecayProperties();
     FillDecayThresholds();
     ProcessDecays();

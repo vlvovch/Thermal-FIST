@@ -22,7 +22,6 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGFit/ThermalModelFit.h"
-#include "CosmicEos/EffectiveMassModel.h"
 #include "BaseStructures.h"
 #include "configwidgets.h"
 
@@ -72,7 +71,7 @@ class ModelTab : public QWidget
 
     ModelConfigWidget *configWidget;
 
-    std::vector<thermalfist::EffectiveMassModel*> em_models;
+    //std::vector<thermalfist::EffectiveMassModel*> em_models;
 
     int getCurrentRow();
 
@@ -99,7 +98,6 @@ private slots:
     void changeVolumeRSC(double);
     void showValidityCheckLog();
     void computeHigherOrderFluctuations();
-    void clearEMMs();
 public:
     void updateModel();
     void resetTPS();

@@ -583,7 +583,7 @@ namespace thermalfist {
 
     /**
      * \brief The procedure which calculates the chemical potentials
-     *        \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_Q \f$ which reproduce
+     *        \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_C \f$ which reproduce
      *        the specified total baryon, electric, strangeness, and charm
      *        charges of the system.
      * 
@@ -1180,6 +1180,11 @@ namespace thermalfist {
      * \brief Sets a generalized density model for particle species with PDG code \param PDGID
      */
     void SetDensityModelForParticleSpeciesByPdg(long long PDGID, GeneralizedDensity* density_model = NULL);
+
+    /**
+     *
+     */
+    void ClearDensityModels();
 
   protected:
     ThermalModelParameters m_Parameters;

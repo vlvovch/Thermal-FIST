@@ -402,6 +402,7 @@ namespace thermalfist {
      * \return const std::vector<ThermalParticle>& The vector of all particle species.
      */
     const std::vector<ThermalParticle>& Particles() const { return m_Particles; }
+          std::vector<ThermalParticle>& Particles()       { return m_Particles; }
 
     //@{
       /**

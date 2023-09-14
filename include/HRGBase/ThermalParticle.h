@@ -667,7 +667,10 @@ namespace thermalfist {
 
     /// \brief Getter/Setter for the generalized density object
     GeneralizedDensity* GetGeneralizedDensity() const { return m_GeneralizedDensity; }
-    void SetGeneralizedDensity(GeneralizedDensity *density_model) { m_GeneralizedDensity = density_model; }
+    void SetGeneralizedDensity(GeneralizedDensity *density_model);
+
+    /// \brief Clear the generalized density
+    void ClearGeneralizedDensity();
 
   private:
     /**

@@ -542,6 +542,8 @@ namespace thermalfist {
     allzero &= (totQ == 0.0 && ConstrMuQ) || (muQinit == 0 && !ConstrMuQ);
     allzero &= (totS == 0.0 && ConstrMuS) || (muSinit == 0 && !ConstrMuS);
     allzero &= (totC == 0.0 && ConstrMuC) || (muCinit == 0 && !ConstrMuC);
+
+
     if (allzero) {
       m_Parameters.muB = 0.;
       m_Parameters.muS = 0.;
@@ -553,6 +555,7 @@ namespace thermalfist {
     }
     vector<int> vConstr(4, 1);
     vector<int> vType(4, 0);
+    
 
     vConstr[0] = m_TPS->hasBaryons() && ConstrMuB;
     vConstr[1] = m_TPS->hasCharged() && ConstrMuQ;
@@ -588,6 +591,9 @@ namespace thermalfist {
     Broyden broydn(&eqs, &jaco);
     Broyden::BroydenSolutionCriterium crit(1.0E-8);
     broydn.Solve(xinactual, &crit);
+
+
+    printf("%lf\n", BaryonDensity() * Volume());
 
     return (broydn.Iterations() < broydn.MaxIterations());
   }
@@ -1946,5 +1952,10 @@ namespace thermalfist {
     } else {
       printf("**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code %lld is oustide the range!\n", PDGID);
     }
+  }
+
+  void ThermalModelBase::ClearDensityModels() {
+    for (auto& particle : TPS()->Particles())
+      particle.ClearGeneralizedDensity();
   }
 } // namespace thermalfist
