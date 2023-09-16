@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.4.2] 
+
+Date: 2022-11-07
+
+- Fix bug (introduced in v1.4.1) with the normalization of two-particle susceptibilities in ThermalModelIdeal
+
 ## [Version 1.4.1] 
 
 Date: 2022-10-18
@@ -227,6 +233,10 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.4.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.1...v1.4.2
+
+[Version 1.4.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4...v1.4.1
 
 [Version 1.4]: https://github.com/vlvovch/Thermal-FIST/compare/v1.3.4...v1.4
 
