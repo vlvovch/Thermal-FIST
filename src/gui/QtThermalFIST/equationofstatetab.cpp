@@ -31,15 +31,27 @@ void EoSWorker::run() {
   int i = 0;
   for (double param = Tmin; param <= Tmax + 1.e-10 && !(*stop); param += dT, ++i) {
     if (i < paramsTD->size()) {
+      // T dependence at const. muB
       if (mode == 0) {
         model->SetTemperature(param * 1.e-3);
       }
+      // T dependence at const. muB/T
       else if (mode == 1) {
         model->SetTemperature(param * 1.e-3);
-        model->SetBaryonChemicalPotential(param * 1.e-3 * cParam);
+        if (!model->ConstrainMuB())
+          model->SetBaryonChemicalPotential(param * 1.e-3 * cParams[0]);
+        if (!model->ConstrainMuQ())
+          model->SetElectricChemicalPotential(param * 1.e-3 * cParams[1]);
+        if (!model->ConstrainMuS())
+          model->SetStrangenessChemicalPotential(param * 1.e-3 * cParams[2]);
       }
+      // Isotherm
       else if (mode == 2) {
         model->SetBaryonChemicalPotential(param * 1.e-3);
+        if (!model->ConstrainMuQ())
+          model->SetElectricChemicalPotential(cParams[1] * 1.e-3);
+        if (!model->ConstrainMuS())
+          model->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
       }
 
       if (param == Tmin)
@@ -183,6 +195,31 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     index++;
 
     tname = "Δ";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "T[MeV]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "μB[MeV]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "μQ[MeV]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "μS[MeV]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "μC[MeV]";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -352,10 +389,19 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
 
     QVBoxLayout *layLeft = new QVBoxLayout();
 
+    QHBoxLayout *layLeftTop = new QHBoxLayout();
+    layLeftTop->setAlignment(Qt::AlignLeft);
     CBratio = new QCheckBox(tr("Ratio"));
     CBratio->setChecked(false);
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(replot()));
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
+
+    CBflipAxes = new QCheckBox(tr("Flip axes"));
+    CBflipAxes->setChecked(false);
+    connect(CBflipAxes, SIGNAL(toggled(bool)), this, SLOT(replot()));
+
+    layLeftTop->addWidget(CBratio);
+    layLeftTop->addWidget(CBflipAxes);
 
     QGridLayout *selLay = new QGridLayout();
     selLay->setAlignment(Qt::AlignLeft);
@@ -422,7 +468,8 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     plotDependence->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(plotDependence, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
 
-    layLeft->addWidget(CBratio, 0, Qt::AlignLeft);
+    //layLeft->addWidget(CBratio, 0, Qt::AlignLeft);
+    layLeft->addLayout(layLeftTop);
     layLeft->addLayout(selLay);
     layLeft->addWidget(plotDependence);
 
@@ -444,8 +491,8 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout* layMode = new QHBoxLayout();
     layMode->setAlignment(Qt::AlignLeft);
     comboMode = new QComboBox();
-    comboMode->addItem(tr("Const. μB"));
-    comboMode->addItem(tr("Const. μB/T"));
+    comboMode->addItem(tr("Const. μ"));
+    comboMode->addItem(tr("Const. μ/T"));
     comboMode->addItem(tr("Const. T"));
     comboMode->setCurrentIndex(0);
     connect(comboMode, SIGNAL(currentIndexChanged(int)), this, SLOT(modelChanged()));
@@ -464,6 +511,20 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     spinmuB->setMinimum(-10000.);
     spinmuB->setMaximum(10000.);
     spinmuB->setValue(0.);
+
+    labelmuQ = new QLabel("μ<sub>Q</sub> (MeV):");
+    spinmuQ = new QDoubleSpinBox();
+    spinmuQ->setDecimals(3);
+    spinmuQ->setMinimum(-10000.);
+    spinmuQ->setMaximum(10000.);
+    spinmuQ->setValue(0.);
+
+    labelmuS = new QLabel("μ<sub>S</sub> (MeV):");
+    spinmuS = new QDoubleSpinBox();
+    spinmuS->setDecimals(3);
+    spinmuS->setMinimum(-10000.);
+    spinmuS->setMaximum(10000.);
+    spinmuS->setValue(0.);
 
     labelTMin = new QLabel(tr("T<sub>min</sub> (MeV):"));
     spinTMin = new QDoubleSpinBox();
@@ -495,6 +556,10 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     layBounds->addWidget(spindT, 0, 5);
     layBounds->addWidget(labelmuB, 1, 0);
     layBounds->addWidget(spinmuB, 1, 1);
+    layBounds->addWidget(labelmuQ, 1, 2);
+    layBounds->addWidget(spinmuQ, 1, 3);
+    layBounds->addWidget(labelmuS, 1, 4);
+    layBounds->addWidget(spinmuS, 1, 5);
 
     labelConstr = new QLabel(tr(""));
 
@@ -543,10 +608,10 @@ ThermalModelConfig EquationOfStateTab::getConfig()
 {
   ThermalModelConfig ret = configWidget->updatedConfig();
 
-  ret.T = spinTMin->value() * 1.e-3;
-  ret.muB = spinmuB->value() * 1.e-3;
-  ret.muQ = 0.;
-  ret.muS = 0.;
+  ret.T   = spinTMin->value() * 1.e-3;
+  ret.muB = spinmuB->value()  * 1.e-3;
+  ret.muQ = spinmuQ->value()  * 1.e-3;
+  ret.muS = spinmuS->value()  * 1.e-3;
   ret.muC = 0.;
   ret.gq = 1.;
   ret.gS = 1.;
@@ -627,8 +692,10 @@ void EquationOfStateTab::calculate() {
 
       fStop = 0;
 
+      std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value()};
+
       EoSWorker *wrk = new EoSWorker(model, spinTMin->value(), spinTMax->value(), spindT->value(),
-        spinmuB->value(), comboMode->currentIndex(),
+                                     mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
@@ -695,16 +762,25 @@ void EquationOfStateTab::modelChanged()
     spinmuB->setEnabled(true);
   }
 
+  spinmuQ->setEnabled(!configWidget->currentConfig.ConstrainMuQ);
+  spinmuS->setEnabled(!configWidget->currentConfig.ConstrainMuS);
+
   if (comboMode->currentIndex() == 2) {
     labelmuB->setText("T (MeV)");
     labelTMin->setText("μB<sub>min</sub> (MeV)");
     labelTMax->setText("μB<sub>max</sub> (MeV)");
     labeldT->setText("∆μB (MeV)");
+    labelmuQ->setText("μ<sub>Q</sub> (MeV)");
+    labelmuS->setText("μ<sub>S</sub> (MeV)");
   }
   else {
     labelmuB->setText("μ<sub>B</sub> (MeV)");
+    labelmuQ->setText("μ<sub>Q</sub> (MeV)");
+    labelmuS->setText("μ<sub>S</sub> (MeV)");
     if (comboMode->currentIndex() == 1) {
       labelmuB->setText("μ<sub>B</sub>/T");
+      labelmuQ->setText("μ<sub>Q</sub>/T");
+      labelmuS->setText("μ<sub>S</sub>/T");
     }
     labelTMin->setText("T<sub>min</sub> (MeV)");
     labelTMax->setText("T<sub>max</sub> (MeV)");
@@ -742,6 +818,15 @@ void EquationOfStateTab::modelChanged()
   else {
     labelConstr->setVisible(false);
   }
+
+  labelmuB->setVisible(model->TPS()->hasBaryons());
+  spinmuB->setVisible(model->TPS()->hasBaryons());
+  labelmuQ->setVisible(model->TPS()->hasCharged());
+  spinmuQ->setVisible(model->TPS()->hasCharged());
+  labelmuS->setVisible(model->TPS()->hasStrange());
+  spinmuS->setVisible(model->TPS()->hasStrange());
+
+  configWidget->comboEnsemble->setEnabled(false);
 }
 
 void EquationOfStateTab::resetTPS()
@@ -1055,6 +1140,41 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
         ret[j] = paramsTD[j].sT3;
+      }
+    }
+
+    tind = parammap["T[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].T * 1.e3;
+      }
+    }
+
+    tind = parammap["μB[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].muB * 1.e3;
+      }
+    }
+
+    tind = parammap["μQ[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].muQ * 1.e3;
+      }
+    }
+
+    tind = parammap["μS[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].muS * 1.e3;
+      }
+    }
+
+    tind = parammap["μC[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].muC * 1.e3;
       }
     }
 
@@ -1900,19 +2020,31 @@ void EquationOfStateTab::readLatticeData()
 }
 
 void EquationOfStateTab::replot() {
+    bool flipAxes = false;
+    flipAxes = CBflipAxes->isChecked();
+
+    QCPAxis* xAxis = plotDependence->xAxis;
+    QCPAxis* yAxis = plotDependence->yAxis;
+
+    if (flipAxes) {
+      xAxis = plotDependence->yAxis;
+      yAxis = plotDependence->xAxis;
+    }
+
     if (comboMode->currentIndex() == 2) {
-      plotDependence->xAxis->setLabel("μB (MeV)");
+      xAxis->setLabel("μB (MeV)");
     }
     else {
-      plotDependence->xAxis->setLabel("T (MeV)");
+      xAxis->setLabel("T (MeV)");
     }
 
     int index = comboQuantity->currentIndex();
 
-    plotDependence->clearGraphs();
+//    plotDependence->clearGraphs();
+    plotDependence->clearPlottables();
 
-    plotDependence->xAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
-    plotDependence->yAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
+    xAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
+    yAxis->setLabelFont(QFont("Arial", font().pointSize() + 4));
 
     if (index >= 0 && index < paramnames.size()) {
       std::vector<double> yvalues;
@@ -1921,7 +2053,7 @@ void EquationOfStateTab::replot() {
         int index2 = comboQuantity2->currentIndex();
         if (!(index2 >= 0 && index2 < paramnames.size()))
           return;
-        plotDependence->yAxis->setLabel(paramnames[index] + "/" + paramnames[index2]);
+        yAxis->setLabel(paramnames[index] + "/" + paramnames[index2]);
         if ((paramnames[index] == "ni/T³" && paramnames[index2] == "ni/T³") ||
           (paramnames[index] == "ni[fm^-3]" && paramnames[index2] == "ni[fm^-3]")) {
           QString tname = paramnames[index] + "/" + paramnames[index2];
@@ -1930,25 +2062,25 @@ void EquationOfStateTab::replot() {
             && pid2 >= 0 && pid2 < model->TPS()->Particles().size())
             tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")/n(" 
                   + QString::fromStdString(model->TPS()->Particles()[pid2].Name()) + ")";
-          plotDependence->yAxis->setLabel(tname);
+          yAxis->setLabel(tname);
         }
         yvalues = getValuesRatio(index, index2);
       }
       else {
-        plotDependence->yAxis->setLabel(paramnames[index]);
+        yAxis->setLabel(paramnames[index]);
         if (paramnames[index] == "ni/T³") {
           QString tname = paramnames[index];
           int pid = comboParticle->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size())
             tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")/T³";
-          plotDependence->yAxis->setLabel(tname);
+          yAxis->setLabel(tname);
         }
         if (paramnames[index] == "ni[fm^-3]") {
           QString tname = paramnames[index];
           int pid = comboParticle->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size())
             tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")[fm^-3]³";
-          plotDependence->yAxis->setLabel(tname);
+          yAxis->setLabel(tname);
         }
         yvalues = getValues(index);
       }
@@ -1962,32 +2094,37 @@ void EquationOfStateTab::replot() {
         tmin *= 0.;
 
       if (yvalues.size() > 0)
-        plotDependence->yAxis->setRange(tmin, tmax);
+        yAxis->setRange(tmin, tmax);
 
       // Lattice data for muB = 0 only
-      if (spinmuB->value() == 0.0 && !model->ConstrainMuB())
+      if (spinmuB->value() == 0.0 && !model->ConstrainMuB() && !flipAxes)
         plotLatticeData();
 
       int graphNumber = plotDependence->graphCount();
 
-      plotDependence->addGraph();
-      plotDependence->graph(graphNumber)->setName("Model");
-      plotDependence->graph(graphNumber)->setPen(QPen(Qt::black, 2, Qt::SolidLine));
-
-      plotDependence->graph(graphNumber)->data()->clear();
+//      plotDependence->addGraph();
+//      plotDependence->graph(graphNumber)->setName("Model");
+//      plotDependence->graph(graphNumber)->setPen(QPen(Qt::black, 2, Qt::SolidLine));
+//
+//      plotDependence->graph(graphNumber)->data()->clear();
+      QCPCurve *curve = new QCPCurve(plotDependence->xAxis, plotDependence->yAxis);
+      curve->setName("Model");
+      curve->setPen(QPen(Qt::black, 2, Qt::SolidLine));
+      curve->data()->clear();
 
       for(int i=0;i<yvalues.size();++i) {
-          plotDependence->graph(graphNumber)->addData(varvalues[i], yvalues[i]);
+        if (flipAxes)
+          curve->addData(yvalues[i], varvalues[i]);
+        else
+          curve->addData(varvalues[i], yvalues[i]);
       }
-
-      
 
       tmin = std::min(tmin, plotDependence->yAxis->range().lower);
       tmax = std::max(tmax, plotDependence->yAxis->range().upper);
 
-      plotDependence->xAxis->setRange(spinTMin->value(), spinTMax->value());
+      xAxis->setRange(spinTMin->value(), spinTMax->value());
       if (yvalues.size() > 0)
-        plotDependence->yAxis->setRange(1.1*tmin, 1.1*tmax);
+        yAxis->setRange(1.1*tmin, 1.1*tmax);
 
       plotDependence->legend->setFont(QFont("Arial", font().pointSize() + 2));
       plotDependence->legend->setVisible(true);

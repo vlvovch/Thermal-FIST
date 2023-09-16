@@ -100,6 +100,15 @@ struct ThermalModelConfig {
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };
 
+struct ThermodynamicsCosmic {
+  bool flag;
+  double T, muB, muQ, mu_e, mu_mu, mu_tau;
+  double pT4, eT4, IT4, sT3;
+  double p, e, I, s;
+  double rhoB, rhoQ, rhoE, rhoMu, rhoTau;
+  std::vector<double> densities; // gamma, e+-, mu+-, tau+-, neutrinos
+};
+
 struct Thermodynamics {
   bool flag;
   double T, muB, muQ, muS, muC;

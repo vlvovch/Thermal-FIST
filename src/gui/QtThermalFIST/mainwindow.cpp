@@ -69,6 +69,8 @@ MainWindow::MainWindow(QWidget *parent)
 
   tabEoS = new EquationOfStateTab(NULL, model);
 
+  tabCosmicEoS = new CosmicEoSTab(NULL, model);
+
   tab5 = new EventGeneratorTab(NULL, model);
   tabEditor = new ListEditorTab(NULL, model);
   tabEditor->setListPath(cpath);
@@ -84,12 +86,14 @@ MainWindow::MainWindow(QWidget *parent)
 
   tabWidget->addTab(tab5, QString(tr("Event generator")));
 
+  tabWidget->addTab(tabCosmicEoS, QString(tr("Cosmic trajectory")));
+
   tabWidget->addTab(tabEditor, QString(tr("Particle list editor")));
 
   currentTab = tabWidget->currentIndex();
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-  QLabel *labelCopyright = new QLabel(tr("© 2014-2022 Volodymyr Vovchenko"));
+  QLabel *labelCopyright = new QLabel(tr("© 2014-2023 Volodymyr Vovchenko"));
 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   mainLayout->addLayout(dataLay);
@@ -109,6 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
   tabEoS->resetTPS();
   tab5->resetTPS();
   tabEditor->resetTPS();
+  tabCosmicEoS->resetTPS();
 }
 
 MainWindow::~MainWindow()
@@ -175,6 +180,7 @@ void MainWindow::loadDecays()
     tab2->resetTPS();
     tab5->resetTPS();
     tabEditor->resetTPS();
+    tabCosmicEoS->resetTPS();
 
     leList->setText(clists);
 
@@ -198,6 +204,7 @@ void MainWindow::tabChanged(int newIndex)
     tab2->resetTPS();
     tab5->resetTPS();
     tabEditor->resetTPS();
+    tabCosmicEoS->resetTPS();
   }
 
   currentTab = newIndex;
@@ -321,6 +328,8 @@ void MainWindow::loadList()
 
     tabEditor->resetTPS();
     tabEditor->setListPath(pathlist[0]);
+
+    tabCosmicEoS->resetTPS();
 
     cpath = pathlist[0];
   }

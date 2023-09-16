@@ -27,6 +27,7 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "fittoexperimenttab.h"
 
+#include "CosmicEoStab.h"
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +43,8 @@ class MainWindow : public QMainWindow
     EventGeneratorTab *tab5;
     EquationOfStateTab *tabEoS;
     ListEditorTab *tabEditor;
+
+    CosmicEoSTab *tabCosmicEoS;
 
     QLineEdit *leList;
     QPushButton *buttonLoad;

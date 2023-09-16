@@ -364,7 +364,7 @@ namespace thermalfist {
 			}
 		}
 
-		printf("EV Components: %d  AreDisconnected: %d\n", m_componentsNumber, (int)m_componentsDisconnected);
+		printf("EV Components: %d  Are Disconnected: %d\n", m_componentsNumber, (int)m_componentsDisconnected);
 	}
 
 	double ExcludedVolumeModelCrosstermsGeneralized::GetEta(int i, const std::vector<double>& n) const

@@ -195,6 +195,16 @@ namespace thermalfist {
     /// ThermalParticle() object instance corresponding to photons
     const ThermalParticle& PhotonParticle() const { return m_Photon; }
 
+    int NumberOfElectroWeakSpecies() const { return 1 + 2 * m_ChargedLeptons.size() + 2 * m_Neutrinos.size(); }
+
+    /// Returns the name of particle species of given id
+    std::string GetSpeciesName(int id) const;
+
+    /// @brief Returns the number density for given species
+    /// @param id 0 - photon, 1 - e+, 2 - e-,  3 - mu+, ..., 7 - nu_e, 8 - anti-nu_e, ...
+    /// @return 
+    double GetDensity(int id) const;
+
   protected:
     /// Pointer to an HRG model object
     ThermalModelBase* m_modelHRG;

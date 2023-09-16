@@ -258,7 +258,7 @@ namespace thermalfist {
     Broyden broydn(&eqs);
     //broydn.UseNewton(true);
 
-    Broyden::BroydenSolutionCriterium criterium(1.e-6);
+    Broyden::BroydenSolutionCriterium criterium(1.e-7);
 
     return broydn.Solve(m_ChemCurrent, &criterium);
   }
@@ -306,16 +306,62 @@ namespace thermalfist {
     return false;
   }
 
-  void CosmicEoS::ClearEMMs() {
-    for (auto& part :m_modelHRG->TPS()->Particles()) {
-      GeneralizedDensity* emm = part.GetGeneralizedDensity();
-      if (emm != NULL) {
-        delete emm;
-        emm = NULL;
+  std::string CosmicEoS::GetSpeciesName(int id) const
+  {
+    if (id == 0)
+      return m_Photon.Name();
+    else {
+      int iL = id - 1;
+      if (iL/2 < m_ChargedLeptons.size())
+        if (iL % 2 == 0)
+          return m_ChargedLeptons[iL/2].Name();
+        else
+          return "anti-" + m_ChargedLeptons[iL/2].Name();
+      else {
+        iL -= 2 * m_ChargedLeptons.size();
+        if (iL/2 < m_Neutrinos.size())
+          if (iL % 2 == 0)
+            return m_Neutrinos[iL/2].Name();
+          else
+            return "anti-" + m_Neutrinos[iL/2].Name();
+        else {
+          printf("**ERRORR** in CosmicEoS::GetSpeciesName(int id) const: id = %d is out of range!", id);
+        }
       }
     }
   }
 
+  double CosmicEoS::GetDensity(int id) const
+  {
+    if (id == 0)
+      return m_Photon.Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, 0.);
+    else {
+      double muQ = m_ChemCurrent[1];
+      int iL = id - 1;
+      if (iL/2 < m_ChargedLeptons.size())
+        if (iL % 2 == 0)
+          return m_ChargedLeptons[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, m_ChemCurrent[2 + iL/2] - muQ);
+        else
+          return m_ChargedLeptons[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, -(m_ChemCurrent[2 + iL/2] - muQ));
+      else {
+        iL -= 2 * m_ChargedLeptons.size();
+        if (iL/2 < m_Neutrinos.size())
+          if (iL % 2 == 0)
+            return m_Neutrinos[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, m_ChemCurrent[2 + iL/2]);
+          else
+            return m_Neutrinos[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, -m_ChemCurrent[2 + iL/2]);
+        else
+          printf("**ERRORR** in CosmicEoS::GetDensity(int id) const: id = %d is out of range!", id);
+      }
+    }
+  }
+
+  void CosmicEoS::ClearEMMs()
+  {
+    for (auto& part :m_modelHRG->TPS()->Particles()) {
+      part.ClearGeneralizedDensity();
+    }
+  }
 
   std::vector<double> CosmicEoS::BroydenEquationsCosmology::Equations(const std::vector<double>& x)
   {
@@ -349,7 +395,9 @@ namespace thermalfist {
 
     if (constraints[1] != 0.0)
       ret[1] = (nQ / s - constraints[1]) / constraints[1];
-    else
+    // else if (constraints[0] != 0.0)
+    //   ret[1] = nQ / nB;
+    else  
       ret[1] = nQ / m_THM->ElectricChargeDensity(true);
 
     vector<double> nLs(LeptonFlavor::NumberOfFlavors, 0.);

@@ -307,8 +307,6 @@ namespace thermalfist {
       m_LastBroydenSuccessFlag = false;
     else m_LastBroydenSuccessFlag = true;
 
-
-
     m_MaxDiff = broydn.MaxDifference();
 
     vector<double> ret(NN);

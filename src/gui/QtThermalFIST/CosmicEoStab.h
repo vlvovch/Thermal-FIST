@@ -5,8 +5,8 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#ifndef EQUATIONOFSTATETAB_H
-#define EQUATIONOFSTATETAB_H
+#ifndef COSMICEOSTAB_H
+#define COSMICEOSTAB_H
 
 #include <QWidget>
 #include <QPushButton>
@@ -24,65 +24,56 @@
 #include "BaseStructures.h"
 #include "configwidgets.h"
 #include "HRGBase/xMath.h"
+#include "CosmicEos/CosmicEoS.h"
 
 
-class EoSWorker : public QThread
+class CosmicEoSWorker : public QThread
 {
   Q_OBJECT
 
-  thermalfist::ThermalModelBase *model;
+  thermalfist::CosmicEoS *cosmos;
   double Tmin, Tmax, dT;
   std::vector<double> cParams;
+  std::vector<double> chems;
   int mode;
   int *currentSize;
   int *stop;
 
-  std::vector< Thermodynamics > *paramsTD;
-  std::vector< ChargesFluctuations > *paramsFl;
+  std::vector< ThermodynamicsCosmic > *paramsTD;
+  std::vector< Thermodynamics > *paramsTDHRG;
   std::vector<double> *varvalues;
 
   void run() Q_DECL_OVERRIDE;
 
 public:
-  EoSWorker(thermalfist::ThermalModelBase *mod = NULL, 
-      double Tmin = 100., 
+  CosmicEoSWorker(thermalfist::CosmicEoS *mod = NULL,
+      double Tmin = 10.,
       double Tmax = 200.,
-      double dT = 5.,
-      const std::vector<double>& cParamVals = {0.,0.,0.},
-      int mmode = 0,
-      std::vector< Thermodynamics > *paramsTDo = NULL,
-      std::vector< ChargesFluctuations > *paramsFlo = NULL,
+      double dT = 2.,
+      std::vector<double> cParamVals = {8.6e-11,0.,0.,0.,0.},
+      std::vector< ThermodynamicsCosmic > *paramsTDo = NULL,
+      std::vector< Thermodynamics > *paramsTDHRGo = NULL,
       std::vector<double> *varvalueso = NULL,
       int *currentSizeo = NULL,
       int *stopo = NULL,
       QObject * parent = 0) :
-  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
-      model = mod;
+  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals) {
+      cosmos = mod;
       paramsTD = paramsTDo;
-      paramsFl = paramsFlo;
+      paramsTDHRG = paramsTDHRGo;
       varvalues = varvalueso;
       currentSize = currentSizeo;
       stop = stopo;
 
-      if (mode == 0) {
-        mod->SetBaryonChemicalPotential(cParams[0] * 1.e-3);
-        mod->SetElectricChemicalPotential(cParams[1] * 1.e-3);
-        mod->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
-        mod->FillChemicalPotentials();
-      }
-      else if (mode == 1) {
-        mod->SetBaryonChemicalPotential(0.);
-        mod->FillChemicalPotentials();
-      }
-      else if (mode == 2) {
-        mod->SetTemperature(cParams[0] * 1.e-3);
-      }
+      chems = std::vector<double>({ 0.700, -1.e-7, -1.e-7, -1.e-7, -1.e-7 });
+
+      cosmos->SetAsymmetries(cParamVals);
     }
 signals:
   void calculated();
 };
 
-class EquationOfStateTab : public QWidget
+class CosmicEoSTab : public QWidget
 {
     Q_OBJECT
 
@@ -99,13 +90,13 @@ class EquationOfStateTab : public QWidget
 
     QCheckBox *CBflipAxes;
 
-    QLabel *labelTMin, *labelTMax, *labeldT;
-    QLabel *labelmuB, *labelmuQ, *labelmuS;
+    QLabel *labelmuB, *labelTMin, *labelTMax, *labeldT;
 
     QCustomPlot *plotDependence;
 
-    std::vector<Thermodynamics> paramsTD;
-    std::vector<ChargesFluctuations> paramsFl;
+    std::vector<ThermodynamicsCosmic> paramsTD;
+    std::vector<Thermodynamics> paramsTDHRG;
+//    std::vector<ChargesFluctuations> paramsFl;
     std::vector<double> varvalues;
 
     int fCurrentSize;
@@ -116,13 +107,16 @@ class EquationOfStateTab : public QWidget
     std::vector<QString> paramnames;
 
     QDoubleSpinBox *spinTMin, *spinTMax, *spindT;
-    QDoubleSpinBox *spinmuB, *spinmuQ, *spinmuS;
-    QLabel *labelConstr;
+//    QDoubleSpinBox *spinmuB;
+//    QLabel *labelConstr;
+
+    QDoubleSpinBox *spinnB, *spinnQ, *spinnE, *spinnMu, *spinnTau;
 
     QPushButton *buttonCalculate;
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
+    thermalfist::CosmicEoS *cosmos;
 
     QTimer *calcTimer;
 
@@ -130,20 +124,9 @@ class EquationOfStateTab : public QWidget
 
     ModelConfigWidget *configWidget;
 
-
-    QComboBox* comboMode; // 0 - const muB, 1 - const muB/T, 2 - const T
-
-    // Wuppertal-Budapest lattice data
-    QVector< QVector<double> > dataWBx, dataWBy, dataWByerrp, dataWByerrm;
-    std::map<QString, int> mapWB;
-
-    // HotQCD lattice data
-    QVector< QVector<double> > dataHotQCDx, dataHotQCDy, dataHotQCDyerrp, dataHotQCDyerrm;
-    std::map<QString, int> mapHotQCD;
-
 public:
-    EquationOfStateTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
-    ~EquationOfStateTab();
+    CosmicEoSTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
+    ~CosmicEoSTab();
 
     ThermalModelConfig getConfig();
 signals:
@@ -154,7 +137,6 @@ public slots:
     void finalize();
     void modelChanged();
     void resetTPS();
-    void plotLatticeData();
     void fillParticleLists();
     void contextMenuRequest(QPoint pos);
     void saveAsPdf();
@@ -166,8 +148,7 @@ public slots:
 private:
   std::vector<double> getValues(int index, int num = 0);
   std::vector<double> getValuesRatio(int index, int index2);
-  void readLatticeData();
 };
 
 
-#endif // EQUATIONOFSTATETAB_H
+#endif // CosmicEoStab_H
