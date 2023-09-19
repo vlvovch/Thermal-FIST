@@ -73,12 +73,12 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     checkOnlyStable = new QCheckBox(tr("Show only stable particles"));
     connect(checkOnlyStable, SIGNAL(toggled(bool)), this, SLOT(switchStability(bool)));
 
-    buttonResults = new QPushButton(tr("Equation of state..."));
+    buttonResults = new QPushButton(tr("Thermodynamics..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
 
-    buttonCorrelations = new QPushButton(tr("Correlations..."));
+    buttonCorrelations = new QPushButton(tr("Ratios and correlators..."));
     connect(buttonCorrelations, SIGNAL(clicked()), this, SLOT(showCorrelations()));
-    buttonCorrelations->setEnabled(false);
+    //buttonCorrelations->setEnabled(false);
 
     labelHint = new QLabel(tr("Hint: double-click on particle for more info"));
     QFont tmpf = QApplication::font();
@@ -591,10 +591,10 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
     computeHigherOrderFluctuations();
 
-    buttonCorrelations->setEnabled(true);
+    //buttonCorrelations->setEnabled(true);
   }
   else {
-    buttonCorrelations->setEnabled(false);
+    //buttonCorrelations->setEnabled(false);
   }
 
   printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));

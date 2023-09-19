@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QDebug>
+#include <QFontDatabase>
 #include <iostream>
 
 #include "HRGBase/ThermalModelBase.h"
@@ -30,8 +31,9 @@ ResultDialog::ResultDialog(QWidget *parent, ThermalModelBase *mod, ChargesFluctu
   QLabel *labParam = new QLabel(tr("Parameters:"));
   labParam->setFont(font);
 
-  QFont font2("Monospace");
-  font2.setStyleHint(QFont::TypeWriter);
+  //QFont font2("Monospace");
+  //font2.setStyleHint(QFont::TypeWriter);
+  const QFont font2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
   parameters = new QTextEdit();
   parameters->setReadOnly(true);
   parameters->setFont(font2);
@@ -240,6 +242,10 @@ QString ResultDialog::GetResults() {
   sprintf(cc, "%-25s = ", "s/T^3");
   ret += QString(cc);
   ret += QString::number((model->CalculateEntropyDensity()) / model->Parameters().T / model->Parameters().T / model->Parameters().T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm()) + "\r\n";
+
+  sprintf(cc, "%-25s = ", "\\Delta");
+  ret += QString(cc);
+  ret += QString::number(1./3. - model->CalculatePressure()/model->CalculateEnergyDensity()) + "\r\n";
 
   if (model->IsFluctuationsCalculated()) {
     ret += "\r\n";

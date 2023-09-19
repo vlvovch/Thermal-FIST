@@ -38,8 +38,8 @@ namespace thermalfist {
 		 */
 		virtual ~ThermalModelRealGas(void);
 
-		void SetExcludedVolumeModel(ExcludedVolumeModelMultiBase* exvolmod) { m_exvolmod = exvolmod; }
-		void SetMeanFieldModel(MeanFieldModelMultiBase* mfmod) { m_mfmod = mfmod; }
+		void SetExcludedVolumeModel(ExcludedVolumeModelMultiBase* exvolmod) { m_exvolmod = exvolmod; m_ComponentMapCalculated = false; }
+		void SetMeanFieldModel(MeanFieldModelMultiBase* mfmod) { m_mfmod = mfmod; m_ComponentMapCalculated = false; }
 
 		ExcludedVolumeModelMultiBase* ExcludedVolumeModel() const { return m_exvolmod; }
 		MeanFieldModelMultiBase* MeanFieldModel() const { return m_mfmod; }
@@ -114,6 +114,7 @@ namespace thermalfist {
 
 		// Override functions end
 
+		const std::vector< std::vector<int> >& ComponentIndices() const { return m_dMuStarIndices; }
 		virtual double DeltaMu(int i) const { return MuShift(i); }
 
 		std::vector< std::vector<double> > m_chi;
@@ -121,6 +122,9 @@ namespace thermalfist {
 		std::vector<double> m_chiarb;
 
 	protected:
+
+	    /// Partitions particles species into sets that have identical pait interactions
+    	void CalculateComponentsMap();
 
 		/**
  * \brief Uses the Broyden method with a provided initial guess
@@ -132,6 +136,9 @@ namespace thermalfist {
  * \return std::vector<double> The solved shifted chemical potentials
  */
 		virtual std::vector<double> SearchSingleSolution(const std::vector<double>& muStarInit);
+
+		virtual std::vector<double> SearchSingleSolutionUsingComponents(const std::vector<double>& muStarInit);
+		virtual std::vector<double> SearchSingleSolutionDirect(const std::vector<double>& muStarInit);
 
 		/**
 		 * \brief Uses the Broyden method with different initial guesses
@@ -172,8 +179,17 @@ namespace thermalfist {
 		/// Whether Broyden's method was successfull
 		bool   m_LastBroydenSuccessFlag;
 
+		/// Whether the mapping to components with the same VDW parameters has been calculated
+    	bool   m_ComponentMapCalculated;
+
 		/// Vector of the shifted chemical potentials
 		std::vector<double> m_MuStar;
+
+		std::vector<int> m_MapTodMuStar;
+
+		std::vector<int> m_MapFromdMuStar;
+
+		std::vector< std::vector<int> > m_dMuStarIndices;
 
 
 		ExcludedVolumeModelMultiBase* m_exvolmod;
@@ -208,6 +224,25 @@ namespace thermalfist {
 		protected:
 			ThermalModelRealGas* m_THM;
 		};
+
+		class BroydenEquationsRealGasComponents : public BroydenEquations
+		{
+		public:
+			BroydenEquationsRealGasComponents(ThermalModelRealGas* model) : BroydenEquations(), m_THM(model) { m_N = model->m_MapFromdMuStar.size(); }
+			std::vector<double> Equations(const std::vector<double>& x);
+		private:
+			ThermalModelRealGas* m_THM;
+		};
+
+		class BroydenJacobianRealGasComponents : public BroydenJacobian
+		{
+		public:
+			BroydenJacobianRealGasComponents(ThermalModelRealGas* model) : BroydenJacobian(), m_THM(model) { }
+			std::vector<double> Jacobian(const std::vector<double>& x);
+		private:
+			ThermalModelRealGas* m_THM;
+		};
+
 	};
 
 } // namespace thermalfist

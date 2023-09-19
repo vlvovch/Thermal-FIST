@@ -50,12 +50,15 @@ CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
 
   QLabel* labelQuantity = new QLabel(tr("Quantity:"));
   comboQuantity = new QComboBox();
-  comboQuantity->addItem(tr("Susceptibility"));
-  comboQuantity->addItem(tr("Moment"));
-  comboQuantity->addItem(tr("Scaled moment"));
-  comboQuantity->addItem(tr("Pearson correlation"));
-  comboQuantity->addItem(tr("Delta[N1,N2]"));
-  comboQuantity->addItem(tr("Sigma[N1,N2]"));
+  comboQuantity->addItem(tr("Ratio"));
+  if (mod->IsFluctuationsCalculated()) {
+    comboQuantity->addItem(tr("Susceptibility"));
+    comboQuantity->addItem(tr("Moment"));
+    comboQuantity->addItem(tr("Scaled moment"));
+    comboQuantity->addItem(tr("Pearson correlation"));
+    comboQuantity->addItem(tr("Delta[N1,N2]"));
+    comboQuantity->addItem(tr("Sigma[N1,N2]"));
+  }
   comboQuantity->setCurrentIndex(0);
   connect(comboQuantity, SIGNAL(currentIndexChanged(int)), this, SLOT(recalculate()));
 
@@ -79,7 +82,7 @@ CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
 
   setLayout(layout);
 
-  this->setWindowTitle(tr("Correlations"));
+  this->setWindowTitle(tr("Ratios and correlators"));
 
   recalculate();
   //QTimer::singleShot(0, this, SLOT(checkFixTableSize()));
@@ -99,6 +102,10 @@ void CorrelationsDialog::checkFixTableSize() {
 void CorrelationsDialog::recalculate()
 {
   tableCorr->clear();
+
+  if (comboQuantity->currentIndex() > 0 && !model->IsFluctuationsCalculated()) {
+    return;
+  }
 
   if (comboType->currentIndex() <= 1) {
     QVector<long long> idtopdg(0);
@@ -128,28 +135,47 @@ void CorrelationsDialog::recalculate()
 
         double corr = 1.;
 
-        if (comboType->currentIndex() == 0) {
-          if (comboFeeddown->currentIndex() == 0)
-            corr = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg2);
-          else
-            corr = model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg2);
-        }
-        else {
-          if (comboFeeddown->currentIndex() == 0)
-            corr = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg2)
-            - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg2)
-            - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg2)
-            + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg2);
-          else
-            corr = model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg2)
-            - model->TwoParticleSusceptibilityFinalByPdg(pdg1, -pdg2)
-            - model->TwoParticleSusceptibilityFinalByPdg(-pdg1, pdg2)
-            + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg2);
+        if (comboQuantity->currentIndex() > 1) {
+          if (comboType->currentIndex() == 0) {
+            if (comboFeeddown->currentIndex() == 0)
+              corr = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg2);
+            else
+              corr = model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg2);
+          } else {
+            if (comboFeeddown->currentIndex() == 0)
+              corr = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg2)
+                     - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg2)
+                     - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg2)
+                     + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg2);
+            else
+              corr = model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg2)
+                     - model->TwoParticleSusceptibilityFinalByPdg(pdg1, -pdg2)
+                     - model->TwoParticleSusceptibilityFinalByPdg(-pdg1, pdg2)
+                     + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg2);
+          }
         }
 
-        if (comboQuantity->currentIndex() == 0)
-          tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr)));
+        if (comboQuantity->currentIndex() == 0) {
+          double yield1 = 0., yield2 = 0.;
+          Feeddown::Type feed = Feeddown::Primordial;
+          if (comboFeeddown->currentIndex() == 1)
+            feed = Feeddown::StabilityFlag;
+
+          if (comboType->currentIndex() == 0 || model->TPS()->PdgToId(-pdg1) == -1)
+            yield1 = model->GetYield(pdg1, feed);
+          else
+            yield1 = model->GetYield(pdg1, feed) - model->GetYield(-pdg1, feed);
+
+          if (comboType->currentIndex() == 0 || model->TPS()->PdgToId(-pdg2) == -1)
+            yield2 = model->GetYield(pdg2, feed);
+          else
+            yield2 = model->GetYield(pdg2, feed) - model->GetYield(-pdg2, feed);
+
+          tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(yield1/yield2)));
+        }
         else if (comboQuantity->currentIndex() == 1)
+          tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr)));
+        else if (comboQuantity->currentIndex() == 2)
           tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
         //else if (comboQuantity->currentIndex() == 2) {
         //  double val = corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
@@ -228,7 +254,7 @@ void CorrelationsDialog::recalculate()
           corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
           // Scaled moment
-          if (comboQuantity->currentIndex() == 2) {
+          if (comboQuantity->currentIndex() == 3) {
             if (pdg1 == pdg2) {
               qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
             }
@@ -240,7 +266,7 @@ void CorrelationsDialog::recalculate()
             }
           }
           // Pearson
-          else if (comboQuantity->currentIndex() == 3) {
+          else if (comboQuantity->currentIndex() == 4) {
             double var1 = wn1 * N1, var2 = wn2 * N2;
             tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
           }
@@ -251,7 +277,7 @@ void CorrelationsDialog::recalculate()
             }
 
             // Delta
-            if (comboQuantity->currentIndex() == 4) {
+            if (comboQuantity->currentIndex() == 5) {
               double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
               continue;
@@ -293,11 +319,16 @@ void CorrelationsDialog::recalculate()
             if (i1 == 0)
               tableCorr->setVerticalHeaderItem(i2, new QTableWidgetItem(names[i2]));
 
-            // Susceptibility
             if (comboQuantity->currentIndex() == 0) {
+              double yield1 = model->ConservedChargeDensity((ConservedCharge::Name)i);
+              double yield2 = model->ConservedChargeDensity((ConservedCharge::Name)j);
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(yield1/yield2)));
+            }
+            // Susceptibility
+            else if (comboQuantity->currentIndex() == 1) {
               tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j))));
             }
-            else if (comboQuantity->currentIndex() == 1) {
+            else if (comboQuantity->currentIndex() == 2) {
               tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
             }
             else {
@@ -307,7 +338,7 @@ void CorrelationsDialog::recalculate()
               double wn2 = model->Susc((ConservedCharge::Name)j, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
               double corr = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
               // Scaled moment
-              if (comboQuantity->currentIndex() == 2) {
+              if (comboQuantity->currentIndex() == 3) {
                 if (i != j) {
                   tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
                 }
@@ -316,12 +347,12 @@ void CorrelationsDialog::recalculate()
                 }
               }
               // Pearson
-              else if (comboQuantity->currentIndex() == 3) {
+              else if (comboQuantity->currentIndex() == 4) {
                 double var1 = wn1 * N1, var2 = wn2 * N2;
                 tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
               }
               // Delta
-              else if (comboQuantity->currentIndex() == 4) {
+              else if (comboQuantity->currentIndex() == 5) {
                 double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
@@ -380,22 +411,40 @@ void CorrelationsDialog::recalculate()
           }
 
           double corr = 1.;
-          if (comboType->currentIndex() == 3) {
-            if (comboFeeddown->currentIndex() == 0)
-              corr = model->PrimordialParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name)cc);
-            else
-              corr = model->FinalParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name)cc);
-          }
-          else {
-            if (comboFeeddown->currentIndex() == 0)
-              corr = model->PrimordialNetParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name)cc);
-            else
-              corr = model->FinalNetParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name)cc);
+          if (comboQuantity->currentIndex() > 1) {
+            if (comboType->currentIndex() == 3) {
+              if (comboFeeddown->currentIndex() == 0)
+                corr = model->PrimordialParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name) cc);
+              else
+                corr = model->FinalParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name) cc);
+            } else {
+              if (comboFeeddown->currentIndex() == 0)
+                corr = model->PrimordialNetParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name) cc);
+              else
+                corr = model->FinalNetParticleChargeSusceptibilityByPdg(pdg1, (ConservedCharge::Name) cc);
+            }
           }
 
-          if (comboQuantity->currentIndex() == 0)
-            tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr)));
+          if (comboQuantity->currentIndex() == 0) {
+            double yield1 = 0.;
+            if (comboFeeddown->currentIndex() == 0) {
+              if (comboType->currentIndex() == 3 || model->TPS()->PdgToId(-pdg1) == -1)
+                yield1 = model->GetDensity(pdg1, Feeddown::Primordial);
+              else
+                yield1 = model->GetDensity(pdg1, Feeddown::Primordial) - model->GetDensity(-pdg1, Feeddown::Primordial);
+            }
+            else {
+              if (comboType->currentIndex() == 3 || model->TPS()->PdgToId(-pdg1) == -1)
+                yield1 = model->GetDensity(pdg1, Feeddown::StabilityFlag);
+              else
+                yield1 = model->GetDensity(pdg1, Feeddown::StabilityFlag) - model->GetDensity(-pdg1, Feeddown::StabilityFlag);
+            }
+            double yield2 = model->ConservedChargeDensity((ConservedCharge::Name)cc);
+            tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(yield1/yield2)));
+          }
           else if (comboQuantity->currentIndex() == 1)
+            tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr)));
+          else if (comboQuantity->currentIndex() == 2)
             tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3))));
           else {
             double N1 = 0., N2 = 0.;
@@ -443,16 +492,16 @@ void CorrelationsDialog::recalculate()
             corr *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
 
             // Scaled moment
-            if (comboQuantity->currentIndex() == 2) {
+            if (comboQuantity->currentIndex() == 3) {
               tableCorr->setItem(i, i2, new QTableWidgetItem("N/A"));
             }
             // Pearson
-            else if (comboQuantity->currentIndex() == 3) {
+            else if (comboQuantity->currentIndex() == 4) {
               double var1 = wn1 * N1, var2 = wn2 * N2;
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
             }
             // Delta
-            else if (comboQuantity->currentIndex() == 4) {
+            else if (comboQuantity->currentIndex() == 5) {
               double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }

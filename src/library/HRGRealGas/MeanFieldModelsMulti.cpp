@@ -36,7 +36,7 @@ namespace thermalfist {
 
 	double MeanFieldModelMultiVDW::d2v(int i, int j) const
 	{
-		return -(m_a[i][j] + m_a[j][i]);
+    return -(m_a[i][j] + m_a[j][i]);
 	}
 
 	double MeanFieldModelMultiVDW::dvdT() const

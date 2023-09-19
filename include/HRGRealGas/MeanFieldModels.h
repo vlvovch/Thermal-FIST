@@ -30,8 +30,14 @@ namespace thermalfist {
     {
     }
     virtual ~MeanFieldModelBase() { }
+
+    // Mean field in units of GeV/fm^3
     virtual double v(double n) const { return 0.; }
+
+    // Density derivatives of the mean field in units of GeV * fm^{3 * (order-1)}
     virtual double dv(int order, double n) const { return 0.; }
+
+    // Temperature derivative of the mean field in units of fm^{-3}
     virtual double dvdT(double n) const { return 0.; }
   };
 
@@ -115,35 +121,47 @@ namespace thermalfist {
     MeanFieldModelSkyrme(
       double alpha, 
       double beta, 
+      double gam = 2.0,
       double n0 = 0.16,
       double dalphadT = 0.,
       double dbetadT = 0.
-    ) : m_alpha(alpha), m_beta(beta), m_n0(n0), m_dalphadT(dalphadT), m_dbetadT(dbetadT)
+    ) : m_alpha(alpha), m_beta(beta), m_gam(gam), m_n0(n0), m_dalphadT(dalphadT), m_dbetadT(dbetadT)
     {
     }
 
     virtual ~MeanFieldModelSkyrme() { }
     virtual double v(double n) const { 
       return m_alpha * n * n / m_n0 
-        + m_beta * n * n * n / m_n0 / m_n0; 
+        + m_beta * n * pow(n/m_n0, m_gam); 
     }
     virtual double dv(int order, double n) const {
       if (order == 0)
         return v(n);
       if (order == 1)
-        return 2. * m_alpha * n / m_n0 + 3. * m_beta * n * n / m_n0 / m_n0;
+        return 2. * m_alpha * n / m_n0 + (1. + m_gam) * m_beta * pow(n/m_n0, m_gam);
       if (order == 2)
-        return 2. * m_alpha / m_n0 + 6. * m_beta * n / m_n0 / m_n0;
-      if (order == 3)
-        return 6. * m_beta / m_n0 / m_n0;
+        return 2. * m_alpha / m_n0 + (1. + m_gam) * m_gam * m_beta * pow(n, m_gam - 1.) / pow(m_n0, m_gam);
+
+      if (order >= 3) {
+        double gam_mult = 1.0;
+        for(int i = 0; i < order; ++i) {
+          gam_mult *= (1. + m_gam - i);
+        }
+        return gam_mult * m_beta * pow(n, m_gam + 1 - order) / pow(m_n0, m_gam);
+      }
+
+      // if (order == 3)
+      //   return 6. * m_beta / m_n0 / m_n0;
       return 0.;
     }
     virtual double dvdT(double n) const {
-      return m_dalphadT * n * n / m_n0
-        + m_dbetadT * n * n * n / m_n0 / m_n0;
+      return m_dalphadT * n * n / m_n0 
+        + m_dbetadT * n * pow(n/m_n0, m_gam); 
+      // return m_dalphadT * n * n / m_n0
+      //   + m_dbetadT * n * n * n / m_n0 / m_n0;
     }
   private:
-    double m_alpha, m_beta, m_n0;
+    double m_alpha, m_beta, m_gam, m_n0;
     double m_dalphadT, m_dbetadT;
   };
 

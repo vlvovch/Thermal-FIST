@@ -13,6 +13,7 @@
 
 #ifdef USE_OPENMP
 #include <omp.h>
+#include "ThermalModelRealGas.h"
 #endif
 
 
@@ -22,7 +23,7 @@ using namespace std;
 namespace thermalfist {
 
   ThermalModelRealGas::ThermalModelRealGas(ThermalParticleSystem* TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params), m_SearchMultipleSolutions(false)
+    ThermalModelBase(TPS_, params), m_SearchMultipleSolutions(false), m_ComponentMapCalculated(false)
   {
     m_chi.resize(6);
     for (int i = 0; i < 6; ++i) m_chi[i].resize(3);
@@ -74,7 +75,85 @@ namespace thermalfist {
       m_MuStar[i] = m_Chem[i];
   }
 
-  vector<double> ThermalModelRealGas::SearchSingleSolution(const vector<double>& muStarInit)
+  void ThermalModelRealGas::CalculateComponentsMap()
+  {
+    map< vector<int>, int> MapComp;
+
+    int NN = m_densities.size();
+
+    m_MapTodMuStar.resize(NN);
+    m_MapFromdMuStar.clear();
+    MapComp.clear();
+    m_dMuStarIndices.clear();
+
+    int tind = 0;
+    for (int i = 0; i < NN; ++i) {
+      vector<int> IntParam(0);
+      if (m_exvolmod == NULL)
+        IntParam.push_back(0);
+      else
+        IntParam.push_back(m_exvolmod->ComponentIndices()[i]);
+      if (m_mfmod == NULL)
+        IntParam.push_back(0);
+      else
+        IntParam.push_back(m_mfmod->ComponentIndices()[i]);
+
+      if (MapComp.count(IntParam) == 0) {
+        MapComp[IntParam] = tind;
+        m_MapTodMuStar[i] = tind;
+        m_MapFromdMuStar.push_back(i);
+        m_dMuStarIndices.push_back(vector<int>(1, i));
+        tind++;
+      }
+      else {
+        m_MapTodMuStar[i] = MapComp[IntParam];
+        m_dMuStarIndices[MapComp[IntParam]].push_back(i);
+      }
+    }
+
+    m_ComponentMapCalculated = true;
+  }
+
+  std::vector<double> ThermalModelRealGas::SearchSingleSolution(const std::vector<double> &muStarInit)
+  {
+    return SearchSingleSolutionUsingComponents(muStarInit);
+    //return SearchSingleSolutionDirect(muStarInit);
+  }
+
+  vector<double> ThermalModelRealGas::SearchSingleSolutionUsingComponents(const vector<double> &muStarInit)
+  {
+     if (!m_ComponentMapCalculated)
+       CalculateComponentsMap();
+
+
+    int NN = m_densities.size();
+    int NNdmu = m_MapFromdMuStar.size();
+
+    vector<double> dmuscur(NNdmu, 0.);
+    for (int i = 0; i < NNdmu; ++i)
+      dmuscur[i] = muStarInit[m_MapFromdMuStar[i]] - m_Chem[m_MapFromdMuStar[i]];
+
+    BroydenEquationsRealGasComponents eqs(this);
+    BroydenJacobianRealGasComponents  jac(this);
+    Broyden broydn(&eqs, &jac);
+    BroydenSolutionCriteriumRealGas crit(this);
+
+    dmuscur = broydn.Solve(dmuscur, &crit);
+
+    if (broydn.Iterations() == broydn.MaxIterations())
+      m_LastBroydenSuccessFlag = false;
+    else m_LastBroydenSuccessFlag = true;
+
+    m_MaxDiff = broydn.MaxDifference();
+
+    vector<double> ret(NN);
+    for (int i = 0; i < NN; ++i)
+      ret[i] = m_Chem[i] + dmuscur[m_MapTodMuStar[i]];
+
+    return ret;
+  }
+  
+  vector<double> ThermalModelRealGas::SearchSingleSolutionDirect(const vector<double> &muStarInit)
   {
     int NN = m_densities.size();
 
@@ -92,8 +171,6 @@ namespace thermalfist {
     if (broydn.Iterations() == broydn.MaxIterations())
       m_LastBroydenSuccessFlag = false;
     else m_LastBroydenSuccessFlag = true;
-
-    //printf("Iters: %d\n", broydn.Iterations());
 
     m_MaxDiff = broydn.MaxDifference();
 
@@ -1470,31 +1547,10 @@ namespace thermalfist {
           ret[k * NN + kp] += -m_THM->m_exvolmod->df(kp, k) * ns[kp];
 
           if (1 /*attrfl*/) {
-            //for (int n = 0; n < NN; ++n) {
-            //  for (int np = 0; np < NN; ++np) {
-            //    ret[k * NN + kp] += -Ps[n] * m_THM->m_exvolmod->d2f(n, k, np) * dnjdmukp[np];
-            //  }
-            //}
-
             ret[k * NN + kp] += evc_d2fmul[evinds[k]];
-            //for (int in = 0; in < Nevcomp; ++in) {
-            //  for (int inp = 0; inp < Nevcomp; ++inp) {
-            //    int n  = m_THM->m_exvolmod->ComponentIndicesFrom()[in];
-            //    int np = m_THM->m_exvolmod->ComponentIndicesFrom()[inp];
-            //    ret[k * NN + kp] += -evc_Ps[in] * m_THM->m_exvolmod->d2f(n, k, np) * evc_dnjdmukp[inp];
-            //  }
-            //}
-
-            //for (int n = 0; n < NN; ++n) {
-            //  ret[k * NN + kp] += m_THM->m_mfmod->d2v(k, n) * dnjdmukp[n];
-            //}
 
             ret[k * NN + kp] += mfc_d2vmul[mfinds[k]];
 
-            //for (int in = 0; in < Nmfcomp; ++in) {
-            //  int n = m_THM->m_mfmod->ComponentIndicesFrom()[in];
-            //  ret[k * NN + kp] += m_THM->m_mfmod->d2v(k, n) * mfc_dnjdmukp[in];
-            //}
           }
         }
       }
@@ -1516,6 +1572,158 @@ namespace thermalfist {
     else {
       return Broyden::BroydenSolutionCriterium::IsSolved(x, f, xdelta);
     }
+  }
+
+  std::vector<double> ThermalModelRealGas::BroydenEquationsRealGasComponents::Equations(const std::vector<double> &x)
+  {
+    int NN = m_THM->Densities().size();
+    vector<double> Ps(NN, 0.);
+    for (int i = 0; i < NN; ++i) {
+      Ps[i] = m_THM->TPS()->Particles()[i].Density(m_THM->Parameters(),
+        IdealGasFunctions::Pressure,
+        m_THM->UseWidth(),
+        m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
+      );
+    }
+
+    vector<double> ns(NN, 0.);
+    for (int i = 0; i < NN; ++i) {
+      ns[i] = m_THM->TPS()->Particles()[i].Density(m_THM->Parameters(),
+        IdealGasFunctions::ParticleDensity,
+        m_THM->UseWidth(),
+        m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
+      );
+    }
+
+    vector<double> np = m_THM->m_exvolmod->nsol(ns);
+    m_THM->m_exvolmod->SetDensities(np);
+    m_THM->m_mfmod->SetDensities(np);
+
+    vector<double> ret(m_N, 0.);
+    for (size_t i = 0; i < ret.size(); ++i) {
+      ret[i] = x[i];
+      for (int j = 0; j < NN; ++j)
+        ret[i] += -m_THM->m_exvolmod->df(j, m_THM->m_MapFromdMuStar[i]) * Ps[j];
+      ret[i] += m_THM->m_mfmod->dv(m_THM->m_MapFromdMuStar[i]);
+    }
+    return ret;
+  }
+
+  std::vector<double> ThermalModelRealGas::BroydenJacobianRealGasComponents::Jacobian(const std::vector<double> &x)
+  {
+    int NN = m_THM->m_densities.size();
+    int NNdmu = m_THM->m_MapFromdMuStar.size();
+
+    MatrixXd densMatrix(NNdmu, NNdmu);
+    VectorXd solVector(NNdmu), xVector(NNdmu);
+
+    std::vector<double> ret(NNdmu * NNdmu, 0.);
+    {
+      vector<double> Ps(NN, 0.);
+      for (int i = 0; i < NN; ++i)
+        Ps[i] = m_THM->TPS()->Particles()[i].Density(m_THM->Parameters(),
+          IdealGasFunctions::Pressure,
+          m_THM->UseWidth(),
+          m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
+        );
+
+      vector<double> ns(NN, 0.);
+      for (int i = 0; i < NN; ++i)
+        ns[i] = m_THM->TPS()->Particles()[i].Density(m_THM->Parameters(),
+          IdealGasFunctions::ParticleDensity,
+          m_THM->UseWidth(),
+          m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
+        );
+
+      vector<double> chi2s(NN, 0.);
+      for (int i = 0; i < NN; ++i)
+        chi2s[i] = m_THM->TPS()->Particles()[i].chiDimensionfull(2, m_THM->Parameters(),
+          m_THM->UseWidth(),
+          m_THM->ChemicalPotential(i) + x[m_THM->m_MapTodMuStar[i]]
+        );
+
+      vector<double> evc_Ps(NNdmu, 0.);
+      for (int i = 0; i < NN; ++i)
+        evc_Ps[m_THM->m_MapTodMuStar[i]] += Ps[i];
+      vector<double> ns_comps(NNdmu, 0.);
+      for (int i = 0; i < NN; ++i)
+        ns_comps[m_THM->m_MapTodMuStar[i]] += ns[i];
+      vector<double> chi2_comps(NNdmu, 0.);
+      for (int i = 0; i < NN; ++i)
+        chi2_comps[m_THM->m_MapTodMuStar[i]] += chi2s[i];
+
+      vector<double> np = m_THM->m_exvolmod->nsol(ns);
+      m_THM->m_exvolmod->SetDensities(np);
+      m_THM->m_mfmod->SetDensities(np);
+
+      for (int i = 0; i < NNdmu; ++i) {
+        for (int j = 0; j < NNdmu; ++j) {
+          densMatrix(i, j) = 0.;
+          if (i == j)
+            densMatrix(i, j) += 1.;
+
+          densMatrix(i, j) += -m_THM->m_exvolmod->df(m_THM->m_MapFromdMuStar[i], m_THM->m_MapFromdMuStar[j])
+                  * ns_comps[i];
+        }
+      }
+
+
+
+      PartialPivLU<MatrixXd> decomp(densMatrix);
+
+      for (int kp = 0; kp < NNdmu; ++kp) {
+
+        for (int l = 0; l < NNdmu; ++l) {
+          xVector[l] = 0.;
+          if (l == kp) {
+            xVector[l] = chi2_comps[l] * pow(xMath::GeVtoifm(), 3)
+              * m_THM->m_exvolmod->f(m_THM->m_MapFromdMuStar[l]);
+          }
+        }
+
+        solVector = decomp.solve(xVector);
+        for (int i = 0; i < NNdmu; ++i)
+          if (solVector[i] > 1.) solVector[i] = 1.;  // Stabilizer
+
+        vector<double> dnjdmukp(NNdmu, 0.);
+        for (int j = 0; j < NNdmu; ++j) {
+          dnjdmukp[j] = solVector[j];
+        }
+
+        vector<double> evc_d2fmul(NNdmu, 0.);
+        vector<double> mfc_d2vmul(NNdmu, 0.);
+        for (int nn = 0; nn < NNdmu; ++nn) {
+          for (int in = 0; in < NNdmu; ++in) {
+            for (int inp = 0; inp < NNdmu; ++inp) {
+              int n  = m_THM->m_MapFromdMuStar[in];
+              int np = m_THM->m_MapFromdMuStar[inp];
+              int k  = m_THM->m_MapFromdMuStar[nn];
+              evc_d2fmul[nn] += -evc_Ps[in] * m_THM->m_exvolmod->d2f(n, k, np) * dnjdmukp[inp];
+            }
+          }
+        }
+
+        for (int nn = 0; nn < NNdmu; ++nn) {
+          for (int in = 0; in < NNdmu; ++in) {
+            int n = m_THM->m_MapFromdMuStar[in];
+            int k = m_THM->m_MapFromdMuStar[nn];
+            mfc_d2vmul[nn] += m_THM->m_mfmod->d2v(k, n) * dnjdmukp[in];
+          }
+        }
+
+        for (int k = 0; k < NNdmu; ++k) {
+          if (k == kp)
+            ret[k * NNdmu + kp] += 1.;
+          ret[k * NNdmu + kp] += -m_THM->m_exvolmod->df(m_THM->m_MapFromdMuStar[kp], m_THM->m_MapFromdMuStar[k])
+            * ns_comps[kp];
+
+          ret[k * NNdmu + kp] += evc_d2fmul[k];
+          ret[k * NNdmu + kp] += mfc_d2vmul[k];
+        }
+      }
+    }
+
+    return ret;
   }
 
 }
