@@ -64,8 +64,6 @@ namespace thermalfist {
       }
     }
 
-    ApplyFixForBoseCondensation();
-
     m_StabilityFlagsSet = true;
     m_ChemicalFreezeoutSet = false;
     m_IsCalculated = false;
@@ -75,6 +73,7 @@ namespace thermalfist {
   {
     if (!m_StabilityFlagsSet) {
       SetStabilityFlags(ComputePCEStabilityFlags(m_model->TPS(), UseSahaForNuclei(), FreezeLonglivedResonances(), LonglivedResonanceWidthCut()));
+      ApplyFixForBoseCondensation();
     }
     
     m_ParametersInit = params;
