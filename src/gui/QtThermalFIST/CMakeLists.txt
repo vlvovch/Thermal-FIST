@@ -27,7 +27,7 @@ source_group("QCustomPlot" FILES ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS} ${Qt5PrintSupport_EXECUTABLE_COMPILE_FLAGS}")
 	  
 # Tell CMake to create the executable
-add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE} qttfres.qrc qttficon.rc)
+add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE} qttfres.qrc qttficon.rc trajectoriestab.cpp)
 
 if(WIN32)
   if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")
