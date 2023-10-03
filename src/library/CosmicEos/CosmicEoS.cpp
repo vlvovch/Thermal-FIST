@@ -43,8 +43,8 @@ namespace thermalfist {
     m_Photon = ThermalParticle(true, "photon", 22, 2., -1, 0.);
     
     // Charged leptons
-    m_ChargedLeptons.push_back(ThermalParticle(true, "electron", 11, 2., 1, LeptonFlavor::m_e, 0, 0, -1));
-    m_ChargedLeptons.push_back(ThermalParticle(true, "muon", 13, 2., 1, LeptonFlavor::m_mu, 0, 0, -1));
+    m_ChargedLeptons.push_back(ThermalParticle(true, "e", 11, 2., 1, LeptonFlavor::m_e, 0, 0, -1));
+    m_ChargedLeptons.push_back(ThermalParticle(true, "mu", 13, 2., 1, LeptonFlavor::m_mu, 0, 0, -1));
     m_ChargedLeptons.push_back(ThermalParticle(true, "tau", 15, 2., 1, LeptonFlavor::m_tau, 0, 0, -1));
 
     // Neutrinos

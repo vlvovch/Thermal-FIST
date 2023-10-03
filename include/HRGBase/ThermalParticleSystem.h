@@ -393,6 +393,10 @@ namespace thermalfist {
     /// particles with a non-zero charm.
     bool hasCharmed() const { return (m_NumCharmed > 0); }
 
+    /// Whether the particle list contains
+    /// multibaryons
+    bool hasMultiBaryons() const { return (m_MaxAbsBaryonNumber > 1); }
+
     /// Number of different particle species in the list
     int ComponentsNumber() const { return static_cast<int>(m_Particles.size()); }
 
@@ -584,6 +588,7 @@ namespace thermalfist {
     int m_NumCharged;
     int m_NumStrange;
     int m_NumCharmed;
+    int m_MaxAbsBaryonNumber;
 
     int m_NumberOfParticles;
 

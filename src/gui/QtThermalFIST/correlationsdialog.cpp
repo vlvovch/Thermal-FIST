@@ -135,7 +135,7 @@ void CorrelationsDialog::recalculate()
 
         double corr = 1.;
 
-        if (comboQuantity->currentIndex() > 1) {
+        if (comboQuantity->currentIndex() >= 1) {
           if (comboType->currentIndex() == 0) {
             if (comboFeeddown->currentIndex() == 0)
               corr = model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg2);
@@ -259,7 +259,8 @@ void CorrelationsDialog::recalculate()
               qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
             }
             if (i != j) {
-              tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
+              //tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
+              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
             }
             else {
               tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / N1)));

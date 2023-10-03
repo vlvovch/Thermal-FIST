@@ -485,6 +485,7 @@ namespace thermalfist {
     m_PDGtoID.clear();
 
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
 
     if (ListFiles.size() == 1 && CheckListIsiSS(ListFiles[0])) {
       LoadListiSS(ListFiles[0], flags, mcut);
@@ -630,6 +631,7 @@ namespace thermalfist {
         if (chg != 0)   m_NumCharged++;
         if (str != 0)   m_NumStrange++;
         if (charm != 0) m_NumCharmed++;
+        m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
         m_Particles.push_back(part_candidate); 
         m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -708,6 +710,7 @@ namespace thermalfist {
           if (chg != 0)   m_NumCharged++;
           if (str != 0)   m_NumStrange++;
           if (charm != 0) m_NumCharmed++;
+          m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
           m_Particles.push_back(part_candidate);
           m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -1017,6 +1020,7 @@ namespace thermalfist {
     m_PDGtoID.clear();
 
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
 
     ifstream fin(filename.c_str());
 
@@ -1074,6 +1078,7 @@ namespace thermalfist {
           if (chg != 0)   m_NumCharged++;
           if (str != 0)   m_NumStrange++;
           if (charm != 0) m_NumCharmed++;
+          m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
           m_Particles.push_back(part_candidate);
           m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -1360,6 +1365,7 @@ namespace thermalfist {
   void ThermalParticleSystem::FillPdgMap()
   {
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
     m_NumberOfParticles = 0;
     m_PDGtoID.clear();
     for (size_t i = 0; i < m_Particles.size(); ++i) {
@@ -1369,6 +1375,7 @@ namespace thermalfist {
       if (m_Particles[i].Strangeness() != 0)     m_NumStrange++;
       if (m_Particles[i].Charm() != 0)           m_NumCharmed++;
       if (m_Particles[i].PdgId() > 0)            m_NumberOfParticles++;
+      m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(m_Particles[i].BaryonCharge()));
     }
 
     for (size_t i = 0; i < m_DecayContributionsByFeeddown.size(); ++i)
@@ -1508,6 +1515,7 @@ namespace thermalfist {
     ret &= m_NumCharged == rhs.m_NumCharged;
     ret &= m_NumStrange == rhs.m_NumStrange;
     ret &= m_NumCharmed == rhs.m_NumCharmed;
+    ret &= m_MaxAbsBaryonNumber == rhs.m_MaxAbsBaryonNumber;
     ret &= m_NumberOfParticles == rhs.m_NumberOfParticles;
     ret &= m_ResonanceWidthIntegrationType == rhs.m_ResonanceWidthIntegrationType;
     ret &= m_DecayDistributionsMap == rhs.m_DecayDistributionsMap;

@@ -134,6 +134,11 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     parammap[tname] = index;
     index++;
 
+    tname = "T[MeV]";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
     tname = "p/T⁴";
     paramnames.push_back(tname);
     parammap[tname] = index;
@@ -231,11 +236,18 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(replot()));
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 
+    CBxAxis = new QCheckBox(tr("Show quantity 2 on x-axis"));
+    CBxAxis->setChecked(false);
+    connect(CBxAxis, SIGNAL(toggled(bool)), this, SLOT(replot()));
+    connect(CBxAxis, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
+
+
     CBflipAxes = new QCheckBox(tr("Flip axes"));
     CBflipAxes->setChecked(true);
     connect(CBflipAxes, SIGNAL(toggled(bool)), this, SLOT(replot()));
 
     layLeftTop->addWidget(CBratio);
+    layLeftTop->addWidget(CBxAxis);
     layLeftTop->addWidget(CBflipAxes);
 
     QGridLayout *selLay = new QGridLayout();
@@ -305,12 +317,16 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     plotDependence->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(plotDependence, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
 
+    buttonEoSTable = new QPushButton(tr("Tabulated EoS..."));
+    connect(buttonEoSTable, SIGNAL(clicked()), this, SLOT(showEoSTable()));
 
-    //layLeft->addWidget(CBratio, 0, Qt::AlignLeft);
+
+  //layLeft->addWidget(CBratio, 0, Qt::AlignLeft);
     layLeft->addLayout(layLeftTop);
     layLeft->addLayout(selLay);
     layLeft->addWidget(plotDependence);
     layLeft->addWidget(CBflipAxes, 0, Qt::AlignLeft);
+    layLeft->addWidget(buttonEoSTable, 0, Qt::AlignLeft);
 
     QVBoxLayout *layRight = new QVBoxLayout();
     layRight->setContentsMargins(15, 0, 0, 0);
@@ -598,7 +614,7 @@ void CosmicEoSTab::finalize() {
 
 void CosmicEoSTab::modelChanged()
 {
-  if (CBratio->isChecked()) {
+  if (CBratio->isChecked() || CBxAxis->isChecked()) {
     comboQuantity2->setEnabled(true);
   }
   else {
@@ -619,7 +635,7 @@ void CosmicEoSTab::modelChanged()
   }
 
   if ((comboQuantity2->currentText() == "n_i^lep/T³" || comboQuantity2->currentText() == "n_i^had/T³")
-    && CBratio->isChecked()) {
+    && (CBratio->isChecked() || CBxAxis->isChecked())) {
     labelParticle2->setVisible(true);
     comboParticle2->setVisible(true);
     labelFeeddown2->setVisible(comboQuantity2->currentText() == "n_i^had/T³");
@@ -679,9 +695,9 @@ void CosmicEoSTab::contextMenuRequest(QPoint pos)
   QMenu *menu = new QMenu(this);
   menu->setAttribute(Qt::WA_DeleteOnClose);
 
-  menu->addAction("Save as pdf", this, SLOT(saveAsPdf()));
-  menu->addAction("Save as png", this, SLOT(saveAsPng()));
-  menu->addAction("Write computed values to file", this, SLOT(saveAsAscii()));
+  menu->addAction("Save as pdf...", this, SLOT(saveAsPdf()));
+  menu->addAction("Save as png...", this, SLOT(saveAsPng()));
+  menu->addAction("Write computed values to file...", this, SLOT(saveAsAscii()));
 
   menu->popup(plotDependence->mapToGlobal(pos));
 }
@@ -725,11 +741,16 @@ void CosmicEoSTab::saveAs(int type)
     else {
       std::vector<double> yvalues;
 
-      if (CBratio->isChecked()) {
+      if (CBratio->isChecked() && !CBxAxis->isChecked()) {
         yvalues = getValuesRatio(comboQuantity->currentIndex(), comboQuantity2->currentIndex());
       }
       else {
         yvalues = getValues(comboQuantity->currentIndex());
+      }
+
+      std::vector<double> xvalues = varvalues;
+      if (CBxAxis->isChecked()) {
+        xvalues = getValues(comboQuantity2->currentIndex(), 1);
       }
 
       QFile fout(path);
@@ -738,13 +759,18 @@ void CosmicEoSTab::saveAs(int type)
         QTextStream out(&fout);
         out.setFieldWidth(15);
         out.setFieldAlignment(QTextStream::AlignLeft);
-        out << plotDependence->xAxis->label();
-        out << plotDependence->yAxis->label();
+        if (!CBflipAxes->isChecked()) {
+          out << plotDependence->xAxis->label();
+          out << plotDependence->yAxis->label();
+        } else {
+          out << plotDependence->yAxis->label();
+          out << plotDependence->xAxis->label();
+        }
         out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
         for (int i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
-          out << varvalues[i] << yvalues[i];
+          out << xvalues[i] << yvalues[i];
           out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
         }
       }
@@ -861,6 +887,13 @@ std::vector<double> CosmicEoSTab::getValues(int index, int num)
       }
     }
 
+    tind = parammap["T[MeV]"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].T * 1.e3;
+      }
+    }
+
     tind = parammap["μB[MeV]"];
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
@@ -955,7 +988,7 @@ void CosmicEoSTab::replot() {
       yAxis = plotDependence->xAxis;
     }
 
-    xAxis->setLabel("T[MeV]");
+    xAxis->setLabel(getParameterName());
 
     int index = comboQuantity->currentIndex();
 
@@ -967,14 +1000,15 @@ void CosmicEoSTab::replot() {
 
     if (index >= 0 && index < paramnames.size()) {
       std::vector<double> yvalues;
+      std::vector<double> xvalues = varvalues;
 
-      if (CBratio->isChecked()) {
+      if (CBratio->isChecked() && !CBxAxis->isChecked()) {
         int index2 = comboQuantity2->currentIndex();
         if (!(index2 >= 0 && index2 < paramnames.size()))
           return;
         yAxis->setLabel(paramnames[index] + "/" + paramnames[index2]);
-        if ((paramnames[index] == "ni/T³" && paramnames[index2] == "ni/T³") ||
-          (paramnames[index] == "ni[fm^-3]" && paramnames[index2] == "ni[fm^-3]")) {
+        if ((paramnames[index] == "n_i^had/T³" && paramnames[index2] == "n_i^had/T³") ||
+          (paramnames[index] == "n_i^had[fm^-3]" && paramnames[index2] == "n_i^had[fm^-3]")) {
           QString tname = paramnames[index] + "/" + paramnames[index2];
           int pid = comboParticle->currentIndex(), pid2 = comboParticle2->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size()
@@ -983,25 +1017,92 @@ void CosmicEoSTab::replot() {
                   + QString::fromStdString(model->TPS()->Particles()[pid2].Name()) + ")";
           yAxis->setLabel(tname);
         }
+        if ((paramnames[index] == "n_i^lep/T³" && paramnames[index2] == "n_i^had/T³") ||
+            (paramnames[index] == "n_i^lep[fm^-3]" && paramnames[index2] == "n_i^had[fm^-3]")) {
+          QString tname = paramnames[index] + "/" + paramnames[index2];
+          int pid = comboParticle->currentIndex(), pid2 = comboParticle2->currentIndex();
+          if (pid >= 0 && pid < cosmos->NumberOfElectroWeakSpecies()
+              && pid2 >= 0 && pid2 < model->TPS()->Particles().size())
+            tname = "n(" + QString::fromStdString(cosmos->GetSpeciesName(pid)) + ")/n("
+                    + QString::fromStdString(model->TPS()->Particles()[pid2].Name()) + ")";
+          yAxis->setLabel(tname);
+        }
+        if ((paramnames[index] == "n_i^had/T³" && paramnames[index2] == "n_i^lep/T³") ||
+            (paramnames[index] == "n_i^had[fm^-3]" && paramnames[index2] == "n_i^lep[fm^-3]")) {
+          QString tname = paramnames[index] + "/" + paramnames[index2];
+          int pid = comboParticle->currentIndex(), pid2 = comboParticle2->currentIndex();
+          if (pid >= 0 && pid < model->TPS()->Particles().size()
+              && pid2 >= 0 && pid2 < cosmos->NumberOfElectroWeakSpecies())
+            tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")/n("
+                    + QString::fromStdString(cosmos->GetSpeciesName(pid2)) + ")";
+          yAxis->setLabel(tname);
+        }
+        if ((paramnames[index] == "n_i^lep/T³" && paramnames[index2] == "n_i^lep/T³") ||
+            (paramnames[index] == "n_i^lep[fm^-3]" && paramnames[index2] == "n_i^lep[fm^-3]")) {
+          QString tname = paramnames[index] + "/" + paramnames[index2];
+          int pid = comboParticle->currentIndex(), pid2 = comboParticle2->currentIndex();
+          if (pid >= 0 && pid < cosmos->NumberOfElectroWeakSpecies()
+              && pid2 >= 0 && pid2 < cosmos->NumberOfElectroWeakSpecies())
+            tname = "n(" + QString::fromStdString(cosmos->GetSpeciesName(pid)) + ")/n("
+                    + QString::fromStdString(cosmos->GetSpeciesName(pid2)) + ")";
+          yAxis->setLabel(tname);
+        }
         yvalues = getValuesRatio(index, index2);
       }
       else {
         yAxis->setLabel(paramnames[index]);
-        if (paramnames[index] == "ni/T³") {
+        if (paramnames[index] == "n_i^had/T³" || paramnames[index] == "n_i^had[fm^-3]") {
           QString tname = paramnames[index];
           int pid = comboParticle->currentIndex();
           if (pid >= 0 && pid < model->TPS()->Particles().size())
-            tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")/T³";
+            tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")";
+          if (paramnames[index] == "n_i^had/T³")
+            tname += "/T³";
+          else
+            tname += "[fm^-3]";
           yAxis->setLabel(tname);
         }
-        if (paramnames[index] == "ni[fm^-3]") {
+        if (paramnames[index] == "n_i^lep/T³" || paramnames[index] == "n_i^lep[fm^-3]") {
           QString tname = paramnames[index];
           int pid = comboParticle->currentIndex();
-          if (pid >= 0 && pid < model->TPS()->Particles().size())
-            tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")[fm^-3]³";
+          if (pid >= 0 && pid < cosmos->NumberOfElectroWeakSpecies())
+            tname = "n(" + QString::fromStdString(cosmos->GetSpeciesName(pid)) +")";
+          if (paramnames[index] == "n_i^lep/T³")
+            tname += "/T³";
+          else
+            tname += "[fm^-3]";
           yAxis->setLabel(tname);
         }
         yvalues = getValues(index);
+
+        if (CBxAxis->isChecked()) {
+          xvalues = getValues(comboQuantity2->currentIndex(), 1);
+
+          int index2 = comboQuantity2->currentIndex();
+          xAxis->setLabel(paramnames[index2]);
+          if (paramnames[index2] == "n_i^had/T³" || paramnames[index2] == "n_i^had[fm^-3]") {
+            QString tname = paramnames[index2];
+            int pid = comboParticle2->currentIndex();
+            if (pid >= 0 && pid < model->TPS()->Particles().size())
+              tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")";
+            if (paramnames[index2] == "n_i^had/T³")
+              tname += "/T³";
+            else
+              tname += "[fm^-3]";
+            xAxis->setLabel(tname);
+          }
+          if (paramnames[index2] == "n_i^lep/T³" || paramnames[index2] == "n_i^lep[fm^-3]") {
+            QString tname = paramnames[index2];
+            int pid = comboParticle2->currentIndex();
+            if (pid >= 0 && pid < cosmos->NumberOfElectroWeakSpecies())
+              tname = "n(" + QString::fromStdString(cosmos->GetSpeciesName(pid)) +")";
+            if (paramnames[index2] == "n_i^lep/T³")
+              tname += "/T³";
+            else
+              tname += "[fm^-3]";
+            xAxis->setLabel(tname);
+          }
+        }
       }
       double tmin = 0., tmax = 0.;
       for (int i = 0; i<yvalues.size(); ++i) {
@@ -1015,13 +1116,17 @@ void CosmicEoSTab::replot() {
       if (yvalues.size() > 0)
         yAxis->setRange(tmin, tmax);
 
-//      int graphNumber = plotDependence->graphCount();
-//
-//      plotDependence->addGraph();
-//      plotDependence->graph(graphNumber)->setName("Model");
-//      plotDependence->graph(graphNumber)->setPen(QPen(Qt::black, 2, Qt::SolidLine));
-//
-//      plotDependence->graph(graphNumber)->data()->clear();
+
+        if (CBxAxis->isChecked()) {
+          double xmin = 1.e12, xmax = -1.e12;
+          for (int i = 0; i<xvalues.size(); ++i) {
+            xmin = std::min(xmin, xvalues[i]);
+            xmax = std::max(xmax, xvalues[i]);
+          }
+
+          if (xvalues.size() > 0)
+            xAxis->setRange(xmin, xmax);
+        }
 
         QCPCurve *curve = new QCPCurve(plotDependence->xAxis, plotDependence->yAxis);
         curve->setName("Model");
@@ -1030,17 +1135,18 @@ void CosmicEoSTab::replot() {
 
       for(int i=0;i<yvalues.size();++i) {
           if (flipAxes)
-              curve->addData(yvalues[i], varvalues[i]);
+              curve->addData(yvalues[i], xvalues[i]);
               //plotDependence->graph(graphNumber)->addData(yvalues[i], varvalues[i]);
           else
-              curve->addData(varvalues[i], yvalues[i]);
+              curve->addData(xvalues[i], yvalues[i]);
             //plotDependence->graph(graphNumber)->addData(varvalues[i], yvalues[i]);
       }
 
       tmin = std::min(tmin, yAxis->range().lower);
       tmax = std::max(tmax, yAxis->range().upper);
 
-      xAxis->setRange(spinTMin->value(), spinTMax->value());
+      if (!CBxAxis->isChecked())
+        xAxis->setRange(spinTMin->value(), spinTMax->value());
       if (yvalues.size() > 0)
           yAxis->setRange(1.1 * tmin, 1.1 * tmax);
 
@@ -1049,4 +1155,57 @@ void CosmicEoSTab::replot() {
 
       plotDependence->replot();
     }
+}
+
+QString CosmicEoSTab::getParameterName() const {
+  return "T[MeV]";
+}
+
+void CosmicEoSTab::showEoSTable() {
+  recomputeCalcTable();
+
+  CalculationTableDialog dialog(this, calcTable);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.showMaximized();
+  dialog.exec();
+}
+
+
+void CosmicEoSTab::recomputeCalcTable() {
+  calcTable.clear();
+
+  calcTable.parameter_name = getParameterName();
+  for(int i = 0; i < varvalues.size(); ++i) {
+    calcTable.parameter_values.push_back(varvalues[i]);
+    calcTable.temperature_values.push_back(paramsTD[i].T);
+  }
+
+  for(int ir = 0; ir < paramnames.size(); ++ir) {
+    if (paramnames[ir] == "n_i^had/T³" || paramnames[ir] == "n_i^had[fm^-3]")
+      continue;
+
+    if (paramnames[ir] == "n_i^lep/T³" || paramnames[ir] == "n_i^lep[fm^-3]")
+      continue;
+
+    calcTable.quantities_names.push_back(paramnames[ir]);
+    calcTable.quantities_values.push_back(getValues(ir));
+  }
+
+  for(int ic = 0; ic < model->TPS()->Particles().size(); ++ic) {
+    calcTable.densities_names.push_back(QString::fromStdString(model->TPS()->Particles()[ic].Name()));
+  }
+
+  for(int ir = 0; ir < varvalues.size(); ++ir) {
+    calcTable.densities_values.push_back(paramsTDHRG[ir].densities);
+  }
+
+  for(int ilep = 0; ilep < cosmos->NumberOfElectroWeakSpecies(); ++ilep) {
+    calcTable.quantities_names.push_back(QString::fromStdString(
+            "n(" + cosmos->GetSpeciesName(ilep) + ")/T³"));
+    std::vector<double> lepton_densities;
+    for(int ival = 0; ival < varvalues.size(); ++ival) {
+      lepton_densities.push_back(paramsTD[ival].densities[ilep] / pow(paramsTD[ival].T * xMath::GeVtoifm(), 3.));
+    }
+    calcTable.quantities_values.push_back(lepton_densities);
+  }
 }

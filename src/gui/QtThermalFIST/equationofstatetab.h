@@ -25,6 +25,8 @@
 #include "configwidgets.h"
 #include "HRGBase/xMath.h"
 
+#include "calculationtabledialog.h"
+
 
 class EoSWorker : public QThread
 {
@@ -88,6 +90,7 @@ class EquationOfStateTab : public QWidget
 
     QComboBox *comboQuantity;
     QCheckBox *CBratio;
+    QCheckBox *CBxAxis;
     QComboBox *comboQuantity2;
 
     QComboBox *comboParticle;
@@ -141,6 +144,11 @@ class EquationOfStateTab : public QWidget
     QVector< QVector<double> > dataHotQCDx, dataHotQCDy, dataHotQCDyerrp, dataHotQCDyerrm;
     std::map<QString, int> mapHotQCD;
 
+    // Table for the calculation results table widget
+    CalculationTable calcTable;
+
+    QPushButton *buttonEoSTable;
+
 public:
     EquationOfStateTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EquationOfStateTab();
@@ -163,10 +171,14 @@ public slots:
     // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
     void saveAs(int type);
 
+    void showEoSTable();
+
 private:
   std::vector<double> getValues(int index, int num = 0);
   std::vector<double> getValuesRatio(int index, int index2);
+  QString getParameterName() const;
   void readLatticeData();
+  void recomputeCalcTable();
 };
 
 

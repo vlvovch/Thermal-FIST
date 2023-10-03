@@ -127,7 +127,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     QHBoxLayout *layMisc = new QHBoxLayout();
     layMisc->setAlignment(Qt::AlignLeft);
 
-    buttonResults = new QPushButton(tr("Equation of state..."));
+    buttonResults = new QPushButton(tr("Thermodynamics..."));
     connect(buttonResults, SIGNAL(clicked()), this, SLOT(showResults()));
     buttonChi2Profile = new QPushButton(tr("Chi2 profile..."));
     connect(buttonChi2Profile, SIGNAL(clicked()), this, SLOT(showChi2Profile()));
@@ -348,6 +348,37 @@ void FitToExperimentTab::changedRow()
 
 void FitToExperimentTab::performFit(const ThermalModelConfig & config, const ThermalModelFitParameters & params)
 {
+  if (config.ModelType == ThermalModelConfig::CE) {
+    int messageType = 0;
+    // 0 - Ok
+    // 1 - Warning, light nuclei in the list
+    // 2 - Warning, quantum statistics for baryons
+    // 3 - Warning, light nuclei and quantum statistics for baryons
+    if (model->TPS()->hasMultiBaryons() && config.QuantumStatisticsInclude == 0)
+      messageType = 3;
+    else if (model->TPS()->hasMultiBaryons())
+      messageType = 1;
+    else if (config.QuantumStatisticsInclude == 0)
+      messageType = 2;
+
+    QVector<QString> messages = {
+            "Everything is OK",
+            "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list.\n\nDo you want to proceed with the calculation?",
+            "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only.\n\nDo you want to proceed with the calculation?",
+            "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects.\n\nDo you want to proceed with the calculation?"
+    };
+
+    if (messageType != 0) {
+      QMessageBox msgBox;
+      msgBox.setText(messages[messageType]);
+      msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+      msgBox.setDefaultButton(QMessageBox::No);
+      int ret = msgBox.exec();
+      if (ret == QMessageBox::No)
+        return;
+    }
+  }
+
   ThermalModelBase *modelnew;
 
   if (config.ModelType == ThermalModelConfig::DiagonalEV) {
