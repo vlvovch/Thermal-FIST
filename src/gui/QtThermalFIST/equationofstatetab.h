@@ -103,7 +103,9 @@ class EquationOfStateTab : public QWidget
     QCheckBox *CBflipAxes;
 
     QLabel *labelTMin, *labelTMax, *labeldT;
+    QLabel *labelEMin, *labelEMax, *labeldE;
     QLabel *labelmuB, *labelmuQ, *labelmuS;
+    QLabel *labelTaux;
 
     QCustomPlot *plotDependence;
 
@@ -120,6 +122,8 @@ class EquationOfStateTab : public QWidget
 
     QDoubleSpinBox *spinTMin, *spinTMax, *spindT;
     QDoubleSpinBox *spinmuB, *spinmuQ, *spinmuS;
+    QDoubleSpinBox *spinEMin, *spinEMax, *spindE;
+    QDoubleSpinBox *spinTaux;
     QLabel *labelConstr;
 
     QPushButton *buttonCalculate;

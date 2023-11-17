@@ -126,6 +126,9 @@ public:
   QCheckBox *CBAnnihilation;
   QDoubleSpinBox *spinPionsAnnihilation;
 
+  QDoubleSpinBox *spinB;
+  QSpinBox *spinLandauLevels;
+
   QCheckBox *CBPionInteractions;
   QDoubleSpinBox *spinfPi;
 

@@ -846,6 +846,26 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
 
   grPCE->setLayout(PCELayout);
 
+  QGroupBox* grMagneticField = new QGroupBox(tr("Magnetic field"));
+  QGridLayout* BLayout = new QGridLayout();
+  QLabel* labelB = new QLabel(tr("eB [GeV<sup>2</sup>]:"));
+  spinB = new QDoubleSpinBox();
+  spinB->setMinimum(0.);
+  spinB->setMaximum(100.);
+  spinB->setSingleStep(0.01);
+  spinB->setDecimals(4);
+  spinB->setValue(m_parent->currentConfig.MagneticFieldB);
+  QLabel* labelLandauLevels = new QLabel(tr("Landau levels l<sub>max</sub>:"));
+  spinLandauLevels = new QSpinBox();
+  spinLandauLevels->setMinimum(0);
+  spinLandauLevels->setMaximum(100000);
+  spinLandauLevels->setValue(m_parent->currentConfig.MagneticFieldLmax);
+  BLayout->addWidget(labelB, 0, 0);
+  BLayout->addWidget(spinB, 0, 1);
+  BLayout->addWidget(labelLandauLevels, 1, 0);
+  BLayout->addWidget(spinLandauLevels, 1, 1);
+  grMagneticField->setLayout(BLayout);
+
   QGroupBox* grPions = new QGroupBox(tr("Pion interactions"));
   QVBoxLayout* PionsLayout = new QVBoxLayout();
   
@@ -872,6 +892,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   }
   
   layout->addWidget(grPCE);
+  layout->addWidget(grMagneticField);
   layout->addWidget(grPions);
 
   layout->addWidget(buttonBox);
@@ -911,5 +932,7 @@ void OtherOptionsDialog::OK()
   config.PCEPionAnnihilationNumber = spinPionsAnnihilation->value();
   config.UseEMMPions = CBPionInteractions->isChecked();
   config.EMMPionFPi  = spinfPi->value() * 1.e-3;
+  config.MagneticFieldB = spinB->value();
+  config.MagneticFieldLmax = spinLandauLevels->value();
   QDialog::accept();
 }

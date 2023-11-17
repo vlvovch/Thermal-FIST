@@ -33,7 +33,8 @@ namespace thermalfist {
     m_NormBratio(false),
     m_QuantumStats(true),
     m_MaxDiff(0.),
-    m_useOpenMP(0)
+    m_useOpenMP(0),
+    m_IGFExtraConfig()
   {
     if (!Disclaimer::DisclaimerPrinted) 
       Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
@@ -1957,5 +1958,21 @@ namespace thermalfist {
   void ThermalModelBase::ClearDensityModels() {
     for (auto& particle : TPS()->Particles())
       particle.ClearGeneralizedDensity();
+  }
+
+  void ThermalModelBase::SetMagneticField(double B, int lmax) {
+    m_IGFExtraConfig.MagneticField.B    = B;
+    if (lmax >= 0)
+      m_IGFExtraConfig.MagneticField.lmax = lmax;
+    for (auto& particle : TPS()->Particles())
+      particle.SetMagneticField(B, m_IGFExtraConfig.MagneticField.lmax);
+    ResetCalculatedFlags();
+  }
+
+  void ThermalModelBase::ClearMagneticField() {
+    m_IGFExtraConfig.MagneticField.B    = 0.;
+    for (auto& particle : TPS()->Particles())
+      particle.ClearMagneticField();
+    ResetCalculatedFlags();
   }
 } // namespace thermalfist

@@ -115,6 +115,9 @@ void CalculationTableDialog::fillTable()
   tableValues->clear();
 
   tableValues->setColumnCount(m_table.quantities_names.size() + 1);
+  if (comboQuantity->currentIndex() != 0) {
+    tableValues->setColumnCount(m_table.densities_names.size() + 1);
+  }
   tableValues->setRowCount(m_table.parameter_values.size());
 
   tableValues->setHorizontalHeaderItem(0, new QTableWidgetItem(m_table.parameter_name));

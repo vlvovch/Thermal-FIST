@@ -53,6 +53,17 @@ void EoSWorker::run() {
         if (!model->ConstrainMuS())
           model->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
       }
+      // Magnetic field
+      else if (mode == 3) {
+        model->SetTemperature(cParams[3] * 1.e-3);
+        if (!model->ConstrainMuB())
+          model->SetBaryonChemicalPotential(cParams[0] * 1.e-3);
+        if (!model->ConstrainMuQ())
+          model->SetElectricChemicalPotential(cParams[1] * 1.e-3);
+        if (!model->ConstrainMuS())
+          model->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
+        model->SetMagneticField(param);
+      }
 
       if (param == Tmin)
         model->ConstrainChemicalPotentials(true);
@@ -505,6 +516,7 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     comboMode->addItem(tr("Const. μ"));
     comboMode->addItem(tr("Const. μ/T"));
     comboMode->addItem(tr("Const. T"));
+    comboMode->addItem(tr("Magnetic field dependence"));
     comboMode->setCurrentIndex(0);
     connect(comboMode, SIGNAL(currentIndexChanged(int)), this, SLOT(modelChanged()));
     layMode->addWidget(new QLabel(tr("Mode:")));
@@ -540,7 +552,7 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     labelTMin = new QLabel(tr("T<sub>min</sub> (MeV):"));
     spinTMin = new QDoubleSpinBox();
     spinTMin->setDecimals(3);
-    spinTMin->setMinimum(0.01);
+    spinTMin->setMinimum(0.);
     spinTMin->setMaximum(10000.);
     spinTMin->setValue(100.);
 
@@ -558,6 +570,37 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     spindT->setMaximum(10000.);
     spindT->setValue(5.);
 
+    labelEMin = new QLabel(tr("eB<sub>min</sub> (GeV<sup>2</sup>):"));
+    spinEMin = new QDoubleSpinBox();
+    spinEMin->setDecimals(3);
+    spinEMin->setMinimum(0.);
+    spinEMin->setMaximum(100.);
+    spinEMin->setSingleStep(0.01);
+    spinEMin->setValue(0.);
+
+    labelEMax = new QLabel(tr("eB<sub>max</sub> (GeV<sup>2</sup>):"));
+    spinEMax = new QDoubleSpinBox();
+    spinEMax->setDecimals(3);
+    spinEMax->setMinimum(0.);
+    spinEMax->setMaximum(100.);
+    spinEMax->setSingleStep(0.01);
+    spinEMax->setValue(0.16);
+
+    labeldE = new QLabel(tr("∆eB (GeV<sup>2</sup>):"));
+    spindE = new QDoubleSpinBox();
+    spindE->setDecimals(3);
+    spindE->setMinimum(0.);
+    spindE->setMaximum(100.);
+    spindE->setSingleStep(0.01);
+    spindE->setValue(0.01);
+
+    labelTaux = new QLabel(tr("T (MeV):"));
+    spinTaux = new QDoubleSpinBox();
+    spinTaux->setMinimum(0.01);
+    spinTaux->setMaximum(10000.);
+    spinTaux->setValue(155.);
+
+
 
     layBounds->addWidget(labelTMin, 0, 0);
     layBounds->addWidget(spinTMin, 0, 1);
@@ -565,12 +608,20 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     layBounds->addWidget(spinTMax, 0, 3);
     layBounds->addWidget(labeldT, 0, 4);
     layBounds->addWidget(spindT, 0, 5);
-    layBounds->addWidget(labelmuB, 1, 0);
-    layBounds->addWidget(spinmuB, 1, 1);
-    layBounds->addWidget(labelmuQ, 1, 2);
-    layBounds->addWidget(spinmuQ, 1, 3);
-    layBounds->addWidget(labelmuS, 1, 4);
-    layBounds->addWidget(spinmuS, 1, 5);
+    layBounds->addWidget(labelEMin, 1, 0);
+    layBounds->addWidget(spinEMin, 1, 1);
+    layBounds->addWidget(labelEMax, 1, 2);
+    layBounds->addWidget(spinEMax, 1, 3);
+    layBounds->addWidget(labeldE, 1, 4);
+    layBounds->addWidget(spindE, 1, 5);
+    layBounds->addWidget(labelmuB, 2, 0);
+    layBounds->addWidget(spinmuB, 2, 1);
+    layBounds->addWidget(labelmuQ, 2, 2);
+    layBounds->addWidget(spinmuQ, 2, 3);
+    layBounds->addWidget(labelmuS, 2, 4);
+    layBounds->addWidget(spinmuS, 2, 5);
+    layBounds->addWidget(labelTaux, 3, 0);
+    layBounds->addWidget(spinTaux, 3, 1);
 
     labelConstr = new QLabel(tr(""));
 
@@ -693,7 +744,14 @@ void EquationOfStateTab::calculate() {
       paramsFl.resize(0);
       varvalues.resize(0);
 
-      int iters = static_cast<int>((spinTMax->value() - spinTMin->value()) / spindT->value()) + 1;
+      double pmin = spinTMin->value(), pmax = spinTMax->value(), dp = spindT->value();
+      if (comboMode->currentIndex() == 3) {
+        pmin = spinEMin->value();
+        pmax = spinEMax->value();
+        dp = spindE->value();
+      }
+
+      int iters = static_cast<int>((pmax - pmin) / dp) + 1;
 
       fCurrentSize = 0;
 
@@ -703,9 +761,9 @@ void EquationOfStateTab::calculate() {
 
       fStop = 0;
 
-      std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value()};
+      std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
-      EoSWorker *wrk = new EoSWorker(model, spinTMin->value(), spinTMax->value(), spindT->value(),
+      EoSWorker *wrk = new EoSWorker(model, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
@@ -796,6 +854,39 @@ void EquationOfStateTab::modelChanged()
     labelTMin->setText("T<sub>min</sub> (MeV)");
     labelTMax->setText("T<sub>max</sub> (MeV)");
     labeldT->setText("∆T (MeV)");
+  }
+
+
+  if (comboMode->currentIndex() != 3) {
+    labelEMin->setVisible(false);
+    labelEMax->setVisible(false);
+    labeldE->setVisible(false);
+    spinEMin->setVisible(false);
+    spinEMax->setVisible(false);
+    spindE->setVisible(false);
+    labelTMin->setVisible(true);
+    labelTMax->setVisible(true);
+    labeldT->setVisible(true);
+    spinTMin->setVisible(true);
+    spinTMax->setVisible(true);
+    spindT->setVisible(true);
+    labelTaux->setVisible(false);
+    spinTaux->setVisible(false);
+  } else {
+    labelEMin->setVisible(true);
+    labelEMax->setVisible(true);
+    labeldE->setVisible(true);
+    spinEMin->setVisible(true);
+    spinEMax->setVisible(true);
+    spindE->setVisible(true);
+    labelTMin->setVisible(false);
+    labelTMax->setVisible(false);
+    labeldT->setVisible(false);
+    spinTMin->setVisible(false);
+    spinTMax->setVisible(false);
+    spindT->setVisible(false);
+    labelTaux->setVisible(true);
+    spinTaux->setVisible(true);
   }
 
   QString constr = "";
@@ -2052,6 +2143,8 @@ void EquationOfStateTab::readLatticeData()
 QString EquationOfStateTab::getParameterName() const {
   if (comboMode->currentIndex() == 2)
     return "μB[MeV]";
+  else if (comboMode->currentIndex() == 3)
+    return "eB[GeV^2]";
   else
     return "T[MeV]";
 }
@@ -2172,7 +2265,7 @@ void EquationOfStateTab::replot() {
       }
 
       // Lattice data for muB = 0 only
-      if (spinmuB->value() == 0.0 && !model->ConstrainMuB() && !flipAxes && !CBxAxis->isChecked())
+      if (comboMode->currentIndex() < 2 && spinmuB->value() == 0.0 && !model->ConstrainMuB() && !flipAxes && !CBxAxis->isChecked())
         plotLatticeData();
 
       int graphNumber = plotDependence->graphCount();
@@ -2197,8 +2290,14 @@ void EquationOfStateTab::replot() {
       tmin = std::min(tmin, plotDependence->yAxis->range().lower);
       tmax = std::max(tmax, plotDependence->yAxis->range().upper);
 
+      double pmin = spinTMin->value(), pmax = spinTMax->value();
+      if (comboMode->currentIndex() == 3) {
+        pmin = spinEMin->value();
+        pmax = spinEMax->value();
+      }
+
       if (!CBxAxis->isChecked())
-        xAxis->setRange(spinTMin->value(), spinTMax->value());
+        xAxis->setRange(pmin, pmax);
       if (yvalues.size() > 0)
         yAxis->setRange(1.1*tmin, 1.1*tmax);
 

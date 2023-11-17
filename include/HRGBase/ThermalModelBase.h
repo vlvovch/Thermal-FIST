@@ -1186,9 +1186,22 @@ namespace thermalfist {
      */
     void ClearDensityModels();
 
+    const IdealGasFunctions::IdealGasFunctionsExtraConfig& GetIdealGasFunctionsExtraConfig() const { return m_IGFExtraConfig; }
+
+    /**
+     * \brief Sets the value of magnetic field and the number of Landau levels to include
+     */
+    void SetMagneticField(double B = 0.0, int lmax = -1);
+
+    /// \brief Clears the magnetic field
+    void ClearMagneticField();
+
   protected:
     ThermalModelParameters m_Parameters;
     ThermalParticleSystem* m_TPS;
+
+    /// Extra parameters for calculating ideal gas functions, such as the magnetic field
+    IdealGasFunctions::IdealGasFunctionsExtraConfig m_IGFExtraConfig;
 
     bool   m_LastCalculationSuccessFlag;
     double m_MaxDiff;

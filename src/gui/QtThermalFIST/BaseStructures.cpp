@@ -151,6 +151,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.UseEMMPions = false;
   ret.EMMPionFPi  = 0.133;
 
+  ret.MagneticFieldB = model->GetIdealGasFunctionsExtraConfig().MagneticField.B;
+  ret.MagneticFieldLmax = model->GetIdealGasFunctionsExtraConfig().MagneticField.lmax;
+
   return ret;
 }
 
@@ -250,6 +253,9 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
       }
     }
   }
+
+  // Magnetic field
+  model->SetMagneticField(config.MagneticFieldB, config.MagneticFieldLmax);
 }
 
 void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConfig & config)
