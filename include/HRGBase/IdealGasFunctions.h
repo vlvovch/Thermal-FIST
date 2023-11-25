@@ -172,6 +172,19 @@ namespace thermalfist {
                                       const IdealGasFunctionsExtraConfig& extraConfig = {});
 
     /**
+     * \brief Computes the thermal part of the magnetization of a Maxwell-Boltzmann gas, m_B = dP/dB.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \param extraConfig Extra parameters such as magnetic field.
+     * \return Magnetization [GeV^2].
+     */
+    double BoltzmannMagnetization(double T, double mu, double m, double deg,
+                            const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
      * \brief Computes the particle number density of a quantum ideal gas using cluster expansion.
      * 
      * \param T Temperature [GeV].
@@ -278,6 +291,18 @@ namespace thermalfist {
                                                     const IdealGasFunctionsExtraConfig& extraConfig = {});
 
     /**
+     * \brief Computes the thermal part of the magnetization of a Maxwell-Boltzmann gas, m_B = dP/dB.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Magnetization [GeV^2].
+     */
+    double QuantumClusterExpansionMagnetization(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                                const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
      * \brief Computes the particle number density of a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
      * 
      * \param T Temperature [GeV].
@@ -336,7 +361,19 @@ namespace thermalfist {
      */
     double QuantumNumericalIntegrationScalarDensity(int statistics, double T, double mu, double m, double deg,
                                                     const IdealGasFunctionsExtraConfig& extraConfig = {});  // TODO: Check for correctness
-    
+
+    /**
+     * \brief Computes the magnetization of a quantum ideal gas using 32-point Gauss-Laguerre quadratures.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return Magnetization [GeV^2].
+     */
+    double QuantumNumericalIntegrationMagnetization(int statistics, double T, double mu, double m, double deg,
+                                                    const IdealGasFunctionsExtraConfig& extraConfig = {});
+
     double QuantumNumericalIntegrationT1dn1dmu1(int statistics, double T, double mu, double m, double deg,
                                                 const IdealGasFunctionsExtraConfig& extraConfig = {});
     double QuantumNumericalIntegrationT2dn2dmu2(int statistics, double T, double mu, double m, double deg,
@@ -463,7 +500,11 @@ namespace thermalfist {
      */
     double FermiNumericalIntegrationLargeMuScalarDensity(double T, double mu, double m, double deg,
                                                          const IdealGasFunctionsExtraConfig& extraConfig = {});  // TODO: Check for correctness
-    
+
+
+    double FermiNumericalIntegrationLargeMuMagnetization(double T, double mu, double m, double deg,
+                                                         const IdealGasFunctionsExtraConfig& extraConfig = {});  // TODO: Check for correctness
+
     double FermiNumericalIntegrationLargeMuT1dn1dmu1(double T, double mu, double m, double deg,
                                                      const IdealGasFunctionsExtraConfig& extraConfig = {});
     double FermiNumericalIntegrationLargeMuT2dn2dmu2(double T, double mu, double m, double deg,
@@ -563,6 +604,10 @@ namespace thermalfist {
      */
     double FermiZeroTScalarDensity(double mu, double m, double deg,
                                    const IdealGasFunctionsExtraConfig& extraConfig = {});  // TODO: Check for correctness
+
+    double FermiZeroTMagnetization(double mu, double m, double deg,
+                                   const IdealGasFunctionsExtraConfig& extraConfig = {});  // TODO: Check for correctness
+
 
     double FermiZeroTdn1dmu1(double mu, double m, double deg,
                              const IdealGasFunctionsExtraConfig& extraConfig = {});

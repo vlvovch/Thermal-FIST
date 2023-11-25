@@ -74,7 +74,7 @@ namespace thermalfist {
         // TODO: Check that it's done correctly
         double Qmod = abs(extraConfig.MagneticField.Q);
         auto spins = GetSpins(extraConfig.MagneticField.degSpin);
-        // Use e = -p + T (dp/dT) + mu (dp/mu)
+        // Use e = -p + T (dp/dT) + mu (dp/mu) + B * (dp/dB)
         // Sum over spins
         double ret = 0.;
         for(double sz : spins) {
@@ -85,7 +85,7 @@ namespace thermalfist {
           }
         }
         ret *= Qmod * extraConfig.MagneticField.B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-        return ret;
+        return ret + extraConfig.MagneticField.B * BoltzmannMagnetization(T, mu, m, deg, extraConfig) * xMath::GeVtoifm3();
       }
 
       // No magnetic field
@@ -96,9 +96,14 @@ namespace thermalfist {
 
     double BoltzmannEntropyDensity(double T, double mu, double m, double deg,
                                    const IdealGasFunctionsExtraConfig& extraConfig) {
-      return (BoltzmannPressure(T, mu, m, deg, extraConfig) +
-      BoltzmannEnergyDensity(T, mu, m, deg, extraConfig) -
-      mu * BoltzmannDensity(T, mu, m, deg, extraConfig)) / T;
+      double ret = (BoltzmannPressure(T, mu, m, deg, extraConfig) +
+                    BoltzmannEnergyDensity(T, mu, m, deg, extraConfig) -
+                    mu * BoltzmannDensity(T, mu, m, deg, extraConfig)) / T;
+
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        ret -= extraConfig.MagneticField.B * BoltzmannMagnetization(T, mu, m, deg, extraConfig) * xMath::GeVtoifm3() / T;
+
+      return ret;
     }
 
     double BoltzmannScalarDensity(double T, double mu, double m, double deg,
@@ -294,7 +299,8 @@ namespace thermalfist {
             }
           }
         }
-        return ret * Qmod * extraConfig.MagneticField.B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+        return ret * Qmod * extraConfig.MagneticField.B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3()
+               + extraConfig.MagneticField.B * QuantumClusterExpansionMagnetization(statistics, T, mu, m, deg, order, extraConfig) * xMath::GeVtoifm3();
       }
 
       // No magnetic field
@@ -315,9 +321,14 @@ namespace thermalfist {
     double QuantumClusterExpansionEntropyDensity(int statistics, double T, double mu, double m, double deg, int order,
                                                  const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      return (QuantumClusterExpansionPressure(statistics, T, mu, m, deg, order, extraConfig) +
-      QuantumClusterExpansionEnergyDensity(statistics, T, mu, m, deg, order, extraConfig) -
-      mu * QuantumClusterExpansionDensity(statistics, T, mu, m, deg, order, extraConfig)) / T;
+      double ret = (QuantumClusterExpansionPressure(statistics, T, mu, m, deg, order, extraConfig) +
+                    QuantumClusterExpansionEnergyDensity(statistics, T, mu, m, deg, order, extraConfig) -
+                    mu * QuantumClusterExpansionDensity(statistics, T, mu, m, deg, order, extraConfig)) / T;
+
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        ret -= extraConfig.MagneticField.B * QuantumClusterExpansionMagnetization(statistics, T, mu, m, deg, order, extraConfig) * xMath::GeVtoifm3() / T;
+
+      return ret;
     }
 
     double QuantumClusterExpansionScalarDensity(int statistics, double T, double mu, double m, double deg, int order,
@@ -596,7 +607,8 @@ namespace thermalfist {
             }
           }
         }
-        return ret * Qmod * extraConfig.MagneticField.B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+        return ret * Qmod * extraConfig.MagneticField.B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3()
+         + extraConfig.MagneticField.B * QuantumNumericalIntegrationMagnetization(statistics, T, mu, m, deg, extraConfig) * xMath::GeVtoifm3();
       }
 
       // No magnetic field
@@ -618,9 +630,15 @@ namespace thermalfist {
     {
       if (T == 0.)
         return 0.;
-      return (QuantumNumericalIntegrationPressure(statistics, T, mu, m, deg, extraConfig)
-      + QuantumNumericalIntegrationEnergyDensity(statistics, T, mu, m, deg, extraConfig)
-      - mu * QuantumNumericalIntegrationDensity(statistics, T, mu, m, deg, extraConfig)) / T;
+
+      double ret = (QuantumNumericalIntegrationPressure(statistics, T, mu, m, deg, extraConfig)
+                    + QuantumNumericalIntegrationEnergyDensity(statistics, T, mu, m, deg, extraConfig)
+                    - mu * QuantumNumericalIntegrationDensity(statistics, T, mu, m, deg, extraConfig)) / T;
+
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        ret -= extraConfig.MagneticField.B * QuantumNumericalIntegrationMagnetization(statistics, T, mu, m, deg, extraConfig) * xMath::GeVtoifm3() / T;
+
+      return ret;
     }
 
     double QuantumNumericalIntegrationScalarDensity(int statistics, double T, double mu, double m, double deg,
@@ -1001,9 +1019,14 @@ namespace thermalfist {
     double FermiNumericalIntegrationLargeMuEntropyDensity(double T, double mu, double m, double deg,
                                                           const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      return (FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg, extraConfig)
-      + FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg, extraConfig)
-      - mu * FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg, extraConfig)) / T;
+      double ret = (FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg, extraConfig)
+                    + FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg, extraConfig)
+                    - mu * FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg, extraConfig)) / T;
+
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        ret -= extraConfig.MagneticField.B * FermiNumericalIntegrationLargeMuMagnetization(T, mu, m, deg, extraConfig) * xMath::GeVtoifm3() / T;
+
+      return ret;
     }
 
     double FermiNumericalIntegrationLargeMuScalarDensity(double T, double mu, double m, double deg,
@@ -1367,6 +1390,134 @@ namespace thermalfist {
         }
       }
       printf("**WARNING** IdealGasFunctions::IdealGasQuantity: Unknown quantity\n");
+      return 0.;
+    }
+
+    double BoltzmannMagnetization(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      // Check for magnetic field effect for charged particles
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        // TODO: Check that it's done correctly
+        double Qmod = abs(extraConfig.MagneticField.Q);
+        auto spins = GetSpins(extraConfig.MagneticField.degSpin);
+        // Sum over spins
+        double ret = 0.;
+        for(double sz : spins) {
+          // Sum over Landau levels
+          for(int l = 0; l < extraConfig.MagneticField.lmax; ++l) {
+            double e0 = sqrt(m*m + Qmod*extraConfig.MagneticField.B*(2.*l + 1. - 2.*sz));
+            ret += (T * e0 * xMath::BesselKexp(1, e0 / T)
+                    - Qmod * extraConfig.MagneticField.B * (l + 0.5 - sz) * xMath::BesselKexp(0, e0 / T)
+                   ) * exp((mu - e0) / T);
+          }
+        }
+        ret *= Qmod / 2. / xMath::Pi() / xMath::Pi();
+        return ret;
+      }
+
+      // No magnetic field
+      return 0.;
+    }
+
+    double QuantumClusterExpansionMagnetization(int statistics, double T, double mu, double m, double deg, int order,
+                                                const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return BoltzmannMagnetization(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        double Qmod = abs(extraConfig.MagneticField.Q);
+        auto spins = GetSpins(extraConfig.MagneticField.degSpin);
+
+
+        // Use Eq. (7) from https://arxiv.org/pdf/2104.06843.pdf
+        // Sum over spins
+        double ret = 0.;
+        for(double sz : spins) {
+          // Sum over Landau levels
+          for(int l = 0; l < extraConfig.MagneticField.lmax; ++l) {
+            double e0 = sqrt(m*m + Qmod*extraConfig.MagneticField.B*(2.*l + 1. - 2.*sz));
+
+            // Sum over clusters
+            double tfug = exp((mu - e0) / T);
+            double EoverT = e0 / T;
+            double cfug = tfug;
+            double sign = 1.;
+            for (int i = 1; i <= order; ++i) {
+              ret += sign * (T / static_cast<double>(i) * e0 * xMath::BesselKexp(1, i*EoverT)
+               - Qmod * extraConfig.MagneticField.B * (l + 0.5 - sz) * xMath::BesselKexp(0, i*EoverT)
+              ) * cfug;
+
+              cfug *= tfug;
+              if (signchange) sign = -sign;
+            }
+          }
+        }
+        return ret * Qmod / 2. / xMath::Pi() / xMath::Pi();
+      }
+
+      // No magnetic field
+      return 0.;
+    }
+
+    double QuantumNumericalIntegrationMagnetization(int statistics, double T, double mu, double m, double deg,
+                                                    const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)           return BoltzmannMagnetization(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return FermiZeroTMagnetization(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuMagnetization(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // Check for magnetic field effect for charged particles
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        double Qmod = abs(extraConfig.MagneticField.Q);
+        auto spins = GetSpins(extraConfig.MagneticField.degSpin);
+
+        // Use Eq. (5) from https://arxiv.org/pdf/2104.06843.pdf
+        // Sum over spins
+        double ret = 0.;
+        for(double sz : spins) {
+          // Sum over Landau levels
+          for(int l = 0; l < extraConfig.MagneticField.lmax; ++l) {
+
+            // Numerical integration over pz
+            double moverT = m / T;
+            double muoverT = mu / T;
+            double BoverT2 = extraConfig.MagneticField.B / T / T;
+            for (int i = 0; i < 32; i++) {
+              double tx = lagx32[i];
+              double EoverT = sqrt(tx*tx + moverT*moverT + Qmod*BoverT2*(2.*l + 1. - 2.*sz));
+              ret += lagw32[i] * T * (tx * T * tx - Qmod * BoverT2 * T * (l + 0.5 - sz) ) / EoverT / (exp(EoverT - muoverT) + statistics);
+            }
+          }
+        }
+        return ret * Qmod / 2. / xMath::Pi() / xMath::Pi();
+      }
+
+      // No magnetic field
+      return 0.;
+    }
+
+    double FermiNumericalIntegrationLargeMuMagnetization(double T, double mu, double m, double deg,
+                                                         const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationMagnetization(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      return 0.;
+    }
+
+    double FermiZeroTMagnetization(double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      assert(extraConfig.MagneticField.B == 0.0);
       return 0.;
     }
 

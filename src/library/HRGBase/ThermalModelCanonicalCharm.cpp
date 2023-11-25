@@ -84,6 +84,8 @@ namespace thermalfist {
   }
 
   void ThermalModelCanonicalCharm::CalculatePrimordialDensities() {
+    assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
+
     if (UsePartialChemicalEquilibrium()) {
       printf("**ERROR** ThermalModelCanonicalCharm::CalculatePrimordialDensities(): PCE not supported!\n");
       exit(1);

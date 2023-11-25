@@ -114,6 +114,8 @@ namespace thermalfist {
 
 
   void ThermalModelVDWCanonicalStrangeness::CalculatePrimordialDensities() {
+    assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
+
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);

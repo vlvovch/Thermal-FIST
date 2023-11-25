@@ -148,6 +148,8 @@ namespace thermalfist {
 
 
   void ThermalModelCanonical::CalculatePrimordialDensities() {
+    assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
+
     m_FluctuationsCalculated = false;
 
     if (m_PartialZ.size() == 0)
