@@ -534,10 +534,14 @@ namespace thermalfist {
       return false;
     }
 
-    m_Parameters.muB = muBinit;
-    m_Parameters.muS = muSinit;
-    m_Parameters.muQ = muQinit;
-    m_Parameters.muC = muCinit;
+    if (ConstrMuB)
+      m_Parameters.muB = muBinit;
+    if (ConstrMuS)
+      m_Parameters.muS = muSinit;
+    if (ConstrMuQ)
+      m_Parameters.muQ = muQinit;
+    if (ConstrMuC)
+      m_Parameters.muC = muCinit;
     bool allzero = true;
     allzero &= (totB == 0.0 && ConstrMuB) || (muBinit == 0 && !ConstrMuB);
     allzero &= (totQ == 0.0 && ConstrMuQ) || (muQinit == 0 && !ConstrMuQ);

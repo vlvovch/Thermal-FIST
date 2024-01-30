@@ -117,9 +117,15 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.SoverB = model->SoverB();
 
+  ret.RhoB = model->BaryonDensity();
+  ret.RhoQ = model->ElectricChargeDensity();
+  ret.RhoS = model->StrangenessDensity();
+  ret.RhoC = model->CharmDensity();
+
   ret.QoverB = model->QoverB();
 
   ret.ConstrainMuB = model->ConstrainMuB();
+  ret.ConstrainMuBType = 0;
 
   ret.ConstrainMuQ = model->ConstrainMuQ();
 

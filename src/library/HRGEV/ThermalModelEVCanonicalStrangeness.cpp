@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 #include "HRGBase/xMath.h"
 #include "HRGEV/ExcludedVolumeHelper.h"

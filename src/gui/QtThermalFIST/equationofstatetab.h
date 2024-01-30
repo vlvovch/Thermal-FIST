@@ -33,6 +33,7 @@ class EoSWorker : public QThread
   Q_OBJECT
 
   thermalfist::ThermalModelBase *model;
+  ThermalModelConfig config;
   double Tmin, Tmax, dT;
   std::vector<double> cParams;
   int mode;
@@ -46,7 +47,8 @@ class EoSWorker : public QThread
   void run() Q_DECL_OVERRIDE;
 
 public:
-  EoSWorker(thermalfist::ThermalModelBase *mod = NULL, 
+  EoSWorker(thermalfist::ThermalModelBase *mod = NULL,
+      const ThermalModelConfig& cconfig = ThermalModelConfig(),
       double Tmin = 100., 
       double Tmax = 200.,
       double dT = 5.,
@@ -60,6 +62,7 @@ public:
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
       model = mod;
+      config = cconfig;
       paramsTD = paramsTDo;
       paramsFl = paramsFlo;
       varvalues = varvalueso;

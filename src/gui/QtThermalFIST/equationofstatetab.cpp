@@ -65,10 +65,28 @@ void EoSWorker::run() {
         model->SetMagneticField(param);
       }
 
-      if (param == Tmin)
-        model->ConstrainChemicalPotentials(true);
-      else
-        model->ConstrainChemicalPotentials(false);
+      if ((mode == 0 || mode == 1) && config.ConstrainMuB && config.ConstrainMuBType == 1) {
+        double totB = model->Volume() * config.RhoB;
+        double totQ = config.QoverB * totB;
+        double totS = 0.;
+        double totC = 0.;
+        double muBinit = model->Parameters().muB;
+        double muQinit = model->Parameters().muQ;
+        double muSinit = model->Parameters().muS;
+        double muCinit = model->Parameters().muC;
+        if (param == Tmin)
+          muBinit = muQinit = muSinit = muCinit = 0.;
+        model->SolveChemicalPotentials(
+                totB, totQ, totS, totC,
+                muBinit, muQinit, muSinit, muCinit,
+                config.ConstrainMuB, config.ConstrainMuQ, config.ConstrainMuS, config.ConstrainMuC
+        );
+      } else {
+        if (param == Tmin)
+          model->ConstrainChemicalPotentials(true);
+        else
+          model->ConstrainChemicalPotentials(false);
+      }
 
       model->CalculateDensities();
 
@@ -763,7 +781,7 @@ void EquationOfStateTab::calculate() {
 
       std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
-      EoSWorker *wrk = new EoSWorker(model, pmin, pmax, dp,
+      EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));

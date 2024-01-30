@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <cassert>
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/NumericalIntegration.h"

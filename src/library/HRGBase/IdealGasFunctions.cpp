@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <cfloat>
 #include <vector>
+#include <cassert>
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/NumericalIntegration.h"

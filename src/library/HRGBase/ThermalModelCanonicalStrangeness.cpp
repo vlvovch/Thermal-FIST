@@ -7,7 +7,10 @@
  */
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 
+#include <cassert>
+
 #include "HRGBase/xMath.h"
+
 
 using namespace std;
 

@@ -87,9 +87,12 @@ class ConservationLawsDialog : public QDialog
 public:
   ModelConfigWidget *m_parent;
   QCheckBox *CBmuB, *CBmuQ, *CBmuS, *CBmuC;
+  QCheckBox *CBmuBdens;
   QDoubleSpinBox *spinSBRatio, *spinQBRatio;
 
-  QWidget *CBmuBfull, *CBmuQfull;
+  QDoubleSpinBox *spinRhoB;
+
+  QWidget *CBmuBfull, *CBmuBdensfull, *CBmuQfull;
   //QHBoxLayout *laymuB, *laymuQ;
   QLabel *labelNothing;
   
@@ -101,6 +104,7 @@ public:
   explicit  ConservationLawsDialog(ModelConfigWidget *parent = 0);
 private slots:
   void updateControls();
+  void toggleMuB();
 
 public slots :
   void OK();
