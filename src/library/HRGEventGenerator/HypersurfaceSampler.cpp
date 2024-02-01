@@ -593,7 +593,7 @@ namespace thermalfist {
         }
         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
         // from this paper Phys.Rev.C 73 (2006) 064903
-        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (0.5 * 1.15)));
+        Weight_visc = (1.0 + (1.0 + particle->Statistics() * feq) * pipp / (2.0 * T * T * (elem->edens + elem->P)));
         if(Weight_visc<0.1) Weight_visc = 0.1 ;
       }
       else {
