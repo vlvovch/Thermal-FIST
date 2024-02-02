@@ -67,7 +67,7 @@ namespace thermalfist {
        * \param particle         Pointer to a ThermalParticle object representing the particle to sample.
        * \param mass             Particle mass in GeV. If negative, the pole/vacuum mass is used.
        * \param etasmear         The smear in longitudinal rapidity
-       * \param shear_correction Use shear corrections in momenta of the particles
+       * \param shear_correction Use shear viscous corrections for the momenta of the particles
        *
        * \return                A vector of 7 elements, the first 3 elements are the three-momentum (px,py,pz) in GeV,
        *                        the remaining four elements is the space-time coordinate (r0,rx,ry,rz) in fm/c
@@ -118,8 +118,6 @@ namespace thermalfist {
       const ParticlizationHypersurface* m_ParticlizationHypersurface;
       const ThermalParticle* m_Particle;
       const VolumeElementSampler* m_VolumeElementSampler;
-      //ThermalMomentumGenerator m_Generator;
-      //double m_Tkin;
       double m_EtaSmear;
       bool m_ShearCorrection;
     };
@@ -285,6 +283,9 @@ namespace thermalfist {
     /// Calculates the (T,muB,muS,muQ) values as function of baryon density at fixed constant energy density
     static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001);
 
+    /// Rescales the hypersurface parameters to match the given energy and baryon density
+    static void RescaleHypersurfaceParametersEdens(ParticlizationHypersurface *hypersurface, ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001, double rhocrit = 0.16);
+
     /// Sets the hypersurface parameters
     //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
     virtual void SetParameters();
@@ -423,7 +424,8 @@ namespace thermalfist {
         model->Parameters().T,
         model->Parameters().muB,
         model->Parameters().muS,
-        model->Parameters().muQ
+        model->Parameters().muQ,
+        model->Pressure()
       };
     }
   };
