@@ -131,6 +131,42 @@ namespace thermalfist {
     fout << std::fixed;
   }
 
+  void SimpleEvent::writeToFileForSmash(std::ofstream& fout, const ThermalParticleSystem *m_TPS) const
+  {
+    fout << "# event start" << std::endl;
+
+    fout.precision(16);
+    // fout << std::scientific;
+
+    const int tabsize = 4;
+    int charge;
+
+    // t x y z mass p0 px py pz pdg ID charge
+    for (size_t i = 0; i < Particles.size(); ++i) {
+      if (m_TPS != NULL){
+        charge = m_TPS->ParticleByPDG(Particles[i].PDGID).ElectricCharge();
+      }
+      else{
+        charge = 0;
+      }
+      fout << std::setw(tabsize) << Particles[i].r0 << " "
+        << std::setw(tabsize) << Particles[i].rx << " "
+        << std::setw(tabsize) << Particles[i].ry << " "
+        << std::setw(tabsize) << Particles[i].rz << " "
+        << std::setw(tabsize) << Particles[i].m << " "
+        << std::setw(tabsize) << Particles[i].p0 << " "
+        << std::setw(tabsize) << Particles[i].px << " "
+        << std::setw(tabsize) << Particles[i].py << " "
+        << std::setw(tabsize) << Particles[i].pz << " "
+        << std::setw(tabsize) << Particles[i].PDGID << " "
+        << std::setw(tabsize) << i << " "
+        << std::setw(tabsize) << charge << " "; // TODO: has the be the electric charge, don't know how to get it here
+      fout << std::endl;
+    }
+    fout << "# event end" << std::endl;
+    fout << std::fixed;
+  }
+
   void SimpleEvent::RapidityBoost(double dY)
   {
     for (size_t i = 0; i < Particles.size(); ++i)
