@@ -25,12 +25,15 @@
 #include "configwidgets.h"
 #include "HRGBase/xMath.h"
 
+#include "calculationtabledialog.h"
+
 
 class EoSWorker : public QThread
 {
   Q_OBJECT
 
   thermalfist::ThermalModelBase *model;
+  ThermalModelConfig config;
   double Tmin, Tmax, dT;
   std::vector<double> cParams;
   int mode;
@@ -44,7 +47,8 @@ class EoSWorker : public QThread
   void run() Q_DECL_OVERRIDE;
 
 public:
-  EoSWorker(thermalfist::ThermalModelBase *mod = NULL, 
+  EoSWorker(thermalfist::ThermalModelBase *mod = NULL,
+      const ThermalModelConfig& cconfig = ThermalModelConfig(),
       double Tmin = 100., 
       double Tmax = 200.,
       double dT = 5.,
@@ -58,6 +62,7 @@ public:
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
       model = mod;
+      config = cconfig;
       paramsTD = paramsTDo;
       paramsFl = paramsFlo;
       varvalues = varvalueso;
@@ -88,6 +93,7 @@ class EquationOfStateTab : public QWidget
 
     QComboBox *comboQuantity;
     QCheckBox *CBratio;
+    QCheckBox *CBxAxis;
     QComboBox *comboQuantity2;
 
     QComboBox *comboParticle;
@@ -100,7 +106,9 @@ class EquationOfStateTab : public QWidget
     QCheckBox *CBflipAxes;
 
     QLabel *labelTMin, *labelTMax, *labeldT;
+    QLabel *labelEMin, *labelEMax, *labeldE;
     QLabel *labelmuB, *labelmuQ, *labelmuS;
+    QLabel *labelTaux;
 
     QCustomPlot *plotDependence;
 
@@ -117,6 +125,8 @@ class EquationOfStateTab : public QWidget
 
     QDoubleSpinBox *spinTMin, *spinTMax, *spindT;
     QDoubleSpinBox *spinmuB, *spinmuQ, *spinmuS;
+    QDoubleSpinBox *spinEMin, *spinEMax, *spindE;
+    QDoubleSpinBox *spinTaux;
     QLabel *labelConstr;
 
     QPushButton *buttonCalculate;
@@ -141,6 +151,11 @@ class EquationOfStateTab : public QWidget
     QVector< QVector<double> > dataHotQCDx, dataHotQCDy, dataHotQCDyerrp, dataHotQCDyerrm;
     std::map<QString, int> mapHotQCD;
 
+    // Table for the calculation results table widget
+    CalculationTable calcTable;
+
+    QPushButton *buttonEoSTable;
+
 public:
     EquationOfStateTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~EquationOfStateTab();
@@ -163,10 +178,14 @@ public slots:
     // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
     void saveAs(int type);
 
+    void showEoSTable();
+
 private:
   std::vector<double> getValues(int index, int num = 0);
   std::vector<double> getValuesRatio(int index, int index2);
+  QString getParameterName() const;
   void readLatticeData();
+  void recomputeCalcTable();
 };
 
 

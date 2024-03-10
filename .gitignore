@@ -19,3 +19,6 @@ cmake-*/*
 
 # Doxygen
 docs/doxygen/html*
+
+# Apple
+*.DS_Store

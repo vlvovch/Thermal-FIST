@@ -248,11 +248,11 @@ namespace thermalfist {
     }
 
     if (quantity == IdealGasFunctions::chi3) {
-      return Quantity(IdealGasFunctions::chi3difull, T, mu) / T / T;
+      return Quantity(IdealGasFunctions::chi3difull, T, mu) / T;
     }
 
     if (quantity == IdealGasFunctions::chi4) {
-      return Quantity(IdealGasFunctions::chi4difull, T, mu) / T / T;
+      return Quantity(IdealGasFunctions::chi4difull, T, mu);
     }
 
     printf("**ERROR** EffectiveMassModel::Quantity(): Calculate %d quantity is not implemented!", static_cast<int>(quantity));

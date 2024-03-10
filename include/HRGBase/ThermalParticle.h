@@ -672,6 +672,14 @@ namespace thermalfist {
     /// \brief Clear the generalized density
     void ClearGeneralizedDensity();
 
+    /**
+    * \brief Sets the value of magnetic field and the number of Landau levels to include
+    */
+    void SetMagneticField(double B = 0.0, int lmax = 1);
+
+    /// \brief Clears the magnetic field
+    void ClearMagneticField() { m_IGFExtraConfig.MagneticField.B = 0.0; }
+
   private:
     /**
     *  Auxiliary coefficients used for numerical integration using quadratures
@@ -755,6 +763,9 @@ namespace thermalfist {
 
     /// Whether to use an outside procedure for calculating densities
     GeneralizedDensity *m_GeneralizedDensity;
+
+    /// Extra parameters such as magnetic field
+    IdealGasFunctions::IdealGasFunctionsExtraConfig m_IGFExtraConfig;
   };
 
 } // namespace thermalfist

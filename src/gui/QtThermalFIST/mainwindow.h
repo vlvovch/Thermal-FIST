@@ -19,6 +19,7 @@
 #include <QTextEdit>
 #include <QTabWidget>
 
+#include "trajectoriestab.h"
 #include "modeltab.h"
 #include "eventgeneratortab.h"
 #include "equationofstatetab.h"
@@ -45,6 +46,8 @@ class MainWindow : public QMainWindow
     ListEditorTab *tabEditor;
 
     CosmicEoSTab *tabCosmicEoS;
+
+    TrajectoriesTab *tabTrajectories;
 
     QLineEdit *leList;
     QPushButton *buttonLoad;

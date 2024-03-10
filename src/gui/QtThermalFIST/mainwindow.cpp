@@ -75,18 +75,19 @@ MainWindow::MainWindow(QWidget *parent)
   tabEditor = new ListEditorTab(NULL, model);
   tabEditor->setListPath(cpath);
 
-  
+  tabTrajectories = new TrajectoriesTab(NULL, {tabEoS, tabCosmicEoS}, {"HRG model", "Cosmic trajectory"});
 
   tabWidget = new QTabWidget();
   tabWidget->addTab(tab1, QString(tr("Thermal model")));
 
   tabWidget->addTab(tab2, QString(tr("Thermal fits")));
 
-  tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
+  //tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
+  tabWidget->addTab(tabTrajectories, QString(tr("Equation of state")));
 
   tabWidget->addTab(tab5, QString(tr("Event generator")));
 
-  tabWidget->addTab(tabCosmicEoS, QString(tr("Cosmic trajectory")));
+  //tabWidget->addTab(tabCosmicEoS, QString(tr("Cosmic trajectory")));
 
   tabWidget->addTab(tabEditor, QString(tr("Particle list editor")));
 

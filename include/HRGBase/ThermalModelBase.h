@@ -670,6 +670,12 @@ namespace thermalfist {
     virtual void CalculateFluctuations();
 
     /**
+     * \brief Computes the temperature derivatives of densities, shifted chemical potentials, and primordial hadron number susceptibilities.
+     *
+     */
+    virtual void CalculateTemperatureDerivatives();
+
+    /**
      * \brief Computes the fluctuations and
      *        correlations of the primordial particle numbers.
      * 
@@ -712,6 +718,20 @@ namespace thermalfist {
      *
      */
     virtual double TwoParticleSusceptibilityPrimordialByPdg(long long id1, long long id2);
+
+    /**
+ * \brief Returns the computed temperature derivative of the primordial particle number (cross-)susceptibility \f$ \frac{\partial}{\partial T} \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+ *        for particles with ids i and j. CalculateFluctuations() must be called beforehand.
+ *
+ */
+    virtual double TwoParticleSusceptibilityTemperatureDerivativePrimordial(int i, int j) const;
+
+    /**
+     * \brief Returns the computed temperature derivative of the primordial particle number (cross-)susceptibility \f$ \frac{\partial}{\partial T} \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
+     *        for particles with pdg codes id1 and id2. CalculateFluctuations() must be called beforehand.
+     *
+     */
+    virtual double TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg(long long id1, long long id2);
 
     /**
      * \brief Returns the computed (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
@@ -787,11 +807,16 @@ namespace thermalfist {
     /**
      * \brief Calculates the conserved charges susceptibility matrix.
      *        
-     * Computes \f$ \chi_{lmnk}^{BSQC}~=~\frac{\partial^{l+m+n+k}p/T^4}{\partial(\mu_B/T)^l 
-     * \,\partial(\mu_S/T)^m \,\partial(\mu_Q/T)^n\,\partial(\mu_C/T)^k} \f$
+     * Computes \f$ \chi_{ijkl}^{BSQC}~=~\frac{\partial^{l+m+n+k}p/T^4}{\partial(\mu_B/T)^i
+     * \,\partial(\mu_S/T)^j \,\partial(\mu_Q/T)^k\,\partial(\mu_C/T)^l} \f$
      * where i+j+k+l = 2.
-     * 
-     * The calculation results are accessible through Susc()
+     *
+     * If temperature derivatives are available, calculates
+     * also the temperature derivative of the conserved charges susceptibility matrix.
+     *
+     * \f$ \frac{\partial\chi_{ijkl}^{BSQC}}{\partial T} \f$
+     *
+     * The calculation results are accessible through Susc() and dSuscdT()
      * 
      */
     virtual void CalculateSusceptibilityMatrix();
@@ -838,6 +863,26 @@ namespace thermalfist {
      */
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 
+    /**
+     * \brief Calculates (mixed) susceptibilities of arbitrary "conserved" charges.
+     *
+     * Calculates \f$ \frac{\partial^n p/T^4}{\partial(\mu_1/T) \ldots \partial(\mu_n/T)}$
+     *
+     * Each particle specie is assumed to carry a conserved charge with
+     * a value provided by an input vector.
+     *
+     * Restricted to the grand canonical ensemble.
+     *
+     * \param chgs A vector with conserved charge value vectors for all species.
+     *             First vector corresponds to the first derivative, second vector to the second derivative, etc.
+     *             0-based indices of the vector must correspond to the
+     *             0-based indices of the particle list TPS()
+     *
+     * \return std::vector<double> A vector with computed values of susceptibilities
+     */
+    virtual std::vector<double> CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs);
+
+
     //virtual double GetParticlePrimordialDensity(unsigned int);
     //virtual double GetParticleTotalDensity(unsigned int);
 
@@ -879,6 +924,9 @@ namespace thermalfist {
     /// Absolute charm quark content density (fm\f$^{-3}\f$)
     double AbsoluteCharmDensity() { return CalculateAbsoluteCharmDensity(); }
 
+    /// Specific heat at constant chemical potentials, cV = (de/dT)_\mu
+    double SpecificHeat() { return CalculateSpecificHeat(); }
+
     //@{
     /// Implementation of the equation of state functions
     virtual double CalculatePressure() = 0;
@@ -895,6 +943,7 @@ namespace thermalfist {
     virtual double CalculateAbsoluteCharmDensity();
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
+    virtual double CalculateSpecificHeat() = 0;
     //@}
 
     /// Computes the density of the auxiliary ArbitraryCharge()
@@ -928,6 +977,13 @@ namespace thermalfist {
     /// in the CalculateDensities() method
     /// were successfull 
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
+
+    /**
+     * \brief Same as GetDensity(int,Feeddown::Type)
+     *
+     * \deprecated
+     */
+    double GetdndT(int i) const;
 
     /**
      * \brief Same as GetDensity(int,Feeddown::Type)
@@ -992,6 +1048,9 @@ namespace thermalfist {
     /// The tag of this ThermalModelBase object.
     const std::string& TAG() const { return m_TAG; }
 
+    /// Transforms the PDG ID to the 0-based index
+    int  PdgToId(long long pdgid) const { return m_TPS->PdgToId(pdgid); }
+
     /// Reset all flags which correspond to a calculation status
     void ResetCalculatedFlags();
 
@@ -1002,6 +1061,10 @@ namespace thermalfist {
     /// Whether fluctuations were calculated with
     /// the CalculateFluctuations() method
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
+
+    /// Whether temperature derivatives were calculated with
+    /// the CalculateTemperatureDerivatives() method
+    bool IsTemperatureDerivativesCalculated() const { return m_TemperatureDerivativesCalculated; }
 
     /// Whether the grand-canonical ensemble particle
     /// number densities were calculated
@@ -1081,6 +1144,16 @@ namespace thermalfist {
     double ConservedChargeDensity(ConservedCharge::Name chg);
 
     /**
+     * \brief Temperature derivative of a density of a conserved charge (in fm^-3 GeV^-1)
+     *
+     * \f$ \frac{\partial \rho_{c_i}}{\partial T} \f$
+     *
+     * \param i Conserved charge
+     * \return  Temperature derivative of a conserved charge density \f$ \frac{\partial \rho_{c_i}}{\partial T} \f$
+     */
+    double ConservedChargeDensitydT(ConservedCharge::Name chg);
+
+    /**
      * \brief A 2nd order susceptibility of conserved charges
      * 
      * \f$ \chi_{11}^{c_i c_j} \f$
@@ -1089,7 +1162,18 @@ namespace thermalfist {
      * \param j Second conserved charge
      * \return  Susceptibility \f$ \chi_{11}^{c_i c_j} \f$
      */
-    double Susc(ConservedCharge::Name i, ConservedCharge::Name j) const { return m_Susc[i][j]; }
+    double Susc(ConservedCharge::Name i, ConservedCharge::Name j) const;// { return m_Susc[i][j]; }
+
+    /**
+     * \brief Temperature derivative of a 2nd order susceptibility of conserved charges
+     *
+     * \f$ \frac{\partial \chi_{11}^{c_i c_j}}{\partial T} \f$
+     *
+     * \param i First conserved charge
+     * \param j Second conserved charge
+     * \return  \f$ \frac{\partial \chi_{11}^{c_i c_j}}{\partial T} \f$ [GeV^-1]
+     */
+    double dSuscdT(ConservedCharge::Name i, ConservedCharge::Name j) const;
 
     /**
      * \brief A 2nd order susceptibility of conserved charges proxies
@@ -1106,7 +1190,7 @@ namespace thermalfist {
      * \param j Second proxy charge
      * \return Proxy susceptibility 
      */
-    double ProxySusc(ConservedCharge::Name i, ConservedCharge::Name j) const { return m_ProxySusc[i][j]; }
+    double ProxySusc(ConservedCharge::Name i, ConservedCharge::Name j) const;// { return m_ProxySusc[i][j]; }
 
     /**
      * \brief Multiplicity of charged particles.
@@ -1186,9 +1270,22 @@ namespace thermalfist {
      */
     void ClearDensityModels();
 
+    const IdealGasFunctions::IdealGasFunctionsExtraConfig& GetIdealGasFunctionsExtraConfig() const { return m_IGFExtraConfig; }
+
+    /**
+     * \brief Sets the value of magnetic field and the number of Landau levels to include
+     */
+    void SetMagneticField(double B = 0.0, int lmax = -1);
+
+    /// \brief Clears the magnetic field
+    void ClearMagneticField();
+
   protected:
     ThermalModelParameters m_Parameters;
     ThermalParticleSystem* m_TPS;
+
+    /// Extra parameters for calculating ideal gas functions, such as the magnetic field
+    IdealGasFunctions::IdealGasFunctionsExtraConfig m_IGFExtraConfig;
 
     bool   m_LastCalculationSuccessFlag;
     double m_MaxDiff;
@@ -1235,6 +1332,10 @@ namespace thermalfist {
     std::vector< std::vector<double> > m_PrimCorrel;
     std::vector< std::vector<double> > m_TotalCorrel;
 
+    // Shifted chemical potential derivatives
+    std::vector< std::vector<double> > m_dmusdmu;
+
+
     // Particle number-conserved charge correlators
     std::vector< std::vector<double> > m_PrimChargesCorrel;
     std::vector< std::vector<double> > m_FinalChargesCorrel;
@@ -1242,8 +1343,20 @@ namespace thermalfist {
     // Conserved charges susceptibility matrix
     std::vector< std::vector<double> > m_Susc;
 
+    // Temperature derivative of the conserved charges susceptibility matrix (GeV^-1)
+    std::vector< std::vector<double> > m_dSuscdT;
+
     // Susceptibility matrix of net-p, net-Q, and net-K
     std::vector< std::vector<double> > m_ProxySusc;
+
+    // Temperature derivatives
+    bool m_TemperatureDerivativesCalculated;
+    // Densities
+    std::vector<double> m_dndT;
+    // (Shifted) chemical potentials
+    std::vector<double> m_dmusdT;
+    // Primordial mixed susceptibilities
+    std::vector< std::vector<double> > m_PrimChi2sdT; // GeV^-1
 
     // Cumulants of arbitrary charge calculation
     //std::vector< std::vector<double> > m_chi;

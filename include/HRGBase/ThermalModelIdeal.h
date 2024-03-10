@@ -43,6 +43,8 @@ namespace thermalfist {
 
     virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
 
+    virtual std::vector<double> CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs);
+
     virtual double CalculateEnergyDensity();
 
     virtual double CalculateEntropyDensity();
@@ -53,6 +55,8 @@ namespace thermalfist {
 
     virtual double CalculatePressure();
 
+    virtual double CalculateSpecificHeat();
+
     virtual double ParticleScaledVariance(int part);
 
     virtual double ParticleSkewness(int part);
@@ -60,6 +64,8 @@ namespace thermalfist {
     virtual double ParticleKurtosis(int part);
 
     virtual double ParticleScalarDensity(int part);
+
+    virtual void CalculateTemperatureDerivatives();
 
     // Override functions end
   };

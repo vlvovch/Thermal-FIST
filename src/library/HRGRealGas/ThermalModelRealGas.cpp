@@ -1234,6 +1234,7 @@ namespace thermalfist {
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i)
       m_PrimCorrel[i].resize(NN);
+    m_dmusdmu = m_PrimCorrel;
     m_TotalCorrel = m_PrimCorrel;
 
     MatrixXd densMatrix(2 * NN, 2 * NN);
@@ -1298,6 +1299,7 @@ namespace thermalfist {
       for (int i = 0; i < NN; ++i) {
         dni[i] = solVector[i];
         dmus[i] = solVector[NN + i];
+        m_dmusdmu[i][k] = dmus[i];
       }
 
       for (int j = 0; j < NN; ++j) {
@@ -1311,6 +1313,280 @@ namespace thermalfist {
       else m_wprim[i] = 1.;
     }
 
+  }
+
+  void ThermalModelRealGas::CalculateTemperatureDerivatives() {
+    int N = m_TPS->ComponentsNumber();
+    int Nevcomp = m_exvolmod->ComponentsNumber();
+    const vector<int>& evinds = m_exvolmod->ComponentIndices();
+    const vector<int>& evindsfrom = m_exvolmod->ComponentIndicesFrom();
+    int Nmfcomp = m_mfmod->ComponentsNumber();
+    const vector<int>& mfinds = m_mfmod->ComponentIndices();
+    const vector<int>& mfindsfrom = m_mfmod->ComponentIndicesFrom();
+
+    double T = m_Parameters.T;
+
+    m_dndT = vector<double>(N, 0.);
+    m_dmusdT = vector<double>(N, 0.);
+    m_PrimChi2sdT = vector<vector<double>>(N, vector<double>(N, 0.));
+
+    vector<double> nids(N, 0.), dniddTs(N, 0.), chi2ids(N, 0.), dchi2idsdT(N, 0.), chi3ids(N, 0.);
+    for (int i = 0; i < N; ++i) {
+      nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
+      dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]);
+      chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
+      // chi2til = chi2 * T^2
+      // dchi2til/dT = T^2 * dchi2/dT +  2 * T * chi2 = T^2 * dchi2/dT + 2 * chi2til / T
+      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
+    }
+
+    int NN = m_densities.size();
+
+    MatrixXd densMatrix(2 * NN, 2 * NN);
+    VectorXd solVector(2 * NN), xVector(2 * NN);
+
+    vector<double> chi2id(m_densities.size()), Ps(m_densities.size()), sids(m_densities.size());
+    for (int i = 0; i < NN; ++i) {
+      //chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      Ps[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
+      sids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_MuStar[i]);
+      //chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+    }
+
+    vector<double>  evc_Ps(Nevcomp, 0.);
+    for (int i = 0; i < NN; ++i) {
+      evc_Ps[evinds[i]] += Ps[i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(i, j) = -m_exvolmod->df(i, j) * m_DensitiesId[i];
+        if (i == j) densMatrix(i, j) += 1.;
+      }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j)
+        densMatrix(i, NN + j) = 0.;
+
+    for (int i = 0; i < NN; ++i) {
+      densMatrix(i, NN + i) = -m_exvolmod->f(i) * chi2ids[i];
+    }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, j) = m_mfmod->d2v(i, j);
+        for (int indk = 0; indk < Nevcomp; ++indk) {
+          int k = evindsfrom[indk];
+          densMatrix(NN + i, j) += -m_exvolmod->d2f(k, i, j) * evc_Ps[indk];
+        }
+      }
+
+    for (int i = 0; i < NN; ++i)
+      for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, NN + j) = -m_exvolmod->df(j,i) * m_DensitiesId[j];
+        if (i == j) densMatrix(NN + i, NN + j) += 1.;
+      }
+
+    PartialPivLU<MatrixXd> decomp(densMatrix);
+
+    for(int i = 0; i < NN; ++i) {
+      double fi = m_exvolmod->f(i);
+      xVector[i] = fi * dniddTs[i];
+      xVector[NN + i] = 0.;
+      for(int j = 0; j < NN; ++j) {
+        xVector[NN + i] += m_exvolmod->df(j, i) * sids[j];
+      }
+    }
+
+    solVector = decomp.solve(xVector);
+
+    for(int i=0;i<NN;++i) {
+      m_dndT[i]  = solVector[i];
+      m_dmusdT[i] = solVector[NN+i];
+    }
+
+    // dchi2's
+    if (IsFluctuationsCalculated()) {
+      vector<double> dnevdT(Nevcomp, 0.);
+      for(int l = 0; l < NN; ++l) {
+        dnevdT[evinds[l]] += m_dndT[l];
+      }
+
+      vector<vector<double>> chikjd2fikldnldT(Nevcomp, vector<double>(N, 0.));
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            for(int indl = 0; indl < Nevcomp; ++indl) {
+              int l = evindsfrom[indl];
+              chikjd2fikldnldT[indi][j] += m_PrimCorrel[k][j] * m_exvolmod->d2f(i, k, l) * dnevdT[indl];
+            }
+          }
+        }
+      }
+
+      vector<vector<double>> chikjdfik(Nevcomp, vector<double>(N, 0.));
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            chikjdfik[indi][j] += m_PrimCorrel[k][j] * m_exvolmod->df(i, k);
+          }
+        }
+      }
+
+      vector<double> dfikdnkdT(Nevcomp, 0.);
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int k = 0; k < N; ++k) {
+          dfikdnkdT[indi] += m_exvolmod->df(i, k) * m_dndT[k];
+        }
+      }
+
+      vector<vector<double>> chikjd3vikldnldT(Nmfcomp, vector<double>(N, 0.));
+      vector<double> dnmfdT(Nmfcomp, 0.);
+      for(int l = 0; l < NN; ++l) {
+        dnmfdT[mfinds[l]] += m_dndT[l];
+      }
+
+      for (int indi = 0; indi < Nmfcomp; ++indi) {
+        int i = mfindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            for(int indl = 0; indl < Nmfcomp; ++indl) {
+              int l = mfindsfrom[indl];
+              chikjd3vikldnldT[indi][j] += m_PrimCorrel[k][j] * m_mfmod->d3v(i, k, l) * dnmfdT[indl];
+            }
+          }
+        }
+      }
+
+      vector<vector<double>> chikjd3fmikldnldTPsm(Nevcomp, vector<double>(N, 0.));
+
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            for(int indl = 0; indl < Nevcomp; ++indl) {
+              int l = evindsfrom[indl];
+              for(int indm = 0; indm < Nevcomp; ++indm) {
+                int m = evindsfrom[indm];
+                chikjd3fmikldnldTPsm[indi][j] += m_PrimCorrel[k][j] * m_exvolmod->d3f(m, i, k, l) * dnevdT[indl] * evc_Ps[indm];
+              }
+            }
+          }
+        }
+      }
+
+      vector<double> splusnidsums(Nevcomp, 0.);
+      for(int m = 0; m < NN; ++m) {
+        splusnidsums[evinds[m]] += sids[m] + nids[m] * m_dmusdT[m];
+      }
+      vector<vector<double>> chikjd2fmiketc(Nevcomp, vector<double>(N, 0.));
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            for (int indm = 0; indm < Nevcomp; ++indm) {
+              int m = evindsfrom[indm];
+              chikjd2fmiketc[indi][j] += m_PrimCorrel[k][j] * m_exvolmod->d2f(m, i, k) * splusnidsums[indm];
+            }
+          }
+        }
+      }
+
+      vector<vector<double>> dmusmukjd2fkildnldTnidk(Nevcomp, vector<double>(N, 0.));
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            for(int indl = 0; indl < Nevcomp; ++indl) {
+              int l = evindsfrom[indl];
+              dmusmukjd2fkildnldTnidk[indi][j] += m_dmusdmu[k][j] * m_exvolmod->d2f(k, i, l) * dnevdT[indl] * nids[k];
+            }
+          }
+        }
+      }
+
+      vector<vector<double>> dmusdmukjdfkietc(Nevcomp, vector<double>(N, 0.));
+      for (int indi = 0; indi < Nevcomp; ++indi) {
+        int i = evindsfrom[indi];
+        for (int j = 0; j < N; ++j) {
+          for (int k = 0; k < N; ++k) {
+            dmusdmukjdfkietc[indi][j] += m_dmusdmu[k][j] * m_exvolmod->df(k, i) * (dniddTs[k] + chi2ids[k] * m_dmusdT[k]);
+          }
+        }
+      }
+
+
+      for (int j = 0; j < NN; ++j) {
+        for (int i = 0; i < NN; ++i) {
+          // a1
+          double a1 = 0.;
+
+          a1 += chikjd2fikldnldT[evinds[i]][j] * nids[i];
+          a1 += chikjdfik[evinds[i]][j] * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+          a1 += m_dmusdmu[i][j] * dfikdnkdT[evinds[i]] * chi2ids[i];
+
+//          for (int k = 0; k < NN; ++k) {
+////            for (int l = 0; l < NN; ++l) {
+////              a1 += m_PrimCorrel[k][j] * m_exvolmod->d2f(i, k, l) * nids[i];
+////            }
+////            a1 += m_PrimCorrel[k][j] * m_exvolmod->df(i, k) * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+////            a1 += m_dmusdmu[i][j] * m_exvolmod->df(i, k) * m_dndT[k] * chi2ids[i];
+//          }
+          a1 += m_dmusdmu[i][j] * m_exvolmod->f(i) * (dchi2idsdT[i] + chi3ids[i] * m_dmusdT[i]);
+
+          xVector[i] = a1;
+
+
+          // a2
+          double a2 = 0.;
+
+
+          a2 += -chikjd3vikldnldT[mfinds[i]][j];
+
+          a2 += chikjd3fmikldnldTPsm[evinds[i]][j];
+
+          a2 += chikjd2fmiketc[evinds[i]][j];
+
+          a2 += dmusmukjd2fkildnldTnidk[evinds[i]][j];
+
+          a2 += dmusdmukjdfkietc[evinds[i]][j];
+
+//          for (int k = 0; k < NN; ++k) {
+////            for (int l = 0; l < NN; ++l) {
+////              a2 += m_PrimCorrel[k][j] * (
+////                      -m_mfmod->d3v(i, k, l) * m_dndT[l]
+////                      + m_exvolmod->d3f(m, i, k, l) * m_dndT[l] * Ps[m]
+////              );
+////            }
+////            a2 += m_PrimCorrel[k][j] * m_exvolmod->d2f(m, i, k) * (sids[m] + nids[m] * m_dmusdT[m]);
+//
+////            for (int l = 0; l < NN; ++l) {
+////              a2 += m_dmusdmu[k][j] * m_exvolmod->d2f(k, i, l) * m_dndT[l] * nids[k];
+////            }
+////            a2 += m_dmusdmu[k][j] * m_exvolmod->df(k, i) * (dniddTs[k] + chi2ids[k] * m_dmusdT[k]);
+//          }
+
+          xVector[i + NN] = a2;
+        }
+
+        solVector = decomp.solve(xVector);
+
+        for (int i = 0; i < NN; ++i) {
+          // chi2 = chi2til / T^2
+          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T / T / T
+          m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+        }
+      }
+
+      m_TemperatureDerivativesCalculated = true;
+      CalculateSusceptibilityMatrix();
+    }
+
+    m_TemperatureDerivativesCalculated = true;
   }
 
   void ThermalModelRealGas::CalculateFluctuations()
@@ -1329,6 +1605,44 @@ namespace thermalfist {
     }
 
     m_FluctuationsCalculated = true;
+
+    if (IsTemperatureDerivativesCalculated()) {
+      m_TemperatureDerivativesCalculated = false;
+      CalculateTemperatureDerivatives();
+    }
+  }
+
+  double ThermalModelRealGas::CalculateSpecificHeat() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // Compute dE/dT
+    double ret = 0.;
+
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      // Term 1
+      for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        double dfik = m_exvolmod->df(i, k);
+        ret += dfik * m_dndT[k] * part.Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_MuStar[i]);
+      }
+
+      double fi = m_exvolmod->f(i);
+      double dvi = m_mfmod->dv(i);
+      // Term 2
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dedT, m_UseWidth, m_MuStar[i]);
+
+      // Term 3
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dedmu, m_UseWidth, m_MuStar[i]) * m_dmusdT[i];
+
+      // Term 4
+      ret += dvi * m_dndT[i];
+    }
+
+    // No T dependence implemented yet
+    assert(m_mfmod->dvdT() == 0.0);
+
+    return ret;
   }
 
   double ThermalModelRealGas::CalculateEnergyDensity() {

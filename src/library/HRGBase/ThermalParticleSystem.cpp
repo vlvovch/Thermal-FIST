@@ -485,6 +485,7 @@ namespace thermalfist {
     m_PDGtoID.clear();
 
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
 
     if (ListFiles.size() == 1 && CheckListIsiSS(ListFiles[0])) {
       LoadListiSS(ListFiles[0], flags, mcut);
@@ -630,6 +631,7 @@ namespace thermalfist {
         if (chg != 0)   m_NumCharged++;
         if (str != 0)   m_NumStrange++;
         if (charm != 0) m_NumCharmed++;
+        m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
         m_Particles.push_back(part_candidate); 
         m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -708,6 +710,7 @@ namespace thermalfist {
           if (chg != 0)   m_NumCharged++;
           if (str != 0)   m_NumStrange++;
           if (charm != 0) m_NumCharmed++;
+          m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
           m_Particles.push_back(part_candidate);
           m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -1017,6 +1020,7 @@ namespace thermalfist {
     m_PDGtoID.clear();
 
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
 
     ifstream fin(filename.c_str());
 
@@ -1074,6 +1078,7 @@ namespace thermalfist {
           if (chg != 0)   m_NumCharged++;
           if (str != 0)   m_NumStrange++;
           if (charm != 0) m_NumCharmed++;
+          m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(bary));
 
           m_Particles.push_back(part_candidate);
           m_PDGtoID[pdgid] = m_Particles.size() - 1;
@@ -1360,6 +1365,7 @@ namespace thermalfist {
   void ThermalParticleSystem::FillPdgMap()
   {
     m_NumBaryons = m_NumCharged = m_NumStrange = m_NumCharmed = 0;
+    m_MaxAbsBaryonNumber = 0;
     m_NumberOfParticles = 0;
     m_PDGtoID.clear();
     for (size_t i = 0; i < m_Particles.size(); ++i) {
@@ -1369,6 +1375,7 @@ namespace thermalfist {
       if (m_Particles[i].Strangeness() != 0)     m_NumStrange++;
       if (m_Particles[i].Charm() != 0)           m_NumCharmed++;
       if (m_Particles[i].PdgId() > 0)            m_NumberOfParticles++;
+      m_MaxAbsBaryonNumber = max(m_MaxAbsBaryonNumber, abs(m_Particles[i].BaryonCharge()));
     }
 
     for (size_t i = 0; i < m_DecayContributionsByFeeddown.size(); ++i)
@@ -1508,6 +1515,7 @@ namespace thermalfist {
     ret &= m_NumCharged == rhs.m_NumCharged;
     ret &= m_NumStrange == rhs.m_NumStrange;
     ret &= m_NumCharmed == rhs.m_NumCharmed;
+    ret &= m_MaxAbsBaryonNumber == rhs.m_MaxAbsBaryonNumber;
     ret &= m_NumberOfParticles == rhs.m_NumberOfParticles;
     ret &= m_ResonanceWidthIntegrationType == rhs.m_ResonanceWidthIntegrationType;
     ret &= m_DecayDistributionsMap == rhs.m_DecayDistributionsMap;
@@ -1631,6 +1639,14 @@ namespace thermalfist {
     }
   }
 
+  std::vector<double> ThermalParticleSystem::GetConservedChargesVector(ConservedCharge::Name charge) {
+    std::vector<double> ret(ComponentsNumber(), 0.);
+    for (size_t i = 0; i < m_Particles.size(); ++i) {
+      ret[i] = static_cast<double>(m_Particles[i].ConservedCharge(charge));
+    }
+    return ret;
+  }
+
 
   namespace CuteHRGHelper {
     std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems) {
@@ -1662,6 +1678,7 @@ namespace thermalfist {
     static std::vector<ThermalParticle> Particles;
     static std::map<long long, int> PdgIdMap;
     static bool isInitialized = Init();
+
     const ThermalParticle& Particle(int id)
     {
       if (id < 0 || id >= Particles.size()) {
@@ -1670,6 +1687,7 @@ namespace thermalfist {
       }
       return Particles[id];
     }
+
     const ThermalParticle& ParticleByPdg(long long pdgid)
     {
       int tid = PdgToId(pdgid);
@@ -1679,10 +1697,12 @@ namespace thermalfist {
       }
       return Particle(tid);
     }
+
     int PdgToId(long long pdgid)
     {
       return (PdgIdMap.count(pdgid) > 0) ? PdgIdMap[pdgid] : -1;
     }
+
     bool Init()
     {
       Particles.clear();
@@ -1744,6 +1764,7 @@ namespace thermalfist {
 
       return true;
     }
+
     std::string NameByPdg(long long pdg)
     {
       int tid = PdgToId(pdg);

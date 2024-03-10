@@ -53,11 +53,40 @@ void EoSWorker::run() {
         if (!model->ConstrainMuS())
           model->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
       }
+      // Magnetic field
+      else if (mode == 3) {
+        model->SetTemperature(cParams[3] * 1.e-3);
+        if (!model->ConstrainMuB())
+          model->SetBaryonChemicalPotential(cParams[0] * 1.e-3);
+        if (!model->ConstrainMuQ())
+          model->SetElectricChemicalPotential(cParams[1] * 1.e-3);
+        if (!model->ConstrainMuS())
+          model->SetStrangenessChemicalPotential(cParams[2] * 1.e-3);
+        model->SetMagneticField(param);
+      }
 
-      if (param == Tmin)
-        model->ConstrainChemicalPotentials(true);
-      else
-        model->ConstrainChemicalPotentials(false);
+      if ((mode == 0 || mode == 1) && config.ConstrainMuB && config.ConstrainMuBType == 1) {
+        double totB = model->Volume() * config.RhoB;
+        double totQ = config.QoverB * totB;
+        double totS = 0.;
+        double totC = 0.;
+        double muBinit = model->Parameters().muB;
+        double muQinit = model->Parameters().muQ;
+        double muSinit = model->Parameters().muS;
+        double muCinit = model->Parameters().muC;
+        if (param == Tmin)
+          muBinit = muQinit = muSinit = muCinit = 0.;
+        model->SolveChemicalPotentials(
+                totB, totQ, totS, totC,
+                muBinit, muQinit, muSinit, muCinit,
+                config.ConstrainMuB, config.ConstrainMuQ, config.ConstrainMuS, config.ConstrainMuC
+        );
+      } else {
+        if (param == Tmin)
+          model->ConstrainChemicalPotentials(true);
+        else
+          model->ConstrainChemicalPotentials(false);
+      }
 
       model->CalculateDensities();
 
@@ -396,11 +425,18 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(replot()));
     connect(CBratio, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
 
+    CBxAxis = new QCheckBox(tr("Show quantity 2 on x-axis"));
+    CBxAxis->setChecked(false);
+    connect(CBxAxis, SIGNAL(toggled(bool)), this, SLOT(replot()));
+    connect(CBxAxis, SIGNAL(toggled(bool)), this, SLOT(modelChanged()));
+
+
     CBflipAxes = new QCheckBox(tr("Flip axes"));
     CBflipAxes->setChecked(false);
     connect(CBflipAxes, SIGNAL(toggled(bool)), this, SLOT(replot()));
 
     layLeftTop->addWidget(CBratio);
+    layLeftTop->addWidget(CBxAxis);
     layLeftTop->addWidget(CBflipAxes);
 
     QGridLayout *selLay = new QGridLayout();
@@ -468,10 +504,14 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     plotDependence->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(plotDependence, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
 
+    buttonEoSTable = new QPushButton(tr("Tabulated EoS..."));
+    connect(buttonEoSTable, SIGNAL(clicked()), this, SLOT(showEoSTable()));
+
     //layLeft->addWidget(CBratio, 0, Qt::AlignLeft);
     layLeft->addLayout(layLeftTop);
     layLeft->addLayout(selLay);
     layLeft->addWidget(plotDependence);
+    layLeft->addWidget(buttonEoSTable, 0, Qt::AlignLeft);
 
     QVBoxLayout *layRight = new QVBoxLayout();
     layRight->setContentsMargins(15, 0, 0, 0);
@@ -494,6 +534,7 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     comboMode->addItem(tr("Const. μ"));
     comboMode->addItem(tr("Const. μ/T"));
     comboMode->addItem(tr("Const. T"));
+    comboMode->addItem(tr("Magnetic field dependence"));
     comboMode->setCurrentIndex(0);
     connect(comboMode, SIGNAL(currentIndexChanged(int)), this, SLOT(modelChanged()));
     layMode->addWidget(new QLabel(tr("Mode:")));
@@ -529,7 +570,7 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     labelTMin = new QLabel(tr("T<sub>min</sub> (MeV):"));
     spinTMin = new QDoubleSpinBox();
     spinTMin->setDecimals(3);
-    spinTMin->setMinimum(0.01);
+    spinTMin->setMinimum(0.);
     spinTMin->setMaximum(10000.);
     spinTMin->setValue(100.);
 
@@ -547,6 +588,37 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     spindT->setMaximum(10000.);
     spindT->setValue(5.);
 
+    labelEMin = new QLabel(tr("eB<sub>min</sub> (GeV<sup>2</sup>):"));
+    spinEMin = new QDoubleSpinBox();
+    spinEMin->setDecimals(3);
+    spinEMin->setMinimum(0.);
+    spinEMin->setMaximum(100.);
+    spinEMin->setSingleStep(0.01);
+    spinEMin->setValue(0.);
+
+    labelEMax = new QLabel(tr("eB<sub>max</sub> (GeV<sup>2</sup>):"));
+    spinEMax = new QDoubleSpinBox();
+    spinEMax->setDecimals(3);
+    spinEMax->setMinimum(0.);
+    spinEMax->setMaximum(100.);
+    spinEMax->setSingleStep(0.01);
+    spinEMax->setValue(0.16);
+
+    labeldE = new QLabel(tr("∆eB (GeV<sup>2</sup>):"));
+    spindE = new QDoubleSpinBox();
+    spindE->setDecimals(3);
+    spindE->setMinimum(0.);
+    spindE->setMaximum(100.);
+    spindE->setSingleStep(0.01);
+    spindE->setValue(0.01);
+
+    labelTaux = new QLabel(tr("T (MeV):"));
+    spinTaux = new QDoubleSpinBox();
+    spinTaux->setMinimum(0.01);
+    spinTaux->setMaximum(10000.);
+    spinTaux->setValue(155.);
+
+
 
     layBounds->addWidget(labelTMin, 0, 0);
     layBounds->addWidget(spinTMin, 0, 1);
@@ -554,12 +626,20 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     layBounds->addWidget(spinTMax, 0, 3);
     layBounds->addWidget(labeldT, 0, 4);
     layBounds->addWidget(spindT, 0, 5);
-    layBounds->addWidget(labelmuB, 1, 0);
-    layBounds->addWidget(spinmuB, 1, 1);
-    layBounds->addWidget(labelmuQ, 1, 2);
-    layBounds->addWidget(spinmuQ, 1, 3);
-    layBounds->addWidget(labelmuS, 1, 4);
-    layBounds->addWidget(spinmuS, 1, 5);
+    layBounds->addWidget(labelEMin, 1, 0);
+    layBounds->addWidget(spinEMin, 1, 1);
+    layBounds->addWidget(labelEMax, 1, 2);
+    layBounds->addWidget(spinEMax, 1, 3);
+    layBounds->addWidget(labeldE, 1, 4);
+    layBounds->addWidget(spindE, 1, 5);
+    layBounds->addWidget(labelmuB, 2, 0);
+    layBounds->addWidget(spinmuB, 2, 1);
+    layBounds->addWidget(labelmuQ, 2, 2);
+    layBounds->addWidget(spinmuQ, 2, 3);
+    layBounds->addWidget(labelmuS, 2, 4);
+    layBounds->addWidget(spinmuS, 2, 5);
+    layBounds->addWidget(labelTaux, 3, 0);
+    layBounds->addWidget(spinTaux, 3, 1);
 
     labelConstr = new QLabel(tr(""));
 
@@ -682,7 +762,14 @@ void EquationOfStateTab::calculate() {
       paramsFl.resize(0);
       varvalues.resize(0);
 
-      int iters = static_cast<int>((spinTMax->value() - spinTMin->value()) / spindT->value()) + 1;
+      double pmin = spinTMin->value(), pmax = spinTMax->value(), dp = spindT->value();
+      if (comboMode->currentIndex() == 3) {
+        pmin = spinEMin->value();
+        pmax = spinEMax->value();
+        dp = spindE->value();
+      }
+
+      int iters = static_cast<int>((pmax - pmin) / dp) + 1;
 
       fCurrentSize = 0;
 
@@ -692,9 +779,9 @@ void EquationOfStateTab::calculate() {
 
       fStop = 0;
 
-      std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value()};
+      std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
-      EoSWorker *wrk = new EoSWorker(model, spinTMin->value(), spinTMax->value(), spindT->value(),
+      EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
@@ -721,7 +808,7 @@ void EquationOfStateTab::finalize() {
 
 void EquationOfStateTab::modelChanged()
 {
-  if (CBratio->isChecked()) {
+  if (CBratio->isChecked() || CBxAxis->isChecked()) {
     comboQuantity2->setEnabled(true);
   }
   else {
@@ -742,7 +829,7 @@ void EquationOfStateTab::modelChanged()
   }
 
   if ((comboQuantity2->currentText() == "ni/T³" || comboQuantity2->currentText() == "ni[fm^-3]")
-    && CBratio->isChecked()) {
+    && (CBratio->isChecked() || CBxAxis->isChecked())) {
     labelParticle2->setVisible(true);
     comboParticle2->setVisible(true);
     labelFeeddown2->setVisible(true);
@@ -785,6 +872,39 @@ void EquationOfStateTab::modelChanged()
     labelTMin->setText("T<sub>min</sub> (MeV)");
     labelTMax->setText("T<sub>max</sub> (MeV)");
     labeldT->setText("∆T (MeV)");
+  }
+
+
+  if (comboMode->currentIndex() != 3) {
+    labelEMin->setVisible(false);
+    labelEMax->setVisible(false);
+    labeldE->setVisible(false);
+    spinEMin->setVisible(false);
+    spinEMax->setVisible(false);
+    spindE->setVisible(false);
+    labelTMin->setVisible(true);
+    labelTMax->setVisible(true);
+    labeldT->setVisible(true);
+    spinTMin->setVisible(true);
+    spinTMax->setVisible(true);
+    spindT->setVisible(true);
+    labelTaux->setVisible(false);
+    spinTaux->setVisible(false);
+  } else {
+    labelEMin->setVisible(true);
+    labelEMax->setVisible(true);
+    labeldE->setVisible(true);
+    spinEMin->setVisible(true);
+    spinEMax->setVisible(true);
+    spindE->setVisible(true);
+    labelTMin->setVisible(false);
+    labelTMax->setVisible(false);
+    labeldT->setVisible(false);
+    spinTMin->setVisible(false);
+    spinTMax->setVisible(false);
+    spindT->setVisible(false);
+    labelTaux->setVisible(true);
+    spinTaux->setVisible(true);
   }
 
   QString constr = "";
@@ -975,6 +1095,15 @@ void EquationOfStateTab::plotLatticeData()
   }
 }
 
+void EquationOfStateTab::showEoSTable() {
+  recomputeCalcTable();
+
+  CalculationTableDialog dialog(this, calcTable);
+  dialog.setWindowFlags(Qt::Window);
+  dialog.showMaximized();
+  dialog.exec();
+}
+
 void EquationOfStateTab::fillParticleLists()
 {
   for (int ii = 0; ii < 2; ++ii) {
@@ -1002,9 +1131,9 @@ void EquationOfStateTab::contextMenuRequest(QPoint pos)
   QMenu *menu = new QMenu(this);
   menu->setAttribute(Qt::WA_DeleteOnClose);
 
-  menu->addAction("Save as pdf", this, SLOT(saveAsPdf()));
-  menu->addAction("Save as png", this, SLOT(saveAsPng()));
-  menu->addAction("Write computed values to file", this, SLOT(saveAsAscii()));
+  menu->addAction("Save as pdf...", this, SLOT(saveAsPdf()));
+  menu->addAction("Save as png...", this, SLOT(saveAsPng()));
+  menu->addAction("Write computed values to file...", this, SLOT(saveAsAscii()));
 
   menu->popup(plotDependence->mapToGlobal(pos));
 }
@@ -1048,11 +1177,16 @@ void EquationOfStateTab::saveAs(int type)
     else {
       std::vector<double> yvalues;
 
-      if (CBratio->isChecked()) {
+      if (CBratio->isChecked() && !CBxAxis->isChecked()) {
         yvalues = getValuesRatio(comboQuantity->currentIndex(), comboQuantity2->currentIndex());
       }
       else {
         yvalues = getValues(comboQuantity->currentIndex());
+      }
+
+      std::vector<double> xvalues = varvalues;
+      if (CBxAxis->isChecked()) {
+        xvalues = getValues(comboQuantity2->currentIndex(), 1);
       }
 
       QFile fout(path);
@@ -1061,13 +1195,18 @@ void EquationOfStateTab::saveAs(int type)
         QTextStream out(&fout);
         out.setFieldWidth(15);
         out.setFieldAlignment(QTextStream::AlignLeft);
-        out << plotDependence->xAxis->label();
-        out << plotDependence->yAxis->label();
+        if (!CBflipAxes->isChecked()) {
+          out << plotDependence->xAxis->label();
+          out << plotDependence->yAxis->label();
+        } else {
+          out << plotDependence->yAxis->label();
+          out << plotDependence->xAxis->label();
+        }
         out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
         for (int i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
-          out << varvalues[i] << yvalues[i];
+          out << xvalues[i] << yvalues[i];
           out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
         }
       }
@@ -2019,6 +2158,15 @@ void EquationOfStateTab::readLatticeData()
   }
 }
 
+QString EquationOfStateTab::getParameterName() const {
+  if (comboMode->currentIndex() == 2)
+    return "μB[MeV]";
+  else if (comboMode->currentIndex() == 3)
+    return "eB[GeV^2]";
+  else
+    return "T[MeV]";
+}
+
 void EquationOfStateTab::replot() {
     bool flipAxes = false;
     flipAxes = CBflipAxes->isChecked();
@@ -2031,12 +2179,14 @@ void EquationOfStateTab::replot() {
       yAxis = plotDependence->xAxis;
     }
 
-    if (comboMode->currentIndex() == 2) {
-      xAxis->setLabel("μB (MeV)");
-    }
-    else {
-      xAxis->setLabel("T (MeV)");
-    }
+    xAxis->setLabel(getParameterName());
+
+//    if (comboMode->currentIndex() == 2) {
+//      xAxis->setLabel("μB (MeV)");
+//    }
+//    else {
+//      xAxis->setLabel("T (MeV)");
+//    }
 
     int index = comboQuantity->currentIndex();
 
@@ -2048,8 +2198,9 @@ void EquationOfStateTab::replot() {
 
     if (index >= 0 && index < paramnames.size()) {
       std::vector<double> yvalues;
+      std::vector<double> xvalues = varvalues;
 
-      if (CBratio->isChecked()) {
+      if (CBratio->isChecked() && !CBxAxis->isChecked()) {
         int index2 = comboQuantity2->currentIndex();
         if (!(index2 >= 0 && index2 < paramnames.size()))
           return;
@@ -2083,6 +2234,27 @@ void EquationOfStateTab::replot() {
           yAxis->setLabel(tname);
         }
         yvalues = getValues(index);
+
+        if (CBxAxis->isChecked()) {
+          xvalues = getValues(comboQuantity2->currentIndex(), 1);
+
+          int index2 = comboQuantity2->currentIndex();
+          xAxis->setLabel(paramnames[index2]);
+          if (paramnames[index2] == "ni/T³") {
+            QString tname = paramnames[index2];
+            int pid = comboParticle2->currentIndex();
+            if (pid >= 0 && pid < model->TPS()->Particles().size())
+              tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) +")/T³";
+            xAxis->setLabel(tname);
+          }
+          if (paramnames[index2] == "ni[fm^-3]") {
+            QString tname = paramnames[index2];
+            int pid = comboParticle2->currentIndex();
+            if (pid >= 0 && pid < model->TPS()->Particles().size())
+              tname = "n(" + QString::fromStdString(model->TPS()->Particles()[pid].Name()) + ")[fm^-3]³";
+            xAxis->setLabel(tname);
+          }
+        }
       }
       double tmin = 0., tmax = 0.;
       for (int i = 0; i<yvalues.size(); ++i) {
@@ -2096,8 +2268,22 @@ void EquationOfStateTab::replot() {
       if (yvalues.size() > 0)
         yAxis->setRange(tmin, tmax);
 
+      if (CBxAxis->isChecked()) {
+        double xmin = 1.e12, xmax = -1.e12;
+        for (int i = 0; i<xvalues.size(); ++i) {
+          xmin = std::min(xmin, xvalues[i]);
+          xmax = std::max(xmax, xvalues[i]);
+        }
+
+//        if (xmin > 0.)
+//          xmin *= 0.;
+
+        if (xvalues.size() > 0)
+          xAxis->setRange(xmin, xmax);
+      }
+
       // Lattice data for muB = 0 only
-      if (spinmuB->value() == 0.0 && !model->ConstrainMuB() && !flipAxes)
+      if (comboMode->currentIndex() < 2 && spinmuB->value() == 0.0 && !model->ConstrainMuB() && !flipAxes && !CBxAxis->isChecked())
         plotLatticeData();
 
       int graphNumber = plotDependence->graphCount();
@@ -2114,15 +2300,22 @@ void EquationOfStateTab::replot() {
 
       for(int i=0;i<yvalues.size();++i) {
         if (flipAxes)
-          curve->addData(yvalues[i], varvalues[i]);
+          curve->addData(yvalues[i], xvalues[i]);
         else
-          curve->addData(varvalues[i], yvalues[i]);
+          curve->addData(xvalues[i], yvalues[i]);
       }
 
       tmin = std::min(tmin, plotDependence->yAxis->range().lower);
       tmax = std::max(tmax, plotDependence->yAxis->range().upper);
 
-      xAxis->setRange(spinTMin->value(), spinTMax->value());
+      double pmin = spinTMin->value(), pmax = spinTMax->value();
+      if (comboMode->currentIndex() == 3) {
+        pmin = spinEMin->value();
+        pmax = spinEMax->value();
+      }
+
+      if (!CBxAxis->isChecked())
+        xAxis->setRange(pmin, pmax);
       if (yvalues.size() > 0)
         yAxis->setRange(1.1*tmin, 1.1*tmax);
 
@@ -2131,4 +2324,30 @@ void EquationOfStateTab::replot() {
 
       plotDependence->replot();
     }
+}
+
+void EquationOfStateTab::recomputeCalcTable() {
+  calcTable.clear();
+
+  calcTable.parameter_name = getParameterName();
+  for(int i = 0; i < varvalues.size(); ++i) {
+    calcTable.parameter_values.push_back(varvalues[i]);
+    calcTable.temperature_values.push_back(paramsTD[i].T);
+  }
+
+  for(int ir = 0; ir < paramnames.size(); ++ir) {
+    if (paramnames[ir] == "ni/T³" || paramnames[ir] == "ni[fm^-3]")
+      continue;
+
+    calcTable.quantities_names.push_back(paramnames[ir]);
+    calcTable.quantities_values.push_back(getValues(ir));
+  }
+
+  for(int ic = 0; ic < model->TPS()->Particles().size(); ++ic) {
+    calcTable.densities_names.push_back(QString::fromStdString(model->TPS()->Particles()[ic].Name()));
+  }
+
+  for(int ir = 0; ir < varvalues.size(); ++ir) {
+    calcTable.densities_values.push_back(paramsTD[ir].densities);
+  }
 }

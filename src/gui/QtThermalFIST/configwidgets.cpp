@@ -542,7 +542,7 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   QHBoxLayout* laymuB = new QHBoxLayout();
   laymuB->setAlignment(Qt::AlignLeft);
   CBmuB = new QCheckBox(tr("Constrain μB from entropy per baryon ratio, S/B:"));
-  CBmuB->setChecked(m_parent->currentConfig.ConstrainMuB);
+  CBmuB->setChecked(m_parent->currentConfig.ConstrainMuB && m_parent->currentConfig.ConstrainMuBType == 0);
   connect(CBmuB, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
   spinSBRatio = new QDoubleSpinBox();
   spinSBRatio->setDecimals(3);
@@ -558,6 +558,27 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
 
   CBmuBfull = new QWidget();
   CBmuBfull->setLayout(laymuB);
+
+
+  QHBoxLayout* laymuBdens = new QHBoxLayout();
+  laymuBdens->setAlignment(Qt::AlignLeft);
+  CBmuBdens = new QCheckBox(tr("Constrain μB from baryon density, nB (fm^-3):"));
+  CBmuBdens->setChecked(m_parent->currentConfig.ConstrainMuB && m_parent->currentConfig.ConstrainMuBType == 1);
+  connect(CBmuBdens, &QCheckBox::toggled, this, &ConservationLawsDialog::toggleMuB);
+  spinRhoB = new QDoubleSpinBox();
+  spinRhoB->setDecimals(3);
+  spinRhoB->setMinimum(-100.);
+  spinRhoB->setMaximum(100.);
+  spinRhoB->setSingleStep(0.01);
+  spinRhoB->setValue(m_parent->currentConfig.RhoB);
+
+  laymuBdens->addWidget(CBmuBdens);
+  laymuBdens->addWidget(spinRhoB);
+  laymuBdens->setContentsMargins(0, 0, 0, 0);
+
+
+  CBmuBdensfull = new QWidget();
+  CBmuBdensfull->setLayout(laymuBdens);
 
   QHBoxLayout* laymuQ = new QHBoxLayout();
   laymuQ->setAlignment(Qt::AlignLeft);
@@ -587,6 +608,7 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
   //    !m_parent->currentConfig.CanonicalB))
   grLayout->addWidget(CBmuBfull);
+  grLayout->addWidget(CBmuBdensfull);
 
   //if (m_parent->model->TPS()->hasCharged()
   //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
@@ -670,9 +692,18 @@ void ConservationLawsDialog::updateControls()
 {
   if (CBmuB->isChecked()) {
     spinSBRatio->setEnabled(true);
+    if (CBmuBdens->isChecked())
+      CBmuBdens->setChecked(false);
   }
   else {
     spinSBRatio->setEnabled(false);
+  }
+
+  if (CBmuBdens->isChecked()) {
+    spinRhoB->setEnabled(true);
+  }
+  else {
+    spinRhoB->setEnabled(false);
   }
 
   if (CBmuQ->isChecked()) {
@@ -688,10 +719,13 @@ void ConservationLawsDialog::updateControls()
     && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
       !checkBConserve->isChecked())) {
     CBmuBfull->setEnabled(true);
+    CBmuBdens->setEnabled(true);
     fl = true;
   }
-  else
+  else {
     CBmuBfull->setEnabled(false);
+    CBmuBdens->setEnabled(false);
+  }
 
   if (m_parent->model->TPS()->hasCharged()
     && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
@@ -726,8 +760,10 @@ void ConservationLawsDialog::updateControls()
 
 void ConservationLawsDialog::OK()
 {
-  m_parent->currentConfig.ConstrainMuB = CBmuB->isChecked();
+  m_parent->currentConfig.ConstrainMuB = CBmuB->isChecked() || CBmuBdens->isChecked();
+  m_parent->currentConfig.ConstrainMuBType = static_cast<int>(CBmuBdens->isChecked());
   m_parent->currentConfig.SoverB = spinSBRatio->value();
+  m_parent->currentConfig.RhoB = spinRhoB->value();
   m_parent->currentConfig.ConstrainMuQ = CBmuQ->isChecked();
   m_parent->currentConfig.QoverB = spinQBRatio->value();
   m_parent->currentConfig.ConstrainMuS = CBmuS->isChecked();
@@ -738,6 +774,14 @@ void ConservationLawsDialog::OK()
   m_parent->currentConfig.CanonicalS = checkSConserve->isChecked();
   m_parent->currentConfig.CanonicalC = checkCConserve->isChecked();
   QDialog::accept();
+}
+
+void ConservationLawsDialog::toggleMuB() {
+  if (CBmuBdens->isChecked() && CBmuB->isChecked()) {
+    CBmuB->setChecked(false);
+  } else {
+    updateControls();
+  }
 }
 
 OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
@@ -846,6 +890,26 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
 
   grPCE->setLayout(PCELayout);
 
+  QGroupBox* grMagneticField = new QGroupBox(tr("Magnetic field"));
+  QGridLayout* BLayout = new QGridLayout();
+  QLabel* labelB = new QLabel(tr("eB [GeV<sup>2</sup>]:"));
+  spinB = new QDoubleSpinBox();
+  spinB->setMinimum(0.);
+  spinB->setMaximum(100.);
+  spinB->setSingleStep(0.01);
+  spinB->setDecimals(4);
+  spinB->setValue(m_parent->currentConfig.MagneticFieldB);
+  QLabel* labelLandauLevels = new QLabel(tr("Landau levels l<sub>max</sub>:"));
+  spinLandauLevels = new QSpinBox();
+  spinLandauLevels->setMinimum(0);
+  spinLandauLevels->setMaximum(100000);
+  spinLandauLevels->setValue(m_parent->currentConfig.MagneticFieldLmax);
+  BLayout->addWidget(labelB, 0, 0);
+  BLayout->addWidget(spinB, 0, 1);
+  BLayout->addWidget(labelLandauLevels, 1, 0);
+  BLayout->addWidget(spinLandauLevels, 1, 1);
+  grMagneticField->setLayout(BLayout);
+
   QGroupBox* grPions = new QGroupBox(tr("Pion interactions"));
   QVBoxLayout* PionsLayout = new QVBoxLayout();
   
@@ -872,6 +936,7 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   }
   
   layout->addWidget(grPCE);
+  layout->addWidget(grMagneticField);
   layout->addWidget(grPions);
 
   layout->addWidget(buttonBox);
@@ -911,5 +976,7 @@ void OtherOptionsDialog::OK()
   config.PCEPionAnnihilationNumber = spinPionsAnnihilation->value();
   config.UseEMMPions = CBPionInteractions->isChecked();
   config.EMMPionFPi  = spinfPi->value() * 1.e-3;
+  config.MagneticFieldB = spinB->value();
+  config.MagneticFieldLmax = spinLandauLevels->value();
   QDialog::accept();
 }

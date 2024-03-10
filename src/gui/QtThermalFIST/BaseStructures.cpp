@@ -117,9 +117,15 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.SoverB = model->SoverB();
 
+  ret.RhoB = model->BaryonDensity();
+  ret.RhoQ = model->ElectricChargeDensity();
+  ret.RhoS = model->StrangenessDensity();
+  ret.RhoC = model->CharmDensity();
+
   ret.QoverB = model->QoverB();
 
   ret.ConstrainMuB = model->ConstrainMuB();
+  ret.ConstrainMuBType = 0;
 
   ret.ConstrainMuQ = model->ConstrainMuQ();
 
@@ -150,6 +156,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.UseEMMPions = false;
   ret.EMMPionFPi  = 0.133;
+
+  ret.MagneticFieldB = model->GetIdealGasFunctionsExtraConfig().MagneticField.B;
+  ret.MagneticFieldLmax = model->GetIdealGasFunctionsExtraConfig().MagneticField.lmax;
 
   return ret;
 }
@@ -250,6 +259,9 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
       }
     }
   }
+
+  // Magnetic field
+  model->SetMagneticField(config.MagneticFieldB, config.MagneticFieldLmax);
 }
 
 void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConfig & config)
@@ -257,6 +269,7 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
   if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal) {
     for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
       model->SetVirial(i, i, config.vdWparams.m_bij[i][i]);
+      std::cout << "Setting virial for " << model->TPS()->Particle(i).Name() << " to " << config.vdWparams.m_bij[i][i] << std::endl;
     }
   }
 

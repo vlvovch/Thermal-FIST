@@ -29,11 +29,13 @@ namespace thermalfist {
     m_Calculated(false),
     m_FeeddownCalculated(false),
     m_FluctuationsCalculated(false),
+    m_TemperatureDerivativesCalculated(false),
     m_GCECalculated(false),
     m_NormBratio(false),
     m_QuantumStats(true),
     m_MaxDiff(0.),
-    m_useOpenMP(0)
+    m_useOpenMP(0),
+    m_IGFExtraConfig()
   {
     if (!Disclaimer::DisclaimerPrinted) 
       Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
@@ -58,6 +60,7 @@ namespace thermalfist {
 
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
+    m_dSuscdT = m_Susc;
 
     m_NormBratio = false;
   
@@ -533,10 +536,14 @@ namespace thermalfist {
       return false;
     }
 
-    m_Parameters.muB = muBinit;
-    m_Parameters.muS = muSinit;
-    m_Parameters.muQ = muQinit;
-    m_Parameters.muC = muCinit;
+    if (ConstrMuB)
+      m_Parameters.muB = muBinit;
+    if (ConstrMuS)
+      m_Parameters.muS = muSinit;
+    if (ConstrMuQ)
+      m_Parameters.muQ = muQinit;
+    if (ConstrMuC)
+      m_Parameters.muC = muCinit;
     bool allzero = true;
     allzero &= (totB == 0.0 && ConstrMuB) || (muBinit == 0 && !ConstrMuB);
     allzero &= (totQ == 0.0 && ConstrMuQ) || (muQinit == 0 && !ConstrMuQ);
@@ -628,6 +635,12 @@ namespace thermalfist {
   std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& /*chgs*/, int /*order*/)
   {
     printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
+    return std::vector<double>();
+  }
+
+  std::vector<double> ThermalModelBase::CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &/*chgs*/)
+  {
+    printf("**WARNING** %s::CalculateGeneralizedSusceptibilities(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
     return std::vector<double>();
   }
 
@@ -826,6 +839,19 @@ namespace thermalfist {
     if (chg == ConservedCharge::CharmCharge)
       return CharmDensity();
     return 0.0;
+  }
+
+  double ThermalModelBase::ConservedChargeDensitydT(ConservedCharge::Name chg)
+  {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    double ret = 0.0;
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      ret += m_TPS->Particles()[i].ConservedCharge(chg) * m_dndT[i];
+    }
+
+    return ret;
   }
 
   double ThermalModelBase::ChargedMultiplicity(int type)
@@ -1046,6 +1072,32 @@ namespace thermalfist {
     return TwoParticleSusceptibilityPrimordial(i, j);
   }
 
+  double ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordial(int i, int j) const {
+    if (!IsFluctuationsCalculated() || !IsTemperatureDerivativesCalculated()) {
+      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityPrimordial: temperature derivatives of fluctuations were not computed beforehand! Quitting...\n");
+      exit(1);
+    }
+
+    return m_PrimChi2sdT[i][j];
+  }
+
+  double ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg(long long id1, long long id2)
+  {
+    int i = TPS()->PdgToId(id1);
+    int j = TPS()->PdgToId(id2);
+
+    if (i == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
+      return 0.;
+    }
+    if (j == -1) {
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
+      return 0.;
+    }
+
+    return TwoParticleSusceptibilityTemperatureDerivativePrimordial(i, j);
+  }
+
   double ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg(long long id1, long long id2)
   {
     int i1 = TPS()->PdgToId(id1);
@@ -1229,10 +1281,12 @@ namespace thermalfist {
   {
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
+    m_dSuscdT = m_Susc;
 
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j) {
         m_Susc[i][j] = 0.;
+        m_dSuscdT[i][j] = 0.;
         for (size_t k = 0; k < m_PrimCorrel.size(); ++k) {
           int c1 = 0;
           if (i == 0) c1 = m_TPS->Particles()[k].BaryonCharge();
@@ -1246,6 +1300,9 @@ namespace thermalfist {
             if (j == 2) c2 = m_TPS->Particles()[kp].Strangeness();
             if (j == 3) c2 = m_TPS->Particles()[kp].Charm();
             m_Susc[i][j] += c1 * c2 * m_PrimCorrel[k][kp];
+
+            if (IsTemperatureDerivativesCalculated())
+              m_dSuscdT[i][j] += c1 * c2 * m_PrimChi2sdT[k][kp];
           }
         }
         m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
@@ -1326,6 +1383,10 @@ namespace thermalfist {
 
   void ThermalModelBase::CalculateFluctuations() {
     printf("**WARNING** %s: Calculation of fluctuations is not implemented\n", m_TAG.c_str());
+  }
+
+  void ThermalModelBase::CalculateTemperatureDerivatives() {
+    printf("**WARNING** %s: Calculation of temperature derivatives is not implemented\n", m_TAG.c_str());
   }
 
   std::vector<double> ThermalModelBase::BroydenEquationsChem::Equations(const std::vector<double>& x)
@@ -1957,5 +2018,46 @@ namespace thermalfist {
   void ThermalModelBase::ClearDensityModels() {
     for (auto& particle : TPS()->Particles())
       particle.ClearGeneralizedDensity();
+  }
+
+  void ThermalModelBase::SetMagneticField(double B, int lmax) {
+    m_IGFExtraConfig.MagneticField.B    = B;
+    if (lmax >= 0)
+      m_IGFExtraConfig.MagneticField.lmax = lmax;
+    for (auto& particle : TPS()->Particles())
+      particle.SetMagneticField(B, m_IGFExtraConfig.MagneticField.lmax);
+    ResetCalculatedFlags();
+  }
+
+  void ThermalModelBase::ClearMagneticField() {
+    m_IGFExtraConfig.MagneticField.B    = 0.;
+    for (auto& particle : TPS()->Particles())
+      particle.ClearMagneticField();
+    ResetCalculatedFlags();
+  }
+
+  double ThermalModelBase::Susc(ConservedCharge::Name i, ConservedCharge::Name j) const {
+    assert(IsFluctuationsCalculated());
+    return m_Susc[i][j];
+  }
+
+  double ThermalModelBase::dSuscdT(ConservedCharge::Name i, ConservedCharge::Name j) const {
+    assert(IsFluctuationsCalculated() && IsTemperatureDerivativesCalculated());
+    return m_dSuscdT[i][j];
+  }
+
+  double ThermalModelBase::ProxySusc(ConservedCharge::Name i, ConservedCharge::Name j) const {
+    assert(IsFluctuationsCalculated());
+    return m_ProxySusc[i][j];
+  }
+
+  double ThermalModelBase::GetdndT(int i) const {
+    if (IsTemperatureDerivativesCalculated() && i >= 0 && i < ComponentsNumber())
+      return m_dndT[i];
+    else {
+      printf("**WARNING** ThermalModelBase::GetdndT(): Temperature derivatives are not calculated or particle id %d is oustide the range!\n", i);
+      return 0.;
+    }
+    return 0.;
   }
 } // namespace thermalfist

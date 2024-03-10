@@ -41,9 +41,11 @@ class ModelTab : public QWidget
     QPushButton *labelValid;
     QLabel *labelHint;
 
-    QLabel *labelmuS, *labelmuC;
+    QLabel *labelmuB, *labelmuQ, *labelmuS, *labelmuC;
     QLabel *labelgammaS, *labelgammaC;
     QDoubleSpinBox *spinTemperature, *spinmuB, *spingammaq, *spingammaS, *spingammaC, *spinmuS, *spinmuQ, *spinmuC, *spinVolumeR;
+    QLabel *labelrhoB, *labelrhoQ, *labelrhoS, *labelrhoC;
+    QDoubleSpinBox *spinrhoB, *spinrhoS, *spinrhoQ, *spinrhoC;
     QDoubleSpinBox *spinVolumeRSC;
     QLabel *labelVolumeVal;
     QLabel *labelB, *labelQ, *labelS, *labelC;
@@ -51,8 +53,11 @@ class ModelTab : public QWidget
 
     QCheckBox *checkFluctuations;
     QCheckBox *checkMuInitials;
+    QCheckBox *checkUseDensities;
+
 
     QCheckBox *checkOMP;
+
 
     QPushButton *buttonCalculate;
     QPushButton *buttonWriteToFile;

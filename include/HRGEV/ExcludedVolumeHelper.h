@@ -15,7 +15,7 @@
 /**
  * \file ExcludedVolumeHelper.h
  * 
- * \brief Contains some functions do deal with excluded volumes. 
+ * \brief Contains some functions to deal with excluded volumes.
  * 
  */
 

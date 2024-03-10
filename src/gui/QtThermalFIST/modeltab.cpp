@@ -130,7 +130,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinTemperature->setMaximum(10000.);
     spinTemperature->setValue(model->Parameters().T * 1e3);
     spinTemperature->setToolTip(tr("Temperature"));
-    QLabel *labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
+    labelmuB = new QLabel(tr("μ<sub>B</sub> (MeV):"));
     spinmuB = new QDoubleSpinBox();
     spinmuB->setMinimum(-10000.);
     spinmuB->setMaximum(10000.);
@@ -164,7 +164,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     spinmuS->setMaximum(1000.);
     spinmuS->setValue(model->Parameters().muS * 1e3);
     spinmuS->setToolTip(tr("Strangeness chemical potential"));
-    QLabel *labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
+    labelmuQ = new QLabel(tr("μ<sub>Q</sub> (MeV):"));
     spinmuQ = new QDoubleSpinBox();
     spinmuQ->setMinimum(-1000.);
     spinmuQ->setMaximum(1000.);
@@ -198,6 +198,39 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     changeVolumeRSC(spinVolumeR->value());
 
+    labelrhoB = new QLabel(tr("n<sub>B</sub> (fm<sup>-3</sup>):"));
+    spinrhoB = new QDoubleSpinBox();
+    spinrhoB->setMinimum(-10.);
+    spinrhoB->setMaximum(10.);
+    spinrhoB->setSingleStep(0.01);
+    spinrhoB->setDecimals(4);
+    spinrhoB->setValue(0.);
+    labelrhoS = new QLabel(tr("n<sub>S</sub> (fm<sup>-3</sup>):"));
+    spinrhoS = new QDoubleSpinBox();
+    spinrhoS->setMinimum(-10.);
+    spinrhoS->setMaximum(10.);
+    spinrhoS->setSingleStep(0.01);
+    spinrhoS->setDecimals(4);
+    spinrhoS->setValue(0.);
+    labelrhoQ = new QLabel(tr("n<sub>Q</sub> (fm<sup>-3</sup>):"));
+    spinrhoQ = new QDoubleSpinBox();
+    spinrhoQ->setMinimum(-10.);
+    spinrhoQ->setMaximum(10.);
+    spinrhoQ->setSingleStep(0.01);
+    spinrhoQ->setDecimals(4);
+    spinrhoQ->setValue(0.);
+    labelrhoC = new QLabel(tr("n<sub>C</sub> (fm<sup>-3</sup>):"));
+    spinrhoC = new QDoubleSpinBox();
+    spinrhoC->setMinimum(-10.);
+    spinrhoC->setMaximum(10.);
+    spinrhoC->setSingleStep(0.01);
+    spinrhoC->setDecimals(4);
+    spinrhoC->setValue(0.);
+
+    spinrhoB->setToolTip(tr("Baryon number density"));
+    spinrhoQ->setToolTip(tr("Electric charge density"));
+    spinrhoS->setToolTip(tr("Strangeness density"));
+    spinrhoC->setToolTip(tr("Charm density"));
 
     labelB = new QLabel(tr("B:"));
     spinB = new QSpinBox();
@@ -242,21 +275,30 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     layParameters->addWidget(spinmuQ, 1, 3);
     layParameters->addWidget(labelmuC, 1, 6, 1, 1, Qt::AlignRight);
     layParameters->addWidget(spinmuC, 1, 7); 
-    layParameters->addWidget(labelVolumeR, 2, 0, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinVolumeR, 2, 1);
-    layParameters->addWidget(labelVolumeRSC, 2, 2, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinVolumeRSC, 2, 3);
-    layParameters->addWidget(labelVolume, 2, 4, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(labelVolumeVal, 2, 5);
+    layParameters->addWidget(labelVolumeR, 3, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinVolumeR, 3, 1);
+    layParameters->addWidget(labelVolumeRSC, 3, 2, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinVolumeRSC, 3, 3);
+    layParameters->addWidget(labelVolume, 3, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(labelVolumeVal, 3, 5);
 
-    layParameters->addWidget(labelB, 3, 0, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinB, 3, 1);
-    layParameters->addWidget(labelS, 3, 4, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinS, 3, 5);
-    layParameters->addWidget(labelQ, 3, 2, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinQ, 3, 3);
-    layParameters->addWidget(labelC, 3, 6, 1, 1, Qt::AlignRight);
-    layParameters->addWidget(spinC, 3, 7);
+    layParameters->addWidget(labelrhoB, 2, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinrhoB, 2, 1);
+    layParameters->addWidget(labelrhoS, 2, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinrhoS, 2, 5);
+    layParameters->addWidget(labelrhoQ, 2, 2, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinrhoQ, 2, 3);
+    layParameters->addWidget(labelrhoC, 2, 6, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinrhoC, 2, 7);
+
+    layParameters->addWidget(labelB, 5, 0, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinB, 5, 1);
+    layParameters->addWidget(labelS, 5, 4, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinS, 5, 5);
+    layParameters->addWidget(labelQ, 5, 2, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinQ, 5, 3);
+    layParameters->addWidget(labelC, 5, 6, 1, 1, Qt::AlignRight);
+    layParameters->addWidget(spinC, 5, 7);
 
     grParameters->setLayout(layParameters);
 
@@ -271,8 +313,14 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     checkMuInitials->setChecked(true);
     checkMuInitials->setToolTip(tr("Whether the current values of chemical potentials are used as initial conditions for conservation laws or they are reset"));
 
+    checkUseDensities = new QCheckBox(tr("Use densities"));
+    checkUseDensities->setChecked(false);
+    checkUseDensities->setToolTip(tr("Use densities as input instead of chemical potentials (mu's are calculated from densities)"));
+    connect(checkUseDensities, SIGNAL(clicked()), this, SLOT(modelChanged()));
+
     layFlags->addWidget(checkFluctuations);
     layFlags->addWidget(checkMuInitials);
+    layFlags->addWidget(checkUseDensities);
 
     QHBoxLayout *layButtons = new QHBoxLayout();
     layButtons->setAlignment(Qt::AlignLeft);
@@ -374,6 +422,15 @@ ThermalModelConfig ModelTab::getConfig()
   ret.ComputeFluctations = checkFluctuations->isChecked();
   ret.ResetMus = checkMuInitials->isChecked();
 
+  if (checkUseDensities->isChecked()) {
+    ret.RhoB = spinrhoB->value();
+    ret.RhoQ = spinrhoQ->value();
+    ret.RhoS = spinrhoS->value();
+    ret.RhoC = spinrhoC->value();
+    ret.ConstrainMuB = ret.ConstrainMuQ = ret.ConstrainMuS = ret.ConstrainMuC = true;
+    ret.ConstrainMuBType = 2;
+  }
+
   return ret;
 }
 
@@ -426,6 +483,37 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 {
   QElapsedTimer timerc;
   timerc.start();
+
+  if (config.ModelType == ThermalModelConfig::CE) {
+    int messageType = 0;
+    // 0 - Ok
+    // 1 - Warning, light nuclei in the list
+    // 2 - Warning, quantum statistics for baryons
+    // 3 - Warning, light nuclei and quantum statistics for baryons
+    if (model->TPS()->hasMultiBaryons() && config.QuantumStatisticsInclude == 0)
+      messageType = 3;
+    else if (model->TPS()->hasMultiBaryons())
+      messageType = 1;
+    else if (config.QuantumStatisticsInclude == 0)
+      messageType = 2;
+
+    QVector<QString> messages = {
+      "Everything is OK",
+      "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects.\n\nDo you want to proceed with the calculation?"
+    };
+
+    if (messageType != 0) {
+      QMessageBox msgBox;
+      msgBox.setText(messages[messageType]);
+      msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+      msgBox.setDefaultButton(QMessageBox::No);
+      int ret = msgBox.exec();
+      if (ret == QMessageBox::No)
+        return;
+    }
+  }
   
   ThermalModelBase *modelnew;
 
@@ -493,7 +581,30 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   printf("Initialization time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
   timerc.restart();
-  model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
+  if (!config.ConstrainMuB || config.ConstrainMuBType == 0) {
+    model->ConstrainChemicalPotentials(checkMuInitials->isChecked());
+  } else {
+    double totB = model->Volume() * config.RhoB;
+    double totQ = config.QoverB * totB;
+    double totS = 0.;
+    double totC = 0.;
+    if (config.ConstrainMuBType == 2) {
+      totQ = model->Volume() * config.RhoQ;
+      totS = model->Volume() * config.RhoS;
+      totC = model->Volume() * config.RhoC;
+    }
+    double muBinit = model->Parameters().muB;
+    double muQinit = model->Parameters().muQ;
+    double muSinit = model->Parameters().muS;
+    double muCinit = model->Parameters().muC;
+    if (checkMuInitials->isChecked())
+      muBinit = muQinit = muSinit = muCinit = 0.;
+    model->SolveChemicalPotentials(
+            totB, totQ, totS, totC,
+            muBinit, muQinit, muSinit, muCinit,
+            config.ConstrainMuB, config.ConstrainMuQ, config.ConstrainMuS, config.ConstrainMuC
+                                   );
+  }
   model->CalculatePrimordialDensities();
   printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
@@ -682,6 +793,11 @@ void ModelTab::calculate() {
     if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE) && !(config.Ensemble == ThermalModelConfig::EnsembleCCE))
       spinmuC->setValue(model->Parameters().muC * 1.e3);
   }
+
+  spinrhoB->setValue(model->BaryonDensity());
+  spinrhoQ->setValue(model->ElectricChargeDensity());
+  spinrhoS->setValue(model->StrangenessDensity());
+  spinrhoC->setValue(model->CharmDensity());
   return;
 }
 
@@ -849,8 +965,33 @@ void ModelTab::modelChanged()
     spinS->setEnabled(false);
     spinQ->setEnabled(false);
     spinC->setEnabled(false);
+    spinmuB->setVisible(true);
+    spinmuS->setVisible(true);
+    spinmuQ->setVisible(true);
+    spinmuC->setVisible(true);
+    labelB->setVisible(false);
+    spinB->setVisible(false);
+    labelS->setVisible(false);
+    spinS->setVisible(false);
+    labelQ->setVisible(false);
+    spinQ->setVisible(false);
+    labelC->setVisible(false);
+    spinC->setVisible(false);
+
+    spinrhoB->setEnabled(true);
+    spinrhoS->setEnabled(true);
+    spinrhoQ->setEnabled(true);
+    spinrhoC->setEnabled(true);
   }
   else {
+    labelB->setVisible(true);
+    spinB->setVisible(true);
+    labelQ->setVisible(model->TPS()->hasCharged());
+    spinQ->setVisible(model->TPS()->hasCharged());
+    labelS->setVisible(model->TPS()->hasStrange());
+    spinS->setVisible(model->TPS()->hasStrange());
+    labelC->setVisible(model->TPS()->hasCharmed());
+    spinC->setVisible(model->TPS()->hasCharmed());
     spinmuB->setEnabled(!configWidget->currentConfig.CanonicalB);
     spinmuS->setEnabled(!configWidget->currentConfig.CanonicalS);
     spinmuQ->setEnabled(!configWidget->currentConfig.CanonicalQ);
@@ -859,6 +1000,11 @@ void ModelTab::modelChanged()
     spinS->setEnabled(configWidget->currentConfig.CanonicalS);
     spinQ->setEnabled(configWidget->currentConfig.CanonicalQ);
     spinC->setEnabled(configWidget->currentConfig.CanonicalC);
+
+    spinrhoB->setEnabled(!configWidget->currentConfig.CanonicalB);
+    spinrhoS->setEnabled(!configWidget->currentConfig.CanonicalS);
+    spinrhoQ->setEnabled(!configWidget->currentConfig.CanonicalQ);
+    spinrhoC->setEnabled(!configWidget->currentConfig.CanonicalC);
 
     spinVolumeRSC->setEnabled(configWidget->currentConfig.CanonicalB ||
     configWidget->currentConfig.CanonicalS ||
@@ -870,10 +1016,15 @@ void ModelTab::modelChanged()
     spinmuS->setEnabled(false);
     spinmuC->setEnabled(false);
     spinVolumeRSC->setEnabled(true);
+
+    spinrhoS->setEnabled(false);
+    spinrhoC->setEnabled(false);
   }
   else if (configWidget->currentConfig.Ensemble == ThermalModelConfig::EnsembleCCE) {
     spinmuC->setEnabled(false);
     spinVolumeRSC->setEnabled(true);
+
+    spinrhoC->setEnabled(false);
   }
   else if (configWidget->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
     (!configWidget->currentConfig.CanonicalB &&
@@ -881,22 +1032,49 @@ void ModelTab::modelChanged()
     !configWidget->currentConfig.CanonicalQ &&
     !configWidget->currentConfig.CanonicalC))
     spinVolumeRSC->setEnabled(false);
-  
-  spinmuS->setVisible(model->TPS()->hasStrange());
-  spinmuC->setVisible(model->TPS()->hasCharmed());
-  labelmuS->setVisible(model->TPS()->hasStrange());
-  labelmuC->setVisible(model->TPS()->hasCharmed());
+
+  if (!checkUseDensities->isChecked()) {
+    labelrhoB->setVisible(false);
+    labelrhoS->setVisible(false);
+    labelrhoQ->setVisible(false);
+    labelrhoC->setVisible(false);
+    spinrhoB->setVisible(false);
+    spinrhoS->setVisible(false);
+    spinrhoQ->setVisible(false);
+    spinrhoC->setVisible(false);
+
+    labelmuB->setVisible(true);
+    labelmuS->setVisible(model->TPS()->hasStrange());
+    labelmuQ->setVisible(true);
+    labelmuC->setVisible(model->TPS()->hasCharmed());
+    spinmuB->setVisible(true);
+    spinmuS->setVisible(model->TPS()->hasStrange());
+    spinmuQ->setVisible(true);
+    spinmuC->setVisible(model->TPS()->hasCharmed());
+  } else {
+    spinrhoB->setVisible(true);
+    spinrhoS->setVisible(model->TPS()->hasStrange());
+    spinrhoQ->setVisible(true);
+    spinrhoC->setVisible(model->TPS()->hasCharmed());
+    labelrhoB->setVisible(true);
+    labelrhoS->setVisible(model->TPS()->hasStrange());
+    labelrhoQ->setVisible(true);
+    labelrhoC->setVisible(model->TPS()->hasCharmed());
+
+    spinmuB->setVisible(false);
+    spinmuS->setVisible(false);
+    spinmuQ->setVisible(false);
+    spinmuC->setVisible(false);
+    labelmuB->setVisible(false);
+    labelmuS->setVisible(false);
+    labelmuQ->setVisible(false);
+    labelmuC->setVisible(false);
+  }
+
   spingammaS->setVisible(model->TPS()->hasStrange());
   spingammaC->setVisible(model->TPS()->hasCharmed());
   labelgammaS->setVisible(model->TPS()->hasStrange());
   labelgammaC->setVisible(model->TPS()->hasCharmed());
-
-  labelQ->setVisible(model->TPS()->hasCharged());
-  spinQ->setVisible(model->TPS()->hasCharged());
-  labelS->setVisible(model->TPS()->hasStrange());
-  spinS->setVisible(model->TPS()->hasStrange());
-  labelC->setVisible(model->TPS()->hasCharmed());
-  spinC->setVisible(model->TPS()->hasCharmed());
 }
 
 void ModelTab::updateFontSizes() {

@@ -26,6 +26,7 @@
 #include "HRGBase/xMath.h"
 #include "CosmicEos/CosmicEoS.h"
 
+#include "calculationtabledialog.h"
 
 class CosmicEoSWorker : public QThread
 {
@@ -79,6 +80,7 @@ class CosmicEoSTab : public QWidget
 
     QComboBox *comboQuantity;
     QCheckBox *CBratio;
+    QCheckBox *CBxAxis;
     QComboBox *comboQuantity2;
 
     QComboBox *comboParticle;
@@ -124,6 +126,11 @@ class CosmicEoSTab : public QWidget
 
     ModelConfigWidget *configWidget;
 
+    // Table for the calculation results table widget
+    CalculationTable calcTable;
+
+    QPushButton *buttonEoSTable;
+
 public:
     CosmicEoSTab(QWidget *parent = 0, thermalfist::ThermalModelBase *model=NULL);
     ~CosmicEoSTab();
@@ -145,9 +152,12 @@ public slots:
     // saveAs type: 0 - pdf, 1 - png, 2 - ascii data
     void saveAs(int type);
 
+    void showEoSTable();
 private:
   std::vector<double> getValues(int index, int num = 0);
   std::vector<double> getValuesRatio(int index, int index2);
+  QString getParameterName() const;
+  void recomputeCalcTable();
 };
 
 

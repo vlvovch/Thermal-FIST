@@ -535,6 +535,9 @@ QvdWParameters QvdWParameters::GetParameters(ThermalParticleSystem* TPS, const T
         else
           fl &= !config->DisableMB;
 
+        if (config->InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
+          fl = true;
+
         if (!fl) {
           ret.m_bij[i][j] = 0.;
         }
@@ -585,7 +588,7 @@ QvdWParameters QvdWParameters::GetParameters(ThermalParticleSystem* TPS, const T
             fl &= !config->DisableMB;
 
           if (!fl) {
-            ret.m_bij[i][j] = 0.;
+            ret.m_aij[i][j] = 0.;
           }
           else {
             // Fill aij assuming "chemistry rule" aij = \sqrt{ai * aj}

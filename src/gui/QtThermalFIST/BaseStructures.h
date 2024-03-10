@@ -61,10 +61,15 @@ struct ThermalModelConfig {
   /// Constraints on mu's
   double SoverB;
   double QoverB;
+  double RhoB;
+  double RhoQ;
+  double RhoS;
+  double RhoC;
   bool ConstrainMuB;
   bool ConstrainMuQ;
   bool ConstrainMuS;
   bool ConstrainMuC;
+  int ConstrainMuBType; // 0 - Entropy per baryon, 1 - Baryon density
 
   /// Extra flags
   int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
@@ -92,10 +97,12 @@ struct ThermalModelConfig {
   /// Whether to use the SPR (single-particle rejection) approximation for the EV effects in coordinate space
   bool fUseEVUseSPRApproximation;
 
-
   /// Effective mass model (pions)
   bool  UseEMMPions;
   double EMMPionFPi;
+
+  double MagneticFieldB;
+  int MagneticFieldLmax;
 
   static ThermalModelConfig fromThermalModel(thermalfist::ThermalModelBase *model);
 };

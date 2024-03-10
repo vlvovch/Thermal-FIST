@@ -187,6 +187,10 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
+    virtual double CalculateSpecificHeat();
+
+    virtual void CalculateTemperatureDerivatives();
+
     // Dummy
     virtual double CalculateBaryonMatterEntropyDensity() { return 0.; }
 
