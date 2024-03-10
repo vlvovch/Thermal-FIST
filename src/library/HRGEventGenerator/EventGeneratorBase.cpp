@@ -134,10 +134,12 @@ namespace thermalfist {
           m_THM->SetChemicalPotentials(m_Config.fPCEChems);
           
         m_THM->CalculatePrimordialDensities();
-        m_Config.B = static_cast<int>(m_THM->BaryonDensity() * m_THM->Volume());
-        m_Config.Q = static_cast<int>(m_THM->ElectricChargeDensity() * m_THM->Volume());
-        m_Config.S = static_cast<int>(m_THM->StrangenessDensity() * m_THM->Volume());
-        m_Config.C = static_cast<int>(m_THM->CharmDensity() * m_THM->Volume());
+
+        // Round to nearest integer
+        m_Config.B = lround(m_THM->BaryonDensity() * m_THM->Volume());
+        m_Config.Q = lround(m_THM->ElectricChargeDensity() * m_THM->Volume());
+        m_Config.S = lround(m_THM->StrangenessDensity() * m_THM->Volume());
+        m_Config.C = lround(m_THM->CharmDensity() * m_THM->Volume());
     }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
