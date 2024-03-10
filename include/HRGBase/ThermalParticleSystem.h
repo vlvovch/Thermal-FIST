@@ -541,6 +541,13 @@ namespace thermalfist {
     static const std::string flag_nonuclei;
     static const std::string flag_noexcitednuclei;
 
+    /**
+     * \brief Calculates vector of conserved charges for all particle species.
+     *
+     * \return std::vector<double> -- a vector of conserved charges for all particle species.
+     */
+     std::vector<double> GetConservedChargesVector(ConservedCharge::Name charge);
+
   private:
     void GoResonance(int ind, int startind, double BR);
 

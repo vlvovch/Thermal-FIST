@@ -113,7 +113,8 @@ namespace thermalfist {
     virtual double EtaMax() const { return 1.e9; }
     virtual double f(double eta) const {
       return exp(-4. * eta);
-    }virtual double df(int n, double eta) const {
+    }
+    virtual double df(int n, double eta) const {
       if (n == 0)
         return f(eta);
 
@@ -139,7 +140,7 @@ namespace thermalfist {
     virtual ~ExcludedVolumeModelTVM() { }
     virtual double EtaMax() const { return 1.e9; }
     virtual double f(double eta) const {
-      return exp(-4. * eta + 8. * eta * eta);
+      return exp(-4. * eta - 8. * eta * eta);
     }
     double d1f(double eta) const {
       return -f(eta) * 4. * (1. + 4. * eta);
@@ -148,10 +149,10 @@ namespace thermalfist {
       return f(eta) * 128. * eta * (1. + 2. * eta);
     }
     double d3f(double eta) const {
-      return -f(eta) * 128. * eta * (-1. + 8. * eta * eta * (3. + 4. * eta));
+      return -f(eta) * 128. * (-1. + 8. * eta * eta * (3. + 4. * eta));
     }
     double d4f(double eta) const {
-      return f(eta) * 512. * eta * (-1. + 16. * eta * (-1. + 8. * eta * eta * (1. + eta)));
+      return f(eta) * 512. * (-1. + 16. * eta * (-1. + 8. * eta * eta * (1. + eta)));
     }
     virtual double df(int n, double eta) const;
 

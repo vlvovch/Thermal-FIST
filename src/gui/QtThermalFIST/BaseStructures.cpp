@@ -269,6 +269,7 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
   if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal) {
     for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
       model->SetVirial(i, i, config.vdWparams.m_bij[i][i]);
+      std::cout << "Setting virial for " << model->TPS()->Particle(i).Name() << " to " << config.vdWparams.m_bij[i][i] << std::endl;
     }
   }
 

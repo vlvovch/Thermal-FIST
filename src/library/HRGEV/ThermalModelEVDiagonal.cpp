@@ -255,6 +255,7 @@ namespace thermalfist {
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
+    m_dmusdmu = m_PrimCorrel;
     m_TotalCorrel = m_PrimCorrel;
 
     for (int i = 0; i < NN; ++i) {
@@ -267,6 +268,8 @@ namespace thermalfist {
         for (size_t k = 0; k < m_densities.size(); ++k)
           tmp += m_v[k] * m_v[k] * chi2id[k];
         m_PrimCorrel[i][j] += m_densities[i] * m_densities[j] * tmp;
+
+        m_dmusdmu[i][j] = (i == j ? 1. : 0.) - m_v[i] * m_densities[j];
       }
     }
 
@@ -276,6 +279,104 @@ namespace thermalfist {
       else m_wprim[i] = 1.;
     }
     
+  }
+
+  double ThermalModelEVDiagonal::CalculateSpecificHeat() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // Compute dE/dT
+    double ret = 0.;
+
+    double eid = 0., dTbn = 0., bn = 0., dTeidterm = 0., dmueidterm = 0.;
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      eid += part.Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
+      dTbn += m_v[i] * m_dndT[i];
+      bn += m_v[i] * m_densities[i];
+      dTeidterm += part.Density(m_Parameters, IdealGasFunctions::dedT, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
+      dmueidterm += -m_v[i] * EntropyDensity() * part.Density(m_Parameters, IdealGasFunctions::dedmu, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
+    }
+
+    ret = -dTbn * eid + (1. - bn) * (dTeidterm + dmueidterm);
+
+    return ret;
+  }
+
+  void ThermalModelEVDiagonal::CalculateTemperatureDerivatives() {
+    int N = m_TPS->ComponentsNumber();
+    m_dndT = vector<double>(N, 0.);
+    m_dmusdT = vector<double>(N, 0.);
+    m_PrimChi2sdT = vector<vector<double>>(N, vector<double>(N, 0.));
+
+    double T = m_Parameters.T;
+
+    vector<double> nids(N, 0.), dniddTs(N, 0.), chi2ids(N, 0.), dchi2idsdT(N, 0.), chi3ids(N, 0.);
+    for (int i = 0; i < N; ++i) {
+      nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
+      dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure);
+      chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure) * xMath::GeVtoifm3();
+      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_Chem[i] - m_v[i] * m_Pressure) * xMath::GeVtoifm3();
+    }
+
+    double s = EntropyDensity();
+    double sum_chi2idb2 = 0., sum_bns= 0., sum_bn = 0., sum_dTbns = 0., sum_dchi2dTidb2 = 0., sum_chi3idb3 = 0.;
+    for (int i = 0; i < N; ++i) {
+      m_dmusdT[i] = -m_v[i] * s;
+      sum_chi2idb2 += m_v[i] * m_v[i] * chi2ids[i];
+      sum_bns += m_v[i] * nids[i];
+      sum_bn += m_v[i] * m_densities[i];
+      sum_dTbns += m_v[i] * dniddTs[i];
+      sum_dchi2dTidb2 += m_v[i] * m_v[i] * dchi2idsdT[i];
+      sum_chi3idb3 += m_v[i] * m_v[i] * m_v[i] * chi3ids[i];
+    }
+
+    double sum_dbndT = (1. - sum_bn) * (1. - sum_bn) * (sum_dTbns - sum_chi2idb2 * s);
+
+    for (int i = 0; i < N; ++i) {
+      m_dndT[i] = -sum_dbndT * nids[i] + (1. - sum_bn) * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+    }
+
+    if (IsFluctuationsCalculated()) {
+      for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+          m_PrimChi2sdT[i][j] = 0.;
+
+          double tval = 0.;
+          tval += -chi2ids[j] * m_densities[i] * m_v[j];
+          tval += sum_chi2idb2 * m_densities[j] * m_densities[i];
+          if (i == j)
+            tval += chi2ids[i];
+          tval += -chi2ids[i] * m_densities[j] * m_v[i];
+          m_PrimChi2sdT[i][j] += -sum_dbndT * tval;
+
+          tval = 0.;
+          tval += -dchi2idsdT[j] * m_densities[i] * m_v[j];
+          tval += -chi3ids[j] * m_dmusdT[j] * m_densities[i] * m_v[j];
+          tval += -chi2ids[j] * m_dndT[i] * m_v[j];
+          tval += sum_dchi2dTidb2 * m_densities[j] * m_densities[i];
+          tval += -sum_chi3idb3 * s * m_densities[j] * m_densities[i];
+          tval += sum_chi2idb2 * (m_dndT[j] * m_densities[i] + m_densities[j] * m_dndT[i]);
+          if (i == j) {
+            tval += dchi2idsdT[i];
+            tval += chi3ids[i] * m_dmusdT[i];
+          }
+          tval += -dchi2idsdT[i] * m_densities[j] * m_v[i];
+          tval += -chi3ids[i] * m_dmusdT[i] * m_densities[j] * m_v[i];
+          tval += -chi2ids[i] * m_dndT[j] * m_v[i];
+
+          m_PrimChi2sdT[i][j] += (1. - sum_bn) * tval;
+
+          m_PrimChi2sdT[i][j] = m_PrimChi2sdT[i][j] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+        }
+      }
+
+      m_TemperatureDerivativesCalculated = true;
+      CalculateSusceptibilityMatrix();
+    }
+
+    m_TemperatureDerivativesCalculated = true;
   }
 
   // TODO include correlations
@@ -296,6 +397,11 @@ namespace thermalfist {
     for (size_t i = 0; i < m_wprim.size(); ++i) {
       m_skewtot[i] = 1.;
       m_kurttot[i] = 1.;
+    }
+
+    if (IsTemperatureDerivativesCalculated()) {
+      m_TemperatureDerivativesCalculated = false;
+      CalculateTemperatureDerivatives();
     }
   }
 

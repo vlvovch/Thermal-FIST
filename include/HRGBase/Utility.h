@@ -25,7 +25,7 @@ namespace thermalfist {
     static bool PrintDisclaimer();
 
     static bool DisclaimerPrinted;
-  
+
   };
 
 

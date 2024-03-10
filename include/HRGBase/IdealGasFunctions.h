@@ -29,7 +29,8 @@ namespace thermalfist {
      * 
      */
     enum Quantity { ParticleDensity, EnergyDensity, EntropyDensity, Pressure, chi2, chi3, chi4, ScalarDensity, 
-      chi2difull, chi3difull, chi4difull
+      chi2difull, chi3difull, chi4difull,
+      dndT, d2ndT2, dedT, dedmu, dchi2dT
     };
     /**
      * \brief Identifies whether quantum statistics
@@ -289,6 +290,8 @@ namespace thermalfist {
      */
     double QuantumClusterExpansionChiNDimensionfull(int N, int statistics, double T, double mu, double m, double deg, int order = 1,
                                                     const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+
 
     /**
      * \brief Computes the thermal part of the magnetization of a Maxwell-Boltzmann gas, m_B = dP/dB.
@@ -667,6 +670,249 @@ namespace thermalfist {
      */
     double IdealGasQuantity(Quantity quantity, QStatsCalculationType calctype, int statistics, double T, double mu, double m, double deg, int order = 1,
                             const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /// Temperature derivatives
+    /**
+     * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dndT [fm-3 * GeV^-1].
+     */
+    double BoltzmanndndT(double T, double mu, double m, double deg,
+                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+    * \brief Computes the 2nd derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+    *
+    * \param T Temperature [GeV].
+    * \param mu Chemical potential [GeV].
+    * \param m  Particle's mass [GeV].
+    * \param deg Internal degeneracy factor.
+    * \return dndT [fm-3 * GeV^-2].
+    */
+    double Boltzmannd2ndT2(double T, double mu, double m, double deg,
+                           const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedT [fm-3].
+     */
+    double BoltzmanndedT(double T, double mu, double m, double deg,
+                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt mu at constant T for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedmu [fm-3].
+     */
+    double Boltzmanndedmu(double T, double mu, double m, double deg,
+                          const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of the susceptibility wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dchi2dT [fm-3].
+     */
+    double Boltzmanndchi2dT(double T, double mu, double m, double deg,
+                            const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    // Cluster expansion
+    /**
+     * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dndT [fm-3 * GeV^-1].
+     */
+    double QuantumClusterExpansiondndT(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                       const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+    * \brief Computes the 2nd derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+    *
+    * \param T Temperature [GeV].
+    * \param mu Chemical potential [GeV].
+    * \param m  Particle's mass [GeV].
+    * \param deg Internal degeneracy factor.
+    * \return dndT [fm-3 * GeV^-2].
+    */
+    double QuantumClusterExpansiond2ndT2(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedT [fm-3].
+     */
+    double QuantumClusterExpansiondedT(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                       const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt mu at constant T for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedmu [fm-3].
+     */
+    double QuantumClusterExpansiondedmu(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                        const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of the susceptibility wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dchi2dT [fm-3].
+     */
+    double QuantumClusterExpansiondchi2dT(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+
+    /**
+     * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dndT [fm-3 * GeV^-1].
+     */
+    double QuantumNumericalIntegrationdndT(int statistics, double T, double mu, double m, double deg,
+                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+    * \brief Computes the 2nd derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+    *
+    * \param T Temperature [GeV].
+    * \param mu Chemical potential [GeV].
+    * \param m  Particle's mass [GeV].
+    * \param deg Internal degeneracy factor.
+    * \return dndT [fm-3 * GeV^-2].
+    */
+    double QuantumNumericalIntegrationd2ndT2(int statistics, double T, double mu, double m, double deg,
+                           const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedT [fm-3].
+     */
+    double QuantumNumericalIntegrationdedT(int statistics, double T, double mu, double m, double deg,
+                         const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt mu at constant T for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedmu [fm-3].
+     */
+    double QuantumNumericalIntegrationdedmu(int statistics, double T, double mu, double m, double deg,
+                          const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of the susceptibility wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dchi2dT [fm-3].
+     */
+    double QuantumNumericalIntegrationdchi2dT(int statistics, double T, double mu, double m, double deg,
+                            const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dndT [fm-3 * GeV^-1].
+     */
+    double FermiNumericalIntegrationLargeMudndT(double T, double mu, double m, double deg,
+                                           const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the second derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dndT [fm-3 * GeV^-2].
+     */
+    double FermiNumericalIntegrationLargeMud2ndT2(double T, double mu, double m, double deg,
+                                                const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedT [fm-3].
+     */
+    double FermiNumericalIntegrationLargeMudedT(double T, double mu, double m, double deg,
+                                           const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of energy density wrt mu at constant T for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dedmu [fm-3].
+     */
+    double FermiNumericalIntegrationLargeMudedmu(double T, double mu, double m, double deg,
+                                            const IdealGasFunctionsExtraConfig& extraConfig = {});
+
+    /**
+     * \brief Computes the derivative of the susceptibility wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dchi2dT [fm-3].
+     */
+    double FermiNumericalIntegrationLargeMudchi2dT(double T, double mu, double m, double deg,
+                                              const IdealGasFunctionsExtraConfig& extraConfig = {});
   }
 
   /// \brief Implements the possibility of a generalized calculation of the densities.

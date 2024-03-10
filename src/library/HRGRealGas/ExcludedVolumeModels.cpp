@@ -67,4 +67,5 @@ namespace thermalfist {
 		return 0.;
 	}
 
+
 } // namespace thermalfist

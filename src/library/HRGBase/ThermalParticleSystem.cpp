@@ -1639,6 +1639,14 @@ namespace thermalfist {
     }
   }
 
+  std::vector<double> ThermalParticleSystem::GetConservedChargesVector(ConservedCharge::Name charge) {
+    std::vector<double> ret(ComponentsNumber(), 0.);
+    for (size_t i = 0; i < m_Particles.size(); ++i) {
+      ret[i] = static_cast<double>(m_Particles[i].ConservedCharge(charge));
+    }
+    return ret;
+  }
+
 
   namespace CuteHRGHelper {
     std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems) {
@@ -1670,6 +1678,7 @@ namespace thermalfist {
     static std::vector<ThermalParticle> Particles;
     static std::map<long long, int> PdgIdMap;
     static bool isInitialized = Init();
+
     const ThermalParticle& Particle(int id)
     {
       if (id < 0 || id >= Particles.size()) {
@@ -1678,6 +1687,7 @@ namespace thermalfist {
       }
       return Particles[id];
     }
+
     const ThermalParticle& ParticleByPdg(long long pdgid)
     {
       int tid = PdgToId(pdgid);
@@ -1687,10 +1697,12 @@ namespace thermalfist {
       }
       return Particle(tid);
     }
+
     int PdgToId(long long pdgid)
     {
       return (PdgIdMap.count(pdgid) > 0) ? PdgIdMap[pdgid] : -1;
     }
+
     bool Init()
     {
       Particles.clear();
@@ -1752,6 +1764,7 @@ namespace thermalfist {
 
       return true;
     }
+
     std::string NameByPdg(long long pdg)
     {
       int tid = PdgToId(pdg);

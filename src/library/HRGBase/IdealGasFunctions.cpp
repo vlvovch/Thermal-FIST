@@ -950,6 +950,8 @@ namespace thermalfist {
       double ret2 = 0.;
       ret2 += deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() * pf * pf * pf / 3.;
 
+      // Other terms from differentiating Eq. (55) in https://arxiv.org/pdf/1901.05249.pdf add up to zero
+
       return ret1 + ret2;
     }
 
@@ -1085,6 +1087,8 @@ namespace thermalfist {
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      // The remaining factor cancels out with the derivatives of the integral limits wrt pF/mu
 
       return ret1;
     }
@@ -1339,6 +1343,17 @@ namespace thermalfist {
           return BoltzmannChiNDimensionfull(3, T, mu, m, deg, extraConfig);
         if (quantity == chi4difull)
           return BoltzmannChiNDimensionfull(4, T, mu, m, deg, extraConfig);
+        // Temperature derivatives
+        if (quantity == dndT)
+          return BoltzmanndndT(T, mu, m, deg, extraConfig);
+        if (quantity == d2ndT2)
+          return Boltzmannd2ndT2(T, mu, m, deg, extraConfig);
+        if (quantity == dedT)
+          return BoltzmanndedT(T, mu, m, deg, extraConfig);
+        if (quantity == dedmu)
+          return Boltzmanndedmu(T, mu, m, deg, extraConfig);
+        if (quantity == dchi2dT)
+          return Boltzmanndchi2dT(T, mu, m, deg, extraConfig);
       }
       else {
         if (calctype == ClusterExpansion) {
@@ -1364,6 +1379,17 @@ namespace thermalfist {
             return QuantumClusterExpansionChiNDimensionfull(3, statistics, T, mu, m, deg, order, extraConfig);
           if (quantity == chi4difull)
             return QuantumClusterExpansionChiNDimensionfull(4, statistics, T, mu, m, deg, order, extraConfig);
+          // Temperature derivatives
+          if (quantity == dndT)
+            return QuantumClusterExpansiondndT(statistics, T, mu, m, deg, order, extraConfig);
+          if (quantity == d2ndT2)
+            return QuantumClusterExpansiond2ndT2(statistics, T, mu, m, deg, order, extraConfig);
+          if (quantity == dedT)
+            return QuantumClusterExpansiondedT(statistics, T, mu, m, deg, order, extraConfig);
+          if (quantity == dedmu)
+            return QuantumClusterExpansiondedmu(statistics, T, mu, m, deg, order, extraConfig);
+          if (quantity == dchi2dT)
+            return QuantumClusterExpansiondchi2dT(statistics, T, mu, m, deg, order, extraConfig);
         }
         else {
           if (quantity == ParticleDensity)
@@ -1388,6 +1414,17 @@ namespace thermalfist {
             return QuantumNumericalIntegrationChiNDimensionfull(3, statistics, T, mu, m, deg, extraConfig);
           if (quantity == chi4difull)
             return QuantumNumericalIntegrationChiNDimensionfull(4, statistics, T, mu, m, deg, extraConfig);
+          // Temperature derivatives
+          if (quantity == dndT)
+            return QuantumNumericalIntegrationdndT(statistics, T, mu, m, deg, extraConfig);
+          if (quantity == d2ndT2)
+            return QuantumNumericalIntegrationd2ndT2(statistics, T, mu, m, deg, extraConfig);
+          if (quantity == dedT)
+            return QuantumNumericalIntegrationdedT(statistics, T, mu, m, deg, extraConfig);
+          if (quantity == dedmu)
+            return QuantumNumericalIntegrationdedmu(statistics, T, mu, m, deg, extraConfig);
+          if (quantity == dchi2dT)
+            return QuantumNumericalIntegrationdchi2dT(statistics, T, mu, m, deg, extraConfig);
         }
       }
       printf("**WARNING** IdealGasFunctions::IdealGasQuantity: Unknown quantity\n");
@@ -1522,7 +1559,527 @@ namespace thermalfist {
       return 0.;
     }
 
+    /// Temperature derivatives
 
+    double BoltzmanndndT(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      if (m == 0.)
+        return deg / xMath::Pi() / xMath::Pi() * T * exp(mu/ T) * (3. * T - mu) * xMath::GeVtoifm3();
+      return deg * m * m / 2. / T / xMath::Pi() / xMath::Pi()
+      * (m * xMath::BesselKexp(1, m / T) - (mu - 3. * T) * xMath::BesselKexp(2, m / T))
+      * exp((mu - m) / T) * xMath::GeVtoifm3();
+    }
+
+    double Boltzmannd2ndT2(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      if (m == 0.)
+        return deg / xMath::Pi() / xMath::Pi() / T * exp(mu/ T) *
+          (mu * mu - 4. * mu * T + 6. * T * T) * xMath::GeVtoifm3();
+      return deg / 2. / T / T / T / xMath::Pi() / xMath::Pi()
+             * m * (m * (m * m + mu * mu - 4. * mu * T + 6. * T * T) * xMath::BesselKexp(0, m / T)
+             + (m * m * (3. * T - 2. * mu) + 2. * T * (mu * mu - 4. * mu * T + 6. * T * T)) * xMath::BesselKexp(1, m / T))
+             * exp((mu - m) / T) * xMath::GeVtoifm3();
+    }
+
+    double BoltzmanndedT(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      if (m == 0.)
+        return 3. * deg / xMath::Pi() / xMath::Pi() * T * T * exp(mu/ T) *
+               (4. * T - mu) * xMath::GeVtoifm3();
+
+      return deg * m / 2. / T / xMath::Pi() / xMath::Pi()
+      * (m * (m*m + 3*T*(4.*T-mu))*xMath::BesselKexp(0, m / T)
+      + (6.*T*T*(4.*T-mu) - m*m*(mu-5.*T) )*xMath::BesselKexp(1, m / T))
+      * exp((mu - m) / T) * xMath::GeVtoifm3();
+    }
+
+    double Boltzmanndedmu(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      return BoltzmannEnergyDensity(T, mu, m, deg, extraConfig) / T;
+    }
+
+    double Boltzmanndchi2dT(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      return deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi()
+        * (m * xMath::BesselKexp(1, m / T) - mu * xMath::BesselKexp(2, m / T))
+        * exp((mu - m) / T);
+    }
+
+    double QuantumClusterExpansiondndT(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return BoltzmanndndT(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double tfug = exp((mu - m) / T);
+      double moverT = m / T;
+      double cfug = tfug;
+      double sign = 1.;
+      double ret = 0.;
+      for (int i = 1; i <= order; ++i) {
+        ret += sign * (
+                m * xMath::BesselKexp(1, i*moverT)
+                - (mu - 3. * T/ static_cast<double>(i)) * xMath::BesselKexp(2, i*moverT)
+                ) * cfug;
+        cfug *= tfug;
+        if (signchange) sign = -sign;
+      }
+      ret *= deg * m * m / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      return ret;
+    }
+
+    double QuantumClusterExpansiond2ndT2(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return Boltzmannd2ndT2(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double tfug = exp((mu - m) / T);
+      double moverT = m / T;
+      double cfug = tfug;
+      double sign = 1.;
+      double ret = 0.;
+      for (int i = 1; i <= order; ++i) {
+        double k = static_cast<double>(i);
+        ret += sign * k * (
+                (m * (m * m + mu * mu - 4. * mu * T / k + 6. * T * T / k / k) * xMath::BesselKexp(0, i*moverT)
+                + (m * m * (3. * T / k - 2. * mu) + 2. * T / k * (mu * mu - 4. * mu * T / k + 6. * T / k * T / k)) * xMath::BesselKexp(1, i*moverT))
+                ) * cfug;
+        cfug *= tfug;
+        if (signchange) sign = -sign;
+      }
+      ret *= deg * m / T / T / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      return ret;
+    }
+
+    double QuantumClusterExpansiondedT(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return BoltzmanndedT(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double tfug = exp((mu - m) / T);
+      double moverT = m / T;
+      double cfug = tfug;
+      double sign = 1.;
+      double ret = 0.;
+      for (int i = 1; i <= order; ++i) {
+        double k = static_cast<double>(i);
+        ret += sign * (
+                m * (m*m + 3*T/k*(4.*T/k-mu))*xMath::BesselKexp(0, i*moverT)
+                + (6.*T/k*T/k*(4.*T/k-mu) - m*m*(mu-5.*T/k) )*xMath::BesselKexp(1, i*moverT)
+                ) * cfug;
+        cfug *= tfug;
+        if (signchange) sign = -sign;
+      }
+      ret *= deg * m / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      return ret;
+    }
+
+    double QuantumClusterExpansiondedmu(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return Boltzmanndedmu(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double tfug = exp((mu - m) / T);
+      double cfug = tfug;
+      double moverT = m / T;
+      double sign = 1.;
+      double ret = 0.;
+      for (int i = 1; i <= order; ++i) {
+        ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / T;
+        cfug *= tfug;
+        if (signchange) sign = -sign;
+      }
+      ret *= deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      return ret;
+    }
+
+
+    double QuantumClusterExpansiondchi2dT(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      bool signchange = true;
+      if (statistics == 1) //Fermi
+        signchange = true;
+      else if (statistics == -1) //Bose
+        signchange = false;
+      else
+        return Boltzmanndchi2dT(T, mu, m, deg, extraConfig);
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double tfug = exp((mu - m) / T);
+      double moverT = m / T;
+      double cfug = tfug;
+      double sign = 1.;
+      double ret = 0.;
+      for (int i = 1; i <= order; ++i) {
+        double k = static_cast<double>(i);
+        ret += sign * k * (
+                m * xMath::BesselKexp(1, i*moverT)
+                - mu * xMath::BesselKexp(2, i*moverT)
+                ) * cfug;
+        cfug *= tfug;
+        if (signchange) sign = -sign;
+      }
+      ret *= deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi();
+      return ret;
+    }
+
+    double QuantumNumericalIntegrationdndT(int statistics, double T, double mu, double m, double deg,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)            return BoltzmanndndT(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudndT(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * f * (EoverT - muoverT) * (1. - statistics * f);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() / T;
+
+      return ret;
+    }
+
+    double QuantumNumericalIntegrationd2ndT2(int statistics, double T, double mu, double m, double deg,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)           return Boltzmannd2ndT2(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return 0.;//FermiZeroTDensity(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMud2ndT2(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * f
+        * (EoverT - muoverT) * (1. - statistics * f)
+        * ((EoverT - muoverT) * (1. - 2. * statistics * f) - 2.);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi()  * xMath::GeVtoifm3() / T / T;
+
+      return ret;
+    }
+
+    double QuantumNumericalIntegrationdedT(int statistics, double T, double mu, double m, double deg,
+                                        const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)            return BoltzmanndedT(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudedT(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // No magnetic field
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * EoverT * f * (EoverT - muoverT) * (1. - statistics * f);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      return ret;
+    }
+
+    double QuantumNumericalIntegrationdedmu(int statistics, double T, double mu, double m, double deg,
+                                        const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)            return BoltzmanndedT(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudedmu(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // No magnetic field
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * EoverT * f * (1. - statistics * f);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      return ret;
+    }
+
+    double QuantumNumericalIntegrationdchi2dT(int statistics, double T, double mu, double m, double deg,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)           return Boltzmanndchi2dT(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return 0.;//FermiZeroTDensity(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMudchi2dT(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        calculationHadBECIssue = true;
+        return 0.;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // Check for magnetic field effect for charged particles
+      assert(extraConfig.MagneticField.B == 0);
+
+      // No magnetic field
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        ret += lagw32[i] * T * tx * T * tx * T * f 
+         * (1. - statistics * f)
+        * ((EoverT - muoverT) * (1. - 2. * statistics * f) - 3.);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi() / T / T / T / T;
+
+      return ret;
+    }
+
+    double FermiNumericalIntegrationLargeMudndT(double T, double mu, double m, double deg,
+                                                const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationdndT(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double ret1 = 0.;
+      for (int i = 0; i < 32; i++) {
+        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double fbar = 1. / (exp(-(en - mu) / T) + 1.);
+        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (mu - en) / T / T * fbar * (1. - fbar);
+      }
+
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double f = 1. / (exp(EoverT - muoverT) + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * (EoverT - muoverT) / T * f * (1. - f);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      return ret1;
+    }
+
+    double FermiNumericalIntegrationLargeMud2ndT2(double T, double mu, double m, double deg,
+                                                  const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationd2ndT2(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double ret1 = 0.;
+      for (int i = 0; i < 32; i++) {
+        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double fbar = 1. / (exp(-(en - mu) / T) + 1.);
+        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (mu - en) / T / T / T
+                * fbar * (1. - fbar) * ((mu - en) / T * (1.-2.*fbar) - 2.);
+      }
+
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double f = 1. / (exp(EoverT - muoverT) + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * (EoverT - muoverT) / T  / T
+                * f * (1. - f) * ((EoverT - muoverT) * (1. - 2. * f) - 2.);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      return ret1;
+    }
+
+    double FermiNumericalIntegrationLargeMudedT(double T, double mu, double m, double deg,
+                                                const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationdedT(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double ret1 = 0.;
+      for (int i = 0; i < 32; i++) {
+        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double fbar = 1. / (exp(-(en - mu) / T) + 1.);
+        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * en * (mu - en) / T / T * fbar * (1. - fbar);
+      }
+
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double f = 1. / (exp(EoverT - muoverT) + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T * EoverT * T * (EoverT - muoverT) / T * f * (1. - f);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      return ret1;
+    }
+
+    double FermiNumericalIntegrationLargeMudedmu(double T, double mu, double m, double deg,
+                                                 const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationdedmu(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double ret1 = 0.;
+      for (int i = 0; i < 32; i++) {
+        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double Eexp = exp(-(en - mu) / T);
+        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * en * 1. / (1. + 1./Eexp) / (Eexp + 1.);
+        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * Eexp / (Eexp + 1.) / (Eexp + 1.);
+      }
+
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        ret1 += lagw32[i] * T * tx * T * tx * T * EoverT * T * 1. / (1. + 1. / Eexp) / (Eexp + 1.);
+        //ret1 += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + 1.) / (Eexp + 1.);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() / T;
+
+      return ret1;
+    }
+
+    double FermiNumericalIntegrationLargeMudchi2dT(double T, double mu, double m, double deg,
+                                                   const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationdchi2dT(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double ret1 = 0.;
+      for (int i = 0; i < 32; i++) {
+        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double fbar = 1. / (exp(-(en - mu) / T) + 1.);
+        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf
+                * fbar * (1. - fbar) * ((mu - en) / T * (1. - 2. * fbar) - 3.);
+      }
+
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double f = 1. / (exp(EoverT - muoverT) + 1.);
+        ret1 += lagw32[i] * T * tx * T * tx * T
+                * f * (1. - f) * ((EoverT - muoverT) * (1. - 2. * f) - 3.);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() / T / T / T / T;
+
+      return ret1;
+    }
   } // namespace IdealGasFunctions
 
 } // namespace thermalfist
