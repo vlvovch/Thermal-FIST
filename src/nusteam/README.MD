@@ -26,7 +26,7 @@ make NuSTEAM-HRG-EoS -j
 ```bash
 ./bin/nusteam/NuSTEAM-HRG-EoS 0. 0.
 ```
-Compate the output with the dashes lines in Figures 1a and 2b of the paper [https://arxiv.org/pdf/1609.03975](https://arxiv.org/pdf/1609.03975).
+Compare the output for PT4 and chi4B/chi2B with the dashed lines in Figures 1a and 2b of the paper [https://arxiv.org/pdf/1609.03975](https://arxiv.org/pdf/1609.03975).
 
 4. Try to run the script with non-zero interaction parameters. The program will throw an error. You will need to implement the function below to set the interaction for different hadron pairs
 ```cpp
@@ -60,6 +60,6 @@ If you are stuck, see [NuSTEAM-HRG-EoS-completed.cpp](NuSTEAM-HRG-EoS-completed.
 ```bash
 ./bin/nusteam/NuSTEAM-HRG-EoS 0.329 3.42
 ```
-Compare the results with solid blue lines in Figures 1a and 2b of the paper [https://arxiv.org/pdf/1609.03975](https://arxiv.org/pdf/1609.03975).
+Compare the output for PT4 and chi4B/chi2B with solid blue lines in Figures 1a and 2b of the paper [https://arxiv.org/pdf/1609.03975](https://arxiv.org/pdf/1609.03975).
 
 *Copyright (C) 2024  Volodymyr Vovchenko*
