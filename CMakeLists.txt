@@ -136,6 +136,8 @@ add_subdirectory(src/routines)
 # Examples
 add_subdirectory(src/examples)
 
+# NuSTEAM example
+add_subdirectory(src/nusteam)
 
 
 # Testing with GoogleTest (optional, but recommended)

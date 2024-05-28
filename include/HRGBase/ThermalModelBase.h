@@ -238,6 +238,9 @@ namespace thermalfist {
      */
     virtual void SetVirial(int /*i*/, int /*j*/, double /*b*/) { }
 
+    /// Same as SetVirial() but with a more clear name on what is actually does
+    virtual void SetRepulsion(int i, int j, double b) { SetVirial(i,j,b); }
+
     /**
      * \brief Set the vdW mean field attraction coefficient \f$ a_{ij} \f$
      * 
