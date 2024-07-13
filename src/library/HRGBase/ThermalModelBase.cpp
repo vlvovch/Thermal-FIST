@@ -1381,6 +1381,28 @@ namespace thermalfist {
     }
   }
 
+  std::vector<double> ThermalModelBase::PartialPressures() {
+    if (!IsCalculated())
+      CalculatePrimordialDensities();
+
+    std::vector<double> ret(5, 0.);
+    for (size_t i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      const ThermalParticle& tpart = TPS()->Particle(i);
+      int ind = 0;
+      if (tpart.BaryonCharge() == 1)
+        ind = 1;
+      if (tpart.BaryonCharge() == -1)
+        ind = 2;
+      if (tpart.BaryonCharge() > 1)
+        ind = 3;
+      if (tpart.BaryonCharge() < -1)
+        ind = 4;
+      ret[ind] += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, FullIdealChemicalPotential(i));
+    }
+
+    return ret;
+  }
+
   void ThermalModelBase::CalculateFluctuations() {
     printf("**WARNING** %s: Calculation of fluctuations is not implemented\n", m_TAG.c_str());
   }

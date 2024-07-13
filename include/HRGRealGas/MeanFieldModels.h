@@ -84,24 +84,35 @@ namespace thermalfist {
       if (order == 1)
         return - m_a * n * (2. + m_c * n) / pow(1. + m_c * n, 2);
 
-      double mult = 1.;
-      if (order & 1)
-        mult = -1.;
+      double ret = -2. * m_a / pow(1. + m_c * n, 3);
 
-      //double ret = m_c / (1. + m_c * n);
-      double ret = 1. / (1. + m_c * n);
-      double tret = ret;
-      double k = 1.;
-      for (int i = 1; i <= order; ++i) {
-        k *= i;
-        ret *= tret * k;
-        if (i == 2)
-          tret *= m_c;
+      if (order == 2)
+        return ret;
+
+      for(int i = 3; i <= order; ++i) {
+        ret *= -i * m_c;
+        ret *= 1. / (1. + m_c * n);
       }
 
-      ret *= -mult * m_a;
-
       return ret;
+//      double mult = 1.;
+//      if (order & 1)
+//        mult = -1.;
+//
+//      //double ret = m_c / (1. + m_c * n);
+//      double ret = 1. / (1. + m_c * n);
+//      double tret = ret;
+//      double k = 1.;
+//      for (int i = 1; i <= order; ++i) {
+//        k *= i;
+//        ret *= tret * k;
+//        if (i == 2)
+//          tret *= m_c;
+//      }
+//
+//      ret *= -mult * m_a;
+//
+//      return ret;
     }
     virtual double dvdT(double n) const { 
       return -m_dadT * n * n / (1. + m_c * n) 

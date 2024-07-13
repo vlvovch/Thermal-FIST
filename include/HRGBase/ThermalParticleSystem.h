@@ -634,6 +634,11 @@ namespace thermalfist {
     std::string NameByPdg(long long pdg);
   }
 
+  namespace DecayLifetimes {
+    // In units of ctau (fm)
+    double GetLifetime(long long pdg);
+  }
+
 } // namespace thermalfist
 
 #endif

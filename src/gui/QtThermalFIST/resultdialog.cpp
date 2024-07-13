@@ -227,6 +227,33 @@ QString ResultDialog::GetResults() {
 
   ret += "\r\n";
 
+  // "Partial pressures"
+  {
+    auto Ppres = model->PartialPressures();
+
+    sprintf(cc, "%-25s = ", "Part. pressure mesons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[0]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure baryons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[1]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. press. antibaryons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[2]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure nuclei");
+    ret += QString(cc);
+    ret += QString::number(Ppres[3]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure antinuclei");
+    ret += QString(cc);
+    ret += QString::number(Ppres[4]*1.e3) + " MeV/fm^3\r\n";
+
+    ret += "\r\n";
+  }
+
   sprintf(cc, "%-25s = ", "p/T^4");
   ret += QString(cc);
   ret += QString::number((model->CalculatePressure()) / model->Parameters().T / model->Parameters().T / model->Parameters().T / model->Parameters().T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm()) + "\r\n";

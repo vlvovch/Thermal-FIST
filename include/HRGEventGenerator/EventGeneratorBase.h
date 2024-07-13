@@ -188,13 +188,27 @@ namespace thermalfist {
     virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
 
     /**
+     * \brief Flags for performing decays.
+     *
+     * \param propagateParticles If set to true, samples particle lifetime and
+     * propagates it along the straight line before decay.
+     */
+    struct DecayerFlags {
+      bool propagateParticles;
+      DecayerFlags(bool in_propagateParticles = false) :
+      propagateParticles(in_propagateParticles)
+      {}
+    };
+
+    /**
      * \brief Performs decays of all unstable particles until only stable ones left.
      *
      * \param evtin An event structure contains the list of all the primordial particles.
      * \param TPS   Pointer to the particle list instance that contains all the decay properties.
+     * \param DecayerFlags Extra flags and options
      * \return      A SimpleEvent instance containing all particles after resonance decays.
      */
-    static SimpleEvent PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS);
+    static SimpleEvent PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS, const DecayerFlags& decayerFlags = DecayerFlags());
 
     /**
      * \brief The grand-canonical mean yields.

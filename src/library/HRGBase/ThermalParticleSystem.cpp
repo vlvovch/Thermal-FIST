@@ -1774,4 +1774,45 @@ namespace thermalfist {
     }
   } // namespace ExtraParticles
 
+  namespace DecayLifetimes {
+    // lifetimes from pdg in seconds
+    map<long long, double> lifetimes = {
+            {211, 2.6033e-8}, // pi+-
+            {111, 8.43e-17}, // pi0
+            {321, 1.238e-8}, // K+-
+            {310, 8.954e-11}, // K0S
+            {130, 5.116e-8}, // K0L
+            {411, 1.033e-12}, // D+-
+            {421, 4.103e-13}, // D0
+            {431, 5.012e-13}, // Ds+-
+            {2112, 878.4}, // n
+            {3122, 2.617e-10}, // Lambda
+            {3222, 8.018e-11}, // Sigma+
+            {3212, 74.e-21}, // Sigma0
+            {3112, 1.479e-10}, // Sigma-
+            {3322, 2.9e-10}, // Xi0
+            {3312, 1.639e-10}, // Xi-
+            {3334, 8.21e-11} // Omega-
+            // TODO: Charmed baryons and hypernuclei
+    };
+
+    // resonance widths in GeV
+    map<long long, double> widths = {
+          {221, 1.31e-6} // eta
+    };
+
+    double GetLifetime(long long pdg) {
+      if (lifetimes.count(abs(pdg)))
+        return lifetimes[abs(pdg)] * 1.e15;
+
+      if (widths.count(abs(pdg))) {
+        double width = widths[abs(pdg)];
+        double ctau = 1. / (width * xMath::GeVtoifm());
+        return ctau;
+      }
+
+      // No entry found, return zero
+      return 0.;
+    }
+  }
 } // namespace thermalfist

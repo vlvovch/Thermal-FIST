@@ -1428,7 +1428,7 @@ namespace thermalfist {
   //   return ret;
   // }
 
-  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS)
+  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS, const DecayerFlags& decayerFlags)
   {
     SimpleEvent ret;
     ret.weight = evtin.weight;
@@ -1472,12 +1472,15 @@ namespace thermalfist {
               double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
 
               std::vector<double> Bratios;
+              double Width = 0.;
               if (primParticles[i][j].MotherPDGID != 0 ||
                 TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
                 Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+                Width = TPS->Particles()[i].ResonanceWidth();
               }
               else {
                 Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+                Width = TPS->Particles()[i].TotalWidtheBW(primParticles[i][j].m);
               }
 
               int DecayIndex = 0;
@@ -1502,9 +1505,52 @@ namespace thermalfist {
                   }
                   pdgids.push_back(dpdg);
                 }
+
+                // Propagate along straight line before decay
+                double prop_dx = 0., prop_dy = 0., prop_dz = 0., prop_dt = 0.;
+                if (decayerFlags.propagateParticles) {
+                  double ct = 0.;
+                  if (Width != 0.)
+                    ct = 1. / Width / xMath::GeVtoifm();
+                  else
+                    ct = DecayLifetimes::GetLifetime(primParticles[i][j].PDGID);
+
+                  if (ct == 0.) {
+                    if (abs(primParticles[i][j].PDGID) != 311) {
+                      // K0s "decaying" into K0S and K0L is an exception
+                      printf("**WARNING** Could not find the lifetime for decaying particle %ll. Setting to zero...\n", primParticles[i][j].PDGID);
+                    }
+                  }
+
+                  // Sample lifetime in rest frame
+                  ct = -ct * log(1. - RandomGenerators::randgenMT.randDblExc());
+
+                  // Lorentz time delay
+                  double vx = primParticles[i][j].px / primParticles[i][j].p0;
+                  double vy = primParticles[i][j].py / primParticles[i][j].p0;
+                  double vz = primParticles[i][j].pz / primParticles[i][j].p0;
+                  double gamma = 1. / sqrt(1. - vx*vx - vy*vy - vz*vz);
+                  ct *= gamma;
+
+                  // Propagate
+                  prop_dx += vx * ct;
+                  prop_dy += vy * ct;
+                  prop_dz += vz * ct;
+                  prop_dt += ct;
+                }
+
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
                 for (size_t ind = 0; ind < decres.size(); ind++) {
                   decres[ind].processed = false;
+
+                  // Propagate before decay
+                  if (decayerFlags.propagateParticles && prop_dt != 0.0) {
+                    decres[ind].r0 += prop_dt;
+                    decres[ind].rx += prop_dx;
+                    decres[ind].ry += prop_dy;
+                    decres[ind].rz += prop_dz;
+                  }
+
                   if (TPS->PdgToId(decres[ind].PDGID) != -1) {
                     int tid = TPS->PdgToId(decres[ind].PDGID);
                     SimpleParticle& dprt = decres[ind];

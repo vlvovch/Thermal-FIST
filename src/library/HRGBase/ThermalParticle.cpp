@@ -513,6 +513,9 @@ namespace thermalfist {
   {
     //if (m_ResonanceWidthIntegrationType != eBW)
     //  return m_Width;
+    if (m_Width / m_Mass < 0.01) {
+     return m_Width;
+    }
 
     double tsumb = 0.0;
     for (size_t i = 0; i < m_Decays.size(); ++i) {

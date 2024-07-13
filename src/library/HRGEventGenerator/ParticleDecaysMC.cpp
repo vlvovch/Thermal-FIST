@@ -267,6 +267,18 @@ namespace thermalfist {
         + (npart1.rz - npart2.rz) * (npart1.rz - npart2.rz);
     }
 
+    double ComputeDCA(const SimpleParticle& part)
+    {
+      double mult1 = part.rx * part.px + part.ry * part.py + part.rz * part.pz;
+      double mult2 = part.px * part.px + part.py * part.py + part.pz * part.pz;
+      double retx = part.rx - part.px * mult1 / mult2;
+      double rety = part.ry - part.py * mult1 / mult2;
+      double retz = part.rz - part.pz * mult1 / mult2;
+
+      double ret = retx * retx + rety * rety + retz * retz;
+      return sqrt(ret);
+    }
+
   }
 
 } // namespace thermalfist

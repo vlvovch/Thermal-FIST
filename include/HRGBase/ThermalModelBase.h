@@ -238,6 +238,9 @@ namespace thermalfist {
      */
     virtual void SetVirial(int /*i*/, int /*j*/, double /*b*/) { }
 
+    /// Same as SetVirial() but with a more clear name on what is actually does
+    virtual void SetRepulsion(int i, int j, double b) { SetVirial(i,j,b); }
+
     /**
      * \brief Set the vdW mean field attraction coefficient \f$ a_{ij} \f$
      * 
@@ -1276,6 +1279,11 @@ namespace thermalfist {
      * \brief Sets the value of magnetic field and the number of Landau levels to include
      */
     void SetMagneticField(double B = 0.0, int lmax = -1);
+
+    /** \brief Computes "partial pressures" of all mesons, baryons, antibaryons, nuclei, antinuclei
+    *
+    */
+    std::vector<double> PartialPressures();
 
     /// \brief Clears the magnetic field
     void ClearMagneticField();
