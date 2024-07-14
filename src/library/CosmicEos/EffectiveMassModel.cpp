@@ -1,4 +1,4 @@
-#include "CosmicEoS/EffectiveMassModel.h"
+#include "CosmicEos/EffectiveMassModel.h"
 
 #include <iostream>
 

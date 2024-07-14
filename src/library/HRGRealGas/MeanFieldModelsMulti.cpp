@@ -1,6 +1,7 @@
 #include "HRGRealGas/MeanFieldModelsMulti.h"
 #include <cmath>
 #include <map>
+#include <cstdio>
 
 namespace thermalfist {
 
