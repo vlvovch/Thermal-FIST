@@ -1487,7 +1487,7 @@ namespace thermalfist {
             double sign = 1.;
             for (int i = 1; i <= order; ++i) {
               ret += sign * (T / static_cast<double>(i) * e0 * xMath::BesselKexp(1, i*EoverT)
-               - Qmod * extraConfig.MagneticField.B * (l + 0.5 - sz) * xMath::BesselKexp(0, i*EoverT)
+               - Qmod  * extraConfig.MagneticField.B * (l + 0.5 - sz) * xMath::BesselKexp(0, i*EoverT)
               ) * cfug;
 
               cfug *= tfug;

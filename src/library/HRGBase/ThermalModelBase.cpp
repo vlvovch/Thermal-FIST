@@ -2048,7 +2048,31 @@ namespace thermalfist {
       m_IGFExtraConfig.MagneticField.lmax = lmax;
     for (auto& particle : TPS()->Particles())
       particle.SetMagneticField(B, m_IGFExtraConfig.MagneticField.lmax);
+    RecomputeThresholdsDueToMagneticField();
     ResetCalculatedFlags();
+  }
+
+  void ThermalModelBase::RecomputeThresholdsDueToMagneticField() {
+    const double &B = m_IGFExtraConfig.MagneticField.B;
+    for (int ipart = 0; ipart < TPS()->ComponentsNumber(); ++ipart) {
+      ThermalParticle &part = TPS()->Particle(ipart);
+      if (!part.ZeroWidthEnforced() || part.ElectricCharge()==0) {
+        if (B == 0.) {
+          part.CalculateAndSetDynamicalThreshold();
+          part.FillCoefficientsDynamical();
+        } else if (!part.ZeroWidthEnforced()) {
+          double szmax = (part.Degeneracy() - 1.) / 2.;
+          if (szmax > 0.5) {
+            double mmin = sqrt(2. * abs(part.ElectricCharge()) * B * (szmax - 0.5));
+            part.CalculateAndSetDynamicalThreshold();
+            if (mmin > part.DecayThresholdMassDynamical()) {
+              part.SetDecayThresholdMassDynamical(mmin);
+            }
+            part.FillCoefficientsDynamical();
+          }
+        }
+      }
+    }
   }
 
   void ThermalModelBase::ClearMagneticField() {

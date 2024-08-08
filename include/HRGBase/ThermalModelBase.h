@@ -1280,6 +1280,11 @@ namespace thermalfist {
      */
     void SetMagneticField(double B = 0.0, int lmax = -1);
 
+    /**
+     * \brief Sets the value of magnetic field and the number of Landau levels to include
+     */
+    void RecomputeThresholdsDueToMagneticField();
+
     /** \brief Computes "partial pressures" of all mesons, baryons, antibaryons, nuclei, antinuclei
     *
     */

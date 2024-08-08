@@ -1253,6 +1253,7 @@ namespace thermalfist {
 
     ret.Particles.resize(ids.size());
 
+
     bool flOverlap = true;
     while (flOverlap) {
       int sampled = 0;
@@ -1518,7 +1519,7 @@ namespace thermalfist {
                   if (ct == 0.) {
                     if (abs(primParticles[i][j].PDGID) != 311) {
                       // K0s "decaying" into K0S and K0L is an exception
-                      printf("**WARNING** Could not find the lifetime for decaying particle %ll. Setting to zero...\n", primParticles[i][j].PDGID);
+                      printf("**WARNING** Could not find the lifetime for decaying particle %lld. Setting to zero...\n", primParticles[i][j].PDGID);
                     }
                   }
 
