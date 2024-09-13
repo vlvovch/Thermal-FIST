@@ -471,9 +471,9 @@ namespace thermalfist {
       return false;
     if (flags.count(ThermalParticleSystem::flag_nocharm) > 0 && part.AbsoluteCharm() != 0)
       return false;
-    if (flags.count(ThermalParticleSystem::flag_nonuclei) > 0 && abs(part.BaryonCharge() > 1))
+    if (flags.count(ThermalParticleSystem::flag_nonuclei) > 0 && abs(part.BaryonCharge()) > 1)
       return false;
-    if (flags.count(ThermalParticleSystem::flag_noexcitednuclei) > 0 && abs(part.BaryonCharge() > 1) && !part.IsStable())
+    if (flags.count(ThermalParticleSystem::flag_noexcitednuclei) > 0 && abs(part.BaryonCharge()) > 1 && !part.IsStable())
       return false;
     return true;
   }

@@ -18,6 +18,8 @@ namespace thermalfist {
 
     MTRand randgenMT;
 
+    std::mt19937 rng_std(std::time(nullptr));
+
     void SetSeed(const unsigned int seed) {
       randgenMT.seed(seed);
     }

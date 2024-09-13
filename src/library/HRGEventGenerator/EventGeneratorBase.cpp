@@ -1249,7 +1249,8 @@ namespace thermalfist {
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       for (int part = 0; part < yields[i]; ++part)
         ids.push_back(i);
-    std::random_shuffle(ids.begin(), ids.end());
+    //std::random_shuffle(ids.begin(), ids.end()); // Removed in C++17
+    std::shuffle(ids.begin(), ids.end(), RandomGenerators::rng_std);
 
     ret.Particles.resize(ids.size());
 

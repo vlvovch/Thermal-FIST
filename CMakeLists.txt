@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.21.1 FATAL_ERROR)
 
 # Maps to Visual Studio solution file (Tutorial.sln)
 # The solution will have all targets (exe, lib, dll) 
@@ -17,8 +17,25 @@ configure_file (
   "${PROJECT_BINARY_DIR}/include/ThermalFISTConfig.h"
   )
 
-set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (NOT CXX_COMPILER_FLAGS_CHECKED)
+	include(CheckCXXCompilerFlag)
+	CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+	CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+	CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
+	if(COMPILER_SUPPORTS_CXX17)
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+		set(CMAKE_CXX_STANDARD 17)
+	elseif(COMPILER_SUPPORTS_CXX14 OR COMPILER_SUPPORTS_CXX1Y)
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+		set(CMAKE_CXX_STANDARD 14)
+	# elseif(COMPILER_SUPPORTS_CXX1Y)
+	# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+	# 	set(CMAKE_CXX_STANDARD 14)
+	endif()
+    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
+endif()
 
 # Turn on the ability to create folders to organize projects (.vcproj)
 # It creates "CMakePredefinedTargets" folder by default and adds CMake
@@ -54,6 +71,7 @@ endif(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
 #endif()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pedantic")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+
 # Here it is setting the Visual Studio warning level to 4
 if(MSVC)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -64,6 +82,9 @@ endif(MSVC)
 
 option (STANDALONE_MINUIT 
         "Build Minuit2 within project instead of linking one from ROOT distribution" OFF) 
+
+option (USE_QT5 
+		"Use Qt5 for GUI instead of Qt6" OFF) 
 
 string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
 if(result)

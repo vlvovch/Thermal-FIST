@@ -228,10 +228,10 @@ void CalculationTableDialog::writeTableToFile() {
   QTextStream out(&file);
 
   if (comboQuantity->currentIndex() != 0) {
-    out << "# Hadron densities table" << endl;
+    out << "# Hadron densities table" << Qt::endl;
     QString units = (comboQuantity->currentIndex() == 1) ? "fm^-3" : "T^3";
-    out << "# Each density is in units of " << units << endl;
-    out << "# Feeddown: " << comboFeeddown->currentText() << endl;
+    out << "# Each density is in units of " << units << Qt::endl;
+    out << "# Feeddown: " << comboFeeddown->currentText() << Qt::endl;
   }
 
   out.setFieldWidth(tabsize);
@@ -246,7 +246,7 @@ void CalculationTableDialog::writeTableToFile() {
       out << m_table.densities_names[ic];
     }
   }
-  out << qSetFieldWidth(0) << endl << qSetFieldWidth(tabsize);
+  out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(tabsize);
 
   int feeddown = comboFeeddown->currentIndex();
   for(int ir = 0; ir < m_table.parameter_values.size(); ++ir) {
@@ -264,7 +264,7 @@ void CalculationTableDialog::writeTableToFile() {
         out << mult * m_table.densities_values[ir][feeddown][ic];
       }
     }
-    out << qSetFieldWidth(0) << endl << qSetFieldWidth(tabsize);
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(tabsize);
   }
 
   file.close();

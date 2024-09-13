@@ -326,6 +326,7 @@ namespace thermalfist {
             return "anti-" + m_Neutrinos[iL/2].Name();
         else {
           printf("**ERRORR** in CosmicEoS::GetSpeciesName(int id) const: id = %d is out of range!", id);
+          return "";
         }
       }
     }
@@ -350,8 +351,10 @@ namespace thermalfist {
             return m_Neutrinos[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, m_ChemCurrent[2 + iL/2]);
           else
             return m_Neutrinos[iL/2].Density(m_modelHRG->Parameters(), IdealGasFunctions::ParticleDensity, false, -m_ChemCurrent[2 + iL/2]);
-        else
+        else {
           printf("**ERRORR** in CosmicEoS::GetDensity(int id) const: id = %d is out of range!", id);
+          return 0.;
+        }
       }
     }
   }

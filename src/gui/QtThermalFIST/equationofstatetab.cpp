@@ -1202,12 +1202,12 @@ void EquationOfStateTab::saveAs(int type)
           out << plotDependence->yAxis->label();
           out << plotDependence->xAxis->label();
         }
-        out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         for (int i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << xvalues[i] << yvalues[i];
-          out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+          out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         }
       }
     }

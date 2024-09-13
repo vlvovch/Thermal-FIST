@@ -256,7 +256,7 @@ void CorrelationsDialog::recalculate()
           // Scaled moment
           if (comboQuantity->currentIndex() == 3) {
             if (pdg1 == pdg2) {
-              qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
+              qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << Qt::endl;
             }
             if (i != j) {
               //tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));

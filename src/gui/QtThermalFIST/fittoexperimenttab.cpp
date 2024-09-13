@@ -693,41 +693,41 @@ void FitToExperimentTab::writetofile() {
 }
 
 void FitToExperimentTab::updateProgress() {
-  //dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
-  dbgstrm << "T\t= " << fitcopy->Parameters().T.value * 1.e3 << " MeV" << endl;
+  //dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << Qt::endl;
+  dbgstrm << "T\t= " << fitcopy->Parameters().T.value * 1.e3 << " MeV" << Qt::endl;
   if (!(model->Ensemble() == ThermalModelBase::CE)) {
-    dbgstrm << "muB\t= " << fitcopy->Parameters().muB.value * 1.e3 << " MeV" << endl;
+    dbgstrm << "muB\t= " << fitcopy->Parameters().muB.value * 1.e3 << " MeV" << Qt::endl;
     if (model->TPS()->hasCharged())
-      dbgstrm << "muQ\t= " << fitcopy->Parameters().muQ.value * 1.e3 << " MeV" << endl;
+      dbgstrm << "muQ\t= " << fitcopy->Parameters().muQ.value * 1.e3 << " MeV" << Qt::endl;
     if (!(model->Ensemble() == ThermalModelBase::SCE)
       && model->TPS()->hasStrange())
-      dbgstrm << "muS\t= " << fitcopy->Parameters().muS.value * 1.e3 << " MeV" << endl;
+      dbgstrm << "muS\t= " << fitcopy->Parameters().muS.value * 1.e3 << " MeV" << Qt::endl;
     if (!(model->Ensemble() == ThermalModelBase::SCE)
       && !(model->Ensemble() == ThermalModelBase::CCE)
       && model->TPS()->hasCharmed())
-      dbgstrm << "muC\t= " << fitcopy->Parameters().muC.value * 1.e3 << " MeV" << endl;
+      dbgstrm << "muC\t= " << fitcopy->Parameters().muC.value * 1.e3 << " MeV" << Qt::endl;
   }
   else {
-      dbgstrm << "B\t= " << fitcopy->BT() << endl;
-      dbgstrm << "S\t= " << fitcopy->ST() << endl;
-      dbgstrm << "Q\t= " << fitcopy->QT() << endl;
-      dbgstrm << "C\t= " << fitcopy->CT() << endl;
+      dbgstrm << "B\t= " << fitcopy->BT() << Qt::endl;
+      dbgstrm << "S\t= " << fitcopy->ST() << Qt::endl;
+      dbgstrm << "Q\t= " << fitcopy->QT() << Qt::endl;
+      dbgstrm << "C\t= " << fitcopy->CT() << Qt::endl;
   }
   if (fitcopy->Parameters().gammaq.toFit == true)
-    dbgstrm << "gammaq\t= " << fitcopy->Parameters().gammaq.value << endl;
+    dbgstrm << "gammaq\t= " << fitcopy->Parameters().gammaq.value << Qt::endl;
   if (fitcopy->Parameters().gammaS.toFit == true)
-    dbgstrm << "gammaS\t= " << fitcopy->Parameters().gammaS.value << endl;
+    dbgstrm << "gammaS\t= " << fitcopy->Parameters().gammaS.value << Qt::endl;
   if (fitcopy->Parameters().gammaC.toFit == true)
-    dbgstrm << "gammaC\t= " << fitcopy->Parameters().gammaC.value << endl;
-  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(fitcopy->Parameters().R.value,3) << " fm^3" << endl;
+    dbgstrm << "gammaC\t= " << fitcopy->Parameters().gammaC.value << Qt::endl;
+  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(fitcopy->Parameters().R.value,3) << " fm^3" << Qt::endl;
   if (model->Ensemble() == ThermalModelBase::SCE || model->Ensemble() == ThermalModelBase::CE)
-    dbgstrm << "Vc\t= " << (4. / 3.) * xMath::Pi() * pow(fitcopy->Parameters().Rc.value, 3) << " fm^3" << endl;
+    dbgstrm << "Vc\t= " << (4. / 3.) * xMath::Pi() * pow(fitcopy->Parameters().Rc.value, 3) << " fm^3" << Qt::endl;
   if (fitcopy->UseTkin())
-    dbgstrm << "Tkin\t= " << fitcopy->Parameters().Tkin.value * 1.e3 << " MeV" << endl;
-  dbgstrm << endl;
+    dbgstrm << "Tkin\t= " << fitcopy->Parameters().Tkin.value * 1.e3 << " MeV" << Qt::endl;
+  dbgstrm << Qt::endl;
 
-  dbgstrm << "Iteration\t= " << fitcopy->Iters() << endl;
-  dbgstrm << "chi2/Ndf\t= " << fitcopy->Chi2() << "/" << fitcopy->Ndf() << " = " << fitcopy->Chi2() / fitcopy->Ndf() << endl;
+  dbgstrm << "Iteration\t= " << fitcopy->Iters() << Qt::endl;
+  dbgstrm << "chi2/Ndf\t= " << fitcopy->Chi2() << "/" << fitcopy->Ndf() << " = " << fitcopy->Chi2() / fitcopy->Ndf() << Qt::endl;
 
   teDebug->clear();
   teDebug->append(dbgstr);
@@ -740,89 +740,89 @@ void FitToExperimentTab::finalize() {
   calcTimer->stop();
   ThermalModelFitParameters result = fitcopy->Parameters();
 
-  dbgstrm << "T\t= " << result.T.value * 1.e3 << " MeV" << endl;
+  dbgstrm << "T\t= " << result.T.value * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
-    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
+    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
-    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
-    dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
+    dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasCharmed() && !model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
-    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
+    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << Qt::endl;
 
 
   if (model->Ensemble() == ThermalModelBase::CE) {
     if (model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
-      dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << endl;
+      dbgstrm << "B\t= " << model->CalculateBaryonDensity()      * model->Volume() << Qt::endl;
     if (model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
-      dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+      dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << Qt::endl;
     if (model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
-      dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << endl;
+      dbgstrm << "Q\t= " << model->CalculateChargeDensity()      * model->Volume() << Qt::endl;
     if (model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
-      dbgstrm << "C\t= " << model->CalculateCharmDensity()       * model->Volume() << endl;
+      dbgstrm << "C\t= " << model->CalculateCharmDensity()       * model->Volume() << Qt::endl;
   }
-  dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
+  dbgstrm << "gammaq\t= " << model->Parameters().gammaq << Qt::endl;
   if (model->TPS()->hasStrange())
-    dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
+    dbgstrm << "gammaS\t= " << model->Parameters().gammaS << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
+    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << Qt::endl;
   //dbgstrm << "V\t= " << model->Parameters().V << " fm^3" << endl;
-  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(result.R.value, 3) << " fm^3" << endl;
+  dbgstrm << "V\t= " << (4./3.) * xMath::Pi() * pow(result.R.value, 3) << " fm^3" << Qt::endl;
   if (fitcopy->UseTkin()) {
-    dbgstrm << "Tkin\t= " << result.Tkin.value * 1.e3 << " MeV" << endl;
-    dbgstrm << "Vkin\t= " << model->Parameters().V << " fm^3" << endl;
+    dbgstrm << "Tkin\t= " << result.Tkin.value * 1.e3 << " MeV" << Qt::endl;
+    dbgstrm << "Vkin\t= " << model->Parameters().V << " fm^3" << Qt::endl;
   }
-  dbgstrm << endl;
+  dbgstrm << Qt::endl;
 
-  dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+  dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << Qt::endl;
 
   double nb = model->CalculateBaryonDensity();
-  dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
-  dbgstrm << "Net baryon number\t= " << nb * model->Parameters().V << endl;
+  dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << Qt::endl;
+  dbgstrm << "Net baryon number\t= " << nb * model->Parameters().V << Qt::endl;
   if (model->TPS()->hasCharged())
-    dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Parameters().V << endl;
+    dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Parameters().V << Qt::endl;
   if (model->TPS()->hasStrange())
-    dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Parameters().V << endl;
+    dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Parameters().V << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Parameters().V << endl;
-  dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
+    dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Parameters().V << Qt::endl;
+  dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << Qt::endl;
   if (fabs(nb) > 1.e-10)
-    dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
+    dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << Qt::endl;
   if (fabs(nb) > 1.e-10)
-    dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
+    dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << Qt::endl;
   if (model->TPS()->hasStrange())
-    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
+    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << Qt::endl;
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
-    dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
-  dbgstrm << endl;
-  dbgstrm << "chi2/ndf\t\t= " << result.chi2ndf * fitcopy->Ndf() << "/" << fitcopy->Ndf() << " = " << result.chi2ndf << endl;
-  dbgstrm << endl;
+    dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
+  dbgstrm << Qt::endl;
+  dbgstrm << "chi2/ndf\t\t= " << result.chi2ndf * fitcopy->Ndf() << "/" << fitcopy->Ndf() << " = " << result.chi2ndf << Qt::endl;
+  dbgstrm << Qt::endl;
 
   // Data description accuracy
   {
     std::pair<double, double> accuracy = fitcopy->ModelDescriptionAccuracy();
     dbgstrm << "Model accuracy = (" << QString::number(100. * accuracy.first, 'f', 2) 
       << QString::fromUtf8(" ± ") 
-      << QString::number(100. * accuracy.second, 'f', 2)  << ") %" << endl;
+      << QString::number(100. * accuracy.second, 'f', 2)  << ") %" << Qt::endl;
 
-    dbgstrm << endl;
+    dbgstrm << Qt::endl;
   }
 
   qint64 elapsedTime = timer.elapsed();
   if (elapsedTime < 1000)
-    dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
+    dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << Qt::endl;
   else if (elapsedTime < 10000)
-    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 2) << " s" << endl;
+    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 2) << " s" << Qt::endl;
   else
-    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 1) << " s" << endl;
+    dbgstrm << "Calculation time = " << QString::number(timer.elapsed()/1000., 'f', 1) << " s" << Qt::endl;
 
-  dbgstrm << "----------------------------------------------------------" << endl;
+  dbgstrm << "----------------------------------------------------------" << Qt::endl;
   teDebug->clear();
   teDebug->append(dbgstr);
   dbgstr.clear();

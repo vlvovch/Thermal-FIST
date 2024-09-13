@@ -327,7 +327,8 @@ DataVsModelPlot::DataVsModelPlot(QWidget * parent, thermalfist::ThermalModelFit 
     sorter.push_back(QPair<double,int>(fit->ModelData(i),i));
   }
 
-  qSort(sorter.begin(), sorter.end());
+  //qSort(sorter.begin(), sorter.end());
+  std::sort(sorter.begin(), sorter.end());
 
   for (int i = 0; i < Npoints; ++i) {
     indmap.push_back(sorter[i].second);

@@ -45,7 +45,7 @@ namespace thermalfist {
 		if (n == 4)
 			return d4f(eta);
 
-		printf("**ERROR** ExcludedVolumeModelCS::df(n,eta): n = %lf not supported!", n);
+		printf("**ERROR** ExcludedVolumeModelCS::df(n,eta): n = %d not supported!", n);
 		exit(-1);
 		return 0.;
 	}
@@ -62,7 +62,7 @@ namespace thermalfist {
 		if (n == 4)
 			return d4f(eta);
 
-		printf("**ERROR** ExcludedVolumeModelTVM::df(n,eta): n = %lf not supported!", n);
+		printf("**ERROR** ExcludedVolumeModelTVM::df(n,eta): n = %d not supported!", n);
 		exit(-1);
 		return 0.;
 	}

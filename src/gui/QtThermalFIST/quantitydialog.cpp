@@ -25,15 +25,18 @@ QuantityDialog::QuantityDialog(QWidget *parent, ThermalModelBase *mod, FittedQua
     QLabel *labPDG2 = new QLabel(tr("PDGID 2"));
 
     lePDG1 = new QLineEdit();
-    QRegExp rx("-?\\d{1,15}");
-    QValidator *validator1 = new QRegExpValidator(rx, this);
+//    QRegExp rx("-?\\d{1,15}");
+//    QValidator *validator1 = new QRegExpValidator(rx, this);
+    QRegularExpression rx("-?\\d{1,15}");
+    QValidator *validator1 = new QRegularExpressionValidator(rx, this);
     lePDG1->setValidator(validator1);
     lePDG1->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     if (!quant->type) lePDG1->setText(QString::number(quant->mult.fPDGID));
     else lePDG1->setText(QString::number(quant->ratio.fPDGID1));
 
     lePDG2 = new QLineEdit();
-    QValidator *validator2 = new QRegExpValidator(rx, this);
+    //QValidator *validator2 = new QRegExpValidator(rx, this);
+  QValidator *validator2 = new QRegularExpressionValidator(rx, this);
     lePDG2->setValidator(validator2);
     lePDG2->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     if (!quant->type) lePDG2->setEnabled(false);

@@ -565,7 +565,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   model->SetVolumeRadius(config.VolumeR);
   model->SetCanonicalVolumeRadius(config.VolumeRSC);
 
-  dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << endl;
+  dbgstrm << "T\t= " << model->Parameters().T * 1.e3 << " MeV" << Qt::endl;
 
   SetThermalModelConfiguration(model, config);
 
@@ -609,63 +609,63 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   printf("Densities time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
   if (config.UsePCE) {
-    dbgstrm << "Chemical freeze-out:" << endl;
+    dbgstrm << "Chemical freeze-out:" << Qt::endl;
   }
   if (model->TPS()->hasBaryons() && !model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
-    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << endl;
+    dbgstrm << "muB\t= " << model->Parameters().muB * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasCharged() && !model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
-    dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << endl;
+    dbgstrm << "muQ\t= " << model->Parameters().muQ * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasStrange() && !model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
-    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << endl;
+    dbgstrm << "muS\t= " << model->Parameters().muS * 1.e3 << " MeV" << Qt::endl;
 
   if (model->TPS()->hasCharmed() && !model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
-    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << endl;
+    dbgstrm << "muC\t= " << model->Parameters().muC * 1.e3 << " MeV" << Qt::endl;
 
   if (config.ModelType == ThermalModelConfig::CE)
   {
     if (model->TPS()->hasBaryons() && model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
-      dbgstrm << "B\t= " << model->CalculateBaryonDensity() * model->Volume() << endl;
+      dbgstrm << "B\t= " << model->CalculateBaryonDensity() * model->Volume() << Qt::endl;
     if (model->TPS()->hasStrange() && model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
-      dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+      dbgstrm << "S\t= " << model->CalculateStrangenessDensity() * model->Volume() << Qt::endl;
     if (model->TPS()->hasCharged() && model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
-      dbgstrm << "Q\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
+      dbgstrm << "Q\t= " << model->CalculateChargeDensity() * model->Volume() << Qt::endl;
     if (model->TPS()->hasCharmed() && model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
-      dbgstrm << "C\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
+      dbgstrm << "C\t= " << model->CalculateCharmDensity() * model->Volume() << Qt::endl;
   }
-  dbgstrm << "gammaq\t= " << model->Parameters().gammaq << endl;
-  dbgstrm << "gammaS\t= " << model->Parameters().gammaS << endl;
+  dbgstrm << "gammaq\t= " << model->Parameters().gammaq << Qt::endl;
+  dbgstrm << "gammaS\t= " << model->Parameters().gammaS << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << endl;
-  dbgstrm << "V\t= " << model->Volume() << " fm^3" << endl;
-  dbgstrm << endl;
-  dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+    dbgstrm << "gammaC\t= " << model->Parameters().gammaC << Qt::endl;
+  dbgstrm << "V\t= " << model->Volume() << " fm^3" << Qt::endl;
+  dbgstrm << Qt::endl;
+  dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << Qt::endl;
   double nb = model->CalculateBaryonDensity();
-  dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
-  dbgstrm << "Net baryon number\t= " << nb * model->Volume() << endl;
+  dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << Qt::endl;
+  dbgstrm << "Net baryon number\t= " << nb * model->Volume() << Qt::endl;
   if (model->TPS()->hasCharged())
-    dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
+    dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << Qt::endl;
   if (model->TPS()->hasStrange())
-    dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+    dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
-  dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << endl;
-  dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
+    dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << Qt::endl;
+  dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << Qt::endl;
+  dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << Qt::endl;
   if (fabs(nb) > 1.e-10)
-    dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;
+    dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << Qt::endl;
   if (fabs(nb) > 1.e-10)
-    dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
-  dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << endl;
+    dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << Qt::endl;
+  dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << Qt::endl;
   if (fabs(nb) > 1.e-10)
-    dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
+    dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << Qt::endl;
   if (model->TPS()->hasStrange())
-    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+    dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << Qt::endl;
   if (model->TPS()->hasCharmed())
-    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
+    dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << Qt::endl;
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
-    dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
-  dbgstrm << endl;
+    dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
+  dbgstrm << Qt::endl;
 
   if (config.UsePCE) {
     timerc.restart();
@@ -715,43 +715,43 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   
 
   if (config.UsePCE) {
-    dbgstrm << "Kinetic freeze-out:" << endl;
-    dbgstrm << "Tkin\t\t= " << config.Tkin * 1.e3 << " MeV" << endl;
-    dbgstrm << "Vkin\t\t= " << model->Volume() << " fm^3" << endl;
-    dbgstrm << "Vkin/Vch\t\t= " << model->Volume() / (4./3.*xMath::Pi()*pow(config.VolumeR,3)) << endl;
+    dbgstrm << "Kinetic freeze-out:" << Qt::endl;
+    dbgstrm << "Tkin\t\t= " << config.Tkin * 1.e3 << " MeV" << Qt::endl;
+    dbgstrm << "Vkin\t\t= " << model->Volume() << " fm^3" << Qt::endl;
+    dbgstrm << "Vkin/Vch\t\t= " << model->Volume() / (4./3.*xMath::Pi()*pow(config.VolumeR,3)) << Qt::endl;
     if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
-      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
-    dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << endl;
+      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
+    dbgstrm << "Particle density\t= " << model->CalculateHadronDensity() << " fm^-3" << Qt::endl;
     nb = model->CalculateBaryonDensity();
-    dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << endl;
-    dbgstrm << "Net baryon number\t= " << nb * model->Volume() << endl;
+    dbgstrm << "Net baryon density\t= " << nb << " fm^-3" << Qt::endl;
+    dbgstrm << "Net baryon number\t= " << nb * model->Volume() << Qt::endl;
     if (model->TPS()->hasCharged())
-      dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << endl;
+      dbgstrm << "Net electric charge\t= " << model->CalculateChargeDensity() * model->Volume() << Qt::endl;
     if (model->TPS()->hasStrange())
-      dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << endl;
+      dbgstrm << "Net strangeness\t= " << model->CalculateStrangenessDensity() * model->Volume() << Qt::endl;
     if (model->TPS()->hasCharmed())
-      dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << endl;
-    dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << endl;
-    dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << endl;
+      dbgstrm << "Net charm\t= " << model->CalculateCharmDensity() * model->Volume() << Qt::endl;
+    dbgstrm << "Absolute baryon number\t= " << model->AbsoluteBaryonDensity() * model->Volume() << Qt::endl;
+    dbgstrm << "E/N\t\t= " << model->CalculateEnergyDensity() / model->CalculateHadronDensity() << Qt::endl;
     if (fabs(nb) > 1.e-10)
-      dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << endl;
+      dbgstrm << "E/Nb\t\t= " << model->CalculateEnergyDensity() / nb << Qt::endl;
     if (fabs(nb) > 1.e-10)
-      dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << endl;
-    dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << endl;
+      dbgstrm << "S/B\t\t= " << model->CalculateEntropyDensity() / nb << Qt::endl;
+    dbgstrm << "S/N\t\t= " << model->CalculateEntropyDensity() / model->CalculateHadronDensity() << Qt::endl;
     if (fabs(nb) > 1.e-10)
-      dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << endl;
+      dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << Qt::endl;
     if (model->TPS()->hasStrange())
-      dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << endl;
+      dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << Qt::endl;
     if (model->TPS()->hasCharmed())
-      dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << endl;
+      dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << Qt::endl;
     if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
-      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << endl;
-    dbgstrm << endl;
+      dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
+    dbgstrm << Qt::endl;
   }
 
-  dbgstrm << endl;
-  dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
-  dbgstrm << "----------------------------------------------------------" << endl;
+  dbgstrm << Qt::endl;
+  dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << Qt::endl;
+  dbgstrm << "----------------------------------------------------------" << Qt::endl;
   teDebug->append(dbgstr);
   dbgstr.clear();
 

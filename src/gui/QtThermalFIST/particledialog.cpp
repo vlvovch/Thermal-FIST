@@ -109,7 +109,8 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
     for (int i = 0; i < sources.size(); ++i)
       sources[i].first *= model->Densities()[sources[i].second];
 
-    qSort(sources.begin(), sources.end());
+    //qSort(sources.begin(), sources.end());
+    std::sort(sources.begin(), sources.end());
 
     tableSources->setItem(0, 0, new QTableWidgetItem(tr("Primordial")));
     tableSources->setItem(0, 1, new QTableWidgetItem(QString::number(model->Densities()[pid] * model->Volume())));

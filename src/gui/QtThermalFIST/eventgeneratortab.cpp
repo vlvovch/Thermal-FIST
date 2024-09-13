@@ -47,6 +47,14 @@
 
 using namespace thermalfist;
 
+namespace {
+  template <typename T>
+  static inline QVector<T> fromStdVector(const std::vector<T> &vector)
+  {
+    return QVector<T>(vector.begin(), vector.end());
+  }
+}
+
 EventGeneratorWorker::EventGeneratorWorker(
   thermalfist::EventGeneratorBase* gen,
   ParticlesSpectra* spec,
@@ -817,10 +825,10 @@ void EventGeneratorTab::replot() {
         if ((ttype>=0 && ttype<=2) || ttype==4) {
             QVector<double> x1,y1,y1err;
             std::vector<double> tvec = spectra->fParticles[id].GetXVector(ttype);
-            x1 = QVector<double>::fromStdVector(tvec);
+            x1 = fromStdVector(tvec);
             //x1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
-            y1    = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
-            y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
+            y1    = fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
+            y1err = fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
             for(int i=0;i<x1.size();++i) {
               if (y1[i] != 0.)
                 tmin = std::min(tmin, y1[i]);
@@ -838,8 +846,8 @@ void EventGeneratorTab::replot() {
         plotDistr->yAxis->setLabel(paramnames[index]);
 
         QVector<double> x2,y2;
-        x2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelX() );
-        y2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelY() );
+        x2 = fromStdVector (spectra->fParticles[id].GetModelX() );
+        y2 = fromStdVector (spectra->fParticles[id].GetModelY() );
         for(int i=0;i<x2.size();++i) {
           if (y2[i] != 0.)
             tmin = std::min(tmin, y2[i]);
@@ -1038,12 +1046,12 @@ void EventGeneratorTab::finalize() {
     for(int i=0;i<spectra->fPositiveCharges.size();++i) spectra->fPositiveCharges[i].CalculateCentralMoments();
     for(int i=0;i<spectra->fNegativeCharges.size();++i) spectra->fNegativeCharges[i].CalculateCentralMoments();
 
-    dbgstrm << "Generated " << fCurrentSize << " events" << endl;
-    dbgstrm << "Effective event number = " << nE << endl;
-    dbgstrm << "CE acceptance rate: " << EventGeneratorBase::fCEAccepted / (double)(EventGeneratorBase::fCETotal) << endl;
-    dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << endl;
-    dbgstrm << "Per event = " << timer.elapsed()/(double)(fCurrentSize) << " ms" << endl;
-    dbgstrm << "----------------------------------------------------------" << endl;
+    dbgstrm << "Generated " << fCurrentSize << " events" << Qt::endl;
+    dbgstrm << "Effective event number = " << nE << Qt::endl;
+    dbgstrm << "CE acceptance rate: " << EventGeneratorBase::fCEAccepted / (double)(EventGeneratorBase::fCETotal) << Qt::endl;
+    dbgstrm << "Calculation time = " << timer.elapsed() << " ms" << Qt::endl;
+    dbgstrm << "Per event = " << timer.elapsed()/(double)(fCurrentSize) << " ms" << Qt::endl;
+    dbgstrm << "----------------------------------------------------------" << Qt::endl;
     teDebug->append(dbgstr);
     dbgstr.clear();
     teDebug->verticalScrollBar()->setValue(teDebug->verticalScrollBar()->maximum());
@@ -1078,16 +1086,16 @@ void EventGeneratorTab::updateProgress() {
     if (index>=0 && index<paramnames.size() && id<spectra->fParticles.size()) {
         int ttype = comboDistr->currentIndex();
         if (ttype>=0 && ttype<=4) {
-            x1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
-            y1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
-            if (ttype<=2 || ttype == 4) y1err = QVector<double>::fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
-            else z1 = QVector<double>::fromStdVector (spectra->fParticles[id].GetZVector(ttype) );
+            x1 = fromStdVector (spectra->fParticles[id].GetXVector(ttype) );
+            y1 = fromStdVector (spectra->fParticles[id].GetYVector(ttype) );
+            if (ttype<=2 || ttype == 4) y1err = fromStdVector (spectra->fParticles[id].GetYErrorVector(ttype) );
+            else z1 = fromStdVector (spectra->fParticles[id].GetZVector(ttype) );
             plotDistr->graph(0)->setData(x1, y1);
             //plotDistr->graph(0)->setDataValueError(x1,y1,y1err);
         }
 
-        x2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelX() );
-        y2 = QVector<double>::fromStdVector (spectra->fParticles[id].GetModelY() );
+        x2 = fromStdVector (spectra->fParticles[id].GetModelX() );
+        y2 = fromStdVector (spectra->fParticles[id].GetModelY() );
     }
 
     //qDebug() << "munlock";
@@ -1586,7 +1594,7 @@ void EventGeneratorTab::saveAs1D(int type)
         out << plotDistr->xAxis->label();
         out << plotDistr->yAxis->label();
         out << "error";
-        out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         for (int i = 0; i < plotDistr->graph(0)->data()->size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
@@ -1594,7 +1602,7 @@ void EventGeneratorTab::saveAs1D(int type)
           double y = plotDistr->graph(0)->data()->at(i)->value;
           double yerr = errorBars->data()->at(i).errorPlus;
           out << x << y << yerr;
-          out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+          out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         }
       }
     }
@@ -1659,12 +1667,12 @@ void EventGeneratorTab::saveAs2D(int type)
         out << plot2D->yAxis->label();
         out << plotName;
         out << "error";
-        out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         for (int i = 0; i < fXv.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
-          out << qSetFieldWidth(0) << endl << qSetFieldWidth(15);
+          out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
         }
       }
     }

@@ -79,8 +79,10 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   QLabel *labelPDGID = new QLabel(tr("PDG ID:"));
 
   lePDGID = new QLineEdit();
-  QRegExp rx("-?\\d{1,15}");
-  QValidator *validator = new QRegExpValidator(rx, this);
+  QRegularExpression rx("-?\\d{1,15}");
+//  QRegExp rx("-?\\d{1,15}");
+//  QValidator *validator = new QRegExpValidator(rx, this);
+  QValidator *validator = new QRegularExpressionValidator(rx, this);
   lePDGID->setValidator(validator);
   lePDGID->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   connect(lePDGID, SIGNAL(editingFinished()), this, SLOT(PDGEdited()));

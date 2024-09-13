@@ -808,17 +808,20 @@ namespace thermalfist {
       if (m_THM->TPS()->Particles()[i].BaryonCharge() != 1 && m_THM->TPS()->Particles()[i].BaryonCharge() != -1)
         for (int part = 0; part < yields[i]; ++part)
           idsM.push_back(i);
-    std::random_shuffle(idsM.begin(), idsM.end());
+    //std::random_shuffle(idsM.begin(), idsM.end()); // Removed in C++17
+    std::shuffle(idsM.begin(), idsM.end(), RandomGenerators::rng_std);
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == 1)
         for (int part = 0; part < yields[i]; ++part)
           idsB.push_back(i);
-    std::random_shuffle(idsB.begin(), idsB.end());
+    //std::random_shuffle(idsB.begin(), idsB.end()); // Removed in C++17
+    std::shuffle(idsB.begin(), idsB.end(), RandomGenerators::rng_std);
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == -1)
         for (int part = 0; part < yields[i]; ++part)
           idsaB.push_back(i);
-    std::random_shuffle(idsaB.begin(), idsaB.end());
+    //std::random_shuffle(idsaB.begin(), idsaB.end()); // Removed in C++17
+    std::shuffle(idsaB.begin(), idsaB.end(), RandomGenerators::rng_std);
 
     std::vector<int> ids;
     ids.insert(ids.end(), idsM.begin(), idsM.end());

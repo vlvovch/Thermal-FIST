@@ -1,5 +1,5 @@
 /*
-/* * GNU General Public License (GPLv3 or later)
+ * * GNU General Public License (GPLv3 or later)
  */
 #ifndef SPLINEFUNCTION_H
 #define SPLINEFUNCTION_H

@@ -13,6 +13,7 @@
 #include "MersenneTwister.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGBase/ThermalParticle.h"
+#include <random>
 
 namespace thermalfist {
 
@@ -22,6 +23,9 @@ namespace thermalfist {
 
     /// \brief The Mersenne Twister random number generator
     extern MTRand randgenMT;
+
+    /// \brief The Mersenne Twister random number generator from STD library
+    extern std::mt19937 rng_std;
 
     /// \brief Set the seed of the random number generator randgenMT
     void SetSeed(const unsigned int seed);
