@@ -22,6 +22,7 @@
 #include "HRGVDW/ThermalModelVDW.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
+#include "HRGBase/ExtraParticles.h"
 
 namespace thermalfist {
 

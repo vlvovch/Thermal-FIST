@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "HRGBase/ExtraParticles.h"
+
 using namespace std;
 
 namespace thermalfist {
@@ -9,14 +11,15 @@ namespace thermalfist {
   /// Pion decay constant
   double CosmicEoS::fpi = 0.133;
 
-  /// Electron mass
-  double LeptonFlavor::m_e   = 0.000511;
-
-  /// Muon mass
-  double LeptonFlavor::m_mu  = 0.105658;
-
-  /// Tauon mass
-  double LeptonFlavor::m_tau = 1.77684;
+// Deprecated, the masses and quantum numbers are now taken from ExtraParticles.h/cpp
+//  /// Electron mass
+//  double LeptonFlavor::m_e   = 0.000511;
+//
+//  /// Muon mass
+//  double LeptonFlavor::m_mu  = 0.105658;
+//
+//  /// Tauon mass
+//  double LeptonFlavor::m_tau = 1.77684;
 
   CosmicEoS::CosmicEoS(ThermalModelBase* THMbase, bool pionsinteract) :
     m_modelHRG(THMbase)
@@ -39,18 +42,51 @@ namespace thermalfist {
     m_Asymmetries[3] = l / 3.;
     m_Asymmetries[4] = l / 3.;
 
+    vector<long long> pdgs = {22,         // photon
+                              11, 13, 15, // charged leptons
+                              12, 14, 16  // neutrinos
+                              };
+    m_ChargedLeptons.resize(3);
+    m_Neutrinos.resize(3);
+
+    std::vector<ThermalParticle*> parts = {
+            &m_Photon,
+            &m_ChargedLeptons[0], &m_ChargedLeptons[1], &m_ChargedLeptons[2],
+            &m_Neutrinos[0], &m_Neutrinos[1], &m_Neutrinos[2]
+    };
+    std::vector<double> degeneracies = {
+            2., 2., 2., 2., 1., 1., 1.
+    };
+    //for (auto pdg : pdgs) {
+    for(int ipdg = 0; ipdg < pdgs.size(); ++ipdg) {
+      long long pdg = pdgs[ipdg];
+
+      *parts[ipdg] = ExtraParticles::ParticleByPdg(pdg);
+      // Check if the particle is already in the "HRG" particle list
+      // if so, take it from there and set its degeneracy to zero in "HRG" to avoid double counting
+      const ThermalParticle& part = ExtraParticles::ParticleByPdg(pdg);
+      if (m_modelHRG->TPS()->PdgToId(pdg) != -1) {
+        *parts[ipdg] = m_modelHRG->TPS()->Particle(m_modelHRG->TPS()->PdgToId(pdg));
+        m_modelHRG->TPS()->ParticleByPDG(pdg).SetDegeneracy(0.);
+        if (m_modelHRG->TPS()->PdgToId(-pdg) != -1)
+          m_modelHRG->TPS()->ParticleByPDG(-pdg).SetDegeneracy(0.);
+      }
+      if (parts[ipdg]->Degeneracy() == 0)
+        parts[ipdg]->SetDegeneracy(degeneracies[ipdg]);
+    }
+
     // Photon
-    m_Photon = ThermalParticle(true, "photon", 22, 2., -1, 0.);
+    //m_Photon = ThermalParticle(true, "photon", 22, 2., -1, 0.);
     
     // Charged leptons
-    m_ChargedLeptons.push_back(ThermalParticle(true, "e", 11, 2., 1, LeptonFlavor::m_e, 0, 0, -1));
-    m_ChargedLeptons.push_back(ThermalParticle(true, "mu", 13, 2., 1, LeptonFlavor::m_mu, 0, 0, -1));
-    m_ChargedLeptons.push_back(ThermalParticle(true, "tau", 15, 2., 1, LeptonFlavor::m_tau, 0, 0, -1));
+//    m_ChargedLeptons.push_back(ThermalParticle(true, "e", 11, 2., 1, LeptonFlavor::m_e, 0, 0, -1));
+//    m_ChargedLeptons.push_back(ThermalParticle(true, "mu", 13, 2., 1, LeptonFlavor::m_mu, 0, 0, -1));
+//    m_ChargedLeptons.push_back(ThermalParticle(true, "tau", 15, 2., 1, LeptonFlavor::m_tau, 0, 0, -1));
 
     // Neutrinos
-    m_Neutrinos.push_back(ThermalParticle(true, "nu_e", 12, 1., 1, 0.));
-    m_Neutrinos.push_back(ThermalParticle(true, "nu_m", 14, 1., 1, 0.));
-    m_Neutrinos.push_back(ThermalParticle(true, "nu_t", 16, 1., 1, 0.));
+//    m_Neutrinos.push_back(ThermalParticle(true, "nu_e", 12, 1., 1, 0.));
+//    m_Neutrinos.push_back(ThermalParticle(true, "nu_m", 14, 1., 1, 0.));
+//    m_Neutrinos.push_back(ThermalParticle(true, "nu_t", 16, 1., 1, 0.));
 
     SetPionsInteracting(pionsinteract);
   }
