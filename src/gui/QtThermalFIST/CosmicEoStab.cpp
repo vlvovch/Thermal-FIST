@@ -376,7 +376,7 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
 
     QLabel *labelnE = new QLabel(tr("ℓ<sub>e</sub>/s:"));
     spinnE = new QDoubleSpinBox();
-    spinnE->setDecimals(5);
+    spinnE->setDecimals(12);
     spinnE->setMinimum(-10000.);
     spinnE->setMaximum(10000.);
     spinnE->setValue(0.);
@@ -384,7 +384,7 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
 
     QLabel *labelnMu = new QLabel(tr("ℓ<sub>μ</sub>/s:"));
     spinnMu = new QDoubleSpinBox();
-    spinnMu->setDecimals(5);
+    spinnMu->setDecimals(12);
     spinnMu->setMinimum(-10000.);
     spinnMu->setMaximum(10000.);
     spinnMu->setValue(0.);
@@ -392,7 +392,7 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
 
     QLabel *labelnTau = new QLabel(tr("ℓ<sub>τ</sub>/s:"));
     spinnTau = new QDoubleSpinBox();
-    spinnTau->setDecimals(5);
+    spinnTau->setDecimals(12);
     spinnTau->setMinimum(-10000.);
     spinnTau->setMaximum(10000.);
     spinnTau->setValue(0.);

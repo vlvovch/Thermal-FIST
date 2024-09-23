@@ -7,13 +7,14 @@
  */
 #ifndef XMATH_H
 #define XMATH_H
-
 /**
  * \file xMath.h
  * 
  * \brief Contains some extra mathematical functions used in the code.
  * 
  */
+
+#include <cmath>
 
 namespace thermalfist {
 
@@ -70,8 +71,16 @@ namespace thermalfist {
     double LogGamma(double);
     double Gamma(double);
     //@}
+
+    // Computing Lambert W function (0-branch) using Halley's method
+    // The desired accuracy is within 10 * epsilon where epsilon is the machine precision
+    // Initial guess is z = 0
+    template<typename T> T LambertW0(T z);
   }
 
 } // namespace thermalfist
+
+// Implementation of template functions
+#include "xMath.tcc"
 
 #endif // XMATH_H
