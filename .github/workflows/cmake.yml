@@ -25,12 +25,15 @@ jobs:
 
     env:
       prefix: bin/examples/
+      suffix: ''
 
     steps:
     - uses: actions/checkout@v2
 
     - if: ${{ matrix.prefix }}
       run: echo "prefix=${{ matrix.prefix }}" >> $GITHUB_ENV
+    - if: ${{ matrix.prefix }}
+      run: echo "suffix=.exe" >> $GITHUB_ENV
 
     # - name: Install Qt
     #   uses: WillBrennan/yaqti
@@ -76,39 +79,39 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/CalculationTmu
+      run: ${prefix}CalculationTmu${suffix}
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/BagModelFit 0.50 0.100 0.301 0.005
+      run: ${prefix}BagModelFit${suffix} 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/cpc1HRGTDep 0
+      run: ${prefix}cpc1HRGTDep${suffix} 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/cpc1HRGTDep 1
+      run: ${prefix}cpc1HRGTDep${suffix} 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/cpc1HRGTDep 2
+      run: ${prefix}cpc1HRGTDep${suffix} 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/cpc3chi2NEQ 0
+      run: ${prefix}cpc3chi2NEQ${suffix} 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/cpc4mcHRG 1 100
+      run: ${prefix}cpc4mcHRG${suffix} 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}/PCE-Saha-LHC
+      run: ${prefix}PCE-Saha-LHC${suffix}
