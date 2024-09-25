@@ -20,15 +20,15 @@ jobs:
         matrix:
             os: 
               - ubuntu-latest
-                prefix: "bin/examples/"
+                prefix: bin/examples/
               - ubuntu-20.04
-                prefix: "bin/examples/"
+                prefix: bin/examples/
               - macos-13 
-                prefix: "bin/examples/"
+                prefix: bin/examples/
               - macos-latest
-                prefix: "bin/examples/"
+                prefix: bin/examples/
               - windows-latest
-                prefix: "bin/examples/Release/"
+                prefix: bin/examples/Release/
 
             qts: [6.2.0, 5.15.2]
 
