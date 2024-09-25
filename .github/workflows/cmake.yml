@@ -76,7 +76,7 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/CalculationTmu
+      run: ${prefix}/CalculationTmu
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
