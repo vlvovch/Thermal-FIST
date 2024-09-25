@@ -17,7 +17,8 @@ jobs:
     
     strategy:
         matrix:
-            os: [ubuntu-latest, ubuntu-20.04]
+            os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest]
+            qts: [6.2.0, 5.15.2]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,6 +32,8 @@ jobs:
     #     modules: 'qtcharts qtprintsupport'
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
+      version: ${{ matrix.qts }}
+      modules: 'qtprintsupport'
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -63,39 +66,39 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/CalculationTmu
+      run: bin/examples/CalculationTmu
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/BagModelFit 0.50 0.100 0.301 0.005
+      run: bin/examples/BagModelFit 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/cpc1HRGTDep 0
+      run: bin/examples/cpc1HRGTDep 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/cpc1HRGTDep 1
+      run: bin/examples/cpc1HRGTDep 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/cpc1HRGTDep 2
+      run: bin/examples/cpc1HRGTDep 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/cpc3chi2NEQ 0
+      run: bin/examples/cpc3chi2NEQ 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/cpc4mcHRG 1 100
+      run: bin/examples/cpc4mcHRG 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: examples/PCE-Saha-LHC
+      run: bin/examples/PCE-Saha-LHC
