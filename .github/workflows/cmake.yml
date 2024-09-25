@@ -81,34 +81,34 @@ jobs:
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/BagModelFit 0.50 0.100 0.301 0.005
+      run: ${prefix}/BagModelFit 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/cpc1HRGTDep 0
+      run: ${prefix}/cpc1HRGTDep 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/cpc1HRGTDep 1
+      run: ${prefix}/cpc1HRGTDep 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/cpc1HRGTDep 2
+      run: ${prefix}/cpc1HRGTDep 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/cpc3chi2NEQ 0
+      run: ${prefix}/cpc3chi2NEQ 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/cpc4mcHRG 1 100
+      run: ${prefix}/cpc4mcHRG 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{prefix}}/PCE-Saha-LHC
+      run: ${prefix}/PCE-Saha-LHC
