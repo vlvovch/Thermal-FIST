@@ -1,4 +1,5 @@
 #include <cmath>
+#include <limits>
 
 namespace thermalfist {
 
