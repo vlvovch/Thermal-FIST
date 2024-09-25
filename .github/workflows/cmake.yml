@@ -20,11 +20,10 @@ jobs:
         matrix:
             os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
             qts: [6.2.0, 5.15.2]
+            prefix: bin/examples/
             include:
               - os: windows-latest
                 prefix: bin/examples/Release/
-              - os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest]
-                prefix: bin/examples/
 
     steps:
     - uses: actions/checkout@v2
