@@ -32,8 +32,8 @@ jobs:
                 prefix: bin/examples/Release/
                 suffix: .exe
             exclude:
-              os: macos-latest
-              qts: [5.15.2]
+              - os: macos-latest
+                qts: 5.15.2
 
     # env:
     #   prefix: bin/examples/
