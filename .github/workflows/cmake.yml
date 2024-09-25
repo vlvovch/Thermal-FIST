@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
-        fail-fast: true
+        fail-fast: false
         matrix:
             os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest]
             qts: [6.2.0, 5.15.2]
