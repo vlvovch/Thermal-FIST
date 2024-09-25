@@ -17,25 +17,23 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            # os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
-            # qts: [6.2.0, 5.15.2]
+            os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
+            qts: [6.2.0, 5.15.2]
             include:
               - os: ubuntu-latest
                 prefix: bin/examples/
-                qts: [6.2.0, 5.15.2]
               - os: ubuntu-20.04
                 prefix: bin/examples/
-                qts: [6.2.0, 5.15.2]
               - os: macos-13
                 prefix: bin/examples/
-                qts: [6.2.0, 5.15.2]
               - os: macos-latest
                 prefix: bin/examples/
-                qts: [6.2.0]
               - os: windows-latest
                 prefix: bin/examples/Release/
                 suffix: .exe
-                qts: [6.2.0, 5.15.2]
+              exclude:
+                os: macos-latest
+                qts: [5.15.2]
 
     # env:
     #   prefix: bin/examples/
