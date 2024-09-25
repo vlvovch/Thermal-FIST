@@ -34,7 +34,8 @@ if (NOT CXX_COMPILER_FLAGS_CHECKED)
 	# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 	# 	set(CMAKE_CXX_STANDARD 14)
 	endif()
-    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
+	SET(CXX_COMPILER_FLAGS_CHECKED TRUE)
+#    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
 endif()
 
 # Turn on the ability to create folders to organize projects (.vcproj)
@@ -49,7 +50,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if (NOT EIGEN3_INCLUDE_DIR)
-   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Eigen3" CACHE STRING
+   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/eigen-3.4.0" CACHE STRING
       "Choose the location (include directory) of the Eigen3 library to use."
       FORCE)
 endif(NOT EIGEN3_INCLUDE_DIR)

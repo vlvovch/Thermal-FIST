@@ -272,6 +272,39 @@ namespace thermalfist {
      */
     void GetCoefsIntegrateLaguerre32(std::vector<double> *x, std::vector<double> *w);
 
+
+    /**
+     * Template version.
+     * Populates the nodes and weights for integrating
+     * a function f(x)
+     * in the range ax < x < bx
+     * using the 32-point Gauss-Legendre quadrature.
+     *
+     * \param [in] a Left limit of integration.
+     * \param [in] b Right limit of integration
+     * \param [out] x Gauss-Legendre nodes.
+     * \param [out] w Gauss-Legendre weights.
+     */
+    template <typename T>
+    void GetCoefsIntegrateLegendre32Generic(T a, T b, std::vector<T> *xp, std::vector<T> *wp) {
+      // Integrate function from a to b using Legendre-Gaussian integration
+      // with 32 points.
+      //
+      std::vector<T> &x = *xp;
+      std::vector<T> &w = *wp;
+
+      x.resize(32);
+      w.resize(32);
+
+      const double *xlego = coefficients_xleg32;
+      const double *wlego = coefficients_wleg32;
+
+
+      for (int i = 0; i < 32; i++) {
+        w[i] = (b - a) / 2. * wlego[i];
+        x[i] = (b - a) / 2. * xlego[i] + (b + a) / 2.;
+      }
+    }
   }
 
 } // namespace thermalfist

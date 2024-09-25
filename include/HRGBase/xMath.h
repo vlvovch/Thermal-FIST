@@ -14,7 +14,6 @@
  * 
  */
 
-#include <cmath>
 
 namespace thermalfist {
 

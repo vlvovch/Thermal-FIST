@@ -1,3 +1,5 @@
+#include <cmath>
+
 namespace thermalfist {
 
   namespace xMath {

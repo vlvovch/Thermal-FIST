@@ -71,6 +71,11 @@ namespace thermalfist {
     const std::vector< std::vector<int> >& EVComponentIndices() const { return VDWComponentIndices(); }
   };
 
+  /// \brief Sets EV interactions for baryon-baryon and antibaryon-antibaryon pairs as in https://arxiv.org/abs/1708.02852
+  /// \param model Pointer to the thermal model object
+  /// \param b Repulsion parameter in fm^3
+  void SetEVHRGInteractionParameters(ThermalModelBase *model, double b);
+
 } // namespace thermalfist
 
 #endif
