@@ -17,23 +17,37 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
-            qts: [6.2.0, 5.15.2]
+            # os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
+            # qts: [6.2.0, 5.15.2]
             include:
+              - os: ubuntu-latest
+                prefix: bin/examples/
+                qts: [6.2.0, 5.15.2]
+              - os: ubuntu-20.04
+                prefix: bin/examples/
+                qts: [6.2.0, 5.15.2]
+              - os: macos-13
+                prefix: bin/examples/
+                qts: [6.2.0, 5.15.2]
+              - os: macos-latest
+                prefix: bin/examples/
+                qts: [6.2.0]
               - os: windows-latest
                 prefix: bin/examples/Release/
+                suffix: .exe
+                qts: [6.2.0, 5.15.2]
 
-    env:
-      prefix: bin/examples/
-      suffix: ''
+    # env:
+    #   prefix: bin/examples/
+    #   suffix: ''
 
     steps:
     - uses: actions/checkout@v2
 
-    - if: ${{ matrix.prefix }}
-      run: echo "prefix=${{ matrix.prefix }}" >> $GITHUB_ENV
-    - if: ${{ matrix.prefix }}
-      run: echo "suffix=.exe" >> $GITHUB_ENV
+    # - if: ${{ matrix.prefix }}
+    #   run: echo "prefix=${{ matrix.prefix }}" >> $GITHUB_ENV
+    # - if: ${{ matrix.prefix }}
+    #   run: echo "suffix=.exe" >> $GITHUB_ENV
 
     # - name: Install Qt
     #   uses: WillBrennan/yaqti
@@ -79,39 +93,39 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}CalculationTmu${suffix}
+      run: ${{ matrix.prefix }}CalculationTmu${{ matrix.suffix }}
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}BagModelFit${suffix} 0.50 0.100 0.301 0.005
+      run: ${{ matrix.prefix }}BagModelFit${{ matrix.suffix }} 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}cpc1HRGTDep${suffix} 0
+      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}cpc1HRGTDep${suffix} 1
+      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}cpc1HRGTDep${suffix} 2
+      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}cpc3chi2NEQ${suffix} 0
+      run: ${{ matrix.prefix }}cpc3chi2NEQ${{ matrix.suffix }} 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}cpc4mcHRG${suffix} 1 100
+      run: ${{ matrix.prefix }}cpc4mcHRG${{ matrix.suffix }} 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${prefix}PCE-Saha-LHC${suffix}
+      run: ${{ matrix.prefix }}PCE-Saha-LHC
