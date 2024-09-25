@@ -18,19 +18,13 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            os: 
-              - ubuntu-latest
-                prefix: bin/examples/
-              - ubuntu-20.04
-                prefix: bin/examples/
-              - macos-13 
-                prefix: bin/examples/
-              - macos-latest
-                prefix: bin/examples/
-              - windows-latest
-                prefix: bin/examples/Release/
-
+            os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
             qts: [6.2.0, 5.15.2]
+            include:
+              - os: windows-latest
+                prefix: bin/examples/Release/
+              - os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest]
+                prefix: bin/examples/
 
     steps:
     - uses: actions/checkout@v2
@@ -79,39 +73,39 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/CalculationTmu
+      run: ${{matrix.prefix}}/CalculationTmu
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/BagModelFit 0.50 0.100 0.301 0.005
+      run: ${{matrix.prefix}}/BagModelFit 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/cpc1HRGTDep 0
+      run: ${{matrix.prefix}}/cpc1HRGTDep 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/cpc1HRGTDep 1
+      run: ${{matrix.prefix}}/cpc1HRGTDep 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/cpc1HRGTDep 2
+      run: ${{matrix.prefix}}/cpc1HRGTDep 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/cpc3chi2NEQ 0
+      run: ${{matrix.prefix}}/cpc3chi2NEQ 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/cpc4mcHRG 1 100
+      run: ${{matrix.prefix}}/cpc4mcHRG 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.os.prefix}}/PCE-Saha-LHC
+      run: ${{matrix.prefix}}/PCE-Saha-LHC
