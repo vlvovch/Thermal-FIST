@@ -20,10 +20,15 @@ jobs:
         matrix:
             os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
             qts: [6.2.0, 5.15.2]
-            prefix: bin/examples/
             include:
               - os: windows-latest
                 prefix: bin/examples/Release/
+
+    env:
+      prefix: bin/examples/
+    - if: ${{ matrix.prefix }}
+      env:
+        prefix: ${{ matrix.prefix }}
 
     steps:
     - uses: actions/checkout@v2
@@ -72,39 +77,39 @@ jobs:
     - name: CalculationTmu
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/CalculationTmu
+      run: ${{prefix}}/CalculationTmu
       
     - name: BagModelFit
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/BagModelFit 0.50 0.100 0.301 0.005
+      run: ${{prefix}}/BagModelFit 0.50 0.100 0.301 0.005
       
     - name: cpc1HRGTDep0
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/cpc1HRGTDep 0
+      run: ${{prefix}}/cpc1HRGTDep 0
 
     - name: cpc1HRGTDep1
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/cpc1HRGTDep 1
+      run: ${{prefix}}/cpc1HRGTDep 1
       
     - name: cpc1HRGTDep2
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/cpc1HRGTDep 2
+      run: ${{prefix}}/cpc1HRGTDep 2
 
     - name: cpc3chi2NEQ
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/cpc3chi2NEQ 0
+      run: ${{prefix}}/cpc3chi2NEQ 0
 
     - name: cpc4mcHRG
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/cpc4mcHRG 1 100
+      run: ${{prefix}}/cpc4mcHRG 1 100
 
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{matrix.prefix}}/PCE-Saha-LHC
+      run: ${{prefix}}/PCE-Saha-LHC
