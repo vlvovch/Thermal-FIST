@@ -186,7 +186,7 @@ jobs:
       - name: cpc4mcHRG
         working-directory: ${{github.workspace}}/build
         shell: bash
-        run: ${prefix}cpc4mcHRG$ 1 100
+        run: ${prefix}cpc4mcHRG 1 100
 
       - name: PCE-Saha-LHC
         working-directory: ${{github.workspace}}/build
