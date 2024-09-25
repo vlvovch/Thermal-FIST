@@ -30,8 +30,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - if: ${{ matrix.prefix }}
-      env:
-        prefix: ${{ matrix.prefix }}
+      run: echo "prefix=${{ matrix.prefix }}" >> $GITHUB_ENV
 
     # - name: Install Qt
     #   uses: WillBrennan/yaqti
