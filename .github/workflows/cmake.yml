@@ -23,14 +23,16 @@ jobs:
               - os: windows-latest
                 prefix: bin/examples/Release/
 
-    # env:
-    #   prefix: bin/examples/
-    # - if: ${{ matrix.prefix }}
-    #   env:
-    #     prefix: ${{ matrix.prefix }}
+    env:
+      prefix: bin/examples/
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: fix-prefix
+        if: ${{ matrix.prefix }}
+        env:
+          prefix: ${{ matrix.prefix }}
 
     # - name: Install Qt
     #   uses: WillBrennan/yaqti
