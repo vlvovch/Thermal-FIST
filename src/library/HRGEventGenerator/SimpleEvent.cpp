@@ -131,11 +131,18 @@ namespace thermalfist {
     fout << std::fixed;
   }
 
-  void SimpleEvent::writeToFileForSmash(std::ofstream& fout, const ThermalParticleSystem *m_TPS) const
+  void SimpleEvent::writeToFileForSmash(std::ofstream& fout, const ThermalParticleSystem *m_TPS, const int eventnumber) const
   {
-    fout << "# event start" << std::endl;
+    int eventnumber_smash = eventnumber -1;
+    if (eventnumber_smash == 0) {
+      fout << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge" << std::endl;
+      fout << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e" << std::endl;
+      fout << "# FISTSampler" << std::endl;
+    }
+    
+    fout << "# event "<< eventnumber_smash << " out " << Particles.size()  << std::endl;
 
-    fout.precision(16);
+    fout.precision(10);
     // fout << std::scientific;
 
     const int tabsize = 4;
@@ -149,21 +156,21 @@ namespace thermalfist {
       else{
         charge = 0;
       }
-      fout << std::setw(tabsize) << Particles[i].r0 << " "
-        << std::setw(tabsize) << Particles[i].rx << " "
-        << std::setw(tabsize) << Particles[i].ry << " "
-        << std::setw(tabsize) << Particles[i].rz << " "
-        << std::setw(tabsize) << Particles[i].m << " "
-        << std::setw(tabsize) << Particles[i].p0 << " "
-        << std::setw(tabsize) << Particles[i].px << " "
-        << std::setw(tabsize) << Particles[i].py << " "
-        << std::setw(tabsize) << Particles[i].pz << " "
-        << std::setw(tabsize) << Particles[i].PDGID << " "
-        << std::setw(tabsize) << i << " "
-        << std::setw(tabsize) << charge << " "; // TODO: has the be the electric charge, don't know how to get it here
+      fout  << Particles[i].r0 << " "
+         << Particles[i].rx << " "
+         << Particles[i].ry << " "
+         << Particles[i].rz << " "
+         << Particles[i].m << " "
+         << Particles[i].p0 << " "
+         << Particles[i].px << " "
+         << Particles[i].py << " "
+         << Particles[i].pz << " "
+         << Particles[i].PDGID << " "
+         << i << " "
+         << charge;
       fout << std::endl;
     }
-    fout << "# event end" << std::endl;
+    fout << "# event "<< eventnumber_smash <<" end 0 impact   0.000 scattering_projectile_target yes" << std::endl;
     fout << std::fixed;
   }
 

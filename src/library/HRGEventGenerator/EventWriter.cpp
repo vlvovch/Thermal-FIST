@@ -106,7 +106,7 @@ namespace thermalfist {
     if (!m_fout.is_open())
       return false;
     ++m_EventNumber;
-    evt.writeToFileForSmash(m_fout, m_TPS);
+    evt.writeToFileForSmash(m_fout, m_TPS, m_EventNumber);
     return true;
   }
 

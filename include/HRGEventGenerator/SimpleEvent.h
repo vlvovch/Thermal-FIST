@@ -84,7 +84,7 @@ namespace thermalfist {
     void writeToFileForUrqmd(std::ofstream& fout) const;
 
     /// Writes the event in a format suitable for SMASH afterburner
-    void writeToFileForSmash(std::ofstream& fout, const thermalfist::ThermalParticleSystem* TPS = NULL) const;
+    void writeToFileForSmash(std::ofstream& fout, const thermalfist::ThermalParticleSystem* TPS = NULL, const int eventnumber = 1) const;
   };
 
 } // namespace thermalfist
