@@ -24,6 +24,7 @@ namespace thermalfist {
     double T, muB, muQ, muS;
     double edens, rhoB;
     double pi[10];
+    double Pi;
     double P;
   };
 
@@ -68,6 +69,8 @@ namespace thermalfist {
        * \param mass             Particle mass in GeV. If negative, the pole/vacuum mass is used.
        * \param etasmear         The smear in longitudinal rapidity
        * \param shear_correction Use shear viscous corrections for the momenta of the particles
+       * \param bulk_correction  Use bulk viscous corrections for the momenta of the particles
+       * \param speed_of_sound_squared The speed of sound squared in the medium
        *
        * \return                A vector of 7 elements, the first 3 elements are the three-momentum (px,py,pz) in GeV,
        *                        the remaining four elements is the space-time coordinate (r0,rx,ry,rz) in fm/c
@@ -77,7 +80,9 @@ namespace thermalfist {
         const ThermalParticle* particle,
         const double& mass = -1.,
         const double& etasmear = 0.,
-        const bool shear_correction = false
+        const bool shear_correction = false,
+        const bool bulk_correction = false,
+        const double speed_of_sound_squared = 0.333
       );
 
       /**
@@ -92,7 +97,7 @@ namespace thermalfist {
         const ParticlizationHypersurface* hypersurface = NULL,
         const ThermalParticle* particle = NULL,
         const VolumeElementSampler* positionsampler = NULL,
-        double etasmear = 0.0, bool shear_correction = false);
+        double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333);
 
       /**
        * \brief BoostInvariantMomentumGenerator desctructor.
@@ -104,6 +109,8 @@ namespace thermalfist {
       double EtaSmear() const { return m_EtaSmear; }
       double Mass() const { return m_Particle->Mass(); }
       bool ShearCorrection() const { return m_ShearCorrection; }
+      bool BulkCorrection() const { return m_BulkCorrection; }
+      double SpeedOfSoundSquared() const { return m_SpeedOfSoundSquared; }
 
       // Override functions begin
 
@@ -120,6 +127,8 @@ namespace thermalfist {
       const VolumeElementSampler* m_VolumeElementSampler;
       double m_EtaSmear;
       bool m_ShearCorrection;
+      bool m_BulkCorrection;
+      double m_SpeedOfSoundSquared;
     };
 
 
@@ -202,12 +211,14 @@ namespace thermalfist {
     HypersurfaceEventGenerator(
       const ParticlizationHypersurface* hypersurface = NULL,
       ThermalModelBase* model = NULL,
-      double etasmear = 0.0, bool shear_correction = false) : EventGeneratorBase()
+      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333) : EventGeneratorBase()
     {
       SetHypersurface(hypersurface);
       SetEtaSmear(etasmear);
       SetRescaleTmu();
       SetShearCorrection(shear_correction);
+      SetBulkCorrection(bulk_correction);
+      SetSpeedOfSoundSquared(speed_of_sound_squared);
       m_THM = model;
       //SetParameters(hypersurface, model, etasmear);
     }
@@ -220,12 +231,14 @@ namespace thermalfist {
      * \param hypersurface   A pointer to the particlization hypersurface.  Not deleted at destruction!
      * \param etasmear       Smearing in rapidity
      * \param shear_correction include shear correct in momentum space
+     * \param bulk_correction include bulk correct in momentum space
+     * \param speed_of_sound_squared The speed of sound squared in the medium
      */
     HypersurfaceEventGenerator(
       ThermalParticleSystem* TPS,
       const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
       const ParticlizationHypersurface* hypersurface = NULL,
-      double etasmear = 0.0, bool shear_correction = false);
+      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333);
 
     virtual ~HypersurfaceEventGenerator() {}
 
@@ -249,6 +262,12 @@ namespace thermalfist {
 
     void SetShearCorrection(bool shear_correction) { m_ShearCorrection = shear_correction; }
     bool GetShearCorrection() { return m_ShearCorrection; }
+
+    void SetBulkCorrection(bool bulk_correction) { m_BulkCorrection = bulk_correction; }
+    bool GetBulkCorrection() { return m_BulkCorrection; }
+
+    void SetSpeedOfSoundSquared(double speed_of_sound_squared) { m_SpeedOfSoundSquared = speed_of_sound_squared; }
+    double GetSpeedOfSoundSquared() { return m_SpeedOfSoundSquared; }
 
     void SetRescaleTmu(bool rescale = false, double edens = 0.26);
 
@@ -304,6 +323,8 @@ namespace thermalfist {
     std::vector<double> m_Musav;
     bool m_RescaleTmu;
     bool m_ShearCorrection;
+    bool m_BulkCorrection;
+    double m_SpeedOfSoundSquared;
     double m_edens;
     std::vector<SplineFunction> m_SplinesTMu;
 
