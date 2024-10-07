@@ -494,7 +494,7 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
       messageType = 3;
     else if (model->TPS()->hasMultiBaryons())
       messageType = 1;
-    else if (config.QuantumStatisticsInclude == 0)
+    else if (config.QuantumStatisticsInclude == 0 && config.QuantumStatistics != 0)
       messageType = 2;
 
     QVector<QString> messages = {
