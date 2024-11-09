@@ -645,17 +645,19 @@ namespace thermalfist {
         
       }
       if (bulk_correction){
-        // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
-        // eq (7) of https://arxiv.org/pdf/1509.06738
+         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+         // Eq. (7) of https://arxiv.org/pdf/1509.06738 plus Eq. (4) from https://arxiv.org/pdf/1403.0962
+         // see also https://github.com/smash-transport/smash-hadron-sampler/files/14011233/bulk_corrections_note.pdf
          double mom[4] = {part.p0, part.px, part.py, part.pz};
-         Weight_visc -= (1.0+stat*feq)*elem->Pi*(mass*mass/(3*mom[0])-mom[0]*(1.0/3.0-speed_of_sound_squared))//what to do about this
-        /(15*(1.0/3.0-speed_of_sound_squared)*(1.0/3.0-speed_of_sound_squared)*T*(elem->edens + elem->P))  ;
+         Weight_visc -= (1.0+stat*feq)*elem->Pi
+                 *(mass*mass/(3*mom[0])-mom[0]*(1.0/3.0-speed_of_sound_squared))
+                 /(15*(1.0/3.0-speed_of_sound_squared)*(1.0/3.0-speed_of_sound_squared)*T*(elem->edens + elem->P))  ;
       }
-      if (bulk_correction or shear_correction){
+      if (bulk_correction || shear_correction){
         if (Weight_visc<Wvisc_min) Weight_visc = Wvisc_min;
         if (Weight_visc>Wvisc_max) Weight_visc = Wvisc_max;
         // update weight with viscosity factor
-      Weight *= Weight_visc;
+        Weight *= Weight_visc;
       }
       
       

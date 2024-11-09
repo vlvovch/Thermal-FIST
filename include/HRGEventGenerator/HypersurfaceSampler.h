@@ -97,7 +97,10 @@ namespace thermalfist {
         const ParticlizationHypersurface* hypersurface = NULL,
         const ThermalParticle* particle = NULL,
         const VolumeElementSampler* positionsampler = NULL,
-        double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333);
+        double etasmear = 0.0,
+        bool shear_correction = false,
+        bool bulk_correction = false,
+        double speed_of_sound_squared = 0.15);
 
       /**
        * \brief BoostInvariantMomentumGenerator desctructor.
@@ -238,7 +241,7 @@ namespace thermalfist {
       ThermalParticleSystem* TPS,
       const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
       const ParticlizationHypersurface* hypersurface = NULL,
-      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333);
+      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15);
 
     virtual ~HypersurfaceEventGenerator() {}
 
