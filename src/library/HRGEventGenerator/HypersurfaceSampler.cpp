@@ -72,14 +72,14 @@ namespace thermalfist {
   (const ParticlizationHypersurface* hypersurface,
     const ThermalParticle* particle,
     const VolumeElementSampler* positionsampler,
-    double etasmear, bool shear_correction, bool bulk_correction, double speed_of_sound_squared) :
+    const HypersurfaceMomentumGeneratorConfiguration& config) :
     m_ParticlizationHypersurface(hypersurface),
     m_Particle(particle),
     m_VolumeElementSampler(positionsampler),
-    m_EtaSmear(etasmear),
-    m_ShearCorrection(shear_correction),
-    m_BulkCorrection(bulk_correction),
-    m_SpeedOfSoundSquared(speed_of_sound_squared)
+    m_EtaSmear(config.etaSmear),
+    m_ShearCorrection(config.shearCorrection),
+    m_BulkCorrection(config.bulkCorrection),
+    m_SpeedOfSoundSquared(config.speedOfSoundSquared)
   {
 
   }
@@ -112,6 +112,19 @@ namespace thermalfist {
     SetBulkCorrection(bulk_correction);
     SetSpeedOfSoundSquared(speed_of_sound_squared);
     //SetParameters(hypersurface, m_THM, etasmear);
+  }
+
+
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem *TPS,
+                                                         const EventGeneratorConfiguration &config,
+                                                         const ParticlizationHypersurface *hypersurface,
+                                                         const RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration &configMomentumGenerator
+                                                         ) : EventGeneratorBase(), m_MomentumGeneratorConfig(configMomentumGenerator)
+  {
+    SetConfiguration(TPS, config);
+    SetHypersurface(hypersurface);
+    SetMomentumGeneratorConfig(configMomentumGenerator);
+    SetRescaleTmu();
   }
 
   std::vector<double> HypersurfaceEventGenerator::GCEMeanYields() const
@@ -359,10 +372,7 @@ namespace thermalfist {
           m_ParticlizationHypersurface,
           &m_THM->TPS()->Particle(i),
           &m_VolumeElementSamplers[i],
-          GetEtaSmear(),
-          GetShearCorrection(),
-          GetBulkCorrection(),
-          GetSpeedOfSoundSquared()
+          m_MomentumGeneratorConfig
         ));
 
         // Should not be used
@@ -398,6 +408,7 @@ namespace thermalfist {
       }
     }
   }
+
 
   RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::BoostInvariantHypersurfaceMomentumGenerator(
     const ParticlizationHypersurface* hypersurface,
