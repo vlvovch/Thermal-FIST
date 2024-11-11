@@ -273,7 +273,7 @@ namespace thermalfist {
       ThermalParticleSystem* TPS,
       const EventGeneratorConfiguration& config,
       const ParticlizationHypersurface* hypersurface,
-      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15);
+      double etasmear, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15);
 
     virtual ~HypersurfaceEventGenerator() {}
 
