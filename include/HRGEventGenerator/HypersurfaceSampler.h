@@ -231,7 +231,7 @@ namespace thermalfist {
     HypersurfaceEventGenerator(
       const ParticlizationHypersurface* hypersurface = NULL,
       ThermalModelBase* model = NULL,
-      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.333) : EventGeneratorBase()
+      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15) : EventGeneratorBase()
     {
       SetHypersurface(hypersurface);
       SetEtaSmear(etasmear);
