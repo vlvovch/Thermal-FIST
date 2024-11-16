@@ -72,12 +72,14 @@ namespace thermalfist {
   (const ParticlizationHypersurface* hypersurface,
     const ThermalParticle* particle,
     const VolumeElementSampler* positionsampler,
-    double etasmear, bool shear_correction) :
+    const HypersurfaceMomentumGeneratorConfiguration& config) :
     m_ParticlizationHypersurface(hypersurface),
     m_Particle(particle),
     m_VolumeElementSampler(positionsampler),
-    m_EtaSmear(etasmear),
-    m_ShearCorrection(shear_correction)
+    m_EtaSmear(config.etaSmear),
+    m_ShearCorrection(config.shearCorrection),
+    m_BulkCorrection(config.bulkCorrection),
+    m_SpeedOfSoundSquared(config.speedOfSoundSquared)
   {
 
   }
@@ -96,10 +98,10 @@ namespace thermalfist {
 
     const ParticlizationHypersurfaceElement& elem = (*m_ParticlizationHypersurface)[VolumeElementIndex];
 
-    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear(), ShearCorrection());
+    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear(), ShearCorrection(), BulkCorrection(), SpeedOfSoundSquared());
   }
 
-  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear, bool shear_correction) :
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear, bool shear_correction, bool bulk_correction, double speed_of_sound_squared) :
     EventGeneratorBase()
   {
     SetConfiguration(TPS, config);
@@ -107,7 +109,22 @@ namespace thermalfist {
     SetEtaSmear(etasmear);
     SetRescaleTmu();
     SetShearCorrection(shear_correction);
+    SetBulkCorrection(bulk_correction);
+    SetSpeedOfSoundSquared(speed_of_sound_squared);
     //SetParameters(hypersurface, m_THM, etasmear);
+  }
+
+
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem *TPS,
+                                                         const EventGeneratorConfiguration &config,
+                                                         const ParticlizationHypersurface *hypersurface,
+                                                         const RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration &configMomentumGenerator
+                                                         ) : EventGeneratorBase(), m_MomentumGeneratorConfig(configMomentumGenerator)
+  {
+    SetConfiguration(TPS, config);
+    SetHypersurface(hypersurface);
+    SetMomentumGeneratorConfig(configMomentumGenerator);
+    SetRescaleTmu();
   }
 
   std::vector<double> HypersurfaceEventGenerator::GCEMeanYields() const
@@ -355,8 +372,7 @@ namespace thermalfist {
           m_ParticlizationHypersurface,
           &m_THM->TPS()->Particle(i),
           &m_VolumeElementSamplers[i],
-          GetEtaSmear(),
-          GetShearCorrection()
+          m_MomentumGeneratorConfig
         ));
 
         // Should not be used
@@ -392,6 +408,7 @@ namespace thermalfist {
       }
     }
   }
+
 
   RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::BoostInvariantHypersurfaceMomentumGenerator(
     const ParticlizationHypersurface* hypersurface,
@@ -546,7 +563,7 @@ namespace thermalfist {
     else return (j*(j+1))/2 + i ;
   }
 
-  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear, const bool shear_correction)
+  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear, const bool shear_correction, const bool bulk_correction, const double speed_of_sound_squared) 
   {
     if (particle == NULL) {
       printf("**ERROR** in HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!\n");
@@ -624,7 +641,7 @@ namespace thermalfist {
 
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
-      double Weight_visc;
+      double Weight_visc = 1.0;
       if (shear_correction){
         double mom[4] = {part.p0, part.px, part.py, part.pz};
         double pipp = 0.0;
@@ -635,16 +652,26 @@ namespace thermalfist {
         }
         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
         // from this paper Phys.Rev.C 73 (2006) 064903
-        Weight_visc = (1.0 + (1.0 + stat * feq) * pipp / (2.0 * T * T * (elem->edens + elem->P)));
+        Weight_visc += ((1.0 + stat * feq) * pipp / (2.0 * T * T * (elem->edens + elem->P)));
+        
+      }
+      if (bulk_correction){
+         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+         // Eq. (7) of https://arxiv.org/pdf/1509.06738 plus Eq. (4) from https://arxiv.org/pdf/1403.0962
+         // see also https://github.com/smash-transport/smash-hadron-sampler/files/14011233/bulk_corrections_note.pdf
+         double mom[4] = {part.p0, part.px, part.py, part.pz};
+         Weight_visc -= (1.0+stat*feq)*elem->Pi
+                 *(mass*mass/(3*mom[0])-mom[0]*(1.0/3.0-speed_of_sound_squared))
+                 /(15*(1.0/3.0-speed_of_sound_squared)*(1.0/3.0-speed_of_sound_squared)*T*(elem->edens + elem->P))  ;
+      }
+      if (bulk_correction || shear_correction){
         if (Weight_visc<Wvisc_min) Weight_visc = Wvisc_min;
         if (Weight_visc>Wvisc_max) Weight_visc = Wvisc_max;
-      }
-      else {
-        Weight_visc = 1.0;
+        // update weight with viscosity factor
+        Weight *= Weight_visc;
       }
       
-      // update weight with viscosity factor
-      Weight *= Weight_visc;
+      
 
       if (Weight > 1.) {
         printf("**WARNING** HypersurfaceSampler::GetMomentum: Weight exceeds unity by %E\n",
