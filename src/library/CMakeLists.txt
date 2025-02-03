@@ -23,6 +23,7 @@ HRGBase/ThermalParticleSystem.cpp
 HRGBase/Utility.cpp
 HRGBase/xMath.cpp
 HRGBase/Susceptibilities.cpp
+HRGBase/ExtraParticles.cpp
 )
 
 source_group("HRGBase\\Source Files" FILES ${SRCS_HRGBase})
@@ -42,8 +43,10 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelCanonicalStrangeness.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticle.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticleSystem.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.tcc
 ${PROJECT_SOURCE_DIR}/include/HRGBase/Utility.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/Susceptibilities.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/ExtraParticles.h
 )	  
 
 source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})
