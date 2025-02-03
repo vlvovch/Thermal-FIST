@@ -228,7 +228,8 @@ set_property(TARGET ThermalFIST PROPERTY FOLDER "libraries")
 target_include_directories(ThermalFIST PUBLIC 
 "${PROJECT_SOURCE_DIR}/include" 
 "${PROJECT_BINARY_DIR}/include"
-"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister")
+"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister"
+"${EIGEN3_INCLUDE_DIR}")
 
 #install (TARGETS ThermalFIST
 #         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)
