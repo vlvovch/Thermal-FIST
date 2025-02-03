@@ -191,7 +191,7 @@ source_group("CosmicEos\\Source Files" FILES ${SRCS_HRGPCE})
 
 set(HEADERS_COSMICEOS
 ${PROJECT_SOURCE_DIR}/include/CosmicEos/EffectiveMassModel.h
-${PROJECT_SOURCE_DIR}/include/CosmicEos/CosmicEos.h
+${PROJECT_SOURCE_DIR}/include/CosmicEos/CosmicEoS.h
 )	
 
 source_group("CosmicEos\\Header Files" FILES ${HEADERS_HRGPCE})
