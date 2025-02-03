@@ -345,6 +345,11 @@ namespace thermalfist {
   /// For backward compatibility
   typedef ThermalModelVDW ThermalModelVDWFull;
 
+  /// \brief Sets vdW interactions for baryon-baryon and antibaryon-antibaryon pairs as in https://arxiv.org/abs/1609.03975
+  /// \param model Pointer to the thermal model object
+  /// \param a Attraction parameter in GeV*fm^3
+  /// \param b Repulsion parameter in fm^3
+  void SetVDWHRGInteractionParameters(ThermalModelBase *model, double a, double b);
 } // namespace thermalfist
 
 #endif

@@ -19,6 +19,12 @@ configure_file (
 
 # set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
 # set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (CMAKE_CXX_STANDARD)
+	message(STATUS "Using C++${CMAKE_CXX_STANDARD}")
+	SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+	SET(CXX_COMPILER_FLAGS_CHECKED TRUE)
+endif()
+
 if (NOT CXX_COMPILER_FLAGS_CHECKED)
 	include(CheckCXXCompilerFlag)
 	CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
@@ -30,11 +36,16 @@ if (NOT CXX_COMPILER_FLAGS_CHECKED)
 	elseif(COMPILER_SUPPORTS_CXX14 OR COMPILER_SUPPORTS_CXX1Y)
 		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 		set(CMAKE_CXX_STANDARD 14)
+	else()
+		# message(WARNING "The compiler ${CMAKE_CXX_COMPILER} has no C++14 or C++17 support. Please use a different C++ compiler.")
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+		set(CMAKE_CXX_STANDARD 11 REQUIRED)
 	# elseif(COMPILER_SUPPORTS_CXX1Y)
 	# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 	# 	set(CMAKE_CXX_STANDARD 14)
 	endif()
-    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
+	SET(CXX_COMPILER_FLAGS_CHECKED TRUE)
+#    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
 endif()
 
 # Turn on the ability to create folders to organize projects (.vcproj)
@@ -49,7 +60,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if (NOT EIGEN3_INCLUDE_DIR)
-   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Eigen3" CACHE STRING
+   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/eigen-3.4.0" CACHE STRING
       "Choose the location (include directory) of the Eigen3 library to use."
       FORCE)
 endif(NOT EIGEN3_INCLUDE_DIR)
