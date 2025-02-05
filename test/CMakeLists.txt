@@ -12,32 +12,39 @@ gtest_discover_tests(test_IdealGasFunctions)
 
 # CPC tests
 
-# Run cpc1HRGTDep
-add_test(NAME RunCPC1a
-         COMMAND cpc1HRGTDep 0
-         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+# Testing with GoogleTest (optional, but recommended)
+option (INCLUDE_ALL_TESTS
+        "Include tests which may be `non-deterministic` among compilers/hardware (such as cpc1)" OFF)
 
-# Compare output with reference
-add_test(NAME CompareCPC1a
-         COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.Id-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.Id-HRG.TDep.out)
+if(INCLUDE_ALL_TESTS)
+    # Run cpc1HRGTDep
+    add_test(NAME RunCPC1a
+             COMMAND cpc1HRGTDep 0
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Run cpc1HRGTDep
-add_test(NAME RunCPC1b
-         COMMAND cpc1HRGTDep 1
-         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    # Compare output with reference
+    add_test(NAME CompareCPC1a
+             COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.Id-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.Id-HRG.TDep.out)
 
-# Compare output with reference
-add_test(NAME CompareCPC1b
-         COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.EV-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.EV-HRG.TDep.out)
+    # Run cpc1HRGTDep
+    add_test(NAME RunCPC1b
+             COMMAND cpc1HRGTDep 1
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Run cpc1HRGTDep
-add_test(NAME RunCPC1c
-         COMMAND cpc1HRGTDep 2
-         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    # Compare output with reference
+    add_test(NAME CompareCPC1b
+             COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.EV-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.EV-HRG.TDep.out)
 
-# Compare output with reference
-add_test(NAME CompareCPC1c
-         COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.QvdW-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.QvdW-HRG.TDep.out)
+    # Run cpc1HRGTDep
+    add_test(NAME RunCPC1c
+             COMMAND cpc1HRGTDep 2
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+    # Compare output with reference
+    add_test(NAME CompareCPC1c
+             COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.QvdW-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.QvdW-HRG.TDep.out)
+
+endif(INCLUDE_ALL_TESTS)
 
 # Run cpc2HRGTDep a
 add_test(NAME RunCPC2a
