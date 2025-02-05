@@ -458,6 +458,7 @@ namespace thermalfist {
 
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, j) = 0.;
         densMatrix(NN + i, NN + j) = m_v[i] * DensitiesId[j];
         if (i == j) densMatrix(NN + i, NN + j) += 1.;
       }
