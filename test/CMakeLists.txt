@@ -53,8 +53,9 @@ add_test(NAME RunCPC2b
         COMMAND cpc2chi2 1
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
+
 add_test(NAME CompareCPC2b
-        COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc2.EV-HRG-BagModel.ALICE2_76.chi2.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc2.EV-HRG-BagModel.ALICE2_76.chi2.TDep.out)
+        COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc2.EV-HRG-TwoComponent.ALICE2_76.chi2.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc2.EV-HRG-TwoComponent.ALICE2_76.chi2.TDep.out)
 
 # Run cpc2HRGTDep c
 add_test(NAME RunCPC2c
@@ -62,7 +63,7 @@ add_test(NAME RunCPC2c
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_test(NAME CompareCPC2c
-        COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc2.EV-HRG-TwoComponent.ALICE2_76.chi2.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc2.EV-HRG-TwoComponent.ALICE2_76.chi2.TDep.out)
+        COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc2.EV-HRG-BagModel.ALICE2_76.chi2.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc2.EV-HRG-BagModel.ALICE2_76.chi2.TDep.out)
 
 
 # Run cpc2HRGTDep d
