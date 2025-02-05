@@ -124,7 +124,7 @@ namespace thermalfist {
       else {
         m_Meff = m_Mu;
       }
-      cout << m_TBEC << " " << m_Meff << " " << m_Mu << "\n";
+//      cout << m_TBEC << " " << m_Meff << " " << m_Mu << "\n";
       m_isSolved = true;
     }
   }
