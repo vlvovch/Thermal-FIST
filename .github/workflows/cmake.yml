@@ -109,7 +109,7 @@ jobs:
     - name: PCE-Saha-LHC
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: ${{ matrix.prefix }}PCE-Saha-LHC
+      run: ${{ matrix.prefix }}example-PCE-Saha-LHC
 
   cxx_standards:
     runs-on: ubuntu-latest
