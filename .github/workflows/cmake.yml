@@ -191,4 +191,4 @@ jobs:
       - name: PCE-Saha-LHC
         working-directory: ${{github.workspace}}/build
         shell: bash
-        run: ${prefix}PCE-Saha-LHC
+        run: ${prefix}example-PCE-Saha-LHC
