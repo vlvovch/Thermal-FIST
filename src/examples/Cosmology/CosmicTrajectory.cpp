@@ -1,3 +1,10 @@
+/*
+ * Thermal-FIST package
+ * 
+ * Copyright (c) 2019-2025 Volodymyr Vovchenko
+ *
+ * GNU General Public License (GPLv3 or later)
+ */
 #include <string.h>
 #include <fstream>
 #include <iostream>
