@@ -78,6 +78,11 @@ namespace thermalfist {
 
   }
 
+  /// \brief Returns the matrix of attraction and repulsion parameters for baryon-baryon and antibaryon-antibaryon pairs
+  /// \param model Pointer to the thermal model object
+  /// \param param Interaction parameter
+  std::vector<std::vector<double>> GetBaryonBaryonInteractionMatrix(const ThermalParticleSystem *TPS, double param);
+
 } // namespace thermalfist
 
 #endif

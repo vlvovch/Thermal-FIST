@@ -1330,20 +1330,13 @@ namespace thermalfist {
 
   void SetVDWHRGInteractionParameters(ThermalModelBase *model, double a, double b)
   {
+    auto vdWa = GetBaryonBaryonInteractionMatrix(model->TPS(), a);
+    auto vdWb = GetBaryonBaryonInteractionMatrix(model->TPS(), b);
     // Iterate over all hadron pairs
     for (int i1 = 0; i1 < model->TPS()->Particles().size(); ++i1) {
       for (int i2 = 0; i2 < model->TPS()->Particles().size(); ++i2) {
-        // Baryon charge of first species
-        int B1 = model->TPS()->Particles()[i1].BaryonCharge();
-        // Baryon charge of second species
-        int B2 = model->TPS()->Particles()[i2].BaryonCharge();
-        if ((B1 > 0 && B2 > 0) || (B1 < 0 && B2 < 0)) {
-          model->SetAttraction(i1, i2, a);
-          model->SetRepulsion(i1, i2, b);
-        } else {
-          model->SetAttraction(i1, i2, 0.);
-          model->SetRepulsion(i1, i2, 0.);
-        }
+        model->SetAttraction(i1, i2, vdWa[i1][i2]);
+        model->SetVirial(i1, i2, vdWb[i1][i2]);
       }
     }
   }

@@ -18,6 +18,9 @@
 #include "HRGEV.h"
 #include "HRGFit.h"
 #include "HRGVDW.h"
+#include "HRGRealGas.h"
+
+#include "HRGEV/ExcludedVolumeHelper.h"
 
 #include "ThermalFISTConfig.h"
 
@@ -66,28 +69,34 @@ void ReadParameterRangeFromFile(const std::string &filename)
 // Usage: ThermodynamicsBQS <param_range_file> <outputfile> <a> <b>
 // * <a> -- parameter a for the QvdW model (GeV fm^3)
 // * <b> -- parameter b for the QvdW model (fm^3)
+// * useCS -- Use real gas model and Carnahan-Starling EV
 // * <param_range_file> -- file with the parameter range
 // * <outputfile> -- file to write the results to
 int main(int argc, char *argv[])
 {
 	// van der Waals attraction
-	double a = 0.0;
+	double a = 0.;
 	if (argc > 1)
 		a = atof(argv[1]);
 	
 	// van der Waals repulsion
-	double b = 0.0;
+	double b = 0.;
 	if (argc > 2)
 		b = atof(argv[2]);
+
+  // Use real gas
+  bool useRG = true;
+  if (argc > 3)
+    useRG = atoi(argv[3]);
 	
 	// Parameter range from file
 	string param_range_file = "";
-	if (argc > 3)
-		param_range_file = argv[3];
+	if (argc > 4)
+		param_range_file = argv[4];
 	ReadParameterRangeFromFile(param_range_file);
 
 	// Model type
-	// 0 - Ideal HRG, 1 - EV HRG (no attraction), 2 - QvdW HRG (from 1609.03975)
+	// 0 - Ideal HRG, 1 - EV HRG (no attraction), 2 - QvdW HRG (from 1609.03975), 3 - Real gas HRG (use Carnahan-Starling EV)
 	int ModelType = 0;
 	string ModelPrefix = "Id-HRG";
 	if (a == 0. && b == 0.) {
@@ -102,10 +111,15 @@ int main(int argc, char *argv[])
 		ModelType = 2;
 		ModelPrefix = "QvdW-HRG";
 	}
+
+  if (useRG) {
+    ModelType = 3;
+    ModelPrefix = "RG-HRG";
+  }
 	
 	std::string outputfile = ModelPrefix + "-output.dat";
-	if (argc > 4)
-		outputfile = argv[4];
+	if (argc > 5)
+		outputfile = argv[5];
 	
 	
 	// Create the hadron list instance and read the list from file
@@ -115,7 +129,7 @@ int main(int argc, char *argv[])
 	// Create the ThermalModel instance
 	// Choose the class which fits the required variant of HRG model
 	ThermalModelBase *model;
-	assert(ModelType >= 0 && ModelType <= 2);
+	assert(ModelType >= 0 && ModelType <= 3);
 	if (ModelType == 0) {
 		model = new ThermalModelIdeal(&TPS);
     cout << "Performing calculation in the Id-HRG model..." << endl;
@@ -130,6 +144,25 @@ int main(int argc, char *argv[])
 		SetVDWHRGInteractionParameters(model, a, b);
     cout << "Performing calculation in the QvdW-HRG model..." << endl;
 	}
+  else if (ModelType == 3) {
+    model = new ThermalModelRealGas(&TPS);
+
+    // Excluded volume model
+    if (b != 0.) {
+//      ExcludedVolumeModelBase *evmod = new ExcludedVolumeModelVDW();
+    ExcludedVolumeModelBase *evmod = new ExcludedVolumeModelCS();
+      auto vdWb = GetBaryonBaryonInteractionMatrix(model->TPS(), b);
+      static_cast<ThermalModelRealGas *>(model)->SetExcludedVolumeModel(
+              new ExcludedVolumeModelCrosstermsGeneralized(evmod, vdWb));
+    }
+
+    // Mean field model
+    if (a != 0.) {
+      auto vdWa = GetBaryonBaryonInteractionMatrix(model->TPS(), a);
+      static_cast<ThermalModelRealGas *>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(vdWa));
+    }
+    cout << "Performing calculation in the RG-HRG model..." << endl;
+  }
 
 	// Use (or not) finite resonance width
 	bool useWidth = false;

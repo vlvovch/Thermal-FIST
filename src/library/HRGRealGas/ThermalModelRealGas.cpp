@@ -46,10 +46,14 @@ namespace thermalfist {
   {
     if (m_exvolmodideal != NULL) {
       delete m_exvolmodideal;
+      if (m_exvolmod == m_exvolmodideal)
+        m_exvolmod = NULL;
       m_exvolmodideal = NULL;
     }
     if (m_mfmodideal != NULL) {
       delete m_mfmodideal;
+      if (m_mfmod == m_mfmodideal)
+        m_mfmod = NULL;
       m_mfmodideal = NULL;
     }
     if (m_exvolmod != NULL) {
