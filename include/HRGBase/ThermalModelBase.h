@@ -807,6 +807,18 @@ namespace thermalfist {
      */
     virtual double FinalNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
+
+    /**
+     * \brief A 2nd order susceptibility of conserved charges
+     * 
+     * \f$ \chi_{11}^{c_i c_j} \f$
+     * 
+     * \param i First conserved charge
+     * \param j Second conserved charge
+     * \return  Susceptibility \f$ d P^2 / d \mu_i \mu_j \f$ (GeV\f$^{-2}\f$)
+     */
+    virtual double SusceptibilityDimensionfull(ConservedCharge::Name i, ConservedCharge::Name j) const;
+
     /**
      * \brief Calculates the conserved charges susceptibility matrix.
      *        

@@ -2106,4 +2106,16 @@ namespace thermalfist {
     }
     return 0.;
   }
+
+  double ThermalModelBase::SusceptibilityDimensionfull(ConservedCharge::Name i, ConservedCharge::Name j) const {
+    double ret = 0.;
+    for (size_t k = 0; k < m_PrimCorrel.size(); ++k) {
+      int c1 = m_TPS->Particles()[k].ConservedCharge(i);
+      for (size_t kp = 0; kp < m_PrimCorrel.size(); ++kp) {
+        int c2 = m_TPS->Particles()[kp].ConservedCharge(j);
+        ret += c1 * c2 * m_PrimCorrel[k][kp];
+      }
+    }
+    return ret / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
+  }
 } // namespace thermalfist

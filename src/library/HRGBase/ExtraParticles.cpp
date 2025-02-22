@@ -52,7 +52,7 @@ namespace thermalfist {
       
       int tsz = 0;
       // photons
-      Particles.push_back(ThermalParticle(true, "gamma", 22, 2., 1, 0.));
+      Particles.push_back(ThermalParticle(true, "gamma", 22, 2., -1, 0.));
       PdgIdMap[Particles[tsz].PdgId()] = tsz;
       tsz++;
 
