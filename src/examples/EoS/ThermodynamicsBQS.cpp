@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 		b = atof(argv[2]);
 
   // Use real gas
-  bool useRG = true;
+  bool useRG = false;
   if (argc > 3)
     useRG = atoi(argv[3]);
 	
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	ReadParameterRangeFromFile(param_range_file);
 
 	// Model type
-	// 0 - Ideal HRG, 1 - EV HRG (no attraction), 2 - QvdW HRG (from 1609.03975), 3 - Real gas HRG (use Carnahan-Starling EV)
+	// 0 - Ideal HRG, 1 - EV HRG (no attraction), 2 - QvdW HRG (from 1609.03975), 3 - Real gas HRG
 	int ModelType = 0;
 	string ModelPrefix = "Id-HRG";
 	if (a == 0. && b == 0.) {
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     ModelPrefix = "RG-HRG";
   }
 	
-	std::string outputfile = ModelPrefix + "-output.dat";
+	std::string outputfile = "Thermodynamics-" + ModelPrefix + "-output.dat";
 	if (argc > 5)
 		outputfile = argv[5];
 	
