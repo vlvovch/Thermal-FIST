@@ -34,7 +34,7 @@ using namespace thermalfist;
 map<string, double> params = {
 	{ "muBmin", 0.940 }, // GeV
   { "muBmax", 1.500 }, // GeV
-  { "muBstep", 0.001 }, // GeV
+  { "muBstep", 0.010 }, // GeV
   { "include_leptons", 1}, // Include leptons in the calculation
   {"a", 0.160}, // van der Waals attraction   (default value from https://arxiv.org/pdf/2109.06799)
   {"b", 2.236} // Carnahan-Starling repulsion (default value from https://arxiv.org/pdf/2109.06799)
@@ -68,9 +68,7 @@ void ReadParametersFromFile(const std::string &filename)
 
 // Calculates the neutron star matter EoS in beta-equilibrium
 // for a given range of muB
-// Usage: NS-CSHRG <param_file> <outputfile>
-// * <a> -- parameter a for the QvdW model (GeV fm^3)
-// * <b> -- parameter b for the QvdW model (fm^3)
+// Usage: NeutronStars-CSHRG <param_file> <outputfile>
 // * <param_file> -- file with the parameters
 // * <outputfile> -- file to write the results to
 int main(int argc, char *argv[])
@@ -144,8 +142,9 @@ int main(int argc, char *argv[])
   fout << std::setw(tabsize) << "e[GeV/fm3]" << " "; // Energy density
   fout << std::setw(tabsize) << "s[GeV/fm3]" << " "; // Entropy density (should be zero)
   fout << std::setw(tabsize) << "(1/3-p/e)" << " "; // trace anomaly
-  fout << std::setw(tabsize) << "vs2" << " "; // sound velocity squared
-  fout << std::setw(tabsize) << "vs2FD" << " "; // sound velocity squared through finite difference
+  // fout << std::setw(tabsize) << "vs2" << " "; // sound velocity squared
+  fout << std::setw(tabsize) << "vs2" << " "; // adiabatic sound velocity squared
+  fout << std::setw(tabsize) << "vT2" << " "; // isothermal sound velocity squared
   fout << std::setw(tabsize) << "Yp" << " ";  // proton fraction
   fout << std::setw(tabsize) << "Yn" << " ";  // neutron fraction
   fout << std::setw(tabsize) << "YSig-" << " ";  // proton fraction
@@ -228,11 +227,15 @@ int main(int argc, char *argv[])
     double chi2B = model->SusceptibilityDimensionfull(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge);
     double chi11BQ = model->SusceptibilityDimensionfull(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge);
     double chi2Q = model->SusceptibilityDimensionfull(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
-    double vs2 = (rhoB / xMath::GeVtoifm3()) / muB / (chi2B - chi11BQ * chi11BQ / chi2Q);
-    if (chi11BQ == 0.)
-      vs2 = (rhoB / xMath::GeVtoifm3()) / muB / (chi2B);
-    // Finite difference (backward) for vs2
-    double vs2FD = (p - pprev) / (e - eprev);
+    // double vs2 = (rhoB / xMath::GeVtoifm3()) / muB / (chi2B - chi11BQ * chi11BQ / chi2Q); // Cross-check
+    // if (chi11BQ == 0.)
+    //   vs2 = (rhoB / xMath::GeVtoifm3()) / muB / (chi2B);
+    // // Finite difference (backward) for vs2
+    // double vs2FD = (p - pprev) / (e - eprev);
+
+    // Speed of sound
+    double vs2fct = model->cs2(true, true, false); // vs2 through the standard function
+    double vT2fct = model->cT2(true, true, false); // vT2 through the standard function
 
     // Print to file
     fout << setw(tabsize) << T << " ";
@@ -245,8 +248,9 @@ int main(int argc, char *argv[])
     fout << setw(tabsize) << e << " ";
     fout << setw(tabsize) << s << " ";
     fout << setw(tabsize) << trace_anomaly << " ";
-    fout << setw(tabsize) << vs2 << " ";
-    fout << setw(tabsize) << vs2FD << " ";
+    // fout << setw(tabsize) << vs2 << " "; // vs2 direct
+    fout << setw(tabsize) << vs2fct << " "; // vs2 standard
+    fout << setw(tabsize) << vT2fct << " ";
     fout << setw(tabsize) << Yp << " ";
     fout << setw(tabsize) << Yn << " ";
     fout << setw(tabsize) << YSig << " ";
@@ -273,30 +277,41 @@ int main(int argc, char *argv[])
 }
 
 /**
- * \example ThermodynamicsBQS.cpp
+ * \example NeutronStars-CSHRG.cpp
  * 
- * An example of calculating various thermodynamic quantities over a range
- * of T, \f$\mu_B\f$, \f$\mu_Q\f$, and \f$\mu_S\f$.
+ * An example of calculating the neutron star matter equation of state (EoS)
+ * in beta-equilibrium over a range of baryon chemical potentials (\f$\mu_B\f$).
  * 
- * For each specified value of T, \f$\mu_B\f$, \f$\mu_Q\f$, and \f$\mu_S\f$,
- * the following quantities are calculated:
+ * The EoS is calculated using an interacting HRG model with mean field attraction
+ * and Carnahan-Starling excluded volume repulsion. 
+ * Model parameters are based on Fujimoto et al., Phys. Lett. B 835 (2022) 137524  (https://arxiv.org/pdf/2109.06799)
+ * 
+ * For each specified value of \f$\mu_B\f$, the following quantities are calculated:
+ *   - Temperature
+ *   - Baryon chemical potential
+ *   - Electric charge chemical potential
+ *   - Strangeness chemical potential
+ *   - Baryon density
+ *   - Electric charge density
  *   - Pressure
  *   - Energy density
  *   - Entropy density
  *   - Trace anomaly
- *   - Baryon density
- *   - Electric charge density
- *   - Strangeness density
- *   - Temperature normalized quantities (a la lattice QCD)
+ *   - Sound velocity squared (adiabatic)
+ *   - Sound velocity squared (isothermal)
+ *   - Proton fraction
+ *   - Neutron fraction
+ *   - Sigma- fraction
+ *   - Lambda fraction
+ *   - Electron-to-baryon ratio
+ *   - Muon-to-baryon ratio
  * 
  * Usage:
  * ~~~.bash
- * ThermodynamicsBQS <a> <b> <param_range_file> <outputfile>
+ * NeutronStars-CSHRG <param_file> <outputfile>
  * ~~~
  * 
  * Where:
- * - <a> is the parameter a for the QvdW model (GeV fm^3)
- * - <b> is the parameter b for the QvdW model (fm^3)
- * - <param_range_file> is the file with the parameter range
+ * - <param_file> is the file with the input parameters
  * - <outputfile> is the file to write the results to
  */

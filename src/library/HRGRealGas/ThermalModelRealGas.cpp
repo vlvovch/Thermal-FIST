@@ -1616,7 +1616,7 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelRealGas::CalculateSpecificHeat() {
+  double ThermalModelRealGas::CalculatededT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

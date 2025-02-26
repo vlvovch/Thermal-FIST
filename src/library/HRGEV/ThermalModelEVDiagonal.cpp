@@ -281,7 +281,7 @@ namespace thermalfist {
     
   }
 
-  double ThermalModelEVDiagonal::CalculateSpecificHeat() {
+  double ThermalModelEVDiagonal::CalculatededT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

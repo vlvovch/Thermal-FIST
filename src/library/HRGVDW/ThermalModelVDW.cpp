@@ -879,7 +879,7 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelVDW::CalculateSpecificHeat() {
+  double ThermalModelVDW::CalculatededT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

@@ -113,7 +113,7 @@ namespace thermalfist {
 
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
-    virtual double CalculateSpecificHeat() { exit(1); return 0.; } // Not implemented
+    virtual double CalculatededT() { exit(1); return 0.; } // Not implemented
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 

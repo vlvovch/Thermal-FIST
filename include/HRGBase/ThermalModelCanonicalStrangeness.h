@@ -130,7 +130,7 @@ namespace thermalfist {
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 
-    virtual double CalculateSpecificHeat() { exit(1); return 0.; } // Not implemented
+    virtual double CalculatededT() { exit(1); return 0.; } // Not implemented
 
     // Override functions end
 

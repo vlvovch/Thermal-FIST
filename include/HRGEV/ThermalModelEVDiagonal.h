@@ -173,7 +173,7 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
-    virtual double CalculateSpecificHeat();
+    virtual double CalculatededT();
 
     virtual void CalculateTemperatureDerivatives();
 

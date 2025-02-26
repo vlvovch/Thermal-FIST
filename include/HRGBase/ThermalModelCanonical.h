@@ -215,7 +215,7 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
-    virtual double CalculateSpecificHeat() { exit(1); return 0.; } // Not implemented
+    virtual double CalculatededT() { exit(1); return 0.; } // Not implemented
 
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 

@@ -3,6 +3,9 @@ add_executable(test_IdealGasFunctions test_IdealGasFunctions.cpp)
 target_link_libraries(test_IdealGasFunctions ThermalFIST GTest::gtest_main)
 set_property(TARGET test_IdealGasFunctions PROPERTY FOLDER tests)
 
+add_executable(test_CompareOutputs test_CompareOutputs.cpp)
+target_link_libraries(test_CompareOutputs)
+set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
 
 include(GoogleTest)
 
@@ -43,7 +46,32 @@ if(INCLUDE_ALL_TESTS)
     # Compare output with reference
     add_test(NAME CompareCPC1c
              COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc1.QvdW-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.QvdW-HRG.TDep.out)
+else()
+    # Run cpc1HRGTDep
+    add_test(NAME RunCPC1a
+             COMMAND cpc1HRGTDep 0
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
+    # Compare output with reference using test_CompareOutputs.cpp
+    add_test(NAME CompareCPC1a
+             COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/cpc1.Id-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.Id-HRG.TDep.out)
+
+
+        # Run cpc1HRGTDep
+        add_test(NAME RunCPC1b
+                 COMMAND cpc1HRGTDep 1
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        # Compare output with reference using test_CompareOutputs.cpp
+        add_test(NAME CompareCPC1b
+                 COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/cpc1.EV-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.EV-HRG.TDep.out)
+
+        # Run cpc1HRGTDep
+        add_test(NAME RunCPC1c
+                 COMMAND cpc1HRGTDep 2
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        # Compare output with reference using test_CompareOutputs.cpp
+        add_test(NAME CompareCPC1c
+                 COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/cpc1.QvdW-HRG.TDep.out ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc1.QvdW-HRG.TDep.out)
 endif(INCLUDE_ALL_TESTS)
 
 # Run cpc2HRGTDep a
@@ -104,3 +132,38 @@ add_test(NAME RunCPC4a
 
 add_test(NAME CompareCPC4a
         COMMAND ${CMAKE_COMMAND} -E compare_files ${CMAKE_BINARY_DIR}/cpc4.analyt.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/cpc4.analyt.dat)
+
+
+# Thermodynamics (Id-HRG)
+add_test(NAME RunThermodynamicsIdHRG
+        COMMAND example-ThermodynamicsBQS 0. 0. 0
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+add_test(NAME CompareThermodynamicsIdHRG
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-Id-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-Id-HRG-output.dat)
+
+# Susceptibilities (Id-HRG)
+add_test(NAME RunSusceptibilitiesIdHRG
+        COMMAND example-SusceptibilitiesBQS 0. 0. 0
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesIdHRG
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-Id-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-Id-HRG-output.dat)
+# Susceptibilities (QvdW-HRG)
+add_test(NAME RunSusceptibilitiesQvdWHRG
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 0
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesQvdWHRG    
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-QvdW-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-QvdW-HRG-output.dat)
+# Susceptibilities (RG-HRG)
+add_test(NAME RunSusceptibilitiesRGHRG
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 1
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesRGHRG
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-RG-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-RG-HRG-output.dat)
+
+# Neutron star EoS
+add_test(NAME RunNeutronStarEoS
+        COMMAND example-NeutronStars-CSHRG
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareNeutronStarEoS
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/NSMatter-CSHRG-leptons-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/NSMatter-CSHRG-leptons-output.dat)

@@ -212,11 +212,11 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelIdeal::CalculateSpecificHeat() {
+  double ThermalModelIdeal::CalculatededT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
-    // Compute dE/dT
+    // Compute de/dT
     double ret = 0.;
 
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)

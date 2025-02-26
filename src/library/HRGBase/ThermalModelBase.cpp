@@ -528,6 +528,16 @@ namespace thermalfist {
     }
   }
 
+  bool ThermalModelBase::FixChemicalPotentialsThroughDensities(double rhoB, double rhoQ, double rhoS, double rhoC,
+    double muBinit, double muQinit, double muSinit, double muCinit,
+    bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
+      double V = Parameters().V;
+      return SolveChemicalPotentials(
+        V * rhoB, V * rhoQ, V * rhoS, V * rhoC, 
+        muBinit, muQinit, muSinit, muCinit,
+        ConstrMuB, ConstrMuQ, ConstrMuS, ConstrMuC);
+    }
+
   bool ThermalModelBase::SolveChemicalPotentials(double totB, double totQ, double totS, double totC,
     double muBinit, double muQinit, double muSinit, double muCinit,
     bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
@@ -535,6 +545,16 @@ namespace thermalfist {
       printf("**WARNING** PCE enabled, cannot assume chemical equilibrium to do optimization...");
       return false;
     }
+
+    // TODO: Stability analysis for small densities/numbers
+    // if (abs(totB) < 1.e-6)
+    //   totB = 0.;
+    // if (abs(totQ) < 1.e-6)
+    //   totQ = 0.;
+    // if (abs(totS) < 1.e-6)
+    //   totS = 0.;
+    // if (abs(totC) < 1.e-6)
+    //   totC = 0.;
 
     if (ConstrMuB)
       m_Parameters.muB = muBinit;
@@ -825,6 +845,7 @@ namespace thermalfist {
     m_Calculated = false;
     m_FeeddownCalculated = false;
     m_FluctuationsCalculated = false;
+    m_TemperatureDerivativesCalculated = false;
     m_GCECalculated = false;
   }
 
@@ -1087,11 +1108,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code %lld", id1);
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
+      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code %lld", id2);
       return 0.;
     }
 
@@ -2118,4 +2139,335 @@ namespace thermalfist {
     }
     return ret / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
+
+  double ThermalModelBase::CalculateSpecificHeatChem()
+  {
+    double dedT = CalculatededT(); // fm^-3
+    
+    // T * ds/dT = (de/dT - mu_i d n_i / d T)
+    double ret = dedT;
+    for(int i = 0; i < TPS()->ComponentsNumber(); ++i) {
+      ret -= m_Chem[i] * m_dndT[i];
+    }
+    return ret;
+  }
+
+  // Auxiliary function to compute the susceptibility matrix
+  MatrixXd GetSusceptibilityMatrix(ThermalModelBase* model, const vector<int>& ConservedDensities) {
+    int N = 0;
+    for (int i = 0; i < 4; ++i)
+      if (ConservedDensities[i] == 1)
+        N++;
+
+    assert(N > 0);
+
+    MatrixXd ret(N, N);
+
+    // Pi(i,j) = d P / dmui dmuj
+    {
+      int i1 = 0;
+      for(int i = 0; i < 4; ++i) {
+        if (ConservedDensities[i] == 0)
+          continue;
+        int i2 = 0;
+        for(int j = 0; j < 4; ++j) {
+          if (ConservedDensities[j] == 0)
+            continue;
+          ret(i1, i2) = model->SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
+          i2++;
+        }
+        i1++;
+      }
+    }
+
+    return ret;
+  }
+
+  // Auxiliary function to compute the Hessian matrix of pressure
+  MatrixXd GetPressureHessianMatrix(ThermalModelBase* model, const vector<int>& ConservedDensities) {
+    int N = 1;
+    for (int i = 0; i < 4; ++i)
+      if (ConservedDensities[i] == 1)
+        N++;
+
+    MatrixXd ret(N, N);
+
+    // Compute the Hessian matrix of pressure
+    // Pi(0,0) = d^2 P / d T^2 = ds/dT
+    ret(0, 0) = model->SpecificHeatChem() / model->Parameters().T; // fm^-3 GeV^-1
+
+    // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
+    {
+      int i1 = 0;
+      for(int i = 0; i < 4; ++i) {
+        if (ConservedDensities[i] == 0)
+          continue;
+        ret(0, i1 + 1) = ret(i1 + 1, 0) = model->ConservedChargeDensitydT((ConservedCharge::Name)i);
+        i1++;
+      }
+    }
+
+    // Pi(i,j) = d^2 P / dmui dmuj
+    {
+      int i1 = 0;
+      for(int i = 0; i < 4; ++i) {
+        if (ConservedDensities[i] == 0)
+          continue;
+        int i2 = 0;
+        for(int j = 0; j < 4; ++j) {
+          if (ConservedDensities[j] == 0)
+            continue;
+          ret(i1 + 1, i2 + 1) = model->SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
+          i2++;
+        }
+        i1++;
+      }
+    }
+
+    return ret;
+  }
+
+  double ThermalModelBase::Calculatecs2(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
+    double ret = 0.;
+
+    double T = Parameters().T;
+
+    std::vector<double> mus = {Parameters().muB, Parameters().muQ, Parameters().muS, Parameters().muC};
+    std::vector<int> ConservedCharges = {static_cast<int>(rhoBconst), static_cast<int>(rhoQconst), static_cast<int>(rhoSconst), static_cast<int>(rhoCconst)};
+
+    if (!TPS()->hasBaryons())
+      ConservedCharges[0] = 0;
+    if (!TPS()->hasCharged())
+      ConservedCharges[1] = 0;
+    if (!TPS()->hasStrange())
+      ConservedCharges[2] = 0;
+    if (!TPS()->hasCharmed())
+      ConservedCharges[3] = 0;
+      
+
+    // Cross-check (if charge is not conserved, its chemical potential should be zero)
+    for(int i = 0; i < ConservedCharges.size(); ++i)
+      assert(ConservedCharges[i] == 1 || mus[i] == 0.0);
+
+    // Zero chemical potentials
+    {
+      bool AllMuZero = true;
+      for(int i = 0; i < ConservedCharges.size(); ++i)
+        AllMuZero &= (ConservedCharges[i] == 0 || mus[i] == 0.0);
+      if (AllMuZero) {
+        // At mu = 0 cs2 = s(T) / e'(T)
+        // Calculate temperature derivatives if not already
+        if (!IsTemperatureDerivativesCalculated())
+          CalculateTemperatureDerivatives();
+        return EntropyDensity() / CalculatededT();
+        //return EntropyDensity() / SpecificHeatChem();
+      }
+    }
+
+    int Ndens = 0;
+    for(int i = 0; i < 4; ++i)
+      if (ConservedCharges[i] == 1) 
+        Ndens++;
+
+    // Compute fluctuations if not already
+    if (!IsFluctuationsCalculated())
+      CalculateFluctuations();
+      
+    // Zero temperature
+    if (T == 0.) {
+      
+      // // Compute the matrix of susceptibilities (Eigen Matrix)
+      // MatrixXd chi2matr(Ndens, Ndens);
+      // int i1 = 0, i2 = 0;
+      // for(int i = 0; i < 4; ++i) {
+      //   if (ConservedCharges[i] == 0)
+      //     continue;
+      //   i2 = 0;
+      //   for(int j = 0; j < 4; ++j) {
+      //     if (ConservedCharges[j] == 0)
+      //       continue;
+          
+      //     chi2matr(i1, i2) = SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
+      //     i2++;
+      //   }
+      //   i1++;
+      // }
+      MatrixXd chi2matr = GetSusceptibilityMatrix(this, ConservedCharges);
+      MatrixXd chi2inv = chi2matr.inverse();
+      ret = 0.;
+      int i1 = 0, i2 = 0;
+      for(int i = 0; i < 4; ++i) {
+        if (ConservedCharges[i] == 0)
+          continue;
+        i2 = 0;
+        for(int j = 0; j < 4; ++j) {
+          if (ConservedCharges[j] == 0)
+            continue;
+          
+          auto chg1 = (ConservedCharge::Name)i;
+          auto chg2 = (ConservedCharge::Name)j;
+          ret += ConservedChargeDensity(chg1) * ConservedChargeDensity(chg2) * chi2inv(i1, i2);
+          i2++;
+        }
+        i1++;
+      }
+
+      ret /= (EnergyDensity() + Pressure());
+      return ret;
+    }
+
+    // General case
+
+    // Calculate temperature derivatives if not already
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // double dedT = SpecificHeatChem(); // fm^-3
+    // Compute the Hessian matrix of pressure
+    MatrixXd PiMatr = GetPressureHessianMatrix(this, ConservedCharges);
+    // MatrixXd PiMatr(Ndens + 1, Ndens + 1);
+    // // Pi(0,0) = d^2 P / d T^2 = ds/dT
+    // PiMatr(0,0) = SpecificHeatChem() / T; // fm^-3 GeV^-1
+    // // {
+    // //   // ds/dT = (1/T) * (de/dT - mu_i d n_i / d T)
+    // //   double dsdT = dedT;
+    // //   for(int i = 0; i < ConservedCharges.size(); ++i) {
+    // //     if (ConservedCharges[i] == 0)
+    // //       continue;
+    // //     dsdT -= mus[i] * ConservedChargeDensitydT((ConservedCharge::Name)i);
+    // //   }
+    // //   dsdT /= T;
+    // //   PiMatr(0,0) = dsdT;
+    // // }
+    // // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
+    // {
+    //   int i1 = 0;
+    //   for(int i = 0; i < ConservedCharges.size(); ++i) {
+    //     if (ConservedCharges[i] == 0)
+    //       continue;
+    //     PiMatr(0,i+1) = PiMatr(i+1,0) = ConservedChargeDensitydT((ConservedCharge::Name)i);
+    //   }
+    // }
+    // // Pi(i,j) = d^2 P / d mu_i d mu_j = chi_{ij}
+    // {
+    //   int i1 = 0, i2 = 0;
+    //   for(int i = 0; i < ConservedCharges.size(); ++i) {
+    //     if (ConservedCharges[i] == 0)
+    //       continue;
+    //     i2 = 0;
+    //     for(int j = 0; j < ConservedCharges.size(); ++j) {
+    //       if (ConservedCharges[j] == 0)
+    //         continue;
+    //       PiMatr(i1+1, i2+1) = SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
+    //       i2++;
+    //     }
+    //     i1++;
+    //   }
+    // }
+
+    // Compute the inverse of the Hessian matrix
+    MatrixXd PiMatrInv = PiMatr.inverse();
+    // Prepare the vector x
+    double s = EntropyDensity();
+    vector<double> x = {s};
+    for(int i = 0; i < ConservedCharges.size(); ++i)
+      if (ConservedCharges[i] == 1)
+        x.push_back(ConservedChargeDensity((ConservedCharge::Name)i));
+
+    ret = 0.;
+    for(int i = 0; i < x.size(); ++i)
+      for(int j = 0; j < x.size(); ++j)
+        ret += x[i] * x[j] * PiMatrInv(i,j);
+    ret /= (EnergyDensity() + Pressure());
+
+    return ret;
+  }
+
+  double ThermalModelBase::CalculatecT2(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
+    double ret = 0.;
+
+    double T = Parameters().T;
+
+    std::vector<double> mus = {Parameters().muB, Parameters().muQ, Parameters().muS, Parameters().muC};
+    std::vector<int> ConservedCharges = {static_cast<int>(rhoBconst), static_cast<int>(rhoQconst), static_cast<int>(rhoSconst), static_cast<int>(rhoCconst)};
+
+    if (!TPS()->hasBaryons())
+      ConservedCharges[0] = 0;
+    if (!TPS()->hasCharged())
+      ConservedCharges[1] = 0;
+    if (!TPS()->hasStrange())
+      ConservedCharges[2] = 0;
+    if (!TPS()->hasCharmed())
+      ConservedCharges[3] = 0;
+      
+
+    // Cross-check (if charge is not conserved, its chemical potential should be zero)
+    for(int i = 0; i < ConservedCharges.size(); ++i)
+      assert(ConservedCharges[i] == 1 || mus[i] == 0.0);
+
+    auto chi2Matr = GetSusceptibilityMatrix(this, ConservedCharges);
+    // Compute the inverse of the susceptibility matrix
+    MatrixXd chi2inv= chi2Matr.inverse();
+    
+    double numerator = 0.;
+    double denominator = 0.;
+    int i1 = 0, i2 = 0;
+    for(int i = 0; i < 4; ++i) {
+      \
+      if (ConservedCharges[i] == 0)
+        continue;
+      denominator += mus[i] * ConservedChargeDensity((ConservedCharge::Name)i);
+      i2 = 0;
+      for(int j = 0; j < 4; ++j) {
+        if (ConservedCharges[j] == 0)
+          continue;
+        
+        auto chg1 = (ConservedCharge::Name)i;
+        auto chg2 = (ConservedCharge::Name)j;
+
+        numerator += ConservedChargeDensity(chg1) * ConservedChargeDensity(chg2) * chi2inv(i1, i2);
+        denominator += T * ConservedChargeDensitydT(chg1) * chi2inv(i1, i2) * ConservedChargeDensity(chg2);
+
+        ret += ConservedChargeDensity(chg1) * ConservedChargeDensity(chg2) * chi2inv(i1, i2);
+        i2++;
+      }
+      i1++;
+    }
+
+    return numerator / denominator;
+  }
+
+  double ThermalModelBase::CalculateHeatCapacity(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
+    double T = Parameters().T;
+
+    assert(T > 0.);
+
+    std::vector<double> mus = {Parameters().muB, Parameters().muQ, Parameters().muS, Parameters().muC};
+    std::vector<int> ConservedCharges = {static_cast<int>(rhoBconst), static_cast<int>(rhoQconst), static_cast<int>(rhoSconst), static_cast<int>(rhoCconst)};
+
+    if (!TPS()->hasBaryons())
+      ConservedCharges[0] = 0;
+    if (!TPS()->hasCharged())
+      ConservedCharges[1] = 0;
+    if (!TPS()->hasStrange())
+      ConservedCharges[2] = 0;
+    if (!TPS()->hasCharmed())
+      ConservedCharges[3] = 0;
+
+    // Calculate the numerator
+    double TdsdT = SpecificHeatChem();
+
+    // Calculate the denominator
+    double denominator = 1.;
+    auto PiMatr = GetPressureHessianMatrix(this, ConservedCharges);
+    auto PiMatrInv = PiMatr.inverse();
+    int N = PiMatr.rows();
+    for(int i = 1; i < N; ++i) {
+      denominator -= PiMatr(0, i) * PiMatrInv(i, 0);
+    }
+
+    double heatCapacity = TdsdT / denominator;
+    return heatCapacity;
+  }
+
 } // namespace thermalfist

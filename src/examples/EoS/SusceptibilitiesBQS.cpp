@@ -31,10 +31,10 @@ using namespace thermalfist;
 
 // The range in T, muB, muQ, muS to scan
 map<string, vector<double>> param_range = {
-	{ "T", { 0.100, 0.180, 0.001 } },  // GeV
-	{ "muB", { 0.000, 0.000, 0.01 } }, // GeV
-	{ "muQ", { 0.000, 0.000, 0.01 } }, // GeV
-	{ "muS", { 0.000, 0.000, 0.01 } }  // GeV
+	{ "T",   { 0.100, 0.180, 0.001 } },  // GeV
+	{ "muB", { 0.000, 0.000, 0.01  } }, // GeV
+	{ "muQ", { 0.000, 0.000, 0.01  } }, // GeV
+	{ "muS", { 0.000, 0.000, 0.01  } }  // GeV
 };
 
 // Read the parameter range from file
@@ -182,6 +182,11 @@ int main(int argc, char *argv[])
 	fout << std::setw(tabsize) << "muB[GeV]" << " ";
 	fout << std::setw(tabsize) << "muQ[GeV]" << " ";
 	fout << std::setw(tabsize) << "muS[GeV]" << " ";
+	// Speed of sound squared
+	fout << std::setw(tabsize) << "cs2" << " ";
+	fout << std::setw(tabsize) << "cT2" << " ";
+	// Heat capacity
+	fout << std::setw(tabsize) << "cV/T^3" << " ";
 	// Susceptibilities
 	fout << std::setw(tabsize) << "chi2B" << " ";
 	fout << std::setw(tabsize) << "chi2Q" << " ";
@@ -189,7 +194,7 @@ int main(int argc, char *argv[])
 	fout << std::setw(tabsize) << "chi11BQ" << " ";    
 	fout << std::setw(tabsize) << "chi11BS" << " ";
 	fout << std::setw(tabsize) << "chi11QS" << " ";
-	// Temperature derivartives
+	// Temperature derivatives
 	fout << std::setw(tabsize) << "T*chi2B'" << " ";
 	fout << std::setw(tabsize) << "T*chi2Q'" << " ";
 	fout << std::setw(tabsize) << "T*chi2S'" << " ";
@@ -254,11 +259,22 @@ int main(int argc, char *argv[])
 					double Tchi11BSpr = T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge);
 					double Tchi11QSpr = T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge);
 
+					// Speed of sound
+					double cs2 = model->cs2();
+					double cT2 = model->cT2();
+
+					// Heat capacity
+					double cV  = model->HeatCapacity();
+					double cVT3 = cV / pow(T, 3.) / xMath::GeVtoifm3();
+
 					// Print to file
 					fout << setw(tabsize) << T << " ";
 					fout << setw(tabsize) << muB << " ";
 					fout << setw(tabsize) << muQ << " ";
 					fout << setw(tabsize) << muS << " ";
+					fout << setw(tabsize) << cs2 << " ";
+					fout << setw(tabsize) << cT2 << " ";
+					fout << setw(tabsize) << cVT3 << " ";
 					fout << setw(tabsize) << chi2B << " ";
 					fout << setw(tabsize) << chi2Q << " ";
 					fout << setw(tabsize) << chi2S << " ";
@@ -302,6 +318,8 @@ int main(int argc, char *argv[])
  *   2. Calculates the following quantities:
  *      - Susceptibilities \f$\chi_2^B\f$, \f$\chi_2^Q\f$, \f$\chi_2^S\f$, \f$\chi_{11}^{BQ}\f$, \f$\chi_{11}^{BS}\f$, \f$\chi_{11}^{QS}\f$
  *      - Temperature derivatives of susceptibilities \f$T \chi_2^B'\f$, \f$T \chi_2^Q'\f$, \f$T \chi_2^S'\f$, \f$T \chi_{11}^{BQ}'\f$, \f$T \chi_{11}^{BS}'\f$, \f$T \chi_{11}^{QS}'\f$
+ *      - Adiabatic \f$c_s^2\f$ and isothermal \f$c_T^2\f$ squared sound velocity
+ *      - Heat capacity \f$c_V/T^3\f$
  * 
  * Usage:
  * ~~~.bash
