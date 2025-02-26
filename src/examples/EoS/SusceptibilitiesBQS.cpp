@@ -83,16 +83,21 @@ int main(int argc, char *argv[])
 	if (argc > 2)
 		b = atof(argv[2]);
 
-  // Use real gas
-  bool useRG = false;
-  if (argc > 3)
-    useRG = atoi(argv[3]);
+  	// Use real gas
+  	bool useRG = false;
+  	if (argc > 3)
+    	useRG = atoi(argv[3]);
 	
 	// Parameter range from file
 	string param_range_file = "";
 	if (argc > 4)
 		param_range_file = argv[4];
 	ReadParameterRangeFromFile(param_range_file);
+
+	// Compute isothermal speed of sound
+	bool compute_cT2 = false;
+	if (argc > 5)
+	compute_cT2 = atoi(argv[5]);
 
 	// Model type
 	// 0 - Ideal HRG, 1 - EV HRG (no attraction), 2 - QvdW HRG (from 1609.03975), 3 - Real gas HRG
@@ -117,8 +122,8 @@ int main(int argc, char *argv[])
   }
 	
 	std::string outputfile = "Susceptibilities-" + ModelPrefix + "-output.dat";
-	if (argc > 5)
-		outputfile = argv[5];
+	if (argc > 6)
+		outputfile = argv[6];
 	
 	
 	// Create the hadron list instance and read the list from file
@@ -184,7 +189,8 @@ int main(int argc, char *argv[])
 	fout << std::setw(tabsize) << "muS[GeV]" << " ";
 	// Speed of sound squared
 	fout << std::setw(tabsize) << "cs2" << " ";
-	fout << std::setw(tabsize) << "cT2" << " ";
+	if (compute_cT2)
+		fout << std::setw(tabsize) << "cT2" << " ";
 	// Heat capacity
 	fout << std::setw(tabsize) << "cV/T^3" << " ";
 	// Susceptibilities
@@ -261,7 +267,6 @@ int main(int argc, char *argv[])
 
 					// Speed of sound
 					double cs2 = model->cs2();
-					double cT2 = model->cT2();
 
 					// Heat capacity
 					double cV  = model->HeatCapacity();
@@ -273,7 +278,10 @@ int main(int argc, char *argv[])
 					fout << setw(tabsize) << muQ << " ";
 					fout << setw(tabsize) << muS << " ";
 					fout << setw(tabsize) << cs2 << " ";
-					fout << setw(tabsize) << cT2 << " ";
+					if (compute_cT2) {
+						double cT2 = model->cT2();
+						fout << setw(tabsize) << cT2 << " ";
+					}
 					fout << setw(tabsize) << cVT3 << " ";
 					fout << setw(tabsize) << chi2B << " ";
 					fout << setw(tabsize) << chi2Q << " ";
@@ -323,7 +331,7 @@ int main(int argc, char *argv[])
  * 
  * Usage:
  * ~~~.bash
- * SusceptibilitiesBQS <a> <b> <useRG> <param_range_file> <outputfile>
+ * SusceptibilitiesBQS <a> <b> <useRG> <param_range_file> <cT2flag> <outputfile>
  * ~~~
  * 
  * Where:
@@ -331,5 +339,6 @@ int main(int argc, char *argv[])
  * - <b> is the parameter b for the QvdW model (fm^3)
  * - <useRG> is a flag to use the real gas model and Carnahan-Starling EV
  * - <param_range_file> is the file with the parameter range
+ * - <cT2flag> is a flag to compute the isothermal speed of sound squared
  * - <outputfile> is the file to write the results to
  */

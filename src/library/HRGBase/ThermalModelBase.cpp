@@ -2399,6 +2399,16 @@ namespace thermalfist {
       ConservedCharges[2] = 0;
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
+
+    // If all chemical potentials are zero, c_T is undefined (return 0.)
+    {
+      bool AllMuZero = true;
+      for(int i = 0; i < ConservedCharges.size(); ++i)
+        AllMuZero &= (ConservedCharges[i] == 0 || mus[i] == 0.0);
+      if (AllMuZero) {
+        return 0.;
+      }
+    }
       
 
     // Cross-check (if charge is not conserved, its chemical potential should be zero)

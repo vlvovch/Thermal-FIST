@@ -135,32 +135,82 @@ add_test(NAME CompareCPC4a
 
 
 # Thermodynamics (Id-HRG)
-add_test(NAME RunThermodynamicsIdHRG
-        COMMAND example-ThermodynamicsBQS 0. 0. 0
+add_test(NAME RunThermodynamicsIdHRG1
+        COMMAND example-ThermodynamicsBQS 0. 0. 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in Thermodynamics-Id-HRG-output-1.dat
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsIdHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-Id-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-Id-HRG-output-1.dat)
 
-add_test(NAME CompareThermodynamicsIdHRG
-        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-Id-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-Id-HRG-output.dat)
+add_test(NAME RunThermodynamicsIdHRG2
+        COMMAND example-ThermodynamicsBQS 0. 0. 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in Thermodynamics-Id-HRG-output-2.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsIdHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-Id-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-Id-HRG-output-2.dat)
+
+# Thermodynamics (QvdW-HRG)
+add_test(NAME RunThermodynamicsQvdWHRG1
+        COMMAND example-ThermodynamicsBQS 0.329 3.42 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in Thermodynamics-QvdW-HRG-output-1.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsQvdWHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-QvdW-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-QvdW-HRG-output-1.dat)
+
+add_test(NAME RunThermodynamicsQvdWHRG2
+        COMMAND example-ThermodynamicsBQS 0.329 3.42 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in Thermodynamics-QvdW-HRG-output-2.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsQvdWHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-QvdW-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-QvdW-HRG-output-2.dat)
+
+# Thermodynamics (RG-HRG)
+add_test(NAME RunThermodynamicsRGHRG1
+        COMMAND example-ThermodynamicsBQS 0.329 3.42 1 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in Thermodynamics-RG-HRG-output-1.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsRGHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-RG-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-RG-HRG-output-1.dat)
+
+add_test(NAME RunThermodynamicsRGHRG2
+        COMMAND example-ThermodynamicsBQS 0.329 3.42 1 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in Thermodynamics-RG-HRG-output-2.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareThermodynamicsRGHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Thermodynamics-RG-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Thermodynamics-RG-HRG-output-2.dat)
 
 # Susceptibilities (Id-HRG)
-add_test(NAME RunSusceptibilitiesIdHRG
-        COMMAND example-SusceptibilitiesBQS 0. 0. 0
+add_test(NAME RunSusceptibilitiesIdHRG1
+        COMMAND example-SusceptibilitiesBQS 0. 0. 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in 0 Susceptibilities-Id-HRG-output-1.dat
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_test(NAME CompareSusceptibilitiesIdHRG
-        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-Id-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-Id-HRG-output.dat)
-# Susceptibilities (QvdW-HRG)
-add_test(NAME RunSusceptibilitiesQvdWHRG
-        COMMAND example-SusceptibilitiesBQS 0.329 3.42 0
+add_test(NAME CompareSusceptibilitiesIdHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-Id-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-Id-HRG-output-1.dat)
+add_test(NAME RunSusceptibilitiesIdHRG2
+        COMMAND example-SusceptibilitiesBQS 0. 0. 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in 1 Susceptibilities-Id-HRG-output-2.dat
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_test(NAME CompareSusceptibilitiesQvdWHRG    
-        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-QvdW-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-QvdW-HRG-output.dat)
-# Susceptibilities (RG-HRG)
-add_test(NAME RunSusceptibilitiesRGHRG
-        COMMAND example-SusceptibilitiesBQS 0.329 3.42 1
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_test(NAME CompareSusceptibilitiesRGHRG
-        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-RG-HRG-output.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-RG-HRG-output.dat)
+add_test(NAME CompareSusceptibilitiesIdHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-Id-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-Id-HRG-output-2.dat)
 
+# Susceptibilities (QvdW-HRG)
+add_test(NAME RunSusceptibilitiesQvdWHRG1
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in 0 Susceptibilities-QvdW-HRG-output-1.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesQvdWHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-QvdW-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-QvdW-HRG-output-1.dat)
+
+add_test(NAME RunSusceptibilitiesQvdWHRG2
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 0 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in 1 Susceptibilities-QvdW-HRG-output-2.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesQvdWHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-QvdW-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-QvdW-HRG-output-2.dat)
+
+# Susceptibilities (RG-HRG)
+add_test(NAME RunSusceptibilitiesRGHRG1
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 1 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_1.in 0 Susceptibilities-RG-HRG-output-1.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesRGHRG1
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-RG-HRG-output-1.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-RG-HRG-output-1.dat)
+
+add_test(NAME RunSusceptibilitiesRGHRG2
+        COMMAND example-SusceptibilitiesBQS 0.329 3.42 1 ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/BQS_paramrange_2.in 1 Susceptibilities-RG-HRG-output-2.dat
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_test(NAME CompareSusceptibilitiesRGHRG2
+        COMMAND test_CompareOutputs ${CMAKE_BINARY_DIR}/Susceptibilities-RG-HRG-output-2.dat ${PROJECT_SOURCE_DIR}/test/ReferenceOutput/Susceptibilities-RG-HRG-output-2.dat)
+        
 # Neutron star EoS
 add_test(NAME RunNeutronStarEoS
         COMMAND example-NeutronStars-CSHRG
