@@ -231,8 +231,6 @@ namespace thermalfist {
 	/**
 	 * \brief Implementation of the diagonal van der Waals excluded volume model.
 	 * 
-	 * This class implements the diagonal van der Waals excluded volume model,
-	 * where only the self-interactions of particles are considered.
 	 */
 	class ExcludedVolumeModelDiagonalVDW :
 		public ExcludedVolumeModelMultiBase {
@@ -320,10 +318,7 @@ namespace thermalfist {
 	/**
 	 * \brief Implementation of a diagonal generalized excluded volume model.
 	 * 
-	 * This class implements a diagonal generalized excluded volume model,
-	 * where the excluded volume effects are described by a general model
-	 * specified by the ExcludedVolumeModelBase object.
-	 * The object pointed by ExcludedVolumeModelBase will be deleted on destruction.
+	 * This class implements a diagonal generalized excluded volume model.
 	 */
 	class ExcludedVolumeModelDiagonalGeneralized :
 		public ExcludedVolumeModelMultiBase {
