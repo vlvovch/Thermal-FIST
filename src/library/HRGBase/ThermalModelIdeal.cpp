@@ -258,7 +258,7 @@ namespace thermalfist {
 
     m_TemperatureDerivativesCalculated = true;
 
-    if (IsFluctuationsCalculated())
+    if (IsSusceptibilitiesCalculated())
       CalculateSusceptibilityMatrix();
   }
 

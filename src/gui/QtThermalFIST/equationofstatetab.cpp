@@ -112,11 +112,15 @@ void EoSWorker::run() {
       tTD.rhoQ = model->ElectricChargeDensity();
       tTD.rhoS = model->StrangenessDensity();
       tTD.rhoC = model->CharmDensity();
-      tTD.flag = true;
-      paramsTD->operator [](i) = tTD;
 
       model->CalculateTwoParticleCorrelations();
       model->CalculateSusceptibilityMatrix();
+      model->CalculateTemperatureDerivatives();
+
+      tTD.cs2  = model->cs2();
+      tTD.cVT3 = model->HeatCapacity() / pow(model->Parameters().T, 3) / thermalfist::xMath::GeVtoifm3();
+      tTD.flag = true;
+      paramsTD->operator [](i) = tTD;
 
       ChargesFluctuations flucts;
 
@@ -224,6 +228,16 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     index++;
 
     tname = "Δ";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "cs²";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "CV/T³";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -1382,6 +1396,20 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
         ret[j] = paramsTD[j].I / paramsTD[j].e / 3.;
+      }
+    }
+
+    tind = parammap["cs²"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].cs2;
+      }
+    }
+
+    tind = parammap["CV/T³"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsTD[j].cVT3;
       }
     }
 

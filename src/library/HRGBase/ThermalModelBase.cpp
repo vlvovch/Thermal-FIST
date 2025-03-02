@@ -2401,6 +2401,19 @@ namespace thermalfist {
     // Calculate the numerator
     double TdsdT = SpecificHeatChem();
 
+    // If all chemical potentials are zero, retur TdsT
+    {
+      bool AllMuZero = true;
+      for(int i = 0; i < ConservedCharges.size(); ++i)
+        AllMuZero &= (ConservedCharges[i] == 0 || mus[i] == 0.0);
+      if (AllMuZero) {
+        return TdsdT;
+      }
+    }
+
+    if (!IsFluctuationsCalculated())
+      CalculateFluctuations();
+
     // Calculate the denominator
     double denominator = 1.;
     auto PiMatr = GetPressureHessianMatrix(this, ConservedCharges);

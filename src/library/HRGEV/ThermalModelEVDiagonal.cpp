@@ -338,7 +338,7 @@ namespace thermalfist {
       m_dndT[i] = -sum_dbndT * nids[i] + (1. - sum_bn) * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
     }
 
-    if (IsFluctuationsCalculated()) {
+    if (IsSusceptibilitiesCalculated()) {
       for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
           m_PrimChi2sdT[i][j] = 0.;

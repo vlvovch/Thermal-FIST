@@ -699,8 +699,11 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   if (config.ComputeFluctations) {
     model->CalculateFluctuations();
-
     computeHigherOrderFluctuations();
+    printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
+    
+    model->CalculateTemperatureDerivatives();
+    printf("Temperature derivatives time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
     //buttonCorrelations->setEnabled(true);
   }
@@ -708,7 +711,6 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     //buttonCorrelations->setEnabled(false);
   }
 
-  printf("Fluctuations time = %ld ms\n", static_cast<long int>(timerc.elapsed()));
 
   timerc.restart();
 

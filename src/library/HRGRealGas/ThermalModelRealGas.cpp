@@ -1411,7 +1411,7 @@ namespace thermalfist {
     }
 
     // dchi2's
-    if (IsFluctuationsCalculated()) {
+    if (IsSusceptibilitiesCalculated()) {
       vector<double> dnevdT(Nevcomp, 0.);
       for(int l = 0; l < NN; ++l) {
         dnevdT[evinds[l]] += m_dndT[l];
