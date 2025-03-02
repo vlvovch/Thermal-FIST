@@ -7,6 +7,7 @@
  */
 #ifndef BILINEARSPLINEFUNCTION_H
 #define BILINEARSPLINEFUNCTION_H
+#include <stdexcept>
 
 #include "HRGBase/SplineFunction.h"
 
