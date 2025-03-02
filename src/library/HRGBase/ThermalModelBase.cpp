@@ -840,6 +840,7 @@ namespace thermalfist {
   {
     m_Calculated = false;
     m_FeeddownCalculated = false;
+    m_SusceptibilitiesCalculated = false;
     m_FluctuationsCalculated = false;
     m_TemperatureDerivativesCalculated = false;
     m_GCECalculated = false;
@@ -1319,6 +1320,7 @@ namespace thermalfist {
         m_Susc[i][j] = m_Susc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
       }
     }
+    m_SusceptibilitiesCalculated = true;
   }
 
   void ThermalModelBase::CalculateProxySusceptibilityMatrix()
@@ -2091,12 +2093,12 @@ namespace thermalfist {
   }
 
   double ThermalModelBase::Susc(ConservedCharge::Name i, ConservedCharge::Name j) const {
-    assert(IsFluctuationsCalculated());
+    assert(IsSusceptibilitiesCalculated());
     return m_Susc[i][j];
   }
 
   double ThermalModelBase::dSuscdT(ConservedCharge::Name i, ConservedCharge::Name j) const {
-    assert(IsFluctuationsCalculated() && IsTemperatureDerivativesCalculated());
+    assert(IsSusceptibilitiesCalculated() && IsTemperatureDerivativesCalculated());
     return m_dSuscdT[i][j];
   }
 

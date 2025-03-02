@@ -1155,6 +1155,10 @@ namespace thermalfist {
     /// the CalculateFluctuations() method
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
 
+    /// Whether fluctuations were calculated with
+    /// the CalculateFluctuations() method
+    bool IsSusceptibilitiesCalculated() const { return m_SusceptibilitiesCalculated; }
+
     /// Whether temperature derivatives were calculated with
     /// the CalculateTemperatureDerivatives() method
     bool IsTemperatureDerivativesCalculated() const { return m_TemperatureDerivativesCalculated; }
@@ -1405,6 +1409,7 @@ namespace thermalfist {
     bool m_Calculated;
     bool m_FeeddownCalculated;
     bool m_FluctuationsCalculated;
+    bool m_SusceptibilitiesCalculated;
     bool m_GCECalculated;
     bool m_UseWidth;
     bool m_NormBratio;
