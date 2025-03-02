@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <stdexcept>
 
 #include <Eigen/Dense>
 

@@ -8,6 +8,7 @@
 #include "HRGBase/ThermalModelCanonicalCharm.h"
 
 #include <cassert>
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 

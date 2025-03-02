@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <stdexcept>
 
 #include "HRGEventGenerator/SimpleParticle.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"

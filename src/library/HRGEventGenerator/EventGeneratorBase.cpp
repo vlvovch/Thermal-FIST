@@ -9,7 +9,7 @@
 
 #include <functional>
 #include <algorithm>
-
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/ThermalModelBase.h"

@@ -12,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 #include "HRGEV/ExcludedVolumeHelper.h"

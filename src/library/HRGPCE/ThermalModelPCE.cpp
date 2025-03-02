@@ -1,6 +1,8 @@
 #include "HRGPCE/ThermalModelPCE.h"
 
+#include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 

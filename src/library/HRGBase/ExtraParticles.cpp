@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <stdexcept>
 
 #include "HRGBase/Utility.h"
 
