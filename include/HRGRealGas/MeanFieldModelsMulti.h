@@ -208,7 +208,7 @@ namespace thermalfist {
 		 * \param k Third species index.
 		 * \return Third derivative of the mean field.
 		 */
-		virtual double d3v(int i, int j, int k) const;
+		virtual double d3v(int i, int j, int k) const { return 0.; }
 		
 		/**
 		 * \brief Calculates the fourth derivative of the mean field.
@@ -219,7 +219,7 @@ namespace thermalfist {
 		 * \param l Fourth species index.
 		 * \return Fourth derivative of the mean field.
 		 */
-		virtual double d4v(int i, int j, int k, int l) const;
+		virtual double d4v(int i, int j, int k, int l) const { return 0.; }
 		
 		/**
 		 * \brief Calculates the temperature derivative of the mean field.

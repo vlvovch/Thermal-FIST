@@ -264,6 +264,7 @@ namespace thermalfist {
 		/**
 		 * \brief Vector of computed susceptibilities for a specified arbitraty charge.
 		 */
+		std::vector<double> m_chiarb;
 		double ChiArb(int charge);
 
 	protected:
