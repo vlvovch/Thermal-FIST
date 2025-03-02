@@ -45,7 +45,7 @@ void ReadParameterRangeFromFile(const std::string &filename)
     return;
   std::ifstream fin(filename);
   if (!fin.is_open()) {
-    std::cerr << "Error: cannot open file " << filename << "using default parameter range" << std::endl;
+    std::cerr << "Error: cannot open file " << filename << " using default parameter range" << std::endl;
     return;
   }
 

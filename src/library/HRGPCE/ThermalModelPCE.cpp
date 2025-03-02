@@ -50,7 +50,8 @@ namespace thermalfist {
       const ThermalParticle& part = TPShelper.Particles()[i];
       if (part.IsStable()) {
         if (stab_index >= m_EffectiveCharges[0].size()) {
-          throw std::invalid_argument("ThermalModelPCE::SetStabilityFlags: Wrong number of stable components!");
+          throw std::invalid_argument("ThermalModelPCE::SetStabilityFlags: Wrong number of stable components! Expected: " + 
+             std::to_string(m_model->TPS()->ComponentsNumber()) + ", Got: " + std::to_string(m_StabilityFlags.size()));
         }
         m_EffectiveCharges[i][stab_index] = 1.;
         const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = TPShelper.DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];

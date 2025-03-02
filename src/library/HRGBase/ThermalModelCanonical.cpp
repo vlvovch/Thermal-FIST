@@ -340,6 +340,7 @@ Obtained: %lf\n\
       else if (tpart.Statistics() == 0
         || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
+
         if (ind < static_cast<int>(Nsx.size())) {
           if (!UsePartialChemicalEquilibrium()) {
             double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.);

@@ -2031,7 +2031,7 @@ namespace thermalfist {
     if (i >= 0 && i < ComponentsNumber()) {
       TPS()->Particle(i).SetGeneralizedDensity(density_model);
     } else {
-      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpecies(): Particle id " << i << " is oustide the range!" << std::endl;
+      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpecies(): Particle id " << i << " is outside the range!" << std::endl;
     }
   }
 
@@ -2041,7 +2041,7 @@ namespace thermalfist {
     if (id != -1) {
       TPS()->Particle(id).SetGeneralizedDensity(density_model);
     } else {
-      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code " << PDGID << " is oustide the range!" << std::endl;
+      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code " << PDGID << " is outside the range!" << std::endl;
     }
   }
 
@@ -2109,7 +2109,7 @@ namespace thermalfist {
     if (IsTemperatureDerivativesCalculated() && i >= 0 && i < ComponentsNumber())
       return m_dndT[i];
     else {
-      std::cerr << "**WARNING** ThermalModelBase::GetdndT(): Temperature derivatives are not calculated or particle id " << i << " is oustide the range!" << std::endl;
+      std::cerr << "**WARNING** ThermalModelBase::GetdndT(): Temperature derivatives are not calculated or particle id " << i << " is outside the range!" << std::endl;
       return 0.;
     }
     return 0.;

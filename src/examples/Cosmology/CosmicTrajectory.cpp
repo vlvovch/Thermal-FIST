@@ -28,7 +28,7 @@ using namespace std;
 using namespace thermalfist;
 
 
-// Compute chemical potentials as a function of temperture in the Early Universe
+// Compute chemical potentials as a function of temperature in the Early Universe
 // Reference: V. Vovchenko et al., Phys. Rev. Lett. 126 (2021) 012701, https://inspirehep.net/literature/1815329
 int main(int argc, char *argv[])
 {
