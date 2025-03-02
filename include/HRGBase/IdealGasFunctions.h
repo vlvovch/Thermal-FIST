@@ -53,7 +53,7 @@ namespace thermalfist {
                                  int in_lmax = 100,
                                  double in_degSpin = 1.,
                                  double in_Q = 0.) :
-                                 B(in_B),lmax(in_lmax),degSpin(in_degSpin),Q(in_Q)
+                                 B(in_B), lmax(in_lmax), degSpin(in_degSpin), Q(in_Q)
                                  { }
     };
 
@@ -124,7 +124,7 @@ namespace thermalfist {
      * \return Scalar density [fm-3].
      */
     double BoltzmannScalarDensity(double T, double mu, double m, double deg,
-                                  const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());  // TODO: Check for correctness
+                                  const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());  // TODO: Check if the scalar density formula and implementation are correct
     
     /**
      * \brief Computes the chemical potential derivative of density for a Maxwell-Boltzmann gas.

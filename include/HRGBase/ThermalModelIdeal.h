@@ -55,7 +55,7 @@ namespace thermalfist {
 
     virtual double CalculatePressure();
 
-    virtual double CalculatededT();
+    virtual double CalculateEnergyDensityDerivativeT();
 
     virtual double ParticleScaledVariance(int part);
 

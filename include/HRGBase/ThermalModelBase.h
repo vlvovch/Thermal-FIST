@@ -56,7 +56,7 @@ namespace thermalfist {
      * \brief Construct a new ThermalModelBase object.
      * 
      * \param TPS A pointer to the ThermalParticleSystem object containing the particle list
-     * \param params ThermalModelParameters object with current thermal parameters
+     * \param params ThermalModelParameters object with current thermal parameters (default is ThermalModelParameters())
      */
     ThermalModelBase(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters());
 
@@ -986,7 +986,7 @@ namespace thermalfist {
      * \return The calculated speed of sound squared (cs^2).
      */
     double cs2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
-      return Calculatecs2(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+      return CalculateAdiabaticSpeedOfSoundSquared(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
     }
 
     /**
@@ -1003,15 +1003,15 @@ namespace thermalfist {
      * \return The calculated speed of sound squared (cT^2).
      */
     double cT2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
-      return CalculatecT2(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+      return CalculateIsothermalSpeedOfSoundSquared(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
     }
 
     /**
-     * \brief Computes the heat capacity c_V at constant densities (fm^-3)
+     * \brief Computes the heat capacity c_V at constant volume and densities (fm^-3)
      * 
      * \f$ c_V = T \left( \frac{\partial s}{\partial T} \right)_{\{n\}} \f$
      *
-     * \return The calculated heat capacity at constant volume (c_V) in fm^-3.
+     * \return The calculated heat capacity at constant volume and densities (c_V) in fm^-3.
      */
     double HeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
       return CalculateHeatCapacity(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
@@ -1033,10 +1033,10 @@ namespace thermalfist {
     virtual double CalculateAbsoluteCharmDensity();
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
-    virtual double CalculatededT() = 0;
+    virtual double CalculateEnergyDensityDerivativeT() = 0;
     virtual double CalculateSpecificHeatChem();
-    virtual double Calculatecs2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
-    virtual double CalculatecT2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
+    virtual double CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
+    virtual double CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     virtual double CalculateHeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     //@}
 
@@ -1365,19 +1365,28 @@ namespace thermalfist {
 
     const IdealGasFunctions::IdealGasFunctionsExtraConfig& GetIdealGasFunctionsExtraConfig() const { return m_IGFExtraConfig; }
 
-    /**
-     * \brief Sets the value of magnetic field and the number of Landau levels to include
-     */
-    void SetMagneticField(double B = 0.0, int lmax = -1);
 
     /**
-     * \brief Sets the value of magnetic field and the number of Landau levels to include
+     * \brief Sets the value of magnetic field and the number of Landau levels to include.
+     * 
+     * \param B The magnetic field strength.
+     * \param lmax The number of Landau levels to include.
+     * 
+     **/
+     void SetMagneticField(double B = 0.0, int lmax = -1);
+    /**
+     * \brief Recomputes the thresholds for particle production due to the presence of a magnetic field.
+     * 
+     * This method should be called whenever the magnetic field is changed to update the thresholds accordingly.
      */
     void RecomputeThresholdsDueToMagneticField();
 
-    /** \brief Computes "partial pressures" of all mesons, baryons, antibaryons, nuclei, antinuclei
-    *
-    */
+    /**
+     * \brief Clears the magnetic field.
+     * 
+     * This method resets the magnetic field to its default value.
+     * It should be called when the magnetic field effects are no longer needed.
+     */
     std::vector<double> PartialPressures();
 
     /// \brief Clears the magnetic field

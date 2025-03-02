@@ -561,10 +561,8 @@ namespace thermalfist {
 
     bool AcceptParticle(const ThermalParticle& part, const std::set<std::string>& flags, double mcut = -1.) const;
 
-    //void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_OldFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
-    //void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_NewFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
     void ReadDecays_OldFormat(std::ifstream &fin);

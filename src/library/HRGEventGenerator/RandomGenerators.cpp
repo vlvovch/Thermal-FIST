@@ -263,7 +263,7 @@ namespace thermalfist {
         double x0 = randgenMT.randDblExc();
 
         if (mass < m_Mu && m_Statistics == -1)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu %lf > mass %lf\n", m_Mu, mass);
+          std::cerr << "**WARNING** ThermalMomentumGenerator::GetP: Bose-condensation mu " << m_Mu << " > mass " << mass << std::endl;
 
         double M = m_Max;
         if (mass != m_Mass)
@@ -272,7 +272,7 @@ namespace thermalfist {
         double prob = g(x0, mass) / M;
 
         if (prob > 1.)
-          printf("**WARNING** ThermalMomentumGenerator::GetP: Probability exceeds unity by %E\n", prob - 1.);
+          std::cerr << "**WARNING** ThermalMomentumGenerator::GetP: Probability exceeds unity by " << prob - 1. << std::endl;
 
         if (randgenMT.randDblExc() < prob) return -log(x0);
       }
@@ -363,8 +363,7 @@ namespace thermalfist {
         double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
         if (Weight > 1.) {
-          printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
-            Weight - 1.);
+          std::cerr << "**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by " << Weight - 1. << std::endl;
         }
 
         if (RandomGenerators::randgenMT.rand() < Weight)
@@ -590,7 +589,7 @@ namespace thermalfist {
           nmax *= 2;
 
         if (n == 1000) {
-          printf("**WARNING** BesselDistributionGenerator::R(x,nu): Reached maximum iterations...\n");
+          std::cerr << "**WARNING** BesselDistributionGenerator::R(x,nu): Reached maximum iterations..." << std::endl;
         }
       }
       return hn / kn;
@@ -700,7 +699,7 @@ namespace thermalfist {
         double pratio = pmXmOverpm(X, tm, a, nu);
 
         if (pratio != pratio) {
-          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye1: Float problem!");
+          std::cerr << "**WARNING** BesselDistributionGenerator::RandomBesselDevroye1: Float problem!" << std::endl;
           continue;
         }
 
@@ -743,7 +742,7 @@ namespace thermalfist {
         double pratio = pmXmOverpm(X, tm, a, nu);
 
         if (pratio != pratio) {
-          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye2: Float problem!");
+          std::cerr << "**WARNING** BesselDistributionGenerator::RandomBesselDevroye2: Float problem!" << std::endl;
           continue;
         }
 
@@ -786,7 +785,7 @@ namespace thermalfist {
         double pratio = pmXmOverpm(X, tm, a, nu);
 
         if (pratio != pratio) {
-          printf("**WARNING** BesselDistributionGenerator::RandomBesselDevroye3: Float problem!");
+          std::cerr << "**WARNING** BesselDistributionGenerator::RandomBesselDevroye3: Float problem!" << std::endl;
           continue;
         }
 

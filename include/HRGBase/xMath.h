@@ -5,8 +5,8 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#ifndef XMATH_H
-#define XMATH_H
+#ifndef THERMALFIST_XMATH_H
+#define THERMALFIST_XMATH_H
 /**
  * \file xMath.h
  * 
@@ -17,26 +17,24 @@
 
 namespace thermalfist {
 
-  /// \brief Contains some extra mathematical functions used in the code.
   namespace xMath {
 
     /// Pi constant
-    inline double Pi() { return 3.14159265358979323846; }
-
+    constexpr double Pi() { return 3.14159265358979323846; }
     /// A constant to transform GeV into fm\f$^{-1}\f$.
-    inline double GeVtoifm() { return 5.06773; }
+    constexpr double GeVtoifm() { return 5.06773; }
 
     /// A constant to transform GeV\f$^{2}\f$ into fm\f$^{-2}\f$.
-    inline double GeVtoifm2() { return GeVtoifm() * GeVtoifm(); }
+    constexpr double GeVtoifm2() { return GeVtoifm() * GeVtoifm(); }
 
     /// A constant to transform GeV\f$^{3}\f$ into fm\f$^{-3}\f$.
-    inline double GeVtoifm3() { return GeVtoifm() * GeVtoifm() * GeVtoifm(); }
+    constexpr double GeVtoifm3() { return GeVtoifm() * GeVtoifm() * GeVtoifm(); }
 
     /// Nucleon's mass. Value as in UrQMD.
-    inline double mnucleon() { return 0.938; }
+    constexpr double mnucleon() { return 0.938; }
 
     /// Pion's mass. Value as in UrQMD.
-    inline double mpion() { return 0.138; }
+    constexpr double mpion() { return 0.138; }
 
     //@{
     /// Bessel and related special functions.
@@ -57,13 +55,13 @@ namespace thermalfist {
     double StruveL0(double x);         ///< Modified Struve functions of order 0
     double StruveL1(double x);         ///< Modified Struve functions of order 1
 
-    double BesselK0exp(double x);         // modified Bessel function K_0(x), divided by exponential factor
-    double BesselK1exp(double x);         // modified Bessel function K_1(x), divided by exponential factor
-    double BesselKexp(int n, double x);    // integer order modified Bessel function K_n(x), divided by exponential factor
+    double BesselK0exp(double x);         ///< modified Bessel function K_0(x), divided by exponential factor
+    double BesselK1exp(double x);         ///< modified Bessel function K_1(x), divided by exponential factor
+    double BesselKexp(int n, double x);   ///< integer order modified Bessel function K_n(x), divided by exponential factor
 
-    double BesselI0exp(double x);         // modified Bessel function I_0(x), divided by exponential factor
-    double BesselI1exp(double x);         // modified Bessel function I_1(x), divided by exponential factor
-    double BesselIexp(int n, double x);   // integer order modified Bessel function I_n(x), divided by exponential factor
+    double BesselI0exp(double x);         ///< modified Bessel function I_0(x), divided by exponential factor
+    double BesselI1exp(double x);         ///< modified Bessel function I_1(x), divided by exponential factor
+    double BesselIexp(int n, double x);   ///< integer order modified Bessel function I_n(x), divided by exponential factor
 
 
     // Note that the functions Gamma and LogGamma are mutually dependent.
@@ -71,9 +69,17 @@ namespace thermalfist {
     double Gamma(double);
     //@}
 
-    // Computing Lambert W function (0-branch) using Halley's method
-    // The desired accuracy is within 10 * epsilon where epsilon is the machine precision
-    // Initial guess is z = 0
+    /**
+     * \brief Computes the Lambert W function (0-branch) using Halley's method.
+     * 
+     * The Lambert W function is the inverse function of \( f(W) = W e^W \).
+     * This implementation uses Halley's method to achieve the desired accuracy within 10 * epsilon,
+     * where epsilon is the machine precision. The initial guess for the iteration is z = 0.
+     * 
+     * \tparam T The type of the input value.
+     * \param z The input value for which the Lambert W function is computed.
+     * \return The computed value of the Lambert W function for the given input.
+     */
     template<typename T> T LambertW0(T z);
   }
 
@@ -82,4 +88,4 @@ namespace thermalfist {
 // Implementation of template functions
 #include "xMath.tcc"
 
-#endif // XMATH_H
+#endif // THERMALFIST_XMATH_H

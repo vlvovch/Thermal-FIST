@@ -21,7 +21,12 @@ using namespace std;
 namespace thermalfist {
 
   ThermalModelCanonical::ThermalModelCanonical(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params), m_BCE(1), m_QCE(1), m_SCE(1), m_CCE(1), m_IntegrationIterationsMultiplier(1)
+    ThermalModelBase(TPS_, params), 
+    m_BCE(1), 
+    m_QCE(1), 
+    m_SCE(1), 
+    m_CCE(1), 
+    m_IntegrationIterationsMultiplier(1)
   {
 
     m_TAG = "ThermalModelCanonical";
@@ -35,15 +40,16 @@ namespace thermalfist {
   }
 
 
+  
   ThermalModelCanonical::~ThermalModelCanonical(void)
-  {
+  {    
     CleanModelGCE();
   }
 
   void ThermalModelCanonical::ChangeTPS(ThermalParticleSystem *TPS_) {
     ThermalModelBase::ChangeTPS(TPS_);
   }
-
+  
   void ThermalModelCanonical::CalculateQuantumNumbersRange(bool computeFluctuations)
   {
     m_BMAX = 0;
@@ -89,7 +95,7 @@ namespace thermalfist {
     m_SMAX *= m_SCE;
     m_CMAX *= m_CCE;
 
-    printf("BMAX = %d\tQMAX = %d\tSMAX = %d\tCMAX = %d\n", m_BMAX, m_QMAX, m_SMAX, m_CMAX);
+    std::cout << "BMAX = " << m_BMAX << "\tQMAX = " << m_QMAX << "\tSMAX = " << m_SMAX << "\tCMAX = " << m_CMAX << std::endl;
 
     m_QNMap.clear();
     m_QNvec.resize(0);
@@ -109,7 +115,6 @@ namespace thermalfist {
 
             m_PartialZ.push_back(0.);
             m_Corr.push_back(1.);
-
 
             ind++;
           }
@@ -210,7 +215,7 @@ namespace thermalfist {
   void ThermalModelCanonical::ValidateCalculation()
   {
     ThermalModelBase::ValidateCalculation();
-
+    
     char cc[1000];
 
     double TOL = 1.e-4;
@@ -301,9 +306,8 @@ Obtained: %lf\n\
       for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
         int i2 = m_TPS->PdgToId(-m_TPS->Particle(i).PdgId());
         if (i2 != -1) {
-          if (fabs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
-            printf("**ERROR** ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble only supported if particle-antiparticle fugacities are symmetric!\n");
-            exit(1);
+          if (std::abs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
+            throw std::runtime_error("ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble only supported if particle-antiparticle fugacities are symmetric!");
           }
         }
       }
@@ -328,8 +332,7 @@ Obtained: %lf\n\
       if (!IsParticleCanonical(tpart)) {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
         if (ind != m_QNMap[QuantumNumbers(0, 0, 0, 0)]) {
-          printf("**ERROR** ThermalModelCanonical: neutral particle cannot have non-zero ce charges\n");
-          exit(1);
+          throw std::invalid_argument("ThermalModelCanonical: neutral particle cannot have non-zero ce charges");
         }
         if (ind < static_cast<int>(Nsx.size()))
           Nsx[ind] += tpart.Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
@@ -917,5 +920,3 @@ Obtained: %lf\n\
   }
 
 } // namespace thermalfist
-
-

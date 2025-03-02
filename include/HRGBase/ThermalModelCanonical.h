@@ -215,8 +215,17 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
-    virtual double CalculatededT() { exit(1); return 0.; } // Not implemented
+    virtual double CalculateEnergyDensityDerivativeT() { throw std::runtime_error("CalculateEnergyDensityDerivativeT not implemented"); return 0.; } // Not implemented
 
+    /**
+     * \brief Returns the scalar density of a particle species.
+     * 
+     * This method is not implemented for the canonical ensemble model,
+     * hence it returns a constant value of 0.0.
+     * 
+     * \param part The particle species index.
+     * \return double The scalar density, which is 0.0 in this implementation.
+     */
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
     // Override functions end
@@ -280,16 +289,26 @@ namespace thermalfist {
      */
     int m_IntegrationIterationsMultiplier;
 
-    int m_BMAX, m_QMAX, m_SMAX, m_CMAX;
+    int m_BMAX; ///< Maximum baryon number
+    int m_QMAX; ///< Maximum electric charge
+    int m_SMAX; ///< Maximum strangeness
+    int m_CMAX; ///< Maximum charm
     int m_BMAX_list, m_QMAX_list, m_SMAX_list, m_CMAX_list;
 
-    double m_MultExp;
-    double m_MultExpBanalyt;
+    double m_MultExp; ///< Exponential multiplier for canonical partition function calculations
+    double m_MultExpBanalyt; ///< Exponential multiplier for analytical baryon fugacity calculations
 
+    /// Pointer to a ThermalModelIdeal object used for GCE calculations.
     ThermalModelIdeal *m_modelgce;
 
-    int m_BCE, m_QCE, m_SCE, m_CCE;
+    int m_BCE; ///< Flag indicating if baryon charge is conserved canonically
+    int m_QCE; ///< Flag indicating if electric charge is conserved canonically
+    int m_SCE; ///< Flag indicating if strangeness is conserved canonically
+    int m_CCE; ///< Flag indicating if charm is conserved canonically
 
+    /**
+     * \brief Flag indicating whether the analytical calculation of baryon fugacity is used.
+     */
     bool m_Banalyt;
   };
 

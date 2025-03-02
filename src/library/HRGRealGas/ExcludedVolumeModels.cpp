@@ -1,5 +1,7 @@
 #include "HRGRealGas/ExcludedVolumeModels.h"
 #include <cstdio>
+#include <stdexcept>
+#include <string>
 
 namespace thermalfist {
 
@@ -34,37 +36,37 @@ namespace thermalfist {
 	}
 
 	double ExcludedVolumeModelCS::df(int n, double eta) const {
-		if (n == 0)
-			return f(eta);
-		if (n == 1)
-			return d1f(eta);
-		if (n == 2)
-			return d2f(eta);
-		if (n == 3)
-			return d3f(eta);
-		if (n == 4)
-			return d4f(eta);
-
-		printf("**ERROR** ExcludedVolumeModelCS::df(n,eta): n = %d not supported!", n);
-		exit(-1);
-		return 0.;
+		switch (n) {
+			case 0:
+				return f(eta);
+			case 1:
+				return d1f(eta);
+			case 2:
+				return d2f(eta);
+			case 3:
+				return d3f(eta);
+			case 4:
+				return d4f(eta);
+			default:
+				throw std::invalid_argument("ExcludedVolumeModelCS::df(n,eta): n = " + std::to_string(n) + " not supported!");
+		}
 	}
 
 	double ExcludedVolumeModelTVM::df(int n, double eta) const {
-		if (n == 0)
-			return f(eta);
-		if (n == 1)
-			return d1f(eta);
-		if (n == 2)
-			return d2f(eta);
-		if (n == 3)
-			return d3f(eta);
-		if (n == 4)
-			return d4f(eta);
-
-		printf("**ERROR** ExcludedVolumeModelTVM::df(n,eta): n = %d not supported!", n);
-		exit(-1);
-		return 0.;
+		switch (n) {
+			case 0:
+				return f(eta);
+			case 1:
+				return d1f(eta);
+			case 2:
+				return d2f(eta);
+			case 3:
+				return d3f(eta);
+			case 4:
+				return d4f(eta);
+			default:
+				throw std::invalid_argument("ExcludedVolumeModelTVM::df(n,eta): n = " + std::to_string(n) + " not supported!");
+		}
 	}
 
 

@@ -1,9 +1,13 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2019-2019 Volodymyr Vovchenko
+ * Copyright (c) 2019-2023 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
+ *
+ * This file contains structures and enumerations related to particle decays,
+ * including feeddown flags, decay types, and detailed information about 
+ * individual decay channels.
  */
 #ifndef PARTICLEDECAY_H
 #define PARTICLEDECAY_H
@@ -87,7 +91,7 @@ namespace thermalfist {
      * \brief Construct a new ParticleDecay object.
      * 
      * \param bratio Branching ratio of the decay. Between 0 and 1.
-     * \param daughters A vector of PDG ID numbers of all daughter products.
+     * \param daughters A vector of PDG ID numbers of all daughter products. Defaults to an empty vector.
      */
     ParticleDecayChannel(double bratio = 0., const std::vector<long long> &daughters = std::vector<long long>(0)) :
       mBratio(bratio), mDaughters(daughters), mM0(0.), mPole(0.), mL(0.),

@@ -470,7 +470,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -523,7 +523,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return FermiZeroTPressure(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -579,7 +579,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return FermiZeroTEnergyDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -649,7 +649,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return FermiZeroTScalarDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuScalarDensity(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -702,7 +702,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.;
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMuT1dn1dmu1(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -757,7 +757,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.;
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMuT2dn2dmu2(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -813,7 +813,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.;
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMuT3dn3dmu3(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -869,7 +869,7 @@ namespace thermalfist {
                                              const IdealGasFunctionsExtraConfig& extraConfig)
     {
       if (N < 0 || N>3) {
-        printf("**WARNING** QuantumNumericalIntegrationTdndmu: N must be between 0 and 3!\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationTdndmu: N must be between 0 and 3!" << std::endl;
         calculationHadBECIssue = true;
         exit(1);
       }
@@ -898,7 +898,7 @@ namespace thermalfist {
         return FermiZeroTChiNDimensionfull(N, mu, m, deg, extraConfig);
       if (statistics == -1 && T == 0.0) {
         if (mu >= m) {
-          printf("**WARNING** QuantumNumericalIntegrationChiNDimensionfull: Bose-Einstein condensation\n");
+          std::cerr << "**WARNING** QuantumNumericalIntegrationChiNDimensionfull: Bose-Einstein condensation" << std::endl;
           calculationHadBECIssue = true;
         }
         return 0.;
@@ -1157,8 +1157,7 @@ namespace thermalfist {
                                                   const IdealGasFunctionsExtraConfig& extraConfig)
     {
       if (N < 0 || N>3) {
-        printf("**ERROR** FermiNumericalIntegrationLargeMuTdndmu: N < 0 or N > 3\n");
-        exit(1);
+        throw std::runtime_error("**ERROR** FermiNumericalIntegrationLargeMuTdndmu: N < 0 or N > 3");
       }
       if (N == 0)
         return FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg, extraConfig);
@@ -1287,8 +1286,7 @@ namespace thermalfist {
                            const IdealGasFunctionsExtraConfig& extraConfig)
     {
       if (N < 0 || N>3) {
-        printf("**ERROR** FermiNumericalIntegrationLargeMuTdndmu: N < 0 or N > 3\n");
-        exit(1);
+        throw std::runtime_error("**ERROR** FermiNumericalIntegrationLargeMuTdndmu: N < 0 or N > 3");
       }
       if (N == 0)
         return FermiZeroTDensity(mu, m, deg, extraConfig);
@@ -1305,9 +1303,7 @@ namespace thermalfist {
     double FermiZeroTChiN(int N, double mu, double m, double deg,
                           const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      printf("**ERROR** FermiZeroTChiN: This quantity is infinite by definition at T = 0!\n");
-      exit(1);
-      return 0.0;
+      throw std::runtime_error("**ERROR** FermiZeroTChiN: This quantity is infinite by definition at T = 0!");
       //return FermiNumericalIntegrationLargeMuTdndmu(N - 1, mu, m, deg) / pow(T, 3) / xMath::GeVtoifm3();
     }
 
@@ -1427,7 +1423,7 @@ namespace thermalfist {
             return QuantumNumericalIntegrationdchi2dT(statistics, T, mu, m, deg, extraConfig);
         }
       }
-      printf("**WARNING** IdealGasFunctions::IdealGasQuantity: Unknown quantity\n");
+      std::cerr << "**WARNING** IdealGasFunctions::IdealGasQuantity: Unknown quantity" << std::endl;
       return 0.;
     }
 
@@ -1508,7 +1504,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return FermiZeroTMagnetization(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMuMagnetization(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation\n");
+        std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -1778,7 +1774,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudndT(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -1810,7 +1806,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.;//FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMud2ndT2(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -1844,7 +1840,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudedT(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -1873,7 +1869,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.; //FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudedmu(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }
@@ -1902,7 +1898,7 @@ namespace thermalfist {
       if (statistics == 1 && T == 0.) return 0.;//FermiZeroTDensity(mu, m, deg, extraConfig);
       if (statistics == 1 && mu > m) return FermiNumericalIntegrationLargeMudchi2dT(T, mu, m, deg, extraConfig);
       if (statistics == -1 && mu > m) {
-        printf("**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = %lf, mu = %lf\n", m, mu);
+        std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
         return 0.;
       }

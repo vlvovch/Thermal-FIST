@@ -619,8 +619,7 @@ namespace thermalfist {
 
         //if (mcut >= 0. && mass > mcut) {
         if (m_PDGtoID.count(pdgid) != 0) {
-          printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
-          exit(1);
+          throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
         }
         if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0) {
           fin.getline(tmpc, 500);
@@ -700,8 +699,7 @@ namespace thermalfist {
 
           //if (mcut >= 0. && mass > mcut)
           if (m_PDGtoID.count(pdgid) != 0) {
-            printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
-            exit(1);
+            throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
           }
 
           if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0)
@@ -1316,8 +1314,7 @@ namespace thermalfist {
   const ThermalParticle & ThermalParticleSystem::Particle(int id) const
   {
     if (id < 0 || id >= static_cast<int>(m_Particles.size())) {
-      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!");
-      exit(1);
+      throw std::out_of_range("ThermalParticleSystem::Particle(int id): id is out of bounds!");
     }
     return m_Particles[id];
   }
@@ -1325,8 +1322,7 @@ namespace thermalfist {
   ThermalParticle & ThermalParticleSystem::Particle(int id)
   {
     if (id < 0 || id >= static_cast<int>(m_Particles.size())) {
-      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!\n");
-      exit(1);
+      throw std::out_of_range("ThermalParticleSystem::Particle(int id): id is out of bounds!");
     }
     return m_Particles[id];
   }
@@ -1335,8 +1331,7 @@ namespace thermalfist {
   {
     int id = PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid %lld is unknown\n", pdgid);
-      exit(1);
+      throw std::invalid_argument("ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid " + std::to_string(pdgid) + " is unknown");
     }
     return m_Particles[id];
   }
@@ -1345,8 +1340,7 @@ namespace thermalfist {
   {
     int id = PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid %lld is unknown\n", pdgid);
-      exit(1);
+      throw std::invalid_argument("ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid " + std::to_string(pdgid) + " is unknown");
     }
     return m_Particles[id];
   }
@@ -1434,7 +1428,7 @@ namespace thermalfist {
         ret = false;
         cnt++;
         if (cnt == 10) {
-          printf("**WARNING** Further warnings are discarded...\n");
+          throw std::runtime_error("**WARNING** Further warnings are discarded...");
         }
       }
     }
@@ -1447,16 +1441,12 @@ namespace thermalfist {
     for (int i = 0; i < Particles().size(); ++i) {
       const ThermalParticle& part = Particles()[i];
       if (part.AbsoluteStrangeness() == 0 && part.Strangeness() != 0) {
-        printf("**WARNING** %s (%lld): Particle with non-zero strangeness has zero strange quark content |s|!\n",
-          part.Name().c_str(),
-          part.PdgId());
+        std::cerr << "**WARNING** " << part.Name() << " (" << part.PdgId() << "): Particle with non-zero strangeness has zero strange quark content |s|!" << std::endl;
         ret = false;
       }
 
       if (part.AbsoluteCharm() == 0 && part.Charm() != 0) {
-        printf("**WARNING** %s (%lld): Particle with non-zero charm has zero charm quark content |s|!\n",
-          part.Name().c_str(),
-          part.PdgId());
+        std::cerr << "**WARNING** " << part.Name() << " (" << part.PdgId() << "): Particle with non-zero charm has zero charm quark content |s|!" << std::endl;
         ret = false;
       }
     }

@@ -104,7 +104,7 @@ namespace thermalfist {
     virtual void SetBaryonAsymmetry(double b) { m_Asymmetries[0] = b; }
     double BaryonAsymmetry() const { return m_Asymmetries[0]; }
 
-    /// Set electric chrage asymmetry (charge over entropy density)
+    /// Set electric charge asymmetry (charge over entropy density)
     virtual void SetChargeAsymmetry(double q) { m_Asymmetries[1] = q; }
     double ChargeAsymmetry() const { return m_Asymmetries[1]; }
 
@@ -160,7 +160,7 @@ namespace thermalfist {
     double ElectricChargeDensityHRG(bool absolute = false);
 
     /// \brief Isospin charge density
-    /// \param absolute If true, calculates absolute isopsin density
+    /// \param absolute If true, calculates absolute isospin density
     double IsospinChargeDensity(bool absolute = false);
 
     /// \brief Lepton flavor density of the HRG part
@@ -182,7 +182,7 @@ namespace thermalfist {
     /// Used to determine if Bose condensation reached in ideal gas
     double GetPionMass() const;
 
-    /// Whether to include pion interations via effective mass model
+    /// Whether to include pion interactions via effective mass model
     void SetPionsInteracting(bool pionsinteract = true, double fpiChPT = fpi);
     bool InteractingPions() const { return m_InteractingPions; }
 

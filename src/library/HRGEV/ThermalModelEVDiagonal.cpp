@@ -58,7 +58,7 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::FillVirial(const std::vector<double>& ri)
   {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_v.resize(m_TPS->Particles().size());
@@ -69,7 +69,7 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::FillVirialEV(const std::vector<double>& vi)
   {
     if (vi.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_v = vi;
@@ -281,7 +281,7 @@ namespace thermalfist {
     
   }
 
-  double ThermalModelEVDiagonal::CalculatededT() {
+  double ThermalModelEVDiagonal::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

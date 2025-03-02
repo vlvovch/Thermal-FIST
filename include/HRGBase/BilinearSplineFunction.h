@@ -15,14 +15,14 @@ namespace thermalfist {
   /// A class implementing a bilinear spline.
   /**
   * Implementation of bilinear spline function f(x,y) of two arguments.
-  * Uses a 1D spline function tp model f(y;x) at each discrete y
+  * Uses a 1D spline function to model f(y;x) at each discrete y
   * Requires that (x,y) values form a grid.
   */
   class BilinearSplineFunction
   {
   public:
     /**
-    * Default constructror. Empty function.
+    * Default constructor. Empty function.
     */
     BilinearSplineFunction(void) : m_xs(), m_xspls() {
       m_xs.resize(0);
@@ -73,10 +73,9 @@ namespace thermalfist {
 
     /// Evaluates interpolated f(x,y)
     double Eval(double x, double y) const {
-      if (m_xs.size() < 2) return -1.;
-      unsigned int indx = 0;
+      if (m_xs.size() < 2) throw std::runtime_error("Insufficient data points for interpolation.");
       std::vector< double >::const_iterator it = std::lower_bound(m_xs.begin(), m_xs.end(), x);
-      indx = std::distance(m_xs.begin(), it);
+      unsigned int indx = std::distance(m_xs.begin(), it);
       int ind1 = 0, ind2 = 0;
       if (indx == 0) {
         ind1 = 0;
@@ -96,7 +95,7 @@ namespace thermalfist {
     }
 
     /// Destructor.
-    ~BilinearSplineFunction(void) { }
+    ~BilinearSplineFunction(void) = default;
 
   private:
     std::vector<double> m_xs;

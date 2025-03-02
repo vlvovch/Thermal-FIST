@@ -19,13 +19,13 @@ namespace thermalfist {
   namespace ExtraParticles {
     static std::vector<ThermalParticle> Particles;
     static std::map<long long, int> PdgIdMap;
-    static bool isInitialized = Init();
+    static bool isInitialized = []() {
+      return Init();
+    }();
 
-    const ThermalParticle& Particle(int id)
-    {
+    const ThermalParticle& Particle(int id) {
       if (id < 0 || id >= Particles.size()) {
-        printf("**ERROR** ExtraParticles::Particle(int id): id is out of bounds!");
-        exit(1);
+        throw std::out_of_range("ExtraParticles::Particle: id is out of bounds!");
       }
       return Particles[id];
     }
@@ -34,17 +34,17 @@ namespace thermalfist {
     {
       int tid = PdgToId(pdgid);
       if (tid == -1) {
-        printf("**ERROR** ExtraParticles::ParticleByPdg(long long pdgid): pdgid %lld is unknown\n", pdgid);
-        exit(1);
+        throw std::invalid_argument("ExtraParticles::ParticleByPdg: pdgid " + std::to_string(pdgid) + " is unknown");
       }
       return Particle(tid);
     }
-
     int PdgToId(long long pdgid)
     {
       return (PdgIdMap.count(pdgid) > 0) ? PdgIdMap[pdgid] : -1;
     }
 
+    // Initializes the particles and their PDG ID mappings.
+    // This function is used for static initialization.
     bool Init()
     {
       Particles.clear();
@@ -112,7 +112,7 @@ namespace thermalfist {
       int tid = PdgToId(pdg);
       if (tid != -1)
         return Particle(tid).Name();
-      return string("???");
+      return std::string("???");
     }
   } // namespace ExtraParticles
 

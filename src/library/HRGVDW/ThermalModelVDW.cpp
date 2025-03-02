@@ -70,7 +70,7 @@ namespace thermalfist {
 
   void ThermalModelVDW::FillVirial(const vector<double> & ri) {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
@@ -97,7 +97,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillVirialEV(const vector< vector<double> >& bij)
   {
     if (bij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial = bij;
@@ -108,7 +108,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillAttraction(const vector<vector<double> >& aij)
   {
     if (aij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Attr = aij;
@@ -879,7 +879,7 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelVDW::CalculatededT() {
+  double ThermalModelVDW::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

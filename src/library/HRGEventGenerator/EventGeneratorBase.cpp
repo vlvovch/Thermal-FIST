@@ -663,8 +663,7 @@ namespace thermalfist {
       }
 
       if (finS != 0) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsSCESubVolume(): Generated strangeness is non-zero!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsSCESubVolume(): Generated strangeness is non-zero!");
       }
 
       return totals;
@@ -680,8 +679,7 @@ namespace thermalfist {
     // Check there are no multi-charmed particles, otherwise error
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (abs(m_THM->TPS()->Particles()[i].Charm()) > 1) {
-        printf("**ERROR** CCE Event generator does not support lists with multi-charmed particles\n");
-        exit(1);
+        throw std::runtime_error("CCE Event generator does not support lists with multi-charmed particles");
       }
     }
 
@@ -853,8 +851,7 @@ namespace thermalfist {
     }
 
     if (finC != m_Config.C) {
-      printf("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
-      exit(1);
+      throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
     }
 
     return totals;
@@ -1140,23 +1137,19 @@ namespace thermalfist {
       }
 
       if (m_Config.CanonicalB && finB != m_Config.B) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
       }
 
       if (m_Config.CanonicalQ && finQ != m_Config.Q) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
       }
 
       if (m_Config.CanonicalS && finS != m_Config.S) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
       }
 
       if (m_Config.CanonicalC && finC != m_Config.C) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
       }
 
       return totals;
@@ -1197,8 +1190,7 @@ namespace thermalfist {
   {
     int id = m_THM->TPS()->PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** EventGeneratorBase::SampleParticleByPdg(): The input pdg code does not exist in the particle list!");
-      exit(1);
+      throw std::invalid_argument("EventGeneratorBase::SampleParticleByPdg(): The input pdg code does not exist in the particle list!");
     }
     return SampleParticle(id);
   }

@@ -45,7 +45,7 @@ namespace thermalfist {
     if (order == 0)
       return ret;
 
-    // Next the scaled densisities n/T^3
+    // Next the scaled densities n/T^3
     ret[std::vector<int>{1, 0, 0}] = model->BaryonDensity() / xMath::GeVtoifm3() / pow(T, 3);
     ret[std::vector<int>{0, 1, 0}] = model->ElectricChargeDensity() / xMath::GeVtoifm3() / pow(T, 3);
     ret[std::vector<int>{0, 0, 1}] = model->StrangenessDensity() / xMath::GeVtoifm3() / pow(T, 3);
@@ -139,7 +139,7 @@ namespace thermalfist {
     return ret;
   }
 
-  std::map<std::vector<int>, double> ComputeBQSSusceptibilitiesdT(ThermalModelBase *model, int order, double dmuTnum) {
+  std::map<std::vector<int>, double> ComputeBQSSusceptibilitiesDerivativeT(ThermalModelBase *model, int order, double dmuTnum) {
     assert(order >= 0 && order <= 4);
 
     std::map<std::vector<int>, double> ret;
@@ -152,7 +152,9 @@ namespace thermalfist {
     model->CalculatePrimordialDensities();
 
     // First the T derivative of the scaled pressure p/T^4
-    // d(p/T^4)/dT = s/T^4 - 4*p/T^5
+    // The derivative of the scaled pressure p/T^4 with respect to temperature T
+    // is given by the expression: d(p/T^4)/dT = (s/T^4) - (4*p/T^5)
+    // where s is the entropy density and p is the pressure.
     ret[std::vector<int>{0, 0, 0}] = (model->EntropyDensity() - 4. * model->Pressure() / T) / xMath::GeVtoifm3() / pow(T, 4);
 
     if (order == 0)
@@ -188,23 +190,23 @@ namespace thermalfist {
 
     // dmuB
     model->SetBaryonChemicalPotential(muB + dmuTnum * T);
-    auto dSuscmuBp = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuBp = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetBaryonChemicalPotential(muB - dmuTnum * T);
-    auto dSuscmuBm = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuBm = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetBaryonChemicalPotential(muB);
 
     // dmuQ
     model->SetElectricChemicalPotential(muQ + dmuTnum * T);
-    auto dSuscmuQp = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuQp = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetElectricChemicalPotential(muQ - dmuTnum * T);
-    auto dSuscmuQm = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuQm = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetElectricChemicalPotential(muQ);
 
     // dmuS
     model->SetStrangenessChemicalPotential(muS + dmuTnum * T);
-    auto dSuscmuSp = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuSp = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetStrangenessChemicalPotential(muS - dmuTnum * T);
-    auto dSuscmuSm = ComputeBQSSusceptibilitiesdT(model, 2);
+    auto dSuscmuSm = ComputeBQSSusceptibilitiesDerivativeT(model, 2);
     model->SetStrangenessChemicalPotential(muS);
 
     // Iterate over all the keys and calculate the third order susceptibilities

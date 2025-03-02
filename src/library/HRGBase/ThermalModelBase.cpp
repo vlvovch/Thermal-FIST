@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2014-2019 Volodymyr Vovchenko
+ * Copyright (c) 2014-2025 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -37,8 +37,9 @@ namespace thermalfist {
     m_useOpenMP(0),
     m_IGFExtraConfig()
   {
-    if (!Disclaimer::DisclaimerPrinted) 
+    if (!Disclaimer::DisclaimerPrinted) {
       Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
+    }
     
     m_QBgoal = 0.4;
     m_SBgoal = 50.;
@@ -346,7 +347,7 @@ namespace thermalfist {
   void ThermalModelBase::SetResonanceWidthIntegrationType(ThermalParticle::ResonanceWidthIntegration type)
   {
     if (!m_UseWidth) {
-      printf("**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!\n");
+      std::cerr << "**WARNING** ThermalModelBase::SetResonanceWidthIntegrationType: Using resonance widths is switched off!" << std::endl;
       m_TPS->SetResonanceWidthIntegrationType(ThermalParticle::BWTwoGamma);
     }
     else
@@ -362,7 +363,7 @@ namespace thermalfist {
   void ThermalModelBase::SetChemicalPotentials(const std::vector<double>& chem)
   {
     if (chem.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::SetChemicalPotentials(const std::vector<double> & chem): size of chem does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::SetChemicalPotentials(const std::vector<double> & chem): size of chem does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Chem = chem;
@@ -371,8 +372,7 @@ namespace thermalfist {
   double ThermalModelBase::ChemicalPotential(int i) const
   {
     if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
-      printf("**ERROR** ThermalModelBase::ChemicalPotential(int i): i is out of bounds!");
-      exit(1);
+      throw std::out_of_range("ThermalModelBase::ChemicalPotential: i is out of bounds!");
     }
     return m_Chem[i];
   }
@@ -380,8 +380,7 @@ namespace thermalfist {
   void ThermalModelBase::SetChemicalPotential(int i, double chem)
   {
     if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
-      printf("**ERROR** ThermalModelBase::SetChemicalPotential(int i): i is out of bounds!");
-      exit(1);
+      throw std::out_of_range("ThermalModelBase::SetChemicalPotential: i is out of bounds!");
     }
     m_Chem[i] = chem;
   }
@@ -389,8 +388,7 @@ namespace thermalfist {
   double ThermalModelBase::FullIdealChemicalPotential(int i) const
   {
     if (i < 0 || i >= static_cast<int>(m_Chem.size())) {
-      printf("**ERROR** ThermalModelBase::FullIdealChemicalPotential(int i): i is out of bounds!");
-      exit(1);
+      throw std::out_of_range("ThermalModelBase::FullIdealChemicalPotential: i is out of bounds!");
     }
     
     double ret = ChemicalPotential(i);
@@ -523,7 +521,7 @@ namespace thermalfist {
       BroydenChem broydn(this, &eqs, &jaco);
       Broyden::BroydenSolutionCriterium crit(1.0E-8);
       broydn.Solve(x22, &crit);
-      //printf("Broyden iters: %d\n", broydn.Iterations());
+      //std::cerr << "Broyden iters: " << broydn.Iterations() << std::endl;
       break;
     }
   }
@@ -542,7 +540,7 @@ namespace thermalfist {
     double muBinit, double muQinit, double muSinit, double muCinit,
     bool ConstrMuB, bool ConstrMuQ, bool ConstrMuS, bool ConstrMuC) {
     if (UsePartialChemicalEquilibrium()) {
-      printf("**WARNING** PCE enabled, cannot assume chemical equilibrium to do optimization...");
+      std::cerr << "**WARNING** PCE enabled, cannot assume chemical equilibrium to do optimization..." << std::endl;
       return false;
     }
 
@@ -620,7 +618,7 @@ namespace thermalfist {
     broydn.Solve(xinactual, &crit);
 
 
-    printf("%lf\n", BaryonDensity() * Volume());
+    //std::cerr << BaryonDensity() * Volume() << std::endl;
 
     return (broydn.Iterations() < broydn.MaxIterations());
   }
@@ -643,8 +641,7 @@ namespace thermalfist {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
-        sprintf(cc, "**WARNING** Density for particle %lld (%s) is NaN!\n\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
-        printf("%s", cc);
+        std::cerr << "**WARNING** Density for particle " << m_TPS->Particle(i).PdgId() << " (" << m_TPS->Particle(i).Name() << ") is NaN!\n\n";
 
         m_ValidityLog.append(cc);
       }
@@ -654,14 +651,13 @@ namespace thermalfist {
 
   std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& /*chgs*/, int /*order*/)
   {
-    printf("**WARNING** %s::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
+    std::cerr << "**WARNING** " << m_TAG << "::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!" << std::endl;
     return std::vector<double>();
   }
 
   std::vector<double> ThermalModelBase::CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &/*chgs*/)
   {
-    printf("**WARNING** %s::CalculateGeneralizedSusceptibilities(const std::vector<double>& chgs, int order) not implemented!\n", m_TAG.c_str());
-    return std::vector<double>();
+    throw std::runtime_error("ThermalModelBase::CalculateGeneralizedSusceptibilities: not implemented!");
   }
 
   double ThermalModelBase::CalculateHadronDensity() {
@@ -789,7 +785,7 @@ namespace thermalfist {
     if (PDGID == 22122112 && m_TPS->PdgToId(2212) != -1 && m_TPS->PdgToId(2112) != -1)
       return  dens->operator[](m_TPS->PdgToId(2212)) + dens->operator[](m_TPS->PdgToId(2112));
 
-    printf("**WARNING** %s: Density with PDG ID %lld not found!\n", m_TAG.c_str(), PDGID);
+    std::cerr << "**WARNING** " << m_TAG << ": Density with PDG ID " << PDGID << " not found!" << std::endl;
 
     return 0.;
   }
@@ -804,7 +800,7 @@ namespace thermalfist {
     else if (static_cast<size_t>(feeddown) < m_densitiesbyfeeddown.size()) 
       dens = &m_densitiesbyfeeddown[static_cast<int>(feeddown)];
     else {
-      printf("**WARNING** %s: GetDensity: Unknown feeddown: %d\n", m_TAG.c_str(), static_cast<int>(feeddown));
+      std::cerr << "**WARNING** " << m_TAG << ": GetDensity: Unknown feeddown: " << static_cast<int>(feeddown) << std::endl;
       return 0.;
     }
 
@@ -897,7 +893,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVariance(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVariance(int): Fluctuations were not calculated\n", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << ": ChargedScaledVariance(int): Fluctuations were not calculated\n";
       return 1.;
     }
     double ret = 0.0;
@@ -948,7 +944,7 @@ namespace thermalfist {
   double ThermalModelBase::ChargedScaledVarianceFinal(int type)
   {
     if (!m_FluctuationsCalculated) {
-      printf("**WARNING** %s: ChargedScaledVarianceFinal(int): Fluctuations were not calculated\n", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << ": ChargedScaledVarianceFinal(int): Fluctuations were not calculated" << std::endl;
       return 1.;
     }
     int op = type;
@@ -965,7 +961,7 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateTwoParticleCorrelations() {
-    printf("**WARNING** %s: Calculation of two-particle correlations and fluctuations is not implemented\n", m_TAG.c_str());
+    throw std::runtime_error("ThermalModelBase::CalculateTwoParticleCorrelations: Calculation of two-particle correlations and fluctuations is not implemented");
   }
 
 
@@ -1069,8 +1065,7 @@ namespace thermalfist {
   double ThermalModelBase::TwoParticleSusceptibilityPrimordial(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityPrimordial: fluctuations were not computed beforehand! Quitting...\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::TwoParticleSusceptibilityPrimordial: fluctuations were not computed beforehand!");
     }
 
     return m_PrimCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
@@ -1082,11 +1077,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityPrimordialByPdg: unknown pdg code " << id2 << std::endl;
       return 0.;
     }
 
@@ -1095,8 +1090,7 @@ namespace thermalfist {
 
   double ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordial(int i, int j) const {
     if (!IsFluctuationsCalculated() || !IsTemperatureDerivativesCalculated()) {
-      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityPrimordial: temperature derivatives of fluctuations were not computed beforehand! Quitting...\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::TwoParticleSusceptibilityPrimordial: temperature derivatives of fluctuations were not computed beforehand!");
     }
 
     return m_PrimChi2sdT[i][j];
@@ -1108,11 +1102,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code %lld", id2);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityTemperatureDerivativePrimordialByPdg: unknown pdg code " << id2 << std::endl;
       return 0.;
     }
 
@@ -1125,11 +1119,11 @@ namespace thermalfist {
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code %lld", id2);
+      std::cerr << "**WARNING** ThermalModelBase::NetParticleSusceptibilityPrimordialByPdg: unknown pdg code " << id2 << std::endl;
       return 0.;
     }
 
@@ -1158,16 +1152,14 @@ namespace thermalfist {
   double ThermalModelBase::TwoParticleSusceptibilityFinal(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityFinal: fluctuations were not computed beforehand! Quitting...\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::TwoParticleSusceptibilityFinal: fluctuations were not computed beforehand!");
     }
 
     if (!m_TPS->Particle(i).IsStable() || !m_TPS->Particle(j).IsStable()) {
       int tid = i;
       if (!m_TPS->Particle(j).IsStable())
         tid = j;
-      printf("**ERROR** ThermalModelBase::TwoParticleSusceptibilityFinal: Particle %d is not stable! Final correlations not computed for unstable particles. Quitting...\n", tid);
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::TwoParticleSusceptibilityFinal: Particle " + std::to_string(tid) + " is not stable! Final correlations not computed for unstable particles.");
     }
 
     return m_TotalCorrel[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
@@ -1179,11 +1171,11 @@ namespace thermalfist {
     int j = TPS()->PdgToId(id2);
 
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
     if (j == -1) {
-      printf("**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id2);
+      std::cerr << "**WARNING** ThermalModelBase::TwoParticleSusceptibilityFinalByPdg: unknown pdg code " << id2 << std::endl;
       return 0.;
     }
 
@@ -1196,11 +1188,11 @@ namespace thermalfist {
     int j1 = TPS()->PdgToId(id2);
 
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
     if (j1 == -1) {
-      printf("**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code %lld", id2);
+      std::cerr << "**WARNING** ThermalModelBase::NetParticleSusceptibilityFinalByPdg: unknown pdg code " << id2 << std::endl;
       return 0.;
     }
 
@@ -1229,8 +1221,7 @@ namespace thermalfist {
   double ThermalModelBase::PrimordialParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::PrimordialParticleChargeSusceptibility: fluctuations were not computed beforehand! Quitting...\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::PrimordialParticleChargeSusceptibility: fluctuations were not computed beforehand!");
     }
 
     return m_PrimChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
@@ -1240,7 +1231,7 @@ namespace thermalfist {
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::PrimordialParticleChargeSusceptibilityByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
 
@@ -1251,7 +1242,7 @@ namespace thermalfist {
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::PrimordialNetParticleChargeSusceptibilityByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
 
@@ -1265,8 +1256,7 @@ namespace thermalfist {
   double ThermalModelBase::FinalParticleChargeSusceptibility(int i, ConservedCharge::Name chg) const
   {
     if (!IsFluctuationsCalculated()) {
-      printf("**ERROR** ThermalModelBase::FinalParticleChargeSusceptibility: fluctuations were not computed beforehand! Quitting...\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelBase::FinalParticleChargeSusceptibility: fluctuations were not computed beforehand!");
     }
 
     return m_FinalChargesCorrel[i][static_cast<int>(chg)] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
@@ -1276,7 +1266,7 @@ namespace thermalfist {
   {
     int i = TPS()->PdgToId(id1);
     if (i == -1) {
-      printf("**WARNING** ThermalModelBase::FinalParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::FinalParticleChargeSusceptibilityByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
 
@@ -1287,7 +1277,7 @@ namespace thermalfist {
   {
     int i1 = TPS()->PdgToId(id1);
     if (i1 == -1) {
-      printf("**WARNING** ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg: unknown pdg code %lld", id1);
+      std::cerr << "**WARNING** ThermalModelBase::FinalNetParticleChargeSusceptibilityByPdg: unknown pdg code " << id1 << std::endl;
       return 0.;
     }
 
@@ -1367,9 +1357,8 @@ namespace thermalfist {
         m_ProxySusc[i][j] = m_ProxySusc[i][j] / m_Parameters.T / m_Parameters.T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
       }
     }
-
-    //printf("chi2netp/chi2skellam = %lf\n", m_ProxySusc[0][0] / (m_densitiestotal[m_TPS->PdgToId(2212)] + m_densitiestotal[m_TPS->PdgToId(-2212)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
-    //printf("chi2netpi/chi2skellam = %lf\n", m_ProxySusc[1][1] / (m_densitiestotal[m_TPS->PdgToId(211)] + m_densitiestotal[m_TPS->PdgToId(-211)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3));
+    //std::cerr << "chi2netp/chi2skellam = " << m_ProxySusc[0][0] / (m_densitiestotal[m_TPS->PdgToId(2212)] + m_densitiestotal[m_TPS->PdgToId(-2212)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3) << std::endl;
+    //std::cerr << "chi2netpi/chi2skellam = " << m_ProxySusc[1][1] / (m_densitiestotal[m_TPS->PdgToId(211)] + m_densitiestotal[m_TPS->PdgToId(-211)]) * pow(m_Parameters.T * xMath::GeVtoifm(), 3) << std::endl;
   }
 
   void ThermalModelBase::CalculateParticleChargeCorrelationMatrix()
@@ -1425,11 +1414,11 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::CalculateFluctuations() {
-    printf("**WARNING** %s: Calculation of fluctuations is not implemented\n", m_TAG.c_str());
+    std::cerr << "**WARNING** " << m_TAG << ": Calculation of fluctuations is not implemented" << std::endl;
   }
 
   void ThermalModelBase::CalculateTemperatureDerivatives() {
-    printf("**WARNING** %s: Calculation of temperature derivatives is not implemented\n", m_TAG.c_str());
+    std::cerr << "**WARNING** " << m_TAG << ": Calculation of temperature derivatives is not implemented" << std::endl;
   }
 
   std::vector<double> ThermalModelBase::BroydenEquationsChem::Equations(const std::vector<double>& x)
@@ -1502,8 +1491,7 @@ namespace thermalfist {
     int i1 = 0;
     // Analytic calculations of Jacobian not yet supported if entropy per baryon is involved
     if (m_THM->ConstrainMuB()) { 
-      printf("**ERROR** Constraining chemical potentials: analytic calculation of the Jacobian not supported if muB is constrained\n");
-      exit(1); 
+      throw std::runtime_error("ThermalModelBase::ConstrainChemicalPotentials: analytic calculation of the Jacobian not supported if muB is constrained");
     }
 
     if (m_THM->ConstrainMuQ()) { m_THM->SetElectricChemicalPotential(x[i1]); i1++; }
@@ -1718,8 +1706,7 @@ namespace thermalfist {
   std::vector<double> ThermalModelBase::BroydenChem::Solve(const std::vector<double>& x0, BroydenSolutionCriterium * solcrit, int max_iterations)
   {
     if (m_Equations == NULL) {
-      printf("**ERROR** Broyden::Solve: Equations to solve not specified!\n");
-      exit(1);
+      throw std::runtime_error("Broyden::Solve: Equations to solve not specified!");
     }
 
     int NNN = 0;
@@ -1814,7 +1801,7 @@ namespace thermalfist {
 
     if (Jac.determinant() == 0.0)
     {
-      printf("**WARNING** Singular Jacobian in Broyden::Solve\n");
+      std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve" << std::endl;
       return xcur;
     }
 
@@ -1867,7 +1854,7 @@ namespace thermalfist {
     }
 
     if (m_Iterations == max_iterations) {
-      printf("**WARNING** Reached maximum number of iterations in Broyden procedure\n");
+      std::cerr << "**WARNING** Reached maximum number of iterations in Broyden procedure" << std::endl;
     }
 
     if (UseDefaultSolutionCriterium) {
@@ -2044,7 +2031,7 @@ namespace thermalfist {
     if (i >= 0 && i < ComponentsNumber()) {
       TPS()->Particle(i).SetGeneralizedDensity(density_model);
     } else {
-      printf("**WARNING** ThermalModelBase::SetDensityModelForParticleSpecies(): Particle id %d is oustide the range!\n", i);
+      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpecies(): Particle id " << i << " is oustide the range!" << std::endl;
     }
   }
 
@@ -2054,7 +2041,7 @@ namespace thermalfist {
     if (id != -1) {
       TPS()->Particle(id).SetGeneralizedDensity(density_model);
     } else {
-      printf("**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code %lld is oustide the range!\n", PDGID);
+      std::cerr << "**WARNING** ThermalModelBase::SetDensityModelForParticleSpeciesByPdg(): Pdg code " << PDGID << " is oustide the range!" << std::endl;
     }
   }
 
@@ -2122,7 +2109,7 @@ namespace thermalfist {
     if (IsTemperatureDerivativesCalculated() && i >= 0 && i < ComponentsNumber())
       return m_dndT[i];
     else {
-      printf("**WARNING** ThermalModelBase::GetdndT(): Temperature derivatives are not calculated or particle id %d is oustide the range!\n", i);
+      std::cerr << "**WARNING** ThermalModelBase::GetdndT(): Temperature derivatives are not calculated or particle id " << i << " is oustide the range!" << std::endl;
       return 0.;
     }
     return 0.;
@@ -2142,7 +2129,7 @@ namespace thermalfist {
 
   double ThermalModelBase::CalculateSpecificHeatChem()
   {
-    double dedT = CalculatededT(); // fm^-3
+    double dedT = CalculateEnergyDensityDerivativeT(); // fm^-3
     
     // T * ds/dT = (de/dT - mu_i d n_i / d T)
     double ret = dedT;
@@ -2227,7 +2214,7 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelBase::Calculatecs2(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
+  double ThermalModelBase::CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
     double ret = 0.;
 
     double T = Parameters().T;
@@ -2259,7 +2246,7 @@ namespace thermalfist {
         // Calculate temperature derivatives if not already
         if (!IsTemperatureDerivativesCalculated())
           CalculateTemperatureDerivatives();
-        return EntropyDensity() / CalculatededT();
+        return EntropyDensity() / CalculateEnergyDensityDerivativeT();
         //return EntropyDensity() / SpecificHeatChem();
       }
     }
@@ -2276,22 +2263,6 @@ namespace thermalfist {
     // Zero temperature
     if (T == 0.) {
       
-      // // Compute the matrix of susceptibilities (Eigen Matrix)
-      // MatrixXd chi2matr(Ndens, Ndens);
-      // int i1 = 0, i2 = 0;
-      // for(int i = 0; i < 4; ++i) {
-      //   if (ConservedCharges[i] == 0)
-      //     continue;
-      //   i2 = 0;
-      //   for(int j = 0; j < 4; ++j) {
-      //     if (ConservedCharges[j] == 0)
-      //       continue;
-          
-      //     chi2matr(i1, i2) = SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
-      //     i2++;
-      //   }
-      //   i1++;
-      // }
       MatrixXd chi2matr = GetSusceptibilityMatrix(this, ConservedCharges);
       MatrixXd chi2inv = chi2matr.inverse();
       ret = 0.;
@@ -2325,45 +2296,6 @@ namespace thermalfist {
     // double dedT = SpecificHeatChem(); // fm^-3
     // Compute the Hessian matrix of pressure
     MatrixXd PiMatr = GetPressureHessianMatrix(this, ConservedCharges);
-    // MatrixXd PiMatr(Ndens + 1, Ndens + 1);
-    // // Pi(0,0) = d^2 P / d T^2 = ds/dT
-    // PiMatr(0,0) = SpecificHeatChem() / T; // fm^-3 GeV^-1
-    // // {
-    // //   // ds/dT = (1/T) * (de/dT - mu_i d n_i / d T)
-    // //   double dsdT = dedT;
-    // //   for(int i = 0; i < ConservedCharges.size(); ++i) {
-    // //     if (ConservedCharges[i] == 0)
-    // //       continue;
-    // //     dsdT -= mus[i] * ConservedChargeDensitydT((ConservedCharge::Name)i);
-    // //   }
-    // //   dsdT /= T;
-    // //   PiMatr(0,0) = dsdT;
-    // // }
-    // // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
-    // {
-    //   int i1 = 0;
-    //   for(int i = 0; i < ConservedCharges.size(); ++i) {
-    //     if (ConservedCharges[i] == 0)
-    //       continue;
-    //     PiMatr(0,i+1) = PiMatr(i+1,0) = ConservedChargeDensitydT((ConservedCharge::Name)i);
-    //   }
-    // }
-    // // Pi(i,j) = d^2 P / d mu_i d mu_j = chi_{ij}
-    // {
-    //   int i1 = 0, i2 = 0;
-    //   for(int i = 0; i < ConservedCharges.size(); ++i) {
-    //     if (ConservedCharges[i] == 0)
-    //       continue;
-    //     i2 = 0;
-    //     for(int j = 0; j < ConservedCharges.size(); ++j) {
-    //       if (ConservedCharges[j] == 0)
-    //         continue;
-    //       PiMatr(i1+1, i2+1) = SusceptibilityDimensionfull((ConservedCharge::Name)i, (ConservedCharge::Name)j) * xMath::GeVtoifm3();
-    //       i2++;
-    //     }
-    //     i1++;
-    //   }
-    // }
 
     // Compute the inverse of the Hessian matrix
     MatrixXd PiMatrInv = PiMatr.inverse();
@@ -2383,7 +2315,7 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelBase::CalculatecT2(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
+  double ThermalModelBase::CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
     double ret = 0.;
 
     double T = Parameters().T;

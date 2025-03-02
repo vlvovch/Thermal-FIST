@@ -87,8 +87,7 @@ namespace thermalfist {
   std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass) const
   {
     if (m_VolumeElementSampler == NULL || m_ParticlizationHypersurface == NULL) {
-      printf("**ERROR** in RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!");
     }
 
     if (mass < 0.)
@@ -424,8 +423,7 @@ namespace thermalfist {
   std::vector<double> RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass) const
   {
     if (m_VolumeElementSampler == NULL || m_ParticlizationHypersurface == NULL) {
-      printf("**ERROR** in RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!");
     }
 
     if (mass < 0.)
@@ -539,7 +537,7 @@ namespace thermalfist {
     const double vv [3] = {vx, vy, vz} ;
     const double v2 = vx*vx+vy*vy+vz*vz ;
     const double gamma = 1.0/sqrt(1.0-v2) ;
-    if(std::isinf(gamma)||std::isnan(gamma)){ cout<<"boost vector invalid; exiting\n" ; exit(1) ; }
+    if(std::isinf(gamma)||std::isnan(gamma)){ throw std::runtime_error("boost vector invalid"); }
     boostMatrix[0][0] = gamma ;
     boostMatrix[0][1] = boostMatrix[1][0] = vx*gamma ;
     boostMatrix[0][2] = boostMatrix[2][0] = vy*gamma ;
@@ -566,8 +564,7 @@ namespace thermalfist {
   std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear, const bool shear_correction, const bool bulk_correction, const double speed_of_sound_squared) 
   {
     if (particle == NULL) {
-      printf("**ERROR** in HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!");
     }
 
     double etaF = 0.5 * log((elem->u[0] + elem->u[3]) / (elem->u[0] - elem->u[3]));
@@ -918,6 +915,3 @@ namespace thermalfist {
   }
 
 } // namespace thermalfist
-
-
-

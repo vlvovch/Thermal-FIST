@@ -21,7 +21,9 @@ namespace thermalfist {
       double m_mass;
       double m_c;
     public:
-      EMMFieldPressure(double mass = 0.135, double c = 0) : m_mass(mass), m_c(c) {}
+      EMMFieldPressure(double mass = 0.135, double c = 0)
+        : m_mass(mass),
+          m_c(c) {}
 
       virtual ~EMMFieldPressure() {}
 
@@ -88,8 +90,9 @@ namespace thermalfist {
     public:
       /// Constructor.
       /// Default: pi+
-      EffectiveMassModel(const ThermalParticle &particle = ThermalParticle(true, "pi", 211, 1.0, -1, 0.135, 0, 0, 1),
-                         EMMFieldPressure *FieldPressure = NULL);
+      EffectiveMassModel(
+          const ThermalParticle &particle = ThermalParticle(true, "pi", 211, 1.0, -1, 0.135, 0, 0, 1),
+          EMMFieldPressure *FieldPressure = NULL);
 
       virtual ~EffectiveMassModel(void);
 

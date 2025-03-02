@@ -22,13 +22,13 @@
 
 namespace thermalfist {
 
-  /// Calculates mixed susceptibilities of BQS charges for the given model up to the given order (fourth-order max)
+  /// Calculates mixed susceptibilities of Baryon (B), Charge (Q), and Strangeness (S) charges for the given model up to the given order (fourth-order max)
   /// The susceptibilities of third and fourth order are calculated using the central finite difference method with step size dmuTnum
   std::map<std::vector<int>, double> ComputeBQSSusceptibilities(ThermalModelBase *model, int order = 4, double dmuTnum = 0.001);
 
-  /// Calculates temperature derivatives of the mixed susceptibilities of BQS charges for the given model up to the given order (fourth-order max)
+  /// Calculates temperature derivatives of the mixed susceptibilities of Baryon (B), Charge (Q), and Strangeness (S) charges for the given model up to the given order (fourth-order max)
   /// The susceptibilities of third and fourth order are calculated using the central finite difference method with step size dmuTnum
-  std::map<std::vector<int>, double> ComputeBQSSusceptibilitiesdT(ThermalModelBase *model, int order = 4, double dmuTnum = 0.001);
+  std::map<std::vector<int>, double> ComputeBQSSusceptibilitiesDerivativeT(ThermalModelBase *model, int order = 4, double dmuTnum = 0.001);
 
 } // namespace thermalfist
 

@@ -7,7 +7,7 @@
  */
 #include "HRGBase/Broyden.h"
 
-#include <stdio.h>
+#include <iostream>
 #include <cmath>
 
 #include <Eigen/Dense>
@@ -27,13 +27,11 @@ namespace thermalfist {
   std::vector<double> BroydenJacobian::Jacobian(const std::vector<double>& x)
   {
     if (m_Equations == NULL) {
-      printf("**ERROR** BroydenJacobian::Jacobian: Equations to solve not specified!\n");
-      exit(1);
+      throw std::runtime_error("BroydenJacobian::Jacobian: Equations to solve not specified!");
     }
 
     if (m_Equations->Dimension() != static_cast<int>(x.size())) {
-      printf("**ERROR** BroydenJacobian::Jacobian: Equations dimension does not match that of input!\n");
-      exit(1);
+      throw std::runtime_error("**ERROR** BroydenJacobian::Jacobian: Equations dimension does not match that of input!");
     }
 
     int N = m_Equations->Dimension();
@@ -43,7 +41,7 @@ namespace thermalfist {
     std::vector< std::vector<double> > xh(N);
 
     for (size_t i = 0; i < x.size(); ++i) {
-      h[i] = m_dx*abs(h[i]);
+      h[i] = m_dx*std::abs(h[i]);
       if (h[i] == 0.0) h[i] = m_dx;
       if (h[i] < 1.e-10) h[i] = 1.e-10;
       //h[i] = max(m_dx, h[i]);
@@ -77,8 +75,7 @@ namespace thermalfist {
   std::vector<double> Broyden::Solve(const std::vector<double> &x0, BroydenSolutionCriterium *solcrit, int max_iterations)
   {
     if (m_Equations == NULL) {
-      printf("**ERROR** Broyden::Solve: Equations to solve not specified!\n");
-      exit(1);
+      throw std::runtime_error("Broyden::Solve: Equations to solve not specified!");
     }
 
     m_MaxIterations = max_iterations;
@@ -109,7 +106,7 @@ namespace thermalfist {
 
     if (Jac.determinant() == 0.0)
     {
-      printf("**WARNING** Singular Jacobian in Broyden::Solve\n");
+      std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve" << std::endl;
       return xcur;
     }
 
