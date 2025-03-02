@@ -32,6 +32,7 @@ namespace thermalfist {
 
     /**
     * Constructor which sets the data from the provided vectors.
+    * 
     * \param x A vector of x values.
     * \param y A vector of y values.
     * \param vals A vector of f(x,y) values.
@@ -46,6 +47,7 @@ namespace thermalfist {
 
     /**
     * Method which sets the data from the provided vectors.
+    * 
     * \param x A vector of x values.
     * \param y A vector of y values.
     * \param vals A vector of f(x,y) values.
@@ -55,8 +57,8 @@ namespace thermalfist {
     */
     void setData(const std::vector<double> &x, const std::vector<double> &y, const std::vector<double> &vals) {
       if (x.size() > 0) {
-        m_xs.resize(0);
-        m_xspls.resize(0);
+      m_xs.resize(0);
+      m_xspls.resize(0);
         double cx = -1e50;
         for (unsigned int i = 0; i < x.size(); ++i) {
           if (fabs(x[i] - cx) > 1e-6) {

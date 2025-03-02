@@ -19,6 +19,13 @@
 
 namespace thermalfist {
 
+  /**
+   * \brief Converts a value to a string.
+   * 
+   * \tparam T Type of the value to convert
+   * \param value The value to convert to a string
+   * \return std::string The string representation of the value
+   */
   template <typename T>
   std::string to_string_fix(T value)
   {
@@ -32,10 +39,18 @@ namespace thermalfist {
     return os.str();
   }
 
-  /// Lorentz boost
+  /**
+   * \brief Performs a Lorentz boost on a four-vector.
+   * 
+   * \param fourvector The four-vector to boost (E, px, py, pz)
+   * \param vx The x-component of the boost velocity (in units of c)
+   * \param vy The y-component of the boost velocity (in units of c)
+   * \param vz The z-component of the boost velocity (in units of c)
+   * \return std::vector<double> The boosted four-vector
+   */
   std::vector<double> LorentzBoost(const std::vector<double>& fourvector, double vx, double vy, double vz);
 
-  /// \brief Structure containing the thermal event generator configuration.
+  /// Structure containing the thermal event generator configuration.
   struct EventGeneratorConfiguration {
     /// Enumerates the statistical ensembles 
     enum Ensemble { 

@@ -28,6 +28,7 @@ namespace thermalfist {
 
     /**
      * Constructor which sets the data from the provided vectors.
+     * 
      * \param x A vector of x values.
      * \param y A vector of y values.
      * Data must be sorted in non-descending order of x values.
@@ -40,10 +41,11 @@ namespace thermalfist {
       sort(m_vals.begin(), m_vals.end());
     }
 
-    /// Adds a new pair of x,y values.
     /**
-     * \param x A new x value.
-     * \param val A new y value.
+     * Adds a new pair of x,y values.
+     * 
+     * \param x The x-coordinate.
+     * \param val The y-coordinate (function value at x).
      * Adds a new (x,y) pair to the function. The function is sorted after
      * adding the new value.
      */
@@ -53,9 +55,10 @@ namespace thermalfist {
       sort(m_vals.begin(), m_vals.end());
     }
 
-    /// Evaluates interpolated function at x = arg.
     /**
-     * \param arg The x value at which to evaluate the function.
+     * Evaluates interpolated function at x = arg.
+     * 
+     * \param arg The point at which to evaluate the function.
      * \return The value of the function at x = arg.
      * Evaluates the function at x = arg using linear interpolation between
      * the provided (x,y) pairs.
@@ -79,9 +82,10 @@ namespace thermalfist {
         (m_vals[ind].second - m_vals[ind - 1].second) / (m_vals[ind].first - m_vals[ind - 1].first);
     }
 
-    /// Evaluates slope (derivative) at x = arg.
     /**
-     * \param arg The x value at which to evaluate the derivative.
+     * Evaluates slope (derivative) at x = arg.
+     * 
+     * \param arg The point at which to evaluate the derivative.
      * \return The value of the derivative at x = arg.
      * Evaluates the derivative of the function at x = arg using linear
      * interpolation between the provided (x,y) pairs.
@@ -98,9 +102,10 @@ namespace thermalfist {
       return (m_vals[ind].second - m_vals[ind - 1].second) / (m_vals[ind].first - m_vals[ind - 1].first);
     }
 
-    /// Evaluates f(arg)^2.
     /**
-     * \param arg The x value at which to evaluate the function.
+     * Evaluates f(arg)^2.
+     * 
+     * \param arg The point at which to evaluate the function.
      * \return The value of the function at x = arg squared.
      * Evaluates the function at x = arg using linear interpolation between
      * the provided (x,y) pairs and returns the square of the result.
@@ -111,7 +116,6 @@ namespace thermalfist {
     }
 
     /**
-     * \return The value of the function at x = arg.
      * Clears all data and fills the function with a constant function
      * f(x) = 0.
      */
@@ -123,13 +127,16 @@ namespace thermalfist {
       m_vals[1].second = 0.;
     }
 
-    /// Just clear all data.
+    /**
+     * Just clear all data.
+     */
     void clearall() {
       m_vals.resize(0);
     }
 
-    /// Fill (x,y) pairs from provided vectors.
     /**
+     * Fill (x,y) pairs from provided vectors.
+     * 
      * \param x A vector of x values.
      * \param y A vector of y values.
      * Data must be sorted in non-descending order of x values.
@@ -143,8 +150,9 @@ namespace thermalfist {
       sort(m_vals.begin(), m_vals.end());
     }
 
-    /// Models constant f(x) == val function.
     /**
+     * Models constant f(x) == val function.
+     * 
      * \param val The value of the constant function.
      * Clears all data and fills the function with a constant function
      * f(x) = val.

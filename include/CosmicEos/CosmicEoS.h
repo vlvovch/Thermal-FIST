@@ -8,8 +8,15 @@
 
 namespace thermalfist {
 
-  // Isospin = (u - d) / 2, e.g. I_pi = 1,0,-1
-  // Using https://en.wikipedia.org/wiki/Gell-Mann%E2%80%93Nishijima_formula
+  /**
+   * \brief Calculates the isospin charge of a particle.
+   * 
+   * Isospin = (u - d) / 2, e.g. I_pi = 1,0,-1
+   * Using https://en.wikipedia.org/wiki/Gell-Mann%E2%80%93Nishijima_formula
+   * 
+   * \param part The particle for which to calculate the isospin charge
+   * \return double The isospin charge value
+   */
   double IsospinCharge(const ThermalParticle& part);
 
   /**
@@ -244,4 +251,3 @@ namespace thermalfist {
 } // namespace thermalfist
 
 #endif
-
