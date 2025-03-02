@@ -45,12 +45,7 @@ namespace thermalfist {
      * 
      * \param dim The number of equations.
      */
-    void SetDimension(int dim) {
-        if (dim <= 0) {
-            throw std::invalid_argument("Dimension must be a positive integer.");
-        }
-        m_N = dim;
-    }
+    void SetDimension(int dim);
 
     /**
      * Evaluates the l.h.s. of all the equations

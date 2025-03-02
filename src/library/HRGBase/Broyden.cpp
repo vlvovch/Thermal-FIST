@@ -24,6 +24,13 @@ namespace thermalfist {
   const double Broyden::TOL         = 1.0E-10;
   const int    Broyden::MAX_ITERS   = 200;
 
+  void BroydenEquations::SetDimension(int dim) {
+    if (dim <= 0) {
+      throw std::invalid_argument("Dimension must be a positive integer.");
+    }
+    m_N = dim;
+  }
+
 
   std::vector<double> BroydenJacobian::Jacobian(const std::vector<double>& x)
   {
