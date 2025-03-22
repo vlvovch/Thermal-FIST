@@ -85,11 +85,8 @@ Please see the [**Thermal-FIST documentation**](https://fias.uni-frankfurt.de/~v
 ### Notes
 
 - It is recommended to use the latest version of the package. See the [CHANGELOG](CHANGELOG.md)
-
 - Undocumented new features and bugfixes often first appear in the [devel branch](https://github.com/vlvovch/Thermal-FIST/tree/devel)
-
 - Open an issue if you have possible improvements/new features/bugfixes in mind
-
 - Calculations may break down for excessive/overstressed parameters.
 This should be carefully monitored, and the accuracy of the output assessed.
 If in doubt, contact the program author(s).
