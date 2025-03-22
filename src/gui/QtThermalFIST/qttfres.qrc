@@ -9,6 +9,9 @@
     <file>images/fias.png</file>
   </qresource>
   <qresource>
+    <file>images/uh_red.png</file>
+  </qresource>
+  <qresource>
     <file>images/Goethe-Uni.png</file>
   </qresource>
   <qresource>

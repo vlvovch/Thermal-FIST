@@ -7,7 +7,7 @@ The core library has no external dependencies.
 The thermal fitting routines use the MINUIT2 library from CERN ROOT which is included as a standalone package. If a ROOT installation with MINUIT2 
 is found in the system, MINUIT2 from the installation is used instead.
 
-The QtThermalFIST GUI frontend requires the open source [**Qt5 framework**](http://qt-project.org) to be installed. Otherwise the GUI frontend is not built.
+The QtThermalFIST GUI frontend requires the open source [**Qt6 or Qt5 framework**](http://qt-project.org) to be installed. Otherwise the GUI frontend is not built. Qt6 is preferred and used by default if available.
 
 ### Building
 
@@ -27,7 +27,7 @@ make
 This will build the libraries in `build/lib`, the QtThermalFIST GUI in `build/bin`,
 and a couple of sample macros in `build/bin/examples`.
 
-Please see also the commands listed in the [**.travis.yml**](../.travis.yml) file for another example of building and running the package under a Linux system.
+Please see also the commands listed in the [**.github/workflows/build_and_test.yml**](../.github/workflows/build_and_test.yml) file for another example of building and running the package under various systems.
 
 ### QtThermalFIST
 
@@ -66,6 +66,7 @@ The model configuration is specified in the right-hand side panel.
 2. **Excluded-volume (Diagonal)** - the most widely used excluded-volume HRG model. References: [nucl-th/9711062](https://arxiv.org/abs/nucl-th/9711062) and [nucl-th/9808012](https://arxiv.org/abs/nucl-th/9808012) 
 3. **Excluded-volume (X-terms)** - generalized ''Crossterms'' EV model. EV parameters specified for each pair of species, instead of for each specie only. In this way one can model differently, e.g., baryon-baryon and baryon-antibaryon repulsion. See [nucl-th/9906068](https://arxiv.org/abs/nucl-th/9906068) and [1606.06218](https://arxiv.org/abs/1606.06218) for details.
 4. **QvdW-HRG** - multi-component quantum van der Waals HRG. Both attractive and repulsive interaction parameters can be specified for any pair of species. See [1707.09215](https://arxiv.org/abs/1707.09215)
+5. **Real Gas HRG** - generalization of the van der Waals HRG with non-linear excluded volume prescriptions (e.g., Carnahan-Starling) and arbitrary mean fields. See [Phys. Rev. C 96, 015206 (2017)](https://inspirehep.net/literature/1510282) for details on the single component case.
 
 **Ensemble.** The statistical ensemble (canonical vs grand-canonical)
 
@@ -106,19 +107,28 @@ Chemical potentials in the GCE can be constrained by various conservation laws. 
 3. Strange chemical potential can be constrained from the strangeness neutrality condition.
 4. Charm chemical potential can be constrained from the charm neutrality condition.
 
-**Excluded volume/van der Waals interactions.** 
-Set the interaction parameters for an excluded volume or a van der Waals HRG model. The are two possibilities.
+**Excluded volume/van der Waals/Real Gas interactions.** 
+Set the interaction parameters for an excluded volume, van der Waals, or Real Gas HRG model. The are two possibilities.
 
-1. Set parameters manually, by providing the values of the a and b parameters. Interpreting these input parameters as those of protons, it is possible to assign the same parameters to all other particles, or impose a mass-proportional (bag model) or baryon conent proportional scaling of parameters. For Crossterms EV or QvdW models it is also possible to switch off interactions for various hadron pairs such as meson-meson, meson-baryon baryon-baryon, and baryon-antibaryon.
+1. Set parameters manually, by providing the values of the a and b parameters. Interpreting these input parameters as those of protons, it is possible to assign the same parameters to all other particles, or impose a mass-proportional (bag model) or baryon conent proportional scaling of parameters. For Crossterms EV, QvdW, or Real Gas models it is also possible to switch off interactions for various hadron pairs such as meson-meson, meson-baryon baryon-baryon, and baryon-antibaryon.
 2. The interaction parameters can be read from an external file. 
    * For *Diagonal EV* model the external file should contain a list of rows (one for each species) with two columns: 1 - PDGID, 2 - v_i. 
    * For *Crossterms EV*, one row for each pair of species, three columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij. 
    * For *QvdW-HRG*, one row for each pair of species, four columns: 1 - PDGID1, 2 - PDGID2, 3 - b_ij, 4 - a_ij. 
+   * For *Real Gas HRG*, the format is similar to QvdW-HRG but with additional options for specifying the excluded volume model (e.g., Carnahan-Starling) and mean field model.
    * If some species/pair of species is not found in the input file, then the parameters are assumed to be zero for those. A number of sample input files is provided in the `$(ThermalFIST)/input/list/interaction` folder.
+
+**PCE/Saha/Other...** Additional model configurations:
+1. **Resonances** - choice of Breit-Wigner shape and branching ratios normalization.
+2. **Partial Chemical Equilibrium (PCE)** - whether to apply partial chemical equilibrium for modeling the hadronic phase after chemical freeze-out. If enabled, the hadronic phase is modeled with partial chemical equilibrium and the final yields are computed at temperature $T_{\rm{kin}}$. Additional options include freezeing the yields of long-lived resonances based on width cut-off, Saha equation for light nuclei, and nucleon annihilation (B + B̄ ↔ nπ). 
+3. **Magnetic Field** - Non-zero external magnetic field of given strength $eB$ and the number of Landau levels to be used in the calculation.
+4. **Effective Mass Model for Pions** - includes repulsive interactions and Bose-Einstein condensation effects for pions.
 
 The button *Calculate* invokes a calculation of all the hadron yields, equation of state properties, and, optionally, fluctuations, for the specified values of thermal parameters.
 
 The button *Equation of state...* shows the equation of state properties corresponding to a given calculation, as well as some extra quantities, such as the second-order fluctuations incuding contributions from probabilistic decays.
+
+**Use densities** checkbox allows calculations at fixed conserved charge densities instead of fixed chemical potentials.
 
 Double-clicking on a particle in the list will open a window with additional useful information about the particle, including, e.g., all the feeddown contributions from different resonance decays.
 
@@ -143,11 +153,38 @@ the chemical potentials μ_Q, μ_S, and/or μ_C can be fixed by conservation law
 The thermal model specification is done similarly to the previous two tabs, except that here only the grand-canonical ensemble is considered.
 For a number of observables at $μ_B = 0$ the published lattice QCD data of the Wuppertal-Budapest and/or HotQCD collaborations is plotted along with the calculation results for convenience.
 
+The tab now includes:
+- Tabular view of calculation results with export to file capability
+- New tab for the calculation of cosmic trajectories in the Early Universe given baryon, charge, and lepton flavor asymmetries
+- Additional thermodynamic quantities:
+
+  - Adiabatic and isothermal sound velocity
+  - Specific heat capacity (c_V/T³)
+
 #### *Event generator* tab
 
 A Monte Carlo generator which generates events with particle numbers distributed according to the corresponding multiplicity distribution in a HRG model, while momenta are distributed in accordance with the Blast-Wave model (spherically or cylindrically symmetric). Currently restricted to the case of the Maxwell-Boltzmann statistics.
 In theory provides the same yield, fluctuations etc. as analytic calculations (in case of EV/vdW interactions a sufficiently large system volume is necessary), also applicable to study combined effect of EV/vdW interactions and exact charge conservation.
 Can be useful, e.g., in detector response simulations.
+
+New features include:
+- Shear and bulk viscous corrections
+- Support for output to SMASH
+- Propagation of particles after (weak) decays and DCA cuts
+
+The event generator can be used for:
+
+1. **Ideal HRG** - events in the grand-canonical ensemble
+2. **Canonical ensemble** - events with exact conservation of quantum numbers.
+3. **Excluded volume** - events with hard-core repulsion between hadrons. 
+
+The momentum distributions are generated according to the Blast-Wave model. The following options are available:
+
+1. **Siemens-Rasmussen** - spherically symmetric fireball
+2. **Blast-Wave** - cylindrically symmetric fireball, with longitudinal and transverse flow
+3. **Cracow** - cylindrically symmetric fireball, with longitudinal and transverse flow, and a different parametrization of the freeze-out hypersurface
+
+The generated events can be saved to a file, which can be used for further analysis.
 
 #### *Particle list editor* tab
 
@@ -157,30 +194,33 @@ All changes can be saved to a file.
 
 ### Other notes
 
-- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/examples](../src/examples) folder
+- Sample C++ macros which use Thermal-FIST as a library can be found in the [$(ThermalFIST)/src/examples](../src/examples) folder. See also the description in the [online documentation](https://vovchenko.net/project/thermal-fist/doc/examples.html).
   
-- An example of using the Thermal-FIST library as a submodule is provided by [this repository](https://github.com/vlvovch/1807.02079)
+- An example of using the Thermal-FIST library as a submodule is provided by [this repository](https://github.com/vlvovch/finite-resonance-widths)
 
-- Since version 1.2.1 it is possible to run interactive Thermal-FIST sessions in Jupyter Notebook. See the [FIST-jupyter](https://github.com/vlvovch/FIST-jupyter) repository for an example.
+- Since version 1.2.1 it is possible to run interactive Thermal-FIST sessions in Jupyter Notebook. See the [fist-jupyter](https://github.com/vlvovch/fist-jupyter) repository for an example. (NOTE: does not work on Apple Silicon)
+
+- For event generator, see also the [fist-sampler](https://github.com/vlvovch/fist-sampler) repository for an example.
   
 - The canonical ensemble calculations use the method from [this paper](https://arxiv.org/abs/nucl-th/0112021) to perform analytically the integration over the baryon number fugacity whenever this is possible. This allows to significantly speed up the calculations. This method cannot be used if the quantum statisics is applied for baryons, or if there are multi-baryons (light nuclei) in the particle list. In this case direct numerical integration is performed, which can make calculations very slow.
 
 ### Common issues
 
-- CMake cannot find Qt5 and therefore GUI cannot be built. The following message usually appears after running the `cmake` command: 
+- CMake cannot find Qt6/Qt5 and therefore GUI cannot be built. The following message usually appears after running the `cmake` command: 
 
-  > By not providing "FindQt5Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt5Widgets", but CMake did not find one.
+  > By not providing "FindQt6Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt6Widgets", but CMake did not find one.
 
-  Please make sure that Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt5 directory to CMake explicitly
+  Please make sure that Qt6 or Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt directory to CMake explicitly
 
   ```bash
-  cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
+  cmake -DCMAKE_PREFIX_PATH=<path-to-qt> ../
   ```
   
-  The above solution can also be applied in the case when CMake finds an incompatible version of Qt5, e.g. an x86 Qt build for a x64 Thermal-FIST build configuration.
+  The above solution can also be applied in the case when CMake finds an incompatible version of Qt, e.g. an x86 Qt build for a x64 Thermal-FIST build configuration.
 
 - Program outputs warnings about the Bose-Einstein condensation. This occurs if chemical potentials of bosons at some point exceed their mass. This sometimes happens in the process of constaining electric/strange chemical potentials through conservation laws. If these warnings eventually disappear and final values of chemical potentials are reasonable, things should be fine.
 
 - Accuracy of the calculations in the canonical ensemble will eventually break down as the system volume is increased to a large value, such as that corresponding to central heavy-ion collisions. Accuracy of a canonical ensemble calculation can be verified by comparing the values of the exactly conserved charges computed in the model with the given ones.
 
 - Canonical ensemble calculations seem to take forever. Canonical ensemble calculations are slow if the particle list contains multi-baryon states (light nuclei) or if quantum statistical effects for baryons are included. Unless required, it is recommended to use particle list without light nuclei and use Boltzmann approximation for baryons in the canonical ensemble.
+
