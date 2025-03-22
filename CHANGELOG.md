@@ -22,7 +22,7 @@ A real gas model for a single component case has been formulated in [Vovchenko, 
 
 Real gas HRG is implemented as a new [**ThermalModelRealGas**](include/HRGRealGas/ThermalModelRealGas.h) class.
 It takes as input the [excluded volume model](include/HRGRealGas/ExcludedVolumeModelsMulti.h) and the [mean field model](include/HRGRealGas/MeanFieldModelsMulti.h), both of which can be arbitrary.
-The source code contains a number of examples of both models, such as van der Waals/Carnahan-Starling excluded volume, and van der Waels or baryon density dependent mean field.
+The source code contains a number of examples of both models, such as van der Waals/Carnahan-Starling excluded volume, and van der Waals or baryon density dependent mean field.
 
 Real gas HRG fully supports the calculation of all the standard thermodynamic quantities and susceptibilities and has the complete functionality of van der Waals HRG model from before.
 
@@ -49,6 +49,11 @@ This version contains an implementation of cosmic trajectories in the Early Univ
   - Class: [**ThermalModelPCEAnnihilation**](include/HRGPCE/ThermalModelPCEAnnihilation.h).
   - Reference: [Vovchenko, Koch, Phys. Lett. B 835, 137577 (2022)](https://inspirehep.net/literature/2172067).
   - Documentation: [this link](https://vovchenko.net/project/thermal-fist/doc/classthermalfist_1_1_thermal_model_p_c_e_annihilation.html)
+
+- Neutron star matter calculations
+  - Supported by adding leptons to the list from [/input/list/electroweak](/input/list/electroweak) and setting charge neutrality and $\mu_S = 0$
+  - For a meaningful calculation, one should use an interacting version of the HRG, e.g. real gas
+  - Example [here]((https://vovchenko.net/project/thermal-fist/doc/_neutron_stars-_c_s_h_r_g_8cpp-example.html)
 
 - Effective mass model for pions
   - Repulsive interactions and Bose-Einsten condensation
