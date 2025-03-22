@@ -65,10 +65,10 @@ jobs:
       run: cmake --build . --config $BUILD_TYPE
 
     - name: Upload build artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-artifact
-          path: ${{github.workspace}}/build
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-artifact
+        path: ${{github.workspace}}/build
 
   cxx_standards:
     runs-on: ubuntu-latest
