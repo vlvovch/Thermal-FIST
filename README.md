@@ -52,4 +52,4 @@ Please cite the following paper when using this code:
 
 It is expected that changes to the code are documented.
 
-*Copyright (C) 2018-2023  Volodymyr Vovchenko*
+*Copyright (C) 2018-2025  Volodymyr Vovchenko*

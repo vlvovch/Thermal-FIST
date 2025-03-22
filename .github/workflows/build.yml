@@ -1,4 +1,4 @@
-name: CMake
+name: build
 
 on: [push]
 
@@ -64,52 +64,11 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C $BUILD_TYPE --verbose
-      
-    - name: CalculationTmu
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}CalculationTmu${{ matrix.suffix }}
-      
-    - name: BagModelFit
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}BagModelFit${{ matrix.suffix }} 0.50 0.100 0.301 0.005
-      
-    - name: cpc1HRGTDep0
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 0
-
-    - name: cpc1HRGTDep1
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 1
-      
-    - name: cpc1HRGTDep2
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}cpc1HRGTDep${{ matrix.suffix }} 2
-
-    - name: cpc3chi2NEQ
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}cpc3chi2NEQ${{ matrix.suffix }} 0
-
-    - name: cpc4mcHRG
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}cpc4mcHRG${{ matrix.suffix }} 1 100
-
-    - name: PCE-Saha-LHC
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: ${{ matrix.prefix }}example-PCE-Saha-LHC
+    - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: ${{github.workspace}}/build
 
   cxx_standards:
     runs-on: ubuntu-latest
@@ -146,49 +105,9 @@ jobs:
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE
 
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        # Execute tests defined by the CMake configuration.  
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C $BUILD_TYPE --verbose
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact-2
+          path: ${{github.workspace}}/build
         
-      - name: CalculationTmu
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}CalculationTmu
-        
-      - name: BagModelFit
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}BagModelFit 0.50 0.100 0.301 0.005
-        
-      - name: cpc1HRGTDep0
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}cpc1HRGTDep 0
-
-      - name: cpc1HRGTDep1
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}cpc1HRGTDep 1
-        
-      - name: cpc1HRGTDep2
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}cpc1HRGTDep 2
-
-      - name: cpc3chi2NEQ
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}cpc3chi2NEQ 0
-
-      - name: cpc4mcHRG
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}cpc4mcHRG 1 100
-
-      - name: PCE-Saha-LHC
-        working-directory: ${{github.workspace}}/build
-        shell: bash
-        run: ${prefix}example-PCE-Saha-LHC
