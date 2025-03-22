@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
 
         if ((B1 > 0 && B2 > 0) || (B1 < 0 && B2 < 0))  // baryon-baryon or antibaryon-antibaryon
         {
-          model->SetAttraction(i, j, a); // Set QvdW repulsion
-          model->SetVirial(i, j, b);     // Set QvdW attraction
+          model->SetAttraction(i, j, a); // Set QvdW attraction
+          model->SetVirial(i, j, b);     // Set QvdW repulsion
         }
         else // no vdW interactions for meson-meson, meson-baryon or baryon-anitbaryon pairs
         {

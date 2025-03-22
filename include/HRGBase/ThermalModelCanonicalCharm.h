@@ -1,3 +1,4 @@
+
 /*
  * Thermal-FIST package
  * 
@@ -111,6 +112,8 @@ namespace thermalfist {
     virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
 
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
+
+    virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 

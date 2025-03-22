@@ -21,12 +21,14 @@ namespace thermalfist {
   bool EventWriter::OpenFile(const std::string& filename)
   {
     if (m_fout.is_open())
-      CloseFile();
-
+      m_fout.close();
+     
     m_fout.open(filename);
-
-    if (!m_fout.is_open())
+     
+    if (!m_fout.is_open()) {
+      std::cerr << "**ERROR** EventWriter::OpenFile(): Could not open file " << filename << std::endl;
       return false;
+    }
 
     m_EventNumber = 0;
 
@@ -98,6 +100,15 @@ namespace thermalfist {
       return false;
     ++m_EventNumber;
     evt.writeToFileForUrqmd(m_fout);
+    return true;
+  }
+
+  bool EventWriterForSmash::WriteEvent(const SimpleEvent& evt)
+  {
+    if (!m_fout.is_open())
+      return false;
+    ++m_EventNumber;
+    evt.writeToFileForSmash(m_fout, m_TPS, m_EventNumber);
     return true;
   }
 

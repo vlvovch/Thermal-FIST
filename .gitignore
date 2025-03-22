@@ -9,6 +9,8 @@ build*/*
 Debug*/*
 Release*/*
 local*/*
+cmake-*/*
+.idea/*
 
 # Visual Studio
 .vs/*
@@ -17,3 +19,6 @@ local*/*
 
 # Doxygen
 docs/doxygen/html*
+
+# Apple
+*.DS_Store

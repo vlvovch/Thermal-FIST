@@ -15,7 +15,7 @@
 /**
  * \file ExcludedVolumeHelper.h
  * 
- * \brief Contains some functions do deal with excluded volumes. 
+ * \brief Contains some functions to deal with excluded volumes.
  * 
  */
 
@@ -52,6 +52,17 @@ namespace thermalfist {
     inline double brr(double r1, double r2) { return (2. * xMath::Pi() / 3.) * pow(r1 + r2, 3); }
 
     /**
+     * \brief Computes the asymmetric 2nd virial coefficient
+     *        \f$ \tilde b_{ij} \f$ of the classical hard spheres
+     *        equation of state from the two radii.
+     *
+     * \param r1       First radius (fm)
+     * \param r2       Second radius (fm)
+     * \return double  Virial coefficient (fm\f$^3\f$)
+     */
+    double btilrr(double r1, double r2);// { return 2. * brr(r1, r2) * brr(r1, r1) / (brr(r1, r1) + brr(r2, r2)); }
+
+    /**
      * \brief Returns the matrix of excluded volume
      *        coefficients \f$ \tilde{b}_{ij} \f$
      *        of an HRG model
@@ -66,6 +77,11 @@ namespace thermalfist {
     std::vector< std::vector<double> > aijMatrix(const ThermalModelBase* model);
 
   }
+
+  /// \brief Returns the matrix of attraction and repulsion parameters for baryon-baryon and antibaryon-antibaryon pairs
+  /// \param model Pointer to the thermal model object
+  /// \param param Interaction parameter
+  std::vector<std::vector<double>> GetBaryonBaryonInteractionMatrix(const ThermalParticleSystem *TPS, double param);
 
 } // namespace thermalfist
 

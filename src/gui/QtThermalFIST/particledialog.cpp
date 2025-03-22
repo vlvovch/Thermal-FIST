@@ -109,7 +109,8 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
     for (int i = 0; i < sources.size(); ++i)
       sources[i].first *= model->Densities()[sources[i].second];
 
-    qSort(sources.begin(), sources.end());
+    //qSort(sources.begin(), sources.end());
+    std::sort(sources.begin(), sources.end());
 
     tableSources->setItem(0, 0, new QTableWidgetItem(tr("Primordial")));
     tableSources->setItem(0, 1, new QTableWidgetItem(QString::number(model->Densities()[pid] * model->Volume())));
@@ -249,6 +250,34 @@ QString ParticleDialog::GetParticleInfo() {
       ret += QString::number(model->TPS()->Particles()[pid].DecayThresholdMass() * 1.e3) + " " + tr("MeV");
       ret += "\r\n";
     }
+  }
+
+  if (model->IsCalculated()) {
+    ret += "\r\n";
+    ret += "\r\n";
+    ret += tr("Dynamical properties:") + "\r\n";
+    ret += tr("Effective chemical potential").leftJustified(20) + " = ";
+    ret += QString::number(1.e3 * model->FullIdealChemicalPotential(pid)) + " " + tr("MeV");
+    ret += "\r\n";
+    ret += tr("Effective mass").leftJustified(20) + " = ";
+    if (model->TPS()->Particles()[pid].GetGeneralizedDensity() != NULL) {
+      double meff = model->TPS()->Particles()[pid].GetGeneralizedDensity()->EffectiveMass();
+      if (meff < 0.)
+        meff = model->TPS()->Particles()[pid].Mass();
+      ret += QString::number(1.e3 * meff) + " " + tr("MeV");
+      ret += "\r\n";
+
+      double BECfraction = model->TPS()->Particles()[pid].GetGeneralizedDensity()->BECFraction();
+      if (BECfraction > 0.0) {
+        ret += tr("BEC fraction").leftJustified(20) + " = ";
+        ret += QString::number(BECfraction);
+        ret += "\r\n";
+      }
+    } else {
+      ret += QString::number(1.e3 * model->TPS()->Particles()[pid].Mass()) + " " + tr("MeV");
+      ret += "\r\n";
+    }
+
   }
 
   return ret;

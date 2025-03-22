@@ -11,6 +11,8 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <cassert>
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
@@ -114,6 +116,8 @@ namespace thermalfist {
 
 
   void ThermalModelVDWCanonicalStrangeness::CalculatePrimordialDensities() {
+    assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
+
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);
@@ -267,8 +271,7 @@ namespace thermalfist {
   void ThermalModelVDWCanonicalStrangeness::FillVirial(const std::vector<double>& ri)
   {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
-      return;
+      throw std::invalid_argument(m_TAG + "::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list");
     }
     m_Virial.resize(m_TPS->Particles().size());
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -289,8 +292,7 @@ namespace thermalfist {
   void ThermalModelVDWCanonicalStrangeness::FillVirialEV(const std::vector< std::vector<double> > & bij)
   {
     if (bij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const std::vector<double> & bij): size of bij does not match number of hadrons in the list", m_TAG.c_str());
-      return;
+      throw std::invalid_argument(m_TAG + "::FillVirialEV(const std::vector<double> & bij): size of bij does not match number of hadrons in the list");
     }
     m_Virial = bij;
   }
@@ -298,8 +300,7 @@ namespace thermalfist {
   void ThermalModelVDWCanonicalStrangeness::FillAttraction(const std::vector< std::vector<double> > & aij)
   {
     if (aij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillAttraction(const std::vector<double> & aij): size of aij does not match number of hadrons in the list", m_TAG.c_str());
-      return;
+      throw std::invalid_argument(m_TAG + "::FillAttraction(const std::vector<double> & aij): size of aij does not match number of hadrons in the list");
     }
     m_Attr = aij;
   }

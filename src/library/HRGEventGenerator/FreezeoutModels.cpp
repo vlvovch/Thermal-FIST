@@ -87,8 +87,7 @@ namespace thermalfist {
     m_R(Rmax)
   {
     if (tau <= 0. || Rmax <= 0. || m_n < 0. || (m_BetaS < 0. || m_BetaS > 1.)) {
-      std::cerr << "**ERROR** CylindricalBlastWaveParametrization::CylindricalBlastWaveParametrization: invalid parameter values!" << std::endl;
-      exit(1);
+      throw std::invalid_argument("CylindricalBlastWaveParametrization: invalid parameter values!");
     }
   }
 
@@ -103,8 +102,7 @@ namespace thermalfist {
     m_tauH(tauH)
   {
     if (tauH <= 0. || RoverTauH <= 0.) {
-      std::cerr << "**ERROR** CracowFreezeoutParametrization::CracowFreezeoutParametrization: invalid parameter values!" << std::endl;
-      exit(1);
+      throw std::invalid_argument("CracowFreezeoutParametrization: invalid parameter values!");
     }
   }
 

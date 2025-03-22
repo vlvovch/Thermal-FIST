@@ -169,7 +169,7 @@ namespace thermalfist {
      * using the combined 32-point
      * Gauss-Laguerre and the 32-point Gauss-Legendre quadrature.
      * 
-     * \param func A point to a function to be integrate.
+     * \param func A pointer to a function to be integrated.
      * \param ay Left limit of integration for variable y.
      * \param by Right limit of integration for variable y.
      * \return Result of the integration.
@@ -217,8 +217,8 @@ namespace thermalfist {
      * 
      * \param [in] a Left limit of integration.
      * \param [in] b Right limit of integration
-     * \param [out] x Gauss-Legendre nodes.
-     * \param [out] w Gauss-Legendre weights.
+     * \param [out] x Gauss-Laguerre nodes.
+     * \param [out] w Gauss-Laguerre weights.
      */
     void GetCoefsIntegrateLegendre32(double a, double b, std::vector<double> *x, std::vector<double> *w);
 
@@ -251,7 +251,7 @@ namespace thermalfist {
     /**
      * Populates the nodes and weights for integrating
      * a function f(x)
-     * in the range \param ax < x < \param bx
+     * in the range \param a < x < \param b
      * using the 40-point Gauss-Legendre quadrature.
      * 
      * \param [in] a Left limit of integration.
@@ -272,6 +272,39 @@ namespace thermalfist {
      */
     void GetCoefsIntegrateLaguerre32(std::vector<double> *x, std::vector<double> *w);
 
+
+    /**
+     * Template version.
+     * Populates the nodes and weights for integrating
+     * a function f(x)
+     * in the range ax < x < bx
+     * using the 32-point Gauss-Legendre quadrature.
+     *
+     * \param [in] a Left limit of integration.
+     * \param [in] b Right limit of integration
+     * \param [out] x Gauss-Legendre nodes.
+     * \param [out] w Gauss-Legendre weights.
+     */
+    template <typename T>
+    void GetCoefsIntegrateLegendre32Template(T a, T b, std::vector<T> *xp, std::vector<T> *wp) {
+      // Integrate function from a to b using Legendre-Gaussian integration
+      // with 32 points.
+      //
+      std::vector<T> &x = *xp;
+      std::vector<T> &w = *wp;
+
+      x.resize(32);
+      w.resize(32);
+
+      const double *xlego = coefficients_xleg32;
+      const double *wlego = coefficients_wleg32;
+
+
+      for (int i = 0; i < 32; i++) {
+        w[i] = (b - a) / 2. * wlego[i];
+        x[i] = (b - a) / 2. * xlego[i] + (b + a) / 2.;
+      }
+    }
   }
 
 } // namespace thermalfist

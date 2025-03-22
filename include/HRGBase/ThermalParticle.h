@@ -49,7 +49,7 @@ namespace thermalfist {
       StrangenessCharge = 2, ///< Strangeness
       CharmCharge = 3        ///< Charm
     };
-    static const int NumberOfTypes = 5;
+    static const int NumberOfTypes = 4;
   };
 
   
@@ -665,6 +665,21 @@ namespace thermalfist {
     bool operator==(const ThermalParticle &rhs) const; // TODO: improve
     bool operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
 
+    /// \brief Getter/Setter for the generalized density object
+    GeneralizedDensity* GetGeneralizedDensity() const { return m_GeneralizedDensity; }
+    void SetGeneralizedDensity(GeneralizedDensity *density_model);
+
+    /// \brief Clear the generalized density
+    void ClearGeneralizedDensity();
+
+    /**
+    * \brief Sets the value of magnetic field and the number of Landau levels to include
+    */
+    void SetMagneticField(double B = 0.0, int lmax = 1);
+
+    /// \brief Clears the magnetic field
+    void ClearMagneticField() { m_IGFExtraConfig.MagneticField.B = 0.0; }
+
   private:
     /**
     *  Auxiliary coefficients used for numerical integration using quadratures
@@ -725,7 +740,6 @@ namespace thermalfist {
     ResonanceWidthShape m_ResonanceWidthShape;                  /**< Either relativistic or non-relativitic Breit-Wigner */
     ResonanceWidthIntegration m_ResonanceWidthIntegrationType;  /**< Plus-minus TwoGamma or from m0 to infty */
     double m_Radius;              /**< Hard-core radius (fm) */
-    double m_Vo;                  /**< Eigenvolume parameter (fm^3). Obsolete. To be removed. */
     double m_Weight;              /**< Weight of a given particle. Default is 1 */
 
     ParticleDecaysVector m_Decays;      /**< All decay channels currently in use.  */
@@ -745,6 +759,12 @@ namespace thermalfist {
 
     /// Whether BEC was encountered
     bool m_LastDensityOk;
+
+    /// Whether to use an outside procedure for calculating densities
+    GeneralizedDensity *m_GeneralizedDensity;
+
+    /// Extra parameters such as magnetic field
+    IdealGasFunctions::IdealGasFunctionsExtraConfig m_IGFExtraConfig;
   };
 
 } // namespace thermalfist

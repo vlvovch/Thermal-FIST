@@ -11,7 +11,7 @@
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/ThermalModelBase.h"
-#include "HRGEV/ExcludedVolumeModel.h"
+#include "HRGRealGas/ExcludedVolumeModels.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 
 namespace thermalfist {

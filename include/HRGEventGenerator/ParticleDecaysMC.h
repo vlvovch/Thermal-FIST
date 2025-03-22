@@ -150,6 +150,13 @@ namespace thermalfist {
      * \param part2  Second particle
      */
     double ParticleDistanceSquared(const SimpleParticle& part1, const SimpleParticle& part2);
+
+    /**
+     * \brief Computes the distance of closest approach (DCA) to the origin.
+     *
+     * \param part  Particle
+     */
+    double ComputeDCA(const SimpleParticle& part);
   }
 
 } // namespace thermalfist

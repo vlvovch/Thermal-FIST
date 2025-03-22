@@ -9,7 +9,7 @@
 
 #include <functional>
 #include <algorithm>
-
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 #include "HRGBase/ThermalModelBase.h"
@@ -20,7 +20,9 @@
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGVDW/ThermalModelVDW.h"
+#include "HRGRealGas/ThermalModelRealGas.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
+#include "HRGBase/ExtraParticles.h"
 
 namespace thermalfist {
 
@@ -92,7 +94,6 @@ namespace thermalfist {
     if (TPS == NULL)
       return;
 
-
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CCE) {
       m_Config.CFOParameters.muC = 0.;
     }
@@ -100,7 +101,7 @@ namespace thermalfist {
       m_Config.CFOParameters.muS = 0.;
       m_Config.CFOParameters.muC = 0.;
     }
-    else if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
+    else if (0 && m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
       if (m_Config.CanonicalB) 
         m_Config.CFOParameters.muB = 0.;
       if (m_Config.CanonicalS)
@@ -123,6 +124,24 @@ namespace thermalfist {
     else if (m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
       m_THM = new ThermalModelVDWFull(TPS, m_Config.CFOParameters);
     }
+    else if (m_Config.fModelType == EventGeneratorConfiguration::RealGas) {
+      m_THM = new ThermalModelRealGas(TPS, m_Config.CFOParameters);
+    }
+
+    if (m_Config.fEnsemble == EventGeneratorConfiguration::CE && m_Config.fUseGCEConservedCharges) {
+        if (!m_Config.fUsePCE)
+          m_THM->FillChemicalPotentials();
+        else
+          m_THM->SetChemicalPotentials(m_Config.fPCEChems);
+          
+        m_THM->CalculatePrimordialDensities();
+
+        // Round to nearest integer
+        m_Config.B = lround(m_THM->BaryonDensity() * m_THM->Volume());
+        m_Config.Q = lround(m_THM->ElectricChargeDensity() * m_THM->Volume());
+        m_Config.S = lround(m_THM->StrangenessDensity() * m_THM->Volume());
+        m_Config.C = lround(m_THM->CharmDensity() * m_THM->Volume());
+    }
 
     m_THM->SetUseWidth(TPS->ResonanceWidthIntegrationType());
 
@@ -136,7 +155,9 @@ namespace thermalfist {
     else
       m_THM->SetChemicalPotentials(m_Config.fPCEChems);
 
-    if (m_Config.fModelType != EventGeneratorConfiguration::PointParticle) {
+    if (m_Config.fModelType == EventGeneratorConfiguration::DiagonalEV ||
+      m_Config.fModelType == EventGeneratorConfiguration::CrosstermsEV ||
+      m_Config.fModelType == EventGeneratorConfiguration::QvdW) {
       for (size_t i = 0; i < m_THM->Densities().size(); ++i) {
         for (size_t j = 0; j < m_THM->Densities().size(); ++j) {
           if (m_Config.bij.size() == m_THM->Densities().size()
@@ -148,6 +169,27 @@ namespace thermalfist {
             m_THM->SetAttraction(i, j, m_Config.aij[i][j]);
         }
       }
+    }
+
+    if (m_Config.fModelType == EventGeneratorConfiguration::RealGas) {
+      ExcludedVolumeModelBase* evmod;
+      if (config.RealGasExcludedVolumePrescription == 0) {
+        evmod = new ExcludedVolumeModelVDW();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 1) {
+        evmod = new ExcludedVolumeModelCS();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 2) {
+        evmod = new ExcludedVolumeModelVirial();
+      }
+      else if (config.RealGasExcludedVolumePrescription == 3) {
+        evmod = new ExcludedVolumeModelTVM();
+      }
+      else {
+        evmod = new ExcludedVolumeModelVDW();
+      }
+      static_cast<ThermalModelRealGas*>(m_THM)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(evmod, m_Config.bij));
+      static_cast<ThermalModelRealGas*>(m_THM)->SetMeanFieldModel(new MeanFieldModelMultiVDW(m_Config.aij));
     }
 
     if (m_Config.fEnsemble == EventGeneratorConfiguration::CE) {
@@ -621,8 +663,7 @@ namespace thermalfist {
       }
 
       if (finS != 0) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsSCESubVolume(): Generated strangeness is non-zero!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsSCESubVolume(): Generated strangeness is non-zero!");
       }
 
       return totals;
@@ -638,8 +679,7 @@ namespace thermalfist {
     // Check there are no multi-charmed particles, otherwise error
     for (size_t i = 0; i < m_THM->TPS()->Particles().size(); ++i) {
       if (abs(m_THM->TPS()->Particles()[i].Charm()) > 1) {
-        printf("**ERROR** CCE Event generator does not support lists with multi-charmed particles\n");
-        exit(1);
+        throw std::runtime_error("CCE Event generator does not support lists with multi-charmed particles");
       }
     }
 
@@ -811,8 +851,7 @@ namespace thermalfist {
     }
 
     if (finC != m_Config.C) {
-      printf("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
-      exit(1);
+      throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCCESubVolume(): Generated charm is non-zero!");
     }
 
     return totals;
@@ -1098,23 +1137,19 @@ namespace thermalfist {
       }
 
       if (m_Config.CanonicalB && finB != m_Config.B) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated baryon number does not match the input!");
       }
 
       if (m_Config.CanonicalQ && finQ != m_Config.Q) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated electric charge does not match the input!");
       }
 
       if (m_Config.CanonicalS && finS != m_Config.S) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated strangeness does not match the input!");
       }
 
       if (m_Config.CanonicalC && finC != m_Config.C) {
-        printf("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
-        exit(1);
+        throw std::runtime_error("**ERROR** EventGeneratorBase::GenerateTotalsCE(): Generated charm does not match the input!");
       }
 
       return totals;
@@ -1155,8 +1190,7 @@ namespace thermalfist {
   {
     int id = m_THM->TPS()->PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** EventGeneratorBase::SampleParticleByPdg(): The input pdg code does not exist in the particle list!");
-      exit(1);
+      throw std::invalid_argument("EventGeneratorBase::SampleParticleByPdg(): The input pdg code does not exist in the particle list!");
     }
     return SampleParticle(id);
   }
@@ -1208,9 +1242,11 @@ namespace thermalfist {
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       for (int part = 0; part < yields[i]; ++part)
         ids.push_back(i);
-    std::random_shuffle(ids.begin(), ids.end());
+    //std::random_shuffle(ids.begin(), ids.end()); // Removed in C++17
+    std::shuffle(ids.begin(), ids.end(), RandomGenerators::rng_std);
 
     ret.Particles.resize(ids.size());
+
 
     bool flOverlap = true;
     while (flOverlap) {
@@ -1387,7 +1423,7 @@ namespace thermalfist {
   //   return ret;
   // }
 
-  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS)
+  SimpleEvent EventGeneratorBase::PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS, const DecayerFlags& decayerFlags)
   {
     SimpleEvent ret;
     ret.weight = evtin.weight;
@@ -1431,12 +1467,15 @@ namespace thermalfist {
               double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
 
               std::vector<double> Bratios;
+              double Width = 0.;
               if (primParticles[i][j].MotherPDGID != 0 ||
                 TPS->ResonanceWidthIntegrationType() != ThermalParticle::eBW) {
                 Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, false);
+                Width = TPS->Particles()[i].ResonanceWidth();
               }
               else {
                 Bratios = TPS->Particles()[i].BranchingRatiosM(primParticles[i][j].m, true);
+                Width = TPS->Particles()[i].TotalWidtheBW(primParticles[i][j].m);
               }
 
               int DecayIndex = 0;
@@ -1461,9 +1500,52 @@ namespace thermalfist {
                   }
                   pdgids.push_back(dpdg);
                 }
+
+                // Propagate along straight line before decay
+                double prop_dx = 0., prop_dy = 0., prop_dz = 0., prop_dt = 0.;
+                if (decayerFlags.propagateParticles) {
+                  double ct = 0.;
+                  if (Width != 0.)
+                    ct = 1. / Width / xMath::GeVtoifm();
+                  else
+                    ct = DecayLifetimes::GetLifetime(primParticles[i][j].PDGID);
+
+                  if (ct == 0.) {
+                    if (abs(primParticles[i][j].PDGID) != 311) {
+                      // K0s "decaying" into K0S and K0L is an exception
+                      printf("**WARNING** Could not find the lifetime for decaying particle %lld. Setting to zero...\n", primParticles[i][j].PDGID);
+                    }
+                  }
+
+                  // Sample lifetime in rest frame
+                  ct = -ct * log(1. - RandomGenerators::randgenMT.randDblExc());
+
+                  // Lorentz time delay
+                  double vx = primParticles[i][j].px / primParticles[i][j].p0;
+                  double vy = primParticles[i][j].py / primParticles[i][j].p0;
+                  double vz = primParticles[i][j].pz / primParticles[i][j].p0;
+                  double gamma = 1. / sqrt(1. - vx*vx - vy*vy - vz*vz);
+                  ct *= gamma;
+
+                  // Propagate
+                  prop_dx += vx * ct;
+                  prop_dy += vy * ct;
+                  prop_dz += vz * ct;
+                  prop_dt += ct;
+                }
+
                 std::vector<SimpleParticle> decres = ParticleDecaysMC::ManyBodyDecay(primParticles[i][j], masses, pdgids);
                 for (size_t ind = 0; ind < decres.size(); ind++) {
                   decres[ind].processed = false;
+
+                  // Propagate before decay
+                  if (decayerFlags.propagateParticles && prop_dt != 0.0) {
+                    decres[ind].r0 += prop_dt;
+                    decres[ind].rx += prop_dx;
+                    decres[ind].ry += prop_dy;
+                    decres[ind].rz += prop_dz;
+                  }
+
                   if (TPS->PdgToId(decres[ind].PDGID) != -1) {
                     int tid = TPS->PdgToId(decres[ind].PDGID);
                     SimpleParticle& dprt = decres[ind];
@@ -1867,19 +1949,87 @@ namespace thermalfist {
       ret = normweight;
     }
 
+    if (m_THM->InteractionModel() == ThermalModelBase::RealGas) {
+      ThermalModelRealGas* model = static_cast<ThermalModelRealGas*>(m_THM);
+      double V = m_THM->Volume();
+
+      double weight = 1.;
+      double logweight = 0.;
+      double normweight = 1.;
+      double weightvdw = 1.;
+      bool fl = true;
+
+      int Nspecies = m_THM->TPS()->Particles().size();
+
+      ExcludedVolumeModelMultiBase* evmod = model->ExcludedVolumeModel();
+      int Nevcomp = evmod->ComponentsNumber();
+      const std::vector<int>& evinds = evmod->ComponentIndices();
+      const std::vector<int>& evindsfrom = evmod->ComponentIndicesFrom();
+      std::vector<int> Nscomp(Nevcomp, 0);
+      std::vector<double> Nvdwscomp(Nevcomp, 0.);
+      //std::vector<double> dmuTs(Nspecies, 0.);
+
+      std::vector<double> ev_favs(Nevcomp, 0.);
+      for (size_t icomp = 0; icomp < Nevcomp; ++icomp) {
+        ev_favs[icomp] = evmod->f(evindsfrom[icomp]);
+      }
+      std::vector<double> densities_sampled(Nspecies);
+      for (size_t j = 0; j < Nspecies; ++j) {
+        densities_sampled[j] = totals[j] / V;
+      }
+      evmod->SetDensities(densities_sampled);
+      std::vector<double> ev_fsampled(Nevcomp, 0.);
+      for (size_t icomp = 0; icomp < Nevcomp; ++icomp) {
+        ev_fsampled[icomp] = evmod->f(evindsfrom[icomp]);
+      }
+      evmod->SetDensities(m_THM->Densities());
+
+      MeanFieldModelMultiBase* mfmod = model->MeanFieldModel();
+      double mf_vav = mfmod->v();
+      mfmod->SetDensities(densities_sampled);
+      double mf_vsampled = mfmod->v();
+      mfmod->SetDensities(m_THM->Densities());
+
+      for (size_t j = 0; j < Nspecies; ++j) {
+        int jcomp = evinds[j];
+        normweight *= pow(ev_fsampled[jcomp] / ev_favs[jcomp], totals[j]);
+
+        double dmuT = 0.;
+        if (densitiesid->operator[](j))
+          dmuT = log(densities[j] / densitiesid->operator[](j) / ev_favs[jcomp]);
+        normweight *= exp(-dmuT * (totals[j] - densities[j] * V));
+      }
+
+      normweight *= exp(-V * (mf_vsampled - mf_vav) / m_THM->Parameters().T);
+
+      if (!fl)
+        return -1.;
+
+      m_LastWeight = normweight;
+      m_LastLogWeight = log(normweight);
+      m_LastNormWeight = normweight;
+
+      ret = normweight;
+    }
+
+    //printf("Weight: %lf\n", ret);
+
     return ret;
   }
+
   EventGeneratorConfiguration::EventGeneratorConfiguration()
   {
     fEnsemble = GCE;
     fModelType = PointParticle;
     CFOParameters = ThermalModelParameters();
     B = Q = S = C = 0;
+    RealGasExcludedVolumePrescription = 0;
     CanonicalB = CanonicalQ = CanonicalS = CanonicalC = true;
     fUsePCE = false;
     fUseEVRejectionMultiplicity = true;
     fUseEVRejectionCoordinates = true;
     fUseEVUseSPRApproximation = true;
+    fUseGCEConservedCharges = false;
   }
 
 } // namespace thermalfist

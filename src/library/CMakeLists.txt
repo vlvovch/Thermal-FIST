@@ -22,6 +22,8 @@ HRGBase/ThermalParticle.cpp
 HRGBase/ThermalParticleSystem.cpp
 HRGBase/Utility.cpp
 HRGBase/xMath.cpp
+HRGBase/Susceptibilities.cpp
+HRGBase/ExtraParticles.cpp
 )
 
 source_group("HRGBase\\Source Files" FILES ${SRCS_HRGBase})
@@ -41,7 +43,10 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelCanonicalStrangeness.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticle.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticleSystem.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.tcc
 ${PROJECT_SOURCE_DIR}/include/HRGBase/Utility.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/Susceptibilities.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/ExtraParticles.h
 )	  
 
 source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})
@@ -61,7 +66,6 @@ set(HEADERS_HRGEV
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrossterms.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCrosstermsLegacy.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVDiagonal.h
-${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeModel.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ExcludedVolumeHelper.h
 ${PROJECT_SOURCE_DIR}/include/HRGEV/ThermalModelEVCanonicalStrangeness.h
 )	
@@ -82,6 +86,27 @@ ${PROJECT_SOURCE_DIR}/include/HRGVDW/ThermalModelVDWCanonicalStrangeness.h
 )
 
 source_group("HRGVDW\\Header Files" FILES ${HEADERS_HRGVDW})
+
+# Real gas part of the library
+set(SRCS_HRGRealGas
+HRGRealGas/ThermalModelRealGas.cpp
+HRGRealGas/ExcludedVolumeModels.cpp
+HRGRealGas/ExcludedVolumeModelsMulti.cpp
+HRGRealGas/MeanFieldModels.cpp
+HRGRealGas/MeanFieldModelsMulti.cpp
+)
+
+source_group("HRGRealGas\\Source Files" FILES ${SRCS_HRGRealGas})
+
+set(HEADERS_HRGRealGas
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ThermalModelRealGas.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ExcludedVolumeModels.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/ExcludedVolumeModelsMulti.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/MeanFieldModels.h
+${PROJECT_SOURCE_DIR}/include/HRGRealGas/MeanFieldModelsMulti.h
+)
+
+source_group("HRGRealGas\\Header Files" FILES ${HEADERS_HRGRealGas})
 
 # Fitter
 	  
@@ -142,15 +167,37 @@ source_group("HRGEventGenerator\\Header Files" FILES ${HEADERS_HRGEventGenerator
 # Partial chemical equilibrium part
 set(SRCS_HRGPCE
 HRGPCE/ThermalModelPCE.cpp
+HRGPCE/ThermalModelPCEAnnihilation.cpp
 )
 
 source_group("HRGPCE\\Source Files" FILES ${SRCS_HRGPCE})
 
 set(HEADERS_HRGPCE
 ${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCE.h
+${PROJECT_SOURCE_DIR}/include/HRGPCE/ThermalModelPCEAnnihilation.h
 )	
 
 source_group("HRGPCE\\Header Files" FILES ${HEADERS_HRGPCE})
+
+if (NOT STANDALONE_MINUIT)
+include_directories ("$ENV{ROOTSYS}/include/root") 
+include_directories ("$ENV{ROOTSYS}/include") 
+endif (NOT STANDALONE_MINUIT)
+
+# Cosmic EoS part
+set(SRCS_COSMICEOS
+CosmicEos/EffectiveMassModel.cpp
+CosmicEos/CosmicEoS.cpp
+)
+
+source_group("CosmicEos\\Source Files" FILES ${SRCS_HRGPCE})
+
+set(HEADERS_COSMICEOS
+${PROJECT_SOURCE_DIR}/include/CosmicEos/EffectiveMassModel.h
+${PROJECT_SOURCE_DIR}/include/CosmicEos/CosmicEoS.h
+)	
+
+source_group("CosmicEos\\Header Files" FILES ${HEADERS_HRGPCE})
 
 if (NOT STANDALONE_MINUIT)
 include_directories ("$ENV{ROOTSYS}/include/root") 
@@ -164,9 +211,11 @@ add_library(ThermalFIST
 ${SRCS_HRGBase} ${HEADERS_HRGBase} 
 ${SRCS_HRGEV} ${HEADERS_HRGEV} 
 ${SRCS_HRGVDW} ${HEADERS_HRGVDW} 
+${SRCS_HRGRealGas} ${HEADERS_HRGRealGas} 
 ${SRCS_HRGFit} ${HEADERS_HRGFit} 
 ${SRCS_HRGEventGenerator} ${HEADERS_HRGEventGenerator}
 ${SRCS_HRGPCE} ${HEADERS_HRGPCE}
+${SRCS_COSMICEOS} ${HEADERS_COSMICEOS}
 )
 
 if (NOT STANDALONE_MINUIT)
@@ -182,7 +231,8 @@ set_property(TARGET ThermalFIST PROPERTY FOLDER "libraries")
 target_include_directories(ThermalFIST PUBLIC 
 "${PROJECT_SOURCE_DIR}/include" 
 "${PROJECT_BINARY_DIR}/include"
-"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister")
+"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister"
+"${EIGEN3_INCLUDE_DIR}")
 
 #install (TARGETS ThermalFIST
 #         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)

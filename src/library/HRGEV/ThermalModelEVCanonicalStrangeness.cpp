@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 #include "HRGBase/xMath.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
@@ -69,6 +70,8 @@ namespace thermalfist {
 
 
   void ThermalModelEVCanonicalStrangeness::CalculatePrimordialDensities() {
+    assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
+
     m_FluctuationsCalculated = false;
 
     m_energydensitiesGCE.resize(0);
@@ -206,8 +209,7 @@ namespace thermalfist {
   void ThermalModelEVCanonicalStrangeness::FillVirial(const std::vector<double>& ri)
   {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
-      return;
+      throw std::invalid_argument(m_TAG + "::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list");
     }
     m_v.resize(m_TPS->Particles().size());
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
@@ -217,8 +219,7 @@ namespace thermalfist {
   void ThermalModelEVCanonicalStrangeness::FillVirialEV(const std::vector<double>& vi)
   {
     if (vi.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list", m_TAG.c_str());
-      return;
+      throw std::invalid_argument(m_TAG + "::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list");
     }
     m_v = vi;
   }

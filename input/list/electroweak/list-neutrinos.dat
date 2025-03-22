@@ -1,0 +1,8 @@
+# neutrinos (need to include antineutrinos explicitly since they have no BQS charges)
+#         pdgid                name         stable       mass[GeV]     degeneracy     statistics              B              Q              S              C            |S|            |C|     width[GeV] threshold[GeV]
+             12                nu_e              1               0              1              1              0              0              0              0              0              0              0              0
+             14               nu_mu              1               0              1              1              0              0              0              0              0              0              0              0
+             16              nu_tau              1               0              1              1              0              0              0              0              0              0              0              0
+            -12           anti_nu_e              1               0              1              1              0              0              0              0              0              0              0              0
+            -14          anti_nu_mu              1               0              1              1              0              0              0              0              0              0              0              0
+            -16         anti_nu_tau              1               0              1              1              0              0              0              0              0              0              0              0

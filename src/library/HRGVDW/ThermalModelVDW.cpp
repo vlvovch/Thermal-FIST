@@ -42,7 +42,7 @@ namespace thermalfist {
     m_Virial.resize(m_densities.size(), vector<double>(m_densities.size(),0.));
     m_Attr = m_Virial;
     m_VirialdT = m_Virial;
-    m_AttrdT   = m_AttrdT;
+    m_AttrdT   = m_Attr;
     m_Volume = params.V;
     m_TAG = "ThermalModelVDW";
 
@@ -70,7 +70,7 @@ namespace thermalfist {
 
   void ThermalModelVDW::FillVirial(const vector<double> & ri) {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
@@ -97,7 +97,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillVirialEV(const vector< vector<double> >& bij)
   {
     if (bij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial = bij;
@@ -108,7 +108,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillAttraction(const vector<vector<double> >& aij)
   {
     if (aij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Attr = aij;
@@ -306,8 +306,6 @@ namespace thermalfist {
     if (broydn.Iterations() == broydn.MaxIterations())
       m_LastBroydenSuccessFlag = false;
     else m_LastBroydenSuccessFlag = true;
-
-
 
     m_MaxDiff = broydn.MaxDifference();
 
@@ -786,6 +784,7 @@ namespace thermalfist {
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i)
       m_PrimCorrel[i].resize(NN);
+    m_dmusdmu = m_PrimCorrel;
     m_TotalCorrel = m_PrimCorrel;
 
     MatrixXd densMatrix(2 * NN, 2 * NN);
@@ -841,6 +840,7 @@ namespace thermalfist {
       for (int i = 0; i < NN; ++i) {
         dni[i]  = solVector[i];
         dmus[i] = solVector[NN + i];
+        m_dmusdmu[i][k] = dmus[i];
       }
 
       for (int j = 0; j < NN; ++j) {
@@ -872,7 +872,208 @@ namespace thermalfist {
     }
 
     m_FluctuationsCalculated = true;
+
+    if (IsTemperatureDerivativesCalculated()) {
+      m_TemperatureDerivativesCalculated = false;
+      CalculateTemperatureDerivatives();
+    }
   }
+
+  double ThermalModelVDW::CalculateEnergyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // Compute dE/dT
+    double ret = 0.;
+
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      double fi  = 1., dvi = 0.;
+      // Term 1
+      for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        double dfik = -m_Virial[k][i];
+        ret += dfik * m_dndT[k] * part.Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_MuStar[i]);
+        fi -= m_Virial[k][i] * m_densities[k];
+        dvi += -(m_Attr[k][i] + m_Attr[i][k]) * m_densities[k];
+      }
+
+      // Term 2
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dedT, m_UseWidth, m_MuStar[i]);
+
+      // Term 3
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dedmu, m_UseWidth, m_MuStar[i]) * m_dmusdT[i];
+
+      // Term 4
+      ret += dvi * m_dndT[i];
+    }
+
+    return ret;
+  }
+
+  void ThermalModelVDW::CalculateTemperatureDerivatives() {
+    if (!IsCalculated())
+      CalculatePrimordialDensities();
+
+    int N = m_TPS->ComponentsNumber();
+    m_dndT = vector<double>(N, 0.);
+    m_dmusdT = vector<double>(N, 0.);
+    m_PrimChi2sdT = vector<vector<double>>(N, vector<double>(N, 0.));
+
+    double T = m_Parameters.T;
+
+    vector<double> nids(N, 0.), dniddTs(N, 0.), chi2ids(N, 0.), dchi2idsdT(N, 0.), chi3ids(N, 0.);
+    for (int i = 0; i < N; ++i) {
+      nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
+      dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]);
+      chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
+      // chi2til = chi2 * T^2
+      // dchi2til/dT = T^2 * dchi2/dT +  2 * T * chi2 = T^2 * dchi2/dT + 2 * chi2til / T
+      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
+    }
+
+    int NN = m_densities.size();
+
+    MatrixXd densMatrix(2 * NN, 2 * NN);
+    VectorXd solVector(2 * NN), xVector(2 * NN);
+
+    //vector<double> chi2id(m_densities.size());
+
+    for (int i = 0; i<NN; ++i)
+      for (int j = 0; j<NN; ++j) {
+        densMatrix(i, j) = m_Virial[j][i] * m_DensitiesId[i];
+        if (i == j) densMatrix(i, j) += 1.;
+      }
+
+    for (int i = 0; i<NN; ++i)
+      for (int j = 0; j<NN; ++j)
+        densMatrix(i, NN + j) = 0.;
+
+    for (int i = 0; i<NN; ++i) {
+      densMatrix(i, NN + i) = 0.;
+      for (int k = 0; k<NN; ++k) {
+        densMatrix(i, NN + i) += m_Virial[k][i] * m_densities[k];
+      }
+      densMatrix(i, NN + i) = (densMatrix(i, NN + i) - 1.) * chi2ids[i];
+    }
+
+    for (int i = 0; i<NN; ++i)
+      for (int j = 0; j<NN; ++j) {
+        densMatrix(NN + i, j) = -(m_Attr[i][j] + m_Attr[j][i]);
+      }
+
+    for (int i = 0; i<NN; ++i)
+      for (int j = 0; j<NN; ++j) {
+        densMatrix(NN + i, NN + j) = m_Virial[i][j] * m_DensitiesId[j];
+        if (i == j) densMatrix(NN + i, NN + j) += 1.;
+      }
+
+    PartialPivLU<MatrixXd> decomp(densMatrix);
+
+    for(int i=0;i<NN;++i) {
+      double fi = 1.;
+      for(int k=0;k<NN;++k) {
+        fi -= m_Virial[k][i] * m_densities[k];
+      }
+      xVector[i] = fi * dniddTs[i];
+      xVector[NN + i] = 0.;
+      for(int j = 0; j < NN; ++j) {
+        xVector[NN + i] += -m_Virial[i][j] * m_TPS->Particles()[j].Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_MuStar[j]);
+      }
+    }
+
+    solVector = decomp.solve(xVector);
+
+    for(int i=0;i<NN;++i) {
+      m_dndT[i]  = solVector[i];
+      m_dmusdT[i] = solVector[NN+i];
+    }
+
+
+    // dchi2's
+    if (IsSusceptibilitiesCalculated()) {
+      
+      // TODO: Faaster implementation
+      // int NNdmu = m_MapFromdMuStar.size();
+      // vector<vector<double>> dfij = vector<vector<double>>(NNdmu, vector<double>(NNdmu, 0.));
+      // vector<double> fi = vector<double>(NNdmu, 0.);
+      // vector<double> tsum1 = vector<double>(NNdmu, 0.);
+      // vector<double> tsumdndT = vector<double>(NNdmu, 0.);
+
+      // for (int j = 0; j < NN; ++j) {
+      //   for (int i = 0; i < NN; ++i) {
+      //     dfij[m_MapTodMuStar[i]][m_MapTodMuStar[j]] += m_Virial[j][i];
+      //     fi[m_MapTodMuStar[i]] += m_Virial[j][i] * m_densities[j];
+      //   }
+      //   tsum1[m_MapTodMuStar[j]] += (dniddTs[j] + chi2ids[j] * m_dmusdT[j]);
+      //   tsumdndT[m_MapTodMuStar[j]] += m_dndT[j];
+      // }
+
+      for (int j = 0; j < NN; ++j) {
+        // vector<double> PrimCorrelkjsum = vector<double>(NNdmu, 0.);
+        // for(int k = 0; k < NN; ++k) {
+        //   PrimCorrelkjsum[m_MapTodMuStar[k]] += m_PrimCorrel[k][j];
+        // }
+        for (int i = 0; i < NN; ++i) {
+
+          // Faster calculation, to be checked
+          //  // a1
+          // double a1 = 0.;
+          // for (int k = 0; k < NNdmu; ++k) {
+          //   a1 += PrimCorrelkjsum[m_MapFromdMuStar[k]] * dfij[k][m_MapTodMuStar[i]] * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+          //   a1 += m_dmusdmu[i][j] * dfij[m_MapTodMuStar[i]][k] * tsumdndT[k] * chi2ids[i];
+          // }
+          // a1 += m_dmusdmu[i][j] * fi[m_MapTodMuStar[i]] * (dchi2idsdT[i] + chi3ids[i] * m_dmusdT[i]);
+          // xVector[i] = a1;
+
+          // // a2
+          // double a2 = 0.;
+          // for (int k = 0; k < NNdmu; ++k) {
+          //   a2 += m_dmusdmu[m_MapFromdMuStar[k]][j] * (-m_Virial[i][m_MapFromdMuStar[k]]) * tsum1[k]; // To be checked
+          // }
+          // xVector[i + NN] = a2;
+
+          double fi = 1.;
+          vector<double> dfik = vector<double>(NN, 0.);
+          //vector<vector<double>> d2fikl = vector<vector<double>>(NN, vector<double>(NN, 0.));
+          for (int k = 0; k < NN; ++k) {
+            dfik[k] = -m_Virial[k][i];
+            fi -= m_Virial[k][i] * m_densities[k];
+          }
+
+          // a1
+          double a1 = 0.;
+          for (int k = 0; k < NN; ++k) {
+            a1 += m_PrimCorrel[k][j] * dfik[k] * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+            a1 += m_dmusdmu[i][j] * dfik[k] * m_dndT[k] * chi2ids[i];
+          }
+          a1 += m_dmusdmu[i][j] * fi * (dchi2idsdT[i] + chi3ids[i] * m_dmusdT[i]);
+          xVector[i] = a1;
+
+          // a2
+          double a2 = 0.;
+          for (int k = 0; k < NN; ++k) {
+            a2 += m_dmusdmu[k][j] * (-m_Virial[i][k]) * (dniddTs[k] + chi2ids[k] * m_dmusdT[k]);
+          }
+          xVector[i + NN] = a2;
+        }
+
+        solVector = decomp.solve(xVector);
+
+        for (int i = 0; i < NN; ++i) {
+          // chi2 = chi2til / T^2
+          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T / T / T
+          m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+        }
+      }
+
+      m_TemperatureDerivativesCalculated = true;
+      CalculateSusceptibilityMatrix();
+    }
+
+    m_TemperatureDerivativesCalculated = true;
+  }
+
 
 
   double ThermalModelVDW::CalculateEnergyDensity() {
@@ -1161,6 +1362,19 @@ namespace thermalfist {
     }
     else {
       return Broyden::BroydenSolutionCriterium::IsSolved(x, f, xdelta);
+    }
+  }
+
+  void SetVDWHRGInteractionParameters(ThermalModelBase *model, double a, double b)
+  {
+    auto vdWa = GetBaryonBaryonInteractionMatrix(model->TPS(), a);
+    auto vdWb = GetBaryonBaryonInteractionMatrix(model->TPS(), b);
+    // Iterate over all hadron pairs
+    for (int i1 = 0; i1 < model->TPS()->Particles().size(); ++i1) {
+      for (int i2 = 0; i2 < model->TPS()->Particles().size(); ++i2) {
+        model->SetAttraction(i1, i2, vdWa[i1][i2]);
+        model->SetVirial(i1, i2, vdWb[i1][i2]);
+      }
     }
   }
 

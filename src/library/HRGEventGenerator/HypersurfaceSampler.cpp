@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <stdexcept>
 
 #include "HRGEventGenerator/SimpleParticle.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
@@ -72,11 +73,14 @@ namespace thermalfist {
   (const ParticlizationHypersurface* hypersurface,
     const ThermalParticle* particle,
     const VolumeElementSampler* positionsampler,
-    double etasmear) :
+    const HypersurfaceMomentumGeneratorConfiguration& config) :
     m_ParticlizationHypersurface(hypersurface),
     m_Particle(particle),
     m_VolumeElementSampler(positionsampler),
-    m_EtaSmear(etasmear)
+    m_EtaSmear(config.etaSmear),
+    m_ShearCorrection(config.shearCorrection),
+    m_BulkCorrection(config.bulkCorrection),
+    m_SpeedOfSoundSquared(config.speedOfSoundSquared)
   {
 
   }
@@ -84,8 +88,7 @@ namespace thermalfist {
   std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass) const
   {
     if (m_VolumeElementSampler == NULL || m_ParticlizationHypersurface == NULL) {
-      printf("**ERROR** in RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("RandomGenerators::HypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!");
     }
 
     if (mass < 0.)
@@ -95,17 +98,33 @@ namespace thermalfist {
 
     const ParticlizationHypersurfaceElement& elem = (*m_ParticlizationHypersurface)[VolumeElementIndex];
 
-    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear());
+    return SamplePhaseSpaceCoordinateFromElement(&elem, m_Particle, mass, EtaSmear(), ShearCorrection(), BulkCorrection(), SpeedOfSoundSquared());
   }
 
-  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear) :
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem* TPS, const EventGeneratorConfiguration& config, const ParticlizationHypersurface* hypersurface, double etasmear, bool shear_correction, bool bulk_correction, double speed_of_sound_squared) :
     EventGeneratorBase()
   {
     SetConfiguration(TPS, config);
     SetHypersurface(hypersurface);
     SetEtaSmear(etasmear);
     SetRescaleTmu();
+    SetShearCorrection(shear_correction);
+    SetBulkCorrection(bulk_correction);
+    SetSpeedOfSoundSquared(speed_of_sound_squared);
     //SetParameters(hypersurface, m_THM, etasmear);
+  }
+
+
+  HypersurfaceEventGenerator::HypersurfaceEventGenerator(ThermalParticleSystem *TPS,
+                                                         const EventGeneratorConfiguration &config,
+                                                         const ParticlizationHypersurface *hypersurface,
+                                                         const RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration &configMomentumGenerator
+                                                         ) : EventGeneratorBase(), m_MomentumGeneratorConfig(configMomentumGenerator)
+  {
+    SetConfiguration(TPS, config);
+    SetHypersurface(hypersurface);
+    SetMomentumGeneratorConfig(configMomentumGenerator);
+    SetRescaleTmu();
   }
 
   std::vector<double> HypersurfaceEventGenerator::GCEMeanYields() const
@@ -122,10 +141,10 @@ namespace thermalfist {
   void HypersurfaceEventGenerator::SetParameters()
   {
     if (m_RescaleTmu) {
-      std::vector<std::vector<double>> TMuMap = CalculateTMuMap(m_THM, m_edens);
-      m_SplinesTMu.resize(4);
-      for(int i = 0; i < 4; ++i)
-        m_SplinesTMu[i].fill(TMuMap[0], TMuMap[1+i]);
+      // Rescale T, mu's, and P for all cells
+      RescaleHypersurfaceParametersEdens(const_cast<ParticlizationHypersurface *>(m_ParticlizationHypersurface),
+                                         m_THM,
+                                         m_edens);
     }
     ProcessVolumeElements();
     SetMomentumGenerators();
@@ -147,7 +166,12 @@ namespace thermalfist {
 
     cout << "Processing " << m_ParticlizationHypersurface->size() << " volume elements" << endl;
 
-    //for (const auto& elem : *m_ParticlizationHypersurface) {
+
+    // If rescaling T & mu, keep track how much of the energy-weighted volume correspond to given energy density
+    // This is to catch the case when the energy density is not uniform or mismatched in the input parameters
+    double rescaleTmu_EMatch = 0., rescaleTmu_Etot = 0.;
+
+    // Process all the hypersurface elements
     for (size_t ielem = 0; ielem < m_ParticlizationHypersurface->size(); ++ielem) {
       if (ielem % 10000 == 0) {
         cout << ielem << " ";
@@ -155,18 +179,10 @@ namespace thermalfist {
       }
       const auto& elem = m_ParticlizationHypersurface->operator[](ielem);
 
-      if (!m_RescaleTmu || abs(elem.edens - m_edens) > 1.e-3 || elem.rhoB < 0.0 || elem.rhoB > 0.25) {
-        m_THM->SetTemperature(elem.T);
-        m_THM->SetBaryonChemicalPotential(elem.muB);
-        m_THM->SetElectricChemicalPotential(elem.muQ);
-        m_THM->SetStrangenessChemicalPotential(elem.muS);
-      }
-      else {
-        m_THM->SetTemperature(m_SplinesTMu[0].f(elem.rhoB));
-        m_THM->SetBaryonChemicalPotential(m_SplinesTMu[1].f(elem.rhoB));
-        m_THM->SetElectricChemicalPotential(m_SplinesTMu[3].f(elem.rhoB));
-        m_THM->SetStrangenessChemicalPotential(m_SplinesTMu[2].f(elem.rhoB));
-      }
+      m_THM->SetTemperature(elem.T);
+      m_THM->SetBaryonChemicalPotential(elem.muB);
+      m_THM->SetElectricChemicalPotential(elem.muQ);
+      m_THM->SetStrangenessChemicalPotential(elem.muS);
 
       if (m_Config.CFOParameters.gammaq != 1.0)
         m_THM->SetGammaq(m_Config.CFOParameters.gammaq);
@@ -184,6 +200,12 @@ namespace thermalfist {
       if (dVeff <= 0.) {
         continue;
       }
+
+      if (abs(elem.edens - m_edens) <= 1.e-3)
+        rescaleTmu_EMatch += dVeff * elem.edens;
+//      else
+//        cout << "Energy density mismatch: " << elem.edens << " vs " << m_edens << endl;
+      rescaleTmu_Etot += dVeff * elem.edens;
 
       Veff += dVeff;
       m_Tav += elem.T * dVeff;
@@ -230,6 +252,14 @@ namespace thermalfist {
     cout << "V     = " << Veff << endl;
     cout << "<T>   = " << m_Tav << endl;
     cout << "<muB> = " << m_Musav[m_THM->TPS()->PdgToId(2112)] << endl;
+
+    // Check for energy density mismatch for T-Mu rescaling
+    if (m_RescaleTmu){
+      if (rescaleTmu_EMatch/rescaleTmu_Etot < 0.90) {
+        printf("**WARNING** Energy density mismatch for T-Mu rescaling: %lf\n", rescaleTmu_EMatch/rescaleTmu_Etot);
+      }
+      cout << "Edens match fraction = " << rescaleTmu_EMatch/rescaleTmu_Etot << endl;
+    }
 
     // The canonical ensemble
     // Make the canonical ensemble integers
@@ -294,7 +324,7 @@ namespace thermalfist {
   std::vector<std::vector<double>> HypersurfaceEventGenerator::CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin, double rhomax, double drho)
   {
     cout << "Remapping T and mu along e = " << edens << " surface..." << endl;
-    vector<double> rhos, Ts, muBs, muSs, muQs;
+    vector<double> rhos, Ts, muBs, muSs, muQs, Ps;
     vector<double> Tmusini = { 0.150, 0.100, 0.033, -0.05 };
     for (double rho = rhomin; rho < rhomax + 1.e-9; rho += drho) {
       rhos.push_back(rho);
@@ -311,10 +341,10 @@ namespace thermalfist {
       muBs.push_back(Tmus[1]);
       muSs.push_back(Tmus[2]);
       muQs.push_back(Tmus[3]);
-      //cout << rho << " : " << Tmus[0] << " " << Tmus[1] << " " << Tmus[2] << " " << Tmus[3] << " ";
+      Ps.push_back(Tmus[4]);
     }
 
-    return { rhos, Ts, muBs, muSs, muQs };
+    return { rhos, Ts, muBs, muSs, muQs, Ps };
   }
 
 
@@ -342,7 +372,7 @@ namespace thermalfist {
           m_ParticlizationHypersurface,
           &m_THM->TPS()->Particle(i),
           &m_VolumeElementSamplers[i],
-          GetEtaSmear()
+          m_MomentumGeneratorConfig
         ));
 
         // Should not be used
@@ -355,6 +385,30 @@ namespace thermalfist {
       }
     }
   }
+
+  void HypersurfaceEventGenerator::RescaleHypersurfaceParametersEdens(ParticlizationHypersurface *hypersurface,
+                                                                      ThermalModelBase *model, double edens,
+                                                                      double rhomin, double rhomax, double drho,
+                                                                      double rhocrit) {
+    auto TMuMap = CalculateTMuMap(model, edens, rhomin, rhomax, drho);
+    vector<SplineFunction> SplinesTMu(5);
+    for(int i = 0; i < 5; ++i)
+      SplinesTMu[i].fill(TMuMap[0], TMuMap[1+i]);
+
+    for(auto& elem : *hypersurface) {
+      if (abs(elem.edens - edens) > 1.e-3 || elem.rhoB < 0.0 || elem.rhoB > 0.25) {
+        // Do nothing
+      }
+      else {
+        elem.T = SplinesTMu[0].f(elem.rhoB);
+        elem.muB = SplinesTMu[1].f(elem.rhoB);
+        elem.muS = SplinesTMu[2].f(elem.rhoB);
+        elem.muQ = SplinesTMu[3].f(elem.rhoB);
+        elem.P = SplinesTMu[4].f(elem.rhoB);
+      }
+    }
+  }
+
 
   RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::BoostInvariantHypersurfaceMomentumGenerator(
     const ParticlizationHypersurface* hypersurface,
@@ -370,8 +424,7 @@ namespace thermalfist {
   std::vector<double> RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass) const
   {
     if (m_VolumeElementSampler == NULL || m_ParticlizationHypersurface == NULL) {
-      printf("**ERROR** in RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("RandomGenerators::BoostInvariantHypersurfaceMomentumGenerator::GetMomentum(double mass): Hypersurface not initialized!");
     }
 
     if (mass < 0.)
@@ -478,11 +531,41 @@ namespace thermalfist {
     return ret;
   }
 
-  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear)
+  void fillBoostMatrix(double vx, double vy, double vz, double boostMatrix[4][4])
+  // Lorentz boost matrix
+  // here in boostMatrix [0]=t, [1]=x, [2]=y, [3]=z
+  {
+    const double vv [3] = {vx, vy, vz} ;
+    const double v2 = vx*vx+vy*vy+vz*vz ;
+    const double gamma = 1.0/sqrt(1.0-v2) ;
+    if(std::isinf(gamma)||std::isnan(gamma)){ throw std::runtime_error("boost vector invalid"); }
+    boostMatrix[0][0] = gamma ;
+    boostMatrix[0][1] = boostMatrix[1][0] = vx*gamma ;
+    boostMatrix[0][2] = boostMatrix[2][0] = vy*gamma ;
+    boostMatrix[0][3] = boostMatrix[3][0] = vz*gamma ;
+    if(v2>0.0){
+    for(int i=1; i<4; i++)
+    for(int j=1; j<4; j++)
+    boostMatrix[i][j] = (gamma-1.0)*vv[i-1]*vv[j-1]/v2 ;
+    }else{
+    for(int i=1; i<4; i++)
+    for(int j=1; j<4; j++)
+    boostMatrix[i][j] = 0.0 ;
+    }
+    for(int i=1; i<4; i++) boostMatrix[i][i] += 1.0 ;
+  }
+
+  int index44(const int &i, const int &j){
+    // index44: returns an index of pi^{mu nu} mu,nu component in a plain 1D array
+    if(i>3 || j>3 || i<0 || j<0) {std::cout<<"index44: i j " <<i<<" "<<j<<endl ; exit(1) ; }
+    if(j<i) return (i*(i+1))/2 + j ;
+    else return (j*(j+1))/2 + i ;
+  }
+
+  std::vector<double> RandomGenerators::HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(const ParticlizationHypersurfaceElement* elem, const ThermalParticle* particle, const double& mass, const double& etasmear, const bool shear_correction, const bool bulk_correction, const double speed_of_sound_squared) 
   {
     if (particle == NULL) {
-      printf("**ERROR** in HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!\n");
-      return { 0., 0., 0., 0., 0., 0., 0. };
+      throw std::runtime_error("HypersurfaceMomentumGenerator::SamplePhaseSpaceCoordinateFromElement(): Unknown particle species!");
     }
 
     double etaF = 0.5 * log((elem->u[0] + elem->u[3]) / (elem->u[0] - elem->u[3]));
@@ -502,10 +585,39 @@ namespace thermalfist {
     // Maximum weight for the rejection sampling of the momentum
     double maxWeight = 1. + std::abs(dsigma_loc[1] / dsigma_loc[0]) + std::abs(dsigma_loc[2] / dsigma_loc[0]) + std::abs(dsigma_loc[3] / dsigma_loc[0]);
 
+    // Regulating linear shear corrections
+    double Wvisc_min = 0.1, Wvisc_max = 10.0;  // Lower bound consistent with smash-hadron-sampler, upper bound large enough so that it is not reached in practice
+    // Wvisc_min = 0.; Wvisc_max = 2.0; // |delta f| < feq, following https://arxiv.org/pdf/1912.08271.pdf
+
     double T = elem->T;
     double mu = particle->BaryonCharge() * elem->muB + particle->ElectricCharge() * elem->muQ + particle->Strangeness() * elem->muS;
     ThermalMomentumGenerator Generator(mass, particle->Statistics(), T, mu);
 
+    // Shear correction based on smash-hadron-sampler (ideal gas type), see https://github.com/smash-transport/smash-hadron-sampler/blob/main/src/gen.cpp#L297
+    const double gmumu[4] = {1., -1., -1., -1.};
+    const double C_Feq = pow(0.5*xMath::GeVtoifm() / xMath::Pi(), 3);
+    int stat = -particle->Statistics(); // Opposite convention to smash-hadron-sampler for quantum statistics
+    // Ideal gas distribution function f0 = feq, excluded volume not included
+    // Note that feq plays no role for Maxwell-Boltzmann statistics (stat = 0)
+    const double feq = C_Feq / (exp((part.p0-mu)/T) - stat); // TODO: The possible excluded volume factor not included, effect likely small and disappears in the absence of quantum statistics
+    double pi_lrf[10];
+    double boostMatrix[4][4];
+    if (shear_correction){
+      maxWeight *= Wvisc_max;
+      // boost pi^{mu nu} into the local rest frame
+      fillBoostMatrix(-vx, -vy, -vz, boostMatrix);
+      for (int i=0; i<4; i++){
+        for (int j=0; j<4; j++){
+          pi_lrf[index44(i,j)] = 0.0;
+          for (int k=0; k<4; k++){
+            for (int l=0; l<4; l++){
+              pi_lrf[index44(i,j)] += elem->pi[index44(k,l)] * boostMatrix[i][k] * boostMatrix[j][l];
+            }
+          }
+        }
+      }
+    }
+    
     while (true) {
       double tp = Generator.GetP(mass);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
@@ -521,18 +633,48 @@ namespace thermalfist {
       double dsigmamu_pmu_loc = dsigma_loc[0] * part.p0
         - dsigma_loc[1] * part.px - dsigma_loc[2] * part.py - dsigma_loc[3] * part.pz;
 
-
       double dsigmamu_umu_loc = dsigma_loc[0];
 
       double dumu_pmu_loc = p0LRF;
 
       double Weight = dsigmamu_pmu_loc / dsigmamu_umu_loc / dumu_pmu_loc / maxWeight;
 
+      double Weight_visc = 1.0;
+      if (shear_correction){
+        double mom[4] = {part.p0, part.px, part.py, part.pz};
+        double pipp = 0.0;
+        for (int i=0; i<4; i++){
+          for (int j=0; j<4; j++){
+            pipp += mom[i] * mom[j] * gmumu[i] * gmumu[j] * pi_lrf[index44(i,j)];
+          }
+        }
+        // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+        // from this paper Phys.Rev.C 73 (2006) 064903
+        Weight_visc += ((1.0 + stat * feq) * pipp / (2.0 * T * T * (elem->edens + elem->P)));
+        
+      }
+      if (bulk_correction){
+         // this is in principle the ansatz which is also used in https://github.com/smash-transport/smash-hadron-sampler
+         // Eq. (7) of https://arxiv.org/pdf/1509.06738 plus Eq. (4) from https://arxiv.org/pdf/1403.0962
+         // see also https://github.com/smash-transport/smash-hadron-sampler/files/14011233/bulk_corrections_note.pdf
+         double mom[4] = {part.p0, part.px, part.py, part.pz};
+         Weight_visc -= (1.0+stat*feq)*elem->Pi
+                 *(mass*mass/(3*mom[0])-mom[0]*(1.0/3.0-speed_of_sound_squared))
+                 /(15*(1.0/3.0-speed_of_sound_squared)*(1.0/3.0-speed_of_sound_squared)*T*(elem->edens + elem->P))  ;
+      }
+      if (bulk_correction || shear_correction){
+        if (Weight_visc<Wvisc_min) Weight_visc = Wvisc_min;
+        if (Weight_visc>Wvisc_max) Weight_visc = Wvisc_max;
+        // update weight with viscosity factor
+        Weight *= Weight_visc;
+      }
+      
+      
+
       if (Weight > 1.) {
-        printf("**WARNING** BoostInvariantHypersurfaceMomentumGenerator::GetMomentum: Weight exceeds unity by %E\n",
+        printf("**WARNING** HypersurfaceSampler::GetMomentum: Weight exceeds unity by %E\n",
           Weight - 1.);
       }
-
       if (RandomGenerators::randgenMT.rand() < Weight)
         break;
     }
@@ -691,17 +833,20 @@ namespace thermalfist {
       if (m_THM->TPS()->Particles()[i].BaryonCharge() != 1 && m_THM->TPS()->Particles()[i].BaryonCharge() != -1)
         for (int part = 0; part < yields[i]; ++part)
           idsM.push_back(i);
-    std::random_shuffle(idsM.begin(), idsM.end());
+    //std::random_shuffle(idsM.begin(), idsM.end()); // Removed in C++17
+    std::shuffle(idsM.begin(), idsM.end(), RandomGenerators::rng_std);
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == 1)
         for (int part = 0; part < yields[i]; ++part)
           idsB.push_back(i);
-    std::random_shuffle(idsB.begin(), idsB.end());
+    //std::random_shuffle(idsB.begin(), idsB.end()); // Removed in C++17
+    std::shuffle(idsB.begin(), idsB.end(), RandomGenerators::rng_std);
     for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
       if (m_THM->TPS()->Particles()[i].BaryonCharge() == -1)
         for (int part = 0; part < yields[i]; ++part)
           idsaB.push_back(i);
-    std::random_shuffle(idsaB.begin(), idsaB.end());
+    //std::random_shuffle(idsaB.begin(), idsaB.end()); // Removed in C++17
+    std::shuffle(idsaB.begin(), idsaB.end(), RandomGenerators::rng_std);
 
     std::vector<int> ids;
     ids.insert(ids.end(), idsM.begin(), idsM.end());
@@ -757,205 +902,6 @@ namespace thermalfist {
     return ret;
   }
 
-
-  
-  //SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
-  //{
-  //  SimpleEvent ret;
-
-  //  // Hard-core radius for (anti)baryons in the sampling procedure
-  //  double radB = m_rad;
-  //  if (radB < 0.0)
-  //      radB = CuteHRGHelper::rv(m_b);
-
-  //  // Reshuffle the order of particles to be sampled
-  //  std::vector<int> ids;
-  //  for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-  //    for (int part = 0; part < yields[i]; ++part)
-  //      ids.push_back(i);
-  //  std::random_shuffle(ids.begin(), ids.end());
-
-  //  // Sample the particles
-  //  bool flOverlap = true;
-
-  //  while (flOverlap) {
-  //    int sampled = 0;
-  //    std::vector<int> idBaryons, idAntiBaryons;
-  //    ret.Particles.clear();
-  //    while (sampled < ids.size()) {
-  //      flOverlap = false;
-  //      int i = ids[sampled];
-  //      const ThermalParticle& species = m_THM->TPS()->Particles()[i];
-  //      SimpleParticle part = SampleParticle(i);
-
-  //      // Reject the (anti)baryon if it overlaps with another (anti)baryon
-  //      if (radB > 0.0) {
-  //        //bool flOverlap = false;
-
-  //        if (species.BaryonCharge() == 1) {
-  //          for (int ip = 0; ip < idBaryons.size(); ++ip) {
-  //            double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[idBaryons[ip]], part);
-  //            flOverlap |= (dist2 <= 4. * radB * radB);
-  //          }
-  //        }
-
-  //        if (species.BaryonCharge() == -1) {
-  //          for (int ip = 0; ip < idAntiBaryons.size(); ++ip) {
-  //            double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[idAntiBaryons[ip]], part);
-  //            flOverlap |= (dist2 <= 4. * radB * radB);
-  //          }
-  //        }
-  //        if (flOverlap) {
-  //          if (!EVFastMode())
-  //            break;
-  //          else
-  //            continue;
-  //          //printf("Reject baryon  ");
-  //          //continue;
-  //        }
-  //      }
-
-  //      ret.Particles.push_back(part);
-  //      if (species.BaryonCharge() == 1)
-  //        idBaryons.push_back(sampled);
-  //      if (species.BaryonCharge() == -1)
-  //        idAntiBaryons.push_back(sampled);
-  //      sampled++;
-  //    }
-  //  }
-
-  //  ret.AllParticles = ret.Particles;
-
-  //  ret.DecayMap.resize(ret.Particles.size());
-  //  fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
-
-  //  ret.DecayMapFinal.resize(ret.Particles.size());
-  //  for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
-  //    ret.DecayMapFinal[i] = i;
-
-  //  return ret;
-  //}
-  //
-
-  //SimpleEvent HypersurfaceEventGeneratorEVHRG::SampleParticles(const std::vector<int>& yields) const
-  //{
-  //  SimpleEvent ret;
-
-  //  // Hard-core radius for (anti)baryons in the sampling procedure
-  //  double radB = m_rad;
-  //  if (radB < 0.0)
-  //    radB = CuteHRGHelper::rv(m_b);
-
-  //  // Reshuffle the order of particles to be sampled
-  //  std::vector<int> ids;
-  //  for (int i = 0; i < m_THM->TPS()->Particles().size(); ++i)
-  //    for (int part = 0; part < yields[i]; ++part)
-  //      ids.push_back(i);
-  //  std::random_shuffle(ids.begin(), ids.end());
-
-  //  // Sample the particles
-
-  //  // First the mesons (and light nuclei if applicable)
-  //  int sampled = 0;
-  //  ret.Particles.resize(ids.size());
-  //  for (int ip = 0; ip < ids.size(); ++ip) {
-  //    int pid = ids[ip];
-  //    const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-  //    if (species.BaryonCharge() != 1 && species.BaryonCharge() != -1) {
-  //      ret.Particles[sampled] = SampleParticle(pid);
-  //      sampled++;
-  //    }
-  //  }
-
-  //  // Then, the (anti)baryons
-  //  int sampledSoFar = sampled;
-
-  //  //std::vector<int> idBaryons, idAntiBaryons;
-  //  //for (int ip = 0; ip < ids.size(); ++ip) {
-  //  //  int pid = ids[ip];
-  //  //  const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-  //  //  if (species.BaryonCharge() == 1)
-  //  //    idBaryons.push_back(sampled);
-  //  //  if (species.BaryonCharge() == -1)
-  //  //    idAntiBaryons.push_back(sampled);
-
-  //  //  sampled++;
-  //  //}
-
-  //  for (int idB = 0; idB < 2; idB++) {
-
-  //    int Bcharge = 1;
-  //    if (idB == 1)
-  //      Bcharge = -1;
-
-  //    sampled = sampledSoFar;
-
-  //    std::vector<int> idBaryons;
-  //    for (int ip = 0; ip < ids.size(); ++ip) {
-  //      int pid = ids[ip];
-  //      const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-  //      if (species.BaryonCharge() == Bcharge)
-  //        idBaryons.push_back(sampled);
-
-  //      sampled++;
-  //    }
-
-  //    bool flOverlap = true;
-
-  //    while (flOverlap) {
-  //      sampled = sampledSoFar;
-  //      for (int ip = 0; ip < ids.size(); ++ip) {
-  //        flOverlap = false;
-  //        int pid = ids[ip];
-  //        const ThermalParticle& species = m_THM->TPS()->Particles()[pid];
-  //        if (species.BaryonCharge() != Bcharge)
-  //          continue;
-
-  //        SimpleParticle part = SampleParticle(pid);
-
-  //        // Reject the (anti)baryon if it overlaps with another (anti)baryon
-  //        if (radB > 0.0) {
-
-  //          for (int iip = 0; iip < idBaryons.size(); ++iip) {
-  //            if (idBaryons[iip] >= sampled)
-  //              break;
-  //            double dist2 = ParticleDecaysMC::ParticleDistanceSquared(ret.Particles[idBaryons[iip]], part);
-  //            flOverlap |= (dist2 <= 4. * radB * radB);
-  //          }
-
-  //          if (flOverlap) {
-  //            //printf("Reject baryon  ");
-  //            if (!EVFastMode()) {
-  //              break;
-  //            }
-  //            else {
-  //              ip--;
-  //              continue;
-  //            }
-  //          }
-
-  //        }
-
-  //        ret.Particles[sampled] = part;
-  //        sampled++;
-  //      }
-  //    }
-
-  //    sampledSoFar = sampled;
-  //  }
-
-  //  ret.AllParticles = ret.Particles;
-
-  //  ret.DecayMap.resize(ret.Particles.size());
-  //  fill(ret.DecayMap.begin(), ret.DecayMap.end(), -1);
-
-  //  ret.DecayMapFinal.resize(ret.Particles.size());
-  //  for (int i = 0; i < ret.DecayMapFinal.size(); ++i)
-  //    ret.DecayMapFinal[i] = i;
-
-  //  return ret;
-  //}
-
   std::pair<int, int> HypersurfaceEventGeneratorEVHRG::ComputeNBNBbar(const std::vector<int>& yields) const
   {
     int NB = 0, NBbar = 0;
@@ -970,6 +916,3 @@ namespace thermalfist {
   }
 
 } // namespace thermalfist
-
-
-

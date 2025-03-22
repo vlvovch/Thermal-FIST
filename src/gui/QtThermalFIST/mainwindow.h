@@ -19,6 +19,7 @@
 #include <QTextEdit>
 #include <QTabWidget>
 
+#include "trajectoriestab.h"
 #include "modeltab.h"
 #include "eventgeneratortab.h"
 #include "equationofstatetab.h"
@@ -27,6 +28,7 @@
 #include "HRGBase/ThermalModelBase.h"
 #include "fittoexperimenttab.h"
 
+#include "CosmicEoStab.h"
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +44,10 @@ class MainWindow : public QMainWindow
     EventGeneratorTab *tab5;
     EquationOfStateTab *tabEoS;
     ListEditorTab *tabEditor;
+
+    CosmicEoSTab *tabCosmicEoS;
+
+    TrajectoriesTab *tabTrajectories;
 
     QLineEdit *leList;
     QPushButton *buttonLoad;

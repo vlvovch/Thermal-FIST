@@ -17,3 +17,4 @@
 #include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/Utility.h"
 #include "HRGBase/xMath.h"
+#include "HRGBase/Susceptibilities.h"

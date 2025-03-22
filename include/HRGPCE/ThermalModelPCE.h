@@ -6,11 +6,12 @@
 #include "HRGBase/Broyden.h"
 
 namespace thermalfist {
+  
 
   /**
    * \brief Class implementing HRG in partial chemical equilibrium.
    * 
-   * Partial chemical equilbiirum (PCE) describes the hadronic phase dynamics.
+   * Partial chemical equilibrium (PCE) describes the hadronic phase dynamics.
    *
    * The basic ideas about PCE can be found in
    * H. Bebie, P. Gerber, J.L. Goity, H. Leutwyler,
@@ -29,7 +30,7 @@ namespace thermalfist {
    * 3. Set the chemical freeze-out conditions via SetChemicalFreezeout()
    * 4. Evaluate the PCE conditions at a given temperature or volume in the hadronic phase via CalculatePCE()
    * 5. Use the pointer ThermalModel() to the HRG model to access the various physical properties at the given
-   * PCE point, like various hadron yields or the equation of state.
+   * PCE point, like various hadron yields, chemical potentials, or the equation of state.
    * 
    */
   class ThermalModelPCE
@@ -229,10 +230,31 @@ namespace thermalfist {
     ThermalModelParameters m_ParametersCurrent;
     std::vector<double> m_ChemCurrent;
 
+    
+
+    /**
+     * \brief Class for calculation of the right-hand side of the PCE equations.
+     *
+     * This class is used in the Broyden solver to calculate the right-hand side
+     * of the partial chemical equilibrium equations.
+     *
+     * \param model  Pointer to the ThermalModelPCE object which is used to calculate
+     *               the right-hand side of the equations.
+     * \param mode   Additional parameter, currently not used.
+     */
     class BroydenEquationsPCE : public BroydenEquations
     {
     public:
       BroydenEquationsPCE(ThermalModelPCE *model, int mode = 0) : BroydenEquations(), m_THM(model), m_Mode(mode) { m_N = m_THM->m_StableComponentsNumber + 1; }
+
+      /**
+       * Implements the equations to be solved.
+       *
+       * \param x The vector of variables consisting of chemical potentials (first N elements)
+       *          and the last element is either the volume (for a fixed temperature calcultion) 
+       *          or the temperature (for a fixed volume calculation).
+       * \return The vector of equation values.
+       */
       std::vector<double> Equations(const std::vector<double> &x);
     private:
       ThermalModelPCE *m_THM;

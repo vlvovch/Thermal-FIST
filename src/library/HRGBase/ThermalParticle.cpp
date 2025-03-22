@@ -27,7 +27,8 @@ namespace thermalfist {
     int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
     m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.),
-    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth)
+    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth), m_GeneralizedDensity(NULL),
+    m_IGFExtraConfig()
   {
     if (!Disclaimer::DisclaimerPrinted) 
       Disclaimer::DisclaimerPrinted = Disclaimer::PrintDisclaimer();
@@ -75,7 +76,7 @@ namespace thermalfist {
   {
     m_Threshold = threshold;
     if (m_Threshold < 0.0) {
-      printf("**WARNING** Trying to set negative decay threshold for %s, setting to zero instead", m_Name.c_str());
+      std::cerr << "**WARNING** Trying to set negative decay threshold for " << m_Name << ", setting to zero instead" << std::endl;
     }
     if (m_Width != 0.0) FillCoefficients();
   }
@@ -84,7 +85,7 @@ namespace thermalfist {
   {
     m_ThresholdDynamical = threshold;
     if (m_ThresholdDynamical < 0.0) {
-      printf("**WARNING** Trying to set negative dynamical decay threshold for %s, setting to zero instead", m_Name.c_str());
+      std::cerr << "**WARNING** Trying to set negative dynamical decay threshold for " << m_Name << ", setting to zero instead" << std::endl;
     }
   }
 
@@ -139,21 +140,23 @@ namespace thermalfist {
   void ThermalParticle::ReadDecays(string filename) {
     m_Decays.resize(0);
     ifstream fin(filename.c_str());
-    if (fin.is_open()) {
-      char cc[400];
-      double tmpbr;
-      while (fin >> tmpbr) {
-        ParticleDecayChannel decay;
-        decay.mBratio = tmpbr / 100.;
-        fin.getline(cc, 350);
-        stringstream ss;
-        ss << cc;
-        int tmpid;
-        while (ss >> tmpid) {
-          decay.mDaughters.push_back(tmpid);
-        }
-        m_Decays.push_back(decay);
+    if (!fin.is_open()) {
+      std::cerr << "Error: Could not open file " << filename << endl;
+      return;
+    }
+    char cc[400];
+    double tmpbr;
+    while (fin >> tmpbr) {
+      ParticleDecayChannel decay;
+      decay.mBratio = tmpbr / 100.;
+      fin.getline(cc, 350);
+      stringstream ss;
+      ss << cc;
+      int tmpid;
+      while (ss >> tmpid) {
+        decay.mDaughters.push_back(tmpid);
       }
+      m_Decays.push_back(decay);
     }
   }
 
@@ -176,7 +179,7 @@ namespace thermalfist {
       double ret1 = 0., ret2 = 0., tmp = 0.;
       for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
-        double dens = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
+        double dens = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
         ret1 += tmp * dens;
         ret2 += tmp;
 
@@ -488,23 +491,6 @@ namespace thermalfist {
     }
 
 
-    // // Output to file for debugging
-    // {
-    //   char cc[300];
-    //   sprintf(cc, "%d_width.dat", PdgId());
-    //   FILE *f = fopen(cc, "w");
-
-    //   for (int j = 0; j < m_xlegpdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-    //   for (int j = 0; j < m_xlegdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-    //   for (int j = 0; j < m_xlagdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-    //   fclose(f);
-    // }
 
   }
 
@@ -512,6 +498,9 @@ namespace thermalfist {
   {
     //if (m_ResonanceWidthIntegrationType != eBW)
     //  return m_Width;
+    if (m_Width / m_Mass < 0.01) {
+     return m_Width;
+    }
 
     double tsumb = 0.0;
     for (size_t i = 0; i < m_Decays.size(); ++i) {
@@ -552,7 +541,7 @@ namespace thermalfist {
 
   double ThermalParticle::ThermalMassDistribution(double M, double T, double Mu, double width)
   {
-    return IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, T, Mu, M, m_Degeneracy, m_ClusterExpansionOrder) * MassDistribution(M, width);
+    return IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ParticleDensity, m_QuantumStatisticsCalculationType, m_Statistics, T, Mu, M, m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig) * MassDistribution(M, width);
   }
 
   double ThermalParticle::ThermalMassDistribution(double M, double T, double Mu)
@@ -593,13 +582,18 @@ namespace thermalfist {
 
 
   double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type, bool useWidth, double mu) const {
+    if (m_GeneralizedDensity != NULL)
+      return m_GeneralizedDensity->Quantity(type, params.T, mu);
+    
+    if (m_Degeneracy == 0.0)
+      return 0.0;
+    
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    //if (!useWidth || m_Mass == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
     if (!useWidth || m_Mass == 0.0 || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
-      return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder);
+      return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
     }
 
     int ind = m_xleg.size();
@@ -614,8 +608,7 @@ namespace thermalfist {
 
         if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
           tmp *= m_brweight[i];
-
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, x[i], m_Degeneracy, m_ClusterExpansionOrder);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, x[i], m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
 
         ret1 += tmp * dens;
         ret2 += tmp;
@@ -628,7 +621,7 @@ namespace thermalfist {
       for (int i = 0; i < ind2; ++i) {
         double tmass = m_Mass + 2.*m_Width + m_xlag32[i] * m_Width;
         tmp = m_wlag32[i] * m_Width * MassDistribution(tmass);
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, tmass, m_Degeneracy, m_ClusterExpansionOrder);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, tmass, m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
 
         ret1 += tmp * dens;
         ret2 += tmp;
@@ -638,7 +631,7 @@ namespace thermalfist {
     if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
       for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_xalldyn[i], m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
         ret1 += tmp * dens;
         ret2 += tmp;
       }
@@ -659,7 +652,7 @@ namespace thermalfist {
 
     //if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
     if (!useWidth || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
-      return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy);
+      return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy, 1, m_IGFExtraConfig);
     }
 
     int ind = m_xleg.size();
@@ -674,7 +667,7 @@ namespace thermalfist {
         if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
           tmp *= m_brweight[i];
 
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, x[i], m_Degeneracy);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, x[i], m_Degeneracy, 1, m_IGFExtraConfig);
 
         ret1 += tmp * dens;
         ret2 += tmp;
@@ -687,7 +680,7 @@ namespace thermalfist {
       for (int i = 0; i < ind2; ++i) {
         double tmass = m_Mass + 2.*m_Width + m_xlag32[i] * m_Width;
         tmp = m_wlag32[i] * m_Width * MassDistribution(tmass);
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, tmass, m_Degeneracy);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, tmass, m_Degeneracy, 1, m_IGFExtraConfig);
 
         ret1 += tmp * dens;
         ret2 += tmp;
@@ -697,7 +690,7 @@ namespace thermalfist {
     if (m_ResonanceWidthIntegrationType == eBW || m_ResonanceWidthIntegrationType == eBWconstBR) {
       for (size_t i = 0; i < m_xalldyn.size(); i++) {
         tmp = m_walldyn[i];
-        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_xalldyn[i], m_Degeneracy);
+        double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_xalldyn[i], m_Degeneracy, 1, m_IGFExtraConfig);
         ret1 += tmp * dens;
         ret2 += tmp;
       }
@@ -782,6 +775,25 @@ namespace thermalfist {
     if (index == 3) return Density(params, IdealGasFunctions::chi3, useWidth, mu);
     if (index == 4) return Density(params, IdealGasFunctions::chi4, useWidth, mu);
     return 1.;
+  }
+
+  void ThermalParticle::ClearGeneralizedDensity() {
+    if (m_GeneralizedDensity != NULL) {
+      delete m_GeneralizedDensity;
+      m_GeneralizedDensity = NULL;
+    }
+  }
+
+  void ThermalParticle::SetGeneralizedDensity(GeneralizedDensity *density_model) {
+    ClearGeneralizedDensity();
+    m_GeneralizedDensity = density_model;
+  }
+
+  void ThermalParticle::SetMagneticField(double B, int lmax) {
+    m_IGFExtraConfig.MagneticField.B = B;
+    m_IGFExtraConfig.MagneticField.lmax = lmax;
+    m_IGFExtraConfig.MagneticField.Q = static_cast<double>(m_ElectricCharge);
+    m_IGFExtraConfig.MagneticField.degSpin = m_Degeneracy;
   }
 
 } // namespace thermalfist

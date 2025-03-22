@@ -69,8 +69,9 @@ namespace thermalfist {
       q4 = -1.062446e-2, q5 = 5.87872e-3, q6 = -2.51540e-3, q7 = 5.3208e-4;
 
     if (x <= 0) {
-      //Error("xMath::BesselK0", "*K0* Invalid argument x = %g\n",x);
-      return 0;
+      std::stringstream os;
+      os << "Invalid input argument " << x << ". Argument must be positive.";
+      throw std::invalid_argument(os.str());
     }
 
     double y = 0, result = 0;
@@ -138,10 +139,10 @@ namespace thermalfist {
 
     const double q1 = 1.25331414, q2 = 0.23498619, q3 = -3.655620e-2,
       q4 = 1.504268e-2, q5 = -7.80353e-3, q6 = 3.25614e-3, q7 = -6.8245e-4;
-
     if (x <= 0) {
-      //Error("xMath::BesselK1", "*K1* Invalid argument x = %g\n",x);
-      return 0;
+      std::stringstream os;
+      os << "Invalid argument x = " << x << ". Argument must be positive.";
+      throw std::invalid_argument(os.str());
     }
 
     double y = 0, result = 0;
@@ -165,10 +166,10 @@ namespace thermalfist {
      // for n=0,1,2,... and positive real x.
      //
      //--- NvE 12-mar-2000 UU-SAP Utrecht
-
     if (x <= 0 || n < 0) {
-      //Error("xMath::BesselK", "*K* Invalid argument(s) (n,x) = (%d, %g)\n",n,x);
-      return 0;
+      std::stringstream os;
+      os << "Invalid input argument(s) (n,x) = (" << n << ", " << x << "). Argument x must be positive.";
+      throw std::invalid_argument(os.str());
     }
 
     if (n == 0) return xMath::BesselK0(x);
@@ -199,11 +200,6 @@ namespace thermalfist {
     int iacc = 40; // Increase to enhance accuracy
     const double kBigPositive = 1.e10;
     const double kBigNegative = 1.e-10;
-
-    if (n < 0) {
-      //Error("xMath::BesselI", "*I* Invalid argument (n,x) = (%d, %g)\n",n,x);
-      return 0;
-    }
 
     if (n == 0) return xMath::BesselI0(x);
     if (n == 1) return xMath::BesselI1(x);
@@ -641,12 +637,11 @@ namespace thermalfist {
       q4 = -1.062446e-2, q5 = 5.87872e-3, q6 = -2.51540e-3, q7 = 5.3208e-4;
 
     if (x <= 0) {
-      //Error("xMath::BesselK0", "*K0* Invalid argument x = %g\n",x);
-      return 0;
+      std::stringstream os;
+      os << "Invalid input argument " << x << ". Argument must be positive.";
+      throw std::invalid_argument(os.str());
     }
-
     double y = 0, result = 0;
-
     if (x <= 2) {
       y = x * x / 4;
       result = exp(x)*((-log(x / 2.)*xMath::BesselI0(x)) + (p1 + y * (p2 + y * (p3 + y * (p4 + y * (p5 + y * (p6 + y * p7)))))));
@@ -676,12 +671,13 @@ namespace thermalfist {
       q4 = 1.504268e-2, q5 = -7.80353e-3, q6 = 3.25614e-3, q7 = -6.8245e-4;
 
     if (x <= 0) {
-      //Error("xMath::BesselK1", "*K1* Invalid argument x = %g\n",x);
+      std::stringstream os;
+      os << "Invalid input argument " << x << ". Argument must be positive.";
+      throw std::invalid_argument(os.str());
       return 0;
     }
 
     double y = 0, result = 0;
-
     if (x <= 2) {
       y = x * x / 4;
       result = exp(x) * ((log(x / 2.)*xMath::BesselI1(x)) + (1. / x)*(p1 + y * (p2 + y * (p3 + y * (p4 + y * (p5 + y * (p6 + y * p7)))))));
@@ -701,10 +697,10 @@ namespace thermalfist {
      // for n=0,1,2,... and positive real x.
      //
      //--- NvE 12-mar-2000 UU-SAP Utrecht
-
     if (x <= 0 || n < 0) {
-      //Error("xMath::BesselK", "*K* Invalid argument(s) (n,x) = (%d, %g)\n",n,x);
-      return 0;
+      std::stringstream os;
+      os << "Invalid input argument(s) (n,x) = (" << n << ", " << x << "). Argument x must be positive.";
+      throw std::invalid_argument(os.str());
     }
 
     if (n == 0) return xMath::BesselK0exp(x);
@@ -803,11 +799,6 @@ namespace thermalfist {
     int iacc = 40; // Increase to enhance accuracy
     const double kBigPositive = 1.e10;
     const double kBigNegative = 1.e-10;
-
-    if (n < 0) {
-      //Error("xMath::BesselI", "*I* Invalid argument (n,x) = (%d, %g)\n",n,x);
-      return 0;
-    }
 
     if (n == 0) return xMath::BesselI0exp(x);
     if (n == 1) return xMath::BesselI1exp(x);

@@ -23,6 +23,9 @@ namespace thermalfist {
     double u[4];
     double T, muB, muQ, muS;
     double edens, rhoB;
+    double pi[10];
+    double Pi;
+    double P;
   };
 
   typedef std::vector<ParticlizationHypersurfaceElement> ParticlizationHypersurface;
@@ -61,10 +64,13 @@ namespace thermalfist {
       /**
        * \brief Samples the Cartesian phase-space coordinates of a particle emmited from a hypersurface element.
        *
-       * \param hypersurface    Pointer to a ParticlizationHypersurface object.
-       * \param particle        Pointer to a ThermalParticle object representing the particle to sample.
-       * \param mass            Particle mass in GeV. If negative, the pole/vacuum mass is used.
-       * \param etasmear        The smear in longitudinal rapidity
+       * \param hypersurface     Pointer to a ParticlizationHypersurface object.
+       * \param particle         Pointer to a ThermalParticle object representing the particle to sample.
+       * \param mass             Particle mass in GeV. If negative, the pole/vacuum mass is used.
+       * \param etasmear         The smear in longitudinal rapidity
+       * \param shear_correction Use shear viscous corrections for the momenta of the particles
+       * \param bulk_correction  Use bulk viscous corrections for the momenta of the particles
+       * \param speed_of_sound_squared The speed of sound squared in the medium
        *
        * \return                A vector of 7 elements, the first 3 elements are the three-momentum (px,py,pz) in GeV,
        *                        the remaining four elements is the space-time coordinate (r0,rx,ry,rz) in fm/c
@@ -73,8 +79,31 @@ namespace thermalfist {
         const ParticlizationHypersurfaceElement* elem,
         const ThermalParticle* particle,
         const double& mass = -1.,
-        const double& etasmear = 0.
+        const double& etasmear = 0.,
+        const bool shear_correction = false,
+        const bool bulk_correction = false,
+        const double speed_of_sound_squared = 0.15
       );
+
+      /**
+       * \brief Configuration structure for the HypersurfaceMomentumGenerator
+       *
+       * Contains the parameters for the generation of the particle momenta
+       * from the hypersurface.
+       *
+       * \param EtaSmear            The smear in longitudinal rapidity
+       * \param ShearCorrection     Apply shear viscous corrections for the momenta of the particles
+       * \param BulkCorrection      Apply bulk viscous corrections for the momenta of the particles
+       * \param SpeedOfSoundSquared The speed of sound squared in the medium used for the viscous corrections
+       */
+      struct HypersurfaceMomentumGeneratorConfiguration {
+        double etaSmear;
+        bool shearCorrection;
+        bool bulkCorrection;
+        double speedOfSoundSquared;
+        HypersurfaceMomentumGeneratorConfiguration(double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15) :
+                etaSmear(etasmear), shearCorrection(shear_correction), bulkCorrection(bulk_correction), speedOfSoundSquared(speed_of_sound_squared) {}
+      };
 
       /**
        * \brief Construct a new BoostInvariantMomentumGenerator object
@@ -82,13 +111,13 @@ namespace thermalfist {
        * \param hypersurface    Pointer to a ParticlizationHypersurface object. Not deleted on destruction!
        * \param particle        Pointer to a ThermalParticle object. Not deleted on destruction!
        * \param positionsampler Pointer to a VolumeElementSampler object. Not deleted on destruction!
-       * \param etasmear        The smear in longitudinal rapidity
+       * \param config          Configuration object for the HypersurfaceMomentumGenerator
        */
       HypersurfaceMomentumGenerator(
         const ParticlizationHypersurface* hypersurface = NULL,
         const ThermalParticle* particle = NULL,
         const VolumeElementSampler* positionsampler = NULL,
-        double etasmear = 0.0);
+        const HypersurfaceMomentumGeneratorConfiguration& config = HypersurfaceMomentumGeneratorConfiguration());
 
       /**
        * \brief BoostInvariantMomentumGenerator desctructor.
@@ -99,6 +128,9 @@ namespace thermalfist {
 
       double EtaSmear() const { return m_EtaSmear; }
       double Mass() const { return m_Particle->Mass(); }
+      bool ShearCorrection() const { return m_ShearCorrection; }
+      bool BulkCorrection() const { return m_BulkCorrection; }
+      double SpeedOfSoundSquared() const { return m_SpeedOfSoundSquared; }
 
       // Override functions begin
 
@@ -113,9 +145,10 @@ namespace thermalfist {
       const ParticlizationHypersurface* m_ParticlizationHypersurface;
       const ThermalParticle* m_Particle;
       const VolumeElementSampler* m_VolumeElementSampler;
-      //ThermalMomentumGenerator m_Generator;
-      //double m_Tkin;
       double m_EtaSmear;
+      bool m_ShearCorrection;
+      bool m_BulkCorrection;
+      double m_SpeedOfSoundSquared;
     };
 
 
@@ -133,8 +166,8 @@ namespace thermalfist {
       /**
        * \brief Construct a new BoostInvariantMomentumGenerator object
        *
-       * \param hypersurface Pointer to a ParticlizationHypersurface object. Not deleted on destruction!
-       * \param hypersurface Pointer to a VolumeElementSampler object. Not deleted on destruction!
+       * \param hypersurface    Pointer to a ParticlizationHypersurface object. Not deleted on destruction!
+       * \param positionsampler Pointer to a VolumeElementSampler object. Not deleted on destruction!
        * \param Tkin       The kinetic temperature (in GeV)
        * \param etamax     The longitudinal space-time rapidity cut-off
        * \param mass       Particle mass (in GeV)
@@ -198,28 +231,49 @@ namespace thermalfist {
     HypersurfaceEventGenerator(
       const ParticlizationHypersurface* hypersurface = NULL,
       ThermalModelBase* model = NULL,
-      double etasmear = 0.0) : EventGeneratorBase()
+      double etasmear = 0.0, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15) : EventGeneratorBase()
     {
       SetHypersurface(hypersurface);
       SetEtaSmear(etasmear);
       SetRescaleTmu();
+      SetShearCorrection(shear_correction);
+      SetBulkCorrection(bulk_correction);
+      SetSpeedOfSoundSquared(speed_of_sound_squared);
       m_THM = model;
       //SetParameters(hypersurface, model, etasmear);
     }
 
     /**
-     * \brief Construct a new HypersurfaceEventGenerator object
+    * \brief Construct a new HypersurfaceEventGenerator object
+    *
+    * \param TPS    A pointer to the particle list.  Not deleted at destruction!
+    * \param config Event generator configuration
+    * \param hypersurface   A pointer to the particlization hypersurface.  Not deleted at destruction!
+    * \param configMomentumGenerator Configuration object for the HypersurfaceMomentumGenerator
+    */
+    HypersurfaceEventGenerator(
+            ThermalParticleSystem* TPS,
+            const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
+            const ParticlizationHypersurface* hypersurface = NULL,
+            const RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration& configMomentumGenerator = RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration());
+
+
+    /**
+     * \brief (Deprecated) Construct a new HypersurfaceEventGenerator object
      *
      * \param TPS    A pointer to the particle list.  Not deleted at destruction!
      * \param config Event generator configuration
      * \param hypersurface   A pointer to the particlization hypersurface.  Not deleted at destruction!
      * \param etasmear       Smearing in rapidity
+     * \param shear_correction include shear correct in momentum space
+     * \param bulk_correction include bulk correct in momentum space
+     * \param speed_of_sound_squared The speed of sound squared in the medium
      */
     HypersurfaceEventGenerator(
       ThermalParticleSystem* TPS,
-      const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
-      const ParticlizationHypersurface* hypersurface = NULL,
-      double etasmear = 0.0);
+      const EventGeneratorConfiguration& config,
+      const ParticlizationHypersurface* hypersurface,
+      double etasmear, bool shear_correction = false, bool bulk_correction = false, double speed_of_sound_squared = 0.15);
 
     virtual ~HypersurfaceEventGenerator() {}
 
@@ -238,8 +292,20 @@ namespace thermalfist {
 
     void SetHypersurface(const ParticlizationHypersurface* hypersurface) { m_ParticlizationHypersurface = hypersurface; m_ParametersSet = false; }
 
-    void SetEtaSmear(double etaSmear) { m_EtaSmear = etaSmear; m_ParametersSet = false; }
-    double GetEtaSmear() const { return m_EtaSmear; }
+    void SetMomentumGeneratorConfig(const RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration& config) { m_MomentumGeneratorConfig = config; m_ParametersSet = false; }
+    RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration GetMomentumGeneratorConfig() const { return m_MomentumGeneratorConfig; }
+
+    void SetEtaSmear(double etaSmear) { m_MomentumGeneratorConfig.etaSmear = etaSmear; m_ParametersSet = false; }
+    double GetEtaSmear() const { return m_MomentumGeneratorConfig.etaSmear; }
+
+    void SetShearCorrection(bool shear_correction) { m_MomentumGeneratorConfig.shearCorrection = shear_correction; }
+    bool GetShearCorrection() { return m_MomentumGeneratorConfig.shearCorrection; }
+
+    void SetBulkCorrection(bool bulk_correction) { m_MomentumGeneratorConfig.bulkCorrection = bulk_correction; }
+    bool GetBulkCorrection() { return m_MomentumGeneratorConfig.bulkCorrection; }
+
+    void SetSpeedOfSoundSquared(double speed_of_sound_squared) { m_MomentumGeneratorConfig.speedOfSoundSquared = speed_of_sound_squared; }
+    double GetSpeedOfSoundSquared() { return m_MomentumGeneratorConfig.speedOfSoundSquared; }
 
     void SetRescaleTmu(bool rescale = false, double edens = 0.26);
 
@@ -274,6 +340,9 @@ namespace thermalfist {
     /// Calculates the (T,muB,muS,muQ) values as function of baryon density at fixed constant energy density
     static std::vector<std::vector<double>> CalculateTMuMap(ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001);
 
+    /// Rescales the hypersurface parameters to match the given energy and baryon density
+    static void RescaleHypersurfaceParametersEdens(ParticlizationHypersurface *hypersurface, ThermalModelBase* model, double edens, double rhomin = 0.0, double rhomax = 0.27, double drho = 0.001, double rhocrit = 0.16);
+
     /// Sets the hypersurface parameters
     //void SetParameters(const ParticlizationHypersurface* hypersurface, ThermalModelBase* model, double etasmear = 0.0);
     virtual void SetParameters();
@@ -287,10 +356,10 @@ namespace thermalfist {
     const ParticlizationHypersurface* m_ParticlizationHypersurface;
     std::vector<RandomGenerators::VolumeElementSampler> m_VolumeElementSamplers;
     std::vector<double> m_FullSpaceYields;
-    double m_EtaSmear;
     double m_Tav;
     std::vector<double> m_Musav;
     bool m_RescaleTmu;
+    RandomGenerators::HypersurfaceMomentumGenerator::HypersurfaceMomentumGeneratorConfiguration m_MomentumGeneratorConfig;
     double m_edens;
     std::vector<SplineFunction> m_SplinesTMu;
 
@@ -411,7 +480,8 @@ namespace thermalfist {
         model->Parameters().T,
         model->Parameters().muB,
         model->Parameters().muS,
-        model->Parameters().muQ
+        model->Parameters().muQ,
+        model->Pressure()
       };
     }
   };
@@ -429,7 +499,7 @@ namespace thermalfist {
       ThermalParticleSystem* TPS,
       const EventGeneratorConfiguration& config = EventGeneratorConfiguration(),
       const ParticlizationHypersurface* hypersurface = NULL,
-      double etasmear = 0.0) : HypersurfaceEventGenerator(TPS, config, hypersurface, etasmear) {
+      double etasmear = 0.0, bool shear_correction = false) : HypersurfaceEventGenerator(TPS, config, hypersurface, etasmear, shear_correction) {
       m_b = 0.0;
       m_rad = 0.0;
       m_MeanB = m_MeanAB = m_VEff = 0.0;

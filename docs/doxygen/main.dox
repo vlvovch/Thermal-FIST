@@ -4,7 +4,7 @@
 <span style="font-size:larger;">
 This documentation details the classes, structures, and functions of the Thermal-FIST library
 as well as some usage examples.
-It should be useful for using the library in C++ macros for performing various HRG model calculations, or for making modifications to the library code.
+It should be useful for using the library in a C++ program for performing various HRG model calculations, or for making modifications to the library code.
 
 ## Downloading and building the package
 
@@ -25,11 +25,11 @@ can be done in GUI. Using the GUI can therefore be a good starting point.
 See the <a href="https://github.com/vlvovch/Thermal-FIST/blob/master/docs/quickstart.md"><b>Quick Start Guide</b></a> to get started.
 
 An example of using the Thermal-FIST library as a git submodule can be found
-in the following repository [**https://github.com/vlvovch/1807.02079**](https://github.com/vlvovch/1807.02079)
+in the following repository [**https://github.com/vlvovch/finite-resonance-widths**](https://github.com/vlvovch/finite-resonance-widths)
 
 The library can be used in Jupyter interactive notebooks. Please see 
 [**https://github.com/vlvovch/FIST-jupyter**](https://github.com/vlvovch/FIST-jupyter) and 
-[**https://github.com/vlvovch/CSM**](https://github.com/vlvovch/CSM) for samples
+[**https://github.com/vlvovch/CSM**](https://github.com/vlvovch/CSM) for examples
 
 </span>
 */
@@ -46,7 +46,7 @@ The thermal fitting routines use MINUIT2 from CERN ROOT which
 is included here as a standalone package. If a ROOT installation with MINUIT2 
 is found in the system, it is used in place of a standalone distribution.
 
-The QtThermalFIST GUI frontend requires the open source [**Qt5 framework**](http://qt-project.org)
+The QtThermalFIST GUI frontend requires the open source [**Qt6 or Qt5 framework**](http://qt-project.org)
 to be installed. Otherwise the GUI frontend is not built.
 
 ### Building
@@ -78,14 +78,14 @@ and [**Examples**](examples.html) for more details
 
 ### Common issues
 
-- CMake cannot find Qt5 and therefore GUI cannot be built. Usually this type of message appears after running the `cmake` command: 
+- CMake cannot find Qt6/Qt5 and therefore GUI cannot be built. Usually this type of message appears after running the `cmake` command: 
 
 > By not providing "FindQt5Widgets.cmake" in CMAKE_MODULE_PATH this project has asked CMake to find a package configuration file provided by "Qt5Widgets", but CMake did not find one.
 
-Make sure that Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt5 directory explicitly
+Make sure that Qt6/Qt5 is installed in the system. If CMake still cannot find it, try specifying the Qt6/Qt5 directory explicitly
 
 ~~~.bash
-cmake -DCMAKE_PREFIX_PATH=<path-to-qt5> ../
+cmake -DCMAKE_PREFIX_PATH=<path-to-qt6-or-qt5> ../
 ~~~
 
 */
@@ -99,5 +99,5 @@ It may therefore be convenient to include the
 using namespace thermalfist;
 ~~~
 
-directive in a C++ macro which uses the library.
+directive in a C++ script which uses the library.
 */

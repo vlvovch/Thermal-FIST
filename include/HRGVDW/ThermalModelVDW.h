@@ -187,6 +187,10 @@ namespace thermalfist {
 
     virtual double CalculateEntropyDensity();
 
+    virtual double CalculateEnergyDensityDerivativeT();
+
+    virtual void CalculateTemperatureDerivatives();
+
     // Dummy
     virtual double CalculateBaryonMatterEntropyDensity() { return 0.; }
 
@@ -300,10 +304,10 @@ namespace thermalfist {
 
     std::vector< std::vector<int> > m_dMuStarIndices;
 
-  private:
     std::vector< std::vector<double> > m_chi;
 
     std::vector<double> m_chiarb;
+  private:
     
     
     virtual void CalculatePrimordialDensitiesOld();
@@ -341,6 +345,17 @@ namespace thermalfist {
   /// For backward compatibility
   typedef ThermalModelVDW ThermalModelVDWFull;
 
+  /// \brief Sets vdW interactions for baryon-baryon and antibaryon-antibaryon pairs as in https://arxiv.org/abs/1609.03975
+  /// \param model Pointer to the thermal model object
+  /// \param a Attraction parameter in GeV*fm^3
+  /// \param b Repulsion parameter in fm^3
+  void SetVDWHRGInteractionParameters(ThermalModelBase *model, double a, double b);
+
+  /// \brief Sets vdW interactions based on the provided matrices of attraction and repulsion parameters
+  /// \param model Pointer to the thermal model object
+  /// \param a Attraction parameter in GeV*fm^3
+  /// \param b Repulsion parameter in fm^3
+  void SetVDWHRGInteractionParameters(ThermalModelBase *model, const std::vector<std::vector<double>> & a, const std::vector<std::vector<double>> & b);
 } // namespace thermalfist
 
 #endif

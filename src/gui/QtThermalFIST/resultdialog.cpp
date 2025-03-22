@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QDebug>
+#include <QFontDatabase>
 #include <iostream>
 
 #include "HRGBase/ThermalModelBase.h"
@@ -30,8 +31,9 @@ ResultDialog::ResultDialog(QWidget *parent, ThermalModelBase *mod, ChargesFluctu
   QLabel *labParam = new QLabel(tr("Parameters:"));
   labParam->setFont(font);
 
-  QFont font2("Monospace");
-  font2.setStyleHint(QFont::TypeWriter);
+  //QFont font2("Monospace");
+  //font2.setStyleHint(QFont::TypeWriter);
+  const QFont font2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
   parameters = new QTextEdit();
   parameters->setReadOnly(true);
   parameters->setFont(font2);
@@ -225,6 +227,33 @@ QString ResultDialog::GetResults() {
 
   ret += "\r\n";
 
+  // "Partial pressures"
+  {
+    auto Ppres = model->PartialPressures();
+
+    sprintf(cc, "%-25s = ", "Part. pressure mesons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[0]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure baryons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[1]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. press. antibaryons");
+    ret += QString(cc);
+    ret += QString::number(Ppres[2]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure nuclei");
+    ret += QString(cc);
+    ret += QString::number(Ppres[3]*1.e3) + " MeV/fm^3\r\n";
+
+    sprintf(cc, "%-25s = ", "Part. pressure antinuclei");
+    ret += QString(cc);
+    ret += QString::number(Ppres[4]*1.e3) + " MeV/fm^3\r\n";
+
+    ret += "\r\n";
+  }
+
   sprintf(cc, "%-25s = ", "p/T^4");
   ret += QString(cc);
   ret += QString::number((model->CalculatePressure()) / model->Parameters().T / model->Parameters().T / model->Parameters().T / model->Parameters().T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm()) + "\r\n";
@@ -241,7 +270,30 @@ QString ResultDialog::GetResults() {
   ret += QString(cc);
   ret += QString::number((model->CalculateEntropyDensity()) / model->Parameters().T / model->Parameters().T / model->Parameters().T / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm()) + "\r\n";
 
+  sprintf(cc, "%-25s = ", "\\Delta");
+  ret += QString(cc);
+  ret += QString::number(1./3. - model->CalculatePressure()/model->CalculateEnergyDensity()) + "\r\n";
+
   if (model->IsFluctuationsCalculated()) {
+    ret += "\r\n";
+
+    sprintf(cc, "%-25s = ", "cs2");
+    ret += QString(cc);
+    ret += QString::number(model->cs2()) + "\r\n";
+
+    double cT2 = model->cT2();
+    if (cT2 != 0.) {
+      sprintf(cc, "%-25s = ", "cT2");
+      ret += QString(cc);
+      ret += QString::number(cT2) + "\r\n";
+    }
+
+    double cV = model->HeatCapacity();
+    if (cV != 0.) {
+      sprintf(cc, "%-25s = ", "cV/T^3");
+      ret += QString(cc);
+      ret += QString::number(cV / xMath::GeVtoifm3() / pow(model->Parameters().T, 3)) + "\r\n";
+    }
     ret += "\r\n";
 
     sprintf(cc, "%-25s = ", "\\chi2B");
@@ -305,6 +357,55 @@ QString ResultDialog::GetResults() {
       sprintf(cc, "%-25s = ", "\\chi11SC");
       ret += QString(cc);
       ret += QString::number(model->Susc(ConservedCharge::StrangenessCharge, ConservedCharge::CharmCharge)) + "\r\n";
+    }
+
+    ret += "\r\n";
+
+    double T = model->Parameters().T;
+
+    sprintf(cc, "%-25s = ", "T*\\chi2B'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
+
+    sprintf(cc, "%-25s = ", "T*\\chi2Q'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)) + "\r\n";
+
+    sprintf(cc, "%-25s = ", "T*\\chi2S'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+
+    if (model->TPS()->hasCharmed()) {
+      sprintf(cc, "%-25s = ", "T*\\chi2C'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::CharmCharge, ConservedCharge::CharmCharge)) + "\r\n";
+    }
+
+    sprintf(cc, "%-25s = ", "T*\\chi11BQ'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge)) + "\r\n";
+
+    
+    sprintf(cc, "%-25s = ", "T*\\chi11QS'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+
+    sprintf(cc, "%-25s = ", "T*\\chi11BS'");
+    ret += QString(cc);
+    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+      
+    if (model->TPS()->hasCharmed()) {
+      sprintf(cc, "%-25s = ", "T*\\chi11BC'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::CharmCharge)) + "\r\n";
+
+      sprintf(cc, "%-25s = ", "T*\\chi11QC'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::CharmCharge)) + "\r\n";
+
+      sprintf(cc, "%-25s = ", "T*\\chi11SC'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::CharmCharge)) + "\r\n";
     }
 
     ret += "\r\n";

@@ -13,14 +13,15 @@
 
 #include <iostream>
 #include <cmath>
+#include <cassert>
 
 
 using namespace std;
 
 namespace thermalfist {
 
-  ThermalModelIdeal::ThermalModelIdeal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params)
+  ThermalModelIdeal::ThermalModelIdeal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) 
+    : ThermalModelBase(TPS_, params)
   {
     m_TAG = "ThermalModelIdeal";
 
@@ -55,12 +56,14 @@ namespace thermalfist {
 
     m_PrimCorrel.resize(NN);
     for (int i = 0; i < NN; ++i) m_PrimCorrel[i].resize(NN);
+    m_dmusdmu = m_PrimCorrel;
     m_TotalCorrel = m_PrimCorrel;
 
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
         m_PrimCorrel[i][j] = 0.;
         if (i == j) m_PrimCorrel[i][j] += chi2s[i] * pow(xMath::GeVtoifm(), 3);
+        m_dmusdmu[i][j] = (i == j) ? 1. : 0.;
       }
 
     for (int i = 0; i < NN; ++i) {
@@ -123,6 +126,9 @@ namespace thermalfist {
 
   std::vector<double> ThermalModelIdeal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
   {
+    return CalculateGeneralizedSusceptibilities(std::vector<std::vector<double>>(order, chgs));
+
+    // Deprecated
     vector<double> ret(order + 1, 0.);
 
     // chi1
@@ -145,6 +151,26 @@ namespace thermalfist {
 
     for (size_t i = 0; i < m_densities.size(); ++i)
       ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i]);
+
+    return ret;
+  }
+
+  std::vector<double> ThermalModelIdeal::CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs) {
+    int order = chgs.size();
+
+    if (order > 4) {
+        throw std::invalid_argument("Order must be less than or equal to 4");
+    }
+
+    vector<double> ret(order + 1, 0.);
+    vector<double> current_charges(m_densities.size(), 1.);
+
+    for(int iord = 0; iord < order; ++iord) {
+      for(size_t i = 0; i < m_densities.size(); ++i) {
+        current_charges[i] *= chgs[iord][i];
+        ret[iord] += current_charges[i] * m_TPS->Particles()[i].chi(iord + 1, m_Parameters, m_UseWidth, m_Chem[i]);//m_densities[i];
+      }
+    }
 
     return ret;
   }
@@ -189,6 +215,19 @@ namespace thermalfist {
     return ret;
   }
 
+  double ThermalModelIdeal::CalculateEnergyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // Compute de/dT
+    double ret = 0.;
+
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dedT, m_UseWidth, m_Chem[i]);
+
+    return ret;
+  }
+
   double ThermalModelIdeal::ParticleScaledVariance(int part) {
     return m_TPS->Particles()[part].ScaledVariance(m_Parameters, m_UseWidth, m_Chem[part]);
   }
@@ -204,5 +243,24 @@ namespace thermalfist {
   double ThermalModelIdeal::ParticleScalarDensity(int part) {
     return m_TPS->Particles()[part].Density(m_Parameters, IdealGasFunctions::ScalarDensity, m_UseWidth, m_Chem[part]);
   }
+
+  void ThermalModelIdeal::CalculateTemperatureDerivatives() {
+    int N = m_TPS->ComponentsNumber();
+    m_dndT = vector<double>(N, 0.);
+    m_dmusdT = vector<double>(N, 0.);
+    m_PrimChi2sdT = vector<vector<double>>(N, vector<double>(N, 0.));
+
+    for (int i = 0; i < N; ++i) {
+      m_dndT[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_Chem[i]);
+      m_dmusdT[i] = 0.;
+      m_PrimChi2sdT[i][i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_Chem[i]);
+    }
+
+    m_TemperatureDerivativesCalculated = true;
+
+    if (IsSusceptibilitiesCalculated())
+      CalculateSusceptibilityMatrix();
+  }
+
 
 } // namespace thermalfist

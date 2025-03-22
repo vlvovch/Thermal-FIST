@@ -1,7 +1,11 @@
 #include "BaseStructures.h"
 
 #include "HRGEV/ExcludedVolumeHelper.h"
+#include "HRGEV.h"
+#include "HRGVDW.h""
+#include "HRGRealGas.h""
 #include "HRGBase/ThermalModelCanonical.h"
+#include "CosmicEos/EffectiveMassModel.h"
 
 using namespace thermalfist;
 
@@ -34,6 +38,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
     else
       ret.ModelType = ThermalModelConfig::QvdW;
   }
+  else if (model->InteractionModel() == ThermalModelBase::RealGas) {
+    ret.ModelType = ThermalModelConfig::RealGas;
+  }
 
   ret.Ensemble = model->Ensemble();
 
@@ -51,7 +58,18 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.vdWB = 1.;
 
+  ret.vdWbBB = 3.42;
+  ret.vdWbBantiB = ret.vdWbMB = ret.vdWbMM = 0.;
+
+  ret.vdWaBB = 0.329;
+  ret.vdWaBantiB = ret.vdWaMB = ret.vdWaMM = 0.;
+
+  ret.vdWparams.m_aij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 0.));
+  ret.vdWparams.m_bij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 1.));
   ret.InteractionInput = "";
+
+  ret.RealGasExcludedVolumePrescription = 0;
+  
 
   ret.DisableMM = 1;
 
@@ -99,9 +117,15 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.SoverB = model->SoverB();
 
+  ret.RhoB = model->BaryonDensity();
+  ret.RhoQ = model->ElectricChargeDensity();
+  ret.RhoS = model->StrangenessDensity();
+  ret.RhoC = model->CharmDensity();
+
   ret.QoverB = model->QoverB();
 
   ret.ConstrainMuB = model->ConstrainMuB();
+  ret.ConstrainMuBType = 0;
 
   ret.ConstrainMuQ = model->ConstrainMuQ();
 
@@ -123,10 +147,18 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.PCEFreezeLongLived = false;
   ret.PCEWidthCut = 0.015;
   ret.PCESahaForNuclei = true;
+  ret.PCEAnnihilation = false;
+  ret.PCEPionAnnihilationNumber = 5.;
 
   ret.fUseEVRejectionMultiplicity = true;
   ret.fUseEVRejectionCoordinates  = true;
   ret.fUseEVUseSPRApproximation   = true;
+
+  ret.UseEMMPions = false;
+  ret.EMMPionFPi  = 0.133;
+
+  ret.MagneticFieldB = model->GetIdealGasFunctionsExtraConfig().MagneticField.B;
+  ret.MagneticFieldLmax = model->GetIdealGasFunctionsExtraConfig().MagneticField.lmax;
 
   return ret;
 }
@@ -210,10 +242,72 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
       }
     }
   }
+
+
+  // Effective mass model for pions
+  model->ClearDensityModels();
+  if (config.UseEMMPions) {
+    std::vector<long long> pdgs = {211, 111, -211};
+    int emmid = 0;
+    for(auto tpdg : pdgs) {
+      if (model->TPS()->PdgToId(tpdg) != -1) {
+        const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
+        model->SetDensityModelForParticleSpeciesByPdg(
+                tpdg,
+                new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMPionFPi))
+        );
+      }
+    }
+  }
+
+  // Magnetic field
+  model->SetMagneticField(config.MagneticFieldB, config.MagneticFieldLmax);
 }
 
 void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConfig & config)
 {
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal) {
+    for (int i = 0; i < model->TPS()->Particles().size(); ++i) {
+      model->SetVirial(i, i, config.vdWparams.m_bij[i][i]);
+      std::cout << "Setting virial for " << model->TPS()->Particle(i).Name() << " to " << config.vdWparams.m_bij[i][i] << std::endl;
+    }
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVCrossterms) {
+    static_cast<ThermalModelEVCrossterms*>(model)->FillVirialEV(config.vdWparams.m_bij);
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionQVDW) {
+    static_cast<ThermalModelVDW*>(model)->FillVirialEV(config.vdWparams.m_bij);
+    static_cast<ThermalModelVDW*>(model)->FillAttraction(config.vdWparams.m_aij);
+  }
+
+  if (config.InteractionModel == ThermalModelConfig::InteractionRealGas) {
+    //static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsVDW(config.vdWparams.m_bij));
+    //static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(new ExcludedVolumeModelVDW(), config.vdWparams.m_bij));
+    ExcludedVolumeModelBase* evmod;
+    if (config.RealGasExcludedVolumePrescription == 0) {
+      evmod = new ExcludedVolumeModelVDW();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 1) {
+      evmod = new ExcludedVolumeModelCS();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 2) {
+      evmod = new ExcludedVolumeModelVirial();
+    }
+    else if (config.RealGasExcludedVolumePrescription == 3) {
+      evmod = new ExcludedVolumeModelTVM();
+    }
+    else {
+      evmod = new ExcludedVolumeModelVDW();
+    }
+    static_cast<ThermalModelRealGas*>(model)->SetExcludedVolumeModel(new ExcludedVolumeModelCrosstermsGeneralized(evmod, config.vdWparams.m_bij));
+    static_cast<ThermalModelRealGas*>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(config.vdWparams.m_aij));
+  }
+
+
+  return;
+  
   if (config.InteractionScaling != 3) {
     // First repulsion
     double radius = CuteHRGHelper::rv(config.vdWB);

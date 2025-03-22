@@ -318,6 +318,12 @@ namespace thermalfist {
     /// Sets the resonance width cut for freezeing the yields of long-lived resonances
     void SetPCEWidthCut(double WidthCut) { m_PCEWidthCut = WidthCut; }
 
+    /// Sets whether to include baryon annihilation in PCE
+    void PCEAnnihilation(bool Annihilation) { m_PCEAnnihilation = Annihilation; }
+
+    /// Sets the average number of pions in baryon annihilation
+    void SetPCEPionAnnihilationNumber(double PionAnnihilationNumber) { m_PCEPionAnnihilationNumber = PionAnnihilationNumber; }
+
     /// Returns a relative error of the data description (and its uncertainty estimate)
     std::pair< double, double > ModelDescriptionAccuracy() const;
 
@@ -355,6 +361,8 @@ namespace thermalfist {
     bool      m_SahaForNuclei;
     bool      m_PCEFreezeLongLived;
     double    m_PCEWidthCut;
+    bool      m_PCEAnnihilation;
+    double    m_PCEPionAnnihilationNumber;
   };
 
 } // namespace thermalfist

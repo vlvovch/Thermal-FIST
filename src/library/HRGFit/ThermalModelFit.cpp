@@ -28,7 +28,7 @@
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGBase/Utility.h"
-#include "HRGPCE/ThermalModelPCE.h"
+#include "HRGPCE/ThermalModelPCEAnnihilation.h"
 
 namespace thermalfist {
 
@@ -119,8 +119,8 @@ namespace thermalfist {
         // Bose-Einstein function divergence (\mu > m),
         // then effectively discard parameter of the current iteration by setting chi^2 to 10^12
         if (IdealGasFunctions::calculationHadBECIssue) {
-          printf("%15d ", m_THMFit->Iters());
-          printf("Issue with Bose-Einstein condensation, discarding this iteration...\n");
+          std::cerr << m_THMFit->Iters();
+          std::cerr << "**WARNING** Issue with Bose-Einstein condensation, discarding this iteration..." << std::endl;
           return m_THMFit->Chi2() = chi2 = 1.e12;
         }
         
@@ -213,7 +213,8 @@ namespace thermalfist {
 
   ThermalModelFit::ThermalModelFit(ThermalModelBase *model_):
     m_model(model_), m_modelpce(NULL), m_Parameters(model_->Parameters()), m_FixVcToV(true), m_VcOverV(1.), 
-    m_YieldsAtTkin(false), m_SahaForNuclei(true), m_PCEFreezeLongLived(false), m_PCEWidthCut(0.015)
+    m_YieldsAtTkin(false), m_SahaForNuclei(true), m_PCEFreezeLongLived(false), m_PCEWidthCut(0.015),
+    m_PCEAnnihilation(false), m_PCEPionAnnihilationNumber(5.)
   {
   }
 
@@ -232,9 +233,16 @@ namespace thermalfist {
     m_Parameters.C = m_model->Parameters().C;
 
     if (UseTkin()) {
-      m_modelpce = new ThermalModelPCE(m_model, m_PCEFreezeLongLived, m_PCEWidthCut);
-      if (!m_SahaForNuclei) {
-        m_modelpce->SetStabilityFlags(m_modelpce->ComputePCEStabilityFlags(m_model->TPS(), m_SahaForNuclei, m_PCEFreezeLongLived, m_PCEWidthCut));
+      if (m_PCEAnnihilation) {
+        m_modelpce = new ThermalModelPCEAnnihilation(m_model, m_PCEFreezeLongLived, m_PCEWidthCut);
+        static_cast<ThermalModelPCEAnnihilation*>(m_modelpce)->SetPionAnnihilationNumber(m_PCEPionAnnihilationNumber);
+        m_modelpce->UseSahaForNuclei(m_SahaForNuclei);
+        m_modelpce->SetStabilityFlags(static_cast<ThermalModelPCEAnnihilation*>(m_modelpce)->RecalculateStabilityFlags());
+      }
+      else {
+        m_modelpce = new ThermalModelPCE(m_model, m_PCEFreezeLongLived, m_PCEWidthCut);
+        if (!m_SahaForNuclei)
+          m_modelpce->SetStabilityFlags(m_modelpce->ComputePCEStabilityFlags(m_model->TPS(), m_SahaForNuclei, m_PCEFreezeLongLived, m_PCEWidthCut));
       }
     }
 
@@ -549,8 +557,7 @@ namespace thermalfist {
       printf("Thermal fit finished\n\n");
     return ret;
   #else
-    printf("**ERROR** Cannot fit without MINUIT2 library!\n");
-    exit(1);
+    throw std::runtime_error("Cannot fit without MINUIT2 library!");
   #endif
   }
 

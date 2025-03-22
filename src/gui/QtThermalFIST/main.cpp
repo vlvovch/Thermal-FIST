@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QTranslator>
 #include <QLibraryInfo>
+#include <QtGlobal>
 
 //#define CRTDBG_MAP_ALLOC
 //#include <stdlib.h>
@@ -33,8 +34,13 @@ int main(int argc, char *argv[])
       Qt::AlignLeft | Qt::AlignTop, Qt::black);  //This line represents the alignment of text, color and position
 
     QTranslator qtTranslator;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     qtTranslator.load("qt_" + QLocale::system().name(),
             QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+#else
+    qtTranslator.load("qtbase_" + QLocale::system().name(),
+            QLibraryInfo::path(QLibraryInfo::TranslationsPath));
+#endif
     a.installTranslator(&qtTranslator);
 
     QTranslator myappTranslator;

@@ -151,14 +151,13 @@ namespace thermalfist {
 
       for (size_t i = 0; i < ret.size(); ++i)
         if (ret[i].px != ret[i].px) {
-          printf("**WARNING** Issue in a two-body decay!\n");
+          std::cerr << "**WARNING** Issue in a two-body decay!" << std::endl;
         }
 
 #ifdef DEBUGDECAYS
       if (abs(Mother.p0 - (ret[0].p0 + ret[1].p0)) > 1.e-9) {
-        printf("Two-body decay energy conservation issue: %lf %lf\n",
-               Mother.p0 - (ret[0].p0 + ret[1].p0), sqrt(vx*vx+vy*vy+vz*vz));
-        printf("%lf %lf\n", Mother.m, ten1 + ten2);
+        std::cerr << "Two-body decay energy conservation issue: " << Mother.p0 - (ret[0].p0 + ret[1].p0) << " " << sqrt(vx*vx+vy*vy+vz*vz) << std::endl;
+        std::cerr << Mother.m << " " << ten1 + ten2 << std::endl;
       }
 #endif
 
@@ -220,7 +219,7 @@ namespace thermalfist {
 
 #ifdef DEBUGDECAYS
       for (int i = 0; i < ret.size(); ++i)
-        if (ret[i].px != ret[i].px) std::cout << "**WARNING** NaN in NBodyDecay procedure output!\n";
+        if (ret[i].px != ret[i].px) std::cerr << "**WARNING** NaN in NBodyDecay procedure output!" << std::endl;
 #endif
 
       return ret;
@@ -229,7 +228,7 @@ namespace thermalfist {
     void ShuffleDecayProducts(std::vector<double>& masses, std::vector<long long>& pdgs)
     {
       if (masses.size() != pdgs.size()) {
-        std::cout << "**WARNING** ShuffleDecayProducts(): size of masses does not match size of pdgs!\n";
+        std::cerr << "**WARNING** ShuffleDecayProducts(): size of masses does not match size of pdgs!" << std::endl;
         return;
       }
       int N = masses.size();
@@ -265,6 +264,18 @@ namespace thermalfist {
       return (npart1.rx - npart2.rx) * (npart1.rx - npart2.rx)
         + (npart1.ry - npart2.ry) * (npart1.ry - npart2.ry)
         + (npart1.rz - npart2.rz) * (npart1.rz - npart2.rz);
+    }
+
+    double ComputeDCA(const SimpleParticle& part)
+    {
+      double mult1 = part.rx * part.px + part.ry * part.py + part.rz * part.pz;
+      double mult2 = part.px * part.px + part.py * part.py + part.pz * part.pz;
+      double retx = part.rx - part.px * mult1 / mult2;
+      double rety = part.ry - part.py * mult1 / mult2;
+      double retz = part.rz - part.pz * mult1 / mult2;
+
+      double ret = retx * retx + rety * rety + retz * retz;
+      return sqrt(ret);
     }
 
   }

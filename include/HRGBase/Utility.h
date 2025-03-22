@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2019 Volodymyr Vovchenko
+ * Copyright (c) 2019-2025 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -25,7 +25,7 @@ namespace thermalfist {
     static bool PrintDisclaimer();
 
     static bool DisclaimerPrinted;
-  
+
   };
 
 

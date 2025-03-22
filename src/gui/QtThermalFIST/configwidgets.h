@@ -44,6 +44,8 @@ public:
   QComboBox *comboQuant;
   QCheckBox *CBQuadratures;
 
+  QPushButton* buttonQvdWparameters;
+
   QPushButton *buttonConservationLaws;
 
   QPushButton *buttonInteractions;
@@ -66,6 +68,7 @@ public:
 private slots:
   void conservationLawsDialog();
   void interactionsDialog();
+  void QvdWparametersDialog();
   void otherOptionsDialog();
   void modelTypeChanged();
   void ensembleChanged();
@@ -84,9 +87,12 @@ class ConservationLawsDialog : public QDialog
 public:
   ModelConfigWidget *m_parent;
   QCheckBox *CBmuB, *CBmuQ, *CBmuS, *CBmuC;
+  QCheckBox *CBmuBdens;
   QDoubleSpinBox *spinSBRatio, *spinQBRatio;
 
-  QWidget *CBmuBfull, *CBmuQfull;
+  QDoubleSpinBox *spinRhoB;
+
+  QWidget *CBmuBfull, *CBmuBdensfull, *CBmuQfull;
   //QHBoxLayout *laymuB, *laymuQ;
   QLabel *labelNothing;
   
@@ -98,44 +104,13 @@ public:
   explicit  ConservationLawsDialog(ModelConfigWidget *parent = 0);
 private slots:
   void updateControls();
+  void toggleMuB();
 
 public slots :
   void OK();
   void Discard() { QDialog::reject(); };
 };
 
-
-class InteractionsDialog : public QDialog
-{
-  Q_OBJECT
-public:
-  ModelConfigWidget *m_parent;
-  QRadioButton *radSet, *radLoad;
-  QDoubleSpinBox *spinB;
-  QDoubleSpinBox *spinA;
-  QLabel *labelRadiusValue;
-  //QDoubleSpinBox *spinRadius;
-  QComboBox *comboScaling;
-  QCheckBox *CBMM, *CBMB, *CBBaB, *CBBB;
-
-  QLineEdit *leFilePath;
-  QPushButton *buttonChooseFile;
-
-  QGroupBox *groupMC;
-  QCheckBox *CBEVMult, *CBEVCoord, *CBEVSPR;
-
-public:
-  explicit  InteractionsDialog(ModelConfigWidget *parent = 0);
-
-private slots :
-  void modeToggled();
-  void chooseInputFile();
-  void updateRadius();
-  void updateSPR();
-public slots :
-  void OK();
-  void Discard() { QDialog::reject(); };
-};
 
 class OtherOptionsDialog : public QDialog
 {
@@ -151,6 +126,15 @@ public:
   QCheckBox *CBFreezeLongLived;
   QDoubleSpinBox *spinWidthCut;
   QCheckBox *CBSahaNuclei;
+
+  QCheckBox *CBAnnihilation;
+  QDoubleSpinBox *spinPionsAnnihilation;
+
+  QDoubleSpinBox *spinB;
+  QSpinBox *spinLandauLevels;
+
+  QCheckBox *CBPionInteractions;
+  QDoubleSpinBox *spinfPi;
 
 public:
   explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);

@@ -62,34 +62,39 @@ MainWindow::MainWindow(QWidget *parent)
   dataLay->addWidget(buttonLoadDecays);
 
   tab1 = new ModelTab(NULL, model);
-  tab1->resetTPS();
+  //tab1->resetTPS();
 
   tab2 = new FitToExperimentTab(NULL, model);
   tab1->setFitTab(tab2);
 
   tabEoS = new EquationOfStateTab(NULL, model);
 
+  tabCosmicEoS = new CosmicEoSTab(NULL, model);
+
   tab5 = new EventGeneratorTab(NULL, model);
   tabEditor = new ListEditorTab(NULL, model);
   tabEditor->setListPath(cpath);
 
-  
+  tabTrajectories = new TrajectoriesTab(NULL, {tabEoS, tabCosmicEoS}, {"HRG model", "Cosmic trajectory"});
 
   tabWidget = new QTabWidget();
   tabWidget->addTab(tab1, QString(tr("Thermal model")));
 
   tabWidget->addTab(tab2, QString(tr("Thermal fits")));
 
-  tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
+  //tabWidget->addTab(tabEoS, QString(tr("Equation of state")));
+  tabWidget->addTab(tabTrajectories, QString(tr("Equation of state")));
 
   tabWidget->addTab(tab5, QString(tr("Event generator")));
+
+  //tabWidget->addTab(tabCosmicEoS, QString(tr("Cosmic trajectory")));
 
   tabWidget->addTab(tabEditor, QString(tr("Particle list editor")));
 
   currentTab = tabWidget->currentIndex();
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 
-  QLabel *labelCopyright = new QLabel(tr("© 2014-2020 Volodymyr Vovchenko"));
+  QLabel *labelCopyright = new QLabel(tr("© 2014-2023 Volodymyr Vovchenko"));
 
   QVBoxLayout *mainLayout = new QVBoxLayout;
   mainLayout->addLayout(dataLay);
@@ -103,6 +108,13 @@ MainWindow::MainWindow(QWidget *parent)
   QString title = "Thermal-FIST " + QString::number(ThermalFIST_VERSION_MAJOR) + "." + QString::number(ThermalFIST_VERSION_MINOR);
   if (ThermalFIST_VERSION_DEVEL != 0) title += "." + QString::number(ThermalFIST_VERSION_DEVEL);
   setWindowTitle(title);
+
+  tab1->resetTPS();
+  tab2->resetTPS();
+  tabEoS->resetTPS();
+  tab5->resetTPS();
+  tabEditor->resetTPS();
+  tabCosmicEoS->resetTPS();
 }
 
 MainWindow::~MainWindow()
@@ -169,6 +181,7 @@ void MainWindow::loadDecays()
     tab2->resetTPS();
     tab5->resetTPS();
     tabEditor->resetTPS();
+    tabCosmicEoS->resetTPS();
 
     leList->setText(clists);
 
@@ -192,6 +205,7 @@ void MainWindow::tabChanged(int newIndex)
     tab2->resetTPS();
     tab5->resetTPS();
     tabEditor->resetTPS();
+    tabCosmicEoS->resetTPS();
   }
 
   currentTab = newIndex;
@@ -315,6 +329,8 @@ void MainWindow::loadList()
 
     tabEditor->resetTPS();
     tabEditor->setListPath(pathlist[0]);
+
+    tabCosmicEoS->resetTPS();
 
     cpath = pathlist[0];
   }

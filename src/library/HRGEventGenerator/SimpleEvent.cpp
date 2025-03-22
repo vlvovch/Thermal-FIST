@@ -131,6 +131,49 @@ namespace thermalfist {
     fout << std::fixed;
   }
 
+  void SimpleEvent::writeToFileForSmash(std::ofstream& fout, const ThermalParticleSystem *m_TPS, const int eventnumber) const
+  {
+    int eventnumber_smash = eventnumber -1;
+    if (eventnumber_smash == 0) {
+      fout << "#!OSCAR2013 particle_lists t x y z mass p0 px py pz pdg ID charge" << std::endl;
+      fout << "# Units: fm fm fm fm GeV GeV GeV GeV GeV none none e" << std::endl;
+      fout << "# FISTSampler" << std::endl;
+    }
+    
+    fout << "# event "<< eventnumber_smash << " out " << Particles.size()  << std::endl;
+
+    fout.precision(10);
+    // fout << std::scientific;
+
+    const int tabsize = 4;
+    int charge;
+
+    // t x y z mass p0 px py pz pdg ID charge
+    for (size_t i = 0; i < Particles.size(); ++i) {
+      if (m_TPS != NULL){
+        charge = m_TPS->ParticleByPDG(Particles[i].PDGID).ElectricCharge();
+      }
+      else{
+        charge = 0;
+      }
+      fout  << Particles[i].r0 << " "
+         << Particles[i].rx << " "
+         << Particles[i].ry << " "
+         << Particles[i].rz << " "
+         << Particles[i].m << " "
+         << Particles[i].p0 << " "
+         << Particles[i].px << " "
+         << Particles[i].py << " "
+         << Particles[i].pz << " "
+         << Particles[i].PDGID << " "
+         << i << " "
+         << charge;
+      fout << std::endl;
+    }
+    fout << "# event "<< eventnumber_smash <<" end 0 impact   0.000 scattering_projectile_target yes" << std::endl;
+    fout << std::fixed;
+  }
+
   void SimpleEvent::RapidityBoost(double dY)
   {
     for (size_t i = 0; i < Particles.size(); ++i)

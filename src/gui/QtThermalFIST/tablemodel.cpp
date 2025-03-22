@@ -128,7 +128,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
             switch (section)
             {
                 case 1:
-                    return tr("PDG ID");
+                    return tr("PDG code");
                 case 0:
                     return tr("Name");
                 case 2:

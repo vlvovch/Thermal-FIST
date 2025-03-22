@@ -1,6 +1,8 @@
 #include "HRGPCE/ThermalModelPCE.h"
 
+#include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -50,8 +52,8 @@ namespace thermalfist {
       const ThermalParticle& part = TPShelper.Particles()[i];
       if (part.IsStable()) {
         if (stab_index >= m_EffectiveCharges[0].size()) {
-          printf("**ERROR** ThermalModelPCE::SetStabilityFlags: Wrong number of stable components!\n");
-          exit(1);
+          throw std::invalid_argument("ThermalModelPCE::SetStabilityFlags: Wrong number of stable components! Expected: " + 
+             std::to_string(m_model->TPS()->ComponentsNumber()) + ", Got: " + std::to_string(m_StabilityFlags.size()));
         }
         m_EffectiveCharges[i][stab_index] = 1.;
         const ThermalParticleSystem::DecayContributionsToParticle& decayContributions = TPShelper.DecayContributionsByFeeddown()[Feeddown::StabilityFlag][i];
@@ -64,8 +66,6 @@ namespace thermalfist {
       }
     }
 
-    ApplyFixForBoseCondensation();
-
     m_StabilityFlagsSet = true;
     m_ChemicalFreezeoutSet = false;
     m_IsCalculated = false;
@@ -75,6 +75,7 @@ namespace thermalfist {
   {
     if (!m_StabilityFlagsSet) {
       SetStabilityFlags(ComputePCEStabilityFlags(m_model->TPS(), UseSahaForNuclei(), FreezeLonglivedResonances(), LonglivedResonanceWidthCut()));
+      ApplyFixForBoseCondensation();
     }
     
     m_ParametersInit = params;
@@ -117,10 +118,7 @@ namespace thermalfist {
   void ThermalModelPCE::CalculatePCE(double param, PCEMode mode)
   {
     if (!m_ChemicalFreezeoutSet) {
-      printf("**ERROR** ThermalModelPCE::CalculatePCE:"
-             "Tried to make a PCE calculation without setting the chemical freze-out!"
-             "Call ThermalModelPCE::SetChemicalFreezeout() first.\n");
-      exit(1);
+      throw std::invalid_argument("ThermalModelPCE::CalculatePCE: Tried to make a PCE calculation without setting the chemical freze-out! Call ThermalModelPCE::SetChemicalFreezeout() first.");
     }
 
     if (!m_StabilityFlagsSet) {
@@ -148,8 +146,7 @@ namespace thermalfist {
     for (int i = 0; i < m_StabilityFlags.size(); ++i) {
       if (m_StabilityFlags[i]) {
         if (stab_index >= m_EffectiveCharges[0].size()) {
-          printf("**ERROR** ThermalModelPCE::CalculatePCE: Wrong number of stable components!\n");
-          exit(1);
+          throw std::invalid_argument("ThermalModelPCE::CalculatePCE: Wrong number of stable components!");
         }
 
         //PCEParams[stab_index] = m_ChemCurrent[i];
@@ -401,4 +398,3 @@ namespace thermalfist {
   }
 
 } // namespace thermalfist
-

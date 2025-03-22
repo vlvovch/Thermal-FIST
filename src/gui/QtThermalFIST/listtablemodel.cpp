@@ -195,7 +195,7 @@ QVariant ListTableModel::headerData(int section, Qt::Orientation orientation, in
                 case 9:
                     return QString("Sum of BRs");
                 case 10:
-                    return QString("Check decays");
+                    return QString("Issues");
             }
         }
         else if (orientation == Qt::Vertical) return section + 1;
