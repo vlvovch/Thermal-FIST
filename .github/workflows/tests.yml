@@ -41,7 +41,7 @@ jobs:
 
     steps:
     - name: Download build artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: build-artifact
 
@@ -105,7 +105,7 @@ jobs:
 
     steps:
       - name: Download build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: build-artifact-2
 
