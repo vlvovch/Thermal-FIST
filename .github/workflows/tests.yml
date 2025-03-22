@@ -43,7 +43,7 @@ jobs:
     - name: Download build artifact
       uses: actions/download-artifact@v4
       with:
-        name: build-artifact
+        name: ${{ matrix.os }}-${{ matrix.qts }}-build-artifact
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -107,7 +107,7 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-artifact-2
+          name: cxx-${{ matrix.cxxs }}-build-artifact-2
 
       - name: Test
         working-directory: ${{github.workspace}}/build
