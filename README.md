@@ -59,7 +59,7 @@ can be done in GUI. Using the GUI can therefore be a good starting point.
 
 
 <p align="center">
-  <img src="src/gui/QtThermalFIST/images/QtThermalFIST.png" alt="QtThermalFIST"/>
+  <img src="src/gui/QtThermalFIST/images/QtThermalFIST.jpg" alt="QtThermalFIST"/>
 </p>
 
 
