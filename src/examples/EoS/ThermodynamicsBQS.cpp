@@ -67,11 +67,11 @@ void ReadParameterRangeFromFile(const std::string &filename)
 // Calculates the HRG model equation of state properties
 // for a given range of T, muB, muQ, muS
 // Usage: ThermodynamicsBQS <param_range_file> <outputfile> <a> <b>
-// <a> -- parameter a for the QvdW model (GeV fm^3)
-// <b> -- parameter b for the QvdW model (fm^3)
-// useCS -- Use real gas model and Carnahan-Starling EV
-// <param_range_file> -- file with the parameter range
-// <outputfile> -- file to write the results to
+// * <a> -- parameter a for the QvdW model (GeV fm^3)
+// * <b> -- parameter b for the QvdW model (fm^3)
+// * useCS -- Use real gas model and Carnahan-Starling EV
+// * <param_range_file> -- file with the parameter range
+// * <outputfile> -- file to write the results to
 int main(int argc, char *argv[])
 {
   // van der Waals attraction
@@ -304,8 +304,8 @@ int main(int argc, char *argv[])
  * ~~~
  * 
  * Where:
- * - \<a\> is the parameter a for the QvdW model (GeV fm^3)
- * - \<b\> is the parameter b for the QvdW model (fm^3)
- * - \<param_range_file\> is the file with the parameter range
- * - \<outputfile\> is the file to write the results to
+ * - <a> is the parameter a for the QvdW model (GeV fm^3)
+ * - <b> is the parameter b for the QvdW model (fm^3)
+ * - <param_range_file> is the file with the parameter range
+ * - <outputfile> is the file to write the results to
  */

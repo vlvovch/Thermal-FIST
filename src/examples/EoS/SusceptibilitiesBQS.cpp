@@ -66,11 +66,11 @@ void ReadParameterRangeFromFile(const std::string &filename)
 // Calculates the HRG model 2nd order susceptibilities and their temperature derivatives
 // for a given range of T, muB, muQ, muS
 // Usage: SusceptibilitiesBQS <param_range_file> <outputfile> <a> <b> <useRG>
-// <a> -- parameter a for the QvdW model (GeV fm^3)
-// <b> -- parameter b for the QvdW model (fm^3)
-// <useRG> -- Use real gas model and Carnahan-Starling EV
-// <param_range_file> -- file with the parameter range
-// <outputfile> -- file to write the results to
+// * <a> -- parameter a for the QvdW model (GeV fm^3)
+// * <b> -- parameter b for the QvdW model (fm^3)
+// * <useRG> -- Use real gas model and Carnahan-Starling EV
+// * <param_range_file> -- file with the parameter range
+// * <outputfile> -- file to write the results to
 int main(int argc, char *argv[])
 {
   // van der Waals attraction
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
  *   1. Sets the temperature and chemical potentials.
  *   2. Calculates the following quantities:
  *      - Susceptibilities \f$\chi_2^B\f$, \f$\chi_2^Q\f$, \f$\chi_2^S\f$, \f$\chi_{11}^{BQ}\f$, \f$\chi_{11}^{BS}\f$, \f$\chi_{11}^{QS}\f$
- *      - Temperature derivatives of susceptibilities \f$T \chi_2^{B'}\f$, \f$T \chi_2^{Q'}\f$, \f$T \chi_2^{S'}\f$, \f$T \chi_{11}^{BQ'}\f$, \f$T \chi_{11}^{BS'}\f$, \f$T \chi_{11}^{QS'}\f$
+ *      - Temperature derivatives of susceptibilities \f$T \chi_2^B'\f$, \f$T \chi_2^Q'\f$, \f$T \chi_2^S'\f$, \f$T \chi_{11}^{BQ}'\f$, \f$T \chi_{11}^{BS}'\f$, \f$T \chi_{11}^{QS}'\f$
  *      - Adiabatic \f$c_s^2\f$ and isothermal \f$c_T^2\f$ squared sound velocity
  *      - Heat capacity \f$c_V/T^3\f$
  * 
@@ -335,10 +335,10 @@ int main(int argc, char *argv[])
  * ~~~
  * 
  * Where:
- * - \<a\> is the parameter a for the QvdW model (GeV fm^3)
- * - \<b\> is the parameter b for the QvdW model (fm^3)
- * - \<useRG\> is a flag to use the real gas model and Carnahan-Starling EV
- * - \<param_range_file\> is the file with the parameter range
- * - \<cT2flag\> is a flag to compute the isothermal speed of sound squared
- * - \<outputfile\> is the file to write the results to
+ * - <a> is the parameter a for the QvdW model (GeV fm^3)
+ * - <b> is the parameter b for the QvdW model (fm^3)
+ * - <useRG> is a flag to use the real gas model and Carnahan-Starling EV
+ * - <param_range_file> is the file with the parameter range
+ * - <cT2flag> is a flag to compute the isothermal speed of sound squared
+ * - <outputfile> is the file to write the results to
  */
