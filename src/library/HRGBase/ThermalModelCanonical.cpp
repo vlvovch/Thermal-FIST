@@ -360,7 +360,7 @@ Obtained: %lf\n\
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-          int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
           if (ind < static_cast<int>(Nsx.size())) {
             if (!UsePartialChemicalEquilibrium()) {
               double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.) / static_cast<double>(n); // TODO: Check
@@ -603,7 +603,7 @@ Obtained: %lf\n\
     else if (tpart.Statistics() == 0
       || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
     {
-      int ind = m_QNMap[QuantumNumbers(m_BCE*tpart.BaryonCharge(), m_QCE*tpart.ElectricCharge(), m_SCE*tpart.Strangeness(), m_CCE*tpart.Charm())];
+      int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
       int ind2 = m_QNMap[QuantumNumbers(m_BCE * 2 * tpart.BaryonCharge(), m_QCE * 2 * tpart.ElectricCharge(), m_SCE * 2 * tpart.Strangeness(), m_CCE * 2 * tpart.Charm())];
 
       ret1 = 1.;
@@ -626,8 +626,8 @@ Obtained: %lf\n\
         }
 
         for (int n2 = 1; n2 <= tpart.ClusterExpansionOrder(); ++n2) {
-          if (m_QNMap.count(QuantumNumbers(m_BCE*(n + n2)*tpart.BaryonCharge(), m_QCE*(n + n2)*tpart.ElectricCharge(), m_SCE*(n + n2)*tpart.Strangeness(), m_CCE*(n + n2)*tpart.Charm())) != 0) {
-            int ind2 = m_QNMap[QuantumNumbers(m_BCE*(n + n2)*tpart.BaryonCharge(), m_QCE*(n + n2)*tpart.ElectricCharge(), m_SCE*(n + n2)*tpart.Strangeness(), m_CCE*(n + n2)*tpart.Charm())];
+          if (m_QNMap.count(QuantumNumbers(m_BCE * (n + n2)*tpart.BaryonCharge(), m_QCE * (n + n2)*tpart.ElectricCharge(), m_SCE * (n + n2)*tpart.Strangeness(), m_CCE * (n + n2)*tpart.Charm())) != 0) {
+            int ind2 = m_QNMap[QuantumNumbers(m_BCE * (n + n2)*tpart.BaryonCharge(), m_QCE * (n + n2)*tpart.ElectricCharge(), m_SCE * (n + n2)*tpart.Strangeness(), m_CCE * (n + n2)*tpart.Charm())];
             if (ind < static_cast<int>(m_Corr.size()) && ind2 < static_cast<int>(m_Corr.size()))
               ret2 += densityClusterN * m_Corr[ind2] * m_Parameters.SVc * tpart.DensityCluster(n2, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[part]);
           }
@@ -666,7 +666,7 @@ Obtained: %lf\n\
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-          int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
 
           double densityClusterN = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
 
@@ -768,14 +768,14 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
 
           if (ind < static_cast<int>(m_Corr.size()))
             ret += m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
         }
         else {
           for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-            int ind = m_QNMap[QuantumNumbers(n*tpart.BaryonCharge(), n*tpart.ElectricCharge(), n*tpart.Strangeness(), n*tpart.Charm())];
+            int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
             if (ind < static_cast<int>(m_Corr.size()))
               ret += m_Corr[ind] * tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
           }
@@ -798,14 +798,14 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
 
           if (ind < static_cast<int>(m_Corr.size()))
             ret += m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
         }
         else {
           for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-            int ind = m_QNMap[QuantumNumbers(n*tpart.BaryonCharge(), n*tpart.ElectricCharge(), n*tpart.Strangeness(), n*tpart.Charm())];
+            int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
 
             if (ind < static_cast<int>(m_Corr.size()))
               ret += m_Corr[ind] * tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
