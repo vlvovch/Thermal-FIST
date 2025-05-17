@@ -198,6 +198,10 @@ namespace thermalfist {
 
         if (ind < static_cast<int>(m_Corr.size()))
           m_densities[i] = m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
+        else {
+          cout << "ThermalModelCanonical::CalculatePrimordialDensities: Warning! No canonical partition function for this particle!" << endl;
+          cout << "B = " << m_BCE * tpart.BaryonCharge() << "\tQ = " << m_QCE * tpart.ElectricCharge() << "\tS = " << m_SCE * tpart.Strangeness() << "\tC = " << m_CCE * tpart.Charm() << endl;
+        }
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
