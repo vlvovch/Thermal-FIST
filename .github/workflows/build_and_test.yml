@@ -17,12 +17,12 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            os: [ubuntu-latest, ubuntu-20.04, macos-13, macos-latest, windows-latest]
+            os: [ubuntu-latest, ubuntu-22.04, macos-13, macos-latest, windows-latest]
             qts: [6.2.0, 5.15.2]
             include:
               - os: ubuntu-latest
                 prefix: bin/examples/
-              - os: ubuntu-20.04
+              - os: ubuntu-22.04
                 prefix: bin/examples/
               - os: macos-13
                 prefix: bin/examples/
