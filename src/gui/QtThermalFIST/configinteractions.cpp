@@ -480,12 +480,12 @@ QvdWParameters QvdWParameters::GetParameters(ThermalParticleSystem* TPS, const T
           ret.m_aij[i][j] = config->vdWaBantiB;
         }
         else if (B1 == 0 && B2 == 0) {
-          ret.m_bij[i][j] = config->vdWbMB;
-          ret.m_aij[i][j] = config->vdWaMB;
-        }
-        else {
           ret.m_bij[i][j] = config->vdWbMM;
           ret.m_aij[i][j] = config->vdWaMM;
+        }
+        else {
+          ret.m_bij[i][j] = config->vdWbMB;
+          ret.m_aij[i][j] = config->vdWaMB;
         }
       }
     }
