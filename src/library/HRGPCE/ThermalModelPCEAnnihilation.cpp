@@ -1,6 +1,7 @@
 #include "HRGPCE/ThermalModelPCEAnnihilation.h"
 
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -45,8 +46,7 @@ namespace thermalfist {
         long long tpdgid = ThermalModel()->TPS()->Particle(i).PdgId();
         int idanti = ThermalModel()->TPS()->PdgToId(-tpdgid);
         if (idanti == -1) {
-          printf("ThermalModelPCEAnnihilation: No antibaryon with pdg code %lld exists in the list!", -tpdgid);
-          exit(1); // No antibaryon in the list!
+          throw std::runtime_error("ThermalModelPCEAnnihilation: No antibaryon with pdg code " + std::to_string(-tpdgid) + " exists in the list!");
         }
         m_StableAnnihilateAnti.push_back(idanti);
       }
@@ -66,10 +66,7 @@ namespace thermalfist {
   void ThermalModelPCEAnnihilation::CalculatePCE(double param, PCEMode mode)
   {
     if (!m_ChemicalFreezeoutSet) {
-      printf("**ERROR** ThermalModelPCE::CalculatePCE:"
-        "Tried to make a PCE calculation without setting the chemical freze-out!"
-        "Call ThermalModelPCE::SetChemicalFreezeout() first.\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelPCE::CalculatePCE: Tried to make a PCE calculation without setting the chemical freze-out! Call ThermalModelPCE::SetChemicalFreezeout() first.");
     }
 
     if (!m_StabilityFlagsSet) {
@@ -402,4 +399,3 @@ namespace thermalfist {
   }
 
 } // namespace thermalfist
-

@@ -56,7 +56,7 @@ namespace thermalfist {
      * \brief Construct a new ThermalModelBase object.
      * 
      * \param TPS A pointer to the ThermalParticleSystem object containing the particle list
-     * \param params ThermalModelParameters object with current thermal parameters
+     * \param params ThermalModelParameters object with current thermal parameters (default is ThermalModelParameters())
      */
     ThermalModelBase(ThermalParticleSystem *TPS, const ThermalModelParameters& params = ThermalModelParameters());
 
@@ -616,6 +616,36 @@ namespace thermalfist {
       bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
 
     /**
+     * \brief The procedure which calculates the chemical potentials
+     *        \f$ \mu_B,\,\mu_Q,\,\mu_S,\,\mu_C \f$ which reproduce
+     *        the specified baryon, electric, strangeness, and charm
+     *        densities.
+     * 
+     * Uses the Broyden's method to determine
+     * the chemical potentials.
+     * The resulting chemical potentials are
+     * stored in Parameters().
+     * 
+     * \param rhoB The total desired net baryon charge of the system.
+     * \param rhoQ The total desired electric charge of the system.
+     * \param rhoS The total desired net strangeness of the system.
+     * \param rhoC The total desired net charm of the system.
+     * \param muBinit The initial guess for the baryon chemical potential.
+     * \param muQinit The initial guess for the electric chemical potential.
+     * \param muSinit The initial guess for the strangeness chemical potential.
+     * \param muCinit The initial guess for the charm chemical potential.
+     * \param ConstrMuB Whether the baryon chemical potential should be constrained.
+     * \param ConstrMuQ Whether the electric chemical potential should be constrained.
+     * \param ConstrMuS Whether the strangeness chemical potential should be constrained.
+     * \param ConstrMuC Whether the charm chemical potential should be constrained.
+     *
+     * \return true is chemical potentials were contrained successfully, false otherwise
+     */
+    virtual bool FixChemicalPotentialsThroughDensities(double rhoB = 0., double rhoQ = 0., double rhoS = 0., double rhoC = 0.,
+      double muBinit = 0., double muQinit = 0., double muSinit = 0., double muCinit = 0.,
+      bool ConstrMuB = true, bool ConstrMuQ = true, bool ConstrMuS = true, bool ConstrMuC = true);
+
+    /**
     * \brief Calculates the primordial
     *        densities of all species.
     *
@@ -807,6 +837,18 @@ namespace thermalfist {
      */
     virtual double FinalNetParticleChargeSusceptibilityByPdg(long long id1, ConservedCharge::Name chg);
 
+
+    /**
+     * \brief A 2nd order susceptibility of conserved charges
+     * 
+     * \f$ \chi_{11}^{c_i c_j} \f$
+     * 
+     * \param i First conserved charge
+     * \param j Second conserved charge
+     * \return  Susceptibility \f$ d P^2 / d \mu_i \mu_j \f$ (GeV\f$^{-2}\f$)
+     */
+    virtual double SusceptibilityDimensionfull(ConservedCharge::Name i, ConservedCharge::Name j) const;
+
     /**
      * \brief Calculates the conserved charges susceptibility matrix.
      *        
@@ -927,8 +969,53 @@ namespace thermalfist {
     /// Absolute charm quark content density (fm\f$^{-3}\f$)
     double AbsoluteCharmDensity() { return CalculateAbsoluteCharmDensity(); }
 
-    /// Specific heat at constant chemical potentials, cV = (de/dT)_\mu
-    double SpecificHeat() { return CalculateSpecificHeat(); }
+    /// Specific heat at constant chemical potentials, cV = T * (ds/dT)_\mu
+    double SpecificHeatChem() { return CalculateSpecificHeatChem(); }
+
+    /**
+     * \brief Calculates the adiabatic speed of sound squared (cs^2) in the thermal model.
+     *
+     * This function computes the adiabatic speed of sound squared based on the provided
+     * constant for baryon specific entropy (s/n_B), electric specific entropy (s/n_Q),
+     * strangeness specific entropy (s/n_S), and charm specific entropy (s/n_C).
+     *
+     * \param rhoBconst Boolean flag to indicate if baryon specific entropy (s/n_B) is constant. Default is true.
+     * \param rhoQconst Boolean flag to indicate if electric specific entropy (s/n_Q) is constant. Default is true.
+     * \param rhoSconst Boolean flag to indicate if strangeness specific entropy (s/n_S) is constant. Default is true.
+     * \param rhoCconst Boolean flag to indicate if charm specific entropy (s/n_C) is constant. Default is true.
+     * \return The calculated speed of sound squared (cs^2).
+     */
+    double cs2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
+      return CalculateAdiabaticSpeedOfSoundSquared(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+    }
+
+    /**
+     * \brief Calculates the isothermal speed of sound squared (cs^2) in the thermal model.
+     *
+     * This function computes the isothermal speed of sound squared based on the provided
+     * while keeping ratios of conserved charge densities constant.
+     * At least one of the densities must be set as conserved to ensure a valid calculation.
+     *
+     * \param rhoBconst Boolean flag to indicate if baryon number is conserved.
+     * \param rhoQconst Boolean flag to indicate if electric charge is conserved.
+     * \param rhoSconst Boolean flag to indicate if strangeness is conserved.
+     * \param rhoCconst Boolean flag to indicate if charm is conserved.
+     * \return The calculated speed of sound squared (cT^2).
+     */
+    double cT2(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
+      return CalculateIsothermalSpeedOfSoundSquared(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+    }
+
+    /**
+     * \brief Computes the heat capacity c_V at constant volume and densities (fm^-3)
+     * 
+     * \f$ c_V = T \left( \frac{\partial s}{\partial T} \right)_{\{n\}} \f$
+     *
+     * \return The calculated heat capacity at constant volume and densities (c_V) in fm^-3.
+     */
+    double HeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
+      return CalculateHeatCapacity(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+    }
 
     //@{
     /// Implementation of the equation of state functions
@@ -946,7 +1033,11 @@ namespace thermalfist {
     virtual double CalculateAbsoluteCharmDensity();
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
-    virtual double CalculateSpecificHeat() = 0;
+    virtual double CalculateEnergyDensityDerivativeT() = 0;
+    virtual double CalculateSpecificHeatChem();
+    virtual double CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
+    virtual double CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
+    virtual double CalculateHeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     //@}
 
     /// Computes the density of the auxiliary ArbitraryCharge()
@@ -982,9 +1073,8 @@ namespace thermalfist {
     virtual bool   IsLastSolutionOK() const { return m_LastCalculationSuccessFlag; }
 
     /**
-     * \brief Same as GetDensity(int,Feeddown::Type)
-     *
-     * \deprecated
+     * \brief Returns the temperature derivative of the particle number density
+     *        for particle species i. Units: fm\f$^{-3}\f$ GeV\f$^{-1}\f$
      */
     double GetdndT(int i) const;
 
@@ -1064,6 +1154,10 @@ namespace thermalfist {
     /// Whether fluctuations were calculated with
     /// the CalculateFluctuations() method
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
+
+    /// Whether fluctuations were calculated with
+    /// the CalculateFluctuations() method
+    bool IsSusceptibilitiesCalculated() const { return m_SusceptibilitiesCalculated; }
 
     /// Whether temperature derivatives were calculated with
     /// the CalculateTemperatureDerivatives() method
@@ -1275,10 +1369,29 @@ namespace thermalfist {
 
     const IdealGasFunctions::IdealGasFunctionsExtraConfig& GetIdealGasFunctionsExtraConfig() const { return m_IGFExtraConfig; }
 
+
     /**
-     * \brief Sets the value of magnetic field and the number of Landau levels to include
+     * \brief Sets the value of magnetic field and the number of Landau levels to include.
+     * 
+     * \param B The magnetic field strength.
+     * \param lmax The number of Landau levels to include.
+     * 
+     **/
+     void SetMagneticField(double B = 0.0, int lmax = -1);
+    /**
+     * \brief Recomputes the thresholds for particle production due to the presence of a magnetic field.
+     * 
+     * This method should be called whenever the magnetic field is changed to update the thresholds accordingly.
      */
-    void SetMagneticField(double B = 0.0, int lmax = -1);
+    void RecomputeThresholdsDueToMagneticField();
+
+    /**
+     * \brief Clears the magnetic field.
+     * 
+     * This method resets the magnetic field to its default value.
+     * It should be called when the magnetic field effects are no longer needed.
+     */
+    std::vector<double> PartialPressures();
 
     /// \brief Clears the magnetic field
     void ClearMagneticField();
@@ -1296,6 +1409,7 @@ namespace thermalfist {
     bool m_Calculated;
     bool m_FeeddownCalculated;
     bool m_FluctuationsCalculated;
+    bool m_SusceptibilitiesCalculated;
     bool m_GCECalculated;
     bool m_UseWidth;
     bool m_NormBratio;

@@ -23,6 +23,7 @@ HRGBase/ThermalParticleSystem.cpp
 HRGBase/Utility.cpp
 HRGBase/xMath.cpp
 HRGBase/Susceptibilities.cpp
+HRGBase/ExtraParticles.cpp
 )
 
 source_group("HRGBase\\Source Files" FILES ${SRCS_HRGBase})
@@ -42,8 +43,10 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalModelCanonicalStrangeness.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticle.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/ThermalParticleSystem.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/xMath.tcc
 ${PROJECT_SOURCE_DIR}/include/HRGBase/Utility.h
 ${PROJECT_SOURCE_DIR}/include/HRGBase/Susceptibilities.h
+${PROJECT_SOURCE_DIR}/include/HRGBase/ExtraParticles.h
 )	  
 
 source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})
@@ -228,7 +231,8 @@ set_property(TARGET ThermalFIST PROPERTY FOLDER "libraries")
 target_include_directories(ThermalFIST PUBLIC 
 "${PROJECT_SOURCE_DIR}/include" 
 "${PROJECT_BINARY_DIR}/include"
-"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister")
+"${PROJECT_SOURCE_DIR}/thirdparty/MersenneTwister"
+"${EIGEN3_INCLUDE_DIR}")
 
 #install (TARGETS ThermalFIST
 #         ARCHIVE DESTINATION ${PROJECT_BINARY_DIR}/lib)

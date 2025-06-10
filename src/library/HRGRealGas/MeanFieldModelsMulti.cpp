@@ -1,6 +1,7 @@
 #include "HRGRealGas/MeanFieldModelsMulti.h"
 #include <cmath>
 #include <map>
+#include <cstdio>
 
 namespace thermalfist {
 
@@ -241,10 +242,8 @@ namespace thermalfist {
 	void MeanFieldModelMultiBase::ComputeComponents()
 	{
 		m_components = std::vector<int>(m_N, 0);
-		for (int i = 0; i < m_N; ++i)
-			m_components[i] = i;
-		m_componentsNumber = m_N;
-		m_componentsFrom = m_components;
+		m_componentsNumber = 1;
+		m_componentsFrom = std::vector<int>(1, 0);
 	}
 
 } // namespace thermalfist

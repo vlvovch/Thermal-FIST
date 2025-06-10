@@ -60,10 +60,6 @@ namespace thermalfist {
       << std::endl;
     fout << "# Only particle pairs with a non-zero eigenvolume parameter are listed here"
       << std::endl;
-    /*fout << "#" << std::setw(14) << "pdg_i"
-      << std::setw(15) << "pdg_j"
-      << std::setw(15) << "b_{ij}[fm^3]"
-      << std::endl;*/
     fout << "#" << " " << "pdg_i"
       << " " << "pdg_j"
       << " " << "b_{ij}[fm^3]"
@@ -95,6 +91,17 @@ namespace thermalfist {
       printf("**WARNING** ThermalModelEVCrossterms::SetMultipleSolutionsMode(): Trying to search for multiple solutions in ThermalModelEVCrossterms()! There is no need.\n");
     }
     m_SearchMultipleSolutions = false;
+  }
+
+
+  void SetEVHRGInteractionParameters(ThermalModelBase *model, double b) {
+    auto vdWb = GetBaryonBaryonInteractionMatrix(model->TPS(), b);
+    // Iterate over all hadron pairs
+    for (int i1 = 0; i1 < model->TPS()->Particles().size(); ++i1) {
+      for (int i2 = 0; i2 < model->TPS()->Particles().size(); ++i2) {
+        model->SetRepulsion(i1, i2, vdWb[i1][i2]);
+      }
+    }
   }
 
 } // namespace thermalfist

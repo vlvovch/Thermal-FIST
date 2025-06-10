@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.21.1 FATAL_ERROR)
 
 # Maps to Visual Studio solution file (Tutorial.sln)
 # The solution will have all targets (exe, lib, dll) 
@@ -17,8 +17,36 @@ configure_file (
   "${PROJECT_BINARY_DIR}/include/ThermalFISTConfig.h"
   )
 
-set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (CMAKE_CXX_STANDARD)
+	message(STATUS "Using C++${CMAKE_CXX_STANDARD}")
+	SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+	SET(CXX_COMPILER_FLAGS_CHECKED TRUE)
+endif()
+
+if (NOT CXX_COMPILER_FLAGS_CHECKED)
+	include(CheckCXXCompilerFlag)
+	CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+	CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+	CHECK_CXX_COMPILER_FLAG("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
+	if(COMPILER_SUPPORTS_CXX17)
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+		set(CMAKE_CXX_STANDARD 17)
+	elseif(COMPILER_SUPPORTS_CXX14 OR COMPILER_SUPPORTS_CXX1Y)
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+		set(CMAKE_CXX_STANDARD 14)
+	else()
+		# message(WARNING "The compiler ${CMAKE_CXX_COMPILER} has no C++14 or C++17 support. Please use a different C++ compiler.")
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+		set(CMAKE_CXX_STANDARD 11 REQUIRED)
+	# elseif(COMPILER_SUPPORTS_CXX1Y)
+	# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+	# 	set(CMAKE_CXX_STANDARD 14)
+	endif()
+	SET(CXX_COMPILER_FLAGS_CHECKED TRUE)
+#    SET(CXX_COMPILER_FLAGS_CHECKED TRUE CACHE BOOL "Checked CXX compiler flags" FORCE)
+endif()
 
 # Turn on the ability to create folders to organize projects (.vcproj)
 # It creates "CMakePredefinedTargets" folder by default and adds CMake
@@ -32,7 +60,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if (NOT EIGEN3_INCLUDE_DIR)
-   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Eigen3" CACHE STRING
+   set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/eigen-3.4.0" CACHE STRING
       "Choose the location (include directory) of the Eigen3 library to use."
       FORCE)
 endif(NOT EIGEN3_INCLUDE_DIR)
@@ -54,6 +82,7 @@ endif(CMAKE_BUILD_TYPE STREQUAL "" AND NOT CMAKE_CXX_FLAGS MATCHES "-O[123]")
 #endif()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pedantic")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+
 # Here it is setting the Visual Studio warning level to 4
 if(MSVC)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -64,6 +93,9 @@ endif(MSVC)
 
 option (STANDALONE_MINUIT 
         "Build Minuit2 within project instead of linking one from ROOT distribution" OFF) 
+
+option (USE_QT5 
+		"Use Qt5 for GUI instead of Qt6" OFF) 
 
 string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
 if(result)
@@ -146,37 +178,16 @@ option (INCLUDE_TESTS
 
 if(INCLUDE_TESTS)
 
-	# Download and unpack googletest at configure time
-	configure_file(CMakeLists.txt.in ${PROJECT_BINARY_DIR}/googletest-download/CMakeLists.txt)
-	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	  RESULT_VARIABLE result
-	  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/googletest-download )
-	if(result)
-	  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-	endif()
-	execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	  RESULT_VARIABLE result
-	  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/googletest-download )
-	if(result)
-	  message(FATAL_ERROR "Build step for googletest failed: ${result}")
-	endif()
-
-	# Prevent overriding the parent project's compiler/linker
-	# settings on Windows
+	# Fetch GoogleTest
+	include(FetchContent)
+	FetchContent_Declare(
+			googletest
+			# URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+			URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip # v1.12.1 (last version to support C++11)
+	)
+	# For Windows: Prevent overriding the parent project's compiler/linker settings
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-	# Add googletest directly to our build. This defines
-	# the gtest and gtest_main targets.
-	add_subdirectory(${PROJECT_BINARY_DIR}/googletest-src
-					 ${PROJECT_BINARY_DIR}/googletest-build
-					 EXCLUDE_FROM_ALL)
-
-	# The gtest/gtest_main targets carry header search path
-	# dependencies automatically when using CMake 2.8.11 or
-	# later. Otherwise we have to add them here ourselves.
-	if (CMAKE_VERSION VERSION_LESS 2.8.11)
-	  include_directories("${gtest_SOURCE_DIR}/include")
-	endif()
+	FetchContent_MakeAvailable(googletest)
 
 	enable_testing()
 

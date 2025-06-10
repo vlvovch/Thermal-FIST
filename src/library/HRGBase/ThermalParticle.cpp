@@ -76,7 +76,7 @@ namespace thermalfist {
   {
     m_Threshold = threshold;
     if (m_Threshold < 0.0) {
-      printf("**WARNING** Trying to set negative decay threshold for %s, setting to zero instead", m_Name.c_str());
+      std::cerr << "**WARNING** Trying to set negative decay threshold for " << m_Name << ", setting to zero instead" << std::endl;
     }
     if (m_Width != 0.0) FillCoefficients();
   }
@@ -85,7 +85,7 @@ namespace thermalfist {
   {
     m_ThresholdDynamical = threshold;
     if (m_ThresholdDynamical < 0.0) {
-      printf("**WARNING** Trying to set negative dynamical decay threshold for %s, setting to zero instead", m_Name.c_str());
+      std::cerr << "**WARNING** Trying to set negative dynamical decay threshold for " << m_Name << ", setting to zero instead" << std::endl;
     }
   }
 
@@ -140,21 +140,23 @@ namespace thermalfist {
   void ThermalParticle::ReadDecays(string filename) {
     m_Decays.resize(0);
     ifstream fin(filename.c_str());
-    if (fin.is_open()) {
-      char cc[400];
-      double tmpbr;
-      while (fin >> tmpbr) {
-        ParticleDecayChannel decay;
-        decay.mBratio = tmpbr / 100.;
-        fin.getline(cc, 350);
-        stringstream ss;
-        ss << cc;
-        int tmpid;
-        while (ss >> tmpid) {
-          decay.mDaughters.push_back(tmpid);
-        }
-        m_Decays.push_back(decay);
+    if (!fin.is_open()) {
+      std::cerr << "Error: Could not open file " << filename << endl;
+      return;
+    }
+    char cc[400];
+    double tmpbr;
+    while (fin >> tmpbr) {
+      ParticleDecayChannel decay;
+      decay.mBratio = tmpbr / 100.;
+      fin.getline(cc, 350);
+      stringstream ss;
+      ss << cc;
+      int tmpid;
+      while (ss >> tmpid) {
+        decay.mDaughters.push_back(tmpid);
       }
+      m_Decays.push_back(decay);
     }
   }
 
@@ -489,23 +491,6 @@ namespace thermalfist {
     }
 
 
-    // // Output to file for debugging
-    // {
-    //   char cc[300];
-    //   sprintf(cc, "%d_width.dat", PdgId());
-    //   FILE *f = fopen(cc, "w");
-
-    //   for (int j = 0; j < m_xlegpdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_xlegpdyn[j], m_vallegpdyn[j] / tC);
-
-    //   for (int j = 0; j < m_xlegdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_xlegdyn[j], m_vallegdyn[j] / tC);
-
-    //   for (int j = 0; j < m_xlagdyn.size(); ++j)
-    //     fprintf(f, "%15lf%15E\n", m_Mass + 2.*m_Width + m_xlagdyn[j] * m_Width, m_vallagdyn[j] / m_Width / tC);
-
-    //   fclose(f);
-    // }
 
   }
 
@@ -513,6 +498,9 @@ namespace thermalfist {
   {
     //if (m_ResonanceWidthIntegrationType != eBW)
     //  return m_Width;
+    if (m_Width / m_Mass < 0.01) {
+     return m_Width;
+    }
 
     double tsumb = 0.0;
     for (size_t i = 0; i < m_Decays.size(); ++i) {
@@ -604,7 +592,6 @@ namespace thermalfist {
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    //if (!useWidth || m_Mass == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
     if (!useWidth || m_Mass == 0.0 || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
     }
@@ -621,7 +608,6 @@ namespace thermalfist {
 
         if (m_ResonanceWidthIntegrationType == FullIntervalWeighted)
           tmp *= m_brweight[i];
-
         double dens = IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, x[i], m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
 
         ret1 += tmp * dens;

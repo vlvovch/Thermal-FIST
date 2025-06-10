@@ -1,6 +1,7 @@
 #include "CosmicEos/EffectiveMassModel.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -25,10 +26,23 @@ namespace thermalfist {
     m_FieldPressure = NULL;
   }
 
-  EffectiveMassModel::EffectiveMassModel(const EffectiveMassModel& other)
+  EffectiveMassModel::EffectiveMassModel(const EffectiveMassModel& other) :
+    GeneralizedDensity(),
+    m_Particle(other.m_Particle), m_FieldPressure(NULL)
   {
-    *this = other;
-    if (other.m_FieldPressure != NULL)
+    m_T = other.m_T;
+    m_Mu = other.m_Mu;
+    m_isSolved = other.m_isSolved;
+    m_isBEC = other.m_isBEC;
+    m_TBEC = other.m_TBEC;
+    m_Meff = other.m_Meff;
+    m_Pressure = other.m_Pressure;
+    m_Density = other.m_Density;
+    m_DensityScalar = other.m_DensityScalar;
+    m_EntropyDensity = other.m_EntropyDensity;
+    m_Chi2 = other.m_Chi2;
+    
+    // Use previous value of TBEC as starting guess
       m_FieldPressure = other.m_FieldPressure->clone();
   }
 
@@ -99,7 +113,7 @@ namespace thermalfist {
         if (meffinit < 0.)
           meffinit = m_Meff;
 
-        if (meffinit != meffinit)
+        if (std::isnan(meffinit))
           meffinit = m_Particle.Mass();
 
         BroydenEquations* eqs;
@@ -124,7 +138,6 @@ namespace thermalfist {
       else {
         m_Meff = m_Mu;
       }
-      cout << m_TBEC << " " << m_Meff << " " << m_Mu << "\n";
       m_isSolved = true;
     }
   }
@@ -255,8 +268,7 @@ namespace thermalfist {
       return Quantity(IdealGasFunctions::chi4difull, T, mu);
     }
 
-    printf("**ERROR** EffectiveMassModel::Quantity(): Calculate %d quantity is not implemented!", static_cast<int>(quantity));
-    exit(1);
+    throw std::runtime_error("**ERROR** EffectiveMassModel::Quantity(): Calculate " + std::to_string(static_cast<int>(quantity)) + " quantity is not implemented!");
 
     return 0.0;
   }
@@ -272,7 +284,6 @@ namespace thermalfist {
 
   std::vector<double> EffectiveMassModel::BroydenEquationsEMMMeff::Equations(const std::vector<double>& x)
   {
-    //cout << x[0] << " ";
     double ret = m_EMM->m_FieldPressure->Dpf(x[0]) /
       IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures, m_EMM->m_Particle.Statistics(), m_EMM->m_T, m_EMM->m_Mu, x[0], m_EMM->m_Particle.Degeneracy())
       - 1.;

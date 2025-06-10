@@ -86,7 +86,7 @@ namespace thermalfist {
     virtual double CalculateBaryonMatterEntropyDensity() { return 0.; }
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
 
-    virtual double CalculateSpecificHeat() { exit(1); return 0.; } // Not implemented
+    virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
 
     // TODO properly with excluded volume
     virtual double ParticleScaledVariance(int /*part*/) { return 1.; }

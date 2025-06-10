@@ -48,7 +48,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
   labelVersion->setFont(fontDefault);
   layout->addWidget(labelVersion, 0, Qt::AlignCenter);
   layout->addSpacing(20);
-  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2023 Volodymyr Vovchenko"));
+  QLabel *labelCC = new QLabel(tr("Copyright (c) 2014-2025 Volodymyr Vovchenko"));
   labelCC->setFont(fontDefault);
   layout->addWidget(labelCC, 0, Qt::AlignCenter);
   QLabel *labelLic = new QLabel(tr("GNU General Public License (GPLv3 or later)"));
@@ -116,6 +116,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
   QHBoxLayout *laySupported = new QHBoxLayout;
   laySupported->setAlignment(Qt::AlignCenter);
+
+  QPixmap logoUH(":/images/uh_red.png");
+  QLabel *labellogoUH = new QLabel;
+  labellogoUH->setPixmap(logoUH.scaledToHeight(80, Qt::SmoothTransformation));
+
   QPixmap logoFIAS(":/images/fias.png");
   QLabel *labellogoFIAS = new QLabel;
   labellogoFIAS->setPixmap(logoFIAS.scaledToHeight(60, Qt::SmoothTransformation));
@@ -128,6 +133,8 @@ AboutDialog::AboutDialog(QWidget *parent) :
   QLabel *labellogoKnu = new QLabel;
   labellogoKnu->setPixmap(logoKNU.scaledToHeight(80, Qt::SmoothTransformation));
 
+  laySupported->addWidget(labellogoUH);
+  laySupported->addSpacing(70);
   laySupported->addWidget(labellogoGoethe);
   laySupported->addSpacing(70);
   laySupported->addWidget(labellogoFIAS);

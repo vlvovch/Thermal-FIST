@@ -19,6 +19,13 @@
 
 namespace thermalfist {
 
+  /**
+   * \brief Converts a value to a string.
+   * 
+   * \tparam T Type of the value to convert
+   * \param value The value to convert to a string
+   * \return std::string The string representation of the value
+   */
   template <typename T>
   std::string to_string_fix(T value)
   {
@@ -32,10 +39,18 @@ namespace thermalfist {
     return os.str();
   }
 
-  /// Lorentz boost
+  /**
+   * \brief Performs a Lorentz boost on a four-vector.
+   * 
+   * \param fourvector The four-vector to boost (E, px, py, pz)
+   * \param vx The x-component of the boost velocity (in units of c)
+   * \param vy The y-component of the boost velocity (in units of c)
+   * \param vz The z-component of the boost velocity (in units of c)
+   * \return std::vector<double> The boosted four-vector
+   */
   std::vector<double> LorentzBoost(const std::vector<double>& fourvector, double vx, double vy, double vz);
 
-  /// \brief Structure containing the thermal event generator configuration.
+  /// Structure containing the thermal event generator configuration.
   struct EventGeneratorConfiguration {
     /// Enumerates the statistical ensembles 
     enum Ensemble { 
@@ -188,13 +203,27 @@ namespace thermalfist {
     virtual SimpleEvent GetEvent(bool PerformDecays = true) const;
 
     /**
+     * \brief Flags for performing decays.
+     *
+     * \param propagateParticles If set to true, samples particle lifetime and
+     * propagates it along the straight line before decay.
+     */
+    struct DecayerFlags {
+      bool propagateParticles;
+      DecayerFlags(bool in_propagateParticles = false) :
+      propagateParticles(in_propagateParticles)
+      {}
+    };
+
+    /**
      * \brief Performs decays of all unstable particles until only stable ones left.
      *
      * \param evtin An event structure contains the list of all the primordial particles.
      * \param TPS   Pointer to the particle list instance that contains all the decay properties.
+     * \param DecayerFlags Extra flags and options
      * \return      A SimpleEvent instance containing all particles after resonance decays.
      */
-    static SimpleEvent PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS);
+    static SimpleEvent PerformDecays(const SimpleEvent& evtin, const ThermalParticleSystem* TPS, const DecayerFlags& decayerFlags = DecayerFlags());
 
     /**
      * \brief The grand-canonical mean yields.

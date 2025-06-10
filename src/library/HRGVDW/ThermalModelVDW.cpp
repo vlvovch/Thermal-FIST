@@ -70,7 +70,7 @@ namespace thermalfist {
 
   void ThermalModelVDW::FillVirial(const vector<double> & ri) {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const vector<double> & ri): size of ri does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
@@ -97,7 +97,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillVirialEV(const vector< vector<double> >& bij)
   {
     if (bij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirialEV(const vector<double> & bij): size of bij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Virial = bij;
@@ -108,7 +108,7 @@ namespace thermalfist {
   void ThermalModelVDW::FillAttraction(const vector<vector<double> >& aij)
   {
     if (aij.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillAttraction(const vector<double> & aij): size of aij does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_Attr = aij;
@@ -879,7 +879,7 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelVDW::CalculateSpecificHeat() {
+  double ThermalModelVDW::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
@@ -991,10 +991,47 @@ namespace thermalfist {
 
 
     // dchi2's
-    if (IsFluctuationsCalculated()) {
+    if (IsSusceptibilitiesCalculated()) {
+      
+      // TODO: Faaster implementation
+      // int NNdmu = m_MapFromdMuStar.size();
+      // vector<vector<double>> dfij = vector<vector<double>>(NNdmu, vector<double>(NNdmu, 0.));
+      // vector<double> fi = vector<double>(NNdmu, 0.);
+      // vector<double> tsum1 = vector<double>(NNdmu, 0.);
+      // vector<double> tsumdndT = vector<double>(NNdmu, 0.);
+
+      // for (int j = 0; j < NN; ++j) {
+      //   for (int i = 0; i < NN; ++i) {
+      //     dfij[m_MapTodMuStar[i]][m_MapTodMuStar[j]] += m_Virial[j][i];
+      //     fi[m_MapTodMuStar[i]] += m_Virial[j][i] * m_densities[j];
+      //   }
+      //   tsum1[m_MapTodMuStar[j]] += (dniddTs[j] + chi2ids[j] * m_dmusdT[j]);
+      //   tsumdndT[m_MapTodMuStar[j]] += m_dndT[j];
+      // }
 
       for (int j = 0; j < NN; ++j) {
+        // vector<double> PrimCorrelkjsum = vector<double>(NNdmu, 0.);
+        // for(int k = 0; k < NN; ++k) {
+        //   PrimCorrelkjsum[m_MapTodMuStar[k]] += m_PrimCorrel[k][j];
+        // }
         for (int i = 0; i < NN; ++i) {
+
+          // Faster calculation, to be checked
+          //  // a1
+          // double a1 = 0.;
+          // for (int k = 0; k < NNdmu; ++k) {
+          //   a1 += PrimCorrelkjsum[m_MapFromdMuStar[k]] * dfij[k][m_MapTodMuStar[i]] * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
+          //   a1 += m_dmusdmu[i][j] * dfij[m_MapTodMuStar[i]][k] * tsumdndT[k] * chi2ids[i];
+          // }
+          // a1 += m_dmusdmu[i][j] * fi[m_MapTodMuStar[i]] * (dchi2idsdT[i] + chi3ids[i] * m_dmusdT[i]);
+          // xVector[i] = a1;
+
+          // // a2
+          // double a2 = 0.;
+          // for (int k = 0; k < NNdmu; ++k) {
+          //   a2 += m_dmusdmu[m_MapFromdMuStar[k]][j] * (-m_Virial[i][m_MapFromdMuStar[k]]) * tsum1[k]; // To be checked
+          // }
+          // xVector[i + NN] = a2;
 
           double fi = 1.;
           vector<double> dfik = vector<double>(NN, 0.);
@@ -1325,6 +1362,19 @@ namespace thermalfist {
     }
     else {
       return Broyden::BroydenSolutionCriterium::IsSolved(x, f, xdelta);
+    }
+  }
+
+  void SetVDWHRGInteractionParameters(ThermalModelBase *model, double a, double b)
+  {
+    auto vdWa = GetBaryonBaryonInteractionMatrix(model->TPS(), a);
+    auto vdWb = GetBaryonBaryonInteractionMatrix(model->TPS(), b);
+    // Iterate over all hadron pairs
+    for (int i1 = 0; i1 < model->TPS()->Particles().size(); ++i1) {
+      for (int i2 = 0; i2 < model->TPS()->Particles().size(); ++i2) {
+        model->SetAttraction(i1, i2, vdWa[i1][i2]);
+        model->SetVirial(i1, i2, vdWb[i1][i2]);
+      }
     }
   }
 

@@ -32,10 +32,10 @@ namespace thermalfist {
   {
   public:
     /// Default constructor. Does nothing.
-    BroydenEquations(void) { }
+    BroydenEquations() = default;
 
     /// Destructor.
-    virtual ~BroydenEquations(void) { }
+    virtual ~BroydenEquations(void) = default;
 
     /// Number of equations.
     virtual int Dimension() const { return m_N; }
@@ -45,7 +45,7 @@ namespace thermalfist {
      * 
      * \param dim The number of equations.
      */
-    void SetDimension(int dim) { m_N = dim; }
+    void SetDimension(int dim);
 
     /**
      * Evaluates the l.h.s. of all the equations
@@ -89,7 +89,7 @@ namespace thermalfist {
     BroydenJacobian(BroydenEquations *eqs = NULL) : m_Equations(eqs), m_dx(EPS) { }
 
     /// Destructor.
-    virtual ~BroydenJacobian(void) { }
+    virtual ~BroydenJacobian(void) = default;
 
     /**
      * \brief Evaluates the Jacobian for given values of the variables.
@@ -150,13 +150,13 @@ namespace thermalfist {
        * of any of the l.h.s. of all the equations for the desired
        * accuracy to be considered achieved.
        */
-      BroydenSolutionCriterium(double maximum_error = TOL) { m_MaximumError = maximum_error; }
+      BroydenSolutionCriterium(double maximum_error = TOL) : m_MaximumError(maximum_error) { }
       
       /**
        * \brief Destroy the BroydenSolutionCriterium object
        * 
        */
-      virtual ~BroydenSolutionCriterium() { }
+      virtual ~BroydenSolutionCriterium() = default;
 
       /**
        * Determines whether the solution with the
@@ -200,7 +200,7 @@ namespace thermalfist {
      * \brief Destroy the Broyden object
      * 
      */
-    virtual ~Broyden(void) { }
+    virtual ~Broyden(void) = default;
 
     /**
      * Solves the system of equations.
@@ -242,7 +242,7 @@ namespace thermalfist {
      * Specify whether to use Newton's method instead of
      * the Broyden's method.
      * In the Newton's method the Jacobian will be re-evaluated
-     * from scrath at each iteration.
+     * from scratch at each iteration.
      * 
      * \param flag Use Newton's method if true, use Broyden's method otherwise.
      */

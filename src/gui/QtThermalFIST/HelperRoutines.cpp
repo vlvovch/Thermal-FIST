@@ -18,7 +18,8 @@ void copyTableViewSelectionToClipBoard(QTableView* view)
   QItemSelectionModel* selection = view->selectionModel();
   QModelIndexList indexes = selection->selectedIndexes();
 
-  qSort(indexes);
+  //qSort(indexes);
+  std::sort(indexes.begin(), indexes.end());
 
   if (indexes.size() < 1)
     return;

@@ -49,7 +49,7 @@ namespace thermalfist {
 
   void ThermalModelEVCrosstermsLegacy::FillVirial(const std::vector<double> & ri) {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size %d of ri does not match number of hadrons %d in the list", m_TAG.c_str(), static_cast<int>(ri.size()), static_cast<int>(m_TPS->Particles().size()));
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const std::vector<double> & ri): size " << static_cast<int>(ri.size()) << " of ri does not match number of hadrons " << static_cast<int>(m_TPS->Particles().size()) << " in the list" << std::endl;
       return;
     }
     m_Virial.resize(m_TPS->Particles().size());
@@ -137,7 +137,7 @@ namespace thermalfist {
   void ThermalModelEVCrosstermsLegacy::SetVirial(int i, int j, double b) {
     if (i >= 0 && i < static_cast<int>(m_Virial.size()) && j >= 0 && j < static_cast<int>(m_Virial.size())) 
       m_Virial[i][j] = b;
-    else printf("**WARNING** Index overflow in ThermalModelEVCrosstermsLegacy::SetVirial\n");
+    else std::cerr << "**WARNING** Index overflow in ThermalModelEVCrosstermsLegacy::SetVirial" << std::endl;
   }
 
   void ThermalModelEVCrosstermsLegacy::ChangeTPS(ThermalParticleSystem *TPS) {
@@ -302,7 +302,7 @@ namespace thermalfist {
           m_densities[i] += solVector[j];
       }
       else {
-        cout << "Could not recover m_densities from partial pressures!\n";
+        std::cerr << "**WARNING** Could not recover m_densities from partial pressures!\n";
       }
       xVector[i] = 0.;
     }
@@ -322,8 +322,7 @@ namespace thermalfist {
         m_TotalEntropyDensity += solVector[i];
     }
     else {
-      cout << "**ERROR** Could not recover m_densities from partial pressures!\n";
-      return;
+      std::cerr << "**WARNING** Could not recover m_densities from partial pressures!\n";
     }
 
     m_Calculated = true;
@@ -365,7 +364,7 @@ namespace thermalfist {
           m_densities[i] += solVector[j];
       }
       else {
-        cout << "**ERROR** Could not recover m_densities from partial pressures!\n";
+        std::cerr << "**WARNING** Could not recover m_densities from partial pressures!\n";
         return;
       }
       xVector[i] = 0.;
@@ -388,7 +387,7 @@ namespace thermalfist {
         m_TotalEntropyDensity += solVector[i];
     }
     else {
-      cout << "**ERROR** Could not recover m_densities from partial pressures!\n";
+      std::cerr << "**WARNING** Could not recover m_densities from partial pressures!\n";
       return;
     }
 
@@ -418,7 +417,7 @@ namespace thermalfist {
       //cout << iter << "\t" << maxdiff << "\n";
       if (maxdiff < 1.e-10) break;
     }
-    if (iter == 1000) cout << iter << "\t" << maxdiff << "\n";
+    if (iter == 1000) std::cerr << iter << "\t" << maxdiff << "\n";
     m_Pressure = 0.;
     for (size_t i = 0; i < m_Ps.size(); ++i) 
       m_Pressure += m_Ps[i];
@@ -453,7 +452,7 @@ namespace thermalfist {
         m_densities[i] = solVector[i];
     }
     else {
-      cout << "**ERROR** Could not recover m_densities from partial pressures!\n";
+      std::cerr << "**WARNING** Could not recover m_densities from partial pressures!\n";
       return;
     }
 
@@ -481,7 +480,7 @@ namespace thermalfist {
         m_TotalEntropyDensity += solVector[i];
     }
     else {
-      cout << "Could not recover entropy m_densities from partial pressures!\n";
+      std::cerr << "Could not recover entropy m_densities from partial pressures!\n";
     }
 
     m_Calculated = true;
@@ -539,7 +538,7 @@ namespace thermalfist {
         }
       }
       else {
-        cout << "**WARNING** Could not recover fluctuations!\n";
+        std::cerr << "**WARNING** Could not recover fluctuations!\n";
       }
       xVector[i] = 0.;
     }
@@ -564,7 +563,7 @@ namespace thermalfist {
           m_PrimCorrel[j][i] = m_PrimCorrel[i][j];
         }
         else {
-          cout << "**WARNING** Could not recover fluctuations!\n";
+          std::cerr << "**WARNING** Could not recover fluctuations!\n";
         }
       }
 

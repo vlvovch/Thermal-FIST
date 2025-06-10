@@ -119,8 +119,8 @@ namespace thermalfist {
         // Bose-Einstein function divergence (\mu > m),
         // then effectively discard parameter of the current iteration by setting chi^2 to 10^12
         if (IdealGasFunctions::calculationHadBECIssue) {
-          printf("%15d ", m_THMFit->Iters());
-          printf("Issue with Bose-Einstein condensation, discarding this iteration...\n");
+          std::cerr << m_THMFit->Iters();
+          std::cerr << "**WARNING** Issue with Bose-Einstein condensation, discarding this iteration..." << std::endl;
           return m_THMFit->Chi2() = chi2 = 1.e12;
         }
         
@@ -557,8 +557,7 @@ namespace thermalfist {
       printf("Thermal fit finished\n\n");
     return ret;
   #else
-    printf("**ERROR** Cannot fit without MINUIT2 library!\n");
-    exit(1);
+    throw std::runtime_error("Cannot fit without MINUIT2 library!");
   #endif
   }
 

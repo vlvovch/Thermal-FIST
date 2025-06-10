@@ -46,10 +46,14 @@ namespace thermalfist {
   {
     if (m_exvolmodideal != NULL) {
       delete m_exvolmodideal;
+      if (m_exvolmod == m_exvolmodideal)
+        m_exvolmod = NULL;
       m_exvolmodideal = NULL;
     }
     if (m_mfmodideal != NULL) {
       delete m_mfmodideal;
+      if (m_mfmod == m_mfmodideal)
+        m_mfmod = NULL;
       m_mfmodideal = NULL;
     }
     if (m_exvolmod != NULL) {
@@ -1407,7 +1411,7 @@ namespace thermalfist {
     }
 
     // dchi2's
-    if (IsFluctuationsCalculated()) {
+    if (IsSusceptibilitiesCalculated()) {
       vector<double> dnevdT(Nevcomp, 0.);
       for(int l = 0; l < NN; ++l) {
         dnevdT[evinds[l]] += m_dndT[l];
@@ -1612,7 +1616,7 @@ namespace thermalfist {
     }
   }
 
-  double ThermalModelRealGas::CalculateSpecificHeat() {
+  double ThermalModelRealGas::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 

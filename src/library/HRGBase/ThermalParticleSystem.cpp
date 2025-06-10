@@ -18,6 +18,7 @@
 #include <cstdlib>
 
 #include "HRGBase/Utility.h"
+#include "HRGBase/ExtraParticles.h"
 
 using namespace std;
 
@@ -471,9 +472,9 @@ namespace thermalfist {
       return false;
     if (flags.count(ThermalParticleSystem::flag_nocharm) > 0 && part.AbsoluteCharm() != 0)
       return false;
-    if (flags.count(ThermalParticleSystem::flag_nonuclei) > 0 && abs(part.BaryonCharge() > 1))
+    if (flags.count(ThermalParticleSystem::flag_nonuclei) > 0 && abs(part.BaryonCharge()) > 1)
       return false;
-    if (flags.count(ThermalParticleSystem::flag_noexcitednuclei) > 0 && abs(part.BaryonCharge() > 1) && !part.IsStable())
+    if (flags.count(ThermalParticleSystem::flag_noexcitednuclei) > 0 && abs(part.BaryonCharge()) > 1 && !part.IsStable())
       return false;
     return true;
   }
@@ -618,8 +619,7 @@ namespace thermalfist {
 
         //if (mcut >= 0. && mass > mcut) {
         if (m_PDGtoID.count(pdgid) != 0) {
-          printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
-          exit(1);
+          throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
         }
         if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0) {
           fin.getline(tmpc, 500);
@@ -699,8 +699,7 @@ namespace thermalfist {
 
           //if (mcut >= 0. && mass > mcut)
           if (m_PDGtoID.count(pdgid) != 0) {
-            printf("**ERROR** ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code %lld!", pdgid);
-            exit(1);
+            throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
           }
 
           if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0)
@@ -1315,8 +1314,7 @@ namespace thermalfist {
   const ThermalParticle & ThermalParticleSystem::Particle(int id) const
   {
     if (id < 0 || id >= static_cast<int>(m_Particles.size())) {
-      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!");
-      exit(1);
+      throw std::out_of_range("ThermalParticleSystem::Particle(int id): id is out of bounds!");
     }
     return m_Particles[id];
   }
@@ -1324,8 +1322,7 @@ namespace thermalfist {
   ThermalParticle & ThermalParticleSystem::Particle(int id)
   {
     if (id < 0 || id >= static_cast<int>(m_Particles.size())) {
-      printf("**ERROR** ThermalParticleSystem::Particle(int id): id is out of bounds!\n");
-      exit(1);
+      throw std::out_of_range("ThermalParticleSystem::Particle(int id): id is out of bounds!");
     }
     return m_Particles[id];
   }
@@ -1334,8 +1331,7 @@ namespace thermalfist {
   {
     int id = PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid %lld is unknown\n", pdgid);
-      exit(1);
+      throw std::invalid_argument("ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid " + std::to_string(pdgid) + " is unknown");
     }
     return m_Particles[id];
   }
@@ -1344,8 +1340,7 @@ namespace thermalfist {
   {
     int id = PdgToId(pdgid);
     if (id == -1) {
-      printf("**ERROR** ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid %lld is unknown\n", pdgid);
-      exit(1);
+      throw std::invalid_argument("ThermalParticleSystem::ParticleByPDG(long long pdgid): pdgid " + std::to_string(pdgid) + " is unknown");
     }
     return m_Particles[id];
   }
@@ -1433,7 +1428,7 @@ namespace thermalfist {
         ret = false;
         cnt++;
         if (cnt == 10) {
-          printf("**WARNING** Further warnings are discarded...\n");
+          throw std::runtime_error("**WARNING** Further warnings are discarded...");
         }
       }
     }
@@ -1446,16 +1441,12 @@ namespace thermalfist {
     for (int i = 0; i < Particles().size(); ++i) {
       const ThermalParticle& part = Particles()[i];
       if (part.AbsoluteStrangeness() == 0 && part.Strangeness() != 0) {
-        printf("**WARNING** %s (%lld): Particle with non-zero strangeness has zero strange quark content |s|!\n",
-          part.Name().c_str(),
-          part.PdgId());
+        std::cerr << "**WARNING** " << part.Name() << " (" << part.PdgId() << "): Particle with non-zero strangeness has zero strange quark content |s|!" << std::endl;
         ret = false;
       }
 
       if (part.AbsoluteCharm() == 0 && part.Charm() != 0) {
-        printf("**WARNING** %s (%lld): Particle with non-zero charm has zero charm quark content |s|!\n",
-          part.Name().c_str(),
-          part.PdgId());
+        std::cerr << "**WARNING** " << part.Name() << " (" << part.PdgId() << "): Particle with non-zero charm has zero charm quark content |s|!" << std::endl;
         ret = false;
       }
     }
@@ -1674,104 +1665,45 @@ namespace thermalfist {
     }
   }
 
-  namespace ExtraParticles {
-    static std::vector<ThermalParticle> Particles;
-    static std::map<long long, int> PdgIdMap;
-    static bool isInitialized = Init();
+  namespace DecayLifetimes {
+    // lifetimes from pdg in seconds
+    map<long long, double> lifetimes = {
+            {211, 2.6033e-8}, // pi+-
+            {111, 8.43e-17}, // pi0
+            {321, 1.238e-8}, // K+-
+            {310, 8.954e-11}, // K0S
+            {130, 5.116e-8}, // K0L
+            {411, 1.033e-12}, // D+-
+            {421, 4.103e-13}, // D0
+            {431, 5.012e-13}, // Ds+-
+            {2112, 878.4}, // n
+            {3122, 2.617e-10}, // Lambda
+            {3222, 8.018e-11}, // Sigma+
+            {3212, 74.e-21}, // Sigma0
+            {3112, 1.479e-10}, // Sigma-
+            {3322, 2.9e-10}, // Xi0
+            {3312, 1.639e-10}, // Xi-
+            {3334, 8.21e-11} // Omega-
+            // TODO: Charmed baryons and hypernuclei
+    };
 
-    const ThermalParticle& Particle(int id)
-    {
-      if (id < 0 || id >= Particles.size()) {
-        printf("**ERROR** ExtraParticles::Particle(int id): id is out of bounds!");
-        exit(1);
+    // resonance widths in GeV
+    map<long long, double> widths = {
+          {221, 1.31e-6} // eta
+    };
+
+    double GetLifetime(long long pdg) {
+      if (lifetimes.count(abs(pdg)))
+        return lifetimes[abs(pdg)] * 1.e15;
+
+      if (widths.count(abs(pdg))) {
+        double width = widths[abs(pdg)];
+        double ctau = 1. / (width * xMath::GeVtoifm());
+        return ctau;
       }
-      return Particles[id];
+
+      // No entry found, return zero
+      return 0.;
     }
-
-    const ThermalParticle& ParticleByPdg(long long pdgid)
-    {
-      int tid = PdgToId(pdgid);
-      if (tid == -1) {
-        printf("**ERROR** ExtraParticles::ParticleByPdg(long long pdgid): pdgid %lld is unknown\n", pdgid);
-        exit(1);
-      }
-      return Particle(tid);
-    }
-
-    int PdgToId(long long pdgid)
-    {
-      return (PdgIdMap.count(pdgid) > 0) ? PdgIdMap[pdgid] : -1;
-    }
-
-    bool Init()
-    {
-      Particles.clear();
-      PdgIdMap.clear();
-      
-      int tsz = 0;
-      // photons
-      Particles.push_back(ThermalParticle(true, "gamma", 22, 2., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // electrons
-      Particles.push_back(ThermalParticle(true, "e-", 11, 2., 1, 5.109989461E-04, 0, 0, -1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "e+", -11, 2., 1, 5.109989461E-04, 0, 0, 1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // muons
-      Particles.push_back(ThermalParticle(true, "mu-", 13, 2., 1, 1.056583745E-01, 0, 0, -1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "mu+", -13, 2., 1, 1.056583745E-01, 0, 0, 1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // tauons
-      Particles.push_back(ThermalParticle(true, "tau-", 15, 2., 1, 1.77686E+00, 0, 0, -1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "tau+", -15, 2., 1, 1.77686E+00, 0, 0, 1));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // nu(e)
-      Particles.push_back(ThermalParticle(true, "nu(e)", 12, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "anti-nu(e)", -12, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // nu(mu)
-      Particles.push_back(ThermalParticle(true, "nu(mu)", 14, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "anti-nu(mu)", -14, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      // nu(tau)
-      Particles.push_back(ThermalParticle(true, "nu(tau)", 16, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-      Particles.push_back(ThermalParticle(true, "anti-nu(tau)", -16, 1., 1, 0.));
-      PdgIdMap[Particles[tsz].PdgId()] = tsz;
-      tsz++;
-
-      return true;
-    }
-
-    std::string NameByPdg(long long pdg)
-    {
-      int tid = PdgToId(pdg);
-      if (tid != -1)
-        return Particle(tid).Name();
-      return string("???");
-    }
-  } // namespace ExtraParticles
-
+  }
 } // namespace thermalfist

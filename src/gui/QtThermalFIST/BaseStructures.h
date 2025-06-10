@@ -123,6 +123,7 @@ struct Thermodynamics {
   double p, e, I, s;
   double rhoB, rhoQ, rhoS, rhoC;
   double nh;
+  double cs2, cVT3;
   std::vector< std::vector<double> > densities;
 };
 

@@ -20,8 +20,8 @@ using namespace std;
 
 namespace thermalfist {
 
-  ThermalModelIdeal::ThermalModelIdeal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params)
+  ThermalModelIdeal::ThermalModelIdeal(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) 
+    : ThermalModelBase(TPS_, params)
   {
     m_TAG = "ThermalModelIdeal";
 
@@ -128,6 +128,7 @@ namespace thermalfist {
   {
     return CalculateGeneralizedSusceptibilities(std::vector<std::vector<double>>(order, chgs));
 
+    // Deprecated
     vector<double> ret(order + 1, 0.);
 
     // chi1
@@ -157,7 +158,9 @@ namespace thermalfist {
   std::vector<double> ThermalModelIdeal::CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs) {
     int order = chgs.size();
 
-    assert(order <= 4);
+    if (order > 4) {
+        throw std::invalid_argument("Order must be less than or equal to 4");
+    }
 
     vector<double> ret(order + 1, 0.);
     vector<double> current_charges(m_densities.size(), 1.);
@@ -212,11 +215,11 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelIdeal::CalculateSpecificHeat() {
+  double ThermalModelIdeal::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
-    // Compute dE/dT
+    // Compute de/dT
     double ret = 0.;
 
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
@@ -255,7 +258,7 @@ namespace thermalfist {
 
     m_TemperatureDerivativesCalculated = true;
 
-    if (IsFluctuationsCalculated())
+    if (IsSusceptibilitiesCalculated())
       CalculateSusceptibilityMatrix();
   }
 

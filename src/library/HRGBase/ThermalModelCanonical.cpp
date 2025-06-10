@@ -21,7 +21,12 @@ using namespace std;
 namespace thermalfist {
 
   ThermalModelCanonical::ThermalModelCanonical(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
-    ThermalModelBase(TPS_, params), m_BCE(1), m_QCE(1), m_SCE(1), m_CCE(1), m_IntegrationIterationsMultiplier(1)
+    ThermalModelBase(TPS_, params), 
+    m_BCE(1), 
+    m_QCE(1), 
+    m_SCE(1), 
+    m_CCE(1), 
+    m_IntegrationIterationsMultiplier(1)
   {
 
     m_TAG = "ThermalModelCanonical";
@@ -35,15 +40,16 @@ namespace thermalfist {
   }
 
 
+  
   ThermalModelCanonical::~ThermalModelCanonical(void)
-  {
+  {    
     CleanModelGCE();
   }
 
   void ThermalModelCanonical::ChangeTPS(ThermalParticleSystem *TPS_) {
     ThermalModelBase::ChangeTPS(TPS_);
   }
-
+  
   void ThermalModelCanonical::CalculateQuantumNumbersRange(bool computeFluctuations)
   {
     m_BMAX = 0;
@@ -89,7 +95,7 @@ namespace thermalfist {
     m_SMAX *= m_SCE;
     m_CMAX *= m_CCE;
 
-    printf("BMAX = %d\tQMAX = %d\tSMAX = %d\tCMAX = %d\n", m_BMAX, m_QMAX, m_SMAX, m_CMAX);
+    std::cout << "BMAX = " << m_BMAX << "\tQMAX = " << m_QMAX << "\tSMAX = " << m_SMAX << "\tCMAX = " << m_CMAX << std::endl;
 
     m_QNMap.clear();
     m_QNvec.resize(0);
@@ -109,7 +115,6 @@ namespace thermalfist {
 
             m_PartialZ.push_back(0.);
             m_Corr.push_back(1.);
-
 
             ind++;
           }
@@ -193,6 +198,10 @@ namespace thermalfist {
 
         if (ind < static_cast<int>(m_Corr.size()))
           m_densities[i] = m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
+        else {
+          cout << "ThermalModelCanonical::CalculatePrimordialDensities: Warning! No canonical partition function for this particle!" << endl;
+          cout << "B = " << m_BCE * tpart.BaryonCharge() << "\tQ = " << m_QCE * tpart.ElectricCharge() << "\tS = " << m_SCE * tpart.Strangeness() << "\tC = " << m_CCE * tpart.Charm() << endl;
+        }
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
@@ -210,7 +219,7 @@ namespace thermalfist {
   void ThermalModelCanonical::ValidateCalculation()
   {
     ThermalModelBase::ValidateCalculation();
-
+    
     char cc[1000];
 
     double TOL = 1.e-4;
@@ -301,9 +310,8 @@ Obtained: %lf\n\
       for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
         int i2 = m_TPS->PdgToId(-m_TPS->Particle(i).PdgId());
         if (i2 != -1) {
-          if (fabs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
-            printf("**ERROR** ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble only supported if particle-antiparticle fugacities are symmetric!\n");
-            exit(1);
+          if (std::abs(m_Chem[i] - m_Chem[i2]) > 1.e-8) {
+            throw std::runtime_error("ThermalModelCanonical::CalculatePartitionFunctions: Partial chemical equilibrium canonical ensemble only supported if particle-antiparticle fugacities are symmetric!");
           }
         }
       }
@@ -328,8 +336,7 @@ Obtained: %lf\n\
       if (!IsParticleCanonical(tpart)) {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
         if (ind != m_QNMap[QuantumNumbers(0, 0, 0, 0)]) {
-          printf("**ERROR** ThermalModelCanonical: neutral particle cannot have non-zero ce charges\n");
-          exit(1);
+          throw std::invalid_argument("ThermalModelCanonical: neutral particle cannot have non-zero ce charges");
         }
         if (ind < static_cast<int>(Nsx.size()))
           Nsx[ind] += tpart.Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
@@ -337,6 +344,7 @@ Obtained: %lf\n\
       else if (tpart.Statistics() == 0
         || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
         int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
+
         if (ind < static_cast<int>(Nsx.size())) {
           if (!UsePartialChemicalEquilibrium()) {
             double tdens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.);
@@ -352,7 +360,7 @@ Obtained: %lf\n\
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-          int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
           if (ind < static_cast<int>(Nsx.size())) {
             if (!UsePartialChemicalEquilibrium()) {
               double tdens = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, 0.) / static_cast<double>(n); // TODO: Check
@@ -595,7 +603,7 @@ Obtained: %lf\n\
     else if (tpart.Statistics() == 0
       || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
     {
-      int ind = m_QNMap[QuantumNumbers(m_BCE*tpart.BaryonCharge(), m_QCE*tpart.ElectricCharge(), m_SCE*tpart.Strangeness(), m_CCE*tpart.Charm())];
+      int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
       int ind2 = m_QNMap[QuantumNumbers(m_BCE * 2 * tpart.BaryonCharge(), m_QCE * 2 * tpart.ElectricCharge(), m_SCE * 2 * tpart.Strangeness(), m_CCE * 2 * tpart.Charm())];
 
       ret1 = 1.;
@@ -618,8 +626,8 @@ Obtained: %lf\n\
         }
 
         for (int n2 = 1; n2 <= tpart.ClusterExpansionOrder(); ++n2) {
-          if (m_QNMap.count(QuantumNumbers(m_BCE*(n + n2)*tpart.BaryonCharge(), m_QCE*(n + n2)*tpart.ElectricCharge(), m_SCE*(n + n2)*tpart.Strangeness(), m_CCE*(n + n2)*tpart.Charm())) != 0) {
-            int ind2 = m_QNMap[QuantumNumbers(m_BCE*(n + n2)*tpart.BaryonCharge(), m_QCE*(n + n2)*tpart.ElectricCharge(), m_SCE*(n + n2)*tpart.Strangeness(), m_CCE*(n + n2)*tpart.Charm())];
+          if (m_QNMap.count(QuantumNumbers(m_BCE * (n + n2)*tpart.BaryonCharge(), m_QCE * (n + n2)*tpart.ElectricCharge(), m_SCE * (n + n2)*tpart.Strangeness(), m_CCE * (n + n2)*tpart.Charm())) != 0) {
+            int ind2 = m_QNMap[QuantumNumbers(m_BCE * (n + n2)*tpart.BaryonCharge(), m_QCE * (n + n2)*tpart.ElectricCharge(), m_SCE * (n + n2)*tpart.Strangeness(), m_CCE * (n + n2)*tpart.Charm())];
             if (ind < static_cast<int>(m_Corr.size()) && ind2 < static_cast<int>(m_Corr.size()))
               ret2 += densityClusterN * m_Corr[ind2] * m_Parameters.SVc * tpart.DensityCluster(n2, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[part]);
           }
@@ -658,7 +666,7 @@ Obtained: %lf\n\
       }
       else {
         for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-          int ind = m_QNMap[QuantumNumbers(m_BCE*n*tpart.BaryonCharge(), m_QCE*n*tpart.ElectricCharge(), m_SCE*n*tpart.Strangeness(), m_CCE*n*tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
 
           double densityClusterN = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
 
@@ -760,14 +768,14 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
 
           if (ind < static_cast<int>(m_Corr.size()))
             ret += m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
         }
         else {
           for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-            int ind = m_QNMap[QuantumNumbers(n*tpart.BaryonCharge(), n*tpart.ElectricCharge(), n*tpart.Strangeness(), n*tpart.Charm())];
+            int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
             if (ind < static_cast<int>(m_Corr.size()))
               ret += m_Corr[ind] * tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_Chem[i]);
           }
@@ -790,14 +798,14 @@ Obtained: %lf\n\
         }
         else if (tpart.Statistics() == 0
           || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion) {
-          int ind = m_QNMap[QuantumNumbers(tpart.BaryonCharge(), tpart.ElectricCharge(), tpart.Strangeness(), tpart.Charm())];
+          int ind = m_QNMap[QuantumNumbers(m_BCE * tpart.BaryonCharge(), m_QCE * tpart.ElectricCharge(), m_SCE * tpart.Strangeness(), m_CCE * tpart.Charm())];
 
           if (ind < static_cast<int>(m_Corr.size()))
             ret += m_Corr[ind] * tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
         }
         else {
           for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
-            int ind = m_QNMap[QuantumNumbers(n*tpart.BaryonCharge(), n*tpart.ElectricCharge(), n*tpart.Strangeness(), n*tpart.Charm())];
+            int ind = m_QNMap[QuantumNumbers(m_BCE * n * tpart.BaryonCharge(), m_QCE * n * tpart.ElectricCharge(), m_SCE * n * tpart.Strangeness(), m_CCE * n * tpart.Charm())];
 
             if (ind < static_cast<int>(m_Corr.size()))
               ret += m_Corr[ind] * tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_Chem[i]);
@@ -917,5 +925,3 @@ Obtained: %lf\n\
   }
 
 } // namespace thermalfist
-
-

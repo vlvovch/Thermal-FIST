@@ -58,7 +58,7 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::FillVirial(const std::vector<double>& ri)
   {
     if (ri.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirial(const std::vector<double> & ri): size of ri does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_v.resize(m_TPS->Particles().size());
@@ -69,7 +69,7 @@ namespace thermalfist {
   void ThermalModelEVDiagonal::FillVirialEV(const std::vector<double>& vi)
   {
     if (vi.size() != m_TPS->Particles().size()) {
-      printf("**WARNING** %s::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list", m_TAG.c_str());
+      std::cerr << "**WARNING** " << m_TAG << "::FillVirialEV(const std::vector<double> & vi): size of vi does not match number of hadrons in the list" << std::endl;
       return;
     }
     m_v = vi;
@@ -281,7 +281,7 @@ namespace thermalfist {
     
   }
 
-  double ThermalModelEVDiagonal::CalculateSpecificHeat() {
+  double ThermalModelEVDiagonal::CalculateEnergyDensityDerivativeT() {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
@@ -338,7 +338,7 @@ namespace thermalfist {
       m_dndT[i] = -sum_dbndT * nids[i] + (1. - sum_bn) * (dniddTs[i] + chi2ids[i] * m_dmusdT[i]);
     }
 
-    if (IsFluctuationsCalculated()) {
+    if (IsSusceptibilitiesCalculated()) {
       for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
           m_PrimChi2sdT[i][j] = 0.;
@@ -458,6 +458,7 @@ namespace thermalfist {
 
     for (int i = 0; i < NN; ++i)
       for (int j = 0; j < NN; ++j) {
+        densMatrix(NN + i, j) = 0.;
         densMatrix(NN + i, NN + j) = m_v[i] * DensitiesId[j];
         if (i == j) densMatrix(NN + i, NN + j) += 1.;
       }

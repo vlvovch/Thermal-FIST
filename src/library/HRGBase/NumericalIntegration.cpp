@@ -11,6 +11,15 @@ namespace thermalfist {
 
   namespace NumericalIntegration {
 
+    /**
+     * Integrate a 2D function from 0 to infinity using Gauss-Laguerre integration
+     * with 32 points and from ay to by using Gauss-Legendre integration with 32 points.
+     *
+     * @param func The function to integrate, taking two double arguments.
+     * @param ay The lower bound for the Gauss-Legendre integration.
+     * @param by The upper bound for the Gauss-Legendre integration.
+     * @return The result of the integration.
+     */
     double Integrate2DLaguerre32Legendre32(double(*func)(double, double), double ay, double by)
     {
       // Integrate 2D function from 0 to infinity using Gauss-Laguerre integration
@@ -92,7 +101,7 @@ namespace thermalfist {
     void GetCoefsIntegrateLegendre32(double a, double b, std::vector<double> *xp, std::vector<double> *wp)
     {
       // Integrate function from a to b using Legendre-Gaussian integration
-      // with 32 points.
+      // with 5 points.
       //
       std::vector<double> &x = *xp;
       std::vector<double> &w = *wp;
@@ -113,7 +122,7 @@ namespace thermalfist {
     void GetCoefsIntegrateLegendre10(double a, double b, std::vector<double> *xp, std::vector<double> *wp)
     {
       // Integrate function from a to b using Legendre-Gaussian integration
-      // with 32 points.
+      // with 40 points.
       //
       std::vector<double> &x = *xp;
       std::vector<double> &w = *wp;

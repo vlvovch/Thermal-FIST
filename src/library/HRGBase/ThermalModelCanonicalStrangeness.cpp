@@ -8,6 +8,7 @@
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
 
 #include <cassert>
+#include <stdexcept>
 
 #include "HRGBase/xMath.h"
 
@@ -144,8 +145,7 @@ namespace thermalfist {
     assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
 
     if (UsePartialChemicalEquilibrium()) {
-      printf("**ERROR** ThermalModelCanonicalStrangeness::CalculatePrimordialDensities(): PCE not supported!\n");
-      exit(1);
+      throw std::runtime_error("ThermalModelCanonicalStrangeness::CalculatePrimordialDensities(): PCE not supported!");
     }
 
     m_FluctuationsCalculated = false;

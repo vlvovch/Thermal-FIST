@@ -49,7 +49,7 @@ namespace thermalfist {
       StrangenessCharge = 2, ///< Strangeness
       CharmCharge = 3        ///< Charm
     };
-    static const int NumberOfTypes = 5;
+    static const int NumberOfTypes = 4;
   };
 
   
@@ -740,7 +740,6 @@ namespace thermalfist {
     ResonanceWidthShape m_ResonanceWidthShape;                  /**< Either relativistic or non-relativitic Breit-Wigner */
     ResonanceWidthIntegration m_ResonanceWidthIntegrationType;  /**< Plus-minus TwoGamma or from m0 to infty */
     double m_Radius;              /**< Hard-core radius (fm) */
-    double m_Vo;                  /**< Eigenvolume parameter (fm^3). Obsolete. To be removed. */
     double m_Weight;              /**< Weight of a given particle. Default is 1 */
 
     ParticleDecaysVector m_Decays;      /**< All decay channels currently in use.  */

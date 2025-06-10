@@ -561,10 +561,8 @@ namespace thermalfist {
 
     bool AcceptParticle(const ThermalParticle& part, const std::set<std::string>& flags, double mcut = -1.) const;
 
-    //void LoadTable_OldFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_OldFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
-    //void LoadTable_NewFormat(std::ifstream &fin, bool GenerateAntiParticles = true, double mcut = 1.e9);
     void LoadTable_NewFormat(std::ifstream& fin, const std::set<std::string>& flags = std::set<std::string>(), double mcut = 1.e9);
 
     void ReadDecays_OldFormat(std::ifstream &fin);
@@ -625,13 +623,10 @@ namespace thermalfist {
     void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 1000);
   }
 
-  /// Contains properties of non-QCD particles such as photons and leptons
-  namespace ExtraParticles {
-    const ThermalParticle& Particle(int id);
-    const ThermalParticle& ParticleByPdg(long long pdg);
-    int PdgToId(long long pdg);
-    bool Init();
-    std::string NameByPdg(long long pdg);
+  /// Contains decay lifetimes needed for propagation in Monte Carlo.
+  namespace DecayLifetimes {
+    // In units of ctau (fm)
+    double GetLifetime(long long pdg);
   }
 
 } // namespace thermalfist

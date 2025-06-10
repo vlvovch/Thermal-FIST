@@ -56,6 +56,7 @@ CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
     comboQuantity->addItem(tr("Moment"));
     comboQuantity->addItem(tr("Scaled moment"));
     comboQuantity->addItem(tr("Pearson correlation"));
+    comboQuantity->addItem(tr("Factorial cumulant (coupling)"));
     comboQuantity->addItem(tr("Delta[N1,N2]"));
     comboQuantity->addItem(tr("Sigma[N1,N2]"));
   }
@@ -256,7 +257,7 @@ void CorrelationsDialog::recalculate()
           // Scaled moment
           if (comboQuantity->currentIndex() == 3) {
             if (pdg1 == pdg2) {
-              qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << endl;
+              qDebug() << pdg1 << " " << corr << " " << N1 << " " << N2 << Qt::endl;
             }
             if (i != j) {
               //tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
@@ -271,6 +272,15 @@ void CorrelationsDialog::recalculate()
             double var1 = wn1 * N1, var2 = wn2 * N2;
             tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
           }
+          // Factorial cumulant (coupling)
+          else if (comboQuantity->currentIndex() == 5) {
+            double mean1 = N1, mean2 = N2;
+            double tcorr = corr;
+            if (i == j) {
+              tcorr -= N1;
+            }
+            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+          }
           else {
             if (pdg1 == pdg2) {
               tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(0.)));
@@ -278,7 +288,7 @@ void CorrelationsDialog::recalculate()
             }
 
             // Delta
-            if (comboQuantity->currentIndex() == 5) {
+            if (comboQuantity->currentIndex() == 6) {
               double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
               continue;
@@ -352,8 +362,17 @@ void CorrelationsDialog::recalculate()
                 double var1 = wn1 * N1, var2 = wn2 * N2;
                 tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
               }
-              // Delta
+              // Factorial cumulant (coupling)
               else if (comboQuantity->currentIndex() == 5) {
+                double mean1 = N1, mean2 = N2;
+                double tcorr = corr;
+                if (i1 == i2) {
+                  tcorr -= N1;
+                }
+                tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+              }
+              // Delta
+              else if (comboQuantity->currentIndex() == 6) {
                 double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
                 tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
               }
@@ -501,8 +520,17 @@ void CorrelationsDialog::recalculate()
               double var1 = wn1 * N1, var2 = wn2 * N2;
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
             }
-            // Delta
+            // Factorial cumulant (coupling)
             else if (comboQuantity->currentIndex() == 5) {
+              double mean1 = N1, mean2 = N2;
+              double tcorr = corr;
+              if (i == i2) {
+                tcorr -= N1;
+              }
+              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+            }
+            // Delta
+            else if (comboQuantity->currentIndex() == 6) {
               double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
               tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
             }
