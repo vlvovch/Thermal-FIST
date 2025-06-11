@@ -1,6 +1,6 @@
 # Calculating thermodynamics in the van der Waals HRG model
 
-This example calculates thermodynamics of the HRG model at zero chemical potential with van der Waals interactions as implemented in paper 
+This example calculates thermodynamics of the hadron resonance gas (HRG) model at zero chemical potential with van der Waals interactions as implemented in paper 
 - V. Vovchenko, M.I. Gorenstein, H. Stoecker, *van der Waals Interactions in Hadron Resonance Gas: From Nuclear Matter to Lattice QCD*, [Phys.Rev.Lett. **118** (2017) 182301](https://doi.org/10.1103/PhysRevLett.118.182301), [arXiv:1609.03975 [hep-ph]](https://arxiv.org/abs/1609.03975)
 
 The file [NuSTEAM-HRG-EoS.cpp](NuSTEAM-HRG-EoS.cpp) performs the calculation by linking to Thermal-FIST library. Calculation in the ideal HRG limit is readily implemented. It is users' task to implement ``SetVDWInteractionParameters`` function to enable vdW interaction calculation.

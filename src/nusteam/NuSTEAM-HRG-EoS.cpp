@@ -36,7 +36,7 @@ void SetVDWInteractionParameters(ThermalModelBase *model, double a, double b)
       // based on the values (signs) of B1 and B2
       // Use model->SetAttraction(i1, i2, a) for attraction and
       // model->SetRepulsion(i1, i2, b) for repulsion
-      cout << "Implement setting the vdW parameters for baryon-baryon and antibaryon-antibaryon interaction" << endl;
+      cout << "Implement the setting of the vdW parameters for baryon-baryon and antibaryon-antibaryon interaction" << endl;
       exit(1);
     }
   }
