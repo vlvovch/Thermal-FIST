@@ -101,7 +101,7 @@ namespace thermalfist {
     void GetCoefsIntegrateLegendre32(double a, double b, std::vector<double> *xp, std::vector<double> *wp)
     {
       // Integrate function from a to b using Legendre-Gaussian integration
-      // with 5 points.
+      // with 32 points.
       //
       std::vector<double> &x = *xp;
       std::vector<double> &w = *wp;
@@ -122,7 +122,7 @@ namespace thermalfist {
     void GetCoefsIntegrateLegendre10(double a, double b, std::vector<double> *xp, std::vector<double> *wp)
     {
       // Integrate function from a to b using Legendre-Gaussian integration
-      // with 40 points.
+      // with 10 points.
       //
       std::vector<double> &x = *xp;
       std::vector<double> &w = *wp;
@@ -142,7 +142,7 @@ namespace thermalfist {
     void GetCoefsIntegrateLegendre5(double a, double b, std::vector<double> *xp, std::vector<double> *wp)
     {
       // Integrate function from a to b using Legendre-Gaussian integration
-      // with 32 points.
+      // with 5 points.
       //
       std::vector<double> &x = *xp;
       std::vector<double> &w = *wp;

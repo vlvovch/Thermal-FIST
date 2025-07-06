@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.5.1]
+
+Date: 2025-07-06
+
+## Bugfixes
+- Fixed the setting of meson–meson and meson–baryon interactions in the GUI (it was opposite to what was selected)
+- Corrected pressure and energy density calculation for mixed-canonical ensembles.
+
+## Other changes
+- GUI updates: extended range for $n_B/s$ and added factorial cumulant option.
+- Updated build workflows.
+- Various documentation and typo fixes.
+
 ## [Version 1.5]
 
 Date: 2024-03-22
@@ -53,10 +66,10 @@ This version contains an implementation of cosmic trajectories in the Early Univ
 - Neutron star matter calculations
   - Supported by adding leptons to the list from [/input/list/electroweak](/input/list/electroweak) and setting charge neutrality and $\mu_S = 0$
   - For a meaningful calculation, one should use an interacting version of the HRG, e.g. real gas
-  - Example [here]((https://vovchenko.net/project/thermal-fist/doc/_neutron_stars-_c_s_h_r_g_8cpp-example.html)
+  - Example [here](https://vovchenko.net/project/thermal-fist/doc/_neutron_stars-_c_s_h_r_g_8cpp-example.html)
 
 - Effective mass model for pions
-  - Repulsive interactions and Bose-Einsten condensation
+  - Repulsive interactions and Bose-Einstein condensation
   - Described in https://arxiv.org/abs/2004.09004
  
 - Magnetic field
@@ -130,7 +143,7 @@ Main new feature: Excluded volume effect in the Monte Carlo event generator
 ## Enhancements
 - Hard-core repulsion in event generator (see [FIST sampler](https://github.com/vlvovch/fist-sampler))
 - Crossterms EV-HRG model is now implemented as partial case of QvdW-HRG model (for a = 0)
-- GUI: Blast-wave model: Option to set the value of parameter r_max (the maximim transverse radius)
+- GUI: Blast-wave model: Option to set the value of parameter r_max (the maximum transverse radius)
 - GUI: Minor improvements for PCE-HRG model thermal fits
 
 ## Bugfixes
@@ -337,6 +350,7 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
+[Version 1.5.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5...v1.5.1
 [Version 1.5]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.2...v1.5
 
 [Version 1.4.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.1...v1.4.2

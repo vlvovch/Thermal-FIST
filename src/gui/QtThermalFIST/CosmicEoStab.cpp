@@ -361,8 +361,8 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     QLabel *labelnB = new QLabel(tr("n<sub>B</sub>/s (x10<sup>-11</sup>):"));
     spinnB = new QDoubleSpinBox();
     spinnB->setDecimals(5);
-    spinnB->setMinimum(-10000.);
-    spinnB->setMaximum(10000.);
+    spinnB->setMinimum(-1.e12);
+    spinnB->setMaximum(1.e12);
     spinnB->setValue(8.6);
     spinnB->setSingleStep(0.1);
 

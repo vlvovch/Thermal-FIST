@@ -120,13 +120,13 @@ Set the interaction parameters for an excluded volume, van der Waals, or Real Ga
 
 **PCE/Saha/Other...** Additional model configurations:
 1. **Resonances** - choice of Breit-Wigner shape and branching ratios normalization.
-2. **Partial Chemical Equilibrium (PCE)** - whether to apply partial chemical equilibrium for modeling the hadronic phase after chemical freeze-out. If enabled, the hadronic phase is modeled with partial chemical equilibrium and the final yields are computed at temperature $T_{\rm{kin}}$. Additional options include freezeing the yields of long-lived resonances based on width cut-off, Saha equation for light nuclei, and nucleon annihilation (B + B̄ ↔ nπ). 
+2. **Partial Chemical Equilibrium (PCE)** - whether to apply partial chemical equilibrium for modeling the hadronic phase after chemical freeze-out. If enabled, the hadronic phase is modeled with partial chemical equilibrium and the final yields are computed at temperature $T_{\rm{kin}}$. Additional options include freezing the yields of long-lived resonances based on width cut-off, Saha equation for light nuclei, and nucleon annihilation (B + B̄ ↔ nπ). 
 3. **Magnetic Field** - Non-zero external magnetic field of given strength $eB$ and the number of Landau levels to be used in the calculation.
 4. **Effective Mass Model for Pions** - includes repulsive interactions and Bose-Einstein condensation effects for pions.
 
 The button *Calculate* invokes a calculation of all the hadron yields, equation of state properties, and, optionally, fluctuations, for the specified values of thermal parameters.
 
-The button *Equation of state...* shows the equation of state properties corresponding to a given calculation, as well as some extra quantities, such as the second-order fluctuations incuding contributions from probabilistic decays.
+The button *Equation of state...* shows the equation of state properties corresponding to a given calculation, as well as some extra quantities, such as the second-order fluctuations including contributions from probabilistic decays.
 
 **Use densities** checkbox allows calculations at fixed conserved charge densities instead of fixed chemical potentials.
 

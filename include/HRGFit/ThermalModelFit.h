@@ -315,7 +315,7 @@ namespace thermalfist {
     /// Sets whether the yields of long-lived resonance are frozen in the PCE
     void PCEFreezeLongLived(bool FreezeLongLived) { m_PCEFreezeLongLived = FreezeLongLived; }
 
-    /// Sets the resonance width cut for freezeing the yields of long-lived resonances
+    /// Sets the resonance width cut for freezing the yields of long-lived resonances
     void SetPCEWidthCut(double WidthCut) { m_PCEWidthCut = WidthCut; }
 
     /// Sets whether to include baryon annihilation in PCE
