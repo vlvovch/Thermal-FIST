@@ -66,7 +66,7 @@ namespace thermalfist {
   void ThermalModelPCEAnnihilation::CalculatePCE(double param, PCEMode mode)
   {
     if (!m_ChemicalFreezeoutSet) {
-      throw std::runtime_error("ThermalModelPCE::CalculatePCE: Tried to make a PCE calculation without setting the chemical freze-out! Call ThermalModelPCE::SetChemicalFreezeout() first.");
+      throw std::runtime_error("ThermalModelPCE::CalculatePCE: Tried to make a PCE calculation without setting the chemical freeze-out! Call ThermalModelPCE::SetChemicalFreezeout() first.");
     }
 
     if (!m_StabilityFlagsSet) {

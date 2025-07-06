@@ -993,7 +993,7 @@ namespace thermalfist {
     // dchi2's
     if (IsSusceptibilitiesCalculated()) {
       
-      // TODO: Faaster implementation
+      // TODO: Faster implementation
       // int NNdmu = m_MapFromdMuStar.size();
       // vector<vector<double>> dfij = vector<vector<double>>(NNdmu, vector<double>(NNdmu, 0.));
       // vector<double> fi = vector<double>(NNdmu, 0.);

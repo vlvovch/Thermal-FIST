@@ -202,7 +202,7 @@ namespace thermalfist {
 
     /// Whether long-lived resonances are frozen at Tch
     bool m_FreezeLonglivedResonances;
-    /// Resonance width cut for freezeing the resonance abundances
+    /// Resonance width cut for freezing the resonance abundances
     double m_ResoWidthCut;
 
     /// Whether the chemical freeze-out "initial" condition has been set
