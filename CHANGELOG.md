@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.5.1]
+
+Date: 2025-07-06
+
+## Bugfixes
+- Fixed the setting of meson–meson and meson–baryon interactions in the GUI (it was opposite to what was selected)
+- Corrected pressure and energy density calculation for mixed-canonical ensembles.
+
+## Other changes
+- GUI updates: extended range for $n_B/s$ and added factorial cumulant option.
+- Updated build workflows.
+- Various documentation and typo fixes.
+
 ## [Version 1.5]
 
 Date: 2024-03-22
@@ -337,6 +350,7 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
+[Version 1.5.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5...v1.5.1
 [Version 1.5]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.2...v1.5
 
 [Version 1.4.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.1...v1.4.2
