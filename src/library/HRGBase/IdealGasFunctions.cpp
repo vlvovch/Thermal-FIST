@@ -199,11 +199,14 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i);
+	if (m == 0.)
+	  ret += sign * deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2. * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) * xMath::GeVtoifm3();
+	else
+	  ret += sign * deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i) * xMath::GeVtoifm3();
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
       return ret;
     }
 
@@ -254,11 +257,14 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i) / static_cast<double>(i);
+	if (m == 0.)
+	  ret += sign * deg * T * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2. * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) * xMath::GeVtoifm3();
+	else
+ 	  ret += sign * deg * m * m * T * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i) / static_cast<double>(i) * xMath::GeVtoifm3();
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * T * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
       return ret;
     }
 
@@ -311,11 +317,14 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / static_cast<double>(i);
+	if (m == 0.)
+	  ret += sign * deg * T * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 6. * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) * xMath::GeVtoifm3();
+	else
+	  ret += sign * deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi() * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / static_cast<double>(i) * xMath::GeVtoifm3();
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
       return ret;
     }
 
@@ -378,6 +387,8 @@ namespace thermalfist {
       double moverT = m / T;
       double sign = 1.;
       double ret = 0.;
+      
+      if(m == 0.) return ret;
       for (int i = 1; i <= order; ++i) {
         ret += sign * xMath::BesselKexp(1, i*moverT) * cfug / static_cast<double>(i);
         cfug *= tfug;
@@ -433,11 +444,14 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug * pow(static_cast<double>(i), N - 1);
+	if (m == 0.)
+	  ret += sign * deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2 * cfug * pow(static_cast<double>(i), N - 3) * xMath::GeVtoifm3();
+	else
+	  ret += sign * deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::BesselKexp(2, i*moverT) * cfug * pow(static_cast<double>(i), N - 1) * xMath::GeVtoifm3();
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
       return ret;
     }
 
