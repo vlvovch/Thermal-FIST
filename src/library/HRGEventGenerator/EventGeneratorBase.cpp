@@ -1251,6 +1251,7 @@ namespace thermalfist {
     bool flOverlap = true;
     while (flOverlap) {
       int sampled = 0;
+      if(ids.size() == 0) break;
       while (sampled < ids.size()) {
         flOverlap = false;
         int i = ids[sampled];
