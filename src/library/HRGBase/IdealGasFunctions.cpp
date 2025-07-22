@@ -406,7 +406,7 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       
-      if(m == 0.) 
+      if (m == 0.) 
         return ret;
       
       for (int i = 1; i <= order; ++i) {
