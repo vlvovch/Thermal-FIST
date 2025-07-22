@@ -1719,7 +1719,7 @@ namespace thermalfist {
       for (int i = 1; i <= order; ++i) {
         double k = static_cast<double>(i);
         if (m == 0.) {
-          ret += sign * k * 2. * T / k * (mu * mu - 4. * mu * T / k + 6. * T / k * T / k) / k * cfug;
+          ret += sign * 2. * T * (mu * mu - 4. * mu * T / k + 6. * T / k * T / k) / k * cfug;
         } else {
           ret += sign * k * (
                 (m * (m * m + mu * mu - 4. * mu * T / k + 6. * T * T / k / k) * xMath::BesselKexp(0, i*moverT)
