@@ -1674,7 +1674,7 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        if (m == 0) {
+        if (m == 0.) {
           ret += sign * (
                 - (mu - 3. * T/ static_cast<double>(i)) / static_cast<double>(i) / static_cast<double>(i)
                 ) * cfug;
