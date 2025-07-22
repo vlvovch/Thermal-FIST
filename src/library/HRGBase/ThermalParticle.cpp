@@ -58,8 +58,8 @@ namespace thermalfist {
 
   bool ThermalParticle::ZeroWidthEnforced() const
   {
-    //if (PdgId() == 223) // omega(782)
-    //  return true;
+    if (Mass() == 0.)
+      return true;
     return ((ResonanceWidth() / Mass()) < 0.01);
   }
 
@@ -162,7 +162,8 @@ namespace thermalfist {
 
   void ThermalParticle::CalculateThermalBranchingRatios(const ThermalModelParameters & params, bool useWidth, double mu)
   {
-    if (!useWidth || m_Width == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType != eBW) {
+    //if (!useWidth || m_Width == 0.0 || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType != eBW) {
+    if (!useWidth || m_Width == 0.0 || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType != eBW) {
       for (size_t j = 0; j < m_Decays.size(); ++j) {
         m_Decays[j].mBratioAverage = m_Decays[j].mBratio;
       }
@@ -498,7 +499,7 @@ namespace thermalfist {
   {
     //if (m_ResonanceWidthIntegrationType != eBW)
     //  return m_Width;
-    if (m_Width / m_Mass < 0.01) {
+    if (ZeroWidthEnforced()) {
      return m_Width;
     }
 
@@ -522,7 +523,7 @@ namespace thermalfist {
   {
     std::vector<double> ret(m_Decays.size(), 0.);
 
-    if (!eBW || m_Width / m_Mass < 0.01) {
+    if (!eBW || ZeroWidthEnforced()) {
       for (size_t i = 0; i < m_Decays.size(); ++i)
         ret[i] = m_Decays[i].mBratio;
 
@@ -650,7 +651,6 @@ namespace thermalfist {
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
 
-    //if (!useWidth || m_Width / m_Mass < 1.e-2 || m_ResonanceWidthIntegrationType == ZeroWidth) {
     if (!useWidth || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy, 1, m_IGFExtraConfig);
     }

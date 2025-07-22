@@ -1251,7 +1251,11 @@ namespace thermalfist {
     bool flOverlap = true;
     while (flOverlap) {
       int sampled = 0;
-      if(ids.size() == 0) break;
+      
+      // Check if the event has no particles at all
+      if(ids.size() == 0) 
+        break;
+      
       while (sampled < ids.size()) {
         flOverlap = false;
         int i = ids[sampled];
@@ -1518,7 +1522,7 @@ namespace thermalfist {
                     }
                   }
 
-                  // Sample lifetime in rest frame
+                  // Sample the lifetime in the rest frame
                   ct = -ct * log(1. - RandomGenerators::randgenMT.randDblExc());
 
                   // Lorentz time delay
@@ -1565,7 +1569,7 @@ namespace thermalfist {
                 primParticles[i][j].processed = true;
               }
               else {
-                // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore decay products
+                // Decay through unknown branching ratio, presumably radiative, no hadrons, just ignore the decay products
                 primParticles[i][j].processed = true;
               }
             }
