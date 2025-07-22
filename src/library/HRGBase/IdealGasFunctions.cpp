@@ -1732,7 +1732,7 @@ namespace thermalfist {
       double prefactor = 1.;
       if (m == 0.) {
         prefactor = deg / T / T / 2. / xMath::Pi() / xMath::Pi();
-      } else{
+      } else {
         prefactor = deg * m / T / T / T / 2. / xMath::Pi() / xMath::Pi();
       }
       return ret * prefactor * xMath::GeVtoifm3();
