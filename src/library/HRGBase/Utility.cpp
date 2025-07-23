@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include "ThermalFISTConfig.h"
 
@@ -154,6 +155,48 @@ namespace thermalfist {
       }
     }
     return ret * mn;
+  }
+
+  std::map<std::string, std::string> ReadParametersFromFile(const std::string& filename, const std::map<std::string, std::string>& params) {
+    std::map<std::string, std::string> ret = params;
+    std::ifstream fin(filename);
+
+    if (!fin.is_open()) {
+      std::cout << "Cannot open parameters file!" << "\n";
+      return ret;
+    }
+
+    std::string var;
+    std::cout << "Reading input parameters from file " << filename << "\n";
+    while (fin >> var) {
+      if (var.size() == 0 || var[0] == '#') {
+        fin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        continue;
+      }
+
+      std::cout << "Reading input parameter " << var << " = ";
+      std::string val;
+      fin >> val;
+      std::cout << val << std::endl;
+      ret[var] = val;
+    }
+    fin.close();
+    return ret;
+  }
+
+
+  void ParametersFromArgs(int argc, char *argv[], std::map<std::string, std::string> &params)
+  {
+    for(int i = 1; i < argc - 1; i++) {
+      std::string arg = argv[i];
+      if (arg.size() <= 2 || arg[0] != '-' || arg[1] != '-') {
+        continue;
+      }
+      std::string var = arg.substr(2);
+      std::string val = argv[i + 1];
+      params[var] = val;
+      i++;
+    }
   }
 
   // Time keeping
