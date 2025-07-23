@@ -41,7 +41,7 @@ map<string, double> params = {
 };
 
 // Read the parameters from file
-void ReadParametersFromFile(const std::string &filename)
+void ReadParametersFromFileNS(const std::string &filename)
 {
 	if (filename == "")
 		return;
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
   string params_file = "";
   if (argc > 1)
     params_file = argv[1];
-  ReadParametersFromFile(params_file);
+  ReadParametersFromFileNS(params_file);
 
   bool include_leptons = (params["include_leptons"] != 0.);
 
