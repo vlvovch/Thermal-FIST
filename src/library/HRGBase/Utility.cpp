@@ -171,7 +171,7 @@ namespace thermalfist {
     std::cout << "Reading input parameters from file " << filename << "\n";
     while (fin >> var) {
       if (var.size() == 0 || var[0] == '#') {
-        fin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        fin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
         continue;
       }
 
