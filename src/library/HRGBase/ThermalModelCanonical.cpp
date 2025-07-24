@@ -37,6 +37,8 @@ namespace thermalfist {
     m_modelgce = NULL;
 
     m_Banalyt = false;
+    m_PartialZCalculated = false;
+    m_PartialZCalculatedFlucts = false;
   }
 
 
@@ -119,6 +121,7 @@ namespace thermalfist {
             ind++;
           }
 
+    m_PartialZCalculatedFlucts = computeFluctuations;
   }
 
   void ThermalModelCanonical::SetStatistics(bool stats) {
@@ -590,6 +593,8 @@ Obtained: %lf\n\
     for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
       m_Corr[iN] = m_PartialZ[iN] / m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]];
     }
+
+    m_PartialZCalculated = true;
   }
 
   double ThermalModelCanonical::ParticleScaledVariance(int part)
@@ -740,6 +745,11 @@ Obtained: %lf\n\
   }
 
   void ThermalModelCanonical::CalculateFluctuations() {
+    if (!m_PartialZCalculatedFlucts) {
+      CalculateQuantumNumbersRange(true);
+      CalculatePrimordialDensities();
+    }
+      
     CalculateTwoParticleCorrelations();
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();

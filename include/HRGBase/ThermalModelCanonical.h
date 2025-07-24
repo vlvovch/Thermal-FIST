@@ -127,7 +127,7 @@ namespace thermalfist {
      * 
      * \param conserve true -- canonically, false -- grand-canonically
      */
-    virtual void ConserveBaryonCharge(bool conserve = true) { m_BCE = static_cast<int>(conserve); }
+    virtual void ConserveBaryonCharge(bool conserve = true) { m_BCE = static_cast<int>(conserve); m_PartialZCalculated = false;  }
 
     /**
      * \brief Specifies whether the electric charge is treated canonically.
@@ -136,7 +136,7 @@ namespace thermalfist {
      * 
      * \param conserve true -- canonically, false -- grand-canonically
      */
-    virtual void ConserveElectricCharge(bool conserve = true) { m_QCE = static_cast<int>(conserve); }
+    virtual void ConserveElectricCharge(bool conserve = true) { m_QCE = static_cast<int>(conserve); m_PartialZCalculated = false; }
 
     /**
      * \brief Specifies whether the strangeness charge is treated canonically.
@@ -145,7 +145,7 @@ namespace thermalfist {
      * 
      * \param conserve true -- canonically, false -- grand-canonically
      */
-    virtual void ConserveStrangeness(bool conserve = true) { m_SCE = static_cast<int>(conserve); }
+    virtual void ConserveStrangeness(bool conserve = true) { m_SCE = static_cast<int>(conserve); m_PartialZCalculated = false; }
 
     /**
      * \brief Specifies whether the charm charge is treated canonically.
@@ -154,7 +154,7 @@ namespace thermalfist {
      * 
      * \param conserve true -- canonically, false -- grand-canonically
      */
-    virtual void ConserveCharm(bool conserve = true) { m_CCE = static_cast<int>(conserve); }
+    virtual void ConserveCharm(bool conserve = true) { m_CCE = static_cast<int>(conserve); m_PartialZCalculated = false; }
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 
@@ -182,6 +182,27 @@ namespace thermalfist {
      */
     void SetIntegrationIterationsMultiplier(int multiplier) { (multiplier > 0 ? m_IntegrationIterationsMultiplier = multiplier : m_IntegrationIterationsMultiplier = 1); }
     
+    /* 
+     * \brief Reset all flags which correspond to a calculation status
+     */
+    virtual void ResetCalculatedFlags() {
+      ThermalModelBase::ResetCalculatedFlags();
+      ResetPartialZCalculated();
+    }
+    /*
+     * \brief Reset the flags indicating whether the partial partition functions are calculated
+    */
+    void ResetPartialZCalculated() { m_PartialZCalculated = false; m_PartialZCalculatedFlucts = false; }
+
+    /*
+     * \brief Whether the partial partition functions are calculated
+     */
+    bool IsPartialZCalculated() const { return m_PartialZCalculated; }
+    
+    /*
+     * \brief Whether the partial partition functions are calculated with fluctuations
+     */
+    bool IsPartialZCalculatedFlucts() const { return m_PartialZCalculatedFlucts; }
 
     // Override functions begin
 
@@ -310,6 +331,9 @@ namespace thermalfist {
      * \brief Flag indicating whether the analytical calculation of baryon fugacity is used.
      */
     bool m_Banalyt;
+
+    bool m_PartialZCalculated;
+    bool m_PartialZCalculatedFlucts;
   };
 
 } // namespace thermalfist
