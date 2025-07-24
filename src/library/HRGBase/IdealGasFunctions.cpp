@@ -199,12 +199,21 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i);
+        if (m == 0.)
+          ret += sign * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i);
+        else
+          ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i);
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+
+      double prefactor = 1.;
+      if (m == 0.)
+        prefactor = deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2.;
+      else
+        prefactor = deg * m * m * T / 2. / xMath::Pi() / xMath::Pi();
+
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansionPressure(int statistics, double T, double mu, double m, double deg, int order,
@@ -254,12 +263,21 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i) / static_cast<double>(i);
+        if (m == 0.)
+          ret += sign * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i);
+        else
+          ret += sign * xMath::BesselKexp(2, i*moverT) * cfug / static_cast<double>(i) / static_cast<double>(i);
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * T * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+
+      double prefactor = 1.;
+      if (m == 0.)
+        prefactor = deg * T * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2.;
+      else
+        prefactor = deg * m * m * T * T / 2. / xMath::Pi() / xMath::Pi();
+
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansionEnergyDensity(int statistics, double T, double mu, double m, double deg, int order,
@@ -311,12 +329,21 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / static_cast<double>(i);
+        if (m == 0.)
+          ret += sign * cfug / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i);
+        else
+          ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / static_cast<double>(i);
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+
+      double prefactor = 1.;
+      if (m == 0.)
+        prefactor = deg * T * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 6.;
+      else
+        prefactor = deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi();
+
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansionEntropyDensity(int statistics, double T, double mu, double m, double deg, int order,
@@ -378,6 +405,10 @@ namespace thermalfist {
       double moverT = m / T;
       double sign = 1.;
       double ret = 0.;
+      
+      if (m == 0.) 
+        return ret;
+      
       for (int i = 1; i <= order; ++i) {
         ret += sign * xMath::BesselKexp(1, i*moverT) * cfug / static_cast<double>(i);
         cfug *= tfug;
@@ -433,12 +464,21 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * xMath::BesselKexp(2, i*moverT) * cfug * pow(static_cast<double>(i), N - 1);
+        if (m == 0.)
+          ret += sign * cfug * pow(static_cast<double>(i), N - 3);
+        else
+          ret += sign * xMath::BesselKexp(2, i*moverT) * cfug * pow(static_cast<double>(i), N - 1);
         cfug *= tfug;
         if (signchange) sign = -sign;
-      }
-      ret *= deg * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+      } 
+
+      double prefactor = 1.;
+      if (m == 0.)
+        prefactor = deg * T * T * T / 2. / xMath::Pi() / xMath::Pi() * 2.;
+      else
+        prefactor = deg * m * m * T / 2. / xMath::Pi() / xMath::Pi();
+
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansionChiN(int N, int statistics, double T, double mu, double m, double deg, int order,
@@ -1607,6 +1647,8 @@ namespace thermalfist {
       assert(extraConfig.MagneticField.B == 0);
 
       // No magnetic field
+      if (m == 0.)
+        return -deg * mu / T / T / xMath::Pi() / xMath::Pi() * exp(mu/ T);
       return deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi()
         * (m * xMath::BesselKexp(1, m / T) - mu * xMath::BesselKexp(2, m / T))
         * exp((mu - m) / T);
@@ -1632,15 +1674,27 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * (
+        if (m == 0.) {
+          ret += sign * (
+                - (mu - 3. * T/ static_cast<double>(i)) / static_cast<double>(i) / static_cast<double>(i)
+                ) * cfug;
+        }
+        else {
+          ret += sign * (
                 m * xMath::BesselKexp(1, i*moverT)
                 - (mu - 3. * T/ static_cast<double>(i)) * xMath::BesselKexp(2, i*moverT)
                 ) * cfug;
+        }
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+      double prefactor = 1.;
+      if (m == 0.) {
+        prefactor = deg * T / xMath::Pi() / xMath::Pi();
+      } else {
+        prefactor = deg * m * m / T / 2. / xMath::Pi() / xMath::Pi();
+      }
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansiond2ndT2(int statistics, double T, double mu, double m, double deg, int order,
@@ -1664,15 +1718,24 @@ namespace thermalfist {
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
         double k = static_cast<double>(i);
-        ret += sign * k * (
+        if (m == 0.) {
+          ret += sign * 2. * T * (mu * mu - 4. * mu * T / k + 6. * T / k * T / k) / k * cfug;
+        } else {
+          ret += sign * k * (
                 (m * (m * m + mu * mu - 4. * mu * T / k + 6. * T * T / k / k) * xMath::BesselKexp(0, i*moverT)
                 + (m * m * (3. * T / k - 2. * mu) + 2. * T / k * (mu * mu - 4. * mu * T / k + 6. * T / k * T / k)) * xMath::BesselKexp(1, i*moverT))
                 ) * cfug;
+        }
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m / T / T / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+      double prefactor = 1.;
+      if (m == 0.) {
+        prefactor = deg / T / T / 2. / xMath::Pi() / xMath::Pi();
+      } else {
+        prefactor = deg * m / T / T / T / 2. / xMath::Pi() / xMath::Pi();
+      }
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansiondedT(int statistics, double T, double mu, double m, double deg, int order,
@@ -1696,15 +1759,24 @@ namespace thermalfist {
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
         double k = static_cast<double>(i);
-        ret += sign * (
+        if (m == 0.) {
+          ret += sign * 6. * T / k * T / k * (4. * T / k - mu) / k * cfug;
+        } else {
+          ret += sign * (
                 m * (m*m + 3*T/k*(4.*T/k-mu))*xMath::BesselKexp(0, i*moverT)
                 + (6.*T/k*T/k*(4.*T/k-mu) - m*m*(mu-5.*T/k) )*xMath::BesselKexp(1, i*moverT)
                 ) * cfug;
+        }
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m / T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+      double prefactor = 1.;
+      if (m == 0.) {
+        prefactor = deg / 2. / xMath::Pi() / xMath::Pi();
+      } else {
+        prefactor = deg * m / T / 2. / xMath::Pi() / xMath::Pi();
+      }
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
     double QuantumClusterExpansiondedmu(int statistics, double T, double mu, double m, double deg, int order,
@@ -1727,12 +1799,21 @@ namespace thermalfist {
       double sign = 1.;
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
-        ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / T;
+        if (m == 0.) {
+          ret += sign * 3. / static_cast<double>(i) / static_cast<double>(i) / static_cast<double>(i) * cfug / T;
+        } else {
+          ret += sign * (xMath::BesselKexp(1, i*moverT) + 3. * xMath::BesselKexp(2, i*moverT) / moverT / static_cast<double>(i)) * cfug / T;
+        }
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
-      return ret;
+      double prefactor = 1.;
+      if (m == 0.) {
+        prefactor = deg * T * T * T * T / xMath::Pi() / xMath::Pi();
+      } else {
+        prefactor = deg * m * m * m * T / 2. / xMath::Pi() / xMath::Pi();
+      }
+      return ret * prefactor * xMath::GeVtoifm3();
     }
 
 
@@ -1757,15 +1838,25 @@ namespace thermalfist {
       double ret = 0.;
       for (int i = 1; i <= order; ++i) {
         double k = static_cast<double>(i);
-        ret += sign * k * (
+        if (m == 0.) {
+          ret += sign * k * (-mu / k / k) * cfug;
+        }
+        else {
+          ret += sign * k * (
                 m * xMath::BesselKexp(1, i*moverT)
                 - mu * xMath::BesselKexp(2, i*moverT)
                 ) * cfug;
+        }
         cfug *= tfug;
         if (signchange) sign = -sign;
       }
-      ret *= deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi();
-      return ret;
+      double prefactor = 1.;
+      if (m == 0.) {
+        prefactor = deg / T / T / xMath::Pi() / xMath::Pi();
+      } else {
+        prefactor = deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi();
+      }
+      return ret * prefactor;
     }
 
     double QuantumNumericalIntegrationdndT(int statistics, double T, double mu, double m, double deg,
