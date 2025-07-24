@@ -1145,7 +1145,7 @@ namespace thermalfist {
     int  PdgToId(long long pdgid) const { return m_TPS->PdgToId(pdgid); }
 
     /// Reset all flags which correspond to a calculation status
-    void ResetCalculatedFlags();
+    virtual void ResetCalculatedFlags();
 
     /// Whether densities had been calculated with
     /// the CalculateDensities() method
