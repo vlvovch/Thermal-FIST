@@ -2,7 +2,7 @@
 
 # Thermal-FIST
 [![Build Status](https://github.com/vlvovch/Thermal-FIST/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/vlvovch/Thermal-FIST/actions/workflows/build_and_test.yml)
-[![Version](https://img.shields.io/badge/version-1.5.1-purple.svg)](https://github.com/vlvovch/Thermal-FIST/releases)
+[![Version](https://img.shields.io/badge/version-1.5.2-purple.svg)](https://github.com/vlvovch/Thermal-FIST/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **Thermal-FIST** (or simply **The FIST**) is a C++ package designed for a convenient general-purpose analysis within the family of hadron resonance gas (HRG) models.
