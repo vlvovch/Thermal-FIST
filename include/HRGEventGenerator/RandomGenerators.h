@@ -14,6 +14,7 @@
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGBase/ThermalParticle.h"
 #include <random>
+#include <utility>
 
 namespace thermalfist {
 
