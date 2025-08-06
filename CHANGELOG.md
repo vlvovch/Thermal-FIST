@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.5.2]
+
+Date: 2025-07-23
+
+This update mainly fixes a couple of bugs in event generator mode (thanks to [A. Ohlson](https://github.com/aohlson)).
+Namely, it fixes a bug causing infinite loop in the event generator when the number of particles in the event is zero.
+This can happen when simulating low-multiplicity proton-proton collisions with local charge conservation.
+It also fixes an issue with initialization of Breit-Wigner distributions in the event generator, which could cause invalid_argument exceptions.
+
+## Bugfixes
+- Fixed a bug in the event generator causing infinite loop when the number of particles in the event is zero
+- Fixed an issue with initialization of Breit-Wigner distributions by properly checking if the width is zero
+
+## Enhancements  
+- Implemented $m \to 0$ limit for quantum statistics calculations using cluster expansion
+- Added additional flag checks for ThermalModelCanonical calculations
+
 ## [Version 1.5.1]
 
 Date: 2025-07-06
@@ -350,7 +367,10 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
+[Version 1.5.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.1...v1.5.2
+
 [Version 1.5.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5...v1.5.1
+
 [Version 1.5]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.2...v1.5
 
 [Version 1.4.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.4.1...v1.4.2

@@ -418,6 +418,8 @@ namespace thermalfist {
     }
 
     void BreitWignerGenerator::FixParameters() {
+      if (m_Gamma < 1e-7)
+        return;
       double eps = 1e-8;
       double l = m_Mthr, r = m_M + 2.*m_Gamma;
       double m1 = l + (r - l) / 3.;
@@ -466,6 +468,12 @@ namespace thermalfist {
 
     void ThermalBreitWignerGenerator::FixParameters()
     {
+      if (m_part->ZeroWidthEnforced()) {
+        m_Xmin = m_part->Mass();
+        m_Xmax = m_part->Mass();
+        m_Max = 1.;
+        return;
+      }
       double Threshold = m_part->DecayThresholdMass();
       double Width = m_part->ResonanceWidth();
       double Mass = m_part->Mass();
@@ -494,7 +502,7 @@ namespace thermalfist {
 
     double ThermalBreitWignerGenerator::GetRandom() const
     {
-      if (m_part->ResonanceWidth() / m_part->Mass() < 1.e-2)
+      if (m_part->ZeroWidthEnforced())
         return m_part->Mass();
       while (true) {
         double x0 = m_Xmin + (m_Xmax - m_Xmin) * randgenMT.rand();
@@ -506,6 +514,12 @@ namespace thermalfist {
 
     void ThermalEnergyBreitWignerGenerator::FixParameters()
     {
+      if (m_part->ZeroWidthEnforced()) {
+        m_Xmin = m_part->Mass();
+        m_Xmax = m_part->Mass();
+        m_Max = 1.;
+        return;
+      }
       double Threshold = m_part->DecayThresholdMass();
       double Width = m_part->ResonanceWidth();
       double Mass = m_part->Mass();
