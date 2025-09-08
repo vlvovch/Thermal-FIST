@@ -739,6 +739,13 @@ namespace thermalfist {
     virtual void CalculateTwoParticleFluctuationsDecays();
 
     /**
+     * \brief Applies baryon annihilation toy model to baryon yields and susceptibilities with the given gammaBbar
+     *   Currently may not conserve electric charge and strangeness 100%
+     * 
+     */
+    virtual void ApplyBaryonAnnihilation(double gammaBbar);
+
+    /**
      * \brief Returns the computed primordial particle number (cross-)susceptibility \f$ \frac{1}{VT^3} \, \langle \Delta N_i \Delta N_j \rangle \f$
      *        for particles with ids i and j. CalculateFluctuations() must be called beforehand.
      *
