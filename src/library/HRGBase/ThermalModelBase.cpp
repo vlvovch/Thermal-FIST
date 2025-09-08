@@ -1063,6 +1063,90 @@ namespace thermalfist {
     }
   }
 
+  void ThermalModelBase::ApplyBaryonAnnihilation(double gammaBbar)
+  {
+    double nB = 0., nBbar = 0.;
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      if(TPS()->Particles()[i].BaryonCharge() == 1) nB += m_densities[i];
+      if(TPS()->Particles()[i].BaryonCharge() == -1) nBbar += m_densities[i];
+    }
+
+    double chi1B = nB / pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    double chi1Bbar = nBbar / pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+
+    double gammaB = gammaBbar * nBbar / nB + (nB - nBbar) / nB;
+    double gammaBav = (gammaB * nB + gammaBbar * nBbar) / (nB + nBbar);
+
+    double wp = 0., wm = 0.;
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      const ThermalParticle &part = TPS()->Particles()[i];
+      if (part.BaryonCharge() != 1 && part.BaryonCharge() != -1) continue;
+
+      for(int j = 0; j < ComponentsNumber(); ++j) {
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part2.BaryonCharge() != 1 && part2.BaryonCharge() != -1) continue;
+
+
+        if (part.BaryonCharge() == 1 && part2.BaryonCharge() == 1) 
+          wp += m_PrimCorrel[i][j];
+        if (part.BaryonCharge() == -1 && part2.BaryonCharge() == -1) 
+          wm += m_PrimCorrel[i][j];
+      }
+    }
+    wp = wp * m_Parameters.T / nB;
+    wm = wm * m_Parameters.T / nBbar;
+
+    double wp0 = wp, wm0 = wm;
+    wp = (1. - gammaB + gammaB * wp0);
+    wm = (1. - gammaBbar + gammaBbar * wm0);
+
+    double deltachipm = wp * nB * gammaB - wp0 * nB + wm * nBbar * gammaBbar - wm0 * nBbar;
+    deltachipm *= 1. / m_Parameters.T;
+
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      const ThermalParticle &part = TPS()->Particles()[i];
+      if (part.BaryonCharge() != 1 && part.BaryonCharge() != -1) continue;
+      for(int j = 0; j < ComponentsNumber(); ++j) {
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part2.BaryonCharge() != 1 && part2.BaryonCharge() != -1) continue;
+
+        if (i == j) {
+          double gamma = (part.BaryonCharge() == 1) ? gammaB : gammaBbar;
+          double chi1i = m_densities[i];
+          double chi2i = m_PrimCorrel[i][j] * m_Parameters.T;
+          double chi2i_new = gamma * (1. - gamma) * chi1i + gamma * gamma * chi2i;
+          m_PrimCorrel[i][j] = chi2i_new / m_Parameters.T;
+          continue;
+        }
+
+        if (part.BaryonCharge() == 1 && part2.BaryonCharge() == 1) {
+          double gamma = gammaB;
+          m_PrimCorrel[i][j] = gamma * gamma * m_PrimCorrel[i][j];
+          continue;
+        }
+
+        if (part.BaryonCharge() == -1 && part2.BaryonCharge() == -1) {
+          double gamma = gammaBbar;
+          m_PrimCorrel[i][j] = gamma * gamma * m_PrimCorrel[i][j];
+          continue;
+        }
+
+        m_PrimCorrel[i][j] += deltachipm * m_densities[i] * m_densities[j] / nB / nBbar;
+      }
+    }
+
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      if(TPS()->Particles()[i].BaryonCharge() == 1) 
+        m_densities[i] *= gammaB;
+      if(TPS()->Particles()[i].BaryonCharge() == -1) 
+        m_densities[i] *= gammaBbar;
+    }
+
+    CalculateFeeddown();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateParticleChargeCorrelationMatrix();
+  }
+
   double ThermalModelBase::TwoParticleSusceptibilityPrimordial(int i, int j) const
   {
     if (!IsFluctuationsCalculated()) {
