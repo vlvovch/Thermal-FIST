@@ -1428,7 +1428,8 @@ namespace thermalfist {
         ret = false;
         cnt++;
         if (cnt == 10) {
-          throw std::runtime_error("**WARNING** Further warnings are discarded...");
+          // throw std::runtime_error("**WARNING** Further warnings are discarded...");
+          printf("**WARNING** Further warnings are discarded...\n");
         }
       }
     }
