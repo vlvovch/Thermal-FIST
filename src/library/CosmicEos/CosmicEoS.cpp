@@ -409,6 +409,8 @@ namespace thermalfist {
   {
     std::vector<double> ret(x.size(), 0.);
 
+    // printf("Chemicals: %E %E %E %E %E\n", x[0], x[1], x[2], x[3], x[4]);
+
     double muB = x[0];
     double muQ = x[1];
 

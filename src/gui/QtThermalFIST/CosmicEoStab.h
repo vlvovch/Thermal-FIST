@@ -39,6 +39,7 @@ class CosmicEoSWorker : public QThread
   int mode;
   int *currentSize;
   int *stop;
+  bool reverseDir;
 
   std::vector< ThermodynamicsCosmic > *paramsTD;
   std::vector< Thermodynamics > *paramsTDHRG;
@@ -57,6 +58,7 @@ public:
       std::vector<double> *varvalueso = NULL,
       int *currentSizeo = NULL,
       int *stopo = NULL,
+      bool reverseDiro = false,
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals) {
       cosmos = mod;
@@ -65,6 +67,7 @@ public:
       varvalues = varvalueso;
       currentSize = currentSizeo;
       stop = stopo;
+      reverseDir = reverseDiro;
 
       chems = std::vector<double>({ 0.700, -1.e-7, -1.e-7, -1.e-7, -1.e-7 });
 
@@ -91,6 +94,8 @@ class CosmicEoSTab : public QWidget
     QLabel    *labelFeeddown, *labelFeeddown2;
 
     QCheckBox *CBflipAxes;
+
+    QCheckBox *CBreverseDir;
 
     QLabel *labelmuB, *labelTMin, *labelTMax, *labeldT;
 

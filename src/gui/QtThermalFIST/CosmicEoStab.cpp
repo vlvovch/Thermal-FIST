@@ -28,10 +28,37 @@ using namespace std;
 using namespace thermalfist;
 
 void CosmicEoSWorker::run() {
+  double Tprev = 0., Tprev2 = 0.;
+  vector<double> chemsprev, chemsprev2;
+
   int i = 0;
-  for (double param = Tmin; param <= Tmax + 1.e-10 && !(*stop); param += dT, ++i) {
+  vector<double> params;
+  if (reverseDir) {
+    for (double param = Tmax; param >= Tmin - 1.e-10; param -= dT) {
+      params.push_back(param);
+    }
+  }
+  else {
+    for (double param = Tmin; param <= Tmax + 1.e-10; param += dT) {
+      params.push_back(param);
+    }
+  }
+  for (double param : params) {
     if (i < paramsTD->size()) {
+      if (i > 1) {
+        double dTcur = param - Tprev2;
+        double dTder = Tprev - Tprev2;
+        for(int i = 0; i < 5; i++) {
+          chems[i] = chemsprev2[i] + (chemsprev[i] - chemsprev2[i]) * dTcur / dTder;
+        }
+      }
+
       chems = cosmos->SolveChemicalPotentials(param * 1.e-3, chems);
+      // printf("Param: %f %E %E %E %E %E\n", param, chems[0], chems[1], chems[2], chems[3], chems[4]);
+      Tprev2 = Tprev;
+      Tprev = param;
+      chemsprev2 = chemsprev;
+      chemsprev = chems;
 
       varvalues->operator [](i) = param;
       double T = param;
@@ -94,6 +121,7 @@ void CosmicEoSWorker::run() {
 
       (*currentSize)++;
     }
+    i++;
   }
   emit calculated();
 }
@@ -438,6 +466,9 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     spindT->setMaximum(10000.);
     spindT->setValue(2.);
 
+    CBreverseDir = new QCheckBox(tr("Reverse direction"));
+    CBreverseDir->setChecked(false);
+
 
     layBounds->addWidget(labelTMin, 0, 0);
     layBounds->addWidget(spinTMin, 0, 1);
@@ -445,11 +476,13 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     layBounds->addWidget(spinTMax, 0, 3);
     layBounds->addWidget(labeldT, 0, 4);
     layBounds->addWidget(spindT, 0, 5);
+    // layBounds->addWidget(CBreverseDir, 0, 6);
 
 //    labelConstr = new QLabel(tr(""));
 
 
     layParamBounds->addLayout(layBounds);
+    layParamBounds->addWidget(CBreverseDir, 0, Qt::AlignLeft);
     // layParamBounds->addWidget(labelConstr, 0, Qt::AlignLeft);
 
     grRange->setLayout(layParamBounds);
@@ -588,7 +621,7 @@ void CosmicEoSTab::calculate() {
 
       CosmicEoSWorker *wrk = new CosmicEoSWorker(cosmos, spinTMin->value(), spinTMax->value(), spindT->value(),
                                                  asymmetries, &paramsTD, &paramsTDHRG,
-                                                 &varvalues, &fCurrentSize, &fStop, this);
+                                                 &varvalues, &fCurrentSize, &fStop, CBreverseDir->isChecked(), this);
 
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
