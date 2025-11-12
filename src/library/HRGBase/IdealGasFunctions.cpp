@@ -512,7 +512,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -565,7 +566,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -621,7 +623,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -672,6 +675,13 @@ namespace thermalfist {
       if (T == 0.)
         return 0.;
 
+      if (statistics == -1 && mu > m) {
+        std::cerr << "**WARNING** QuantumNumericalIntegrationEntropyDensity: Bose-Einstein condensation" << std::endl;
+        calculationHadBECIssue = true;
+        mu = m;
+        // return 0.;
+      }
+
       double ret = (QuantumNumericalIntegrationPressure(statistics, T, mu, m, deg, extraConfig)
                     + QuantumNumericalIntegrationEnergyDensity(statistics, T, mu, m, deg, extraConfig)
                     - mu * QuantumNumericalIntegrationDensity(statistics, T, mu, m, deg, extraConfig)) / T;
@@ -691,7 +701,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -744,7 +755,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -799,7 +811,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -855,7 +868,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -940,8 +954,9 @@ namespace thermalfist {
         if (mu >= m) {
           std::cerr << "**WARNING** QuantumNumericalIntegrationChiNDimensionfull: Bose-Einstein condensation" << std::endl;
           calculationHadBECIssue = true;
+          mu = m;
         }
-        return 0.;
+        // return 0.;
       }
       return QuantumNumericalIntegrationTdndmu(N - 1, statistics, T, mu, m, deg, extraConfig) / pow(T, N-1) / xMath::GeVtoifm3();
     }
