@@ -457,17 +457,17 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     spinTMax->setDecimals(3);
     spinTMax->setMinimum(0.01);
     spinTMax->setMaximum(10000.);
-    spinTMax->setValue(200.);
+    spinTMax->setValue(180.);
 
     labeldT = new QLabel(tr("∆T (MeV):"));
     spindT = new QDoubleSpinBox();
     spindT->setDecimals(3);
     spindT->setMinimum(0.);
     spindT->setMaximum(10000.);
-    spindT->setValue(2.);
+    spindT->setValue(1.);
 
     CBreverseDir = new QCheckBox(tr("Reverse direction"));
-    CBreverseDir->setChecked(false);
+    CBreverseDir->setChecked(true);
 
 
     layBounds->addWidget(labelTMin, 0, 0);
