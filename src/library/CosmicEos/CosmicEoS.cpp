@@ -335,6 +335,37 @@ namespace thermalfist {
     }
   }
 
+  void CosmicEoS::SetKaonsInteracting(bool kaonsinteract, double fkaChPT)
+  {
+    //m_InteractingKaons = kaonsinteract;
+    ClearEMMByPdg(321);
+    ClearEMMByPdg(311);
+    ClearEMMByPdg(-311);
+    ClearEMMByPdg(-321);
+    if (kaonsinteract) {
+      HRGModel()->TPS()->ParticleByPDG(321).SetGeneralizedDensity(
+              new EffectiveMassModel(
+                      HRGModel()->TPS()->ParticleByPDG(321),
+                      new EMMFieldPressureChPT(HRGModel()->TPS()->ParticleByPDG(321).Mass(), fkaChPT)
+                      ));
+      HRGModel()->TPS()->ParticleByPDG(-321).SetGeneralizedDensity(
+              new EffectiveMassModel(
+                      HRGModel()->TPS()->ParticleByPDG(-321),
+                      new EMMFieldPressureChPT(HRGModel()->TPS()->ParticleByPDG(-321).Mass(), fkaChPT)
+              ));
+      HRGModel()->TPS()->ParticleByPDG(311).SetGeneralizedDensity(
+              new EffectiveMassModel(
+                      HRGModel()->TPS()->ParticleByPDG(311),
+                      new EMMFieldPressureChPT(HRGModel()->TPS()->ParticleByPDG(311).Mass(), fkaChPT)
+              ));
+      HRGModel()->TPS()->ParticleByPDG(-311).SetGeneralizedDensity(
+              new EffectiveMassModel(
+                      HRGModel()->TPS()->ParticleByPDG(-311),
+                      new EMMFieldPressureChPT(HRGModel()->TPS()->ParticleByPDG(-311).Mass(), fkaChPT)
+              ));
+    }
+  }
+
   bool CosmicEoS::InPionCondensedPhase() const
   {
     if (!InteractingPions())
@@ -405,7 +436,16 @@ namespace thermalfist {
     }
   }
 
-  std::vector<double> CosmicEoS::BroydenEquationsCosmology::Equations(const std::vector<double>& x)
+  void CosmicEoS::ClearEMMByPdg(long long pdg)
+  {
+    auto id = m_modelHRG->PdgToId(pdg);
+    if (id != -1)
+      m_modelHRG->TPS()->Particle(id).ClearGeneralizedDensity();
+    else 
+      printf("**WARNING** CosmicEoS::ClearEMMByPdg: PDG code %lld not found!\n", pdg);
+  }
+
+  std::vector<double> CosmicEoS::BroydenEquationsCosmology::Equations(const std::vector<double> &x)
   {
     std::vector<double> ret(x.size(), 0.);
 

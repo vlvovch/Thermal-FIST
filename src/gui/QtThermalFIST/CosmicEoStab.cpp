@@ -595,7 +595,11 @@ void CosmicEoSTab::calculate() {
 
 
 
-      cosmos = new CosmicEoS(model, config.UseEMMPions);
+      cosmos = new CosmicEoS(model, false);
+      if (config.UseEMMPions)
+        cosmos->SetPionsInteracting(true, config.EMMPionFPi);
+      if (config.UseEMMKaons)
+        cosmos->SetKaonsInteracting(true, config.EMMKaonFKa);
 
       paramsTD.resize(0);
       paramsTDHRG.resize(0);

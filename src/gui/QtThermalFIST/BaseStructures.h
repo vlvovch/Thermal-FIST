@@ -101,6 +101,10 @@ struct ThermalModelConfig {
   bool  UseEMMPions;
   double EMMPionFPi;
 
+  /// Effective mass model (kaons)
+  bool  UseEMMKaons;
+  double EMMKaonFKa;
+
   double MagneticFieldB;
   int MagneticFieldLmax;
 
