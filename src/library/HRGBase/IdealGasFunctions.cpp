@@ -956,7 +956,7 @@ namespace thermalfist {
           calculationHadBECIssue = true;
           mu = m;
         }
-        // return 0.;
+        return 0.;
       }
       return QuantumNumericalIntegrationTdndmu(N - 1, statistics, T, mu, m, deg, extraConfig) / pow(T, N-1) / xMath::GeVtoifm3();
     }
@@ -1561,7 +1561,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1882,7 +1883,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1914,7 +1916,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1948,7 +1951,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1977,7 +1981,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -2006,7 +2011,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
