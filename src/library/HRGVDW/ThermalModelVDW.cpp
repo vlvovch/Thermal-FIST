@@ -328,7 +328,10 @@ namespace thermalfist {
     for(int isol = 0; isol < iters; ++isol) {
       double tmu = muBmin + (0.5 + isol) * dmu;
       for(size_t j = 0; j < curmust.size(); ++j) {
-        curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        if (m_Parameters.muB != 0.0)
+          curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        else
+          curmust[j] = tmu;
         if (m_TPS->Particles()[j].Statistics()==-1 && curmust[j] > m_TPS->Particles()[j].Mass()) 
           curmust[j] = 0.98 * m_TPS->Particles()[j].Mass();
       }

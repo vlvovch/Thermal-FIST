@@ -234,6 +234,16 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layout->addLayout(layFile);
 
 
+  // QGroupBox* groupMultipleSolutions = new QGroupBox(tr("Multiple solutions"));
+  QVBoxLayout* layoutMultipleSolutions = new QVBoxLayout();
+  CBSearchMultipleSolutions = new QCheckBox(tr("Search for multiple solutions (in case of phase transition)"));
+  CBSearchMultipleSolutions->setChecked(m_parent->currentConfig.SearchMultipleSolutions);
+  layoutMultipleSolutions->addWidget(CBSearchMultipleSolutions);
+  // groupMultipleSolutions->setLayout(layoutMultipleSolutions);
+  layout->addLayout(layoutMultipleSolutions);
+  // layout->addWidget(groupMultipleSolutions);
+
+
   groupMC = new QGroupBox(tr("Event generator options"));
   QVBoxLayout* layoutMC = new QVBoxLayout();
   CBEVMult = new QCheckBox(tr("Use rejection sampling for excluded volume multiplicities"));
@@ -445,6 +455,8 @@ void InteractionsDialog::OK()
   m_parent->currentConfig.vdWbBantiB = spinB_BaB->value();
   m_parent->currentConfig.vdWbMB = spinB_MB->value();
   m_parent->currentConfig.vdWbMM = spinB_MM->value();
+
+  m_parent->currentConfig.SearchMultipleSolutions = CBSearchMultipleSolutions->isChecked();
 
   m_parent->currentConfig.fUseEVRejectionMultiplicity = CBEVMult->isChecked();
   m_parent->currentConfig.fUseEVRejectionCoordinates = CBEVCoord->isChecked();

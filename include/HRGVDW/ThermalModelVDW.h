@@ -135,7 +135,7 @@ namespace thermalfist {
      * \return true  Multiple solutions considered
      * \return false Multiple solutions not considered
      */
-    bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
+    virtual bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
 
     /// The shifted chemical potential of particle species i.
     double MuStar(int i) const { return m_MuStar[i]; }
