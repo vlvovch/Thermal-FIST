@@ -927,6 +927,23 @@ namespace thermalfist {
      */
     virtual std::vector<double> CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs);
 
+    /**
+     * \brief Whether to search for multiple solutions for the case when first-order phase transition may be present.
+     * 
+     *        Only relevant for interacting systems. Does nothing elsewhere.
+     * 
+     * \param search Whether multiple solutions should be considered. False by default.
+     */
+    virtual void SetMultipleSolutionsMode(bool search) { }
+
+    /**
+     * \brief Whether multiple solutions are being searched for.
+     * This is a placeholder method as the actual implementation is provided only in interacting systems.
+     *  
+     * \return false Multiple solutions not considered (placeholder)
+     */
+    virtual bool UseMultipleSolutionsMode() const { return false; }
+
 
     //virtual double GetParticlePrimordialDensity(unsigned int);
     //virtual double GetParticleTotalDensity(unsigned int);

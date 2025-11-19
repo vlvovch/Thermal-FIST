@@ -88,7 +88,7 @@ namespace thermalfist {
 		 * \return true  Multiple solutions considered
 		 * \return false Multiple solutions not considered
 		 */
-		bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
+		virtual bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
 
 		/**
 		 * \brief Get the shifted chemical potential of a particle species.
@@ -349,7 +349,7 @@ namespace thermalfist {
 		bool   m_LastBroydenSuccessFlag;
 
 		/// Whether the mapping to components with the same VDW parameters has been calculated
-    	bool   m_ComponentMapCalculated;
+		bool   m_ComponentMapCalculated;
 
 		/// Vector of the shifted chemical potentials
 		std::vector<double> m_MuStar;

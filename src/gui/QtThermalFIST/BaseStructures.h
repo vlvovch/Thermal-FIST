@@ -45,6 +45,7 @@ struct ThermalModelConfig {
   QvdWParameters vdWparams;
 
   int RealGasExcludedVolumePrescription; // 0 - vdW, 1 - CS, 2 - virial, 3 - TVM
+  bool SearchMultipleSolutions; // false - off, true - on
 
   /// Thermal parameters
   double T;

@@ -17,7 +17,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-            os: [ubuntu-latest, ubuntu-22.04, macos-13, macos-latest, windows-latest]
+            os: [ubuntu-latest, ubuntu-22.04, macos-15, macos-latest, windows-latest]
             qts: [6.2.0, 5.15.2]
             include:
               - os: ubuntu-latest

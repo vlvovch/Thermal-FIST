@@ -67,6 +67,7 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.vdWparams.m_aij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 0.));
   ret.vdWparams.m_bij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 1.));
   ret.InteractionInput = "";
+  ret.SearchMultipleSolutions = false;
 
   ret.RealGasExcludedVolumePrescription = 0;
   
@@ -320,6 +321,7 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
     static_cast<ThermalModelRealGas*>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(config.vdWparams.m_aij));
   }
 
+  model->SetMultipleSolutionsMode(config.SearchMultipleSolutions);
 
   return;
   
