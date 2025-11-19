@@ -579,7 +579,8 @@ namespace thermalfist {
 
     vector<double> chi2id(m_densities.size());
     for(int i=0;i<NN;++i) 
-      chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     for(int i=0;i<NN;++i)
       for(int j=0;j<NN;++j) {
@@ -596,7 +597,7 @@ namespace thermalfist {
       for(int k=0;k<NN;++k) {
         densMatrix(i,NN+i) += m_Virial[k][i] * m_densities[k];
       }
-      densMatrix(i,NN+i) = (densMatrix(i,NN+i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+      densMatrix(i,NN+i) = (densMatrix(i,NN+i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3);
     }
 
     for(int i=0;i<NN;++i)
@@ -640,26 +641,27 @@ namespace thermalfist {
 
     vector<double> chi3id(m_densities.size());
     for(int i=0;i<NN;++i) 
-      chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi3id[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     for(int i=0;i<NN;++i) {
       xVector[i]    = 0.;
 
       double tmp = 0.;
       for(int j=0;j<NN;++j) tmp += m_Virial[j][i] * dni[j];
-      tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+      tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i];
       xVector[i] += tmp;
 
       tmp = 0.;
       for(int j=0;j<NN;++j) tmp += m_Virial[j][i] * m_densities[j];
-      tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i];
+      tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i];
       xVector[i] += tmp;
     }
     for(int i=0;i<NN;++i) {
       xVector[NN+i]    = 0.;
 
       double tmp = 0.;
-      for(int j=0;j<NN;++j) tmp += -m_Virial[i][j] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[j];
+      for(int j=0;j<NN;++j) tmp += -m_Virial[i][j] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * dmus[j];
     
       xVector[NN+i] = tmp;
     }
@@ -684,7 +686,8 @@ namespace thermalfist {
 
     vector<double> chi4id(m_densities.size());
     for (int i = 0; i < NN; ++i)
-      chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi4id[i] = m_TPS->Particles()[i].chiDimensionfull(4, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     vector<double> dnis(NN, 0.);
     for(int i=0;i<NN;++i) {
@@ -693,8 +696,8 @@ namespace thermalfist {
 
     vector<double> d2nis(NN, 0.);
     for(int i=0;i<NN;++i) {
-      d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i] + 
-        chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * d2mus[i];
+      d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] + 
+        chi2id[i] * pow(xMath::GeVtoifm(), 3) * d2mus[i];
     }
 
     for(int i=0;i<NN;++i) {
@@ -713,7 +716,7 @@ namespace thermalfist {
       double tmps = 0.;
       for(int j=0;j<NN;++j) tmps += m_Virial[j][i] * m_densities[j];
 
-      tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * d2mus[i] * 3. * dmus[i];
+      tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * d2mus[i] * 3. * dmus[i];
       xVector[i] += tmp;
 
       tmp = -(tmps - 1.) * chi4id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] * dmus[i];
