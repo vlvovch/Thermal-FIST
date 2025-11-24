@@ -27,6 +27,41 @@
 using namespace std;
 using namespace thermalfist;
 
+namespace {
+  // Linear interpolation helper on a QVector grid.
+  // Returns true and sets yOut if x lies within [xs.front(), xs.back()],
+  // otherwise returns false.
+  bool linearInterpolate(const QVector<double>& xs,
+                         const QVector<double>& ys,
+                         double x,
+                         double& yOut)
+  {
+    int n = xs.size();
+    if (n == 0) return false;
+    if (x < xs.front() || x > xs.back()) return false;
+    auto it = std::upper_bound(xs.begin(), xs.end(), x);
+    if (it == xs.begin()) {
+      yOut = ys.front();
+      return true;
+    }
+    if (it == xs.end()) {
+      yOut = ys.back();
+      return true;
+    }
+    int hi = int(it - xs.begin());
+    int lo = hi - 1;
+    double x0 = xs[lo];
+    double x1 = xs[hi];
+    if (x1 == x0) {
+      yOut = ys[lo];
+      return true;
+    }
+    double t = (x - x0) / (x1 - x0);
+    yOut = ys[lo] + t * (ys[hi] - ys[lo]);
+    return true;
+  }
+}
+
 void EoSWorker::run() {
   int i = 0;
   for (double param = Tmin; param <= Tmax + 1.e-10 && !(*stop); param += dT, ++i) {
@@ -991,10 +1026,10 @@ void EquationOfStateTab::plotLatticeData()
 
     // WB data
     if (mapWB.count(paramname) > 0
-    || (CBratio->isChecked()
-    && mapWB.count(paramnames[index]) && mapWB.count(paramnames[comboQuantity2->currentIndex()])
-    && dataWBx[mapWB[paramnames[index]]].size() == dataWBx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
-    ) {
+        || (CBratio->isChecked()
+            && mapWB.count(paramnames[index])
+            && mapWB.count(paramnames[comboQuantity2->currentIndex()])))
+    {
       
       int indWB = 0;
       if (mapWB.count(paramname))
@@ -1004,8 +1039,6 @@ void EquationOfStateTab::plotLatticeData()
         int index2 = comboQuantity2->currentIndex();
         indWB  = mapWB[paramnames[index]];
         indWB2 = mapWB[paramnames[index2]];
-        if (dataWBx[indWB].size() != dataWBx[indWB2].size())
-          return;
       }
       plotDependence->addGraph();
       plotDependence->graph(graphStart)->setName("LQCD (Wuppertal-Budapest)");
@@ -1018,41 +1051,68 @@ void EquationOfStateTab::plotLatticeData()
       plotDependence->graph(graphStart)->setChannelFillGraph(plotDependence->graph(graphStart+1));
 
       double tmin = 1.e5, tmax = 0.;
-      QVector<double> x0(dataWBx[indWB].size());
-      QVector<double> yConfUpper(dataWBx[indWB].size()), yConfLower(dataWBx[indWB].size());
-      for (int i = 0; i < x0.size(); ++i) {
-        x0[i] = dataWBx[indWB][i];
-        if (mapWB.count(paramname)) {
-          yConfUpper[i] = dataWBy[indWB][i] + dataWByerrp[indWB][i];
-          yConfLower[i] = dataWBy[indWB][i] - dataWByerrm[indWB][i];
-        }
-        else if (CBratio->isChecked()) {
-          double mean = dataWBy[indWB][i] / dataWBy[indWB2][i];
-          double error = mean * sqrt((dataWByerrp[indWB][i]/dataWBy[indWB][i])*(dataWByerrp[indWB][i]/dataWBy[indWB][i])
-                  + (dataWByerrp[indWB2][i]/dataWBy[indWB2][i])*(dataWByerrp[indWB2][i]/dataWBy[indWB2][i]));
+      QVector<double> x0;
+      QVector<double> yConfUpper, yConfLower;
 
-          yConfUpper[i] = mean + error;
-          yConfLower[i] = mean - error;
+      const QVector<double>& xNum = dataWBx[indWB];
+      const QVector<double>& yNum = dataWBy[indWB];
+      const QVector<double>& yNumErr = dataWByerrp[indWB];
+
+      const bool useRatio = CBratio->isChecked() && !mapWB.count(paramname);
+
+      for (int i = 0; i < xNum.size(); ++i) {
+        double x = xNum[i];
+        double yUp = 0.0;
+        double yLow = 0.0;
+
+        if (!useRatio) {
+          yUp  = yNum[i] + dataWByerrp[indWB][i];
+          yLow = yNum[i] - dataWByerrm[indWB][i];
+        } else {
+          // Ratio with linear interpolation of denominator and its error
+          const QVector<double>& xDen = dataWBx[indWB2];
+          const QVector<double>& yDen = dataWBy[indWB2];
+          const QVector<double>& yDenErr = dataWByerrp[indWB2];
+
+          double denVal = 0.0, denErr = 0.0;
+          if (!linearInterpolate(xDen, yDen, x, denVal))
+            continue;
+          if (!linearInterpolate(xDen, yDenErr, x, denErr))
+            continue;
+          if (std::abs(denVal) < 1.e-12 || std::abs(yNum[i]) < 1.e-12)
+            continue;
+
+          double mean = yNum[i] / denVal;
+          double error = mean * std::sqrt((yNumErr[i] / yNum[i]) * (yNumErr[i] / yNum[i])
+                                          + (denErr / denVal) * (denErr / denVal));
+          yUp  = mean + error;
+          yLow = mean - error;
         }
-        if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
-          tmin = std::min(tmin, yConfLower[i]);
-          tmax = std::max(tmax, yConfUpper[i]);
+
+        x0.push_back(x);
+        yConfUpper.push_back(yUp);
+        yConfLower.push_back(yLow);
+
+        if (x >= spinTMin->value() && x <= spinTMax->value()) {
+          tmin = std::min(tmin, yLow);
+          tmax = std::max(tmax, yUp);
         }
       }
 
-      plotDependence->graph(graphStart)->setData(x0, yConfUpper);
-      plotDependence->graph(graphStart+1)->setData(x0, yConfLower);
-
-      plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      if (!x0.isEmpty()) {
+        plotDependence->graph(graphStart)->setData(x0, yConfUpper);
+        plotDependence->graph(graphStart+1)->setData(x0, yConfLower);
+        plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      }
 
       graphStart += 2;
     }
 
     // HotQCD data
-    if (mapHotQCD.count(paramname) > 0 || (CBratio->isChecked()
-      && mapHotQCD.count(paramnames[index]) && mapHotQCD.count(paramnames[comboQuantity2->currentIndex()])
-      && dataHotQCDx[mapHotQCD[paramnames[index]]].size() == dataHotQCDx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
-      )
+    if (mapHotQCD.count(paramname) > 0
+        || (CBratio->isChecked()
+            && mapHotQCD.count(paramnames[index])
+            && mapHotQCD.count(paramnames[comboQuantity2->currentIndex()])))
     {
       int indHotQCD = 0;
       if (mapHotQCD.count(paramname))
@@ -1062,8 +1122,6 @@ void EquationOfStateTab::plotLatticeData()
         int index2 = comboQuantity2->currentIndex();
         indHotQCD  = mapHotQCD[paramnames[index]];
         indHotQCD2 = mapHotQCD[paramnames[index2]];
-        if (dataHotQCDx[indHotQCD].size() != dataHotQCDx[indHotQCD2].size())
-          return;
       }
 
       plotDependence->addGraph();
@@ -1077,34 +1135,58 @@ void EquationOfStateTab::plotLatticeData()
       plotDependence->graph(graphStart)->setChannelFillGraph(plotDependence->graph(graphStart + 1));
 
       double tmin = 1.e5, tmax = 0.;
-      QVector<double> x0(dataHotQCDx[indHotQCD].size());
-      QVector<double> yConfUpper(dataHotQCDx[indHotQCD].size()), yConfLower(dataHotQCDx[indHotQCD].size());
-      for (int i = 0; i < x0.size(); ++i) {
-        x0[i] = dataHotQCDx[indHotQCD][i];
+      QVector<double> x0;
+      QVector<double> yConfUpper, yConfLower;
 
-        if (mapHotQCD.count(paramname)) {
-          yConfUpper[i] = dataHotQCDy[indHotQCD][i] + dataHotQCDyerrp[indHotQCD][i];
-          yConfLower[i] = dataHotQCDy[indHotQCD][i] - dataHotQCDyerrm[indHotQCD][i];
+      const QVector<double>& xNumH = dataHotQCDx[indHotQCD];
+      const QVector<double>& yNumH = dataHotQCDy[indHotQCD];
+      const QVector<double>& yNumErrH = dataHotQCDyerrp[indHotQCD];
+
+      const bool useRatioH = CBratio->isChecked() && !mapHotQCD.count(paramname);
+
+      for (int i = 0; i < xNumH.size(); ++i) {
+        double x = xNumH[i];
+        double yUp = 0.0;
+        double yLow = 0.0;
+
+        if (!useRatioH) {
+          yUp  = yNumH[i] + dataHotQCDyerrp[indHotQCD][i];
+          yLow = yNumH[i] - dataHotQCDyerrm[indHotQCD][i];
+        } else {
+          const QVector<double>& xDenH = dataHotQCDx[indHotQCD2];
+          const QVector<double>& yDenH = dataHotQCDy[indHotQCD2];
+          const QVector<double>& yDenErrH = dataHotQCDyerrp[indHotQCD2];
+
+          double denVal = 0.0, denErr = 0.0;
+          if (!linearInterpolate(xDenH, yDenH, x, denVal))
+            continue;
+          if (!linearInterpolate(xDenH, yDenErrH, x, denErr))
+            continue;
+          if (std::abs(denVal) < 1.e-12 || std::abs(yNumH[i]) < 1.e-12)
+            continue;
+
+          double mean = yNumH[i] / denVal;
+          double error = mean * std::sqrt((yNumErrH[i] / yNumH[i]) * (yNumErrH[i] / yNumH[i])
+                                          + (denErr / denVal) * (denErr / denVal));
+          yUp  = mean + error;
+          yLow = mean - error;
         }
-        else if (CBratio->isChecked()) {
-          double mean = dataHotQCDy[indHotQCD][i] / dataHotQCDy[indHotQCD2][i];
-          double error = mean * sqrt((dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])*(dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])
-                                     + (dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i])*(dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i]));
 
-          yConfUpper[i] = mean + error;
-          yConfLower[i] = mean - error;
-        }
+        x0.push_back(x);
+        yConfUpper.push_back(yUp);
+        yConfLower.push_back(yLow);
 
-        if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
-          tmin = std::min(tmin, yConfLower[i]);
-          tmax = std::max(tmax, yConfUpper[i]);
+        if (x >= spinTMin->value() && x <= spinTMax->value()) {
+          tmin = std::min(tmin, yLow);
+          tmax = std::max(tmax, yUp);
         }
       }
 
-      plotDependence->graph(graphStart)->setData(x0, yConfUpper);
-      plotDependence->graph(graphStart + 1)->setData(x0, yConfLower);
-
-      plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      if (!x0.isEmpty()) {
+        plotDependence->graph(graphStart)->setData(x0, yConfUpper);
+        plotDependence->graph(graphStart + 1)->setData(x0, yConfLower);
+        plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      }
     }
   }
 }
