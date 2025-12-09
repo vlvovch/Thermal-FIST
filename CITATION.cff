@@ -1,0 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Thermal-FIST
+message: 'If you use Thermal-FIST, please cite the CPC paper below.'
+type: software
+authors:
+  - given-names: Volodymyr
+    family-names: Vovchenko
+    email: vvovchen@central.uh.edu
+    affiliation: University of Houston
+    orcid: 'https://orcid.org/0000-0002-2189-4766'
+  - given-names: Horst
+    family-names: Stoecker
+    orcid: 'https://orcid.org/0000-0002-3282-3664'
+identifiers:
+  - type: doi
+    value: 10.1016/j.cpc.2019.06.024
+    description: The paper documenting the package
+repository-code: 'https://github.com/vlvovch/Thermal-FIST'
+abstract: A package for hadron resonance gas model applications
+keywords:
+  - equation-of-state
+  - qcd
+  - heavy-ion-collisions
+  - hadron-resonance-gas
+license: GPL-3.0
+preferred-citation:
+  type: article
+  title: "Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state"
+  authors:
+    - family-names: Vovchenko
+      given-names: Volodymyr
+    - family-names: Stoecker
+      given-names: Horst
+  journal: "Computer Physics Communications"
+  volume: 244
+  year: 2019
+  doi: 10.1016/j.cpc.2019.06.024
+  start: 295
+  end: 310
