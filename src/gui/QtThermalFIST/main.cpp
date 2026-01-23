@@ -54,9 +54,10 @@ static void resizeToFillBrowser()
         document.documentElement.style.overflow = 'hidden';
     }, canvasWidth, canvasHeight, cssWidth, cssHeight);
 
-    // Resize Qt window to match CSS size
+    // Resize Qt window to match CSS size and update layout
     if (g_mainWindow) {
-        g_mainWindow->resize(cssWidth, cssHeight);
+        g_mainWindow->setGeometry(0, 0, cssWidth, cssHeight);
+        g_mainWindow->updateGeometry();
     }
 }
 
@@ -117,9 +118,9 @@ int main(int argc, char *argv[])
     // Register resize callback for browser window resize events
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, EM_TRUE, onBrowserResize);
 
-    // Set canvas to fill browser, then show maximized
+    // Resize canvas and show window (use show() instead of showMaximized() for better WASM sizing)
     resizeToFillBrowser();
-    w.showMaximized();
+    w.show();
 #else
     w.showMaximized();
 #endif
