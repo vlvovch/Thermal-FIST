@@ -126,11 +126,11 @@ else()
   endif()
 endif()
 
-# Use the Widgets module from Qt 5.
+# Link Qt libraries (use PRIVATE keyword for compatibility with qt_add_executable)
 if(UseQt6)
-  target_link_libraries(QtThermalFIST ThermalFIST Qt6::Core Qt6::Widgets Qt6::PrintSupport)
+  target_link_libraries(QtThermalFIST PRIVATE ThermalFIST Qt6::Core Qt6::Widgets Qt6::PrintSupport)
 else()
-  target_link_libraries(QtThermalFIST ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
+  target_link_libraries(QtThermalFIST PRIVATE ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
 endif(UseQt6)
 
 target_include_directories(QtThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot")
