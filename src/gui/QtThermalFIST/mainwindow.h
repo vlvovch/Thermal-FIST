@@ -77,6 +77,9 @@ private slots:
     void quickstartguide();
     void increaseFontSize();
     void decreaseFontSize();
+#ifdef Q_OS_WASM
+    void toggleFullscreen();
+#endif
 };
 
 #endif // MAINWINDOW_H
