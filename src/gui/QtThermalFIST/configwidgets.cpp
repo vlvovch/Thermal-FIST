@@ -312,38 +312,70 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
 void ModelConfigWidget::conservationLawsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  ConservationLawsDialog *dialog = new ConservationLawsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   ConservationLawsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::interactionsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  InteractionsDialog *dialog = new InteractionsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   InteractionsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::QvdWparametersDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  QvdWParametersTableDialog *dialog = new QvdWParametersTableDialog(this, &currentConfig, model->TPS());
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->showMaximized();
+#else
   QvdWParametersTableDialog dialog(this, &currentConfig, model->TPS());
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  OtherOptionsDialog *dialog = new OtherOptionsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   OtherOptionsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::modelTypeChanged()

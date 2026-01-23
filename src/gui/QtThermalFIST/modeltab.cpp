@@ -386,9 +386,17 @@ void ModelTab::particleInfoDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
       labelHint->setVisible(false);
+#ifdef Q_OS_WASM
+      // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+      ParticleDialog *dialog = new ParticleDialog(this, model, myModel->GetRowToParticle()[row]);
+      dialog->setAttribute(Qt::WA_DeleteOnClose);
+      dialog->setModal(true);
+      dialog->show();
+#else
       ParticleDialog dialog(this, model, myModel->GetRowToParticle()[row]);
       dialog.setWindowFlags(Qt::Window);
       dialog.exec();
+#endif
     }
 }
 
@@ -507,6 +515,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     };
 
     if (messageType != 0) {
+#ifdef Q_OS_WASM
+      // WASM: Use static method which may handle Asyncify better
+      QMessageBox::StandardButton ret = QMessageBox::warning(
+        this, tr("Warning"), messages[messageType],
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      if (ret == QMessageBox::No)
+        return;
+#else
       QMessageBox msgBox;
       msgBox.setText(messages[messageType]);
       msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -514,9 +530,10 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
       int ret = msgBox.exec();
       if (ret == QMessageBox::No)
         return;
+#endif
     }
   }
-  
+
   ThermalModelBase *modelnew;
 
   if (config.ModelType == ThermalModelConfig::DiagonalEV) {
@@ -868,23 +885,49 @@ void ModelTab::switchStability(bool showStable) {
 }
 
 void ModelTab::showResults() {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  ResultDialog *dialog = new ResultDialog(this, model, &flucts);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   ResultDialog dialog(this, model, &flucts);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 void ModelTab::showCorrelations() {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  CorrelationsDialog *dialog = new CorrelationsDialog(this, model);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   CorrelationsDialog dialog(this, model);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 void ModelTab::showValidityCheckLog() {
   if (!model->IsLastSolutionOK()) {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated message box with show() to avoid Asyncify issues
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    msgBox->setText("There were some issues in calculation. See the log below:");
+    msgBox->setDetailedText(model->ValidityCheckLog().c_str());
+    msgBox->setModal(true);
+    msgBox->show();
+#else
     QMessageBox msgBox;
     msgBox.setText("There were some issues in calculation. See the log below:");
     msgBox.setDetailedText(model->ValidityCheckLog().c_str());
     msgBox.exec();
+#endif
   }
 }
 

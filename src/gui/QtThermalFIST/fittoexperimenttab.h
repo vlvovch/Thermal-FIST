@@ -36,9 +36,8 @@ class FitWorker : public QThread
 
     thermalfist::ThermalModelFit *fTHMFit;
 
-    void run() Q_DECL_OVERRIDE;
-
 public:
+    void run() Q_DECL_OVERRIDE;
     FitWorker(
            thermalfist::ThermalModelFit *THMFit=NULL,
            QObject * parent = 0) :

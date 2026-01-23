@@ -373,8 +373,6 @@ void chi2ProfileDialog::calculate() {
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
-      wrk->start();
-
       comboParameter->setEnabled(false);
       buttonCalculate->setText(tr("Stop"));
       buttonReplot->setEnabled(false);
@@ -382,7 +380,16 @@ void chi2ProfileDialog::calculate() {
       fRunning = true;
       progBar->setVisible(true);
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        wrk->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        wrk->run();
+        finalize();
+        wrk->deleteLater();
+      }
   }
   else {
       fStop = 1;
