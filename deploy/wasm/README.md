@@ -6,10 +6,10 @@ This Docker setup builds QtThermalFIST for WebAssembly and serves it via Caddy.
 
 ```bash
 # Build the image (takes 15-30 minutes on first build)
-docker-compose build
+docker compose build
 
 # Run the container
-docker-compose up -d
+docker compose up -d
 
 # Access at http://localhost:8080
 ```
@@ -30,7 +30,7 @@ If you already have Caddy running on the server and want to proxy to this contai
 
 1. Build the image:
    ```bash
-   docker-compose build
+   docker compose build
    ```
 
 2. Run the container on an internal port:
@@ -83,7 +83,7 @@ For simpler deployment without special headers, use single-threaded:
 ### Build fails with "Qt not found"
 The aqtinstall tool may fail if Qt servers are slow. Retry the build:
 ```bash
-docker-compose build --no-cache
+docker compose build --no-cache
 ```
 
 ### Large image size
