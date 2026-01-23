@@ -10,11 +10,14 @@
 #include <QLayout>
 #include <QLabel>
 #include <QDebug>
+#include <QBuffer>
+#include <QTextStream>
 
 #include <fstream>
 #include <iomanip>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -508,9 +511,33 @@ void chi2ProfileDialog::writetoFile() {
   if (!fRunning) {
 
     int cindex = comboParameter->currentIndex();
-    if (cindex<0 || cindex>vecParams.size())
+    if (cindex<0 || cindex>static_cast<int>(vecParams.size()))
       return;
 
+#ifdef Q_OS_WASM
+    // WASM: Write to buffer and trigger browser download
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+
+    out.setFieldWidth(20);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << comboParameter->currentText() << "chi2";
+    out << qSetFieldWidth(0) << Qt::endl;
+
+    int fCurrentSize = vecCurrentSize[cindex];
+    std::vector<double> &Avalues = vecAvalues[cindex];
+    std::vector<double> &params = vecParams[cindex];
+    for (int i = 0; i < fCurrentSize; ++i) {
+      out.setFieldWidth(20);
+      out << Avalues[i] << params[i];
+      out << qSetFieldWidth(0) << Qt::endl;
+    }
+
+    buffer.close();
+    WasmFileIO::saveFile(data, "chi2profile.out");
+#else
     if (lastFilePath == "")
       lastFilePath = QApplication::applicationDirPath() + "/chi2profile.out";
     QString path = QFileDialog::getSaveFileName(this, tr("Save chi2 profile to file"), lastFilePath, tr("*.out"));
@@ -532,6 +559,7 @@ void chi2ProfileDialog::writetoFile() {
 
       fout.close();
     }
+#endif
   }
 }
 

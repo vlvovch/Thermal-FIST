@@ -18,6 +18,7 @@
 #include <QThread>
 #include <QTimer>
 #include <map>
+#include <atomic>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "qcustomplot.h"
@@ -37,8 +38,8 @@ class EoSWorker : public QThread
   double Tmin, Tmax, dT;
   std::vector<double> cParams;
   int mode;
-  int *currentSize;
-  int *stop;
+  std::atomic<int> *currentSize;
+  std::atomic<int> *stop;
 
   std::vector< Thermodynamics > *paramsTD;
   std::vector< ChargesFluctuations > *paramsFl;
@@ -49,7 +50,7 @@ class EoSWorker : public QThread
 public:
   EoSWorker(thermalfist::ThermalModelBase *mod = NULL,
       const ThermalModelConfig& cconfig = ThermalModelConfig(),
-      double Tmin = 100., 
+      double Tmin = 100.,
       double Tmax = 200.,
       double dT = 5.,
       const std::vector<double>& cParamVals = {0.,0.,0.},
@@ -57,8 +58,8 @@ public:
       std::vector< Thermodynamics > *paramsTDo = NULL,
       std::vector< ChargesFluctuations > *paramsFlo = NULL,
       std::vector<double> *varvalueso = NULL,
-      int *currentSizeo = NULL,
-      int *stopo = NULL,
+      std::atomic<int> *currentSizeo = NULL,
+      std::atomic<int> *stopo = NULL,
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
       model = mod;
@@ -116,9 +117,9 @@ class EquationOfStateTab : public QWidget
     std::vector<ChargesFluctuations> paramsFl;
     std::vector<double> varvalues;
 
-    int fCurrentSize;
+    std::atomic<int> fCurrentSize{0};
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;

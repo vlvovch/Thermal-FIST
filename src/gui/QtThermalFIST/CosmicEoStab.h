@@ -18,6 +18,7 @@
 #include <QThread>
 #include <QTimer>
 #include <map>
+#include <atomic>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "qcustomplot.h"
@@ -37,8 +38,8 @@ class CosmicEoSWorker : public QThread
   std::vector<double> cParams;
   std::vector<double> chems;
   int mode;
-  int *currentSize;
-  int *stop;
+  std::atomic<int> *currentSize;
+  std::atomic<int> *stop;
   bool reverseDir;
 
   std::vector< ThermodynamicsCosmic > *paramsTD;
@@ -56,8 +57,8 @@ public:
       std::vector< ThermodynamicsCosmic > *paramsTDo = NULL,
       std::vector< Thermodynamics > *paramsTDHRGo = NULL,
       std::vector<double> *varvalueso = NULL,
-      int *currentSizeo = NULL,
-      int *stopo = NULL,
+      std::atomic<int> *currentSizeo = NULL,
+      std::atomic<int> *stopo = NULL,
       bool reverseDiro = false,
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals) {
@@ -106,9 +107,9 @@ class CosmicEoSTab : public QWidget
 //    std::vector<ChargesFluctuations> paramsFl;
     std::vector<double> varvalues;
 
-    int fCurrentSize;
+    std::atomic<int> fCurrentSize{0};
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;

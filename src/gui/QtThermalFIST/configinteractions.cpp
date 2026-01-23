@@ -28,6 +28,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "WasmFileIO.h"
+
 #include "HelperRoutines.h"
 #include "BaseStructures.h"
 
@@ -406,6 +408,16 @@ void InteractionsDialog::modeToggled()
 
 void InteractionsDialog::chooseInputFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use getOpenFileContent for browser file picker
+  WasmFileIO::openFile(this, tr("Open file with EV/vdW parameters"), "*.dat *.txt *.*",
+    [this](const QString& sandboxPath) {
+      if (sandboxPath.isEmpty())
+        return;
+      leFilePath->setText(sandboxPath);
+    }
+  );
+#else
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/interaction";
   if (leFilePath->text().size() != 0)
     listpathprefix = QString(leFilePath->text());
@@ -414,6 +426,7 @@ void InteractionsDialog::chooseInputFile()
   {
     leFilePath->setText(path);
   }
+#endif
 }
 
 void InteractionsDialog::updateRadius()

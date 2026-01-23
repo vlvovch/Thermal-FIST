@@ -14,12 +14,14 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileDialog>
 #include <QDebug>
 #include <cstdio>
 #include <vector>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -812,12 +814,10 @@ void ModelTab::calculateFitted()
 
 void ModelTab::writetofile() {
     if (model->IsCalculated()) {
-        QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.dat", tr("*.dat"));
-        if (path.length()>0)
-        {
-            FILE *f = fopen(path.toStdString().c_str(), "w");
+        // Lambda to write the data to a file
+        auto writeData = [this](FILE* f) {
             fprintf(f, "%20s%15s%8s%8s%8s%8s%8s%15s%15s\n", "Name", "PDGID", "Stable", "B", "Q", "S", "C", "Primary yield", "Total yield");
-            for(int i=0;i<model->TPS()->Particles().size();++i) {
+            for(size_t i=0;i<model->TPS()->Particles().size();++i) {
                 fprintf(f, "%20s%15lld%8d%8d%8d%8d%8d%15E%15E\n",
                         model->TPS()->Particles()[i].Name().c_str(),
                         model->TPS()->Particles()[i].PdgId(),
@@ -829,8 +829,33 @@ void ModelTab::writetofile() {
                         model->Densities()[i] * model->Volume(),
                         model->TotalDensities()[i] * model->Volume());
             }
+        };
+
+#ifdef Q_OS_WASM
+        QString tempPath = WasmFileIO::getSandboxTempDir() + "/output.dat";
+        FILE *f = fopen(tempPath.toStdString().c_str(), "w");
+        if (f) {
+            writeData(f);
             fclose(f);
+            // Read back and trigger download
+            QFile file(tempPath);
+            if (file.open(QIODevice::ReadOnly)) {
+                QByteArray data = file.readAll();
+                file.close();
+                WasmFileIO::saveFile(data, "output.dat");
+            }
         }
+#else
+        QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.dat", tr("*.dat"));
+        if (path.length()>0)
+        {
+            FILE *f = fopen(path.toStdString().c_str(), "w");
+            if (f) {
+                writeData(f);
+                fclose(f);
+            }
+        }
+#endif
     }
 }
 
