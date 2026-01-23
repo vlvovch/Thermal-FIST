@@ -22,3 +22,6 @@ docs/doxygen/html*
 
 # Apple
 *.DS_Store
+
+# aqtinstall
+aqtinstall.log

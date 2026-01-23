@@ -28,12 +28,17 @@ docker run -d -p 8080:80 --name thermal-fist-wasm thermal-fist-wasm
 
 If you already have Caddy running on the server and want to proxy to this container:
 
-1. Run the container on an internal port:
+1. Build the image:
+   ```bash
+   docker-compose build
+   ```
+
+2. Run the container on an internal port:
    ```bash
    docker run -d -p 127.0.0.1:8081:80 --name thermal-fist-wasm thermal-fist-wasm
    ```
 
-2. Add to your server's Caddyfile:
+3. Add to your server's Caddyfile:
    ```caddyfile
    thermal-fist.example.com {
        reverse_proxy localhost:8081
