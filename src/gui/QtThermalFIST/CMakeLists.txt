@@ -89,6 +89,11 @@ if(WIN32 AND NOT THERMALFIST_WASM)
   list(APPEND QTHRG_ALL_SOURCES qttficon.rc)
 endif()
 
+# Add WASM data resources (default particle list) for WebAssembly builds
+if(THERMALFIST_WASM)
+  list(APPEND QTHRG_ALL_SOURCES wasmdata.qrc)
+endif()
+
 # Tell CMake to create the executable
 if(THERMALFIST_WASM)
   # For WebAssembly, use qt_add_executable which handles wasm-specific setup

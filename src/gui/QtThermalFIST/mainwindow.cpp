@@ -8,6 +8,8 @@
 #include "mainwindow.h"
 
 #include <QLayout>
+#include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QLabel>
 #include <QApplication>
@@ -31,11 +33,46 @@ using namespace thermalfist;
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
 {
+#ifdef Q_OS_WASM
+  // WASM: Extract default particle list from embedded resources to sandbox FS
+  QString sandboxDir = WasmFileIO::getSandboxTempDir() + "/default";
+  QDir().mkpath(sandboxDir);
+
+  // Extract list.dat from resources
+  QFile listRes(":/data/list.dat");
+  QString listPath = sandboxDir + "/list.dat";
+  if (listRes.open(QIODevice::ReadOnly)) {
+    QFile listOut(listPath);
+    if (listOut.open(QIODevice::WriteOnly)) {
+      listOut.write(listRes.readAll());
+      listOut.close();
+    }
+    listRes.close();
+  }
+
+  // Extract decays.dat from resources
+  QFile decaysRes(":/data/decays.dat");
+  QString decaysPath = sandboxDir + "/decays.dat";
+  if (decaysRes.open(QIODevice::ReadOnly)) {
+    QFile decaysOut(decaysPath);
+    if (decaysOut.open(QIODevice::WriteOnly)) {
+      decaysOut.write(decaysRes.readAll());
+      decaysOut.close();
+    }
+    decaysRes.close();
+  }
+
+  cpath = listPath;
+  QString listpath = listPath;
+  std::vector<std::string> decayPaths = { decaysPath.toStdString() };
+  TPS = new ThermalParticleSystem(listpath.toStdString(), decayPaths);
+#else
   //cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withnuclei.dat";
   cpath = QString(ThermalFIST_DEFAULT_LIST_FILE);
 
   QString listpath = cpath;
   TPS = new ThermalParticleSystem(listpath.toStdString());
+#endif
 
   //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
   model = new ThermalModelIdeal(TPS);
