@@ -194,8 +194,8 @@ A complete Docker setup that builds everything from source is available in `depl
 
 ```bash
 cd deploy/wasm
-docker-compose build   # Takes 15-30 minutes
-docker-compose up -d
+docker compose build   # Takes 15-30 minutes
+docker compose up -d
 ```
 
 This automatically:
