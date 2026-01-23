@@ -92,7 +92,7 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
 
       vecAvalues.push_back(std::vector<double>(0));
       vecParams.push_back(std::vector<double>(0));
-      vecCurrentSize.push_back(0);
+      vecCurrentSize.push_back(std::make_unique<std::atomic<int>>(0));
       vecTotalSize.push_back(0);
     }
   }
@@ -336,7 +336,7 @@ void chi2ProfileDialog::calculate() {
       if (cindex<0 || cindex>=vecParams.size())
         return;
 
-      int &fCurrentSize = vecCurrentSize[cindex];
+      std::atomic<int> *pCurrentSize = vecCurrentSize[cindex].get();
       int &fTotalSize   = vecTotalSize[cindex];
       std::vector<double> &Avalues = vecAvalues[cindex];
       std::vector<double> &params  = vecParams[cindex];
@@ -348,7 +348,7 @@ void chi2ProfileDialog::calculate() {
               params.push_back(0.);
           }
 
-      fCurrentSize = 0;
+      *pCurrentSize = 0;
       //fPreviousSize = 0;
       fTotalSize = spinAiter->value();
       fStop = 0;
@@ -363,12 +363,12 @@ void chi2ProfileDialog::calculate() {
       modelFit->FixVcOverV(modelFitInput->FixVcOverV());
       modelFit->SetVcOverV(modelFitInput->VcOverV());
 
-      for (int i = 0; i<quantities.size(); ++i) {
+      for (size_t i = 0; i<quantities.size(); ++i) {
         modelFit->AddQuantity(quantities[i]);
       }
 
       chi2ProfileWorker *wrk = new chi2ProfileWorker(modelFit,comboParameter->currentText().toStdString(), &Avalues, &params,
-                                                      &fCurrentSize, &fStop, this);
+                                                      pCurrentSize, &fStop, this);
 
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
@@ -399,7 +399,7 @@ void chi2ProfileDialog::replot() {
 
   plot->graph(0)->data()->clear();
 
-  int fCurrentSize = vecCurrentSize[cindex];
+  int fCurrentSize = *vecCurrentSize[cindex];
   std::vector<double> &Avalues = vecAvalues[cindex];
   std::vector<double> &params  = vecParams[cindex];
 
@@ -447,7 +447,7 @@ void chi2ProfileDialog::updateProgress() {
   if (cindex<0 || cindex>vecParams.size())
     return;
   progBar->setRange(0, vecTotalSize[cindex]);
-  progBar->setValue(vecCurrentSize[cindex]);
+  progBar->setValue(*vecCurrentSize[cindex]);
   replot();
 }
 
@@ -526,7 +526,7 @@ void chi2ProfileDialog::writetoFile() {
     out << comboParameter->currentText() << "chi2";
     out << qSetFieldWidth(0) << Qt::endl;
 
-    int fCurrentSize = vecCurrentSize[cindex];
+    int fCurrentSize = *vecCurrentSize[cindex];
     std::vector<double> &Avalues = vecAvalues[cindex];
     std::vector<double> &params = vecParams[cindex];
     for (int i = 0; i < fCurrentSize; ++i) {
@@ -549,7 +549,7 @@ void chi2ProfileDialog::writetoFile() {
       fout << std::setw(20) << comboParameter->currentText().toStdString()
            << std::setw(20) << "chi2" << std::endl;
 
-      int fCurrentSize = vecCurrentSize[cindex];
+      int fCurrentSize = *vecCurrentSize[cindex];
       std::vector<double> &Avalues = vecAvalues[cindex];
       std::vector<double> &params = vecParams[cindex];
       for (int i = 0; i<fCurrentSize; ++i) {

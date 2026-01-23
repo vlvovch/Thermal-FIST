@@ -18,6 +18,7 @@
 #include <QComboBox>
 #include <QTimer>
 #include <map>
+#include <memory>
 #include <atomic>
 
 #include "HRGFit/ThermalModelFit.h"
@@ -84,7 +85,7 @@ class chi2ProfileDialog : public QDialog
     std::vector< std::vector<double> > vecParams;
     std::vector< std::vector<double> > vecAvalues;
     std::vector< double > vecAleft, vecAright;
-    std::vector< std::atomic<int> > vecCurrentSize;
+    std::vector< std::unique_ptr<std::atomic<int>> > vecCurrentSize;
     std::vector< int > vecTotalSize;
 
     bool fRunning;
