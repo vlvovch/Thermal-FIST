@@ -1,7 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
   <qresource prefix="/data">
     <!-- Default particle list and decays for WASM builds -->
-    <file alias="list.dat">../../../../input/list/PDG2020/list-withnuclei.dat</file>
-    <file alias="decays.dat">../../../../input/list/PDG2020/decays.dat</file>
+    <file alias="list.dat">../../../input/list/PDG2020/list-withnuclei.dat</file>
+    <file alias="decays.dat">../../../input/list/PDG2020/decays.dat</file>
   </qresource>
 </RCC>
