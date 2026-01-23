@@ -31,53 +31,17 @@ Please see also the commands listed in the [**.github/workflows/build_and_test.y
 
 ### Building for WebAssembly (Browser)
 
-QtThermalFIST can be built for WebAssembly to run in a web browser. This requires:
-- Qt 6.x with WebAssembly support
-- Emscripten toolchain
+QtThermalFIST can be compiled to WebAssembly to run directly in a web browser.
 
-**Prerequisites:**
-
-1. Install Emscripten: Follow the [Emscripten Getting Started guide](https://emscripten.org/docs/getting_started/downloads.html)
-2. Install Qt 6 for WebAssembly: Use the Qt Online Installer and select the WebAssembly component
-
-**Building:**
-
+Quick start:
 ~~~.bash
-# Source the Emscripten environment
 source /path/to/emsdk/emsdk_env.sh
-
-# Configure with qt-cmake from the Qt wasm installation
-mkdir build-wasm
-cd build-wasm
+mkdir build-wasm && cd build-wasm
 /path/to/Qt/6.x.x/wasm_singlethread/bin/qt-cmake ../ -DTHERMALFIST_WASM=ON
-
-# Build
 cmake --build . --parallel
 ~~~
 
-For threaded builds (better performance for calculations), use the `wasm_multithread` kit instead:
-
-~~~.bash
-/path/to/Qt/6.x.x/wasm_multithread/bin/qt-cmake ../ -DTHERMALFIST_WASM=ON
-~~~
-
-**Running:**
-
-The build produces `.html`, `.js`, and `.wasm` files in `build-wasm/bin/`. To run locally:
-
-~~~.bash
-# Using Python's built-in server (for threaded builds, use emrun instead)
-cd build-wasm/bin
-python3 -m http.server 8080
-~~~
-
-Then open `http://localhost:8080/QtThermalFIST.html` in a web browser.
-
-**Notes:**
-- WebAssembly builds automatically use standalone Minuit2 (ROOT is not available)
-- OpenMP is disabled in WebAssembly builds
-- File I/O uses browser downloads instead of filesystem access
-- For threaded builds, the web server must send specific headers (COOP/COEP) for SharedArrayBuffer support
+See [**wasm-build.md**](wasm-build.md) for detailed instructions on prerequisites, multi-threaded builds, deployment, and troubleshooting.
 
 ### QtThermalFIST
 
