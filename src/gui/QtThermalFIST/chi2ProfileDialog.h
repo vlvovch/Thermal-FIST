@@ -41,8 +41,9 @@ class chi2ProfileWorker : public QThread
     std::vector< double > *params;
     std::vector<double> *Avalues;
 
+public:
     void run() Q_DECL_OVERRIDE {
-        for(int i=0;i<Avalues->size() && !(*stop);++i) {
+        for(size_t i=0;i<Avalues->size() && !(*stop);++i) {
             double tmpParam = Avalues->operator [](i);
             if (ParameterName == "T" || ParameterName == "muB" ||
               ParameterName == "muQ" || ParameterName == "muS" ||
@@ -57,8 +58,6 @@ class chi2ProfileWorker : public QThread
         }
         emit calculated();
     }
-
-public:
   chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
            std::string inParameterName = "T",
            std::vector<double> *Avalueso = NULL,

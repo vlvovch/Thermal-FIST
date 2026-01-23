@@ -280,8 +280,15 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     modelChanged();
 
+#ifdef Q_OS_WASM
+    // WASM: Load experimental data from sandbox where it was extracted by mainwindow
+    QString expDataPath = WasmFileIO::getSandboxTempDir() + "/default/ALICE-PbPb2.76TeV-0-10-all.dat";
+    quantities = ThermalModelFit::loadExpDataFromFile(expDataPath.toStdString());
+    QString datapathprefix = WasmFileIO::getSandboxTempDir() + "/default";
+#else
     QString datapathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/data";
     quantities = ThermalModelFit::loadExpDataFromFile((QString(ThermalFIST_INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-10-all.dat").toStdString());
+#endif
     myModel->setQuantities(&quantities);
     tableQuantities->resizeColumnsToContents();
 
@@ -370,6 +377,14 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
     };
 
     if (messageType != 0) {
+#ifdef Q_OS_WASM
+      // WASM: Use static method which may handle Asyncify better
+      QMessageBox::StandardButton ret = QMessageBox::warning(
+        this, tr("Warning"), messages[messageType],
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      if (ret == QMessageBox::No)
+        return;
+#else
       QMessageBox msgBox;
       msgBox.setText(messages[messageType]);
       msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -377,6 +392,7 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
       int ret = msgBox.exec();
       if (ret == QMessageBox::No)
         return;
+#endif
     }
   }
 
@@ -473,9 +489,16 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
   buttonCalculate->setEnabled(false);
 
-  wrk->start();
-
-  calcTimer->start(100);
+  if (WasmFileIO::isThreadingAvailable()) {
+    // Threading available - run in background thread
+    wrk->start();
+    calcTimer->start(100);
+  } else {
+    // No threading (single-threaded WASM) - run synchronously
+    wrk->run();
+    finalize();
+    wrk->deleteLater();
+  }
 
   lastconfig = config;
 }
@@ -486,17 +509,34 @@ void FitToExperimentTab::calculate() {
 }
 
 void FitToExperimentTab::showResults() {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+    ResultDialog *dialog = new ResultDialog(this, model);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     ResultDialog dialog(this, model);
     dialog.setWindowFlags(Qt::Window);
     dialog.exec();
+#endif
 }
 
 void FitToExperimentTab::showChi2Profile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  chi2ProfileDialog *dialog = new chi2ProfileDialog(this, TPS, getConfig(), getFitParameters(), quantities, fitcopy);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setMinimumSize(QSize(800, 400));
+  dialog->setModal(true);
+  dialog->show();
+#else
   chi2ProfileDialog dialog(this, TPS, getConfig(), getFitParameters(), quantities, fitcopy);
   dialog.setWindowFlags(Qt::Window);
   dialog.setMinimumSize(QSize(800, 400));
   dialog.exec();
+#endif
 }
 
 void FitToExperimentTab::setModel(ThermalModelBase *modelop) {
@@ -513,17 +553,36 @@ void FitToExperimentTab::quantityDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
       labelHint->setVisible(false);
+#ifdef Q_OS_WASM
+      // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+      QuantityDialog *dialog = new QuantityDialog(this, model, &quantities[row]);
+      dialog->setAttribute(Qt::WA_DeleteOnClose);
+      dialog->setModal(true);
+      dialog->show();
+#else
       QuantityDialog dialog(this, model, &quantities[row]);
       dialog.setWindowFlags(Qt::Window);
       dialog.exec();
+#endif
     }
 }
 
 void FitToExperimentTab::addQuantity() {
     myModel->addQuantity();
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated dialog with open() and callback to handle rejection
+    QuantityDialog *dialog = new QuantityDialog(this, model, &quantities[quantities.size()-1]);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    connect(dialog, &QDialog::rejected, this, [this]() {
+      myModel->removeQuantity(quantities.size()-1);
+    });
+    dialog->open();
+#else
     QuantityDialog dialog(this, model, &quantities[quantities.size()-1]);
     dialog.setWindowFlags(Qt::Window);
     if (dialog.exec()==QDialog::Rejected) myModel->removeQuantity(quantities.size()-1);
+#endif
 }
 
 void FitToExperimentTab::loadFromFile() {
@@ -1097,10 +1156,20 @@ void FitToExperimentTab::finalize() {
 
 void FitToExperimentTab::showValidityCheckLog() {
   if (!model->IsLastSolutionOK()) {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated message box with show() to avoid Asyncify issues
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    msgBox->setText("There were some issues in calculation. See the log below:");
+    msgBox->setDetailedText(model->ValidityCheckLog().c_str());
+    msgBox->setModal(true);
+    msgBox->show();
+#else
     QMessageBox msgBox;
     msgBox.setText("There were some issues in calculation. See the log below:");
     msgBox.setDetailedText(model->ValidityCheckLog().c_str());
     msgBox.exec();
+#endif
   }
 }
 

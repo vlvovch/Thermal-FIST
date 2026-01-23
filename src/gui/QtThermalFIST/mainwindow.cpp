@@ -62,10 +62,48 @@ MainWindow::MainWindow(QWidget *parent)
     decaysRes.close();
   }
 
+  // Extract default experimental data from resources
+  QFile expDataRes(":/data/ALICE-PbPb2.76TeV-0-10-all.dat");
+  QString expDataPath = sandboxDir + "/ALICE-PbPb2.76TeV-0-10-all.dat";
+  if (expDataRes.open(QIODevice::ReadOnly)) {
+    QFile expDataOut(expDataPath);
+    if (expDataOut.open(QIODevice::WriteOnly)) {
+      expDataOut.write(expDataRes.readAll());
+      expDataOut.close();
+    }
+    expDataRes.close();
+  }
+
+  // Extract lattice QCD data from resources
+  QString lqcdDir = sandboxDir + "/lqcd";
+  QDir().mkpath(lqcdDir);
+
+  QStringList lqcdFiles = {
+    "WB-EoS.dat",
+    "WB-chi2-1112.4416.dat",
+    "WB-chi11-1910.14592.dat",
+    "WB-chiB-1805.04445.dat",
+    "HotQCD-EoS.dat",
+    "HotQCD-chi2-1203.0784.dat",
+    "HotQCD-chi2-chi8-2001.08530.dat"
+  };
+
+  for (const QString& lqcdFile : lqcdFiles) {
+    QFile lqcdRes(":/data/lqcd/" + lqcdFile);
+    QString lqcdPath = lqcdDir + "/" + lqcdFile;
+    if (lqcdRes.open(QIODevice::ReadOnly)) {
+      QFile lqcdOut(lqcdPath);
+      if (lqcdOut.open(QIODevice::WriteOnly)) {
+        lqcdOut.write(lqcdRes.readAll());
+        lqcdOut.close();
+      }
+      lqcdRes.close();
+    }
+  }
+
   cpath = listPath;
   QString listpath = listPath;
-  std::vector<std::string> decayPaths = { decaysPath.toStdString() };
-  TPS = new ThermalParticleSystem(listpath.toStdString(), decayPaths);
+  TPS = new ThermalParticleSystem(listpath.toStdString(), decaysPath.toStdString());
 #else
   //cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withnuclei.dat";
   cpath = QString(ThermalFIST_DEFAULT_LIST_FILE);
@@ -276,9 +314,17 @@ void MainWindow::tabChanged(int newIndex)
 
 void MainWindow::about()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  AboutDialog *dialog = new AboutDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   AboutDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 void MainWindow::quickstartguide()

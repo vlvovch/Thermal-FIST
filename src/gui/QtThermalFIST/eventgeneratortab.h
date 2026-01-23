@@ -63,9 +63,8 @@ class EventGeneratorWorker : public QThread
 
     thermalfist::HepMCEventWriter hepmcout;
 
-    void run() Q_DECL_OVERRIDE;
-
 public:
+    void run() Q_DECL_OVERRIDE;
   EventGeneratorWorker(
     thermalfist::EventGeneratorBase* gen = NULL,
     ParticlesSpectra* spec = NULL,

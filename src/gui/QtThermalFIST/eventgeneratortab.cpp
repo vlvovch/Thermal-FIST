@@ -1524,13 +1524,20 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     progBar->setFormat("");
 
-    wrk->start();
-
     buttonCalculate->setText(tr("Stop"));
     fRunning = true;
     progBar->setVisible(true);
 
-    calcTimer->start(150);
+    if (WasmFileIO::isThreadingAvailable()) {
+      // Threading available - run in background thread
+      wrk->start();
+      calcTimer->start(150);
+    } else {
+      // No threading (single-threaded WASM) - run synchronously
+      wrk->run();
+      finalize();
+      wrk->deleteLater();
+    }
 }
 
 void EventGeneratorTab::changeVolumeRSC(double VRSC)
@@ -1595,20 +1602,22 @@ void EventGeneratorTab::saveAs1D(int type)
   QString fileName = tname + "." + exts[type];
 
   if (type == 0) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDistr->savePdf(&buffer, plotDistr->width(), plotDistr->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDistr->savePdf(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else if (type == 1) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDistr->savePng(&buffer, plotDistr->width(), plotDistr->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDistr->savePng(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else {
     QByteArray data;
@@ -1711,20 +1720,22 @@ void EventGeneratorTab::saveAs2D(int type)
   QString fileName = tname + "." + exts[type];
 
   if (type == 0) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plot2D->savePdf(&buffer, plotDistr->width(), plotDistr->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plot2D->savePdf(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else if (type == 1) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plot2D->savePng(&buffer, plotDistr->width(), plotDistr->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plot2D->savePng(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else {
     QByteArray data;
@@ -1786,15 +1797,29 @@ void EventGeneratorTab::saveAs2D(int type)
 
 void EventGeneratorTab::changeParticles()
 {
+#ifdef Q_OS_WASM
+  ParticlesAnalyzeDialog *dialog = new ParticlesAnalyzeDialog(&partsConfig, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   ParticlesAnalyzeDialog dialog(&partsConfig, this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 
 void EventGeneratorTab::changeBinning()
 {
+#ifdef Q_OS_WASM
+  BinningDialog *dialog = new BinningDialog(&binConfig, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   BinningDialog dialog(&binConfig, this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }

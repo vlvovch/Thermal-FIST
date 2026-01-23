@@ -34,12 +34,14 @@ PlotDialog::PlotDialog(QWidget * parent, QCustomPlot * plotin) : QDialog(parent)
 void PlotDialog::saveAsPdf()
 {
 #ifdef Q_OS_WASM
-  QByteArray data;
-  QBuffer buffer(&data);
-  buffer.open(QIODevice::WriteOnly);
-  plot->savePdf(&buffer, plot->width(), plot->height());
-  buffer.close();
-  WasmFileIO::saveFile(data, plot->objectName() + ".pdf");
+  QString fileName = plot->objectName() + ".pdf";
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+  plot->savePdf(tempPath, plot->width(), plot->height());
+  QFile file(tempPath);
+  if (file.open(QIODevice::ReadOnly)) {
+    WasmFileIO::saveFile(file.readAll(), fileName);
+    file.close();
+  }
 #else
   QString listpathprefix = QApplication::applicationDirPath() + "/" + plot->objectName() + ".pdf";
   QString path = QFileDialog::getSaveFileName(this, tr("Save plot as pdf"), listpathprefix, "*.pdf");
@@ -53,12 +55,14 @@ void PlotDialog::saveAsPdf()
 void PlotDialog::saveAsPng()
 {
 #ifdef Q_OS_WASM
-  QByteArray data;
-  QBuffer buffer(&data);
-  buffer.open(QIODevice::WriteOnly);
-  plot->savePng(&buffer, plot->width(), plot->height());
-  buffer.close();
-  WasmFileIO::saveFile(data, plot->objectName() + ".png");
+  QString fileName = plot->objectName() + ".png";
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+  plot->savePng(tempPath, plot->width(), plot->height());
+  QFile file(tempPath);
+  if (file.open(QIODevice::ReadOnly)) {
+    WasmFileIO::saveFile(file.readAll(), fileName);
+    file.close();
+  }
 #else
   QString listpathprefix = QApplication::applicationDirPath() + "/" + plot->objectName() + ".png";
   QString path = QFileDialog::getSaveFileName(this, tr("Save plot as png"), listpathprefix, "*.png");

@@ -838,12 +838,20 @@ void EquationOfStateTab::calculate() {
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
-      wrk->start();
-
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        wrk->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        // This will block the UI but at least the calculation will complete
+        wrk->run();
+        finalize();
+        wrk->deleteLater();
+      }
     }
     else {
       fStop = 1;
@@ -1196,10 +1204,17 @@ void EquationOfStateTab::plotLatticeData()
 void EquationOfStateTab::showEoSTable() {
   recomputeCalcTable();
 
+#ifdef Q_OS_WASM
+  CalculationTableDialog *dialog = new CalculationTableDialog(this, calcTable);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->showMaximized();
+#else
   CalculationTableDialog dialog(this, calcTable);
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
+#endif
 }
 
 void EquationOfStateTab::fillParticleLists()
@@ -1270,21 +1285,23 @@ void EquationOfStateTab::saveAs(int type)
 
   if (type == 0) {
     // PDF export
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDependence->savePdf(&buffer, plotDependence->width(), plotDependence->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePdf(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else if (type == 1) {
     // PNG export
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDependence->savePng(&buffer, plotDependence->width(), plotDependence->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePng(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else {
     // Data export
@@ -1733,11 +1750,17 @@ std::vector<double> EquationOfStateTab::getValuesRatio(int index, int index2)
 void EquationOfStateTab::readLatticeData()
 {
   int sizeWB = 0, sizeHotQCD = 0;
-  
+
   ifstream fin;
-  
+
+#ifdef Q_OS_WASM
+  string inputFolder = (WasmFileIO::getSandboxTempDir() + "/default").toStdString();
+#else
+  string inputFolder = string(ThermalFIST_INPUT_FOLDER);
+#endif
+
   // WB thermodynamics
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-EoS.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1812,7 +1835,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi2
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi2-1112.4416.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chi2-1112.4416.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1895,7 +1918,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi11
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi11-1910.14592.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chi11-1910.14592.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1978,7 +2001,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD thermodynamics
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-EoS.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2085,7 +2108,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD chi2
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2192,7 +2215,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD chi2-chi8
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-chi8-2001.08530.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-chi2-chi8-2001.08530.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2264,7 +2287,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi2-chi8
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chiB-1805.04445.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chiB-1805.04445.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;

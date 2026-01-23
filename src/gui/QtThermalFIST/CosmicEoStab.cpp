@@ -632,12 +632,19 @@ void CosmicEoSTab::calculate() {
       connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
-      wrk->start();
-
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        wrk->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        wrk->run();
+        finalize();
+        wrk->deleteLater();
+      }
     }
     else {
       fStop = 1;
@@ -774,20 +781,22 @@ void CosmicEoSTab::saveAs(int type)
   QString fileName = tname + "." + exts[type];
 
   if (type == 0) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDependence->savePdf(&buffer, plotDependence->width(), plotDependence->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePdf(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else if (type == 1) {
-    QByteArray data;
-    QBuffer buffer(&data);
-    buffer.open(QIODevice::WriteOnly);
-    plotDependence->savePng(&buffer, plotDependence->width(), plotDependence->height());
-    buffer.close();
-    WasmFileIO::saveFile(data, fileName);
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePng(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
   }
   else {
     std::vector<double> yvalues;
@@ -1265,10 +1274,17 @@ QString CosmicEoSTab::getParameterName() const {
 void CosmicEoSTab::showEoSTable() {
   recomputeCalcTable();
 
+#ifdef Q_OS_WASM
+  CalculationTableDialog *dialog = new CalculationTableDialog(this, calcTable);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->showMaximized();
+#else
   CalculationTableDialog dialog(this, calcTable);
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
+#endif
 }
 
 

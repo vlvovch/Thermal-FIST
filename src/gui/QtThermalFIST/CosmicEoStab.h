@@ -46,9 +46,8 @@ class CosmicEoSWorker : public QThread
   std::vector< Thermodynamics > *paramsTDHRG;
   std::vector<double> *varvalues;
 
-  void run() Q_DECL_OVERRIDE;
-
 public:
+  void run() Q_DECL_OVERRIDE;
   CosmicEoSWorker(thermalfist::CosmicEoS *mod = NULL,
       double Tmin = 10.,
       double Tmax = 200.,

@@ -45,9 +45,8 @@ class EoSWorker : public QThread
   std::vector< ChargesFluctuations > *paramsFl;
   std::vector<double> *varvalues;
 
-  void run() Q_DECL_OVERRIDE;
-
 public:
+  void run() Q_DECL_OVERRIDE;
   EoSWorker(thermalfist::ThermalModelBase *mod = NULL,
       const ThermalModelConfig& cconfig = ThermalModelConfig(),
       double Tmin = 100.,

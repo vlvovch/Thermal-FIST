@@ -20,6 +20,7 @@
 
 #ifdef Q_OS_WASM
 #include <emscripten.h>
+#include <emscripten/threading.h>
 #endif
 
 /**
@@ -147,6 +148,43 @@ inline void saveTextFile(const QString& text, const QString& suggestedName)
 }
 
 #endif // Q_OS_WASM
+
+/**
+ * @brief Check if threading is supported in the current WASM environment
+ *
+ * WASM threading requires:
+ * 1. Build with -pthread flag
+ * 2. Browser with SharedArrayBuffer support
+ * 3. Server serving COOP/COEP headers
+ *
+ * Note: Safari has unreliable threading support even when it claims availability,
+ * so we force synchronous execution on Safari.
+ *
+ * @return true if threading is available, false otherwise
+ */
+inline bool isThreadingAvailable()
+{
+#ifdef Q_OS_WASM
+    // Check if threading support is enabled at runtime
+    if (!emscripten_has_threading_support())
+        return false;
+
+    // Safari has unreliable WASM threading - force synchronous execution
+    // Check user agent for Safari (but not Chrome which also contains "Safari")
+    bool isSafari = EM_ASM_INT({
+        var ua = navigator.userAgent;
+        return (ua.indexOf('Safari') !== -1 && ua.indexOf('Chrome') === -1) ? 1 : 0;
+    });
+
+    if (isSafari)
+        return false;
+
+    return true;
+#else
+    // Native builds always have threading
+    return true;
+#endif
+}
 
 } // namespace WasmFileIO
 

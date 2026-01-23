@@ -406,9 +406,16 @@ void ListEditorTab::editDecays()
 {
   int row = getCurrentRow();
   if (row >= 0) {
+#ifdef Q_OS_WASM
+    decayseditor *dialog = new decayseditor(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     decayseditor dialog(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
     //dialog.setWordCount(document().wordCount());
     dialog.exec();
+#endif
   }
 }
 
@@ -571,8 +578,15 @@ void ListEditorTab::StableEdited()
 void ListEditorTab::editDecaysDoubleClick(const QModelIndex & index) {
   int row = index.row();
   if (row >= 0) {
+#ifdef Q_OS_WASM
+    decayseditor *dialog = new decayseditor(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     decayseditor dialog(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
     dialog.exec();
+#endif
   }
 }
 

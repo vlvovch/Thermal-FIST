@@ -316,10 +316,18 @@ void ParticleDialog::removeColumn() {
 
 void ParticleDialog::showSpectralFunction()
 {
+#ifdef Q_OS_WASM
+  SpectralFunctionDialog *dialog = new SpectralFunctionDialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setMinimumSize(QSize(800, 400));
+  dialog->setModal(true);
+  dialog->show();
+#else
   SpectralFunctionDialog dialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
   dialog.setWindowFlags(Qt::Window);
   dialog.setMinimumSize(QSize(800, 400));
   dialog.exec();
+#endif
 }
 
 
