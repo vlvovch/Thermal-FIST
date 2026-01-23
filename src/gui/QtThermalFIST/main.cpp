@@ -25,21 +25,48 @@
 // Global pointer for resize callback
 static MainWindow* g_mainWindow = nullptr;
 
+// Resize canvas and Qt window to fill browser
+static void resizeToFillBrowser()
+{
+    // Get browser window size and device pixel ratio
+    double dpr = EM_ASM_DOUBLE({ return window.devicePixelRatio || 1; });
+    int cssWidth = EM_ASM_INT({ return window.innerWidth; });
+    int cssHeight = EM_ASM_INT({ return window.innerHeight; });
+
+    // Canvas internal resolution (accounting for device pixel ratio)
+    int canvasWidth = static_cast<int>(cssWidth * dpr);
+    int canvasHeight = static_cast<int>(cssHeight * dpr);
+
+    // Set canvas internal size (resolution) and CSS display size
+    EM_ASM({
+        var canvas = document.querySelector('canvas');
+        if (canvas) {
+            // Set internal resolution
+            canvas.width = $0;
+            canvas.height = $1;
+            // Set CSS display size
+            canvas.style.width = $2 + 'px';
+            canvas.style.height = $3 + 'px';
+        }
+        // Prevent scrollbars
+        document.body.style.margin = '0';
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+    }, canvasWidth, canvasHeight, cssWidth, cssHeight);
+
+    // Resize Qt window to match CSS size
+    if (g_mainWindow) {
+        g_mainWindow->resize(cssWidth, cssHeight);
+    }
+}
+
 // Callback for browser resize events
 EM_BOOL onBrowserResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
 {
     Q_UNUSED(eventType);
     Q_UNUSED(uiEvent);
     Q_UNUSED(userData);
-
-    if (g_mainWindow) {
-        // Get current browser window size
-        int width = EM_ASM_INT({ return window.innerWidth; });
-        int height = EM_ASM_INT({ return window.innerHeight; });
-
-        // Resize the main window to fill the browser
-        g_mainWindow->resize(width, height);
-    }
+    resizeToFillBrowser();
     return EM_TRUE;
 }
 #endif
@@ -87,14 +114,12 @@ int main(int argc, char *argv[])
     // WASM: Set up automatic window resizing to fill browser
     g_mainWindow = &w;
 
-    // Register resize callback
+    // Register resize callback for browser window resize events
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, EM_TRUE, onBrowserResize);
 
-    // Set initial size to fill browser window
-    int width = EM_ASM_INT({ return window.innerWidth; });
-    int height = EM_ASM_INT({ return window.innerHeight; });
-    w.resize(width, height);
-    w.show();
+    // Set canvas to fill browser, then show maximized
+    resizeToFillBrowser();
+    w.showMaximized();
 #else
     w.showMaximized();
 #endif

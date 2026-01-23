@@ -1,0 +1,16 @@
+:80 {
+    root * /srv
+    file_server
+
+    # Required headers for multi-threaded WASM (SharedArrayBuffer)
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
+    }
+
+    # Serve QtThermalFIST.html as index
+    try_files {path} /QtThermalFIST.html
+
+    # Enable compression
+    encode gzip
+}

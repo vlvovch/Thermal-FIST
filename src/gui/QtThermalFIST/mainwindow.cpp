@@ -374,23 +374,22 @@ void MainWindow::decreaseFontSize()
 #ifdef Q_OS_WASM
 void MainWindow::toggleFullscreen()
 {
-  EmscriptenFullscreenChangeEvent fsce;
-  emscripten_get_fullscreen_status(&fsce);
-
-  if (fsce.isFullscreen) {
-    // Exit fullscreen
-    emscripten_exit_fullscreen();
-  } else {
-    // Enter fullscreen - request on the canvas element
-    EmscriptenFullscreenStrategy strategy;
-    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH;
-    strategy.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF;
-    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
-    strategy.canvasResizedCallback = nullptr;
-    strategy.canvasResizedCallbackUserData = nullptr;
-
-    emscripten_request_fullscreen_strategy("#qtcanvas", EM_TRUE, &strategy);
-  }
+  // Use JavaScript Fullscreen API directly for better compatibility
+  EM_ASM({
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      // Try to fullscreen the canvas or body
+      var elem = document.querySelector('canvas') || document.body;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      }
+    }
+  });
 }
 #endif
 
