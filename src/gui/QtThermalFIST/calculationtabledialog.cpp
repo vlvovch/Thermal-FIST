@@ -18,8 +18,10 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QBuffer>
 
 #include "HelperRoutines.h"
+#include "WasmFileIO.h"
 
 #include "HRGBase/ThermalModelBase.h"
 
@@ -213,6 +215,61 @@ void CalculationTableDialog::copyTable() {
 }
 
 void CalculationTableDialog::writeTableToFile() {
+#ifdef Q_OS_WASM
+  // WASM: Write to buffer and trigger browser download
+  QByteArray data;
+  QBuffer buffer(&data);
+  buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+
+  const int tabsize = 20;
+
+  QTextStream out(&buffer);
+
+  if (comboQuantity->currentIndex() != 0) {
+    out << "# Hadron densities table" << Qt::endl;
+    QString units = (comboQuantity->currentIndex() == 1) ? "fm^-3" : "T^3";
+    out << "# Each density is in units of " << units << Qt::endl;
+    out << "# Feeddown: " << comboFeeddown->currentText() << Qt::endl;
+  }
+
+  out.setFieldWidth(tabsize);
+  out.setFieldAlignment(QTextStream::AlignLeft);
+  out << m_table.parameter_name;
+  if (comboQuantity->currentIndex()==0) {
+    for(int ic = 0; ic < m_table.quantities_names.size(); ++ic) {
+      out << m_table.quantities_names[ic];
+    }
+  } else {
+    for(int ic = 0; ic < m_table.densities_names.size(); ++ic) {
+      out << m_table.densities_names[ic];
+    }
+  }
+  out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(tabsize);
+
+  int feeddown = comboFeeddown->currentIndex();
+  for(int ir = 0; ir < m_table.parameter_values.size(); ++ir) {
+    out << m_table.parameter_values[ir];
+    if (comboQuantity->currentIndex()==0) {
+      for(int ic = 0; ic < m_table.quantities_names.size(); ++ic) {
+        out << m_table.quantities_values[ic][ir];
+      }
+    } else {
+      double mult = 1.;
+      if (comboQuantity->currentIndex() == 2) {
+        mult = 1. / pow(m_table.temperature_values[ir] * xMath::GeVtoifm(), 3);
+      }
+      for(int ic = 0; ic < m_table.densities_names.size(); ++ic) {
+        out << mult * m_table.densities_values[ir][feeddown][ic];
+      }
+    }
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(tabsize);
+  }
+
+  buffer.close();
+  WasmFileIO::saveFile(data, "table.txt");
+
+#else
+  // Native: Use standard file dialog
   QString fileName = QFileDialog::getSaveFileName(this, tr("Save table to file"), "", tr("Text files (*.txt)"));
   if (fileName.isEmpty())
     return;
@@ -268,4 +325,5 @@ void CalculationTableDialog::writeTableToFile() {
   }
 
   file.close();
+#endif
 }

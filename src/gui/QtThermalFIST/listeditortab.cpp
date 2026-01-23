@@ -22,6 +22,7 @@
 #include <QDebug>
 #include "listtablemodel.h"
 #include "decayseditor.h"
+#include "WasmFileIO.h"
 
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalParticleSystem.h"
@@ -752,6 +753,30 @@ void ListEditorTab::setAllThresholds()
 
 void ListEditorTab::saveToFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Write to sandbox FS and trigger browser downloads
+  QString tempListPath = WasmFileIO::getSandboxTempDir() + "/list.dat";
+  QString tempDecaysPath = WasmFileIO::getSandboxTempDir() + "/decays.dat";
+
+  myModel->GetTPS()->WriteTableToFile(tempListPath.toStdString());
+  myModel->GetTPS()->WriteDecaysToFile(tempDecaysPath.toStdString());
+
+  // Download particle list
+  QFile listFile(tempListPath);
+  if (listFile.open(QIODevice::ReadOnly)) {
+    QByteArray listData = listFile.readAll();
+    listFile.close();
+    WasmFileIO::saveFile(listData, "list.dat");
+  }
+
+  // Download decays file
+  QFile decaysFile(tempDecaysPath);
+  if (decaysFile.open(QIODevice::ReadOnly)) {
+    QByteArray decaysData = decaysFile.readAll();
+    decaysFile.close();
+    WasmFileIO::saveFile(decaysData, "decays.dat");
+  }
+#else
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/list.dat";
   if (currentPath.size() != 0) {
     listpathprefix = currentPath;
@@ -771,6 +796,7 @@ void ListEditorTab::saveToFile()
       currentPath = path;
     }
   }
+#endif
 
   if (myModel->haveChanges())
     applyChanges();
@@ -779,15 +805,8 @@ void ListEditorTab::saveToFile()
 
 void ListEditorTab::loadMassesWidthsFromPdg()
 {
-  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/mass_width_2020.mcd";
-  if (currentPath.size() != 0) {
-    listpathprefix = QFileInfo(currentPath).absolutePath() + "/pdglisting/";
-  }
-  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list from PDG website"), 
-    listpathprefix, 
-    tr("PDG file (*.mcd)"));
-  if (path.length() > 0)
-  {
+  // Lambda to process the PDG file content from a given path
+  auto processPdgFile = [this](const QString& path) {
     std::ifstream fin(path.toStdString());
     if (fin.is_open()) {
       char cc[2000];
@@ -824,7 +843,7 @@ void ListEditorTab::loadMassesWidthsFromPdg()
         if (!(issnam >> pname))
           pname = "";
 
-        for (int i = 0; i < pdgs.size(); ++i) {
+        for (size_t i = 0; i < pdgs.size(); ++i) {
           tpdg = pdgs[i];
           int tid = myModel->GetTPS()->PdgToId(tpdg);
           if (tid != -1) {
@@ -859,10 +878,29 @@ void ListEditorTab::loadMassesWidthsFromPdg()
         }
       }
       fin.close();
-
-      //myModel->reset();
     }
+  };
+
+#ifdef Q_OS_WASM
+  WasmFileIO::openFile(this, tr("Open file with particle list from PDG website"), "*.mcd",
+    [this, processPdgFile](const QString& sandboxPath) {
+      if (!sandboxPath.isEmpty()) {
+        processPdgFile(sandboxPath);
+      }
+    });
+#else
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/mass_width_2020.mcd";
+  if (currentPath.size() != 0) {
+    listpathprefix = QFileInfo(currentPath).absolutePath() + "/pdglisting/";
   }
+  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list from PDG website"),
+    listpathprefix,
+    tr("PDG file (*.mcd)"));
+  if (path.length() > 0)
+  {
+    processPdgFile(path);
+  }
+#endif
 }
 
 bool ListEditorTab::haveChangesToList()

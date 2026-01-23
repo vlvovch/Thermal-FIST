@@ -91,23 +91,53 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif(MSVC)
 
 
-option (STANDALONE_MINUIT 
-        "Build Minuit2 within project instead of linking one from ROOT distribution" OFF) 
+option (STANDALONE_MINUIT
+        "Build Minuit2 within project instead of linking one from ROOT distribution" OFF)
 
-option (USE_QT5 
-		"Use Qt5 for GUI instead of Qt6" OFF) 
+option (USE_QT5
+		"Use Qt5 for GUI instead of Qt6" OFF)
 
-string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
-if(result)
-  set(ROOT_FOUND 0)
-  set(STANDALONE_MINUIT 1)
-else(result)
-  set(ROOT_FOUND 1)
-  find_library(MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
-  if(NOT MINUIT2_LIB)
-    set(STANDALONE_MINUIT 1)
+option (THERMALFIST_WASM
+        "Build for WebAssembly (requires Qt6 and Emscripten)" OFF)
+
+# WebAssembly-specific configuration
+if(THERMALFIST_WASM)
+  message(STATUS "Building for WebAssembly")
+
+  # Force standalone Minuit2 (ROOT is not available in wasm)
+  set(STANDALONE_MINUIT ON CACHE BOOL "Build Minuit2 within project" FORCE)
+  message(STATUS "  STANDALONE_MINUIT forced ON for wasm")
+
+  # Force OpenMP off (not available in wasm)
+  set(USE_OpenMP OFF CACHE BOOL "Use OpenMP" FORCE)
+  message(STATUS "  USE_OpenMP forced OFF for wasm")
+
+  # Force Qt6 (Qt5 is not supported for wasm)
+  set(USE_QT5 OFF CACHE BOOL "Use Qt5 for GUI" FORCE)
+  message(STATUS "  USE_QT5 forced OFF for wasm (Qt6 required)")
+
+  # Disable pedantic flag for Emscripten (can cause issues)
+  if(EMSCRIPTEN)
+    string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif()
-endif(result)
+endif()
+
+# ROOT/Minuit2 detection (skip for wasm builds)
+if(NOT THERMALFIST_WASM)
+  string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
+  if(result)
+    set(ROOT_FOUND 0)
+    set(STANDALONE_MINUIT 1)
+  else(result)
+    set(ROOT_FOUND 1)
+    find_library(MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
+    if(NOT MINUIT2_LIB)
+      set(STANDALONE_MINUIT 1)
+    endif()
+  endif(result)
+else()
+  set(ROOT_FOUND 0)
+endif()
 
 # Check whether the size of int is at least 32-bit
 INCLUDE (CheckTypeSize)

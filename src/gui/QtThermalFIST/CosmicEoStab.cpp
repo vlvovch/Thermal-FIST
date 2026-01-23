@@ -15,8 +15,10 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QTextStream>
+#include <QBuffer>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -767,6 +769,67 @@ void CosmicEoSTab::saveAs(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  // WASM: Save to buffer and trigger browser download
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plotDependence->savePdf(&buffer, plotDependence->width(), plotDependence->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else if (type == 1) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plotDependence->savePng(&buffer, plotDependence->width(), plotDependence->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else {
+    std::vector<double> yvalues;
+
+    if (CBratio->isChecked() && !CBxAxis->isChecked()) {
+      yvalues = getValuesRatio(comboQuantity->currentIndex(), comboQuantity2->currentIndex());
+    }
+    else {
+      yvalues = getValues(comboQuantity->currentIndex());
+    }
+
+    std::vector<double> xvalues = varvalues;
+    if (CBxAxis->isChecked()) {
+      xvalues = getValues(comboQuantity2->currentIndex(), 1);
+    }
+
+    if (yvalues.size() > 0) {
+      QByteArray data;
+      QBuffer buffer(&data);
+      buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+      QTextStream out(&buffer);
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      if (!CBflipAxes->isChecked()) {
+        out << plotDependence->xAxis->label();
+        out << plotDependence->yAxis->label();
+      } else {
+        out << plotDependence->yAxis->label();
+        out << plotDependence->xAxis->label();
+      }
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      for (size_t i = 0; i < yvalues.size(); ++i) {
+        out.setFieldWidth(15);
+        out.setFieldAlignment(QTextStream::AlignLeft);
+        out << xvalues[i] << yvalues[i];
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      }
+      buffer.close();
+      WasmFileIO::saveFile(data, fileName);
+    }
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
   if (path.length()>0)
@@ -804,7 +867,7 @@ void CosmicEoSTab::saveAs(int type)
           out << plotDependence->xAxis->label();
         }
         out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
-        for (int i = 0; i < yvalues.size(); ++i) {
+        for (size_t i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << xvalues[i] << yvalues[i];
@@ -812,10 +875,11 @@ void CosmicEoSTab::saveAs(int type)
         }
       }
     }
-    
+
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 std::vector<double> CosmicEoSTab::getValues(int index, int num)

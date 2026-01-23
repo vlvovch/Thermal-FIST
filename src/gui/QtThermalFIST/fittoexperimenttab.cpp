@@ -41,6 +41,7 @@
 #include "chi2ProfileDialog.h"
 #include "thermalfitplots.h"
 #include "fitparametersmodel.h"
+#include "WasmFileIO.h"
 
 using namespace thermalfist;
 
@@ -526,6 +527,22 @@ void FitToExperimentTab::addQuantity() {
 }
 
 void FitToExperimentTab::loadFromFile() {
+#ifdef Q_OS_WASM
+    // WASM: Use getOpenFileContent for browser file picker
+    WasmFileIO::openFile(this, tr("Open file with experimental data to fit"), "*.dat *.txt *.*",
+      [this](const QString& sandboxPath) {
+        if (sandboxPath.isEmpty())
+          return;
+
+        quantities = ThermalModelFit::loadExpDataFromFile(sandboxPath.toStdString());
+        if (fitcopy != NULL)
+          fitcopy->ClearModelData();
+        myModel->setQuantities(&quantities);
+        tableQuantities->resizeColumnsToContents();
+        cpath = sandboxPath;
+      }
+    );
+#else
     QString path = QFileDialog::getOpenFileName(this, tr("Open file with experimental data to fit"), cpath);
     if (path.length()>0)
     {
@@ -536,16 +553,31 @@ void FitToExperimentTab::loadFromFile() {
         tableQuantities->resizeColumnsToContents();
         cpath = path;
     }
+#endif
 }
 
 void FitToExperimentTab::saveToFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Generate data and trigger browser download
+  // Write to a temporary file, read it back, and download
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/expdata.dat";
+  ThermalModelFit::saveExpDataToFile(quantities, tempPath.toStdString());
+
+  QFile tempFile(tempPath);
+  if (tempFile.open(QIODevice::ReadOnly)) {
+    QByteArray data = tempFile.readAll();
+    tempFile.close();
+    WasmFileIO::saveFile(data, "expdata.dat");
+  }
+#else
   QString path = QFileDialog::getSaveFileName(this, tr("Save experimental data to file"), cpath);
   if (path.length()>0)
   {
     ThermalModelFit::saveExpDataToFile(quantities, path.toStdString());
     cpath = path;
   }
+#endif
 }
 
 void FitToExperimentTab::modelChanged()
@@ -677,6 +709,29 @@ void FitToExperimentTab::resetTPS() {
 
 void FitToExperimentTab::writetofile() {
     if (model->IsCalculated()) {
+#ifdef Q_OS_WASM
+        // WASM: Write to sandbox and trigger downloads
+        if (fitcopy != NULL) {
+            QString basePath = WasmFileIO::getSandboxTempDir() + "/output";
+            std::string tpath = basePath.toStdString();
+
+            fitcopy->PrintYieldsLatexAll(tpath + ".tex", tpath);
+            fitcopy->PrintYieldsTable(tpath + ".out");
+            std::string cmmnt = "Thermal fit to " + cpath.toStdString() + " within " + fitcopy->model()->TAG();
+            fitcopy->PrintFitLog(tpath + ".txt", cmmnt);
+
+            // Download each generated file
+            QStringList extensions = {".tex", ".out", ".txt"};
+            for (const QString& ext : extensions) {
+                QFile file(basePath + ext);
+                if (file.open(QIODevice::ReadOnly)) {
+                    QByteArray data = file.readAll();
+                    file.close();
+                    WasmFileIO::saveFile(data, "output" + ext);
+                }
+            }
+        }
+#else
         QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.out", tr("*.out"));
         if (path.length()>0)
         {
@@ -689,6 +744,7 @@ void FitToExperimentTab::writetofile() {
                 fitcopy->PrintFitLog(std::string(tpath + ".txt"), cmmnt);
             }
         }
+#endif
     }
 }
 

@@ -14,9 +14,11 @@
 #include <QMessageBox>
 #include <QElapsedTimer>
 #include <QDebug>
-
+#include <QDesktopServices>
+#include <QUrl>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
@@ -166,6 +168,29 @@ void MainWindow::createMenus()
 
 void MainWindow::loadDecays()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use getOpenFileContent for browser file picker
+  WasmFileIO::openFile(this, tr("Open file with decays"), "*.dat *.txt *.*",
+    [this](const QString& sandboxPath) {
+      if (sandboxPath.isEmpty())
+        return;
+
+      std::vector<std::string> decayspaths;
+      decayspaths.push_back(sandboxPath.toStdString());
+      TPS->LoadDecays(decayspaths);
+      model->ChangeTPS(TPS);
+      tab1->resetTPS();
+      tab2->resetTPS();
+      tab5->resetTPS();
+      tabEditor->resetTPS();
+      tabCosmicEoS->resetTPS();
+
+      leList->setText(clists);
+      leList->setText(leList->text() + " + " + QFileInfo(sandboxPath).fileName());
+    }
+  );
+#else
+  // Native: Use standard file dialog
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
   if (leList->text().size() != 0)
     listpathprefix = leList->text();
@@ -195,6 +220,7 @@ void MainWindow::loadDecays()
       leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decayspaths[idec])).fileName());
     }
   }
+#endif
 }
 
 void MainWindow::tabChanged(int newIndex)
@@ -254,6 +280,49 @@ void MainWindow::decreaseFontSize()
 
 void MainWindow::loadList()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use getOpenFileContent for browser file picker
+  // Note: Multi-file selection not supported in WASM, load one file at a time
+  WasmFileIO::openFile(this, tr("Open file with particle list"), "*.dat *.txt *.*",
+    [this](const QString& listSandboxPath) {
+      if (listSandboxPath.isEmpty())
+        return;
+
+      std::vector<std::string> paths = { listSandboxPath.toStdString() };
+
+      // Try default decays next to list (in sandbox FS)
+      QString decaysPath = QFileInfo(listSandboxPath).absolutePath() + "/decays.dat";
+      std::vector<std::string> decays;
+
+      if (QFileInfo(decaysPath).exists()) {
+        decays.push_back(decaysPath.toStdString());
+      }
+      // Note: In WASM, we skip the dialog asking for decays file for simplicity
+      // User can load decays separately via the Load Decays menu
+
+      *TPS = ThermalParticleSystem(paths, decays);
+      model->ChangeTPS(TPS);
+
+      leList->setText(QFileInfo(listSandboxPath).fileName());
+      clists = leList->text();
+
+      if (decays.size() > 0) {
+        leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[0])).fileName());
+      }
+
+      tab1->resetTPS();
+      tab2->resetTPS();
+      tabEoS->resetTPS();
+      tab5->resetTPS();
+      tabEditor->resetTPS();
+      tabEditor->setListPath(listSandboxPath);
+      tabCosmicEoS->resetTPS();
+
+      cpath = listSandboxPath;
+    }
+  );
+#else
+  // Native: Use standard file dialog
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list";
   if (leList->text().size() != 0)
     listpathprefix = leList->text();
@@ -267,8 +336,8 @@ void MainWindow::loadList()
       paths.push_back(pathlist[i].toStdString());
     //*TPS = ThermalParticleSystem(paths);
     //*TPS = ThermalParticleSystem(
-    //  { path.toStdString() }, 
-    //  { "" }, 
+    //  { path.toStdString() },
+    //  { "" },
     //  { ThermalParticleSystem::flag_noexcitednuclei, ThermalParticleSystem::flag_nonuclei }
     //);
 
@@ -279,8 +348,8 @@ void MainWindow::loadList()
     if (!QFileInfo(decpath[0]).exists()) {
 
       QMessageBox::StandardButton reply;
-      reply = QMessageBox::question(this, 
-        "Decays", 
+      reply = QMessageBox::question(this,
+        "Decays",
         "Decays file was not found at `decays.dat`. Would you like to load decays from another file?",
         QMessageBox::Yes | QMessageBox::No);
       if (reply == QMessageBox::Yes) {
@@ -334,4 +403,5 @@ void MainWindow::loadList()
 
     cpath = pathlist[0];
   }
+#endif
 }

@@ -44,6 +44,8 @@
 #include "spectramodel.h"
 #include "particlespectra.h"
 #include "qcustomplot.h"
+#include "WasmFileIO.h"
+#include <QBuffer>
 
 using namespace thermalfist;
 
@@ -1130,13 +1132,27 @@ void EventGeneratorTab::quantityDoubleClick(const QModelIndex & index) {
 }
 
 void EventGeneratorTab::chooseOutputFile() {
+#ifdef Q_OS_WASM
+  // WASM: File writing for events is not directly supported in browser
+  // Events can still be written to sandbox FS, but downloading large files is impractical
+  QMessageBox::information(this, tr("WebAssembly Mode"),
+    tr("Direct file output is not available in browser mode. "
+       "Events will be generated but not saved to file."));
+#else
   QString path = QFileDialog::getSaveFileName(this, tr("Choose file to write events"), leFilePath->text());
   if (path.length()>0) leFilePath->setText(path);
+#endif
 }
 
 void EventGeneratorTab::loadAcceptance() {
-    QString path = QFileDialog::getExistingDirectory(this, tr("Open folder with acceptance data"), leAcceptancePath->text());
-    if (path.length()>0) leAcceptancePath->setText(path);
+#ifdef Q_OS_WASM
+  // WASM: Directory selection not supported in browser
+  QMessageBox::information(this, tr("WebAssembly Mode"),
+    tr("Loading acceptance data from directory is not available in browser mode."));
+#else
+  QString path = QFileDialog::getExistingDirectory(this, tr("Open folder with acceptance data"), leAcceptancePath->text());
+  if (path.length()>0) leAcceptancePath->setText(path);
+#endif
 }
 
 void EventGeneratorTab::changePlot() {
@@ -1563,7 +1579,7 @@ void EventGeneratorTab::saveAs1D(int type)
 
   {
     int id = getCurrentRow();
-    if (id >= 0 && id < spectra->fParticles.size()) {
+    if (id >= 0 && id < static_cast<int>(spectra->fParticles.size())) {
       if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
         tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
       }
@@ -1575,6 +1591,49 @@ void EventGeneratorTab::saveAs1D(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plotDistr->savePdf(&buffer, plotDistr->width(), plotDistr->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else if (type == 1) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plotDistr->savePng(&buffer, plotDistr->width(), plotDistr->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+    out.setFieldWidth(15);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << plotDistr->xAxis->label();
+    out << plotDistr->yAxis->label();
+    out << "error";
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    for (int i = 0; i < plotDistr->graph(0)->data()->size(); ++i) {
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      double x = plotDistr->graph(0)->data()->at(i)->key;
+      double y = plotDistr->graph(0)->data()->at(i)->value;
+      double yerr = errorBars->data()->at(i).errorPlus;
+      out << x << y << yerr;
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    }
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
 
@@ -1610,6 +1669,7 @@ void EventGeneratorTab::saveAs1D(int type)
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 void EventGeneratorTab::contextMenuRequestPlot2D(QPoint pos)
@@ -1635,7 +1695,7 @@ void EventGeneratorTab::saveAs2D(int type)
 
   {
     int id = getCurrentRow();
-    if (id >= 0 && id < spectra->fParticles.size()) {
+    if (id >= 0 && id < static_cast<int>(spectra->fParticles.size())) {
       if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
         tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
       }
@@ -1647,6 +1707,47 @@ void EventGeneratorTab::saveAs2D(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plot2D->savePdf(&buffer, plotDistr->width(), plotDistr->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else if (type == 1) {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    plot2D->savePng(&buffer, plotDistr->width(), plotDistr->height());
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+  else {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+    out.setFieldWidth(15);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << plot2D->xAxis->label();
+    out << plot2D->yAxis->label();
+    out << plotName;
+    out << "error";
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    for (size_t i = 0; i < fXv.size(); ++i) {
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    }
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
 
@@ -1668,7 +1769,7 @@ void EventGeneratorTab::saveAs2D(int type)
         out << plotName;
         out << "error";
         out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
-        for (int i = 0; i < fXv.size(); ++i) {
+        for (size_t i = 0; i < fXv.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
@@ -1680,6 +1781,7 @@ void EventGeneratorTab::saveAs2D(int type)
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 void EventGeneratorTab::changeParticles()
