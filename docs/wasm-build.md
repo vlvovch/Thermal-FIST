@@ -117,13 +117,139 @@ The WASM build includes embedded data files:
 
 ## Deployment
 
-To deploy on a web server:
+### Quick Deployment (Single-threaded)
 
 1. Copy the contents of `build-wasm/bin/` to your web server
 2. Ensure the server sends correct MIME types:
    - `.wasm` → `application/wasm`
    - `.js` → `application/javascript`
-3. For multi-threaded builds, configure COOP/COEP headers (see above)
+
+### Caddy Deployment (Recommended)
+
+Caddy is simple and provides automatic HTTPS via Let's Encrypt.
+
+**1. Install Caddy:**
+
+```bash
+# Debian/Ubuntu
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
+```
+
+**2. Copy files:**
+
+```bash
+sudo mkdir -p /var/www/thermal-fist
+sudo cp -r build-wasm/bin/* /var/www/thermal-fist/
+```
+
+**3. Create `/etc/caddy/Caddyfile`:**
+
+```caddyfile
+your-domain.com {
+    root * /var/www/thermal-fist
+    file_server
+
+    # Required headers for multi-threaded WASM (SharedArrayBuffer)
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
+    }
+
+    # Serve QtThermalFIST.html as index
+    try_files {path} /QtThermalFIST.html
+}
+```
+
+For local testing without a domain (HTTP only):
+
+```caddyfile
+:8080 {
+    root * /var/www/thermal-fist
+    file_server
+
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
+    }
+
+    try_files {path} /QtThermalFIST.html
+}
+```
+
+**4. Start Caddy:**
+
+```bash
+sudo systemctl restart caddy
+```
+
+Caddy automatically obtains and renews HTTPS certificates via Let's Encrypt.
+
+### Automated Docker Build (Recommended)
+
+A complete Docker setup that builds everything from source is available in `deploy/wasm/`:
+
+```bash
+cd deploy/wasm
+docker-compose build   # Takes 15-30 minutes
+docker-compose up -d
+```
+
+This automatically:
+- Installs Emscripten and Qt for WASM
+- Clones and builds Thermal-FIST
+- Serves via Caddy with proper headers
+
+See [deploy/wasm/README.md](../deploy/wasm/README.md) for details.
+
+### Docker with Pre-built Files
+
+If you've already built the WASM files locally:
+
+**1. Create deployment directory:**
+
+```bash
+mkdir thermal-fist-web
+cd thermal-fist-web
+cp -r /path/to/build-wasm/bin/* .
+```
+
+**2. Create `Caddyfile`:**
+
+```caddyfile
+:80 {
+    root * /srv
+    file_server
+
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
+    }
+
+    try_files {path} /QtThermalFIST.html
+}
+```
+
+**3. Create `Dockerfile`:**
+
+```dockerfile
+FROM caddy:alpine
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY . /srv/
+RUN rm -f /srv/Caddyfile /srv/Dockerfile
+```
+
+**4. Build and run:**
+
+```bash
+docker build -t thermal-fist-web .
+docker run -d -p 8080:80 --name thermal-fist thermal-fist-web
+```
+
+Access at `http://your-server:8080`
 
 ## Troubleshooting
 
