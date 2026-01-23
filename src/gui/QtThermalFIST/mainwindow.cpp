@@ -21,6 +21,9 @@
 
 #include "ThermalFISTConfig.h"
 #include "WasmFileIO.h"
+#ifdef Q_OS_WASM
+#include <emscripten/html5.h>
+#endif
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGBase/ThermalModelCanonicalStrangeness.h"
@@ -225,6 +228,13 @@ void MainWindow::createMenus()
   decFontAct->setShortcuts(QKeySequence::ZoomOut);
   connect(decFontAct, &QAction::triggered, this, &MainWindow::decreaseFontSize);
   viewMenu->addAction(decFontAct);
+#ifdef Q_OS_WASM
+  viewMenu->addSeparator();
+  QAction *fullscreenAct = new QAction(tr("Toggle fullscreen"), this);
+  fullscreenAct->setShortcut(QKeySequence(Qt::Key_F11));
+  connect(fullscreenAct, &QAction::triggered, this, &MainWindow::toggleFullscreen);
+  viewMenu->addAction(fullscreenAct);
+#endif
 
   QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
   QAction *aboutAct = new QAction(tr("&About Thermal-FIST"), this);
@@ -360,6 +370,29 @@ void MainWindow::decreaseFontSize()
   tab1->updateFontSizes();
   tab2->updateFontSizes();
 }
+
+#ifdef Q_OS_WASM
+void MainWindow::toggleFullscreen()
+{
+  EmscriptenFullscreenChangeEvent fsce;
+  emscripten_get_fullscreen_status(&fsce);
+
+  if (fsce.isFullscreen) {
+    // Exit fullscreen
+    emscripten_exit_fullscreen();
+  } else {
+    // Enter fullscreen - request on the canvas element
+    EmscriptenFullscreenStrategy strategy;
+    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH;
+    strategy.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF;
+    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
+    strategy.canvasResizedCallback = nullptr;
+    strategy.canvasResizedCallbackUserData = nullptr;
+
+    emscripten_request_fullscreen_strategy("#qtcanvas", EM_TRUE, &strategy);
+  }
+}
+#endif
 
 void MainWindow::loadList()
 {
