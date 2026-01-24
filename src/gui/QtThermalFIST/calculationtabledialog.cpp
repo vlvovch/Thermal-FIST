@@ -76,6 +76,7 @@ CalculationTableDialog::CalculationTableDialog(QWidget* parent, const Calculatio
   tableValues->installEventFilter(this);
   tableValues->setEditTriggers(QAbstractItemView::NoEditTriggers);
   tableValues->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  configureTableRowHeight(tableValues);
 
   buttonWriteToFile = new QPushButton(tr("Write to file..."));
   connect(buttonWriteToFile, SIGNAL(clicked()), this, SLOT(writeTableToFile()));

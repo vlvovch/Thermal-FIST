@@ -23,6 +23,7 @@
 #include "listtablemodel.h"
 #include "decayseditor.h"
 #include "WasmFileIO.h"
+#include "HelperRoutines.h"
 
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalParticleSystem.h"
@@ -43,6 +44,7 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   tableParticles->setSelectionBehavior(QAbstractItemView::SelectRows);
   tableParticles->setSelectionMode(QAbstractItemView::SingleSelection);
   tableParticles->resizeColumnsToContents();
+  configureTableRowHeight(tableParticles);
   connect(tableParticles->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(changedRow()));
   connect(tableParticles, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(editDecaysDoubleClick(QModelIndex)));
   //tableParticles->setSortingEnabled(true);

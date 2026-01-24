@@ -45,6 +45,7 @@
 #include "particlespectra.h"
 #include "qcustomplot.h"
 #include "WasmFileIO.h"
+#include "HelperRoutines.h"
 #include <QBuffer>
 
 using namespace thermalfist;
@@ -309,6 +310,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     tableSpectra->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableSpectra->setSelectionMode(QAbstractItemView::SingleSelection);
     tableSpectra->resizeColumnsToContents();
+    configureTableRowHeight(tableSpectra);
     //connect(tableSpectra, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
 
     connect(tableSpectra->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));

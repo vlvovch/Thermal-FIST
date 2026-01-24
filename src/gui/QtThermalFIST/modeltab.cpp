@@ -42,6 +42,7 @@
 #include "resultdialog.h"
 #include "fittoexperimenttab.h"
 #include "correlationsdialog.h"
+#include "HelperRoutines.h"
 
 using namespace thermalfist;
 
@@ -66,6 +67,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     tableParticles->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableParticles->setSelectionMode(QAbstractItemView::SingleSelection);
     tableParticles->resizeColumnsToContents();
+    configureTableRowHeight(tableParticles);
     connect(tableParticles->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));
     connect(tableParticles, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(particleInfoDoubleClick(QModelIndex)));
 

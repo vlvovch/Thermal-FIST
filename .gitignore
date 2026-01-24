@@ -11,6 +11,7 @@ Release*/*
 local*/*
 cmake-*/*
 .idea/*
+.cache/*
 
 # Visual Studio
 .vs/*

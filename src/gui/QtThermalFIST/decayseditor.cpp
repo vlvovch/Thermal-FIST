@@ -10,6 +10,7 @@
 #include <QHeaderView>
 #include <QTimer>
 #include <QDebug>
+#include "HelperRoutines.h"
 
 using namespace thermalfist;
 
@@ -24,6 +25,7 @@ decayseditor::decayseditor(QWidget *parent, ThermalParticle *Particle, ThermalPa
     //tableDecays->setSelectionBehavior(QAbstractItemView::SelectRows);
     //tableDecays->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableDecays->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    configureTableRowHeight(tableDecays);
     //tableDecays->setEditTriggers(QAbstractItemView::EditTrigger);
     //tableDecays->resizeColumnsToContents();
 
