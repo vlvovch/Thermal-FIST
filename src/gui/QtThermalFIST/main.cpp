@@ -118,9 +118,10 @@ int main(int argc, char *argv[])
     // Register resize callback for browser window resize events
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, EM_TRUE, onBrowserResize);
 
-    // Resize canvas and show window (use show() instead of showMaximized() for better WASM sizing)
+    // Resize canvas and force maximized state
     resizeToFillBrowser();
-    w.show();
+    w.showNormal();
+    w.showMaximized();
 #else
     w.showMaximized();
 #endif
