@@ -11,7 +11,7 @@ docker compose build
 # Run the container
 docker compose up -d
 
-# Access at http://localhost:8080
+# Access at http://localhost:8081
 ```
 
 ## Manual Build
@@ -21,7 +21,7 @@ docker compose up -d
 docker build -t thermal-fist-wasm .
 
 # Run
-docker run -d -p 8080:80 --name thermal-fist-wasm thermal-fist-wasm
+docker run -d -p 8081:80 --name thermal-fist-wasm thermal-fist-wasm
 ```
 
 ## Using with External Caddy

@@ -2,8 +2,8 @@
 # Multi-stage build: Stage 1 builds, Stage 2 serves
 #
 # Usage: docker build -t thermal-fist-wasm .
-#        docker run -p 8080:80 thermal-fist-wasm
-#        Then open http://localhost:8080 in your browser
+#        docker run -p 8081:80 thermal-fist-wasm
+#        Then open http://localhost:8081 in your browser
 
 # =============================================================================
 # Stage 1: Build environment
