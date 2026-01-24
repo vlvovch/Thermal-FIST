@@ -55,7 +55,7 @@ If you already have Caddy running on the server and want to proxy to this contai
 
 The Dockerfile uses:
 - **Emscripten**: 3.1.37 (required by Qt 6.6)
-- **Qt**: 6.6.0 (wasm_multithread)
+- **Qt**: 6.6.0 (gcc_64 for host tools + wasm_multithread for target)
 - **Thermal-FIST**: feature/wasm-support branch
 
 To use a different branch, modify the Dockerfile:
@@ -68,9 +68,10 @@ RUN git clone --depth 1 -b master https://github.com/vlvovch/Thermal-FIST.git
 The default multi-threaded build requires COOP/COEP headers (already configured in Caddyfile).
 For simpler deployment without special headers, use single-threaded:
 
-1. Change the Qt installation in Dockerfile:
+1. Change the Qt WASM installation in Dockerfile:
    ```dockerfile
-   RUN aqt install-qt linux desktop 6.6.0 wasm_singlethread
+   RUN aqt install-qt linux desktop 6.6.0 gcc_64 && \
+       aqt install-qt linux desktop 6.6.0 wasm_singlethread
    ```
 
 2. Update the build command:

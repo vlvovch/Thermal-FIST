@@ -36,21 +36,28 @@ RUN ./emsdk install 3.1.37 && \
     ./emsdk activate 3.1.37
 
 # Install Qt 6.6 for WebAssembly (multi-threaded for better performance)
+# Also install host Qt (gcc_64) which is required for cross-compilation tools
 WORKDIR /opt
-RUN aqt install-qt linux desktop 6.6.0 wasm_multithread
+RUN aqt install-qt linux desktop 6.6.0 gcc_64 && \
+    aqt install-qt linux desktop 6.6.0 wasm_multithread
 
-# Set up environment
+# Set up environment variables
 ENV EMSDK=/opt/emsdk
+ENV EM_CONFIG=/opt/emsdk/.emscripten
 ENV QT_DIR=/opt/6.6.0
+ENV QT_HOST_PATH=/opt/6.6.0/gcc_64
 
 # Clone Thermal-FIST
 WORKDIR /opt
 RUN git clone --depth 1 -b feature/wasm-support https://github.com/vlvovch/Thermal-FIST.git
 
 # Build for WASM
+# Source emsdk from its directory to ensure proper environment setup
 WORKDIR /opt/Thermal-FIST/build-wasm
-RUN . /opt/emsdk/emsdk_env.sh && \
-    /opt/6.6.0/wasm_multithread/bin/qt-cmake .. -DTHERMALFIST_WASM=ON && \
+RUN cd /opt/emsdk && . ./emsdk_env.sh && cd /opt/Thermal-FIST/build-wasm && \
+    /opt/6.6.0/wasm_multithread/bin/qt-cmake .. \
+        -DTHERMALFIST_WASM=ON \
+        -DQT_HOST_PATH=/opt/6.6.0/gcc_64 && \
     cmake --build . --parallel $(nproc)
 
 # =============================================================================
