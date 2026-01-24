@@ -42,6 +42,7 @@
 #include "thermalfitplots.h"
 #include "fitparametersmodel.h"
 #include "WasmFileIO.h"
+#include "HelperRoutines.h"
 
 using namespace thermalfist;
 
@@ -81,6 +82,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableQuantities->setSelectionMode(QAbstractItemView::SingleSelection);
     tableQuantities->setItemDelegate(new ItemDelegateCustom(this));
     tableQuantities->resizeColumnsToContents();
+    configureTableRowHeight(tableQuantities);
     connect(tableQuantities, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
     
     layoutTop->addWidget(labelQuantities);
@@ -183,6 +185,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableFitParameters->setModel(fitParametersModel);
     tableFitParameters->setItemDelegate(new ItemDelegateCustom(this));
     tableFitParameters->resizeColumnsToContents();
+    configureTableRowHeight(tableFitParameters);
 
 
     QHBoxLayout *layCE = new QHBoxLayout();

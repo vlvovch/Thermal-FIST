@@ -50,6 +50,7 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
   tableDecays = new QTableView();
   tableDecays->setModel(myModel);
   tableDecays->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+  configureTableRowHeight(tableDecays);
 
   QHBoxLayout* layoutButtons = new QHBoxLayout();
   layoutButtons->setAlignment(Qt::AlignLeft);

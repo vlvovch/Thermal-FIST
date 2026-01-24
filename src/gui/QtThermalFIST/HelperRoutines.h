@@ -9,6 +9,20 @@
 #define HELPERROUTINES_H
 
 #include <QTableWidget>
+#include <QTableView>
+#include <QHeaderView>
+#include <QApplication>
+#include <QFontMetrics>
+
+// Configure table view row heights to match current font size
+// Call this after creating a QTableView to ensure proper row heights
+inline void configureTableRowHeight(QTableView* table) {
+    if (!table) return;
+    QFontMetrics fm(QApplication::font());
+    // Row height = font height + comfortable padding
+    int rowHeight = fm.height() + 10;
+    table->verticalHeader()->setDefaultSectionSize(rowHeight);
+}
 
 class QTableWidgetCC : public QTableWidget
 {
