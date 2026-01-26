@@ -50,7 +50,7 @@ ENV QT_HOST_PATH=/opt/6.6.0/gcc_64
 
 # Clone Thermal-FIST
 WORKDIR /opt
-RUN git clone --depth 1 -b feature/wasm-support https://github.com/vlvovch/Thermal-FIST.git
+RUN git clone --depth 1 -b devel https://github.com/vlvovch/Thermal-FIST.git
 
 # Build for WASM
 # Source emsdk from its directory to ensure proper environment setup
