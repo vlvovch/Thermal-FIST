@@ -28,6 +28,7 @@ namespace thermalfist {
     m_PCE(false),
     m_Calculated(false),
     m_FeeddownCalculated(false),
+    m_TwoParticleCorrelationsCalculated(false),
     m_FluctuationsCalculated(false),
     m_TemperatureDerivativesCalculated(false),
     m_GCECalculated(false),
@@ -842,6 +843,7 @@ namespace thermalfist {
   {
     m_Calculated = false;
     m_FeeddownCalculated = false;
+    m_TwoParticleCorrelationsCalculated = false;
     m_SusceptibilitiesCalculated = false;
     m_FluctuationsCalculated = false;
     m_TemperatureDerivativesCalculated = false;
@@ -1293,6 +1295,10 @@ namespace thermalfist {
 
   void ThermalModelBase::CalculateSusceptibilityMatrix()
   {
+    // Ensure two-particle correlations are calculated first
+    if (!m_TwoParticleCorrelationsCalculated)
+      CalculateTwoParticleCorrelations();
+
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
     m_dSuscdT = m_Susc;
@@ -2131,7 +2137,7 @@ namespace thermalfist {
     return ret / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::CalculateSpecificHeatChem()
+  double ThermalModelBase::CalculateHeatCapacityMu()
   {
     double dedT = CalculateEnergyDensityDerivativeT(); // fm^-3
     
@@ -2185,7 +2191,7 @@ namespace thermalfist {
 
     // Compute the Hessian matrix of pressure
     // Pi(0,0) = d^2 P / d T^2 = ds/dT
-    ret(0, 0) = model->SpecificHeatChem() / model->Parameters().T; // fm^-3 GeV^-1
+    ret(0, 0) = model->HeatCapacityMu() / model->Parameters().T; // fm^-3 GeV^-1
 
     // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
     {
@@ -2216,6 +2222,59 @@ namespace thermalfist {
     }
 
     return ret;
+  }
+
+  vector<vector<double>> ThermalModelBase::PressureHessian()
+  {
+    // Ensure susceptibilities and temperature derivatives are calculated
+    if (!m_FluctuationsCalculated)
+      CalculateFluctuations();
+    if (!m_TemperatureDerivativesCalculated)
+      CalculateTemperatureDerivatives();
+
+    // Use the existing helper with all conserved charges enabled
+    vector<int> allCharges = {1, 1, 1, 1};  // B, Q, S, C
+    MatrixXd H_eigen = GetPressureHessianMatrix(this, allCharges);
+
+    // Convert Eigen matrix to vector<vector<double>>
+    int N = H_eigen.rows();
+    vector<vector<double>> H(N, vector<double>(N, 0.0));
+    for (int i = 0; i < N; ++i) {
+      for (int j = 0; j < N; ++j) {
+        H[i][j] = H_eigen(i, j);
+      }
+    }
+
+    return H;
+  }
+
+  bool ThermalModelBase::IsThermodynamicallyStable()
+  {
+    // Ensure susceptibilities and temperature derivatives are calculated
+    if (!m_FluctuationsCalculated)
+      CalculateFluctuations();
+    if (!m_TemperatureDerivativesCalculated)
+      CalculateTemperatureDerivatives();
+
+    // Get the Hessian matrix using the existing helper
+    vector<int> allCharges = {1, 1, 1, 1};  // B, Q, S, C
+    MatrixXd H = GetPressureHessianMatrix(this, allCharges);
+
+    // Use SelfAdjointEigenSolver since Hessian is symmetric
+    Eigen::SelfAdjointEigenSolver<MatrixXd> solver(H);
+    if (solver.info() != Eigen::Success) {
+      return false;  // Eigenvalue computation failed
+    }
+
+    // Check if all eigenvalues are non-negative (positive semi-definite)
+    const auto& eigenvalues = solver.eigenvalues();
+    for (int i = 0; i < eigenvalues.size(); ++i) {
+      if (eigenvalues(i) < 0.0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   double ThermalModelBase::CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
@@ -2251,7 +2310,7 @@ namespace thermalfist {
         if (!IsTemperatureDerivativesCalculated())
           CalculateTemperatureDerivatives();
         return EntropyDensity() / CalculateEnergyDensityDerivativeT();
-        //return EntropyDensity() / SpecificHeatChem();
+        //return EntropyDensity() / HeatCapacityMu();
       }
     }
 
@@ -2297,7 +2356,7 @@ namespace thermalfist {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
-    // double dedT = SpecificHeatChem(); // fm^-3
+    // double dedT = HeatCapacityMu(); // fm^-3
     // Compute the Hessian matrix of pressure
     MatrixXd PiMatr = GetPressureHessianMatrix(this, ConservedCharges);
 
@@ -2359,7 +2418,6 @@ namespace thermalfist {
     double denominator = 0.;
     int i1 = 0, i2 = 0;
     for(int i = 0; i < 4; ++i) {
-      \
       if (ConservedCharges[i] == 0)
         continue;
       denominator += mus[i] * ConservedChargeDensity((ConservedCharge::Name)i);
@@ -2401,7 +2459,7 @@ namespace thermalfist {
       ConservedCharges[3] = 0;
 
     // Calculate the numerator
-    double TdsdT = SpecificHeatChem();
+    double TdsdT = HeatCapacityMu();
 
     // If all chemical potentials are zero, retur TdsT
     {
