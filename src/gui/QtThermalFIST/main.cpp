@@ -83,10 +83,10 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WASM
     // Scale font based on browser window height
     int windowHeight = EM_ASM_INT({ return window.innerHeight; });
-    // Base: 8pt for ~800px height, scale proportionally (min 6pt, max 10pt)
-    int fontSize = windowHeight / 100;
-    if (fontSize < 6) fontSize = 6;
-    if (fontSize > 10) fontSize = 10;
+    // Base: 9pt for ~800px height, scale proportionally (min 7pt, max 11pt)
+    int fontSize = windowHeight / 90;
+    if (fontSize < 7) fontSize = 7;
+    if (fontSize > 11) fontSize = 11;
     font.setPointSize(fontSize);
 #else
     font.setPointSize(10);
