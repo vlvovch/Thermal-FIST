@@ -742,6 +742,7 @@ Obtained: %lf\n\
       else m_wprim[i] = 1.;
     }
 
+    m_TwoParticleCorrelationsCalculated = true;
   }
 
   void ThermalModelCanonical::CalculateFluctuations() {
