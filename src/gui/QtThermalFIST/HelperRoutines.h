@@ -8,40 +8,31 @@
 #ifndef HELPERROUTINES_H
 #define HELPERROUTINES_H
 
-#include <QTableWidget>
-
-#ifdef Q_OS_WASM
-#include <QTableView>
-#include <QHeaderView>
 #include <QApplication>
 #include <QFontMetrics>
+#include <QHeaderView>
+#include <QTableView>
+#include <QTableWidget>
 
 // Configure table view row heights to match current font size
 // Call this after creating a QTableView to ensure proper row heights
 // Only needed for WASM builds where font scaling is applied
-inline void configureTableRowHeight(QTableView* table) {
-    if (!table) return;
-    QFontMetrics fm(QApplication::font());
-    // Row height = font height + comfortable padding
-    int rowHeight = fm.height() + 10;
-    table->verticalHeader()->setDefaultSectionSize(rowHeight);
+inline void configureTableRowHeight(QTableView *table) {
+  if (!table)
+    return;
+  QFontMetrics fm(QApplication::font());
+  // Row height = font height + comfortable padding
+  int rowHeight = fm.height() + 10;
+  table->verticalHeader()->setDefaultSectionSize(rowHeight);
 }
-#else
-// No-op for native builds (default row heights are fine)
-class QTableView;
-inline void configureTableRowHeight(QTableView*) {}
-#endif
 
-class QTableWidgetCC : public QTableWidget
-{
+class QTableWidgetCC : public QTableWidget {
   Q_OBJECT
 public:
-  explicit  QTableWidgetCC(QWidget *parent = 0)
-    : QTableWidget(parent)
-  { }
+  explicit QTableWidgetCC(QWidget *parent = 0) : QTableWidget(parent) {}
 
-  public slots :
-    void keyPressEvent(QKeyEvent *event);
+public slots:
+  void keyPressEvent(QKeyEvent *event);
 };
 
 void copyTableViewSelectionToClipBoard(QTableView *view);
