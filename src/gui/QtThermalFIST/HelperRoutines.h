@@ -9,6 +9,8 @@
 #define HELPERROUTINES_H
 
 #include <QTableWidget>
+
+#ifdef Q_OS_WASM
 #include <QTableView>
 #include <QHeaderView>
 #include <QApplication>
@@ -16,6 +18,7 @@
 
 // Configure table view row heights to match current font size
 // Call this after creating a QTableView to ensure proper row heights
+// Only needed for WASM builds where font scaling is applied
 inline void configureTableRowHeight(QTableView* table) {
     if (!table) return;
     QFontMetrics fm(QApplication::font());
@@ -23,6 +26,11 @@ inline void configureTableRowHeight(QTableView* table) {
     int rowHeight = fm.height() + 10;
     table->verticalHeader()->setDefaultSectionSize(rowHeight);
 }
+#else
+// No-op for native builds (default row heights are fine)
+class QTableView;
+inline void configureTableRowHeight(QTableView*) {}
+#endif
 
 class QTableWidgetCC : public QTableWidget
 {
