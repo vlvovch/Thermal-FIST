@@ -691,7 +691,7 @@ namespace thermalfist {
 
     vector<double> dnis(NN, 0.);
     for(int i=0;i<NN;++i) {
-      dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+      dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i];
     }
 
     vector<double> d2nis(NN, 0.);
