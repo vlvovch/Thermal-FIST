@@ -248,6 +248,16 @@ namespace thermalfist {
      */
     std::vector<double> SearchMultipleSolutions(int iters = 300);
 
+    /**
+     * \brief Try different initial guesses and return the first valid solution found.
+     *
+     * Used as a fallback when the default single-solution search fails.
+     *
+     * \param iters Number of different initial guesses to try
+     * \return std::vector<double> The first valid solution found
+     */
+    std::vector<double> SearchFirstSolution(int iters = 50);
+
     /// Solve the transcedental equations for the
     /// shifted chemical potentials
     void SolveEquations();
