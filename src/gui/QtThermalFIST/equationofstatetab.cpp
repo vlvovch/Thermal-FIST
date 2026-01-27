@@ -716,9 +716,10 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     fCurrentSize = 0;
     fStop = 1;
     fRunning = false;
+    fExpectedIterations = 0;
 
     calcTimer = new QTimer(this);
-    connect(calcTimer, SIGNAL(timeout()), this, SLOT(replot()));
+    connect(calcTimer, SIGNAL(timeout()), this, SLOT(checkProgress()));
 
     readLatticeData();
 
@@ -823,6 +824,7 @@ void EquationOfStateTab::calculate() {
       int iters = static_cast<int>((pmax - pmin) / dp) + 1;
 
       fCurrentSize = 0;
+      fExpectedIterations = iters;  // Store for completion detection
 
       paramsTD.resize(iters);
       paramsFl.resize(iters);
@@ -835,7 +837,6 @@ void EquationOfStateTab::calculate() {
       EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
       buttonCalculate->setText(tr("Stop"));
@@ -843,11 +844,15 @@ void EquationOfStateTab::calculate() {
 
       if (WasmFileIO::isThreadingAvailable()) {
         // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
         wrk->start();
         calcTimer->start(10);
       } else {
         // No threading (single-threaded WASM) - run synchronously
         // This will block the UI but at least the calculation will complete
+        // Signal emission is safe here since everything is on main thread
+        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
         wrk->run();
         finalize();
         wrk->deleteLater();
@@ -863,6 +868,17 @@ void EquationOfStateTab::finalize() {
     buttonCalculate->setText(tr("Calculate"));
     fRunning = false;
     replot();
+}
+
+void EquationOfStateTab::checkProgress() {
+    // Update the plot with current progress
+    replot();
+
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && (fCurrentSize >= fExpectedIterations || fStop)) {
+        finalize();
+    }
 }
 
 void EquationOfStateTab::modelChanged()
