@@ -1121,6 +1121,12 @@ void EventGeneratorTab::updateProgress() {
     }
 
     mutex.unlock();
+
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && (fCurrentSize >= fTotalSize || fStop)) {
+        finalize();
+    }
 }
 
 void EventGeneratorTab::setModel(ThermalModelBase *modelop) {
@@ -1521,7 +1527,6 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath);
 
-    connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
     connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
     progBar->setFormat("");
@@ -1532,10 +1537,14 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     if (WasmFileIO::isThreadingAvailable()) {
       // Threading available - run in background thread
+      // Don't connect calculated() signal - use timer-based completion detection instead
+      // to avoid WASM threading issues with cross-thread signal emission
       wrk->start();
       calcTimer->start(150);
     } else {
       // No threading (single-threaded WASM) - run synchronously
+      // Signal emission is safe here since everything is on main thread
+      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       wrk->run();
       finalize();
       wrk->deleteLater();

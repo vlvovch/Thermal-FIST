@@ -49,6 +49,9 @@ using namespace thermalfist;
 void FitWorker::run()
 {
      fTHMFit->PerformFit();
+     if (fComplete != nullptr) {
+         *fComplete = true;  // Signal completion for timer-based detection
+     }
      emit calculated();
 }
 
@@ -484,9 +487,11 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
   myModel->setModel(fitcopy);
 
-  FitWorker *wrk = new FitWorker(fit);
+  fRunning = true;
+  fFitComplete = false;
 
-  connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+  FitWorker *wrk = new FitWorker(fit, &fFitComplete);
+
   connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
 
@@ -494,10 +499,14 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
   if (WasmFileIO::isThreadingAvailable()) {
     // Threading available - run in background thread
+    // Don't connect calculated() signal - use timer-based completion detection instead
+    // to avoid WASM threading issues with cross-thread signal emission
     wrk->start();
     calcTimer->start(100);
   } else {
     // No threading (single-threaded WASM) - run synchronously
+    // Signal emission is safe here since everything is on main thread
+    connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
     wrk->run();
     finalize();
     wrk->deleteLater();
@@ -852,6 +861,12 @@ void FitToExperimentTab::updateProgress() {
   dbgstr.clear();
 
   myModel->updateAll();
+
+  // Check if calculation is complete (timer-based completion detection for WASM threading)
+  // This avoids cross-thread signal emission which can cause memory errors in WASM
+  if (fRunning && fFitComplete) {
+      finalize();
+  }
 }
 
 void FitToExperimentTab::finalize() {
@@ -1154,6 +1169,7 @@ void FitToExperimentTab::finalize() {
 
   fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
 
+  fRunning = false;
   modelChanged();
 }
 
