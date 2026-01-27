@@ -667,9 +667,9 @@ void CosmicEoSTab::checkProgress() {
     // Update the plot with current progress
     replot();
 
-    // Check if calculation is complete (timer-based completion detection for WASM threading)
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
     // This avoids cross-thread signal emission which can cause memory errors in WASM
-    if (fRunning && fCurrentSize >= fExpectedIterations) {
+    if (fRunning && (fCurrentSize >= fExpectedIterations || fStop)) {
         finalize();
     }
 }

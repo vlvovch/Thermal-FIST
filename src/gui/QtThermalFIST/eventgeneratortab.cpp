@@ -1122,9 +1122,9 @@ void EventGeneratorTab::updateProgress() {
 
     mutex.unlock();
 
-    // Check if calculation is complete (timer-based completion detection for WASM threading)
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
     // This avoids cross-thread signal emission which can cause memory errors in WASM
-    if (fRunning && fCurrentSize >= fTotalSize) {
+    if (fRunning && (fCurrentSize >= fTotalSize || fStop)) {
         finalize();
     }
 }
