@@ -370,7 +370,6 @@ void chi2ProfileDialog::calculate() {
       chi2ProfileWorker *wrk = new chi2ProfileWorker(modelFit,comboParameter->currentText().toStdString(), &Avalues, &params,
                                                       pCurrentSize, &fStop, this);
 
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
       comboParameter->setEnabled(false);
@@ -382,10 +381,14 @@ void chi2ProfileDialog::calculate() {
 
       if (WasmFileIO::isThreadingAvailable()) {
         // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
         wrk->start();
         calcTimer->start(10);
       } else {
         // No threading (single-threaded WASM) - run synchronously
+        // Signal emission is safe here since everything is on main thread
+        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
         wrk->run();
         finalize();
         wrk->deleteLater();
@@ -456,6 +459,12 @@ void chi2ProfileDialog::updateProgress() {
   progBar->setRange(0, vecTotalSize[cindex]);
   progBar->setValue(*vecCurrentSize[cindex]);
   replot();
+
+  // Check if calculation is complete (timer-based completion detection for WASM threading)
+  // This avoids cross-thread signal emission which can cause memory errors in WASM
+  if (fRunning && *vecCurrentSize[cindex] >= vecTotalSize[cindex]) {
+    finalize();
+  }
 }
 
 void chi2ProfileDialog::parameterChanged(int index)

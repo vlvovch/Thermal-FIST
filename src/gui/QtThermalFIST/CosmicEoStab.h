@@ -109,6 +109,7 @@ class CosmicEoSTab : public QWidget
     std::atomic<int> fCurrentSize{0};
     bool fRunning;
     std::atomic<int> fStop{0};
+    int fExpectedIterations{0};  // Expected number of iterations for completion detection
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;
@@ -147,6 +148,7 @@ public slots:
     void calculate();
     void replot();
     void finalize();
+    void checkProgress();  // Timer-based progress check for WASM threading
     void modelChanged();
     void resetTPS();
     void fillParticleLists();

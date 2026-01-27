@@ -505,9 +505,10 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     fCurrentSize = 0;
     fStop = 1;
     fRunning = false;
+    fExpectedIterations = 0;
 
     calcTimer = new QTimer(this);
-    connect(calcTimer, SIGNAL(timeout()), this, SLOT(replot()));
+    connect(calcTimer, SIGNAL(timeout()), this, SLOT(checkProgress()));
 
     fillParticleLists();
 
@@ -610,6 +611,7 @@ void CosmicEoSTab::calculate() {
       int iters = static_cast<int>((spinTMax->value() - spinTMin->value()) / spindT->value()) + 1;
 
       fCurrentSize = 0;
+      fExpectedIterations = iters;  // Store for completion detection
 
       paramsTD.resize(iters);
       paramsTDHRG.resize(iters);
@@ -629,7 +631,6 @@ void CosmicEoSTab::calculate() {
                                                  asymmetries, &paramsTD, &paramsTDHRG,
                                                  &varvalues, &fCurrentSize, &fStop, CBreverseDir->isChecked(), this);
 
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
       buttonCalculate->setText(tr("Stop"));
@@ -637,10 +638,14 @@ void CosmicEoSTab::calculate() {
 
       if (WasmFileIO::isThreadingAvailable()) {
         // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
         wrk->start();
         calcTimer->start(10);
       } else {
         // No threading (single-threaded WASM) - run synchronously
+        // Signal emission is safe here since everything is on main thread
+        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
         wrk->run();
         finalize();
         wrk->deleteLater();
@@ -656,6 +661,17 @@ void CosmicEoSTab::finalize() {
     buttonCalculate->setText(tr("Calculate"));
     fRunning = false;
     replot();
+}
+
+void CosmicEoSTab::checkProgress() {
+    // Update the plot with current progress
+    replot();
+
+    // Check if calculation is complete (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && fCurrentSize >= fExpectedIterations) {
+        finalize();
+    }
 }
 
 void CosmicEoSTab::modelChanged()
