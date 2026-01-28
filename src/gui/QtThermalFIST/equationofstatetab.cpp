@@ -231,7 +231,9 @@ void EoSWorker::run() {
       (*currentSize)++;
     }
   }
-  emit calculated();
+  if (emitSignal) {
+    emit calculated();
+  }
 }
 
 EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelop) :
@@ -834,15 +836,20 @@ void EquationOfStateTab::calculate() {
 
       std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
+      bool useThreading = WasmFileIO::isThreadingAvailable();
+      // Don't emit signal from worker thread in WASM - causes memory errors
+      bool emitSignalFromWorker = !useThreading;
+
       EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
-                                    &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
+                                    &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop,
+                                    emitSignalFromWorker, this);
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      if (WasmFileIO::isThreadingAvailable()) {
+      if (useThreading) {
         // Threading available - run in background thread
         // Don't connect calculated() signal - use timer-based completion detection instead
         // to avoid WASM threading issues with cross-thread signal emission

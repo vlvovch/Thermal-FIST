@@ -36,6 +36,7 @@ class chi2ProfileWorker : public QThread
     thermalfist::ThermalModelFit *modelFit;
     std::atomic<int> *currentSize;
     std::atomic<int> *stop;
+    bool emitSignal;  // Whether to emit calculated() signal (false for WASM threading)
 
     std::string ParameterName;
     std::vector< double > *params;
@@ -56,7 +57,9 @@ public:
             params->operator[](i) = res.chi2;
             (*currentSize)++;
         }
-        emit calculated();
+        if (emitSignal) {
+            emit calculated();
+        }
     }
   chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
            std::string inParameterName = "T",
@@ -64,8 +67,9 @@ public:
            std::vector<double> *paramso = NULL,
            std::atomic<int> *currentSizeo = NULL,
            std::atomic<int> *stopo = NULL,
+           bool emitSignalo = true,
            QObject * parent = 0) :
-        QThread(parent) {
+        QThread(parent), emitSignal(emitSignalo) {
             modelFit = mod;
             params = paramso;
             ParameterName = inParameterName;

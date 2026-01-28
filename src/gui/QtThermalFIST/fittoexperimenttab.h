@@ -37,14 +37,16 @@ class FitWorker : public QThread
 
     thermalfist::ThermalModelFit *fTHMFit;
     std::atomic<bool> *fComplete;  // Pointer to completion flag for WASM threading
+    bool emitSignal;  // Whether to emit calculated() signal (false for WASM threading)
 
 public:
     void run() Q_DECL_OVERRIDE;
     FitWorker(
            thermalfist::ThermalModelFit *THMFit=NULL,
            std::atomic<bool> *complete = nullptr,
+           bool emitSignalo = true,
            QObject * parent = 0) :
-        QThread(parent), fTHMFit(THMFit), fComplete(complete)
+        QThread(parent), fTHMFit(THMFit), fComplete(complete), emitSignal(emitSignalo)
     {
     }
 signals:

@@ -41,6 +41,7 @@ class CosmicEoSWorker : public QThread
   std::atomic<int> *currentSize;
   std::atomic<int> *stop;
   bool reverseDir;
+  bool emitSignal;  // Whether to emit calculated() signal (false for WASM threading)
 
   std::vector< ThermodynamicsCosmic > *paramsTD;
   std::vector< Thermodynamics > *paramsTDHRG;
@@ -59,8 +60,9 @@ public:
       std::atomic<int> *currentSizeo = NULL,
       std::atomic<int> *stopo = NULL,
       bool reverseDiro = false,
+      bool emitSignalo = true,
       QObject * parent = 0) :
-  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals) {
+  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), emitSignal(emitSignalo) {
       cosmos = mod;
       paramsTD = paramsTDo;
       paramsTDHRG = paramsTDHRGo;

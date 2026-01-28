@@ -367,8 +367,12 @@ void chi2ProfileDialog::calculate() {
         modelFit->AddQuantity(quantities[i]);
       }
 
+      bool useThreading = WasmFileIO::isThreadingAvailable();
+      // Don't emit signal from worker thread in WASM - causes memory errors
+      bool emitSignalFromWorker = !useThreading;
+
       chi2ProfileWorker *wrk = new chi2ProfileWorker(modelFit,comboParameter->currentText().toStdString(), &Avalues, &params,
-                                                      pCurrentSize, &fStop, this);
+                                                      pCurrentSize, &fStop, emitSignalFromWorker, this);
 
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
@@ -379,7 +383,7 @@ void chi2ProfileDialog::calculate() {
       fRunning = true;
       progBar->setVisible(true);
 
-      if (WasmFileIO::isThreadingAvailable()) {
+      if (useThreading) {
         // Threading available - run in background thread
         // Don't connect calculated() signal - use timer-based completion detection instead
         // to avoid WASM threading issues with cross-thread signal emission
