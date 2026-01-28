@@ -120,6 +120,7 @@ class EquationOfStateTab : public QWidget
     bool fRunning;
     std::atomic<int> fStop{0};
     int fExpectedIterations{0};  // Expected number of iterations for completion detection
+    EoSWorker *fWorker{nullptr};  // Pointer to current worker for explicit cleanup
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;

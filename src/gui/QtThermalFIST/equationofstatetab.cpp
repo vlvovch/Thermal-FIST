@@ -834,10 +834,11 @@ void EquationOfStateTab::calculate() {
 
       std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
-      EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
+      fWorker = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
-      connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
+      // Connect finished signal to clean up worker when thread actually ends
+      connect(fWorker, &QThread::finished, fWorker, &QObject::deleteLater);
 
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
@@ -846,16 +847,15 @@ void EquationOfStateTab::calculate() {
         // Threading available - run in background thread
         // Don't connect calculated() signal - use timer-based completion detection instead
         // to avoid WASM threading issues with cross-thread signal emission
-        wrk->start();
+        fWorker->start();
         calcTimer->start(10);
       } else {
         // No threading (single-threaded WASM) - run synchronously
         // This will block the UI but at least the calculation will complete
         // Signal emission is safe here since everything is on main thread
-        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
-        wrk->run();
+        connect(fWorker, SIGNAL(calculated()), this, SLOT(finalize()));
+        fWorker->run();
         finalize();
-        wrk->deleteLater();
       }
     }
     else {
@@ -868,6 +868,8 @@ void EquationOfStateTab::finalize() {
     buttonCalculate->setText(tr("Calculate"));
     fRunning = false;
     replot();
+    // Worker cleanup is handled by finished() -> deleteLater() connection
+    fWorker = nullptr;
 }
 
 void EquationOfStateTab::checkProgress() {
