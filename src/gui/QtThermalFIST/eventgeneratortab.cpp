@@ -68,16 +68,14 @@ EventGeneratorWorker::EventGeneratorWorker(
   double* nEp,
   bool pDecays,
   std::string fileout,
-  bool emitSignalo,
   QObject* parent):
       QThread(parent), generator(gen), spectra(spec), mutex(mut),
-          events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays),
-          emitSignal(emitSignalo)/*,
+          events(totalEvents), eventsProcessed(evproc), stop(stopo), nE(nEp), performDecays(pDecays)/*,
           hepmcout(fileout + ".hepmc3")*/
   {
       wsum = w2sum = 0.;
       fout.clear();
-      if (fileout != "")
+      if (fileout != "") 
         fout.open(fileout.c_str());
 
   }
@@ -110,9 +108,7 @@ void EventGeneratorWorker::run()
      if (fout.is_open())
         fout.close();
      *nE = wsum * wsum / w2sum;
-     if (emitSignal) {
-        emit calculated();
-     }
+     emit calculated();
  }
 
 BinningDialog::BinningDialog(BinningConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
@@ -1529,11 +1525,7 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     if (checkFile->isChecked())
       filepath = leFilePath->text().toStdString();
 
-    bool useThreading = WasmFileIO::isThreadingAvailable();
-    // Don't emit signal from worker thread in WASM - causes memory errors
-    bool emitSignalFromWorker = !useThreading;
-
-    EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath, emitSignalFromWorker);
+    EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath);
 
     connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
@@ -1543,7 +1535,7 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
     fRunning = true;
     progBar->setVisible(true);
 
-    if (useThreading) {
+    if (WasmFileIO::isThreadingAvailable()) {
       // Threading available - run in background thread
       // Don't connect calculated() signal - use timer-based completion detection instead
       // to avoid WASM threading issues with cross-thread signal emission

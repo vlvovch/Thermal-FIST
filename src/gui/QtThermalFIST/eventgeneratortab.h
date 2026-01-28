@@ -57,7 +57,6 @@ class EventGeneratorWorker : public QThread
     std::atomic<int> *stop;
     double *nE;
     bool performDecays;
-    bool emitSignal;  // Whether to emit calculated() signal (false for WASM threading)
 
 
     std::ofstream fout;
@@ -76,7 +75,6 @@ public:
     double* nEp = NULL,
     bool pDecays = false,
     std::string fileout = "",
-    bool emitSignalo = true,
     QObject* parent = 0);
 
 signals:
