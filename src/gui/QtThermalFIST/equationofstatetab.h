@@ -40,6 +40,7 @@ class EoSWorker : public QThread
   int mode;
   std::atomic<int> *currentSize;
   std::atomic<int> *stop;
+  bool emitSignal;  // Whether to emit calculated() signal (false for WASM threading)
 
   std::vector< Thermodynamics > *paramsTD;
   std::vector< ChargesFluctuations > *paramsFl;
@@ -59,8 +60,9 @@ public:
       std::vector<double> *varvalueso = NULL,
       std::atomic<int> *currentSizeo = NULL,
       std::atomic<int> *stopo = NULL,
+      bool emitSignalo = true,
       QObject * parent = 0) :
-  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
+  QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode), emitSignal(emitSignalo) {
       model = mod;
       config = cconfig;
       paramsTD = paramsTDo;

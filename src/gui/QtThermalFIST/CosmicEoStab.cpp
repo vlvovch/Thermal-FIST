@@ -125,7 +125,9 @@ void CosmicEoSWorker::run() {
     }
     i++;
   }
-  emit calculated();
+  if (emitSignal) {
+    emit calculated();
+  }
 }
 
 CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
@@ -627,16 +629,21 @@ void CosmicEoSTab::calculate() {
               spinnTau->value()
       };
 
+      bool useThreading = WasmFileIO::isThreadingAvailable();
+      // Don't emit signal from worker thread in WASM - causes memory errors
+      bool emitSignalFromWorker = !useThreading;
+
       CosmicEoSWorker *wrk = new CosmicEoSWorker(cosmos, spinTMin->value(), spinTMax->value(), spindT->value(),
                                                  asymmetries, &paramsTD, &paramsTDHRG,
-                                                 &varvalues, &fCurrentSize, &fStop, CBreverseDir->isChecked(), this);
+                                                 &varvalues, &fCurrentSize, &fStop, CBreverseDir->isChecked(),
+                                                 emitSignalFromWorker, this);
 
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      if (WasmFileIO::isThreadingAvailable()) {
+      if (useThreading) {
         // Threading available - run in background thread
         // Don't connect calculated() signal - use timer-based completion detection instead
         // to avoid WASM threading issues with cross-thread signal emission

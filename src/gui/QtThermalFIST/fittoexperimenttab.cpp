@@ -52,7 +52,9 @@ void FitWorker::run()
      if (fComplete != nullptr) {
          *fComplete = true;  // Signal completion for timer-based detection
      }
-     emit calculated();
+     if (emitSignal) {
+         emit calculated();
+     }
 }
 
 FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelop) :
@@ -490,14 +492,18 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
   fRunning = true;
   fFitComplete = false;
 
-  FitWorker *wrk = new FitWorker(fit, &fFitComplete);
+  bool useThreading = WasmFileIO::isThreadingAvailable();
+  // Don't emit signal from worker thread in WASM - causes memory errors
+  bool emitSignalFromWorker = !useThreading;
+
+  FitWorker *wrk = new FitWorker(fit, &fFitComplete, emitSignalFromWorker);
 
   connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
 
   buttonCalculate->setEnabled(false);
 
-  if (WasmFileIO::isThreadingAvailable()) {
+  if (useThreading) {
     // Threading available - run in background thread
     // Don't connect calculated() signal - use timer-based completion detection instead
     // to avoid WASM threading issues with cross-thread signal emission
