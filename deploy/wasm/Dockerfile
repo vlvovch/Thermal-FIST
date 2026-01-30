@@ -29,45 +29,54 @@ RUN apt-get update && apt-get install -y \
 # Install aqtinstall for downloading Qt
 RUN pip3 install aqtinstall
 
-# Install Emscripten (Qt 6.6 requires Emscripten 3.1.37)
+# Install Emscripten 4.0.7 (matching local dev environment for Qt 6.10.x)
 WORKDIR /opt
 RUN git clone https://github.com/emscripten-core/emsdk.git
 WORKDIR /opt/emsdk
-RUN ./emsdk install 3.1.37 && \
-    ./emsdk activate 3.1.37
+RUN ./emsdk install 4.0.7 && \
+    ./emsdk activate 4.0.7
 
-# Install Qt 6.6 for WebAssembly (multi-threaded for better performance)
-# Also install host Qt (gcc_64) which is required for cross-compilation tools
+# Install Qt 6.10.1 for WebAssembly (Qt 6.7+ uses different aqtinstall syntax: all_os wasm)
+# Also install host Qt (linux_gcc_64) which is required for cross-compilation tools
 WORKDIR /opt
-RUN aqt install-qt linux desktop 6.6.0 gcc_64 && \
-    aqt install-qt linux desktop 6.6.0 wasm_multithread
+RUN aqt install-qt linux desktop 6.10.1 linux_gcc_64 && \
+    aqt install-qt all_os wasm 6.10.1 wasm_multithread
 
 # Set up environment variables
 ENV EMSDK=/opt/emsdk
 ENV EM_CONFIG=/opt/emsdk/.emscripten
-ENV QT_DIR=/opt/6.6.0
-ENV QT_HOST_PATH=/opt/6.6.0/gcc_64
+ENV QT_DIR=/opt/6.10.1
+ENV QT_HOST_PATH=/opt/6.10.1/gcc_64
 
-# Clone Thermal-FIST
+# Clone Thermal-FIST and run initial cmake configure (cached)
 WORKDIR /opt
 RUN git clone --depth 1 -b devel https://github.com/vlvovch/Thermal-FIST.git
-
-# Build for WASM
-# Source emsdk from its directory to ensure proper environment setup
 WORKDIR /opt/Thermal-FIST/build-wasm
 RUN cd /opt/emsdk && . ./emsdk_env.sh && cd /opt/Thermal-FIST/build-wasm && \
-    /opt/6.6.0/wasm_multithread/bin/qt-cmake .. \
+    /opt/6.10.1/wasm_multithread/bin/qt-cmake .. \
         -DTHERMALFIST_WASM=ON \
-        -DQT_HOST_PATH=/opt/6.6.0/gcc_64 && \
-    cmake --build . --parallel $(nproc)
+        -DQT_HOST_PATH=/opt/6.10.1/gcc_64
+
+# Pull latest changes (use --build-arg CACHEBUST=$(date +%s) to force refresh)
+ARG CACHEBUST=1
+RUN cd /opt/Thermal-FIST && git pull
+
+# Incremental build - uses BuildKit cache mount to persist object files
+RUN --mount=type=cache,target=/opt/Thermal-FIST/build-wasm \
+    cd /opt/emsdk && . ./emsdk_env.sh && cd /opt/Thermal-FIST/build-wasm && \
+    /opt/6.10.1/wasm_multithread/bin/qt-cmake .. \
+        -DTHERMALFIST_WASM=ON \
+        -DQT_HOST_PATH=/opt/6.10.1/gcc_64 && \
+    cmake --build . --parallel $(nproc) && \
+    cp -r bin /opt/Thermal-FIST/build-output
 
 # =============================================================================
 # Stage 2: Serve with Caddy
 # =============================================================================
 FROM caddy:alpine
 
-# Copy built WASM files
-COPY --from=builder /opt/Thermal-FIST/build-wasm/bin/ /srv/
+# Copy built WASM files (from build-output since cache mount isn't visible to COPY)
+COPY --from=builder /opt/Thermal-FIST/build-output/ /srv/
 
 # Copy Caddyfile
 COPY Caddyfile /etc/caddy/Caddyfile
