@@ -212,6 +212,56 @@ BR  daughter1 daughter2  # branching ratio and daughter PDG IDs
 
 Antiparticle decays are not listed; they are generated automatically by charge conjugation.
 
+## Post-Generation Corrections
+
+The following corrections were applied manually after generation, based on cross-checks against the PDG2025 API database and MC data files.
+
+### Property fixes
+
+| File | Particle | Property | Old | New | PDG2025 value |
+|------|----------|----------|-----|-----|---------------|
+| `list.dat`, `list-withcharm.dat` | pi2(1880) | mass | 1.895 GeV | 1.874 GeV | 1874 +26/-5 MeV |
+| `list-withcharm.dat` | D(1)(2420)+ | mass | 2.4261 GeV | 2.4221 GeV | 2422.1 ± 0.5 MeV |
+| `list-withcharm.dat` | h_c(1P) | width | 0.7 MeV | 0.78 MeV | 0.78 ± 0.28 MeV |
+
+### Branching ratio fixes
+
+| Particle | Channel | Old BR | New BR | PDG2025 value |
+|----------|---------|--------|--------|---------------|
+| D\*(2007)0 | D0 pi0 | 0.619 | 0.647 | 64.7 ± 0.9% |
+| D\*(2007)0 | D0 gamma | 0.381 | 0.353 | 35.3 ± 0.9% |
+
+### Charm decay catch-all channels
+
+Branching ratios from the PDG are often incomplete: only experimentally measured exclusive modes are listed, so the sum of known BRs is frequently less than 100%. For thermal model feeddown calculations, BR sums must equal 1.0 to ensure proper normalization.
+
+To handle this, an explicit **catch-all decay channel** is added to each charm particle, carrying the unmeasured fraction BR = 1.0 - (sum of known BRs). For particles with no measured exclusive modes, the catch-all carries 100%.
+
+The catch-all channel uses the lightest kinematically allowed final state that conserves the appropriate quantum numbers:
+
+| Particle type | Catch-all channel | Daughters | Rationale |
+|---------------|-------------------|-----------|-----------|
+| Charmonia (cc&#x0304;, C=0) | pi+ pi- pi0 | 211 -211 111 | Lightest hadronic state with correct quantum numbers |
+| D0 (weak decay) | K- pi+ pi0 | -321 211 111 | Cabibbo-favored (c&#x2192;s) hadronic final state |
+| D+ (weak decay) | K&#x0304;0 pi+ pi0 | -311 211 111 | Cabibbo-favored (c&#x2192;s) hadronic final state |
+| D resonances (C=1, S=0) | D + pi | 421 211 or 421 111 | Lightest open-charm + pion (charge-appropriate) |
+| D_s resonances (C=1, S=1) | D_s + pi0 | 431 111 | Lightest open-charm-strange + pion |
+| Lambda_c, Sigma_c (C=1, S=0) | Lambda_c + pi | 4122 + pi | Lightest charmed baryon + pion |
+| Xi_c (C=1, S=-1) | Xi_c + pi | 4232/4132 + pi | Lightest charmed-strange baryon + pion |
+| Omega_c (C=1, S=-2) | Omega_c + pi0 | 4332 111 | Lightest charmed-double-strange baryon + pion |
+
+**Summary of catch-all additions in `decays.dat`:**
+
+- 13 charmonia with existing PDG decay channels: catch-all added for the unmeasured fraction
+- 9 charmonia with no PDG exclusive modes: 100% catch-all
+- 2 ground-state D mesons (D0, D+): catch-all for unmeasured weak decay fraction (2.1% and 12.0%)
+- 7 D/D_s meson resonances: 100% catch-all
+- 17 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
+
+After these additions, all 82 charm particles (55 unstable + 27 stable) have BR sums = 1.0.
+
+---
+
 ## Validation
 
 ### list.dat
@@ -224,3 +274,9 @@ Antiparticle decays are not listed; they are generated automatically by charge c
 3. Confirmed threshold mass values match lightest allowed decay products within 1 MeV
 4. Loaded all 586 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
 5. Confirmed C ∈ {-1, 0, 1} for all entries (charm-canonical compatibility)
+
+### decays.dat (charm sector)
+1. Verified all 55 unstable charm particles have BR sum = 1.000 (within 0.001 tolerance)
+2. Verified all daughter particles exist in the particle list
+3. Verified all decay thresholds ≤ parent mass
+4. Charge (Q) conservation verified in all catch-all channels

@@ -2366,8 +2366,28 @@
 1                                        # 1 decay channel
 1.0             1000010030 2112 2112 # H5 -> H3 + n + n
 
+
+# ============================================================================
+# Charm hadron decays
+#
+# Branching ratios from PDG2025 RPP where available.
+# Catch-all channels added to ensure BR sum = 1.0 for thermal model feeddown.
+#
+# Catch-all channel conventions:
+#   Charmonia (cc-bar, C=0):     pi+ pi- pi0  (lightest 3-pion state)
+#   D mesons (C=+1, S=0):        D + pi       (lightest open-charm + pion)
+#   D_s mesons (C=+1, S=+1):     D_s + pi0    (lightest open-charm-strange + pion)
+#   D0, D+ (weak decays):        K-bar + pi+  (Cabibbo-favored hadronic)
+#   Lambda_c baryons (C=+1):     Lambda_c + pi
+#   Sigma_c baryons (C=+1):      Lambda_c + pi
+#   Xi_c baryons (C=+1, S=-1):   Xi_c + pi
+#   Omega_c baryons (C=+1, S=-2): Omega_c + pi0
+# ============================================================================
+
+# --- Charmonia ---
+
 441                                      # extra (charm/nuclear)
-15                                       # 15 decay channels
+16                                       # 16 decay channels
 0.03            331 211 -211         # eta(c)(1S) -> eta'(958) + pi+ + pi-
 0.015           331 111 111          # eta(c)(1S) -> eta'(958) + pi0 + pi0
 0.01            313 -321 211         # eta(c)(1S) -> K*(892)0 + K- + pi+
@@ -2383,9 +2403,10 @@
 0.047           211 -211 111 111     # eta(c)(1S) -> pi+ + pi- + pi0 + pi0
 0.161           211 -211 111 211 -211 111 # eta(c)(1S) -> pi+ + pi- + pi0 + pi+ + pi- + pi0
 0.018           211 -211 211 -211 211 -211 # eta(c)(1S) -> pi+ + pi- + pi+ + pi- + pi+ + pi-
+0.473           211 -211 111         # eta(c)(1S) -> pi+ + pi- + pi0 (catch-all)
 
 443                                      # extra (charm/nuclear)
-14                                       # 14 decay channels
+15                                       # 15 decay channels
 0.06            -11 11               # J/psi(1S) -> e+ + e-
 0.06            -13 13               # J/psi(1S) -> mu+ + mu-
 0.0056          113 111              # J/psi(1S) -> rho(770)0 + pi0
@@ -2400,9 +2421,10 @@
 0.007           213 -211 111 111     # J/psi(1S) -> rho(770)+ + pi- + pi0 + pi0
 0.007           -213 211 111 111     # J/psi(1S) -> rho(770)- + pi+ + pi0 + pi0
 0.006           213 -213 111         # J/psi(1S) -> rho(770)+ + rho(770)- + pi0
+0.7109          211 -211 111         # J/psi(1S) -> pi+ + pi- + pi0 (catch-all)
 
 10441                                    # extra (charm/nuclear)
-19                                       # 19 decay channels
+20                                       # 20 decay channels
 0.014           443 22               # chi(c0)(1P) -> J/psi(1S) + gamma
 0.0234          211 -211 211 -211    # chi(c0)(1P) -> pi+ + pi- + pi+ + pi-
 0.014           213 -211 111         # chi(c0)(1P) -> rho(770)+ + pi- + pi0
@@ -2422,9 +2444,10 @@
 0.0056          321 -321 311 -311    # chi(c0)(1P) -> K+ + K- + K0 + anti-K0
 0.0023          311 -311 311 -311    # chi(c0)(1P) -> K0 + anti-K0 + K0 + anti-K0
 0.0028          321 -321 321 -321    # chi(c0)(1P) -> K+ + K- + K+ + K-
+0.802           211 -211 111         # chi(c0)(1P) -> pi+ + pi- + pi0 (catch-all)
 
 20443                                    # extra (charm/nuclear)
-7                                        # 7 decay channels
+8                                        # 8 decay channels
 0.343           443 22               # chi(c1)(1P) -> J/psi(1S) + gamma
 0.0072          213 -211 111         # chi(c1)(1P) -> rho(770)+ + pi- + pi0
 0.0072          -213 211 111         # chi(c1)(1P) -> rho(770)- + pi+ + pi0
@@ -2432,17 +2455,19 @@
 0.0045          211 -211 321 -321    # chi(c1)(1P) -> pi+ + pi- + K+ + K-
 0.0011          321 -321 111 111     # chi(c1)(1P) -> K+ + K- + pi0 + pi0
 0.0115          321 -321 211 -211 111 # chi(c1)(1P) -> K+ + K- + pi+ + pi- + pi0
+0.6216          211 -211 111         # chi(c1)(1P) -> pi+ + pi- + pi0 (catch-all)
 
 10443                                    # extra (charm/nuclear)
-5                                        # 5 decay channels
+6                                        # 6 decay channels
 0.51            441 22               # h(c)(1P) -> eta(c)(1S) + gamma
 0.0081          211 211 -211 -211 111 # h(c)(1P) -> pi+ + pi+ + pi- + pi- + pi0
 0.0029          2212 -2212 211 -211  # h(c)(1P) -> p + anti-p + pi+ + pi-
 0.0016          211 -211 111         # h(c)(1P) -> pi+ + pi- + pi0
 0.0015          331 22               # h(c)(1P) -> eta'(958) + gamma
+0.4759          211 -211 111         # h(c)(1P) -> pi+ + pi- + pi0 (catch-all)
 
 445                                      # extra (charm/nuclear)
-10                                       # 10 decay channels
+11                                       # 11 decay channels
 0.19            443 22               # chi(c2)(1P) -> J/psi(1S) + gamma
 0.0102          211 -211 211 -211    # chi(c2)(1P) -> pi+ + pi- + pi+ + pi-
 0.011           213 -211 111         # chi(c2)(1P) -> rho(770)+ + pi- + pi0
@@ -2453,17 +2478,19 @@
 0.0084          321 -321 211 -211    # chi(c2)(1P) -> K+ + K- + pi+ + pi-
 0.0073          -311 321 -211 211 -211 # chi(c2)(1P) -> anti-K0 + K+ + pi- + pi+ + pi-
 0.0073          311 -321 211 211 -211 # chi(c2)(1P) -> K0 + K- + pi+ + pi+ + pi-
+0.7293          211 -211 111         # chi(c2)(1P) -> pi+ + pi- + pi0 (catch-all)
 
 100441                                   # extra (charm/nuclear)
-5                                        # 5 decay channels
+6                                        # 6 decay channels
 0.014           321 -321 211 -211 111 # eta(c)(2S) -> K+ + K- + pi+ + pi- + pi0
 0.005           311 -311 111         # eta(c)(2S) -> K0 + anti-K0 + pi0
 0.005           321 -311 -211        # eta(c)(2S) -> K+ + anti-K0 + pi-
 0.005           321 -321 111         # eta(c)(2S) -> K+ + K- + pi0
 0.005           311 -321 211         # eta(c)(2S) -> K0 + K- + pi+
+0.966           211 -211 111         # eta(c)(2S) -> pi+ + pi- + pi0 (catch-all)
 
 100443                                   # extra (charm/nuclear)
-9                                        # 9 decay channels
+10                                        # 10 decay channels
 0.3468          443 211 -211         # psi(2S) -> J/psi(1S) + pi+ + pi-
 0.1824          443 111 111          # psi(2S) -> J/psi(1S) + pi0 + pi0
 0.0337          443 221              # psi(2S) -> J/psi(1S) + eta
@@ -2473,34 +2500,43 @@
 0.0034          441 22               # psi(2S) -> eta(c)(1S) + gamma
 0.0007          445 22               # psi(2S) -> chi(c2)(1P) + gamma
 0.0013          443 111              # psi(2S) -> J/psi(1S) + pi0
+0.1411          211 -211 111         # psi(2S) -> pi+ + pi- + pi0 (catch-all)
 
 30443                                    # extra (charm/nuclear)
-2                                        # 2 decay channels
+3                                        # 3 decay channels
 0.52            421 -421             # psi(3770) -> D0 + anti-D0
 0.41            411 -411             # psi(3770) -> D+ + D-
+0.07            211 -211 111         # psi(3770) -> pi+ + pi- + pi0 (catch-all)
 
 100445                                   # extra (charm/nuclear)
-2                                        # 2 decay channels
+3                                        # 3 decay channels
 0.52            421 -421             # chi(c2)(3930) -> D0 + anti-D0
 0.41            411 -411             # chi(c2)(3930) -> D+ + D-
+0.07            211 -211 111         # chi(c2)(3930) -> pi+ + pi- + pi0 (catch-all)
 
 9000443                                  # extra (charm/nuclear)
-2                                        # 2 decay channels
+3                                        # 3 decay channels
 0.52            421 -421             # psi(4040) -> D0 + anti-D0
 0.41            411 -411             # psi(4040) -> D+ + D-
+0.07            211 -211 111         # psi(4040) -> pi+ + pi- + pi0 (catch-all)
 
 9010443                                  # extra (charm/nuclear)
-2                                        # 2 decay channels
+3                                        # 3 decay channels
 0.52            421 -421             # psi(4160) -> D0 + anti-D0
 0.41            411 -411             # psi(4160) -> D+ + D-
+0.07            211 -211 111         # psi(4160) -> pi+ + pi- + pi0 (catch-all)
 
 9020443                                  # extra (charm/nuclear)
-2                                        # 2 decay channels
+3                                        # 3 decay channels
 0.52            421 -421             # psi(4415) -> D0 + anti-D0
 0.41            411 -411             # psi(4415) -> D+ + D-
+0.07            211 -211 111         # psi(4415) -> pi+ + pi- + pi0 (catch-all)
+
+
+# --- Open charm mesons (D, D_s) ---
 
 421                                      # extra (charm/nuclear)
-63                                       # 63 decay channels
+64                                       # 64 decay channels
 0.0354          -321 -11 12          # D0 -> K- + e+ + nu(e)
 0.0341          -321 -13 14          # D0 -> K- + mu+ + nu(mu)
 0.0215          -323 -11 12          # D0 -> K*(892)- + e+ + nu(e)
@@ -2564,9 +2600,10 @@
 0.0031          321 -321 211 -211 111 # D0 -> K+ + K- + pi+ + pi- + pi0
 0.0012          333 111              # D0 -> phi(1020) + pi0
 0.0002          333 221              # D0 -> phi(1020) + eta
+0.0208          -321 211 111         # D0 -> K- + pi+ + pi0 (catch-all)
 
 411                                      # extra (charm/nuclear)
-45                                       # 45 decay channels
+46                                       # 46 decay channels
 0.03            -311 211             # D+ -> anti-K0 + pi+
 0.0752          -321 211 211         # D+ -> K- + pi+ + pi+
 0.0104          -321 211 211         # D+ -> K- + pi+ + pi+
@@ -2612,11 +2649,12 @@
 0.0048          -311 -321 211 211    # D+ -> anti-K0 + K- + pi+ + pi+
 0.0002          321 -321 211 211 -211 # D+ -> K+ + K- + pi+ + pi+ + pi-
 0.0038          -311 211 331         # D+ -> anti-K0 + pi+ + eta'(958)
+0.1198          -311 211 111         # D+ -> anti-K0 + pi+ + pi0 (catch-all)
 
 423                                      # extra (charm/nuclear)
 2                                        # 2 decay channels
-0.619           421 111              # D*(2007)0 -> D0 + pi0
-0.381           421 22               # D*(2007)0 -> D0 + gamma
+0.647           421 111              # D*(2007)0 -> D0 + pi0
+0.353           421 22               # D*(2007)0 -> D0 + gamma
 
 413                                      # extra (charm/nuclear)
 3                                        # 3 decay channels
@@ -2716,6 +2754,9 @@
 435                                      # extra (charm/nuclear)
 1                                        # 1 decay channel
 1.0             421 321              # D(s2)*(2573) -> D0 + K+
+
+
+# --- Charmed baryons (Lambda_c, Sigma_c, Xi_c, Omega_c) ---
 
 4122                                     # extra (charm/nuclear)
 5                                        # 5 decay channels
@@ -2818,3 +2859,144 @@
 1                                        # 1 decay channel
 1.0             4332 22              # Omega(c)(2770) -> Omega(c) + gamma
 
+
+
+# --- Additional charmonia (catch-all only, no PDG exclusive BRs) ---
+
+447                                      # psi(3)(3842)
+1                                        # 1 decay channel
+1.0             211 -211 111         # psi(3)(3842) -> pi+ + pi- + pi0 (catch-all)
+
+30445                                    # psi(2)(3823)
+1                                        # 1 decay channel
+1.0             211 -211 111         # psi(2)(3823) -> pi+ + pi- + pi0 (catch-all)
+
+9030443                                  # chi(c1)(3872)
+1                                        # 1 decay channel
+1.0             211 -211 111         # chi(c1)(3872) -> pi+ + pi- + pi0 (catch-all)
+
+9040441                                  # chi(c0)(3915)
+1                                        # 1 decay channel
+1.0             211 -211 111         # chi(c0)(3915) -> pi+ + pi- + pi0 (catch-all)
+
+9050443                                  # chi(c1)(4140)
+1                                        # 1 decay channel
+1.0             211 -211 111         # chi(c1)(4140) -> pi+ + pi- + pi0 (catch-all)
+
+9060443                                  # psi(4230)
+1                                        # 1 decay channel
+1.0             211 -211 111         # psi(4230) -> pi+ + pi- + pi0 (catch-all)
+
+9070443                                  # chi(c1)(4274)
+1                                        # 1 decay channel
+1.0             211 -211 111         # chi(c1)(4274) -> pi+ + pi- + pi0 (catch-all)
+
+9080443                                  # psi(4360)
+1                                        # 1 decay channel
+1.0             211 -211 111         # psi(4360) -> pi+ + pi- + pi0 (catch-all)
+
+9090443                                  # psi(4660)
+1                                        # 1 decay channel
+1.0             211 -211 111         # psi(4660) -> pi+ + pi- + pi0 (catch-all)
+
+
+# --- D meson resonances (catch-all only, no PDG exclusive BRs) ---
+
+417                                      # D(3)*(2750)+
+1                                        # 1 decay channel
+1.0             421 211               # D(3)*(2750)+ -> D0 + pi+ (catch-all)
+
+427                                      # D(3)*(2750)0
+1                                        # 1 decay channel
+1.0             421 111               # D(3)*(2750)0 -> D0 + pi0 (catch-all)
+
+437                                      # D(s3)*(2860)+
+1                                        # 1 decay channel
+1.0             431 111               # D(s3)*(2860)+ -> D(s) + pi0 (catch-all)
+
+10411                                    # D(0)*(2300)+
+1                                        # 1 decay channel
+1.0             421 211               # D(0)*(2300)+ -> D0 + pi+ (catch-all)
+
+10413                                    # D(1)(2420)+
+1                                        # 1 decay channel
+1.0             421 211               # D(1)(2420)+ -> D0 + pi+ (catch-all)
+
+20423                                    # D(1)(2430)0
+1                                        # 1 decay channel
+1.0             421 111               # D(1)(2430)0 -> D0 + pi0 (catch-all)
+
+30433                                    # D(s1)*(2700)+
+1                                        # 1 decay channel
+1.0             431 111               # D(s1)*(2700)+ -> D(s) + pi0 (catch-all)
+
+
+# --- Charmed baryon resonances (catch-all only, no PDG exclusive BRs) ---
+
+204122                                   # Lambda(c)(2860)+
+1                                        # 1 decay channel
+1.0             4122 111             # Lambda(c)(2860)+ -> Lambda(c)+ + pi0 (catch-all)
+
+304122                                   # Lambda(c)(2940)+
+1                                        # 1 decay channel
+1.0             4122 111             # Lambda(c)(2940)+ -> Lambda(c)+ + pi0 (catch-all)
+
+9004112                                  # Sigma(c)(2800)0
+1                                        # 1 decay channel
+1.0             4122 -211             # Sigma(c)(2800)0 -> Lambda(c)+ + pi- (catch-all)
+
+9004212                                  # Sigma(c)(2800)+
+1                                        # 1 decay channel
+1.0             4122 111             # Sigma(c)(2800)+ -> Lambda(c)+ + pi0 (catch-all)
+
+9004222                                  # Sigma(c)(2800)++
+1                                        # 1 decay channel
+1.0             4122 211             # Sigma(c)(2800)++ -> Lambda(c)+ + pi+ (catch-all)
+
+204314                                   # Xi(c)(2970)0
+1                                        # 1 decay channel
+1.0             4232 -211             # Xi(c)(2970)0 -> Xi(c)+ + pi- (catch-all)
+
+204324                                   # Xi(c)(2970)+
+1                                        # 1 decay channel
+1.0             4132 211             # Xi(c)(2970)+ -> Xi(c)0 + pi+ (catch-all)
+
+9104324                                  # Xi(c)(3055)+
+1                                        # 1 decay channel
+1.0             4132 211             # Xi(c)(3055)+ -> Xi(c)0 + pi+ (catch-all)
+
+9204314                                  # Xi(c)(3080)0
+1                                        # 1 decay channel
+1.0             4232 -211             # Xi(c)(3080)0 -> Xi(c)+ + pi- (catch-all)
+
+9204324                                  # Xi(c)(3080)+
+1                                        # 1 decay channel
+1.0             4132 211             # Xi(c)(3080)+ -> Xi(c)0 + pi+ (catch-all)
+
+9104332                                  # Omega(c)(3000)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3000) -> Omega(c)0 + pi0 (catch-all)
+
+9104334                                  # Omega(c)(3065)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3065) -> Omega(c)0 + pi0 (catch-all)
+
+9104336                                  # Omega(c)(3120)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3120) -> Omega(c)0 + pi0 (catch-all)
+
+9204332                                  # Omega(c)(3050)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3050) -> Omega(c)0 + pi0 (catch-all)
+
+9204334                                  # Omega(c)(3090)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3090) -> Omega(c)0 + pi0 (catch-all)
+
+9304332                                  # Omega(c)(3185)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3185) -> Omega(c)0 + pi0 (catch-all)
+
+9304334                                  # Omega(c)(3327)
+1                                        # 1 decay channel
+1.0             4332 111             # Omega(c)(3327) -> Omega(c)0 + pi0 (catch-all)
