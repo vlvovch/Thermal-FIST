@@ -54,6 +54,11 @@ LIGHT_DECAY_REFERENCE_OVERRIDE_IDS = {
     9010325,  # K(2)*(1980)+
 }
 MANUAL_DECAY_OVERRIDE_CHANNELS: Dict[int, List[DecayChannel]] = {
+    # Keep D*(2007)0 at current PDG API values.
+    423: [
+        DecayChannel(br=0.6467184821405996, daughters=[421, 111]),
+        DecayChannel(br=0.3532815178594005, daughters=[421, 22]),
+    ],
     # Enforce Viewer-style representation for K(1)(1650):
     # K pi pi + K phi.
     9000313: [
