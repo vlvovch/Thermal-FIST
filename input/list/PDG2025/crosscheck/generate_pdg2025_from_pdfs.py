@@ -577,17 +577,18 @@ PARTICLES[311] = {
 }
 
 # K0*(700)0 (kappa): I(J^P) = 1/2(0+), BW mass = 838 MeV, width = 463 MeV [NEW in PDG2025]
+# degeneracy_override=0: cancellation in I=3/2 Kpi repulsive channel, analogous to f(0)(500)/sigma
 PARTICLES[9000311] = {
     'name': 'K(0)*(700)0', 'mass': 0.838, 'width': 0.463,
     'J': 0, 'I': 0.5, 'P': 1,
     'B': 0, 'Q': 0, 'S': 1, 'charm': 0, 'absS': 1, 'absC': 0,
-    'stable': 0, 'statistics': -1,
+    'stable': 0, 'statistics': -1, 'degeneracy_override': 0,
 }
 PARTICLES[9000321] = {
     'name': 'K(0)*(700)+', 'mass': 0.838, 'width': 0.463,
     'J': 0, 'I': 0.5, 'P': 1,
     'B': 0, 'Q': 1, 'S': 1, 'charm': 0, 'absS': 1, 'absC': 0,
-    'stable': 0, 'statistics': -1,
+    'stable': 0, 'statistics': -1, 'degeneracy_override': 0,
 }
 
 # K*(892)+: I(J^P) = 1/2(1-), mass = 891.67 MeV, width = 51.4 MeV

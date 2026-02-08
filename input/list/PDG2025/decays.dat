@@ -2933,31 +2933,31 @@
 
 # --- Charmed baryon resonances (catch-all only, no PDG exclusive BRs) ---
 
-204122                                   # Lambda(c)(2860)+
+204124                                   # Lambda(c)(2860)+
 1                                        # 1 decay channel
 1.0             4122 111             # Lambda(c)(2860)+ -> Lambda(c)+ + pi0 (catch-all)
 
-304122                                   # Lambda(c)(2940)+
+304124                                   # Lambda(c)(2940)+
 1                                        # 1 decay channel
 1.0             4122 111             # Lambda(c)(2940)+ -> Lambda(c)+ + pi0 (catch-all)
 
-9004112                                  # Sigma(c)(2800)0
+9004114                                  # Sigma(c)(2800)0
 1                                        # 1 decay channel
 1.0             4122 -211             # Sigma(c)(2800)0 -> Lambda(c)+ + pi- (catch-all)
 
-9004212                                  # Sigma(c)(2800)+
+9004214                                  # Sigma(c)(2800)+
 1                                        # 1 decay channel
 1.0             4122 111             # Sigma(c)(2800)+ -> Lambda(c)+ + pi0 (catch-all)
 
-9004222                                  # Sigma(c)(2800)++
+9004224                                  # Sigma(c)(2800)++
 1                                        # 1 decay channel
 1.0             4122 211             # Sigma(c)(2800)++ -> Lambda(c)+ + pi+ (catch-all)
 
-204314                                   # Xi(c)(2970)0
+204312                                   # Xi(c)(2970)0
 1                                        # 1 decay channel
 1.0             4232 -211             # Xi(c)(2970)0 -> Xi(c)+ + pi- (catch-all)
 
-204324                                   # Xi(c)(2970)+
+204322                                   # Xi(c)(2970)+
 1                                        # 1 decay channel
 1.0             4132 211             # Xi(c)(2970)+ -> Xi(c)0 + pi+ (catch-all)
 
@@ -2965,11 +2965,11 @@
 1                                        # 1 decay channel
 1.0             4132 211             # Xi(c)(3055)+ -> Xi(c)0 + pi+ (catch-all)
 
-9204314                                  # Xi(c)(3080)0
+9204316                                  # Xi(c)(3080)0
 1                                        # 1 decay channel
 1.0             4232 -211             # Xi(c)(3080)0 -> Xi(c)+ + pi- (catch-all)
 
-9204324                                  # Xi(c)(3080)+
+9204326                                  # Xi(c)(3080)+
 1                                        # 1 decay channel
 1.0             4132 211             # Xi(c)(3080)+ -> Xi(c)0 + pi+ (catch-all)
 
