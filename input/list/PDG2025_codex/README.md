@@ -32,8 +32,11 @@ The generator uses a conservative baseline plus controlled expansion:
    (MCID- or name-matched) and the official 2025
    `pdglisting/mass_width_2025.mcd`
    Monte Carlo table.
-2. **Masses and widths**: update from PDG API 2025 summary values when a state
-   can be mapped by MCID.
+2. **Masses and widths**:
+   - prefer values from `pdglisting/mass_width_2025.mcd` when available,
+   - fallback to PDG API 2025 summary values for states not covered by MCD
+     (including MCID-less states via unique normalized-name match to `PART`
+     parent nodes).
 3. **State expansion**: add additional light/strange/charmed `PART` states from
    PDG2025 that have MCIDs and map to meson/baryon content built from
    `u,d,s,c` quarks
@@ -45,16 +48,23 @@ The generator uses a conservative baseline plus controlled expansion:
    - keep baseline channels for generic/ambiguous modes,
    - for added states, use nearest-state decay templates with matching
      conserved charges (`B,Q,S,C`) when explicit mappings are incomplete,
+   - apply an explicit `K(1)(1650)` override to the Viewer-style channel set
+     (`K pi pi` and `K phi`) with charge-conserving representatives,
    - renormalize to 100% for each decaying parent.
-5. **Output variants**:
+5. **Thresholds**:
+   - keep baseline threshold conventions for existing states,
+   - for newly added unstable hadrons, recompute `threshold` from the lightest
+     hadronic channel that satisfies exact strong-conservation (`B,Q,S,C`);
+     channels with leptons/photons are excluded from threshold evaluation.
+6. **Output variants**:
    - `established-with-charm`: `list-withcharm.dat`,
      subset built from `pdglisting/mass_width_2025.mcd` plus states marked established in
      `pdgLive` group tables
      (`pdglisting/pdglive-established-nodes-2025.txt`) using the table markers:
      bullet (`•`) or baryon star rating `***`/`****`; written to
      `list-withcharm.dat`,
-   - `established-only` (default): `list.dat`, charm-filtered
-     projection (`|C|=0`) of the established-with-charm set,
+  - `established-only` (default): `list.dat`, fully charm-free projection of
+    the established-with-charm set (excludes open charm and hidden charm),
    - `extra`: `list-extra.dat`, includes states found in
      PDG API `PART` listings (MCID or name match) and in
      `pdglisting/mass_width_2025.mcd`,
@@ -63,13 +73,13 @@ The generator uses a conservative baseline plus controlled expansion:
      established PDG2025 hadron list,
    - `with excited nuclei`: `list-withexcitednuclei.dat`, formed by adding the
      excited-nucleus delta from `PDG2020/list-withexcitednuclei.dat`.
-6. **Single decays file**: `decays.dat` contains decays for all generated
+7. **Single decays file**: `decays.dat` contains decays for all generated
    hadrons (`list-extra.dat`) plus nuclei/excited nuclei states sourced from
    `PDG2020/decays.dat`; each block is normalized to 100%.
-7. **Runtime compatibility**: Thermal-FIST decays loader applies decay blocks
+8. **Runtime compatibility**: Thermal-FIST decays loader applies decay blocks
    only for parents present in the loaded particle list, so one superset
    `decays.dat` can be used with all list variants.
-8. **Validation workflow**: detailed pdgViewer/PDG-code cross-check tables are
+9. **Validation workflow**: detailed pdgViewer/PDG-code cross-check tables are
    produced during development and kept in `local-diagnostics/` (not included in
    public release payload).
 
@@ -80,10 +90,26 @@ charge-conserving nearest-neighbor templates.
 ## Recent changes
 
 - Introduced a charm-aware established list split:
-  - `list.dat`: established non-charm (`|C|=0`) states.
+  - `list.dat`: established charm-free states (no open or hidden charm).
   - `list-withcharm.dat`: established states including charm.
 - Added open-charm expansion from PDG2025 and updated charm-sector masses,
   widths, and decay BRs from PDG API 2025 where mappable.
+- Added fallback to `mass_width_2025.mcd` for established states whose API
+  parent rows have missing summary mass/width entries (e.g. `f2(2150)0`).
+- Added MCID-less mass/width updates via unique name-to-parent matching
+  (e.g. `phi(2170)`, `pi2(1880)`, `Omega(2012)`).
+- Fixed charm-content bookkeeping for generated states: `|C|` now uses MCID
+  valence charm content (so hidden-charm states such as charmonia carry
+  `|C|=2` while keeping net `C=0`).
+- Switched mass/width MCD parser to accept Fortran-style values like `6.E-02`
+  and prioritize MCD values whenever present.
+- Added PDG upper-limit enforcement for widths (`limit_type='U'`), with
+  reference-list rounding where applicable (e.g. `Lambda(c)(2625)+`).
+- Switched threshold evaluation to a hadronic/strong policy for unstable
+  newly added hadrons (exclude leptonic/radiative channels when computing
+  `threshold`).
+- Replaced `K(1)(1650)0/+` resonance-resolved decay blocks with an explicit
+  Viewer-style two-channel model (`K pi pi`, `K phi`), normalized to 100%.
 - Updated output ordering to follow a PDG2020-like layout: isospin partners are
   grouped together (e.g. `pi0`/`pi+`), non-charm sectors are listed first, and
   charm sectors are moved to the end.
@@ -94,9 +120,22 @@ charge-conserving nearest-neighbor templates.
   per-variant decay files.
 - Added local pdgViewer and charm-PDG-code audit workflow; detailed outputs are
   stored in `local-diagnostics/` and excluded from release tracking.
+- Improved existing-state BR updates to avoid low-coverage partial-BR inflation
+  when no new mapped channels are available.
 - Added established Viewer states without DB MCIDs via controlled overrides in
   three sectors: charmonium, `D_s` excitations, and charmed baryons
   (including `D3*(2750)+`/`D3*(2750)0`).
+- Aligned synthetic charm IDs and charge multiplets for manual overrides to the
+  `PDG2025/list-withcharm.dat` conventions (e.g. `psi(4230)`, `chi(c1)(3872)`,
+  `Sigma(c)(2800)0/+ /++`, `Xi(c)(2970)0/+`, `Xi(c)(3080)0/+`).
+- For charm manual additions, if a matching ID exists in
+  `PDG2025/list-withcharm.dat`, keep that reference threshold and use its width
+  when API/MCD width is missing.
+- For manual charm additions with reference IDs, align mass to
+  `PDG2025/list-withcharm.dat` to avoid name-inference drift
+  (e.g. `Sigma(c)(2800)`, `Xi(c)(2970)+`).
+- Added an explicit `D(s1)(2536)` decay override that includes
+  `D*(2007)0 K+` and keeps a conservative, normalized channel set.
 - For charm overrides with missing official `J^P`, assigned likely quark-model
   `J` values and synchronized synthetic MCID last digits to `2J+1`:
   `Xi(c)(3055)0`/`Xi(c)(3080)0` -> `5/2`,
@@ -134,14 +173,14 @@ charge-conserving nearest-neighbor templates.
 Reference baselines for comparison: `../PDG2020/list.dat` and
 `../PDG2020/list-withcharm.dat`.
 
-- `list.dat` (established-only, default): 242 -> 256 states (`+19`, `-5`)
-- `list-withcharm.dat` (established): 291 -> 326 states (`+40`, `-5`)
-- `list-extra.dat` (extra): 291 -> 349 states (`+58`, `-0`)
-- `list-withnuclei.dat`: 256 -> 264 states (`+8` stable nuclei)
-- `list-withexcitednuclei.dat`: 264 -> 294 states (`+30` excited nuclei)
-- Charm coverage in `list-withcharm.dat`: 57 net-charm states (36 charm
-  baryons) plus additional hidden-charm charmonium states (`C=0`);
-  `list.dat` excludes net charm.
+- `list.dat` (established-only, default): 242 -> 248 states (`+11`, `-5`)
+- `list-withcharm.dat` (established): 291 -> 330 states (`+44`, `-5`)
+- `list-extra.dat` (extra): 291 -> 354 states (`+63`, `-0`)
+- `list-withnuclei.dat`: 248 -> 256 states (`+8` stable nuclei)
+- `list-withexcitednuclei.dat`: 256 -> 286 states (`+30` excited nuclei)
+- Charm coverage in `list-withcharm.dat`: 60 net-charm states (39 charm
+  baryons) plus 22 hidden-charm states (`C=0`);
+  `list.dat` excludes both net and hidden charm.
 - Detailed per-state additions/removals and validation tables are kept in
   `local-diagnostics/` (git-ignored).
 
