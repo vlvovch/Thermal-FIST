@@ -30,7 +30,7 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
    - f(2)(1565) -- new I=0 tensor meson
    - f(0)(2020) -- new I=0 scalar meson
    - f(2)(2150) -- new I=0 tensor meson
-   - K(0)*(700) / kappa -- light scalar kaon (K0, K+)
+   - K(0)*(700) / kappa -- light scalar kaon (K0, K+) — **commented out** (see below)
    - K(1)(1650) -- excited axial kaon (K0, K+)
    - K(0)*(1950) -- excited scalar kaon (K0, K+)
    - K(2)*(1980) -- excited tensor kaon (K0, K+)
@@ -199,7 +199,7 @@ pdgid  name  stable  mass[GeV]  degeneracy  statistics  B  Q  S  C  |S|  |C|  wi
 ```
 
 - `stable`: 1 if treated as stable (very narrow width), 0 if decays are resolved
-- `degeneracy`: 2J+1 (exceptions: f(0)(500) and K(0)*(700) have degeneracy 0 — their thermal contributions are cancelled by repulsive channels in the S-matrix approach: I=2 pipi for sigma, I=3/2 Kpi for kappa; see Broniowski et al., PRC 92, 034905, 2015)
+- `degeneracy`: 2J+1 (exception: f(0)(500)/sigma has degeneracy 0 — its thermal contribution is cancelled by the repulsive I=2 pipi channel in the S-matrix approach; see Broniowski et al., PRC 92, 034905, 2015). K(0)*(700)/kappa is similarly excluded (repulsive I=3/2 Kpi channel) and is commented out entirely since no other particle decays into it.
 - `statistics`: -1 for mesons (Bose-Einstein), +1 for baryons (Fermi-Dirac)
 - `|S|`, `|C|`: absolute strangeness/charm content (not net strangeness). E.g., eta has |S|=1.33, phi has |S|=2
 - `threshold`: lightest decay channel mass sum (GeV)

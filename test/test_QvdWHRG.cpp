@@ -39,9 +39,9 @@ namespace {
   class QvdWHRGStressTest : public ::testing::Test {
   protected:
     void SetUp() override {
-      // Use PDG2020 list
+      // Use PDG2025 list
       std::string inputDir = std::string(ThermalFIST_INPUT_FOLDER);
-      TPS = new ThermalParticleSystem(inputDir + "/list/PDG2020/list.dat", inputDir + "/list/PDG2020/decays.dat");
+      TPS = new ThermalParticleSystem(inputDir + "/list/PDG2025/list.dat", inputDir + "/list/PDG2025/decays.dat");
     }
 
     void TearDown() override {
@@ -240,9 +240,9 @@ namespace {
   class RealGasHRGStressTest : public ::testing::Test {
   protected:
     void SetUp() override {
-      // Use PDG2020 list
+      // Use PDG2025 list
       std::string inputDir = std::string(ThermalFIST_INPUT_FOLDER);
-      TPS = new ThermalParticleSystem(inputDir + "/list/PDG2020/list.dat", inputDir + "/list/PDG2020/decays.dat");
+      TPS = new ThermalParticleSystem(inputDir + "/list/PDG2025/list.dat", inputDir + "/list/PDG2025/decays.dat");
     }
 
     void TearDown() override {

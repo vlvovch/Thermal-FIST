@@ -108,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
   QString listpath = listPath;
   TPS = new ThermalParticleSystem(listpath.toStdString(), decaysPath.toStdString());
 #else
-  //cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withnuclei.dat";
+  //cpath = QString(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list-withnuclei.dat";
   cpath = QString(ThermalFIST_DEFAULT_LIST_FILE);
 
   QString listpath = cpath;

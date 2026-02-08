@@ -641,16 +641,18 @@
 0.5             130                  # K0 -> ???
 
 
-9000311                                  # K(0)*(700)0
-2                                        # 2 decay channels
-0.6667          321 -211             # K(0)*(700)0 -> K+ + pi-
-0.3333          311 111              # K(0)*(700)0 -> K0 + pi0
-
-
-9000321                                  # K(0)*(700)+
-2                                        # 2 decay channels
-0.6667          311 211              # K(0)*(700)+ -> K0 + pi+
-0.3333          321 111              # K(0)*(700)+ -> K+ + pi0
+# K(0)*(700)/kappa excluded: its thermal contribution is cancelled by the repulsive I=3/2 Kpi
+#   channel (Broniowski et al., PRC 92, 034905, 2015), analogous to f(0)(500)/sigma in I=2 pipi.
+#   No other particle decays into K(0)*(700), so it is commented out rather than kept with deg=0.
+# 9000311                                  # K(0)*(700)0
+# 2                                        # 2 decay channels
+# 0.6667          321 -211             # K(0)*(700)0 -> K+ + pi-
+# 0.3333          311 111              # K(0)*(700)0 -> K0 + pi0
+#
+# 9000321                                  # K(0)*(700)+
+# 2                                        # 2 decay channels
+# 0.6667          311 211              # K(0)*(700)+ -> K0 + pi+
+# 0.3333          321 111              # K(0)*(700)+ -> K+ + pi0
 
 
 323                                      # K*(892)+

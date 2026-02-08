@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 		outputfile = argv[2];
 
 
-  vector<string> lists = {string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list.dat"};
+  vector<string> lists = {string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list.dat"};
 
   // If including leptons, add the list of charged leptons
   if (include_leptons)
