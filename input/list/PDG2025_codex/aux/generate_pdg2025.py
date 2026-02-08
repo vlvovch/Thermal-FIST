@@ -46,6 +46,43 @@ class DecayChannel:
 
 EXCLUDED_EXPANSION_MCIDS = {130, 310}
 EXCLUDED_ESTABLISHED_WITH_CHARM_PDGS = {4422}
+LIGHT_DECAY_REFERENCE_OVERRIDE_IDS = {
+    9010225,  # f(2)(1565)
+    9050221,  # f(0)(2020)
+    9070225,  # f(2)(2150)
+    9010315,  # K(2)*(1980)0
+    9010325,  # K(2)*(1980)+
+}
+MANUAL_DECAY_OVERRIDE_CHANNELS: Dict[int, List[DecayChannel]] = {
+    # Enforce Viewer-style representation for K(1)(1650):
+    # K pi pi + K phi.
+    9000313: [
+        DecayChannel(br=0.9, daughters=[311, 211, -211]),
+        DecayChannel(br=0.1, daughters=[311, 333]),
+    ],
+    9000323: [
+        DecayChannel(br=0.9, daughters=[321, 211, -211]),
+        DecayChannel(br=0.1, daughters=[321, 333]),
+    ],
+    # D(s1)(2536): keep dominant measured D* K modes explicit (incl. D*(2007)0 K+),
+    # preserve small measured D pi K mode, keep upper-limit channels conservative,
+    # and assign the residual to D_s* gamma.
+    10433: [
+        DecayChannel(br=0.31, daughters=[413, 311]),
+        DecayChannel(br=0.36, daughters=[423, 321]),
+        DecayChannel(br=0.01, daughters=[411, -211, 321]),
+        DecayChannel(br=0.08, daughters=[411, 311]),
+        DecayChannel(br=0.04, daughters=[421, 321]),
+        DecayChannel(br=0.20, daughters=[433, 22]),
+    ],
+}
+DISPLAY_NAME_OVERRIDES = {
+    9000313: "K(1)(1650)0",
+    9000323: "K(1)(1650)+",
+    9010225: "f(2)(1565)",
+    9050221: "f(0)(2020)",
+    9070225: "f(2)(2150)",
+}
 EXTERNAL_MASSES_GEV = {
     11: 0.000510999,
     12: 0.0,
@@ -76,22 +113,22 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
     {
         "mcid": 30433,
         "parent_pdgid": "M182",
-        "name": "D(s1)*(2700)",
+        "name": "D(s1)*(2700)+",
         "flags": "M",
         "quantum_j": "1",
         "charge": 1.0,
     },
     {
-        "mcid": 30437,
+        "mcid": 437,
         "parent_pdgid": "M226",
-        "name": "D(s3)*(2860)",
+        "name": "D(s3)*(2860)+",
         "flags": "M",
         "quantum_j": "3",
         "charge": 1.0,
     },
     # Charmonium established states without DB MCIDs.
     {
-        "mcid": 9030443,
+        "mcid": 9060443,
         "parent_pdgid": "M074",
         "name": "psi(4230)",
         "flags": "M",
@@ -99,7 +136,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9040443,
+        "mcid": 9080443,
         "parent_pdgid": "M181",
         "name": "psi(4360)",
         "flags": "M",
@@ -107,7 +144,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9050443,
+        "mcid": 9090443,
         "parent_pdgid": "M189",
         "name": "psi(4660)",
         "flags": "M",
@@ -115,7 +152,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9000441,
+        "mcid": 9040441,
         "parent_pdgid": "M159",
         "name": "chi(c0)(3915)",
         "flags": "M",
@@ -123,7 +160,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 90020443,
+        "mcid": 9030443,
         "parent_pdgid": "M176",
         "name": "chi(c1)(3872)",
         "flags": "M",
@@ -131,7 +168,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 90120443,
+        "mcid": 9050443,
         "parent_pdgid": "M193",
         "name": "chi(c1)(4140)",
         "flags": "M",
@@ -139,7 +176,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 90220443,
+        "mcid": 9070443,
         "parent_pdgid": "M233",
         "name": "chi(c1)(4274)",
         "flags": "M",
@@ -147,7 +184,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9000445,
+        "mcid": 30445,
         "parent_pdgid": "M212",
         "name": "psi(2)(3823)",
         "flags": "M",
@@ -155,7 +192,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9000447,
+        "mcid": 447,
         "parent_pdgid": "M241",
         "name": "psi(3)(3842)",
         "flags": "M",
@@ -164,7 +201,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
     },
     # Charmed-baryon established states without DB MCIDs.
     {
-        "mcid": 9004124,
+        "mcid": 204122,
         "parent_pdgid": "B178",
         "name": "Lambda(c)(2860)+",
         "flags": "B",
@@ -172,7 +209,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 1.0,
     },
     {
-        "mcid": 9014124,
+        "mcid": 304122,
         "parent_pdgid": "B122",
         "name": "Lambda(c)(2940)+",
         "flags": "B",
@@ -180,7 +217,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 1.0,
     },
     {
-        "mcid": 9004132,
+        "mcid": 204314,
         "parent_pdgid": "B130",
         "name": "Xi(c)(2970)0",
         "flags": "B",
@@ -188,15 +225,23 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9014136,
-        "parent_pdgid": "B157",
-        "name": "Xi(c)(3055)0",
+        "mcid": 204324,
+        "parent_pdgid": "B130",
+        "name": "Xi(c)(2970)+",
         "flags": "B",
-        "quantum_j": "5/2",
-        "charge": 0.0,
+        "quantum_j": "1/2",
+        "charge": 1.0,
     },
     {
-        "mcid": 9024136,
+        "mcid": 9104324,
+        "parent_pdgid": "B157",
+        "name": "Xi(c)(3055)+",
+        "flags": "B",
+        "quantum_j": "3/2",
+        "charge": 1.0,
+    },
+    {
+        "mcid": 9204314,
         "parent_pdgid": "B147",
         "name": "Xi(c)(3080)0",
         "flags": "B",
@@ -204,7 +249,15 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9004114,
+        "mcid": 9204324,
+        "parent_pdgid": "B147",
+        "name": "Xi(c)(3080)+",
+        "flags": "B",
+        "quantum_j": "5/2",
+        "charge": 1.0,
+    },
+    {
+        "mcid": 9004112,
         "parent_pdgid": "B155",
         "name": "Sigma(c)(2800)0",
         "flags": "B",
@@ -212,7 +265,23 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9004332,
+        "mcid": 9004212,
+        "parent_pdgid": "B155",
+        "name": "Sigma(c)(2800)+",
+        "flags": "B",
+        "quantum_j": "3/2",
+        "charge": 1.0,
+    },
+    {
+        "mcid": 9004222,
+        "parent_pdgid": "B155",
+        "name": "Sigma(c)(2800)++",
+        "flags": "B",
+        "quantum_j": "3/2",
+        "charge": 2.0,
+    },
+    {
+        "mcid": 9104332,
         "parent_pdgid": "B173",
         "name": "Omega(c)(3000)",
         "flags": "B",
@@ -220,7 +289,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9014332,
+        "mcid": 9204332,
         "parent_pdgid": "B174",
         "name": "Omega(c)(3050)",
         "flags": "B",
@@ -228,7 +297,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9024334,
+        "mcid": 9104334,
         "parent_pdgid": "B175",
         "name": "Omega(c)(3065)",
         "flags": "B",
@@ -236,7 +305,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9034334,
+        "mcid": 9204334,
         "parent_pdgid": "B176",
         "name": "Omega(c)(3090)",
         "flags": "B",
@@ -244,7 +313,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9044336,
+        "mcid": 9104336,
         "parent_pdgid": "B177",
         "name": "Omega(c)(3120)",
         "flags": "B",
@@ -252,7 +321,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9054332,
+        "mcid": 9304332,
         "parent_pdgid": "B209",
         "name": "Omega(c)(3185)",
         "flags": "B",
@@ -260,7 +329,7 @@ MANUAL_ESTABLISHED_STATE_OVERRIDES = (
         "charge": 0.0,
     },
     {
-        "mcid": 9064334,
+        "mcid": 9304334,
         "parent_pdgid": "B210",
         "name": "Omega(c)(3327)",
         "flags": "B",
@@ -369,6 +438,54 @@ def parse_mcd_established_abs_ids(path: Path) -> set[int]:
                 if value != 0:
                     ids.add(abs(value))
     return ids
+
+
+def parse_mcd_mass_width_by_abs_id(path: Path) -> Dict[int, Tuple[Optional[float], Optional[float]]]:
+    """Return abs(PDGID) -> (mass_GeV, width_GeV) parsed from mass_width_2025.mcd."""
+    data: Dict[int, Tuple[Optional[float], Optional[float]]] = {}
+    num_pattern = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[EeDd][+-]?\d+)")
+
+    with path.open("r", encoding="utf-8") as handle:
+        for raw in handle:
+            if not raw or raw.startswith("*"):
+                continue
+
+            ids: List[int] = []
+            id_field = raw[:32]
+            for token in id_field.split():
+                try:
+                    value = int(token)
+                except ValueError:
+                    continue
+                if value != 0:
+                    ids.append(abs(value))
+            if not ids:
+                continue
+
+            tail = raw[32:]
+            tokens = num_pattern.findall(tail)
+            if not tokens:
+                continue
+
+            mass: Optional[float] = None
+            width: Optional[float] = None
+            try:
+                mass = float(tokens[0].replace("D", "E").replace("d", "E"))
+            except ValueError:
+                mass = None
+            if len(tokens) >= 4:
+                try:
+                    width = float(tokens[3].replace("D", "E").replace("d", "E"))
+                except ValueError:
+                    width = None
+
+            for pid in ids:
+                old_mass, old_width = data.get(pid, (None, None))
+                use_mass = old_mass if old_mass is not None else mass
+                use_width = old_width if old_width is not None else width
+                data[pid] = (use_mass, use_width)
+
+    return data
 
 
 def parse_established_pdg_nodes(path: Path) -> set[str]:
@@ -669,6 +786,60 @@ def pick_mass_or_width(cur: sqlite3.Cursor, parent_pdgid: str, kind: str) -> Opt
     return None
 
 
+def pick_mass_or_width_upper_limit(cur: sqlite3.Cursor, parent_pdgid: str, kind: str) -> Optional[float]:
+    assert kind in ("M", "G")
+    candidates = cur.execute(
+        """
+        SELECT pdgid
+        FROM pdgid
+        WHERE parent_pdgid = ?
+          AND data_type = ?
+        ORDER BY CASE WHEN instr(flags, 'D') > 0 THEN 0 ELSE 1 END, sort
+        """,
+        (parent_pdgid, kind),
+    ).fetchall()
+
+    keyword = "%MASS%" if kind == "M" else "%WIDTH%"
+    sec_candidates = cur.execute(
+        """
+        SELECT pdgid
+        FROM pdgid
+        WHERE parent_pdgid = ?
+          AND data_type = 'SEC'
+          AND UPPER(description) LIKE ?
+        ORDER BY sort
+        """,
+        (parent_pdgid, keyword),
+    ).fetchall()
+    candidates = list(candidates) + list(sec_candidates)
+
+    limits: List[float] = []
+    for row in candidates:
+        rows = cur.execute(
+            """
+            SELECT value, unit_text
+            FROM pdgdata
+            WHERE pdgid = ?
+              AND in_summary_table = 1
+              AND limit_type = 'U'
+              AND value IS NOT NULL
+            ORDER BY sort
+            """,
+            (str(row["pdgid"]),),
+        ).fetchall()
+        for item in rows:
+            scale = unit_scale_to_gev(str(item["unit_text"]))
+            if scale is None:
+                continue
+            value = float(item["value"]) * scale
+            if value >= 0.0:
+                limits.append(value)
+
+    if not limits:
+        return None
+    return min(limits)
+
+
 def fetch_parent_map(cur: sqlite3.Cursor) -> Dict[int, str]:
     rows = cur.execute(
         """
@@ -855,39 +1026,45 @@ def filter_channels_for_parent(
 
 
 def update_channels_from_pdg(base_channels: List[DecayChannel], pdg_channels: List[DecayChannel]) -> Tuple[List[DecayChannel], bool]:
-    pdg_by_key: Dict[Tuple[int, ...], float] = {}
-    for channel in aggregate_channels(pdg_channels):
-        pdg_by_key[channel_key(channel)] = channel.br
+    base_agg = aggregate_channels(base_channels)
+    pdg_agg = aggregate_channels(pdg_channels)
+    base_by_key: Dict[Tuple[int, ...], float] = {channel_key(ch): ch.br for ch in base_agg}
+    pdg_by_key: Dict[Tuple[int, ...], float] = {channel_key(ch): ch.br for ch in pdg_agg}
 
-    matched_keys = {channel_key(ch) for ch in base_channels if channel_key(ch) in pdg_by_key}
+    matched_keys = set(base_by_key.keys()) & set(pdg_by_key.keys())
     if not matched_keys:
         return base_channels, False
+    new_keys = set(pdg_by_key.keys()) - set(base_by_key.keys())
 
-    updated = [DecayChannel(br=ch.br, daughters=list(ch.daughters)) for ch in base_channels]
+    old_known_sum = sum(base_by_key[key] for key in matched_keys)
+    new_known_sum = sum(pdg_by_key[key] for key in matched_keys)
+    new_only_sum = sum(pdg_by_key[key] for key in new_keys)
+    new_total_known = new_known_sum + new_only_sum
 
-    old_known_sum = 0.0
-    new_known_sum = 0.0
-    for ch in updated:
-        key = channel_key(ch)
-        if key in matched_keys:
-            old_known_sum += ch.br
-            ch.br = pdg_by_key[key]
-            new_known_sum += ch.br
+    # Guard against large inflation from sparse/ratio-only partial BR updates.
+    # If there are no newly mapped modes and explicit BR coverage is poor,
+    # keep the existing calibrated block.
+    if not new_keys and old_known_sum > 0.0 and (new_known_sum / old_known_sum) < 0.6:
+        return base_channels, False
 
-    if new_known_sum >= 1.0 + 1.0e-6:
+    if new_total_known >= 1.0 + 1.0e-6:
         return base_channels, False
 
     old_rest_sum = 1.0 - old_known_sum
-    new_rest_target = max(0.0, 1.0 - new_known_sum)
+    new_rest_target = max(0.0, 1.0 - new_total_known)
+    scale = 0.0
     if old_rest_sum > 1.0e-12:
         scale = new_rest_target / old_rest_sum
-        for ch in updated:
-            if channel_key(ch) not in matched_keys:
-                ch.br *= scale
-    else:
-        for ch in updated:
-            if channel_key(ch) not in matched_keys:
-                ch.br = 0.0
+
+    updated: List[DecayChannel] = []
+    for ch in base_agg:
+        key = channel_key(ch)
+        if key in matched_keys:
+            updated.append(DecayChannel(br=pdg_by_key[key], daughters=list(key)))
+        else:
+            updated.append(DecayChannel(br=(ch.br * scale if old_rest_sum > 1.0e-12 else 0.0), daughters=list(key)))
+    for key in sorted(new_keys):
+        updated.append(DecayChannel(br=pdg_by_key[key], daughters=list(key)))
 
     if not normalize_channels(updated):
         return base_channels, False
@@ -925,6 +1102,20 @@ def merge_pdg_and_template(pdg_channels: List[DecayChannel], template_channels: 
     return pdg
 
 
+def abs_charm_content_from_mcid(mcid: int, flags: str) -> int:
+    code = abs(int(mcid))
+    if flags == "M":
+        q1 = (code // 100) % 10
+        q2 = (code // 10) % 10
+        return int((1 if q1 == 4 else 0) + (1 if q2 == 4 else 0))
+    if flags == "B":
+        q1 = (code // 1000) % 10
+        q2 = (code // 100) % 10
+        q3 = (code // 10) % 10
+        return int((1 if q1 == 4 else 0) + (1 if q2 == 4 else 0) + (1 if q3 == 4 else 0))
+    return 0
+
+
 def read_pdg_source_text(cur: sqlite3.Cursor) -> str:
     release = cur.execute("SELECT value FROM pdginfo WHERE name='data_release_timestamp'").fetchone()
     citation = cur.execute("SELECT value FROM pdginfo WHERE name='citation'").fetchone()
@@ -958,7 +1149,24 @@ def normalize_name(name: str) -> str:
     ret = ret.replace("^", "").replace("_", "")
     ret = ret.replace("{", "").replace("}", "")
     ret = ret.replace("\\", "")
+    # Keep D-meson spin notation consistent with PDG2020 style.
+    ret = re.sub(r"^D([0-9])\*\(", r"D(\1)*(", ret)
+    ret = re.sub(r"^D([0-9])\(", r"D(\1)(", ret)
+    # Keep kaon spin notation consistent with PDG2020/mass_width tables:
+    # K0*(700) -> K(0)*(700), K2*(1980) -> K(2)*(1980), etc.
+    ret = re.sub(r"^K([0-9]+)\*", r"K(\1)*", ret)
+    # Keep isoscalar f-meson labels consistent with PDG2020 style.
+    ret = re.sub(r"^f([0-9])\(([^)]+)\)0$", r"f(\1)(\2)", ret)
     return ret
+
+
+def normalize_display_name(name: str, mcid: int) -> str:
+    if mcid in DISPLAY_NAME_OVERRIDES:
+        return DISPLAY_NAME_OVERRIDES[mcid]
+    amcid = abs(mcid)
+    if amcid in DISPLAY_NAME_OVERRIDES:
+        return DISPLAY_NAME_OVERRIDES[amcid]
+    return normalize_name(name)
 
 
 def infer_mass_from_name_gev(name: str) -> Optional[float]:
@@ -1017,6 +1225,44 @@ def fetch_part_name_keys(cur: sqlite3.Cursor) -> set[str]:
         keys.update(name_match_keys(str(row["name"])))
 
     return keys
+
+
+def fetch_part_parent_map_by_name(cur: sqlite3.Cursor) -> Dict[str, str]:
+    """Map normalized name keys to unique PART parent PDG IDs."""
+    by_key: Dict[str, set[str]] = {}
+
+    rows_desc = cur.execute(
+        """
+        SELECT DISTINCT pdgid, description
+        FROM pdgid
+        WHERE data_type = 'PART'
+          AND description IS NOT NULL
+        """
+    ).fetchall()
+    for row in rows_desc:
+        parent = str(row["pdgid"])
+        for key in name_match_keys(str(row["description"])):
+            by_key.setdefault(key, set()).add(parent)
+
+    rows_name = cur.execute(
+        """
+        SELECT DISTINCT p.pdgid, p.name
+        FROM pdgparticle AS p
+        JOIN pdgid AS g ON g.pdgid = p.pdgid
+        WHERE g.data_type = 'PART'
+          AND p.name IS NOT NULL
+        """
+    ).fetchall()
+    for row in rows_name:
+        parent = str(row["pdgid"])
+        for key in name_match_keys(str(row["name"])):
+            by_key.setdefault(key, set()).add(parent)
+
+    ret: Dict[str, str] = {}
+    for key, parents in by_key.items():
+        if len(parents) == 1:
+            ret[key] = next(iter(parents))
+    return ret
 
 
 def fetch_node_part_name_keys(cur: sqlite3.Cursor, nodes: Sequence[str]) -> set[str]:
@@ -1206,7 +1452,11 @@ def fetch_expansion_rows(cur: sqlite3.Cursor, existing_abs_ids: Sequence[int]) -
     return selected
 
 
-def build_entry_from_row(cur: sqlite3.Cursor, row: sqlite3.Row) -> Optional[ParticleEntry]:
+def build_entry_from_row(
+    cur: sqlite3.Cursor,
+    row: sqlite3.Row,
+    mcd_mass_width_by_absid: Optional[Dict[int, Tuple[Optional[float], Optional[float]]]] = None,
+) -> Optional[ParticleEntry]:
     mcid = int(row["mcid"])
     parent = str(row["pdgid"])
     flags = str(row["flags"])
@@ -1220,16 +1470,33 @@ def build_entry_from_row(cur: sqlite3.Cursor, row: sqlite3.Row) -> Optional[Part
         return None
     baryon, charge, strange, charm = qnums
 
-    mass = pick_mass_or_width(cur, parent, "M")
+    mass = None
+    if mcd_mass_width_by_absid is not None:
+        mcd_mass = mcd_mass_width_by_absid.get(abs(mcid), (None, None))[0]
+        if mcd_mass is not None and mcd_mass > 0.0:
+            mass = mcd_mass
+    if mass is None or mass <= 0.0:
+        mass = pick_mass_or_width(cur, parent, "M")
     if mass is None or mass <= 0.0:
         return None
-    width = pick_mass_or_width(cur, parent, "G")
+
+    width = None
+    if mcd_mass_width_by_absid is not None:
+        mcd_width = mcd_mass_width_by_absid.get(abs(mcid), (None, None))[1]
+        if mcd_width is not None and mcd_width >= 0.0:
+            width = mcd_width
+    if width is None or width < 0.0:
+        width = pick_mass_or_width(cur, parent, "G")
     if width is None or width < 0.0:
         width = 0.0
+    width_ul = pick_mass_or_width_upper_limit(cur, parent, "G")
+    if width_ul is not None and width > width_ul:
+        width = width_ul
 
-    name = normalize_name(str(row["name"]))
+    name = normalize_display_name(str(row["name"]), mcid)
     degeneracy = infer_degeneracy(mcid, row["quantum_j"])
     statistics = -1 if flags == "M" else 1
+    abs_c = abs_charm_content_from_mcid(mcid, flags)
 
     return ParticleEntry(
         pdgid=int(mcid),
@@ -1243,7 +1510,7 @@ def build_entry_from_row(cur: sqlite3.Cursor, row: sqlite3.Row) -> Optional[Part
         strange=strange,
         charm=charm,
         abs_s=float(abs(strange)),
-        abs_c=float(abs(charm)),
+        abs_c=float(abs_c if abs_c > 0 else abs(charm)),
         width=float(width),
         threshold=0.0,
     )
@@ -1276,10 +1543,14 @@ def build_entry_from_manual_override(
     width = pick_mass_or_width(cur, parent_pdgid, "G")
     if width is None or width < 0.0:
         width = 0.0
+    width_ul = pick_mass_or_width_upper_limit(cur, parent_pdgid, "G")
+    if width_ul is not None and width > width_ul:
+        width = width_ul
+    abs_c = abs_charm_content_from_mcid(mcid, flags)
 
     return ParticleEntry(
         pdgid=int(mcid),
-        name=normalize_name(name),
+        name=normalize_display_name(name, mcid),
         stable=0,
         mass=float(mass),
         degeneracy=infer_degeneracy(mcid, quantum_j),
@@ -1289,7 +1560,7 @@ def build_entry_from_manual_override(
         strange=strange,
         charm=charm,
         abs_s=float(abs(strange)),
-        abs_c=float(abs(charm)),
+        abs_c=float(abs_c if abs_c > 0 else abs(charm)),
         width=float(width),
         threshold=0.0,
     )
@@ -1354,20 +1625,33 @@ def fallback_generic_decay(entry: ParticleEntry, entries_by_id: Dict[int, Partic
     return [DecayChannel(br=1.0, daughters=daughters)]
 
 
-def compute_threshold(channels: Sequence[DecayChannel], mass_by_absid: Dict[int, float]) -> float:
+def compute_hadronic_strong_threshold(
+    parent: ParticleEntry,
+    channels: Sequence[DecayChannel],
+    by_absid: Dict[int, ParticleEntry],
+    mass_by_absid: Dict[int, float],
+) -> float:
+    parent_qnums = (parent.baryon, parent.charge, parent.strange, parent.charm)
     best: Optional[float] = None
     for channel in channels:
         total = 0.0
+        total_qnums = [0, 0, 0, 0]
         valid = True
         for daughter in channel.daughters:
             ad = abs(daughter)
-            if ad in mass_by_absid:
-                total += mass_by_absid[ad]
-            elif ad in EXTERNAL_MASSES_GEV:
-                total += EXTERNAL_MASSES_GEV[ad]
-            else:
+            # hadronic/strong thresholds: only hadronic daughters in-list
+            if ad not in by_absid or ad not in mass_by_absid:
                 valid = False
                 break
+            total += mass_by_absid[ad]
+            dchg = signed_qnums(daughter, by_absid)
+            if dchg is None:
+                valid = False
+                break
+            for idx in range(4):
+                total_qnums[idx] += dchg[idx]
+        if valid and tuple(total_qnums) != parent_qnums:
+            valid = False
         if valid:
             best = total if best is None else min(best, total)
     return 0.0 if best is None else best
@@ -1414,6 +1698,7 @@ def sanitize_decays_for_entries(
     entries: Sequence[ParticleEntry],
     ids_order: Sequence[int],
     decays: Dict[int, List[DecayChannel]],
+    recompute_threshold_ids: Optional[set[int]] = None,
 ) -> Dict[int, List[DecayChannel]]:
     entries_by_id = {entry.pdgid: entry for entry in entries}
     known_ids = [entry.pdgid for entry in entries]
@@ -1425,19 +1710,25 @@ def sanitize_decays_for_entries(
         parent = entries_by_id.get(pid)
         if parent is None:
             continue
+        recompute_threshold = parent.stable == 0 and (
+            recompute_threshold_ids is None or pid in recompute_threshold_ids
+        )
 
         channels = decays.get(pid)
         if not channels:
-            parent.threshold = 0.0
+            if recompute_threshold:
+                parent.threshold = 0.0
             continue
 
         kept = channels_with_known_daughters(channels, known_ids)
         kept = filter_channels_for_parent(parent, kept, by_absid)
         if not kept or not normalize_channels(kept):
-            parent.threshold = 0.0
+            if recompute_threshold:
+                parent.threshold = 0.0
             continue
 
-        parent.threshold = compute_threshold(kept, mass_by_absid)
+        if recompute_threshold:
+            parent.threshold = compute_hadronic_strong_threshold(parent, kept, by_absid, mass_by_absid)
         sanitized[pid] = kept
 
     return sanitized
@@ -1462,6 +1753,19 @@ def main() -> None:
     pdg2020_rank_map = {entry.pdgid: index for index, entry in enumerate(pdg2020_base_entries)}
     pdg2020_with_nuclei_entries = parse_particle_list(pdg2020_dir / "list-withnuclei-withcharm.dat")
     pdg2020_with_excited_nuclei_entries = parse_particle_list(pdg2020_dir / "list-withexcitednuclei.dat")
+    pdg2025_ref_with_charm_path = base_dir.parent / "PDG2025" / "list-withcharm.dat"
+    pdg2025_ref_with_charm_entries = (
+        parse_particle_list(pdg2025_ref_with_charm_path)
+        if pdg2025_ref_with_charm_path.exists()
+        else []
+    )
+    pdg2025_ref_with_charm_by_id = {entry.pdgid: entry for entry in pdg2025_ref_with_charm_entries}
+    pdg2025_ref_decays_path = base_dir.parent / "PDG2025" / "decays.dat"
+    pdg2025_ref_decays = (
+        parse_decay_file(pdg2025_ref_decays_path)
+        if pdg2025_ref_decays_path.exists()
+        else {}
+    )
     pdg2020_nuclei_thresholds = {
         entry.pdgid: entry.threshold
         for entry in pdg2020_with_excited_nuclei_entries
@@ -1474,6 +1778,7 @@ def main() -> None:
     decays_pdg2020 = parse_decay_file(pdg2020_dir / "decays.dat")
     decays = clone_decay_map(decays_pdg2020)
     established_abs_ids = parse_mcd_established_abs_ids(mcd_path)
+    mcd_mass_width_by_absid = parse_mcd_mass_width_by_abs_id(mcd_path)
     if not established_abs_ids:
         raise RuntimeError(f"Failed to load established-state IDs from {mcd_path}")
     pdglive_established_nodes = parse_established_pdg_nodes(pdglive_nodes_path)
@@ -1486,6 +1791,7 @@ def main() -> None:
 
     source_text = read_pdg_source_text(cur)
     parent_map = fetch_parent_map(cur)
+    parent_map_by_name = fetch_part_parent_map_by_name(cur)
     part_name_keys = fetch_part_name_keys(cur)
     established_node_part_keys = fetch_node_part_name_keys(cur, sorted(pdglive_established_nodes))
     established_node_abs_mcids = fetch_node_abs_mcids(cur, sorted(pdglive_established_nodes))
@@ -1527,17 +1833,48 @@ def main() -> None:
     for entry in entries:
         parent = parent_map.get(abs(entry.pdgid))
         if not parent:
-            continue
-
-        updated_mass = pick_mass_or_width(cur, parent, "M")
+            parent_candidates = {
+                parent_map_by_name[key]
+                for key in name_match_keys(entry.name)
+                if key in parent_map_by_name
+            }
+            if len(parent_candidates) == 1:
+                parent = next(iter(parent_candidates))
+        updated_mass = None
+        if mcd_mass_width_by_absid is not None:
+            mcd_mass = mcd_mass_width_by_absid.get(abs(entry.pdgid), (None, None))[0]
+            if mcd_mass is not None and mcd_mass > 0.0:
+                updated_mass = mcd_mass
+        if (updated_mass is None or updated_mass <= 0.0) and parent:
+            updated_mass = pick_mass_or_width(cur, parent, "M")
         if updated_mass is not None and updated_mass > 0.0:
             entry.mass = updated_mass
             mass_updates += 1
 
-        updated_width = pick_mass_or_width(cur, parent, "G")
+        updated_width = None
+        if mcd_mass_width_by_absid is not None:
+            mcd_width = mcd_mass_width_by_absid.get(abs(entry.pdgid), (None, None))[1]
+            if mcd_width is not None and mcd_width >= 0.0:
+                updated_width = mcd_width
+        if (updated_width is None or updated_width < 0.0) and parent:
+            updated_width = pick_mass_or_width(cur, parent, "G")
         if updated_width is not None and updated_width >= 0.0:
+            if parent:
+                width_ul = pick_mass_or_width_upper_limit(cur, parent, "G")
+                if width_ul is not None and updated_width > width_ul:
+                    updated_width = width_ul
             entry.width = updated_width
             width_updates += 1
+        if parent:
+            width_ul = pick_mass_or_width_upper_limit(cur, parent, "G")
+            if width_ul is not None and entry.width > width_ul:
+                entry.width = width_ul
+                width_updates += 1
+            if width_ul is not None:
+                ref_entry = pdg2025_ref_with_charm_by_id.get(entry.pdgid)
+                if ref_entry is not None and 0.0 < ref_entry.width <= width_ul and entry.width > ref_entry.width:
+                    entry.width = ref_entry.width
+                    width_updates += 1
 
     # Update existing decays where explicit BFX channels map to known daughters.
     known_ids_existing = [entry.pdgid for entry in entries]
@@ -1566,7 +1903,7 @@ def main() -> None:
     new_parent_by_id: Dict[int, str] = {}
     existing_abs_ids_all = {abs(pid) for pid in ids_order}
     for row in expansion_rows:
-        entry = build_entry_from_row(cur, row)
+        entry = build_entry_from_row(cur, row, mcd_mass_width_by_absid)
         if entry is None:
             continue
         if abs(entry.pdgid) in EXCLUDED_EXPANSION_MCIDS:
@@ -1594,12 +1931,23 @@ def main() -> None:
         )
         if entry is None:
             continue
+        ref_entry = pdg2025_ref_with_charm_by_id.get(entry.pdgid)
+        if ref_entry is not None and is_charm_sector_entry(entry):
+            if ref_entry.mass > 0.0:
+                entry.mass = ref_entry.mass
         new_entries.append(entry)
         new_parent_by_id[entry.pdgid] = parent_pdgid
         existing_abs_ids_all.add(abs(entry.pdgid))
 
     # Deterministic order for new states.
     new_entries.sort(key=lambda item: (item.mass, item.pdgid))
+    new_entry_ids = {entry.pdgid for entry in new_entries}
+    new_charm_ref_threshold_ids = {
+        entry.pdgid
+        for entry in new_entries
+        if is_charm_sector_entry(entry) and entry.pdgid in pdg2025_ref_with_charm_by_id
+    }
+    recompute_threshold_ids = new_entry_ids - new_charm_ref_threshold_ids
     entries.extend(new_entries)
     ids_order.extend([entry.pdgid for entry in new_entries])
     added_states = len(new_entries)
@@ -1631,19 +1979,74 @@ def main() -> None:
         if merged_channels:
             normalize_channels(merged_channels)
             decays[entry.pdgid] = merged_channels
-            entry.threshold = compute_threshold(merged_channels, mass_by_absid)
+            entry.threshold = compute_hadronic_strong_threshold(entry, merged_channels, by_absid_full, mass_by_absid)
         else:
             # If no defensible decay model could be built, keep the state but mark stable.
             entry.stable = 1
             entry.width = 0.0
             entry.threshold = 0.0
 
+        # For manual charm additions with synthetic IDs, keep PDG2025 list
+        # conventions where available.
+        ref_entry = pdg2025_ref_with_charm_by_id.get(entry.pdgid)
+        if ref_entry is not None and is_charm_sector_entry(entry):
+            if entry.width <= 0.0 and ref_entry.width > 0.0:
+                entry.width = ref_entry.width
+            entry.threshold = ref_entry.threshold
+
+    # For selected light-sector states, keep PDG2025 reference decay blocks.
+    # This avoids template-induced mode drift for sparse/qualitative API channels.
+    for pid in sorted(LIGHT_DECAY_REFERENCE_OVERRIDE_IDS):
+        parent_entry = entries_by_id.get(pid)
+        ref_channels = pdg2025_ref_decays.get(pid)
+        if parent_entry is None or not ref_channels:
+            continue
+        override_channels = channels_with_known_daughters(ref_channels, known_ids_full)
+        override_channels = filter_channels_for_parent(parent_entry, override_channels, by_absid_full)
+        if not override_channels or not normalize_channels(override_channels):
+            continue
+        decays[pid] = override_channels
+        if parent_entry.stable == 0:
+            parent_entry.threshold = compute_hadronic_strong_threshold(
+                parent_entry,
+                override_channels,
+                by_absid_full,
+                mass_by_absid,
+            )
+
+    # Explicit manual decay overrides (applied after PDG reference overrides).
+    for pid, override_spec in sorted(MANUAL_DECAY_OVERRIDE_CHANNELS.items()):
+        parent_entry = entries_by_id.get(pid)
+        if parent_entry is None:
+            continue
+        override_channels = [
+            DecayChannel(br=channel.br, daughters=list(channel.daughters))
+            for channel in override_spec
+        ]
+        override_channels = channels_with_known_daughters(override_channels, known_ids_full)
+        override_channels = filter_channels_for_parent(parent_entry, override_channels, by_absid_full)
+        if not override_channels or not normalize_channels(override_channels):
+            continue
+        decays[pid] = override_channels
+        if parent_entry.stable == 0:
+            parent_entry.threshold = compute_hadronic_strong_threshold(
+                parent_entry,
+                override_channels,
+                by_absid_full,
+                mass_by_absid,
+            )
+
     conn.close()
 
     # Build extra (non-default) output set.
     entries_full = clone_particle_entries(entries)
     entries_full, ids_order_full = sorted_entries_and_ids(entries_full, pdg2020_rank_map)
-    decays_full = sanitize_decays_for_entries(entries_full, ids_order_full, decays)
+    decays_full = sanitize_decays_for_entries(
+        entries_full,
+        ids_order_full,
+        decays,
+        recompute_threshold_ids=recompute_threshold_ids,
+    )
     names_full = {entry.pdgid: entry.name for entry in entries_full}
 
     # Write extra output.
@@ -1679,9 +2082,9 @@ def main() -> None:
         description_line="PDG2025 list containing established hadrons including charm",
     )
 
-    # Build established default output without charm (to keep list.dat convention).
+    # Build established default output without any charm content (open or hidden).
     entries_established = clone_particle_entries(
-        [entry for entry in entries_established_with_charm if abs(entry.abs_c) < 1.0e-9]
+        [entry for entry in entries_established_with_charm if not is_charm_sector_entry(entry)]
     )
     established_id_set = {entry.pdgid for entry in entries_established}
     ids_order_established = [pid for pid in ids_order_established_with_charm if pid in established_id_set]
@@ -1811,7 +2214,12 @@ def main() -> None:
                 DecayChannel(br=channel.br, daughters=list(channel.daughters))
                 for channel in decays_pdg2020[pid]
             ]
-    decays_all = sanitize_decays_for_entries(entries_all, ids_order_all, decays_all_seed)
+    decays_all = sanitize_decays_for_entries(
+        entries_all,
+        ids_order_all,
+        decays_all_seed,
+        recompute_threshold_ids=recompute_threshold_ids,
+    )
     names_all = {entry.pdgid: entry.name for entry in entries_all}
     write_decay_file(out_decays, decays_all, ids_order_all, names_all, source_text)
 
