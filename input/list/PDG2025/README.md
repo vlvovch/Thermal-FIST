@@ -222,7 +222,12 @@ The following corrections were applied manually after generation, based on cross
 |------|----------|----------|-----|-----|---------------|
 | `list.dat`, `list-withcharm.dat` | pi2(1880) | mass | 1.895 GeV | 1.874 GeV | 1874 +26/-5 MeV |
 | `list-withcharm.dat` | D(1)(2420)+ | mass | 2.4261 GeV | 2.4221 GeV | 2422.1 ± 0.5 MeV |
+| `list-withcharm.dat` | D(2)\*(2460)+ | mass | 2.4635 GeV | 2.4611 GeV | 2461.1 ± 0.8 MeV (isospin avg) |
 | `list-withcharm.dat` | h_c(1P) | width | 0.7 MeV | 0.78 MeV | 0.78 ± 0.28 MeV |
+| `list-withcharm.dat` | eta_c(2S) | mass | 3.6375 GeV | 3.6378 GeV | 3637.8 ± 0.6 MeV |
+| `list-withcharm.dat` | eta_c(2S) | width | 11.3 MeV | 11.6 MeV | 11.6 ± 1.4 MeV |
+| `list-withcharm.dat` | chi_c2(3930) | mass | 3.9222 GeV | 3.9225 GeV | 3922.5 ± 1.0 MeV |
+| `list-withcharm.dat` | chi_c0(1P) | width | 10.8 MeV | 10.9 MeV | 10.9 ± 0.6 MeV |
 
 ### Branching ratio fixes
 
