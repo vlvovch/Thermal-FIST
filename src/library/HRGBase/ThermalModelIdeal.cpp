@@ -72,6 +72,7 @@ namespace thermalfist {
       else m_wprim[i] = 1.;
     }
 
+    m_TwoParticleCorrelationsCalculated = true;
   }
 
 

@@ -111,7 +111,7 @@ Cross-Origin-Embedder-Policy: require-corp
 
 ### Embedded Resources
 The WASM build includes embedded data files:
-- Default particle list (PDG2020 with nuclei)
+- Default particle list (PDG2025 with nuclei)
 - Default experimental data (ALICE Pb-Pb 2.76 TeV)
 - Lattice QCD reference data (Wuppertal-Budapest and HotQCD)
 
@@ -212,8 +212,8 @@ If you've already built the WASM files locally:
 **1. Create deployment directory:**
 
 ```bash
-mkdir thermal-fist-web
-cd thermal-fist-web
+mkdir thermal-fist-wasm
+cd thermal-fist-wasm
 cp -r /path/to/build-wasm/bin/* .
 ```
 
@@ -245,8 +245,8 @@ RUN rm -f /srv/Caddyfile /srv/Dockerfile
 **4. Build and run:**
 
 ```bash
-docker build -t thermal-fist-web .
-docker run -d -p 8080:80 --name thermal-fist thermal-fist-web
+docker build -t thermal-fist-wasm .
+docker run -d -p 8080:80 --name thermal-fist-wasm thermal-fist-wasm
 ```
 
 Access at `http://your-server:8080`
