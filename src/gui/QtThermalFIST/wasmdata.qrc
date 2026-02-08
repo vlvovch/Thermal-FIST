@@ -1,8 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
   <qresource prefix="/data">
     <!-- Default particle list and decays for WASM builds -->
-    <file alias="list.dat">../../../input/list/PDG2020/list-withnuclei.dat</file>
-    <file alias="decays.dat">../../../input/list/PDG2020/decays.dat</file>
+    <file alias="list.dat">../../../input/list/PDG2025/list-withnuclei.dat</file>
+    <file alias="decays.dat">../../../input/list/PDG2025/decays.dat</file>
     <!-- Default experimental data for WASM builds -->
     <file alias="ALICE-PbPb2.76TeV-0-10-all.dat">../../../input/data/ALICE-PbPb2.76TeV-0-10-all.dat</file>
     <!-- Lattice QCD data for WASM builds -->

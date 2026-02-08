@@ -111,7 +111,7 @@ Cross-Origin-Embedder-Policy: require-corp
 
 ### Embedded Resources
 The WASM build includes embedded data files:
-- Default particle list (PDG2020 with nuclei)
+- Default particle list (PDG2025 with nuclei)
 - Default experimental data (ALICE Pb-Pb 2.76 TeV)
 - Lattice QCD reference data (Wuppertal-Budapest and HotQCD)
 
