@@ -10,12 +10,11 @@ This directory contains the PDG2025 hadron resonance list and decay channels for
 | `list-withcharm.dat` | Extended list with charm — 330 particles (586 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
 | `list-withnuclei.dat` | Extended list with stable light nuclei — 256 particles |
 | `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 286 particles |
+| `list-isospin-symmetric.dat` | Isospin-symmetric list — 248 hadrons with enforced isospin mass symmetry, useful for tests |
 | `decays.dat` | Decay channels for all unstable hadrons |
 | `generate_pdg2025.py` | Generation script: takes PDG2020 as base and applies PDG2025 updates |
 | `pdglisting/mass_width_2025.txt` | PDG2025 mass-width summary data used by `generate_pdg2025.py` |
-| `crosscheck/generate_pdg2025_from_pdfs.py` | Independent cross-check script: encodes all particle properties directly from PDG2025 Summary Tables |
-| `crosscheck/list_from_pdfs.dat` | Output of cross-check script (validated to match `list.dat`) |
-| `crosscheck/decays_from_pdfs.dat` | Decay output of cross-check script (validated to match `decays.dat`) |
+| `modular/` | Sector-split modular files (see below) |
 
 ## How the PDG2025 List Was Generated
 
@@ -40,14 +39,6 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
 
 4. **Updated decay branching fractions** for select particles based on PDG2025 values, including refined isospin decomposition of baryon decay channels with Clebsch-Gordan coefficients.
 
-### Cross-check script: `generate_pdg2025_from_pdfs.py`
-
-This script independently encodes all 248 particle properties (mass, width, quantum numbers, PDG IDs) directly from the PDG 2025 Summary Table PDFs, without referencing the PDG2020 base list. It serves as a validation that the primary generation script produced correct results.
-
-Running it confirms:
-- All 248 particles match in mass, width, degeneracy, and quantum numbers (B, Q, S)
-- Thermodynamic quantities (density, pressure, energy) computed with Thermal-FIST match exactly between the two lists
-
 ## Particle Count by Sector (list.dat)
 
 | Sector | Particles | Notes |
@@ -70,7 +61,7 @@ Running it confirms:
 
 `list-withcharm.dat` extends `list.dat` with 82 charmed hadrons from the PDG2025 Review of Particle Physics Summary Tables. All entries satisfy C ∈ {-1, 0, 1}, making the list compatible with charm-canonical ensemble calculations.
 
-The doubly charmed baryon Xi_cc++ (C=2, pdgid 4422) is intentionally excluded to maintain this compatibility.
+The doubly charmed baryon Xi_cc++ (C=2, pdgid 4422) is intentionally excluded to maintain this compatibility. It is available separately in `modular/list-multicharm.dat`.
 
 | | Count |
 |---|-------|
@@ -115,7 +106,19 @@ Several charmed baryons appear in the PDG2025 RPP with J^P = ??. Degeneracy (2J+
 
 - **Standard PDG IDs** (e.g., 441, 443, 4122, 4232): official MC numbering
 - **PDG IEXTRA IDs** (9000000–9099999, e.g., 9000443 for psi(4040)): official PDG assignments for overflow states
-- **Custom IDs** (90XXXXX): for states without official MC IDs. Format: `9` + counter + quark-content digits + `2J+1` suffix. Examples: `9004222` = Sigma_c(2800)++, `9104332` = Omega_c(3000), `9204324` = Xi_c(3080)+
+- **Custom IDs** (90XXXXX): for states without official MC IDs. Format: `9` + counter + quark-content digits + `2J+1` suffix. Examples: `9004224` = Sigma_c(2800)++, `9104332` = Omega_c(3000), `9204326` = Xi_c(3080)+
+
+### Known MCID-degeneracy mismatches (official PDG numbering)
+
+Three charmed baryons have official PDG MCIDs whose last digit does not match the actual J^P. These are historical artifacts — the MCIDs were assigned before J was measured, and were never updated to avoid breaking Monte Carlo generators:
+
+| Particle | MCID | Last digit implies | Actual J^P | deg |
+|----------|------|-------------------|------------|-----|
+| Lambda_c(2625)+ | 104122 | J=1/2 | 3/2- | 4 |
+| Xi_c(2790)+/0 | 104324/104314 | J=3/2 | 1/2- | 2 |
+| Xi_c(2815)+/0 | 104322/104312 | J=1/2 | 3/2- | 4 |
+
+The degeneracies in our lists follow the measured J^P (correct physics). The MCIDs are kept as the official PDG assignments.
 
 ---
 
@@ -196,7 +199,7 @@ pdgid  name  stable  mass[GeV]  degeneracy  statistics  B  Q  S  C  |S|  |C|  wi
 ```
 
 - `stable`: 1 if treated as stable (very narrow width), 0 if decays are resolved
-- `degeneracy`: 2J+1 (exception: f(0)(500) has degeneracy 0 to suppress its thermal contribution)
+- `degeneracy`: 2J+1 (exceptions: f(0)(500) and K(0)*(700) have degeneracy 0 — their thermal contributions are cancelled by repulsive channels in the S-matrix approach: I=2 pipi for sigma, I=3/2 Kpi for kappa; see Broniowski et al., PRC 92, 034905, 2015)
 - `statistics`: -1 for mesons (Bose-Einstein), +1 for baryons (Fermi-Dirac)
 - `|S|`, `|C|`: absolute strangeness/charm content (not net strangeness). E.g., eta has |S|=1.33, phi has |S|=2
 - `threshold`: lightest decay channel mass sum (GeV)
@@ -211,6 +214,58 @@ BR  daughter1 daughter2  # branching ratio and daughter PDG IDs
 ```
 
 Antiparticle decays are not listed; they are generated automatically by charge conjugation.
+
+## Modular Directory (`modular/`)
+
+The `modular/` directory provides the same particle data split into sector-specific files, following the structure of `PDG2020_modular/`. This allows loading only the sectors needed for a given calculation.
+
+### Particle lists
+
+| File | Particles | Description |
+|------|-----------|-------------|
+| `list-hadrons.dat` | 248 | Light + strange hadrons (= `list.dat`) |
+| `list-charm.dat` | 82 | Charmed hadrons only |
+| `list-nuclei.dat` | 8 | Stable light nuclei (d, t, 3He, 4He, ...) |
+| `list-excitednuclei.dat` | 30 | Excited light nuclei |
+| `list-exotica.dat` | 6 | Exotic states (hypernuclei) |
+| `list-charged-leptons.dat` | 3 | e, mu, tau |
+| `list-multicharm.dat` | 1 | Multiply charmed hadrons: Xi_cc++ (C=2) |
+| `list-isospin-symmetric.dat` | 248 | Isospin-symmetric hadron list (see below) |
+
+### Decay files
+
+| File | Entries | Description |
+|------|---------|-------------|
+| `decays-hadrons.dat` | 247 | Decays for light + strange hadrons |
+| `decays-charm.dat` | 82 | Decays for charmed hadrons |
+| `decays-excitednuclei.dat` | 30 | Decays for excited nuclei |
+
+All modular files are verified particle-by-particle and channel-by-channel identical to the corresponding monolithic files.
+
+---
+
+## Isospin-Symmetric List (`list-isospin-symmetric.dat`)
+
+Enforces exact isospin symmetry by setting a common mass for each isospin multiplet. Sorted globally by mass. Useful for tests requiring exact isospin symmetry.
+
+### Symmetrized masses
+
+| Multiplet | Common mass (MeV) | Members |
+|-----------|-------------------|---------|
+| pi | 138 | pi0, pi+ |
+| K | 494 | K+, K0 |
+| rho(770) | 775.2 | rho+, rho0 |
+| K*(892) | 894 | K*(892)+, K*(892)0 |
+| N | 938 | p, n |
+| Sigma | 1192 | Sigma+, Sigma0, Sigma- |
+| Sigma(1385) | 1384 | Sigma(1385)+/0/- |
+| Xi | 1315 | Xi0, Xi- |
+| Xi(1530) | 1532 | Xi(1530)0, Xi(1530)- |
+| K2*(1430) | 1430 | K2*(1430)+, K2*(1430)0 |
+
+Weakly-decaying strange baryons (Lambda, Sigma+/-, Xi0/-, Omega) are set to `stable=0`. Widths and thresholds are unchanged.
+
+---
 
 ## Post-Generation Corrections
 
