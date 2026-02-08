@@ -391,14 +391,55 @@ namespace thermalfist {
       vector<double> muStarInit = m_MuStar;
 
       for(size_t i=0;i<muStarInit.size();++i) {
-        if (m_TPS->Particles()[i].Statistics()==-1 && muStarInit[i] > m_TPS->Particles()[i].Mass()) 
+        if (m_TPS->Particles()[i].Statistics()==-1 && muStarInit[i] > m_TPS->Particles()[i].Mass())
           muStarInit[i] = 0.98 * m_TPS->Particles()[i].Mass();
       }
       m_MuStar = SearchSingleSolution(muStarInit);
+
+      // If single solution failed, try alternative initial conditions
+      if (!m_LastBroydenSuccessFlag) {
+        m_MuStar = SearchFirstSolution(50);
+      }
     }
     else {
       m_MuStar = SearchMultipleSolutions(100);
     }
+  }
+
+  vector<double> ThermalModelVDW::SearchFirstSolution(int iters) {
+    // Try different initial conditions and return the first successful solution
+    double muBmin = m_Parameters.muB - 0.5 * xMath::mnucleon();
+    double muBmax = m_Parameters.muB + 0.5 * xMath::mnucleon();
+    double dmu = (muBmax - muBmin) / iters;
+    vector<double> curmust(m_densities.size(), 0.);
+
+    for (int isol = 0; isol < iters; ++isol) {
+      double tmu = muBmin + (0.5 + isol) * dmu;
+      for (size_t j = 0; j < curmust.size(); ++j) {
+        if (m_Parameters.muB != 0.0)
+          curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        else
+          curmust[j] = tmu;
+        if (m_TPS->Particles()[j].Statistics() == -1 && curmust[j] > m_TPS->Particles()[j].Mass())
+          curmust[j] = 0.98 * m_TPS->Particles()[j].Mass();
+      }
+
+      vector<double> sol = SearchSingleSolution(curmust);
+
+      // Check if solution is valid (no NaN and Broyden succeeded)
+      bool valid = m_LastBroydenSuccessFlag;
+      for (size_t i = 0; i < sol.size() && valid; ++i)
+        if (sol[i] != sol[i])  // NaN check
+          valid = false;
+
+      if (valid) {
+        return sol;  // Return first valid solution found
+      }
+    }
+
+    // No valid solution found
+    m_LastBroydenSuccessFlag = false;
+    return m_MuStar;  // Return current (possibly invalid) values
   }
 
   void ThermalModelVDW::CalculatePrimordialDensities() {
@@ -859,7 +900,8 @@ namespace thermalfist {
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
     }
-    
+
+    m_TwoParticleCorrelationsCalculated = true;
   }
 
   void ThermalModelVDW::CalculateFluctuations()

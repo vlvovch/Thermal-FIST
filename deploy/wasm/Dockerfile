@@ -50,7 +50,7 @@ ENV QT_HOST_PATH=/opt/6.10.1/gcc_64
 
 # Clone Thermal-FIST and run initial cmake configure (cached)
 WORKDIR /opt
-RUN git clone -b feature/wasm-support https://github.com/vlvovch/Thermal-FIST.git
+RUN git clone --depth 1 -b devel https://github.com/vlvovch/Thermal-FIST.git
 WORKDIR /opt/Thermal-FIST/build-wasm
 RUN cd /opt/emsdk && . ./emsdk_env.sh && cd /opt/Thermal-FIST/build-wasm && \
     /opt/6.10.1/wasm_multithread/bin/qt-cmake .. \
