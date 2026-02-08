@@ -229,12 +229,13 @@ NEW_MESONS = [
 # New strange mesons
 NEW_STRANGE_MESONS = [
     # K(0)*(700) / kappa: I(J^P) = 1/2(0+), PDG IDs 9000311, 9000321
+    # degeneracy=0: cancellation in I=3/2 Kpi repulsive channel, analogous to f(0)(500)/sigma in I=2 pipi
     {
         'pdgid': 9000311,
         'name': 'K(0)*(700)0',
         'stable': 0,
         'mass': 0.838,
-        'degeneracy': 1,
+        'degeneracy': 0,
         'statistics': -1,
         'B': 0, 'Q': 0, 'S': 1, 'C': 0,
         'absS': 1, 'absC': 0,
@@ -246,7 +247,7 @@ NEW_STRANGE_MESONS = [
         'name': 'K(0)*(700)+',
         'stable': 0,
         'mass': 0.838,
-        'degeneracy': 1,
+        'degeneracy': 0,
         'statistics': -1,
         'B': 0, 'Q': 1, 'S': 1, 'C': 0,
         'absS': 1, 'absC': 0,
