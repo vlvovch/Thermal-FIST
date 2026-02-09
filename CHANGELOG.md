@@ -4,6 +4,59 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6]
+
+Date: 2026-02-08
+
+Version 1.6 contains two major additions: updated PDG2025 particle lists with an extended and validated charm sector, and WebAssembly (WASM) support for running the GUI in a web browser.
+
+## PDG2025 particle lists
+
+- The default particle list is now based on the **2025 edition of the PDG listing**
+- **Significantly extended and validated charm sector**: charmed hadrons and charmonia cross-checked against PDG2025 mass/width data, with corrected branching ratios and catch-all decay channels for completeness
+- K₀\*(700)/κ is commented out per PDG2025 guidance (no established resonance status)
+- New modular list structure in `input/list/PDG2025/modular/` for fine-grained customization
+- Isospin-symmetric list available (`list-isospin-symmetric.dat`)
+- Automated list generation workflow (`generate_pdg2025.py`) for reproducibility
+- Added ALICE Pb-Pb 5.02 TeV symmetrized yield data
+
+## WebAssembly (WASM) support
+
+The QtThermalFIST GUI can now run directly in a web browser via WebAssembly.
+
+- Full GUI functionality in the browser, including thermal model calculations, thermal fits, equation of state, and event generator
+- Supports both single-threaded and multi-threaded builds (Qt 6.10.1 + Emscripten 4.0.7)
+- Browser-based file I/O for loading/saving particle lists and results
+- Docker/Caddy deployment infrastructure for self-hosting
+- Threading detection with automatic fallback for browsers without SharedArrayBuffer (e.g. Safari)
+- Dynamic font and row height scaling for various screen sizes and resolutions
+- See `docs/wasm-build.md` for build and deployment instructions
+
+## GUI enhancements
+
+- Quick particle list switching via two combo boxes: PDG edition (PDG2014/2020/2025) and list variant (default, no nuclei, with charm, etc.)
+- Informative display of loaded particle list with particle count
+- Improved rendering of lattice QCD data for ratios in the equation of state tab
+- Better default parameter ranges for cosmic trajectory calculations
+
+## Bugfixes
+
+- Fixed calculation of charge susceptibilities at zero temperature
+- Fixed Bose-Einstein integrals at T = 0 and μ > m
+- Fixed Broyden solver stability issues with `SearchFirstSolution` fallback
+- Fixed V_c fits in charm-canonical ensemble
+- Added check for multi-charmed states in `ThermalModelCanonicalCharm`
+- Improved thermodynamic stability checks via Hessian eigenvalue analysis
+- More stable cosmic trajectory calculations in the GUI
+- More lenient handling of missing decays
+
+## Other changes
+
+- Added kaon interactions (K-K excluded volume)
+- Added `CITATION.cff` for automated citation metadata
+- Unified `configureTableRowHeight` implementation across all platforms
+- Various CI/CD improvements
+
 ## [Version 1.5.2]
 
 Date: 2025-07-23
@@ -366,6 +419,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.6]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.2...v1.6
 
 [Version 1.5.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.1...v1.5.2
 
