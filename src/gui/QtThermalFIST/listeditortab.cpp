@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QDebug>
+#include <QTimer>
 #include "listtablemodel.h"
 #include "decayseditor.h"
 #include "WasmFileIO.h"
@@ -352,7 +353,36 @@ void ListEditorTab::applyChanges()
     QMessageBox::information(this, tr("Apply changes"), tr("No new changes detected!"));
     return;
   }
-  
+
+  auto doApply = [this]() {
+    std::vector<thermalfist::ThermalParticle> particles = myModel->GetTPS()->Particles();
+    myModel->GetTPS()->SetTableFromVector(particles, true);
+
+    myModel->applyChanges();
+
+    *model->TPS() = *myModel->GetTPS();
+    model->ChangeTPS(model->TPS());
+
+    resetTPS();
+  };
+
+#ifdef Q_OS_WASM
+  // WASM: Use non-blocking dialog to avoid issues with exec()
+  QMessageBox *msgBox = new QMessageBox(this);
+  msgBox->setWindowTitle(tr("Apply changes"));
+  msgBox->setText(tr("Do you want to apply changes to the particle list to use in the current session?"));
+  QPushButton *applyButton = msgBox->addButton(tr("Apply"), QMessageBox::ApplyRole);
+  msgBox->addButton(tr("No"), QMessageBox::NoRole);
+  msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+  connect(msgBox, &QMessageBox::finished, this, [this, msgBox, applyButton, doApply](int) {
+    if (msgBox->clickedButton() == applyButton && myModel->haveChanges()) {
+      doApply();
+    }
+  });
+
+  msgBox->open();
+#else
   QMessageBox msgBox;
   QPushButton *applyButton = msgBox.addButton(tr("Apply"), QMessageBox::ApplyRole);
   QPushButton *abortButton = msgBox.addButton(tr("No"), QMessageBox::NoRole);
@@ -360,20 +390,12 @@ void ListEditorTab::applyChanges()
   msgBox.setText(tr("Do you want to apply changes to the particle list to use in the current session?"));
 
   msgBox.exec();
-  
+
   if (msgBox.clickedButton() == abortButton || !myModel->haveChanges())
     return;
 
-  std::vector<ThermalParticle> particles = myModel->GetTPS()->Particles();
-  myModel->GetTPS()->SetTableFromVector(particles, true);
-  
-  myModel->applyChanges();
-
-  *model->TPS() = *myModel->GetTPS();
-  model->ChangeTPS(model->TPS());
-
-  resetTPS();
-
+  doApply();
+#endif
 }
 
 void ListEditorTab::changedRow()
@@ -771,26 +793,48 @@ void ListEditorTab::saveToFile()
 {
 #ifdef Q_OS_WASM
   // WASM: Write to sandbox FS and trigger browser downloads
+  // Note: QFileDialog::saveFileContent is async and opens a browser dialog,
+  // so we must delay the second download to avoid conflicts
   QString tempListPath = WasmFileIO::getSandboxTempDir() + "/list.dat";
   QString tempDecaysPath = WasmFileIO::getSandboxTempDir() + "/decays.dat";
 
   myModel->GetTPS()->WriteTableToFile(tempListPath.toStdString());
   myModel->GetTPS()->WriteDecaysToFile(tempDecaysPath.toStdString());
 
-  // Download particle list
+  // Build descriptive filenames from currentPath (e.g. "PDG2025-list-withnuclei.dat")
+  QString listSuggestedName = "list.dat";
+  QString decaysSuggestedName = "decays.dat";
+  if (!currentPath.isEmpty()) {
+    QFileInfo fi(currentPath);
+    QString dirName = fi.dir().dirName();   // e.g. "PDG2025" or "default"
+    QString fileName = fi.fileName();       // e.g. "list-withnuclei.dat"
+    if (!dirName.isEmpty() && dirName != "." && dirName != "default") {
+      listSuggestedName = dirName + "-" + fileName;
+      decaysSuggestedName = dirName + "-decays.dat";
+    } else {
+      listSuggestedName = fileName;
+    }
+  }
+
+  // Download particle list first
   QFile listFile(tempListPath);
   if (listFile.open(QIODevice::ReadOnly)) {
     QByteArray listData = listFile.readAll();
     listFile.close();
-    WasmFileIO::saveFile(listData, "list.dat");
+    WasmFileIO::saveFile(listData, listSuggestedName);
   }
 
-  // Download decays file
+  // Download decays file after a delay so the browser can process the first download
+  QByteArray decaysData;
   QFile decaysFile(tempDecaysPath);
   if (decaysFile.open(QIODevice::ReadOnly)) {
-    QByteArray decaysData = decaysFile.readAll();
+    decaysData = decaysFile.readAll();
     decaysFile.close();
-    WasmFileIO::saveFile(decaysData, "decays.dat");
+  }
+  if (!decaysData.isEmpty()) {
+    QTimer::singleShot(1000, this, [decaysData, decaysSuggestedName]() {
+      WasmFileIO::saveFile(decaysData, decaysSuggestedName);
+    });
   }
 #else
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/list.dat";

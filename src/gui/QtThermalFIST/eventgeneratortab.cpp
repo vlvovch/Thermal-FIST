@@ -114,10 +114,12 @@ void EventGeneratorWorker::run()
 BinningDialog::BinningDialog(BinningConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
 {
   if (config == 0) {
-    QMessageBox msgBox;
-    msgBox.setText(tr("Empty binning config!"));
-    msgBox.exec();
-    QDialog::reject();
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setText(tr("Empty binning config!"));
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    connect(msgBox, &QMessageBox::finished, this, &QDialog::reject);
+    msgBox->open();
+    return;
   }
   
   QVBoxLayout* layout = new QVBoxLayout();
@@ -177,10 +179,12 @@ void BinningDialog::OK()
 ParticlesAnalyzeDialog::ParticlesAnalyzeDialog(ParticlesAnalyzeConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
 {
   if (config == 0) {
-    QMessageBox msgBox;
-    msgBox.setText(tr("Empty particle list config!"));
-    msgBox.exec();
-    QDialog::reject();
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setText(tr("Empty particle list config!"));
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    connect(msgBox, &QMessageBox::finished, this, &QDialog::reject);
+    msgBox->open();
+    return;
   }
 
   QVBoxLayout* layout = new QVBoxLayout();
@@ -1022,9 +1026,10 @@ void EventGeneratorTab::calculate() {
         double npow = spinn->value();
         double betaS = (2. + npow) / 2. * betaT;
         if (betaS >= 1.0) {
-          QMessageBox msgBox;
-          msgBox.setText(QString("Too high transverse flow! The flow velocity at the surface exceeds the speed of light, β<sub>s</sub> = %1").arg(betaS));
-          msgBox.exec();
+          QMessageBox *msgBox = new QMessageBox(this);
+          msgBox->setText(QString("Too high transverse flow! The flow velocity at the surface exceeds the speed of light, β<sub>s</sub> = %1").arg(betaS));
+          msgBox->setAttribute(Qt::WA_DeleteOnClose);
+          msgBox->open();
           return;
         }
       }
