@@ -1,0 +1,40 @@
+# Base image with Emscripten + Qt for WASM builds
+# Rebuild only when changing Emscripten/Qt versions
+#
+# Build: docker build -f Dockerfile.base -t thermal-fist-wasm-base .
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    python3 \
+    python3-pip \
+    wget \
+    curl \
+    xz-utils \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install aqtinstall for downloading Qt
+RUN pip3 install aqtinstall
+
+# Install Emscripten 4.0.7
+WORKDIR /opt
+RUN git clone https://github.com/emscripten-core/emsdk.git
+WORKDIR /opt/emsdk
+RUN ./emsdk install 4.0.7 && \
+    ./emsdk activate 4.0.7
+
+# Install Qt 6.10.1 for WebAssembly + host tools
+WORKDIR /opt
+RUN aqt install-qt linux desktop 6.10.1 linux_gcc_64 && \
+    aqt install-qt all_os wasm 6.10.1 wasm_multithread
+
+ENV EMSDK=/opt/emsdk
+ENV EM_CONFIG=/opt/emsdk/.emscripten
+ENV QT_DIR=/opt/6.10.1
+ENV QT_HOST_PATH=/opt/6.10.1/gcc_64
