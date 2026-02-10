@@ -9,11 +9,12 @@ import os
 import re
 from collections import OrderedDict
 
-BASE_DIR = "/Users/vlvovch/.claude-worktrees/Thermal-FIST-dev/vigilant-napier/input/list"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(SCRIPT_DIR)  # input/list/
 PDG2020_LIST = os.path.join(BASE_DIR, "PDG2020", "list.dat")
 PDG2020_DECAYS = os.path.join(BASE_DIR, "PDG2020", "decays.dat")
-PDG2025_MASSWIDTH = "/tmp/pdg2025_mass_width.txt"
-OUTPUT_DIR = os.path.join(BASE_DIR, "PDG2025")
+PDG2025_MASSWIDTH = os.path.join(SCRIPT_DIR, "pdglisting", "mass_width_2025.txt")
+OUTPUT_DIR = SCRIPT_DIR
 OUTPUT_LIST = os.path.join(OUTPUT_DIR, "list.dat")
 OUTPUT_DECAYS = os.path.join(OUTPUT_DIR, "decays.dat")
 

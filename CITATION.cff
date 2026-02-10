@@ -26,6 +26,8 @@ keywords:
   - heavy-ion-collisions
   - hadron-resonance-gas
 license: GPL-3.0
+version: 1.6.0
+date-released: '2026-02-09'
 preferred-citation:
   type: article
   title: "Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state"

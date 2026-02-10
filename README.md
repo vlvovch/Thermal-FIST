@@ -2,7 +2,7 @@
 
 # Thermal-FIST
 [![Build Status](https://github.com/vlvovch/Thermal-FIST/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/vlvovch/Thermal-FIST/actions/workflows/build_and_test.yml)
-[![Version](https://img.shields.io/badge/version-1.5.1-purple.svg)](https://github.com/vlvovch/Thermal-FIST/releases)
+[![Version](https://img.shields.io/badge/version-1.6-purple.svg)](https://github.com/vlvovch/Thermal-FIST/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **Thermal-FIST** (or simply **The FIST**) is a C++ package designed for a convenient general-purpose analysis within the family of hadron resonance gas (HRG) models.
@@ -60,6 +60,8 @@ can be done in GUI. Using the GUI can therefore be a good starting point.
 
 <p align="center">
   <img src="src/gui/QtThermalFIST/images/QtThermalFIST.jpg" alt="QtThermalFIST"/>
+  <br/>
+  <em>Also accessible in a browser at <a href="https://thermal-fist.vovchenko.net">thermal-fist.vovchenko.net</a></em>
 </p>
 
 
@@ -76,7 +78,7 @@ Thermal-FIST is a C++ package, and can be used in C++ code. Common usage patters
 
 Please see the [**Quick Start Guide**](docs/quickstart.md) to get started as well as [the examples](https://vovchenko.net/project/thermal-fist/doc/examples.html) in [src/examples](src/examples) for illustration.
 
-For running Thermal-FIST in the cloud, you may use [GitHub Codespaces](https://github.com/features/codespaces). It may even possible to run the GUI from a browser, see [https://github.com/devcontainers/features/tree/main/src/desktop-lite](https://github.com/devcontainers/features/tree/main/src/desktop-lite)
+The GUI can be run directly in a web browser via WebAssembly at [thermal-fist.vovchenko.net](https://thermal-fist.vovchenko.net). For running the C++ code in the cloud, you may use [GitHub Codespaces](https://github.com/features/codespaces).
 
 ### Documentation
 
@@ -108,4 +110,4 @@ Other citations may be needed depending on the specific features and inputs used
 
 It is expected that changes to the code are documented.
 
-*Copyright (C) 2018-2025  Volodymyr Vovchenko*
+*Copyright (C) 2018-2026  Volodymyr Vovchenko*

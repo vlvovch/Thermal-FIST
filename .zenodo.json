@@ -1,0 +1,32 @@
+{
+  "title": "Thermal-FIST: A package for heavy-ion collisions and hadronic equation of state",
+  "description": "C++ package for hadron resonance gas model applications, including thermal fits, equation of state, and Monte Carlo event generation.",
+  "creators": [
+    {
+      "name": "Vovchenko, Volodymyr",
+      "orcid": "0000-0002-2189-4766",
+      "affiliation": "University of Houston"
+    },
+    {
+      "name": "Stoecker, Horst",
+      "orcid": "0000-0002-3282-3664"
+    }
+  ],
+  "keywords": [
+    "hadron resonance gas",
+    "heavy-ion collisions",
+    "equation of state",
+    "QCD",
+    "thermal model"
+  ],
+  "license": "GPL-3.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "identifier": "10.1016/j.cpc.2019.06.024",
+      "relation": "isDocumentedBy",
+      "scheme": "doi"
+    }
+  ]
+}
