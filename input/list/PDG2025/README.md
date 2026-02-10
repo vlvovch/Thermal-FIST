@@ -6,11 +6,11 @@ This directory contains the PDG2025 hadron resonance list and decay channels for
 
 | File | Description |
 |------|-------------|
-| `list.dat` | PDG2025 particle list — 248 light+strange hadrons (444 with antiparticles) |
-| `list-withcharm.dat` | Extended list with charm — 330 particles (586 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
-| `list-withnuclei.dat` | Extended list with stable light nuclei — 256 particles |
-| `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 286 particles |
-| `list-isospin-symmetric.dat` | Isospin-symmetric list — 248 hadrons with enforced isospin mass symmetry, useful for tests |
+| `list.dat` | PDG2025 particle list — 246 light+strange hadrons (440 with antiparticles) |
+| `list-withcharm.dat` | Extended list with charm — 328 particles (582 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
+| `list-withnuclei.dat` | Extended list with stable light nuclei — 254 particles |
+| `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 284 particles |
+| `list-isospin-symmetric.dat` | Isospin-symmetric list — 246 hadrons with enforced isospin mass symmetry, useful for tests |
 | `decays.dat` | Decay channels for all unstable hadrons |
 | `generate_pdg2025.py` | Generation script: takes PDG2020 as base and applies PDG2025 updates |
 | `pdglisting/mass_width_2025.txt` | PDG2025 mass-width summary data used by `generate_pdg2025.py` |
@@ -51,7 +51,7 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
 | Sigma baryons | 27 | Sigma+/0/- through Sigma(2030), with 3 charge states |
 | Xi baryons | 12 | Xi0/- through Xi(2030), with 2 charge states |
 | Omega baryons | 3 | Omega-, Omega(2012), Omega(2250) |
-| **Total** | **248** | Antiparticles generated automatically (444 total) |
+| **Total** | **246** | Antiparticles generated automatically (440 total) |
 
 ---
 
@@ -65,10 +65,10 @@ The doubly charmed baryon Xi_cc++ (C=2, pdgid 4422) is intentionally excluded to
 
 | | Count |
 |---|-------|
-| Light + strange hadrons | 248 |
+| Light + strange hadrons | 246 |
 | Charmed hadrons | 82 |
-| **Total particles** | **330** |
-| **Total with antiparticles** | **586** |
+| **Total particles** | **328** |
+| **Total with antiparticles** | **582** |
 
 ### Charm Sector Breakdown
 
@@ -223,20 +223,20 @@ The `modular/` directory provides the same particle data split into sector-speci
 
 | File | Particles | Description |
 |------|-----------|-------------|
-| `list-hadrons.dat` | 248 | Light + strange hadrons (= `list.dat`) |
+| `list-hadrons.dat` | 246 | Light + strange hadrons (= `list.dat`) |
 | `list-charm.dat` | 82 | Charmed hadrons only |
 | `list-nuclei.dat` | 8 | Stable light nuclei (d, t, 3He, 4He, ...) |
 | `list-excitednuclei.dat` | 30 | Excited light nuclei |
 | `list-exotica.dat` | 6 | Exotic states (hypernuclei) |
 | `list-charged-leptons.dat` | 3 | e, mu, tau |
 | `list-multicharm.dat` | 1 | Multiply charmed hadrons: Xi_cc++ (C=2) |
-| `list-isospin-symmetric.dat` | 248 | Isospin-symmetric hadron list (see below) |
+| `list-isospin-symmetric.dat` | 246 | Isospin-symmetric hadron list (see below) |
 
 ### Decay files
 
 | File | Entries | Description |
 |------|---------|-------------|
-| `decays-hadrons.dat` | 247 | Decays for light + strange hadrons |
+| `decays-hadrons.dat` | 245 | Decays for light + strange hadrons |
 | `decays-charm.dat` | 82 | Decays for charmed hadrons |
 | `decays-excitednuclei.dat` | 30 | Decays for excited nuclei |
 
@@ -318,7 +318,7 @@ The catch-all channel uses the lightest kinematically allowed final state that c
 - 7 D/D_s meson resonances: 100% catch-all
 - 17 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
 
-After these additions, all 82 charm particles (55 unstable + 27 stable) have BR sums = 1.0.
+After these additions, all 82 charm particles (73 unstable + 9 stable) have BR sums = 1.0.
 
 ---
 
@@ -332,11 +332,11 @@ After these additions, all 82 charm particles (55 unstable + 27 stable) have BR 
 1. Verified quantum number consistency (B, Q, S, C, |C|, statistics, degeneracy) for all 82 charm entries
 2. Verified conservation of B, Q, S, C in all threshold decay channels
 3. Confirmed threshold mass values match lightest allowed decay products within 1 MeV
-4. Loaded all 586 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
+4. Loaded all 582 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
 5. Confirmed C ∈ {-1, 0, 1} for all entries (charm-canonical compatibility)
 
 ### decays.dat (charm sector)
-1. Verified all 55 unstable charm particles have BR sum = 1.000 (within 0.001 tolerance)
+1. Verified all 73 unstable charm particles have BR sum = 1.000 (within 0.001 tolerance)
 2. Verified all daughter particles exist in the particle list
 3. Verified all decay thresholds ≤ parent mass
 4. Charge (Q) conservation verified in all catch-all channels

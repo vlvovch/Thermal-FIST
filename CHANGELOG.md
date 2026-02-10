@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Version 1.6]
 
-Date: 2026-02-08
+Date: 2026-02-09
 
 Version 1.6 contains two major additions: updated PDG2025 particle lists with an extended and validated charm sector, and WebAssembly (WASM) support for running the GUI in a web browser.
 
@@ -14,23 +14,21 @@ Version 1.6 contains two major additions: updated PDG2025 particle lists with an
 
 - The default particle list is now based on the **2025 edition of the PDG listing**
 - **Significantly extended and validated charm sector**: charmed hadrons and charmonia cross-checked against PDG2025 mass/width data, with corrected branching ratios and catch-all decay channels for completeness
-- K₀\*(700)/κ is commented out per PDG2025 guidance (no established resonance status)
-- New modular list structure in `input/list/PDG2025/modular/` for fine-grained customization
+- Modular list structure in `input/list/PDG2025/modular/` for fine-grained customization
 - Isospin-symmetric list available (`list-isospin-symmetric.dat`)
-- Automated list generation workflow (`generate_pdg2025.py`) for reproducibility
-- Added ALICE Pb-Pb 5.02 TeV symmetrized yield data
 
 ## WebAssembly (WASM) support
 
-The QtThermalFIST GUI can now run directly in a web browser via WebAssembly.
+The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It can be accessed directly at [**thermal-fist.vovchenko.net**](https://thermal-fist.vovchenko.net/). Chrome is recommended for multi-threaded execution.
 
-- Full GUI functionality in the browser, including thermal model calculations, thermal fits, equation of state, and event generator
-- Supports both single-threaded and multi-threaded builds (Qt 6.10.1 + Emscripten 4.0.7)
-- Browser-based file I/O for loading/saving particle lists and results
+- Core GUI functionality in the browser, including thermal model calculations, thermal fits, equation of state, and event generator
+- Calculations are performed *locally* (client-side) in the browser using your CPU
+- Supports both single-threaded and multi-threaded builds (Qt 6.10.1 + Emscripten 4.0.7); multi-threaded builds require proper COOP/COEP headers and SharedArrayBuffer support
+<!-- - Browser-based file I/O for loading/saving particle lists and results
 - Docker/Caddy deployment infrastructure for self-hosting
 - Threading detection with automatic fallback for browsers without SharedArrayBuffer (e.g. Safari)
 - Dynamic font and row height scaling for various screen sizes and resolutions
-- See `docs/wasm-build.md` for build and deployment instructions
+- See `docs/wasm-build.md` for build and deployment instructions -->
 
 ## GUI enhancements
 
@@ -46,16 +44,17 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly.
 - Fixed Broyden solver stability issues with `SearchFirstSolution` fallback
 - Fixed V_c fits in charm-canonical ensemble
 - Added check for multi-charmed states in `ThermalModelCanonicalCharm`
-- Improved thermodynamic stability checks via Hessian eigenvalue analysis
+- Thermodynamic stability checks via Hessian eigenvalue analysis
 - More stable cosmic trajectory calculations in the GUI
 - More lenient handling of missing decays
 
 ## Other changes
 
-- Added kaon interactions (K-K excluded volume)
-- Added `CITATION.cff` for automated citation metadata
+- Option to use effective mass model for kaon interactions to reach large strangeness/charge chemical potentials (similar to pion implementation which was done before)
+- Added `CITATION.cff` for automated citation metadata and Zenodo integration
 - Unified `configureTableRowHeight` implementation across all platforms
 - Various CI/CD improvements
+- Added ALICE Pb-Pb 5.02 TeV symmetrized yield data
 
 ## [Version 1.5.2]
 
@@ -457,4 +456,3 @@ Date: 2018-08-02
 [Version 0.7]: https://github.com/vlvovch/Thermal-FIST/compare/v0.6...v0.7
 
 [Version 0.6]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.6
-
