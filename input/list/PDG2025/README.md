@@ -26,14 +26,14 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
    - pi(1)(1400)0 (9000113), pi(1)(1400)+ (9000213) -- removed from PDG summary tables
    - Sigma(2250)-, Sigma(2250)0, Sigma(2250)+ (33114, 33214, 33224) -- demoted from summary tables
 
-2. **Added 11 new particles** (7 new states, some with multiple charge states):
+2. **Added 9 new particles** (6 new states, some with multiple charge states):
    - f(2)(1565) -- new I=0 tensor meson
    - f(0)(2020) -- new I=0 scalar meson
    - f(2)(2150) -- new I=0 tensor meson
-   - K(0)*(700) / kappa -- light scalar kaon (K0, K+) — **commented out** (see below)
    - K(1)(1650) -- excited axial kaon (K0, K+)
    - K(0)*(1950) -- excited scalar kaon (K0, K+)
    - K(2)*(1980) -- excited tensor kaon (K0, K+)
+   - K(0)*(700) / kappa -- light scalar kaon (K0, K+) — **commented out** in `list.dat` (its thermal contribution is cancelled by the repulsive I=3/2 Kpi channel; no other particle decays into it)
 
 3. **Updated masses and widths** from PDG2025 data for all existing particles, using `pdglisting/mass_width_2025.txt`.
 
@@ -44,7 +44,7 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
 | Sector | Particles | Notes |
 |--------|-----------|-------|
 | Light unflavored mesons | 70 | pi through f(2)(2340), including hidden strangeness (eta, phi, ...) |
-| Strange mesons | 32 | K through K(4)*(2045), neutral and charged states |
+| Strange mesons | 30 | K through K(4)*(2045), neutral and charged states |
 | N baryons | 40 | p, n, N(1440) through N(2600), with 0/+ charge states |
 | Delta baryons | 48 | Delta(1232) through Delta(2420), with -/0/+/++ charge states |
 | Lambda baryons | 14 | Lambda through Lambda(2350) |
@@ -124,7 +124,7 @@ The degeneracies in our lists follow the measured J^P (correct physics). The MCI
 
 ## PDG Monte Carlo ID Numbering Scheme
 
-### Standard PDG IDs (218 particles in list.dat)
+### Standard PDG IDs (216 particles in list.dat)
 
 Most particles use the official PDG Monte Carlo numbering scheme, which encodes quark content and quantum numbers in digit positions:
 
@@ -302,8 +302,9 @@ The catch-all channel uses the lightest kinematically allowed final state that c
 | Particle type | Catch-all channel | Daughters | Rationale |
 |---------------|-------------------|-----------|-----------|
 | Charmonia (cc&#x0304;, C=0) | pi+ pi- pi0 | 211 -211 111 | Lightest hadronic state with correct quantum numbers |
-| D0 (weak decay) | K- pi+ pi0 | -321 211 111 | Cabibbo-favored (c&#x2192;s) hadronic final state |
-| D+ (weak decay) | K&#x0304;0 pi+ pi0 | -311 211 111 | Cabibbo-favored (c&#x2192;s) hadronic final state |
+| D0 (weak decay) | 2pi+ 2pi- pi0 | 211 -211 211 -211 111 | Generic multi-pion final state (Q=0, 4.52%) |
+| D+ (weak decay) | K- 3pi+ pi- pi0 | -321 211 211 211 -211 111 | CF hadronic final state (Q=+1, 0.36%) |
+| Ds+ (weak decay) | 2pi+ pi- 2pi0 | 211 211 -211 111 111 | Generic multi-pion final state (Q=+1, 4.62%) |
 | D resonances (C=1, S=0) | D + pi | 421 211 or 421 111 | Lightest open-charm + pion (charge-appropriate) |
 | D_s resonances (C=1, S=1) | D_s + pi0 | 431 111 | Lightest open-charm-strange + pion |
 | Lambda_c, Sigma_c (C=1, S=0) | Lambda_c + pi | 4122 + pi | Lightest charmed baryon + pion |
@@ -314,8 +315,8 @@ The catch-all channel uses the lightest kinematically allowed final state that c
 
 - 13 charmonia with existing PDG decay channels: catch-all added for the unmeasured fraction
 - 9 charmonia with no PDG exclusive modes: 100% catch-all
-- 2 ground-state D mesons (D0, D+): catch-all for unmeasured weak decay fraction (2.1% and 12.0%)
-- 7 D/D_s meson resonances: 100% catch-all
+- 3 ground-state D mesons (D0, D+, Ds+): catch-all for unmeasured weak decay fraction (4.52%, 0.36%, 4.62%)
+- 6 D/D_s meson resonances: 100% catch-all
 - 17 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
 
 After these additions, all 82 charm particles (73 unstable + 9 stable) have BR sums = 1.0.

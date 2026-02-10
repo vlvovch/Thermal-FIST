@@ -228,34 +228,40 @@ NEW_MESONS = [
     },
 ]
 
-# New strange mesons
-NEW_STRANGE_MESONS = [
-    # K(0)*(700) / kappa: I(J^P) = 1/2(0+), PDG IDs 9000311, 9000321
-    # degeneracy=0: cancellation in I=3/2 Kpi repulsive channel, analogous to f(0)(500)/sigma in I=2 pipi
+# K(0)*(700) / kappa: I(J^P) = 1/2(0+), PDG IDs 9000311, 9000321
+# Excluded: its thermal contribution is cancelled by the repulsive I=3/2 Kpi channel
+# (Broniowski et al., PRC 92, 034905, 2015), analogous to f(0)(500)/sigma in I=2 pipi.
+# No other particle decays into K(0)*(700), so it is commented out entirely.
+# Written as comments in list.dat for reference.
+KAPPA_PARTICLES = [
     {
         'pdgid': 9000311,
         'name': 'K(0)*(700)0',
         'stable': 0,
         'mass': 0.838,
-        'degeneracy': 0,
+        'degeneracy': 1,
         'statistics': -1,
         'B': 0, 'Q': 0, 'S': 1, 'C': 0,
         'absS': 1, 'absC': 0,
         'width': 0.463,
-        'threshold': 0
+        'threshold': 0.632588
     },
     {
         'pdgid': 9000321,
         'name': 'K(0)*(700)+',
         'stable': 0,
         'mass': 0.838,
-        'degeneracy': 0,
+        'degeneracy': 1,
         'statistics': -1,
         'B': 0, 'Q': 1, 'S': 1, 'C': 0,
         'absS': 1, 'absC': 0,
         'width': 0.463,
-        'threshold': 0
+        'threshold': 0.628654
     },
+]
+
+# New strange mesons
+NEW_STRANGE_MESONS = [
     # K(1)(1650): I(J^P) = 1/2(1+), PDG IDs 9000313, 9000323
     {
         'pdgid': 9000313,
@@ -378,18 +384,7 @@ NEW_DECAYS = {
         {'br': 0.05, 'daughters': [-215, 211], 'comment': '# f(2)(2150) -> a(2)(1320)- + pi+'},
     ],
 
-    # K(0)*(700)0: I(J^P) = 1/2(0+), kappa
-    # Dominant decay to K pi
-    9000311: [
-        {'br': 0.6667, 'daughters': [321, -211], 'comment': '# K(0)*(700)0 -> K+ + pi-'},
-        {'br': 0.3333, 'daughters': [311, 111], 'comment': '# K(0)*(700)0 -> K0 + pi0'},
-    ],
-
-    # K(0)*(700)+
-    9000321: [
-        {'br': 0.6667, 'daughters': [311, 211], 'comment': '# K(0)*(700)+ -> K0 + pi+'},
-        {'br': 0.3333, 'daughters': [321, 111], 'comment': '# K(0)*(700)+ -> K+ + pi0'},
-    ],
+    # K(0)*(700) excluded from particle list; no decay entries needed.
 
     # K(1)(1650)0: I(J^P) = 1/2(1+)
     # Axial kaon, similar to K(1)(1270) but heavier
@@ -2015,6 +2010,16 @@ def generate_pdg2025():
             # Format each field to match the original column alignment
             line = f"{p['pdgid']:>15} {p['name']:>20} {p['stable']:>13} {p['mass']:>14g} {p['degeneracy']:>14} {p['statistics']:>14} {p['B']:>14} {p['Q']:>14} {p['S']:>14} {p['C']:>14} {p['absS']:>14g} {p['absC']:>14g} {p['width']:>14g} {p['threshold']:>14g}"
             f.write(line + "\n")
+
+            # After the last light meson before strange mesons (K0, pdgid 311),
+            # write K(0)*(700)/kappa as commented-out lines
+            if p['pdgid'] == 311:
+                f.write("# K(0)*(700)/kappa excluded: its thermal contribution is cancelled by the repulsive I=3/2 Kpi\n")
+                f.write("#   channel (Broniowski et al., PRC 92, 034905, 2015), analogous to f(0)(500)/sigma in I=2 pipi.\n")
+                f.write("#   No other particle decays into K(0)*(700), so it is commented out rather than kept with deg=0.\n")
+                for kp in KAPPA_PARTICLES:
+                    kline = f"{kp['pdgid']:>15} {kp['name']:>20} {kp['stable']:>13} {kp['mass']:>14g} {kp['degeneracy']:>14} {kp['statistics']:>14} {kp['B']:>14} {kp['Q']:>14} {kp['S']:>14} {kp['C']:>14} {kp['absS']:>14g} {kp['absC']:>14g} {kp['width']:>14g} {kp['threshold']:>14g}"
+                    f.write("#" + kline + "\n")
 
     print(f"Written {len(all_particles)} particles to {OUTPUT_LIST}")
 
