@@ -72,7 +72,7 @@ Thermal-FIST is a C++ package, and can be used in C++ code. Common usage patters
 - C++ macro using linking to the Thermal-FIST library. See [src/examples](src/examples) for illustration.
 - As a submodule. See [https://github.com/vlvovch/finite-resonance-widths](https://github.com/vlvovch/finite-resonance-widths) for an example.
 - As an event generator. See [https://github.com/vlvovch/fist-sampler](https://github.com/vlvovch/fist-sampler) for an example.
-- Using graphical user interface.
+- Using graphical user interface. See [https://thermal-fist.vovchenko.net](https://thermal-fist.vovchenko.net) for a live web version.
 - As a Jupyter notebook. See [https://github.com/vlvovch/fist-jupyter](https://github.com/vlvovch/fist-jupyter) for an example. (NOTE: does not work on Apple Silicon)
 
 
