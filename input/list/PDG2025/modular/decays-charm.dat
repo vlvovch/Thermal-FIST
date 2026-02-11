@@ -1,3 +1,12 @@
+# the list of decays
+# each entry consists of the following:
+# a line with the pdgid of decaying particle
+# a line with the number of decay channels
+# for each channel a line containing whitespace-separated values of the channel branching ratio and pdg ids of the daughter products
+# everything after the # symbol is treated as a comment and ignored
+# decays of antiparticles are not listed but generated from the listed decays of particles
+
+# decays of open charm hadrons from PDG2025
 441                                      # eta(c)(1S) (PDG2025 updated)
 23                                       # 23 decay channels
 0.1589          211 211 -211 -211 111 111 # eta_c -> 3(pi+pi-) pi0pi0 (PDG 15.89%)
@@ -679,3 +688,4 @@
 9304334                                  # Omega(c)(3327) (PDG2025 new)
 1                                        # 1 decay channel
 1.0             4132 321             # Omega_c(3327) -> Xi_c0 K+
+

@@ -870,21 +870,22 @@ DECAY_UPDATES = {
     # =====================================================================
 
     # Lambda(1520): PDG 2025 BFX: N Kbar (45%), Sigma pi (42%), Lambda pipi (10%),
-    #               Sigma(1385) pipi (0.9%), Lambda gamma (0.85%)
-    # Fix: Lambda gamma was 1.0% in PDG2020, PDG2025 says 0.85%
+    #               Sigma pipi (0.9%), Lambda gamma (0.85+/-0.15%)
+    # NKbar=45.5%, Sigma_pi=42%, Lambda_pipi=10%, Sigma_pipi=1%, Lambda_gamma=0.85%
+    # Sigma_pipi split: Sigma+pi-pi0=0.3%, Sigma0pi+pi-=0.3%, Sigma0pi0pi0=0.1%, Sigma-pi+pi0=0.3%
     3124: [
-        {'br': 0.230, 'daughters': [2212, -321], 'comment': '# Lambda(1520) -> p + K-'},
-        {'br': 0.230, 'daughters': [2112, -311], 'comment': '# Lambda(1520) -> n + anti-K0'},
-        {'br': 0.140, 'daughters': [3222, -211], 'comment': '# Lambda(1520) -> Sigma+ + pi-'},
-        {'br': 0.140, 'daughters': [3212, 111], 'comment': '# Lambda(1520) -> Sigma0 + pi0'},
-        {'br': 0.140, 'daughters': [3112, 211], 'comment': '# Lambda(1520) -> Sigma- + pi+'},
-        {'br': 0.068, 'daughters': [3122, 211, -211], 'comment': '# Lambda(1520) -> Lambda + pi+ + pi-'},
-        {'br': 0.034, 'daughters': [3122, 111, 111], 'comment': '# Lambda(1520) -> Lambda + pi0 + pi0'},
+        {'br': 0.2275, 'daughters': [2212, -321], 'comment': '# Lambda(1520) -> p + K-'},
+        {'br': 0.2275, 'daughters': [2112, -311], 'comment': '# Lambda(1520) -> n + anti-K0'},
+        {'br': 0.14, 'daughters': [3222, -211], 'comment': '# Lambda(1520) -> Sigma+ + pi-'},
+        {'br': 0.14, 'daughters': [3212, 111], 'comment': '# Lambda(1520) -> Sigma0 + pi0'},
+        {'br': 0.14, 'daughters': [3112, 211], 'comment': '# Lambda(1520) -> Sigma- + pi+'},
+        {'br': 0.067, 'daughters': [3122, 211, -211], 'comment': '# Lambda(1520) -> Lambda + pi+ + pi-'},
+        {'br': 0.033, 'daughters': [3122, 111, 111], 'comment': '# Lambda(1520) -> Lambda + pi0 + pi0'},
         {'br': 0.003, 'daughters': [3222, -211, 111], 'comment': '# Lambda(1520) -> Sigma+ + pi- + pi0'},
         {'br': 0.003, 'daughters': [3212, 211, -211], 'comment': '# Lambda(1520) -> Sigma0 + pi+ + pi-'},
         {'br': 0.001, 'daughters': [3212, 111, 111], 'comment': '# Lambda(1520) -> Sigma0 + pi0 + pi0'},
         {'br': 0.003, 'daughters': [3112, 211, 111], 'comment': '# Lambda(1520) -> Sigma- + pi+ + pi0'},
-        {'br': 0.0085, 'daughters': [3122, 22], 'comment': '# Lambda(1520) -> Lambda + gamma'},
+        {'br': 0.015, 'daughters': [3122, 22], 'comment': '# Lambda(1520) -> Lambda + gamma'},
     ],
 
     # Lambda(1600): PDG 2025 BFX: N Kbar (15-30%), Sigma pi (10-60%), Lambda sigma (19%)
@@ -1101,28 +1102,28 @@ DECAY_UPDATES = {
     # within PDG2025 ranges where they were previously outside.
     # =====================================================================
 
-    # N(1520)+: Npipi was 40% (PDG 25-35%). Reduce Nrho from 12->5%, Delta*pi 27->23%, add Nsigma 1%
-    # Keep Npi=60% (within 55-65%), total Npipi -> 29%
+    # N(1520)+: PDG2025 Npi=55-65%, Npipi=25-35%, Nrho<8%, Nsigma~3%
+    # Npi=65%, Delta*pi=23%, Nrho=7%, Nsigma=5%
     2124: [
-        {'br': 0.40, 'daughters': [2112, 211], 'comment': '# N(1520)+ -> n + pi+'},
-        {'br': 0.20, 'daughters': [2212, 111], 'comment': '# N(1520)+ -> p + pi0'},
+        {'br': 0.43, 'daughters': [2112, 211], 'comment': '# N(1520)+ -> n + pi+'},
+        {'br': 0.22, 'daughters': [2212, 111], 'comment': '# N(1520)+ -> p + pi0'},
         {'br': 0.115, 'daughters': [2224, -211], 'comment': '# N(1520)+ -> Delta(1232)++ + pi-'},
         {'br': 0.077, 'daughters': [2214, 111], 'comment': '# N(1520)+ -> Delta(1232)+ + pi0'},
         {'br': 0.038, 'daughters': [2114, 211], 'comment': '# N(1520)+ -> Delta(1232)0 + pi+'},
-        {'br': 0.033, 'daughters': [2112, 213], 'comment': '# N(1520)+ -> n + rho(770)+'},
-        {'br': 0.017, 'daughters': [2212, 113], 'comment': '# N(1520)+ -> p + rho(770)0'},
-        {'br': 0.02, 'daughters': [2212, 9000221], 'comment': '# N(1520)+ -> p + f(0)(500)'},
+        {'br': 0.047, 'daughters': [2112, 213], 'comment': '# N(1520)+ -> n + rho(770)+'},
+        {'br': 0.023, 'daughters': [2212, 113], 'comment': '# N(1520)+ -> p + rho(770)0'},
+        {'br': 0.05, 'daughters': [2212, 9000221], 'comment': '# N(1520)+ -> p + f(0)(500)'},
     ],
     # N(1520)0: isospin mirror
     1214: [
-        {'br': 0.20, 'daughters': [2112, 111], 'comment': '# N(1520)0 -> n + pi0'},
-        {'br': 0.40, 'daughters': [2212, -211], 'comment': '# N(1520)0 -> p + pi-'},
+        {'br': 0.22, 'daughters': [2112, 111], 'comment': '# N(1520)0 -> n + pi0'},
+        {'br': 0.43, 'daughters': [2212, -211], 'comment': '# N(1520)0 -> p + pi-'},
         {'br': 0.038, 'daughters': [2214, -211], 'comment': '# N(1520)0 -> Delta(1232)+ + pi-'},
         {'br': 0.077, 'daughters': [2114, 111], 'comment': '# N(1520)0 -> Delta(1232)0 + pi0'},
         {'br': 0.115, 'daughters': [1114, 211], 'comment': '# N(1520)0 -> Delta(1232)- + pi+'},
-        {'br': 0.017, 'daughters': [2112, 113], 'comment': '# N(1520)0 -> n + rho(770)0'},
-        {'br': 0.033, 'daughters': [2212, -213], 'comment': '# N(1520)0 -> p + rho(770)-'},
-        {'br': 0.02, 'daughters': [2112, 9000221], 'comment': '# N(1520)0 -> n + f(0)(500)'},
+        {'br': 0.023, 'daughters': [2112, 113], 'comment': '# N(1520)0 -> n + rho(770)0'},
+        {'br': 0.047, 'daughters': [2212, -213], 'comment': '# N(1520)0 -> p + rho(770)-'},
+        {'br': 0.05, 'daughters': [2112, 9000221], 'comment': '# N(1520)0 -> n + f(0)(500)'},
     ],
 
     # N(1650)+: Npipi was 15% (PDG 20-58%). Reduce Npi from 60->55%, increase Npipi from 15->25%
@@ -1183,8 +1184,8 @@ DECAY_UPDATES = {
         {'br': 0.133, 'daughters': [12212, -211], 'comment': '# N(1675)0 -> N(1440)+ + pi-'},
     ],
 
-    # N(1880)+: SigmaK missing (PDG 10-24%). Add SigmaK=15%, reduce Delta*pi and Nsigma
-    # Npi=6%, Neta=20%, LambdaK=10%, Nomega=14%, SigmaK=15%, Delta*pi=20%, Nsigma=8%, Nrho=7%
+    # N(1880)+: PDG2025 SigmaK=10-24%, Neta~20%, LambdaK~10%, Nomega~14%
+    # Npi=6%, Neta=20%, LambdaK=10%, Nomega=14%, SigmaK=18%, Delta*pi=20%, Nsigma=8%, Nrho=4%
     9902212: [
         {'br': 0.04, 'daughters': [2112, 211], 'comment': '# N(1880)+ -> n + pi+'},
         {'br': 0.02, 'daughters': [2212, 111], 'comment': '# N(1880)+ -> p + pi0'},
@@ -1195,8 +1196,8 @@ DECAY_UPDATES = {
         {'br': 0.04, 'daughters': [2114, 211], 'comment': '# N(1880)+ -> Delta(1232)0 + pi+'},
         {'br': 0.08, 'daughters': [2214, 111], 'comment': '# N(1880)+ -> Delta(1232)+ + pi0'},
         {'br': 0.12, 'daughters': [2224, -211], 'comment': '# N(1880)+ -> Delta(1232)++ + pi-'},
-        {'br': 0.075, 'daughters': [3222, 311], 'comment': '# N(1880)+ -> Sigma+ + K0'},
-        {'br': 0.075, 'daughters': [3212, 321], 'comment': '# N(1880)+ -> Sigma0 + K+'},
+        {'br': 0.09, 'daughters': [3222, 311], 'comment': '# N(1880)+ -> Sigma+ + K0'},
+        {'br': 0.09, 'daughters': [3212, 321], 'comment': '# N(1880)+ -> Sigma0 + K+'},
     ],
     # N(1880)0: isospin mirror
     9902112: [
@@ -1209,11 +1210,12 @@ DECAY_UPDATES = {
         {'br': 0.04, 'daughters': [2214, -211], 'comment': '# N(1880)0 -> Delta(1232)+ + pi-'},
         {'br': 0.08, 'daughters': [2114, 111], 'comment': '# N(1880)0 -> Delta(1232)0 + pi0'},
         {'br': 0.12, 'daughters': [1114, 211], 'comment': '# N(1880)0 -> Delta(1232)- + pi+'},
-        {'br': 0.075, 'daughters': [3112, 321], 'comment': '# N(1880)0 -> Sigma- + K+'},
-        {'br': 0.075, 'daughters': [3212, 311], 'comment': '# N(1880)0 -> Sigma0 + K0'},
+        {'br': 0.09, 'daughters': [3112, 321], 'comment': '# N(1880)0 -> Sigma- + K+'},
+        {'br': 0.09, 'daughters': [3212, 311], 'comment': '# N(1880)0 -> Sigma0 + K0'},
     ],
 
-    # N(1900)+: SigmaK missing (PDG 3-7%). Add SigmaK=5%, reduce Delta*pi
+    # N(1900)+: PDG2025 SigmaK=3-7%, Npi~12%, Neta~13%, Nomega~13%, LambdaK~9%
+    # Npi=12%, Neta=13%, Nomega=13%, N*pi=6%, LK=9%, Dpi=30%, N1520pi=12%, SK=5%
     9912214: [
         {'br': 0.04, 'daughters': [2212, 111], 'comment': '# N(1900)+ -> p + pi0'},
         {'br': 0.08, 'daughters': [2112, 211], 'comment': '# N(1900)+ -> n + pi+'},
@@ -1222,9 +1224,9 @@ DECAY_UPDATES = {
         {'br': 0.02, 'daughters': [22212, 111], 'comment': '# N(1900)+ -> N(1535)+ + pi0'},
         {'br': 0.04, 'daughters': [22112, 211], 'comment': '# N(1900)+ -> N(1535)0 + pi+'},
         {'br': 0.09, 'daughters': [3122, 321], 'comment': '# N(1900)+ -> Lambda + K+'},
-        {'br': 0.03, 'daughters': [2114, 211], 'comment': '# N(1900)+ -> Delta(1232)0 + pi+'},
-        {'br': 0.07, 'daughters': [2214, 111], 'comment': '# N(1900)+ -> Delta(1232)+ + pi0'},
-        {'br': 0.13, 'daughters': [2224, -211], 'comment': '# N(1900)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.05, 'daughters': [2114, 211], 'comment': '# N(1900)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.10, 'daughters': [2214, 111], 'comment': '# N(1900)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.15, 'daughters': [2224, -211], 'comment': '# N(1900)+ -> Delta(1232)++ + pi-'},
         {'br': 0.04, 'daughters': [2124, 111], 'comment': '# N(1900)+ -> N(1520)+ + pi0'},
         {'br': 0.08, 'daughters': [1214, 211], 'comment': '# N(1900)+ -> N(1520)0 + pi+'},
         {'br': 0.025, 'daughters': [3222, 311], 'comment': '# N(1900)+ -> Sigma+ + K0'},
@@ -1232,57 +1234,58 @@ DECAY_UPDATES = {
     ],
     # N(1900)0: isospin mirror
     9912114: [
-        {'br': 0.02, 'daughters': [2112, 111], 'comment': '# N(1900)0 -> n + pi0'},
+        {'br': 0.04, 'daughters': [2112, 111], 'comment': '# N(1900)0 -> n + pi0'},
         {'br': 0.08, 'daughters': [2212, -211], 'comment': '# N(1900)0 -> p + pi-'},
         {'br': 0.13, 'daughters': [2112, 221], 'comment': '# N(1900)0 -> n + eta'},
         {'br': 0.13, 'daughters': [2112, 223], 'comment': '# N(1900)0 -> n + omega(782)'},
         {'br': 0.02, 'daughters': [22112, 111], 'comment': '# N(1900)0 -> N(1535)0 + pi0'},
         {'br': 0.04, 'daughters': [22212, -211], 'comment': '# N(1900)0 -> N(1535)+ + pi-'},
         {'br': 0.09, 'daughters': [3122, 311], 'comment': '# N(1900)0 -> Lambda + K0'},
-        {'br': 0.03, 'daughters': [2214, -211], 'comment': '# N(1900)0 -> Delta(1232)+ + pi-'},
-        {'br': 0.07, 'daughters': [2114, 111], 'comment': '# N(1900)0 -> Delta(1232)0 + pi0'},
-        {'br': 0.13, 'daughters': [1114, 211], 'comment': '# N(1900)0 -> Delta(1232)- + pi+'},
+        {'br': 0.05, 'daughters': [2214, -211], 'comment': '# N(1900)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.10, 'daughters': [2114, 111], 'comment': '# N(1900)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.15, 'daughters': [1114, 211], 'comment': '# N(1900)0 -> Delta(1232)- + pi+'},
         {'br': 0.04, 'daughters': [1214, 111], 'comment': '# N(1900)0 -> N(1520)0 + pi0'},
         {'br': 0.08, 'daughters': [2124, -211], 'comment': '# N(1900)0 -> N(1520)+ + pi-'},
         {'br': 0.025, 'daughters': [3112, 321], 'comment': '# N(1900)0 -> Sigma- + K+'},
         {'br': 0.025, 'daughters': [3212, 311], 'comment': '# N(1900)0 -> Sigma0 + K0'},
     ],
 
-    # N(2060)+: LambdaK missing (PDG 10-20%). Add LambdaK=12%, reduce N*pi
+    # N(2060)+: PDG2025 LambdaK=10-20%, Npi~9%, Neta~4%, Nomega~7%
+    # Npi=12%, Neta=4%, Nomega=9%, Dpi=12%, Nsigma=8%, N1440pi=6%, N1520pi=18%, N1680pi=18%, LK=13%
     9902216: [
-        {'br': 0.03, 'daughters': [2212, 111], 'comment': '# N(2060)+ -> p + pi0'},
-        {'br': 0.06, 'daughters': [2112, 211], 'comment': '# N(2060)+ -> n + pi+'},
+        {'br': 0.04, 'daughters': [2212, 111], 'comment': '# N(2060)+ -> p + pi0'},
+        {'br': 0.08, 'daughters': [2112, 211], 'comment': '# N(2060)+ -> n + pi+'},
         {'br': 0.04, 'daughters': [2212, 221], 'comment': '# N(2060)+ -> p + eta'},
-        {'br': 0.07, 'daughters': [2212, 223], 'comment': '# N(2060)+ -> p + omega(782)'},
+        {'br': 0.09, 'daughters': [2212, 223], 'comment': '# N(2060)+ -> p + omega(782)'},
         {'br': 0.04, 'daughters': [2214, 111], 'comment': '# N(2060)+ -> Delta(1232)+ + pi0'},
         {'br': 0.02, 'daughters': [2114, 211], 'comment': '# N(2060)+ -> Delta(1232)0 + pi+'},
         {'br': 0.06, 'daughters': [2224, -211], 'comment': '# N(2060)+ -> Delta(1232)++ + pi-'},
-        {'br': 0.06, 'daughters': [2212, 9000221], 'comment': '# N(2060)+ -> p + f(0)(500)'},
+        {'br': 0.08, 'daughters': [2212, 9000221], 'comment': '# N(2060)+ -> p + f(0)(500)'},
         {'br': 0.02, 'daughters': [12212, 111], 'comment': '# N(2060)+ -> N(1440)+ + pi0'},
         {'br': 0.04, 'daughters': [12112, 211], 'comment': '# N(2060)+ -> N(1440)0 + pi+'},
         {'br': 0.06, 'daughters': [2124, 111], 'comment': '# N(2060)+ -> N(1520)+ + pi0'},
         {'br': 0.12, 'daughters': [1214, 211], 'comment': '# N(2060)+ -> N(1520)0 + pi+'},
         {'br': 0.06, 'daughters': [12216, 111], 'comment': '# N(2060)+ -> N(1680)+ + pi0'},
         {'br': 0.12, 'daughters': [12116, 211], 'comment': '# N(2060)+ -> N(1680)0 + pi+'},
-        {'br': 0.12, 'daughters': [3122, 321], 'comment': '# N(2060)+ -> Lambda + K+'},
+        {'br': 0.13, 'daughters': [3122, 321], 'comment': '# N(2060)+ -> Lambda + K+'},
     ],
     # N(2060)0: isospin mirror
     9902116: [
-        {'br': 0.03, 'daughters': [2112, 111], 'comment': '# N(2060)0 -> n + pi0'},
-        {'br': 0.06, 'daughters': [2212, -211], 'comment': '# N(2060)0 -> p + pi-'},
+        {'br': 0.04, 'daughters': [2112, 111], 'comment': '# N(2060)0 -> n + pi0'},
+        {'br': 0.08, 'daughters': [2212, -211], 'comment': '# N(2060)0 -> p + pi-'},
         {'br': 0.04, 'daughters': [2112, 221], 'comment': '# N(2060)0 -> n + eta'},
-        {'br': 0.07, 'daughters': [2112, 223], 'comment': '# N(2060)0 -> n + omega(782)'},
+        {'br': 0.09, 'daughters': [2112, 223], 'comment': '# N(2060)0 -> n + omega(782)'},
         {'br': 0.06, 'daughters': [2214, -211], 'comment': '# N(2060)0 -> Delta(1232)+ + pi-'},
         {'br': 0.04, 'daughters': [2114, 111], 'comment': '# N(2060)0 -> Delta(1232)0 + pi0'},
         {'br': 0.02, 'daughters': [1114, 211], 'comment': '# N(2060)0 -> Delta(1232)- + pi+'},
-        {'br': 0.06, 'daughters': [2112, 9000221], 'comment': '# N(2060)0 -> n + f(0)(500)'},
+        {'br': 0.08, 'daughters': [2112, 9000221], 'comment': '# N(2060)0 -> n + f(0)(500)'},
         {'br': 0.02, 'daughters': [12112, 111], 'comment': '# N(2060)0 -> N(1440)0 + pi0'},
         {'br': 0.04, 'daughters': [12212, -211], 'comment': '# N(2060)0 -> N(1440)+ + pi-'},
         {'br': 0.06, 'daughters': [1214, 111], 'comment': '# N(2060)0 -> N(1520)0 + pi0'},
         {'br': 0.12, 'daughters': [2124, -211], 'comment': '# N(2060)0 -> N(1520)+ + pi-'},
         {'br': 0.06, 'daughters': [12116, 111], 'comment': '# N(2060)0 -> N(1680)0 + pi0'},
         {'br': 0.12, 'daughters': [12216, -211], 'comment': '# N(2060)0 -> N(1680)+ + pi-'},
-        {'br': 0.12, 'daughters': [3122, 311], 'comment': '# N(2060)0 -> Lambda + K0'},
+        {'br': 0.13, 'daughters': [3122, 311], 'comment': '# N(2060)0 -> Lambda + K0'},
     ],
 
     # N(2100)+: Neta missing (PDG 5-45%). Replace eta'(7%) with eta(12%). Reduce Nsigma.
@@ -1312,20 +1315,21 @@ DECAY_UPDATES = {
         {'br': 0.20, 'daughters': [22212, -211], 'comment': '# N(2100)0 -> N(1535)+ + pi-'},
     ],
 
-    # N(2120)+: LambdaK missing (PDG 6-11%). Add LambdaK=8%, Neta=2%. Reduce Delta*pi.
+    # N(2120)+: PDG2025 LambdaK=6-11%, Neta=1-5%, Neta'~3%, Nomega~10%
+    # Npi=9%, Neta=2%, Neta'=3%, Nomega=10%, Dpi=46%, Nsigma=8%, N*pi=12%, LK=10%
     9922214: [
         {'br': 0.03, 'daughters': [2212, 111], 'comment': '# N(2120)+ -> p + pi0'},
         {'br': 0.06, 'daughters': [2112, 211], 'comment': '# N(2120)+ -> n + pi+'},
-        {'br': 0.02, 'daughters': [2212, 221], 'comment': '# N(2120)+ -> p + eta (PDG2025 1-5%)'},
+        {'br': 0.02, 'daughters': [2212, 221], 'comment': '# N(2120)+ -> p + eta'},
         {'br': 0.03, 'daughters': [2212, 331], 'comment': '# N(2120)+ -> p + eta\'(958)'},
         {'br': 0.10, 'daughters': [2212, 223], 'comment': '# N(2120)+ -> p + omega(782)'},
-        {'br': 0.14, 'daughters': [2214, 111], 'comment': '# N(2120)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.16, 'daughters': [2214, 111], 'comment': '# N(2120)+ -> Delta(1232)+ + pi0'},
         {'br': 0.07, 'daughters': [2114, 211], 'comment': '# N(2120)+ -> Delta(1232)0 + pi+'},
-        {'br': 0.21, 'daughters': [2224, -211], 'comment': '# N(2120)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.23, 'daughters': [2224, -211], 'comment': '# N(2120)+ -> Delta(1232)++ + pi-'},
         {'br': 0.08, 'daughters': [2212, 9000221], 'comment': '# N(2120)+ -> p + f(0)(500)'},
         {'br': 0.04, 'daughters': [22212, 111], 'comment': '# N(2120)+ -> N(1535)+ + pi0'},
         {'br': 0.08, 'daughters': [22112, 211], 'comment': '# N(2120)+ -> N(1535)0 + pi+'},
-        {'br': 0.08, 'daughters': [3122, 321], 'comment': '# N(2120)+ -> Lambda + K+'},
+        {'br': 0.10, 'daughters': [3122, 321], 'comment': '# N(2120)+ -> Lambda + K+'},
     ],
     # N(2120)0: isospin mirror
     9922114: [
@@ -1335,12 +1339,12 @@ DECAY_UPDATES = {
         {'br': 0.03, 'daughters': [2112, 331], 'comment': '# N(2120)0 -> n + eta\'(958)'},
         {'br': 0.10, 'daughters': [2112, 223], 'comment': '# N(2120)0 -> n + omega(782)'},
         {'br': 0.07, 'daughters': [2214, -211], 'comment': '# N(2120)0 -> Delta(1232)+ + pi-'},
-        {'br': 0.14, 'daughters': [2114, 111], 'comment': '# N(2120)0 -> Delta(1232)0 + pi0'},
-        {'br': 0.21, 'daughters': [1114, 211], 'comment': '# N(2120)0 -> Delta(1232)- + pi+'},
+        {'br': 0.16, 'daughters': [2114, 111], 'comment': '# N(2120)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.23, 'daughters': [1114, 211], 'comment': '# N(2120)0 -> Delta(1232)- + pi+'},
         {'br': 0.08, 'daughters': [2112, 9000221], 'comment': '# N(2120)0 -> n + f(0)(500)'},
         {'br': 0.04, 'daughters': [22112, 111], 'comment': '# N(2120)0 -> N(1535)0 + pi0'},
         {'br': 0.08, 'daughters': [22212, -211], 'comment': '# N(2120)0 -> N(1535)+ + pi-'},
-        {'br': 0.08, 'daughters': [3122, 311], 'comment': '# N(2120)0 -> Lambda + K0'},
+        {'br': 0.10, 'daughters': [3122, 311], 'comment': '# N(2120)0 -> Lambda + K0'},
     ],
 
     # Delta(2200)++: Npi was 15% (PDG 2-8%). Reduce to 5%, give to Npipi
@@ -1411,22 +1415,24 @@ DECAY_UPDATES = {
         {'br': 0.065, 'daughters': [2112, -313], 'comment': '# Lambda(1820) -> n + anti-K*(892)0'},
     ],
 
-    # Lambda(1890): NKbar was 40% (PDG 24-36%), Sigma_pi was 24% (PDG 3-10%).
-    # NKbar->30%, Sigma_pi->6%, increase NKbar*->24%, Sigma(1385)pi->22%
+    # Lambda(1890): PDG2025 NKbar=24-36%, Sigma_pi=3-10%
+    # NKbar=30%, Sigma_pi=6%, NKbar*=30%, Sigma(1385)pi=30%, Lambda_sigma=4%
     23124: [
         {'br': 0.15, 'daughters': [2212, -321], 'comment': '# Lambda(1890) -> p + K-'},
         {'br': 0.15, 'daughters': [2112, -311], 'comment': '# Lambda(1890) -> n + anti-K0'},
         {'br': 0.02, 'daughters': [3222, -211], 'comment': '# Lambda(1890) -> Sigma+ + pi-'},
         {'br': 0.02, 'daughters': [3212, 111], 'comment': '# Lambda(1890) -> Sigma0 + pi0'},
         {'br': 0.02, 'daughters': [3112, 211], 'comment': '# Lambda(1890) -> Sigma- + pi+'},
-        {'br': 0.12, 'daughters': [2212, -323], 'comment': '# Lambda(1890) -> p + K*(892)-'},
-        {'br': 0.12, 'daughters': [2112, -313], 'comment': '# Lambda(1890) -> n + anti-K*(892)0'},
-        {'br': 0.073, 'daughters': [3224, -211], 'comment': '# Lambda(1890) -> Sigma(1385)+ + pi-'},
-        {'br': 0.073, 'daughters': [3214, 111], 'comment': '# Lambda(1890) -> Sigma(1385)0 + pi0'},
-        {'br': 0.074, 'daughters': [3114, 211], 'comment': '# Lambda(1890) -> Sigma(1385)- + pi+'},
+        {'br': 0.15, 'daughters': [2212, -323], 'comment': '# Lambda(1890) -> p + K*(892)-'},
+        {'br': 0.15, 'daughters': [2112, -313], 'comment': '# Lambda(1890) -> n + anti-K*(892)0'},
+        {'br': 0.10, 'daughters': [3224, -211], 'comment': '# Lambda(1890) -> Sigma(1385)+ + pi-'},
+        {'br': 0.10, 'daughters': [3214, 111], 'comment': '# Lambda(1890) -> Sigma(1385)0 + pi0'},
+        {'br': 0.10, 'daughters': [3114, 211], 'comment': '# Lambda(1890) -> Sigma(1385)- + pi+'},
+        {'br': 0.04, 'daughters': [3122, 9000221], 'comment': '# Lambda(1890) -> Lambda + f(0)(500)'},
     ],
 
-    # Lambda(2100): Sigma_pi was 9% (PDG ~5%). Reduce to 3%, increase NKbar* and Lambda_omega
+    # Lambda(2100): PDG2025 Sigma_pi~5%, NKbar~30%, Lambda_omega seen, XiK seen
+    # NKbar=30%, Sigma_pi=3%, Lambda_eta=3%, XiK=3%, Lambda_omega=12%, NKbar*=24%, Sig*pi=18%, Lambda_sigma=7%
     3128: [
         {'br': 0.15, 'daughters': [2212, -321], 'comment': '# Lambda(2100) -> p + K-'},
         {'br': 0.15, 'daughters': [2112, -311], 'comment': '# Lambda(2100) -> n + anti-K0'},
@@ -1436,7 +1442,7 @@ DECAY_UPDATES = {
         {'br': 0.03, 'daughters': [3122, 221], 'comment': '# Lambda(2100) -> Lambda + eta'},
         {'br': 0.015, 'daughters': [3322, 311], 'comment': '# Lambda(2100) -> Xi0 + K0'},
         {'br': 0.015, 'daughters': [3312, 321], 'comment': '# Lambda(2100) -> Xi- + K+'},
-        {'br': 0.10, 'daughters': [3122, 223], 'comment': '# Lambda(2100) -> Lambda + omega(782)'},
+        {'br': 0.12, 'daughters': [3122, 223], 'comment': '# Lambda(2100) -> Lambda + omega(782)'},
         {'br': 0.12, 'daughters': [2212, -323], 'comment': '# Lambda(2100) -> p + K*(892)-'},
         {'br': 0.12, 'daughters': [2112, -313], 'comment': '# Lambda(2100) -> n + anti-K*(892)0'},
         {'br': 0.06, 'daughters': [3224, -211], 'comment': '# Lambda(2100) -> Sigma(1385)+ + pi-'},
@@ -1445,18 +1451,19 @@ DECAY_UPDATES = {
         {'br': 0.07, 'daughters': [3122, 9000221], 'comment': '# Lambda(2100) -> Lambda + f(0)(500)'},
     ],
 
-    # Lambda(2350): NKbar was 20% (PDG ~12%), Sigma_pi was 15% (PDG ~10%). Reduce both, increase NKbar*.
+    # Lambda(2350): PDG2025 NKbar~12%, Sigma_pi~10%, NKbar* dominant
+    # NKbar=12%, Sigma_pi=10%, Sigma*pi=15%, NKbar*=63%
     99031210: [
         {'br': 0.06, 'daughters': [2212, -321], 'comment': '# Lambda(2350) -> p + K-'},
         {'br': 0.06, 'daughters': [2112, -311], 'comment': '# Lambda(2350) -> n + anti-K0'},
         {'br': 0.033, 'daughters': [3222, -211], 'comment': '# Lambda(2350) -> Sigma+ + pi-'},
-        {'br': 0.033, 'daughters': [3212, 111], 'comment': '# Lambda(2350) -> Sigma0 + pi0'},
-        {'br': 0.034, 'daughters': [3112, 211], 'comment': '# Lambda(2350) -> Sigma- + pi+'},
+        {'br': 0.034, 'daughters': [3212, 111], 'comment': '# Lambda(2350) -> Sigma0 + pi0'},
+        {'br': 0.033, 'daughters': [3112, 211], 'comment': '# Lambda(2350) -> Sigma- + pi+'},
         {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Lambda(2350) -> Sigma(1385)+ + pi-'},
         {'br': 0.05, 'daughters': [3214, 111], 'comment': '# Lambda(2350) -> Sigma(1385)0 + pi0'},
         {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Lambda(2350) -> Sigma(1385)- + pi+'},
-        {'br': 0.28, 'daughters': [2212, -323], 'comment': '# Lambda(2350) -> p + K*(892)-'},
-        {'br': 0.28, 'daughters': [2112, -313], 'comment': '# Lambda(2350) -> n + anti-K*(892)0'},
+        {'br': 0.315, 'daughters': [2212, -323], 'comment': '# Lambda(2350) -> p + K*(892)-'},
+        {'br': 0.315, 'daughters': [2112, -313], 'comment': '# Lambda(2350) -> n + anti-K*(892)0'},
     ],
 
     # Lambda(1810): PDG: NKbar 5-35%, Sigma_pi 11-21%, Sigma(1385)pi 25-55%, NKbar* 30-60%
@@ -2465,6 +2472,236 @@ def compute_threshold(pid, decay_channels, particles_by_id):
     return min_threshold if min_threshold < float('inf') else 0
 
 # =====================================================================
+# Decay validation
+# =====================================================================
+
+def get_multiplet_base(name):
+    """Strip charge suffix from particle name to get isospin multiplet base name.
+
+    Examples:
+        "Sigma(1670)+"  -> "Sigma(1670)"
+        "Delta(1232)++" -> "Delta(1232)"
+        "pi+"           -> "pi"
+        "pi0"           -> "pi"
+        "K+"            -> "K"
+        "f(0)(500)"     -> "f(0)(500)"  (no charge suffix)
+        "Lambda"        -> "Lambda"     (no charge suffix)
+    """
+    # Order matters: try "++" before "+"
+    for suffix in ['++', '+', '-']:
+        if name.endswith(suffix):
+            return name[:-len(suffix)]
+    # Trailing "0" is a charge suffix only if the character before it
+    # is NOT a digit (otherwise "f(0)(500)" would be mis-stripped)
+    if name.endswith('0') and len(name) > 1 and not name[-2].isdigit():
+        return name[:-1]
+    return name
+
+
+def validate_decays(decays, all_particles, particles_by_id, pid_name_map=None):
+    """Validate decay channels for charge conservation and isospin consistency.
+
+    Args:
+        decays: OrderedDict mapping parent PID to list of decay channels
+        all_particles: list of particle dicts (with B, Q, S, C fields)
+        particles_by_id: dict mapping PID to particle dict
+        pid_name_map: optional dict mapping PID to name (for particles not in all_particles)
+
+    Returns:
+        True if no hard errors found, False otherwise
+    """
+    errors = []
+    warnings = []
+
+    if pid_name_map is None:
+        pid_name_map = {}
+
+    def get_name(pid):
+        if pid in particles_by_id:
+            return particles_by_id[pid]['name']
+        if pid in pid_name_map:
+            return pid_name_map[pid]
+        return str(pid)
+
+    def get_quantum_numbers(pid):
+        """Get (B, Q, S, C) for a particle.  Returns None for elementary particles."""
+        if pid in particles_by_id:
+            p = particles_by_id[pid]
+            return (p['B'], p['Q'], p['S'], p['C'])
+        # Antiparticles: flip all quantum numbers
+        if -pid in particles_by_id:
+            p = particles_by_id[-pid]
+            return (-p['B'], -p['Q'], -p['S'], -p['C'])
+        # Elementary particles (gamma, leptons, neutrinos): B=Q_B=S=C=0
+        # except for charge
+        elementary_charges = {
+            22: 0,    # gamma
+            11: -1, -11: 1,   # e-, e+
+            13: -1, -13: 1,   # mu-, mu+
+            15: -1, -15: 1,   # tau-, tau+
+            12: 0, -12: 0,    # nu_e
+            14: 0, -14: 0,    # nu_mu
+            16: 0, -16: 0,    # nu_tau
+        }
+        if pid in elementary_charges:
+            return (0, elementary_charges[pid], 0, 0)
+        return None
+
+    # ---------------------------------------------------------------
+    # Check 1: Charge conservation (B, Q, S, C) for every channel
+    # ---------------------------------------------------------------
+    # Note: S and C are not conserved in weak decays (stable particles in FIST).
+    # We only check B and Q for all particles, and S and C only for unstable ones.
+    print("\n  Validating charge conservation in decay channels...")
+    n_checked = 0
+    for pid, channels in decays.items():
+        parent_qn = get_quantum_numbers(pid)
+        if parent_qn is None:
+            continue
+        # Determine if this is a weakly-decaying (stable) particle
+        is_stable = False
+        if pid in particles_by_id:
+            is_stable = (particles_by_id[pid]['stable'] == 1)
+        for ich, ch in enumerate(channels):
+            daughter_qn = [0, 0, 0, 0]
+            all_found = True
+            for d in ch['daughters']:
+                dqn = get_quantum_numbers(d)
+                if dqn is None:
+                    all_found = False
+                    break
+                for k in range(4):
+                    daughter_qn[k] += dqn[k]
+            if not all_found:
+                warnings.append(
+                    f"  Cannot check channel {ich} of {get_name(pid)} ({pid}): "
+                    f"unknown daughter PID in {ch['daughters']}")
+                continue
+            labels = ['B', 'Q', 'S', 'C']
+            for k in range(4):
+                # Skip S (k=2) and C (k=3) check for weakly-decaying particles
+                if is_stable and k >= 2:
+                    continue
+                if parent_qn[k] != daughter_qn[k]:
+                    errors.append(
+                        f"  {labels[k]} not conserved in {get_name(pid)} ({pid}) "
+                        f"channel {ich}: parent {labels[k]}={parent_qn[k]}, "
+                        f"daughters {labels[k]}={daughter_qn[k]}  "
+                        f"(BR={ch['br']}, daughters={ch['daughters']})")
+            n_checked += 1
+    print(f"  Checked {n_checked} decay channels for charge conservation")
+
+    # ---------------------------------------------------------------
+    # Check 2: Daughter existence
+    # ---------------------------------------------------------------
+    print("  Validating daughter particle existence...")
+    elementary_pids = set(ELEMENTARY_MASSES.keys())
+    for pid, channels in decays.items():
+        for ich, ch in enumerate(channels):
+            for d in ch['daughters']:
+                if (d not in particles_by_id and -d not in particles_by_id
+                        and d not in elementary_pids and -d not in elementary_pids):
+                    warnings.append(
+                        f"  Unknown daughter PID {d} in {get_name(pid)} ({pid}) "
+                        f"channel {ich}")
+
+    # ---------------------------------------------------------------
+    # Check 3: Isospin multiplet BR consistency
+    # ---------------------------------------------------------------
+    print("  Validating isospin multiplet BR consistency...")
+
+    # Build multiplet groups: base_name -> list of (pid, name)
+    multiplets = {}
+    for p in all_particles:
+        base = get_multiplet_base(p['name'])
+        if base not in multiplets:
+            multiplets[base] = []
+        multiplets[base].append((p['pdgid'], p['name']))
+
+    n_multiplets_checked = 0
+    for base, members in multiplets.items():
+        # Only check multiplets with 2+ unstable (strong/EM decay) members
+        # Skip weakly-decaying (stable=1) particles — their isospin is broken
+        decaying_members = [(pid, name) for pid, name in members
+                           if pid in decays and len(decays[pid]) > 0
+                           and pid in particles_by_id
+                           and particles_by_id[pid]['stable'] == 0]
+        if len(decaying_members) < 2:
+            continue
+
+        # For each member, classify channels by type and sum BRs
+        member_br_by_type = {}
+        for pid, name in decaying_members:
+            br_by_type = {}
+            for ch in decays[pid]:
+                # Build channel type: map each daughter to its multiplet base name
+                daughter_bases = []
+                for d in ch['daughters']:
+                    # For antiparticles (negative PID not in list):
+                    if d not in particles_by_id and -d in particles_by_id:
+                        p_orig = particles_by_id[-d]
+                        dbase = get_multiplet_base(p_orig['name'])
+                        # Self-conjugate mesons (B=0, S=0, C=0): anti-particle
+                        # is in same multiplet (e.g. pi-, rho-, etc.)
+                        # Otherwise: anti-particle is distinct (anti-K, anti-N)
+                        if p_orig['B'] != 0 or p_orig['S'] != 0 or p_orig['C'] != 0:
+                            dbase = "anti-" + dbase
+                        daughter_bases.append(dbase)
+                    else:
+                        daughter_bases.append(get_multiplet_base(get_name(d)))
+
+                daughter_bases.sort()
+                ch_type = " + ".join(daughter_bases)
+                br_by_type[ch_type] = br_by_type.get(ch_type, 0.0) + ch['br']
+            member_br_by_type[(pid, name)] = br_by_type
+
+        # Compare BR by type across members
+        all_types = set()
+        for br_by_type in member_br_by_type.values():
+            all_types.update(br_by_type.keys())
+
+        has_mismatch = False
+        for ch_type in sorted(all_types):
+            brs = []
+            for pid, name in decaying_members:
+                br = member_br_by_type[(pid, name)].get(ch_type, 0.0)
+                brs.append((name, br))
+            # Check if all BRs are close (within 2% absolute)
+            br_values = [br for _, br in brs]
+            max_br = max(br_values)
+            min_br = min(br_values)
+            if max_br - min_br > 0.02 and max_br > 0.01:
+                detail = ", ".join(f"{name}={br:.4f}" for name, br in brs)
+                warnings.append(
+                    f"  Isospin BR mismatch in {base} multiplet, "
+                    f"channel type [{ch_type}]: {detail}")
+                has_mismatch = True
+
+        if not has_mismatch:
+            n_multiplets_checked += 1
+
+    print(f"  Checked {n_multiplets_checked} isospin multiplets (no mismatches)")
+
+    # ---------------------------------------------------------------
+    # Report results
+    # ---------------------------------------------------------------
+    if warnings:
+        print(f"\n  WARNINGS ({len(warnings)}):")
+        for w in warnings:
+            print(f"    {w}")
+
+    if errors:
+        print(f"\n  ERRORS ({len(errors)}):")
+        for e in errors:
+            print(f"    {e}")
+        print("\n  *** Validation FAILED: charge conservation violations detected ***")
+        return False
+
+    print("  Validation passed")
+    return True
+
+
+# =====================================================================
 # Main generation logic
 # =====================================================================
 
@@ -2758,6 +2995,75 @@ def generate_pdg2025():
             print(f"  Updated decays for {pname} (ID {pid}): {len(channels)} channels")
 
     # =====================================================================
+    # Validate decays
+    # =====================================================================
+
+    if not validate_decays(decays_2025, all_particles, particles_by_id, pid_name_map):
+        print("\n  ERROR: Decay validation failed. Aborting.")
+        sys.exit(1)
+
+    # =====================================================================
+    # Normalize all branching ratios to sum to exactly 1.0
+    # =====================================================================
+
+    def normalize_channels(channels):
+        """Normalize branching ratios of a list of decay channels to sum to 1.0."""
+        total_br = sum(ch['br'] for ch in channels)
+        if total_br > 0 and abs(total_br - 1.0) > 1e-10:
+            for ch in channels:
+                ch['br'] = ch['br'] / total_br
+
+    def format_br(br_val):
+        """Format a branching ratio value as a string with limited precision."""
+        if abs(br_val - 1.0) < 1e-10:
+            return "1.0"
+        return f"{br_val:.6g}"
+
+    def format_channel_brs(channels):
+        """Format branching ratios for a list of channels, ensuring they sum to exactly 1.0.
+
+        Returns a list of BR strings, one per channel. All channels except the largest
+        are formatted with :.6g precision. The largest channel's BR is computed as
+        1.0 minus the sum of all other formatted values, ensuring exact summation.
+        """
+        if len(channels) == 1:
+            return ["1.0"]
+
+        # Find the index of the largest BR channel
+        max_idx = max(range(len(channels)), key=lambda i: channels[i]['br'])
+
+        # Format all channels except the largest
+        br_strs = [None] * len(channels)
+        other_sum = 0.0
+        for i, ch in enumerate(channels):
+            if i != max_idx:
+                br_strs[i] = format_br(ch['br'])
+                other_sum += float(br_strs[i])
+
+        # Set the largest channel to exactly 1.0 - sum(others)
+        remainder = 1.0 - other_sum
+        if abs(remainder - 1.0) < 1e-10:
+            br_strs[max_idx] = "1.0"
+        else:
+            # Use enough precision so it round-trips exactly
+            br_strs[max_idx] = f"{remainder:.10g}"
+
+        return br_strs
+
+    n_normalized = 0
+    for pid, channels in decays_2025.items():
+        total_br = sum(ch['br'] for ch in channels)
+        if abs(total_br - 1.0) > 1e-10:
+            pname = pid_name_map.get(pid, str(pid))
+            print(f"  Normalizing BRs for {pname} (ID {pid}): {total_br:.6f} -> 1.0")
+            normalize_channels(channels)
+            n_normalized += 1
+    if n_normalized > 0:
+        print(f"  Normalized branching ratios for {n_normalized} particles in main list")
+    else:
+        print("  All branching ratios already sum to 1.0")
+
+    # =====================================================================
     # Write decays.dat
     # =====================================================================
 
@@ -2787,18 +3093,11 @@ def generate_pdg2025():
 
                 f.write(f"{pid:<20}                     # {name}\n")
                 f.write(f"{len(channels):<20}                     # {len(channels)} decay channel{'s' if len(channels) > 1 else ''}\n")
-                for ch in channels:
+                br_strs = format_channel_brs(channels)
+                for idx_ch, ch in enumerate(channels):
                     daughters_str = " ".join(str(d) for d in ch['daughters'])
                     comment = ch.get('comment', '')
-                    # Format branching ratio with limited precision
-                    br_val = ch['br']
-                    if abs(br_val - 1.0) < 1e-10:
-                        br_str = "1.0"
-                    elif abs(br_val - round(br_val, 6)) < 1e-10:
-                        br_str = f"{br_val:.6g}"
-                    else:
-                        br_str = f"{br_val:.6g}"
-                    f.write(f"{br_str:<16}{daughters_str:<20} {comment}\n")
+                    f.write(f"{br_strs[idx_ch]:<16}{daughters_str:<20} {comment}\n")
                 f.write("\n")
                 written_pids.add(pid)
 
@@ -2816,19 +3115,15 @@ def generate_pdg2025():
                     label = f"{pname} (PDG2025 updated)"
                 else:
                     label = f"{pname} (from PDG2020)"
+                # Normalize BRs before writing
+                normalize_channels(channels)
                 f.write(f"{pid:<20}                     # {label}\n")
                 f.write(f"{len(channels):<20}                     # {len(channels)} decay channel{'s' if len(channels) > 1 else ''}\n")
-                for ch in channels:
+                br_strs = format_channel_brs(channels)
+                for idx_ch, ch in enumerate(channels):
                     daughters_str = " ".join(str(d) for d in ch['daughters'])
                     comment = ch.get('comment', '')
-                    br_val = ch['br']
-                    if abs(br_val - 1.0) < 1e-10:
-                        br_str = "1.0"
-                    elif abs(br_val - round(br_val, 6)) < 1e-10:
-                        br_str = f"{br_val:.6g}"
-                    else:
-                        br_str = f"{br_val:.6g}"
-                    f.write(f"{br_str:<16}{daughters_str:<20} {comment}\n")
+                    f.write(f"{br_strs[idx_ch]:<16}{daughters_str:<20} {comment}\n")
                 f.write("\n")
                 written_pids.add(pid)
                 extra_count += 1
@@ -2837,19 +3132,15 @@ def generate_pdg2025():
         for pid, channels in CHARM_DECAY_UPDATES.items():
             if pid not in written_pids:
                 pname = pid_name_map.get(pid, str(pid))
+                # Normalize BRs before writing
+                normalize_channels(channels)
                 f.write(f"{pid:<20}                     # {pname} (PDG2025 new)\n")
                 f.write(f"{len(channels):<20}                     # {len(channels)} decay channel{'s' if len(channels) > 1 else ''}\n")
-                for ch in channels:
+                br_strs = format_channel_brs(channels)
+                for idx_ch, ch in enumerate(channels):
                     daughters_str = " ".join(str(d) for d in ch['daughters'])
                     comment = ch.get('comment', '')
-                    br_val = ch['br']
-                    if abs(br_val - 1.0) < 1e-10:
-                        br_str = "1.0"
-                    elif abs(br_val - round(br_val, 6)) < 1e-10:
-                        br_str = f"{br_val:.6g}"
-                    else:
-                        br_str = f"{br_val:.6g}"
-                    f.write(f"{br_str:<16}{daughters_str:<20} {comment}\n")
+                    f.write(f"{br_strs[idx_ch]:<16}{daughters_str:<20} {comment}\n")
                 f.write("\n")
                 written_pids.add(pid)
                 extra_count += 1
