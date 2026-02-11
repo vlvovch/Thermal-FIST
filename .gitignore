@@ -25,5 +25,9 @@ docs/doxygen/html*
 # Apple
 *.DS_Store
 
+# Python
+__pycache__/
+*.pyc
+
 # aqtinstall
 aqtinstall.log
