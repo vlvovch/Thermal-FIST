@@ -1482,8 +1482,7 @@ DECAY_UPDATES = {
         {'br': 0.10, 'daughters': [3122, 211], 'comment': '# Sigma(1670)+ -> Lambda + pi+'},
         {'br': 0.25, 'daughters': [3222, 111], 'comment': '# Sigma(1670)+ -> Sigma+ + pi0'},
         {'br': 0.25, 'daughters': [3212, 211], 'comment': '# Sigma(1670)+ -> Sigma0 + pi+'},
-        {'br': 0.075, 'daughters': [3222, 9000221], 'comment': '# Sigma(1670)+ -> Sigma+ + f(0)(500)'},
-        {'br': 0.075, 'daughters': [3212, 9000221], 'comment': '# Sigma(1670)+ -> Sigma0 + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.15, 'daughters': [3222, 9000221], 'comment': '# Sigma(1670)+ -> Sigma+ + f(0)(500) [proxy Sigma sigma]'},
         {'br': 0.05, 'daughters': [13122, 211], 'comment': '# Sigma(1670)+ -> Lambda(1405) + pi+'},
         {'br': 0.05, 'daughters': [3224, 111], 'comment': '# Sigma(1670)+ -> Sigma(1385)+ + pi0'},
         {'br': 0.05, 'daughters': [3214, 211], 'comment': '# Sigma(1670)+ -> Sigma(1385)0 + pi+'},
@@ -1495,8 +1494,7 @@ DECAY_UPDATES = {
         {'br': 0.10, 'daughters': [3122, 111], 'comment': '# Sigma(1670)0 -> Lambda + pi0'},
         {'br': 0.25, 'daughters': [3222, -211], 'comment': '# Sigma(1670)0 -> Sigma+ + pi-'},
         {'br': 0.25, 'daughters': [3112, 211], 'comment': '# Sigma(1670)0 -> Sigma- + pi+'},
-        {'br': 0.075, 'daughters': [3222, 9000221], 'comment': '# Sigma(1670)0 -> Sigma+ + f(0)(500) [proxy Sigma sigma]'},
-        {'br': 0.075, 'daughters': [3112, 9000221], 'comment': '# Sigma(1670)0 -> Sigma- + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.15, 'daughters': [3212, 9000221], 'comment': '# Sigma(1670)0 -> Sigma0 + f(0)(500) [proxy Sigma sigma]'},
         {'br': 0.05, 'daughters': [13122, 111], 'comment': '# Sigma(1670)0 -> Lambda(1405) + pi0'},
         {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Sigma(1670)0 -> Sigma(1385)+ + pi-'},
         {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Sigma(1670)0 -> Sigma(1385)- + pi+'},
@@ -1507,8 +1505,7 @@ DECAY_UPDATES = {
         {'br': 0.10, 'daughters': [3122, -211], 'comment': '# Sigma(1670)- -> Lambda + pi-'},
         {'br': 0.25, 'daughters': [3212, -211], 'comment': '# Sigma(1670)- -> Sigma0 + pi-'},
         {'br': 0.25, 'daughters': [3112, 111], 'comment': '# Sigma(1670)- -> Sigma- + pi0'},
-        {'br': 0.075, 'daughters': [3212, 9000221], 'comment': '# Sigma(1670)- -> Sigma0 + f(0)(500) [proxy Sigma sigma]'},
-        {'br': 0.075, 'daughters': [3112, 9000221], 'comment': '# Sigma(1670)- -> Sigma- + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.15, 'daughters': [3112, 9000221], 'comment': '# Sigma(1670)- -> Sigma- + f(0)(500) [proxy Sigma sigma]'},
         {'br': 0.05, 'daughters': [13122, -211], 'comment': '# Sigma(1670)- -> Lambda(1405) + pi-'},
         {'br': 0.05, 'daughters': [3214, -211], 'comment': '# Sigma(1670)- -> Sigma(1385)0 + pi-'},
         {'br': 0.05, 'daughters': [3114, 111], 'comment': '# Sigma(1670)- -> Sigma(1385)- + pi0'},
@@ -1524,7 +1521,7 @@ DECAY_UPDATES = {
         {'br': 0.05, 'daughters': [3222, 111], 'comment': '# Sigma(1915)+ -> Sigma+ + pi0'},
         {'br': 0.05, 'daughters': [3212, 211], 'comment': '# Sigma(1915)+ -> Sigma0 + pi+'},
         {'br': 0.20, 'daughters': [3124, 211], 'comment': '# Sigma(1915)+ -> Lambda(1520) + pi+'},
-        {'br': 0.46, 'daughters': [3122, 9000221], 'comment': '# Sigma(1915)+ -> Lambda + f(0)(500) (multi-body proxy)'},
+        {'br': 0.46, 'daughters': [3222, 9000221], 'comment': '# Sigma(1915)+ -> Sigma+ + f(0)(500) (multi-body proxy)'},
     ],
     # Sigma(1915)0
     13216: [
@@ -1547,7 +1544,7 @@ DECAY_UPDATES = {
         {'br': 0.05, 'daughters': [3212, -211], 'comment': '# Sigma(1915)- -> Sigma0 + pi-'},
         {'br': 0.05, 'daughters': [3112, 111], 'comment': '# Sigma(1915)- -> Sigma- + pi0'},
         {'br': 0.20, 'daughters': [3124, -211], 'comment': '# Sigma(1915)- -> Lambda(1520) + pi-'},
-        {'br': 0.46, 'daughters': [3122, 9000221], 'comment': '# Sigma(1915)- -> Lambda + f(0)(500)'},
+        {'br': 0.46, 'daughters': [3112, 9000221], 'comment': '# Sigma(1915)- -> Sigma- + f(0)(500) (multi-body proxy)'},
     ],
 
     # =====================================================================

@@ -7,6 +7,10 @@ add_executable(test_QvdWHRG test_QvdWHRG.cpp)
 target_link_libraries(test_QvdWHRG ThermalFIST GTest::gtest_main)
 set_property(TARGET test_QvdWHRG PROPERTY FOLDER tests)
 
+add_executable(test_ParticleListValidation test_ParticleListValidation.cpp)
+target_link_libraries(test_ParticleListValidation ThermalFIST GTest::gtest_main)
+set_property(TARGET test_ParticleListValidation PROPERTY FOLDER tests)
+
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
 set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
@@ -17,7 +21,10 @@ include(GoogleTest)
 gtest_discover_tests(test_IdealGasFunctions)
 
 # QvdW-HRG stress tests
-gtest_discover_tests(test_QvdWHRG) 
+gtest_discover_tests(test_QvdWHRG)
+
+# Particle list validation tests
+gtest_discover_tests(test_ParticleListValidation)
 
 
 # CPC tests
