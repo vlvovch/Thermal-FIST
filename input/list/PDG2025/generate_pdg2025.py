@@ -476,16 +476,17 @@ DECAY_UPDATES = {
     ],
 
     # omega(782): Updated branching fractions from PDG 2025
-    # PDG 2025 BFX: pi+pi-pi0 (89.2%), pi0 gamma (8.33%), pi+pi- (1.53%),
-    #               pi0 e+e- (0.077%), eta gamma (0.045%)
-    # Note: PDG2020 hand-input had eta gamma=0.45% and pi0 e+e-=0.49% (10x errors)
-    # Remaining 0.82% absorbed into pi+pi-pi0
+    # omega(782): PDG 2025 FC: pi+pi-pi0 (89.25%), pi0 gamma (8.33%), pi+pi- (1.535%),
+    #   neutrals excl. pi0 gamma (0.737%), pi0 e+e- (0.077%), eta gamma (0.045%)
+    # "neutrals" channel mapped to 3pi0 as lightest neutral final state in FIST
+    # Tiny remainder (0.03%) absorbed into pi+pi-pi0
     223: [
-        {'br': 0.9002, 'daughters': [211, -211, 111], 'comment': '# omega(782) -> pi+ + pi- + pi0'},
-        {'br': 0.0833, 'daughters': [111, 22], 'comment': '# omega(782) -> pi0 + gamma'},
-        {'br': 0.0153, 'daughters': [211, -211], 'comment': '# omega(782) -> pi+ + pi-'},
-        {'br': 0.00045, 'daughters': [221, 22], 'comment': '# omega(782) -> eta + gamma'},
-        {'br': 0.00077, 'daughters': [111, -11, 11], 'comment': '# omega(782) -> pi0 + e+ + e-'},
+        {'br': 0.8928, 'daughters': [211, -211, 111], 'comment': '# omega(782) -> pi+ + pi- + pi0 (PDG2025 89.25% + remainder)'},
+        {'br': 0.0833, 'daughters': [111, 22], 'comment': '# omega(782) -> pi0 + gamma (PDG2025 8.33%)'},
+        {'br': 0.0154, 'daughters': [211, -211], 'comment': '# omega(782) -> pi+ + pi- (PDG2025 1.535%)'},
+        {'br': 0.0074, 'daughters': [111, 111, 111], 'comment': '# omega(782) -> neutrals (3pi0 proxy, PDG2025 0.74%)'},
+        {'br': 0.0008, 'daughters': [111, -11, 11], 'comment': '# omega(782) -> pi0 + e+ + e- (PDG2025 0.077%)'},
+        {'br': 0.0003, 'daughters': [221, 22], 'comment': '# omega(782) -> eta + gamma (PDG2025 0.045%)'},
     ],
 
     # eta'(958): Updated branching fractions from PDG 2025
@@ -621,34 +622,38 @@ DECAY_UPDATES = {
     # Total = 100%. Deltapi is constrained by sum, using lower end to fit N(1440)pi
     # Delta(1600) is P33 (I=3/2)
     # Isospin C-G for I=3/2(Q=-1) -> I=3/2 Delta + I=1 pi: Delta0 pi- (2/5), Delta- pi0 (3/5)
+    # Delta(1600): PDG Npi 8-24%, Npipi 58-84%. Was Npi=8%, Npipi=92% (too high).
+    # Fix: Npi=16%, Deltapi=64%, N*pi=20% -> Npipi=84% (upper PDG bound). Total=100%.
+    # I=3/2: C-G for Delta(Q=-1) -> N pi: n pi- = 1/1
+    # C-G for Delta(Q=-1) -> Delta pi: Delta0 pi- (2/5), Delta- pi0 (3/5)
     31114: [  # Delta(1600)-
-        {'br': 0.08, 'daughters': [2112, -211], 'comment': '# Delta(1600)- -> n + pi-'},
-        {'br': 0.288, 'daughters': [2114, -211], 'comment': '# Delta(1600)- -> Delta(1232)0 + pi-'},
-        {'br': 0.432, 'daughters': [1114, 111], 'comment': '# Delta(1600)- -> Delta(1232)- + pi0'},
+        {'br': 0.16, 'daughters': [2112, -211], 'comment': '# Delta(1600)- -> n + pi-'},
+        {'br': 0.256, 'daughters': [2114, -211], 'comment': '# Delta(1600)- -> Delta(1232)0 + pi-'},
+        {'br': 0.384, 'daughters': [1114, 111], 'comment': '# Delta(1600)- -> Delta(1232)- + pi0'},
         {'br': 0.20, 'daughters': [12112, -211], 'comment': '# Delta(1600)- -> N(1440)0 + pi-'},
     ],
     32114: [  # Delta(1600)0
-        {'br': 0.053, 'daughters': [2112, 111], 'comment': '# Delta(1600)0 -> n + pi0'},
-        {'br': 0.027, 'daughters': [2212, -211], 'comment': '# Delta(1600)0 -> p + pi-'},
-        {'br': 0.384, 'daughters': [2214, -211], 'comment': '# Delta(1600)0 -> Delta(1232)+ + pi-'},
-        {'br': 0.048, 'daughters': [2114, 111], 'comment': '# Delta(1600)0 -> Delta(1232)0 + pi0'},
-        {'br': 0.288, 'daughters': [1114, 211], 'comment': '# Delta(1600)0 -> Delta(1232)- + pi+'},
+        {'br': 0.107, 'daughters': [2112, 111], 'comment': '# Delta(1600)0 -> n + pi0'},
+        {'br': 0.053, 'daughters': [2212, -211], 'comment': '# Delta(1600)0 -> p + pi-'},
+        {'br': 0.341, 'daughters': [2214, -211], 'comment': '# Delta(1600)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.043, 'daughters': [2114, 111], 'comment': '# Delta(1600)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.256, 'daughters': [1114, 211], 'comment': '# Delta(1600)0 -> Delta(1232)- + pi+'},
         {'br': 0.133, 'daughters': [12112, 111], 'comment': '# Delta(1600)0 -> N(1440)0 + pi0'},
         {'br': 0.067, 'daughters': [12212, -211], 'comment': '# Delta(1600)0 -> N(1440)+ + pi-'},
     ],
     32214: [  # Delta(1600)+
-        {'br': 0.027, 'daughters': [2112, 211], 'comment': '# Delta(1600)+ -> n + pi+'},
-        {'br': 0.053, 'daughters': [2212, 111], 'comment': '# Delta(1600)+ -> p + pi0'},
-        {'br': 0.288, 'daughters': [2224, -211], 'comment': '# Delta(1600)+ -> Delta(1232)++ + pi-'},
-        {'br': 0.048, 'daughters': [2214, 111], 'comment': '# Delta(1600)+ -> Delta(1232)+ + pi0'},
-        {'br': 0.384, 'daughters': [2114, 211], 'comment': '# Delta(1600)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.053, 'daughters': [2112, 211], 'comment': '# Delta(1600)+ -> n + pi+'},
+        {'br': 0.107, 'daughters': [2212, 111], 'comment': '# Delta(1600)+ -> p + pi0'},
+        {'br': 0.256, 'daughters': [2224, -211], 'comment': '# Delta(1600)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.043, 'daughters': [2214, 111], 'comment': '# Delta(1600)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.341, 'daughters': [2114, 211], 'comment': '# Delta(1600)+ -> Delta(1232)0 + pi+'},
         {'br': 0.067, 'daughters': [12112, 211], 'comment': '# Delta(1600)+ -> N(1440)0 + pi+'},
         {'br': 0.133, 'daughters': [12212, 111], 'comment': '# Delta(1600)+ -> N(1440)+ + pi0'},
     ],
     32224: [  # Delta(1600)++
-        {'br': 0.08, 'daughters': [2212, 211], 'comment': '# Delta(1600)++ -> p + pi+'},
-        {'br': 0.432, 'daughters': [2224, 111], 'comment': '# Delta(1600)++ -> Delta(1232)++ + pi0'},
-        {'br': 0.288, 'daughters': [2214, 211], 'comment': '# Delta(1600)++ -> Delta(1232)+ + pi+'},
+        {'br': 0.16, 'daughters': [2212, 211], 'comment': '# Delta(1600)++ -> p + pi+'},
+        {'br': 0.384, 'daughters': [2224, 111], 'comment': '# Delta(1600)++ -> Delta(1232)++ + pi0'},
+        {'br': 0.256, 'daughters': [2214, 211], 'comment': '# Delta(1600)++ -> Delta(1232)+ + pi+'},
         {'br': 0.20, 'daughters': [12212, 211], 'comment': '# Delta(1600)++ -> N(1440)+ + pi+'},
     ],
 
@@ -803,15 +808,14 @@ DECAY_UPDATES = {
     ],
 
     # f(2)'(1525): Updated branching fractions from PDG 2025
-    # PDG 2025 BFX: KKbar (87.6%), eta eta (10.3%), pi pi (0.82%)
-    # Fix: eta eta was 11.5% in PDG2020, PDG2025 says 10.3%
+    # PDG 2025 FC: KKbar (88.85%), eta eta (10.33%), pi pi (0.82%)
+    # gamma gamma is ~1e-6, negligible. KKbar split 50/50 by isospin, pipi split 1/3:2/3
     335: [
-        {'br': 0.4396, 'daughters': [321, -321], 'comment': "# f(2)'(1525) -> K+ + K-"},
-        {'br': 0.4396, 'daughters': [311, -311], 'comment': "# f(2)'(1525) -> K0 + anti-K0"},
-        {'br': 0.103, 'daughters': [221, 221], 'comment': "# f(2)'(1525) -> eta + eta"},
-        {'br': 0.003, 'daughters': [111, 111], 'comment': "# f(2)'(1525) -> pi0 + pi0"},
-        {'br': 0.006, 'daughters': [211, -211], 'comment': "# f(2)'(1525) -> pi+ + pi-"},
-        {'br': 0.009, 'daughters': [22, 22], 'comment': "# f(2)'(1525) -> gamma + gamma"},
+        {'br': 0.4443, 'daughters': [321, -321], 'comment': "# f(2)'(1525) -> K+ + K- (PDG2025 88.85%/2)"},
+        {'br': 0.4443, 'daughters': [311, -311], 'comment': "# f(2)'(1525) -> K0 + anti-K0 (PDG2025 88.85%/2)"},
+        {'br': 0.1033, 'daughters': [221, 221], 'comment': "# f(2)'(1525) -> eta + eta (PDG2025 10.33%)"},
+        {'br': 0.0027, 'daughters': [111, 111], 'comment': "# f(2)'(1525) -> pi0 + pi0 (PDG2025 0.82%/3)"},
+        {'br': 0.0054, 'daughters': [211, -211], 'comment': "# f(2)'(1525) -> pi+ + pi- (PDG2025 0.82%*2/3)"},
     ],
 
     # f(1)(1285): Updated branching fractions from PDG 2025
@@ -831,6 +835,34 @@ DECAY_UPDATES = {
         {'br': 0.024, 'daughters': [311, -311, 111], 'comment': '# f(1)(1285) -> K0 + anti-K0 + pi0'},
         {'br': 0.167, 'daughters': [221, 111, 111], 'comment': '# f(1)(1285) -> eta + pi0 + pi0'},
         {'br': 0.060, 'daughters': [113, 22], 'comment': '# f(1)(1285) -> rho(770)0 + gamma'},
+    ],
+
+    # rho(3)(1690): PDG 2025 FC: 4pi (71.1%), pi pi (23.6%), KKbar pi (3.76%), KKbar (1.58%)
+    # Charged rho3(1690)+ has same BRs with appropriate charge assignments
+    217: [
+        {'br': 0.5506, 'daughters': [211, 211, -211, 111], 'comment': '# rho(3)(1690)+ -> 4pi direct'},
+        {'br': 0.160, 'daughters': [223, 211], 'comment': '# rho(3)(1690)+ -> omega(782) + pi+'},
+        {'br': 0.236, 'daughters': [211, 111], 'comment': '# rho(3)(1690)+ -> pi+ + pi0 (PDG2025 23.6%)'},
+        {'br': 0.0125, 'daughters': [321, -321, 211], 'comment': '# rho(3)(1690)+ -> K+ + K- + pi+'},
+        {'br': 0.0125, 'daughters': [311, -311, 211], 'comment': '# rho(3)(1690)+ -> K0 + anti-K0 + pi+'},
+        {'br': 0.0125, 'daughters': [321, -311, 111], 'comment': '# rho(3)(1690)+ -> K+ + anti-K0 + pi0'},
+        {'br': 0.0159, 'daughters': [321, -311], 'comment': '# rho(3)(1690)+ -> K+ + anti-K0 (PDG2025 1.58%)'},
+    ],
+
+    # rho(3)(1690)0: PDG 2025 FC: 4pi (71.1%), pi pi (23.6%), KKbar pi (3.76%), KKbar (1.58%)
+    # FIST decomposes 4pi into direct 4pi + omega pi0 (omega->3pi is a 4pi sub-channel)
+    # omega pi RPP: 16+-6%, use 16% within 4pi budget; rest = 71.1-16.0 = 55.1% direct 4pi
+    # KKbar pi split into 4 charge channels equally; KKbar split 50/50
+    117: [
+        {'br': 0.5506, 'daughters': [111, 211, -211, 111], 'comment': '# rho(3)(1690)0 -> 4pi direct (PDG2025 71.1% - 16% omega pi)'},
+        {'br': 0.160, 'daughters': [223, 111], 'comment': '# rho(3)(1690)0 -> omega(782) + pi0 (RPP 16%)'},
+        {'br': 0.236, 'daughters': [211, -211], 'comment': '# rho(3)(1690)0 -> pi+ + pi- (PDG2025 23.6%)'},
+        {'br': 0.0094, 'daughters': [321, -321, 111], 'comment': '# rho(3)(1690)0 -> K+ + K- + pi0'},
+        {'br': 0.0094, 'daughters': [321, -311, -211], 'comment': '# rho(3)(1690)0 -> K+ + anti-K0 + pi-'},
+        {'br': 0.0094, 'daughters': [311, -311, 111], 'comment': '# rho(3)(1690)0 -> K0 + anti-K0 + pi0'},
+        {'br': 0.0094, 'daughters': [311, -321, 211], 'comment': '# rho(3)(1690)0 -> K0 + K- + pi+'},
+        {'br': 0.0079, 'daughters': [321, -321], 'comment': '# rho(3)(1690)0 -> K+ + K- (PDG2025 1.58%/2)'},
+        {'br': 0.0079, 'daughters': [311, -311], 'comment': '# rho(3)(1690)0 -> K0 + anti-K0 (PDG2025 1.58%/2)'},
     ],
 
     # =====================================================================
@@ -962,41 +994,49 @@ DECAY_UPDATES = {
     # Updated: N pi 13%, Delta pi 73%, Delta eta 10%, N rho 4%
     # =====================================================================
 
-    # Delta(1920)-
+    # Delta(1920): Add SigmaK=4% (PDG 2-6%). Reduce Deltapi by 4%.
+    # I=3/2 -> Sigma(I=1) K(I=1/2): C-G gives all Sigma-K charge combos
+    # Delta(1920)-: only Sigma- K0
     21114: [
         {'br': 0.13, 'daughters': [2112, -211], 'comment': '# Delta(1920)- -> n + pi-'},
-        {'br': 0.292, 'daughters': [2114, -211], 'comment': '# Delta(1920)- -> Delta(1232)0 + pi-'},
-        {'br': 0.438, 'daughters': [1114, 111], 'comment': '# Delta(1920)- -> Delta(1232)- + pi0'},
+        {'br': 0.276, 'daughters': [2114, -211], 'comment': '# Delta(1920)- -> Delta(1232)0 + pi-'},
+        {'br': 0.414, 'daughters': [1114, 111], 'comment': '# Delta(1920)- -> Delta(1232)- + pi0'},
         {'br': 0.04, 'daughters': [2112, -213], 'comment': '# Delta(1920)- -> n + rho(770)-'},
         {'br': 0.10, 'daughters': [1114, 221], 'comment': '# Delta(1920)- -> Delta(1232)- + eta'},
+        {'br': 0.04, 'daughters': [3112, 311], 'comment': '# Delta(1920)- -> Sigma- + K0'},
     ],
-    # Delta(1920)0
+    # Delta(1920)0: Sigma- K+ and Sigma0 K0
     22114: [
         {'br': 0.087, 'daughters': [2112, 111], 'comment': '# Delta(1920)0 -> n + pi0'},
         {'br': 0.043, 'daughters': [2212, -211], 'comment': '# Delta(1920)0 -> p + pi-'},
-        {'br': 0.389, 'daughters': [2214, -211], 'comment': '# Delta(1920)0 -> Delta(1232)+ + pi-'},
-        {'br': 0.049, 'daughters': [2114, 111], 'comment': '# Delta(1920)0 -> Delta(1232)0 + pi0'},
-        {'br': 0.292, 'daughters': [1114, 211], 'comment': '# Delta(1920)0 -> Delta(1232)- + pi+'},
+        {'br': 0.365, 'daughters': [2214, -211], 'comment': '# Delta(1920)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.046, 'daughters': [2114, 111], 'comment': '# Delta(1920)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.269, 'daughters': [1114, 211], 'comment': '# Delta(1920)0 -> Delta(1232)- + pi+'},
         {'br': 0.04, 'daughters': [2112, 113], 'comment': '# Delta(1920)0 -> n + rho(770)0'},
         {'br': 0.10, 'daughters': [2114, 221], 'comment': '# Delta(1920)0 -> Delta(1232)0 + eta'},
+        {'br': 0.03, 'daughters': [3112, 321], 'comment': '# Delta(1920)0 -> Sigma- + K+'},
+        {'br': 0.02, 'daughters': [3212, 311], 'comment': '# Delta(1920)0 -> Sigma0 + K0'},
     ],
-    # Delta(1920)+
+    # Delta(1920)+: Sigma0 K+ and Sigma+ K0
     22214: [
         {'br': 0.043, 'daughters': [2112, 211], 'comment': '# Delta(1920)+ -> n + pi+'},
         {'br': 0.087, 'daughters': [2212, 111], 'comment': '# Delta(1920)+ -> p + pi0'},
-        {'br': 0.292, 'daughters': [2224, -211], 'comment': '# Delta(1920)+ -> Delta(1232)++ + pi-'},
-        {'br': 0.049, 'daughters': [2214, 111], 'comment': '# Delta(1920)+ -> Delta(1232)+ + pi0'},
-        {'br': 0.389, 'daughters': [2114, 211], 'comment': '# Delta(1920)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.269, 'daughters': [2224, -211], 'comment': '# Delta(1920)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.046, 'daughters': [2214, 111], 'comment': '# Delta(1920)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.365, 'daughters': [2114, 211], 'comment': '# Delta(1920)+ -> Delta(1232)0 + pi+'},
         {'br': 0.04, 'daughters': [2212, 113], 'comment': '# Delta(1920)+ -> p + rho(770)0'},
         {'br': 0.10, 'daughters': [2214, 221], 'comment': '# Delta(1920)+ -> Delta(1232)+ + eta'},
+        {'br': 0.02, 'daughters': [3212, 321], 'comment': '# Delta(1920)+ -> Sigma0 + K+'},
+        {'br': 0.03, 'daughters': [3222, 311], 'comment': '# Delta(1920)+ -> Sigma+ + K0'},
     ],
-    # Delta(1920)++
+    # Delta(1920)++: only Sigma+ K+
     22224: [
         {'br': 0.13, 'daughters': [2212, 211], 'comment': '# Delta(1920)++ -> p + pi+'},
-        {'br': 0.438, 'daughters': [2224, 111], 'comment': '# Delta(1920)++ -> Delta(1232)++ + pi0'},
-        {'br': 0.292, 'daughters': [2214, 211], 'comment': '# Delta(1920)++ -> Delta(1232)+ + pi+'},
+        {'br': 0.414, 'daughters': [2224, 111], 'comment': '# Delta(1920)++ -> Delta(1232)++ + pi0'},
+        {'br': 0.276, 'daughters': [2214, 211], 'comment': '# Delta(1920)++ -> Delta(1232)+ + pi+'},
         {'br': 0.04, 'daughters': [2212, 213], 'comment': '# Delta(1920)++ -> p + rho(770)+'},
         {'br': 0.10, 'daughters': [2224, 221], 'comment': '# Delta(1920)++ -> Delta(1232)++ + eta'},
+        {'br': 0.04, 'daughters': [3222, 321], 'comment': '# Delta(1920)++ -> Sigma+ + K+'},
     ],
 
     # =====================================================================
@@ -1052,6 +1092,585 @@ DECAY_UPDATES = {
         {'br': 0.30, 'daughters': [215, 221], 'comment': '# pi2(1880)+ -> a(2)(1320)+ + eta'},
         {'br': 0.10, 'daughters': [9030221, 211], 'comment': '# pi2(1880)+ -> f(0)(1500) + pi+'},
         {'br': 0.20, 'daughters': [20223, 211], 'comment': '# pi2(1880)+ -> f(1)(1285) + pi+'},
+    ],
+
+    # =====================================================================
+    # Baryon resonance BR updates from PDG2025 RPP cross-check
+    # PDG gives ranges for partial-wave fractions; FIST uses midpoints
+    # with isospin decomposition. Updates below bring FIST values
+    # within PDG2025 ranges where they were previously outside.
+    # =====================================================================
+
+    # N(1520)+: Npipi was 40% (PDG 25-35%). Reduce Nrho from 12->5%, Delta*pi 27->23%, add Nsigma 1%
+    # Keep Npi=60% (within 55-65%), total Npipi -> 29%
+    2124: [
+        {'br': 0.40, 'daughters': [2112, 211], 'comment': '# N(1520)+ -> n + pi+'},
+        {'br': 0.20, 'daughters': [2212, 111], 'comment': '# N(1520)+ -> p + pi0'},
+        {'br': 0.115, 'daughters': [2224, -211], 'comment': '# N(1520)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.077, 'daughters': [2214, 111], 'comment': '# N(1520)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.038, 'daughters': [2114, 211], 'comment': '# N(1520)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.033, 'daughters': [2112, 213], 'comment': '# N(1520)+ -> n + rho(770)+'},
+        {'br': 0.017, 'daughters': [2212, 113], 'comment': '# N(1520)+ -> p + rho(770)0'},
+        {'br': 0.02, 'daughters': [2212, 9000221], 'comment': '# N(1520)+ -> p + f(0)(500)'},
+    ],
+    # N(1520)0: isospin mirror
+    1214: [
+        {'br': 0.20, 'daughters': [2112, 111], 'comment': '# N(1520)0 -> n + pi0'},
+        {'br': 0.40, 'daughters': [2212, -211], 'comment': '# N(1520)0 -> p + pi-'},
+        {'br': 0.038, 'daughters': [2214, -211], 'comment': '# N(1520)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.077, 'daughters': [2114, 111], 'comment': '# N(1520)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.115, 'daughters': [1114, 211], 'comment': '# N(1520)0 -> Delta(1232)- + pi+'},
+        {'br': 0.017, 'daughters': [2112, 113], 'comment': '# N(1520)0 -> n + rho(770)0'},
+        {'br': 0.033, 'daughters': [2212, -213], 'comment': '# N(1520)0 -> p + rho(770)-'},
+        {'br': 0.02, 'daughters': [2112, 9000221], 'comment': '# N(1520)0 -> n + f(0)(500)'},
+    ],
+
+    # N(1650)+: Npipi was 15% (PDG 20-58%). Reduce Npi from 60->55%, increase Npipi from 15->25%
+    # Keep Neta=20%, LambdaK=5%. Take from Npi, give to Delta*pi and Nsigma
+    32212: [
+        {'br': 0.367, 'daughters': [2112, 211], 'comment': '# N(1650)+ -> n + pi+'},
+        {'br': 0.183, 'daughters': [2212, 111], 'comment': '# N(1650)+ -> p + pi0'},
+        {'br': 0.20, 'daughters': [2212, 221], 'comment': '# N(1650)+ -> p + eta'},
+        {'br': 0.05, 'daughters': [3122, 321], 'comment': '# N(1650)+ -> Lambda + K+'},
+        {'br': 0.045, 'daughters': [2224, -211], 'comment': '# N(1650)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.030, 'daughters': [2214, 111], 'comment': '# N(1650)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.015, 'daughters': [2114, 211], 'comment': '# N(1650)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.06, 'daughters': [2212, 9000221], 'comment': '# N(1650)+ -> p + f(0)(500)'},
+        {'br': 0.033, 'daughters': [12112, 211], 'comment': '# N(1650)+ -> N(1440)0 + pi+'},
+        {'br': 0.017, 'daughters': [12212, 111], 'comment': '# N(1650)+ -> N(1440)+ + pi0'},
+    ],
+    # N(1650)0: isospin mirror
+    32112: [
+        {'br': 0.183, 'daughters': [2112, 111], 'comment': '# N(1650)0 -> n + pi0'},
+        {'br': 0.367, 'daughters': [2212, -211], 'comment': '# N(1650)0 -> p + pi-'},
+        {'br': 0.20, 'daughters': [2112, 221], 'comment': '# N(1650)0 -> n + eta'},
+        {'br': 0.05, 'daughters': [3122, 311], 'comment': '# N(1650)0 -> Lambda + K0'},
+        {'br': 0.015, 'daughters': [2214, -211], 'comment': '# N(1650)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.030, 'daughters': [2114, 111], 'comment': '# N(1650)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.045, 'daughters': [1114, 211], 'comment': '# N(1650)0 -> Delta(1232)- + pi+'},
+        {'br': 0.06, 'daughters': [2112, 9000221], 'comment': '# N(1650)0 -> n + f(0)(500)'},
+        {'br': 0.017, 'daughters': [12112, 111], 'comment': '# N(1650)0 -> N(1440)0 + pi0'},
+        {'br': 0.033, 'daughters': [12212, -211], 'comment': '# N(1650)0 -> N(1440)+ + pi-'},
+    ],
+
+    # N(1675)+: Npipi was 60% (PDG 25-45%). PDG: Npi 38-42%, Neta <1%, Npipi 25-45%
+    # Note: PDG ranges don't sum to 100%. FIST needs 100% in 2-body channels.
+    # Best achievable: Npi=42%, Neta=1%, Npipi=57% (Deltapi=30%, Nsigma=5%, N*pi=20%, Nrho=2%)
+    # Npipi sub-channels: Deltapi 23-37% -> 30%, Nrho 0.1-0.9% -> 2%, Nsigma 3-7% -> 5%
+    2216: [
+        {'br': 0.28, 'daughters': [2112, 211], 'comment': '# N(1675)+ -> n + pi+'},
+        {'br': 0.14, 'daughters': [2212, 111], 'comment': '# N(1675)+ -> p + pi0'},
+        {'br': 0.01, 'daughters': [2212, 221], 'comment': '# N(1675)+ -> p + eta'},
+        {'br': 0.15, 'daughters': [2224, -211], 'comment': '# N(1675)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.10, 'daughters': [2214, 111], 'comment': '# N(1675)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.05, 'daughters': [2114, 211], 'comment': '# N(1675)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.05, 'daughters': [2212, 9000221], 'comment': '# N(1675)+ -> p + f(0)(500)'},
+        {'br': 0.02, 'daughters': [2212, 113], 'comment': '# N(1675)+ -> p + rho(770)0'},
+        {'br': 0.133, 'daughters': [12112, 211], 'comment': '# N(1675)+ -> N(1440)0 + pi+'},
+        {'br': 0.067, 'daughters': [12212, 111], 'comment': '# N(1675)+ -> N(1440)+ + pi0'},
+    ],
+    # N(1675)0: isospin mirror -- note N(1675) has I=1/2
+    2116: [
+        {'br': 0.14, 'daughters': [2112, 111], 'comment': '# N(1675)0 -> n + pi0'},
+        {'br': 0.28, 'daughters': [2212, -211], 'comment': '# N(1675)0 -> p + pi-'},
+        {'br': 0.01, 'daughters': [2112, 221], 'comment': '# N(1675)0 -> n + eta'},
+        {'br': 0.05, 'daughters': [2214, -211], 'comment': '# N(1675)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.10, 'daughters': [2114, 111], 'comment': '# N(1675)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.15, 'daughters': [1114, 211], 'comment': '# N(1675)0 -> Delta(1232)- + pi+'},
+        {'br': 0.05, 'daughters': [2112, 9000221], 'comment': '# N(1675)0 -> n + f(0)(500)'},
+        {'br': 0.02, 'daughters': [2112, 113], 'comment': '# N(1675)0 -> n + rho(770)0'},
+        {'br': 0.067, 'daughters': [12112, 111], 'comment': '# N(1675)0 -> N(1440)0 + pi0'},
+        {'br': 0.133, 'daughters': [12212, -211], 'comment': '# N(1675)0 -> N(1440)+ + pi-'},
+    ],
+
+    # N(1880)+: SigmaK missing (PDG 10-24%). Add SigmaK=15%, reduce Delta*pi and Nsigma
+    # Npi=6%, Neta=20%, LambdaK=10%, Nomega=14%, SigmaK=15%, Delta*pi=20%, Nsigma=8%, Nrho=7%
+    9902212: [
+        {'br': 0.04, 'daughters': [2112, 211], 'comment': '# N(1880)+ -> n + pi+'},
+        {'br': 0.02, 'daughters': [2212, 111], 'comment': '# N(1880)+ -> p + pi0'},
+        {'br': 0.20, 'daughters': [2212, 221], 'comment': '# N(1880)+ -> p + eta'},
+        {'br': 0.10, 'daughters': [3122, 321], 'comment': '# N(1880)+ -> Lambda + K+'},
+        {'br': 0.14, 'daughters': [2212, 223], 'comment': '# N(1880)+ -> p + omega(782)'},
+        {'br': 0.08, 'daughters': [2212, 9000221], 'comment': '# N(1880)+ -> p + f(0)(500)'},
+        {'br': 0.04, 'daughters': [2114, 211], 'comment': '# N(1880)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.08, 'daughters': [2214, 111], 'comment': '# N(1880)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.12, 'daughters': [2224, -211], 'comment': '# N(1880)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.075, 'daughters': [3222, 311], 'comment': '# N(1880)+ -> Sigma+ + K0'},
+        {'br': 0.075, 'daughters': [3212, 321], 'comment': '# N(1880)+ -> Sigma0 + K+'},
+    ],
+    # N(1880)0: isospin mirror
+    9902112: [
+        {'br': 0.02, 'daughters': [2112, 111], 'comment': '# N(1880)0 -> n + pi0'},
+        {'br': 0.04, 'daughters': [2212, -211], 'comment': '# N(1880)0 -> p + pi-'},
+        {'br': 0.20, 'daughters': [2112, 221], 'comment': '# N(1880)0 -> n + eta'},
+        {'br': 0.10, 'daughters': [3122, 311], 'comment': '# N(1880)0 -> Lambda + K0'},
+        {'br': 0.14, 'daughters': [2112, 223], 'comment': '# N(1880)0 -> n + omega(782)'},
+        {'br': 0.08, 'daughters': [2112, 9000221], 'comment': '# N(1880)0 -> n + f(0)(500)'},
+        {'br': 0.04, 'daughters': [2214, -211], 'comment': '# N(1880)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.08, 'daughters': [2114, 111], 'comment': '# N(1880)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.12, 'daughters': [1114, 211], 'comment': '# N(1880)0 -> Delta(1232)- + pi+'},
+        {'br': 0.075, 'daughters': [3112, 321], 'comment': '# N(1880)0 -> Sigma- + K+'},
+        {'br': 0.075, 'daughters': [3212, 311], 'comment': '# N(1880)0 -> Sigma0 + K0'},
+    ],
+
+    # N(1900)+: SigmaK missing (PDG 3-7%). Add SigmaK=5%, reduce Delta*pi
+    9912214: [
+        {'br': 0.04, 'daughters': [2212, 111], 'comment': '# N(1900)+ -> p + pi0'},
+        {'br': 0.08, 'daughters': [2112, 211], 'comment': '# N(1900)+ -> n + pi+'},
+        {'br': 0.13, 'daughters': [2212, 221], 'comment': '# N(1900)+ -> p + eta'},
+        {'br': 0.13, 'daughters': [2212, 223], 'comment': '# N(1900)+ -> p + omega(782)'},
+        {'br': 0.02, 'daughters': [22212, 111], 'comment': '# N(1900)+ -> N(1535)+ + pi0'},
+        {'br': 0.04, 'daughters': [22112, 211], 'comment': '# N(1900)+ -> N(1535)0 + pi+'},
+        {'br': 0.09, 'daughters': [3122, 321], 'comment': '# N(1900)+ -> Lambda + K+'},
+        {'br': 0.03, 'daughters': [2114, 211], 'comment': '# N(1900)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.07, 'daughters': [2214, 111], 'comment': '# N(1900)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.13, 'daughters': [2224, -211], 'comment': '# N(1900)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.04, 'daughters': [2124, 111], 'comment': '# N(1900)+ -> N(1520)+ + pi0'},
+        {'br': 0.08, 'daughters': [1214, 211], 'comment': '# N(1900)+ -> N(1520)0 + pi+'},
+        {'br': 0.025, 'daughters': [3222, 311], 'comment': '# N(1900)+ -> Sigma+ + K0'},
+        {'br': 0.025, 'daughters': [3212, 321], 'comment': '# N(1900)+ -> Sigma0 + K+'},
+    ],
+    # N(1900)0: isospin mirror
+    9912114: [
+        {'br': 0.02, 'daughters': [2112, 111], 'comment': '# N(1900)0 -> n + pi0'},
+        {'br': 0.08, 'daughters': [2212, -211], 'comment': '# N(1900)0 -> p + pi-'},
+        {'br': 0.13, 'daughters': [2112, 221], 'comment': '# N(1900)0 -> n + eta'},
+        {'br': 0.13, 'daughters': [2112, 223], 'comment': '# N(1900)0 -> n + omega(782)'},
+        {'br': 0.02, 'daughters': [22112, 111], 'comment': '# N(1900)0 -> N(1535)0 + pi0'},
+        {'br': 0.04, 'daughters': [22212, -211], 'comment': '# N(1900)0 -> N(1535)+ + pi-'},
+        {'br': 0.09, 'daughters': [3122, 311], 'comment': '# N(1900)0 -> Lambda + K0'},
+        {'br': 0.03, 'daughters': [2214, -211], 'comment': '# N(1900)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.07, 'daughters': [2114, 111], 'comment': '# N(1900)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.13, 'daughters': [1114, 211], 'comment': '# N(1900)0 -> Delta(1232)- + pi+'},
+        {'br': 0.04, 'daughters': [1214, 111], 'comment': '# N(1900)0 -> N(1520)0 + pi0'},
+        {'br': 0.08, 'daughters': [2124, -211], 'comment': '# N(1900)0 -> N(1520)+ + pi-'},
+        {'br': 0.025, 'daughters': [3112, 321], 'comment': '# N(1900)0 -> Sigma- + K+'},
+        {'br': 0.025, 'daughters': [3212, 311], 'comment': '# N(1900)0 -> Sigma0 + K0'},
+    ],
+
+    # N(2060)+: LambdaK missing (PDG 10-20%). Add LambdaK=12%, reduce N*pi
+    9902216: [
+        {'br': 0.03, 'daughters': [2212, 111], 'comment': '# N(2060)+ -> p + pi0'},
+        {'br': 0.06, 'daughters': [2112, 211], 'comment': '# N(2060)+ -> n + pi+'},
+        {'br': 0.04, 'daughters': [2212, 221], 'comment': '# N(2060)+ -> p + eta'},
+        {'br': 0.07, 'daughters': [2212, 223], 'comment': '# N(2060)+ -> p + omega(782)'},
+        {'br': 0.04, 'daughters': [2214, 111], 'comment': '# N(2060)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.02, 'daughters': [2114, 211], 'comment': '# N(2060)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.06, 'daughters': [2224, -211], 'comment': '# N(2060)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.06, 'daughters': [2212, 9000221], 'comment': '# N(2060)+ -> p + f(0)(500)'},
+        {'br': 0.02, 'daughters': [12212, 111], 'comment': '# N(2060)+ -> N(1440)+ + pi0'},
+        {'br': 0.04, 'daughters': [12112, 211], 'comment': '# N(2060)+ -> N(1440)0 + pi+'},
+        {'br': 0.06, 'daughters': [2124, 111], 'comment': '# N(2060)+ -> N(1520)+ + pi0'},
+        {'br': 0.12, 'daughters': [1214, 211], 'comment': '# N(2060)+ -> N(1520)0 + pi+'},
+        {'br': 0.06, 'daughters': [12216, 111], 'comment': '# N(2060)+ -> N(1680)+ + pi0'},
+        {'br': 0.12, 'daughters': [12116, 211], 'comment': '# N(2060)+ -> N(1680)0 + pi+'},
+        {'br': 0.12, 'daughters': [3122, 321], 'comment': '# N(2060)+ -> Lambda + K+'},
+    ],
+    # N(2060)0: isospin mirror
+    9902116: [
+        {'br': 0.03, 'daughters': [2112, 111], 'comment': '# N(2060)0 -> n + pi0'},
+        {'br': 0.06, 'daughters': [2212, -211], 'comment': '# N(2060)0 -> p + pi-'},
+        {'br': 0.04, 'daughters': [2112, 221], 'comment': '# N(2060)0 -> n + eta'},
+        {'br': 0.07, 'daughters': [2112, 223], 'comment': '# N(2060)0 -> n + omega(782)'},
+        {'br': 0.06, 'daughters': [2214, -211], 'comment': '# N(2060)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.04, 'daughters': [2114, 111], 'comment': '# N(2060)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.02, 'daughters': [1114, 211], 'comment': '# N(2060)0 -> Delta(1232)- + pi+'},
+        {'br': 0.06, 'daughters': [2112, 9000221], 'comment': '# N(2060)0 -> n + f(0)(500)'},
+        {'br': 0.02, 'daughters': [12112, 111], 'comment': '# N(2060)0 -> N(1440)0 + pi0'},
+        {'br': 0.04, 'daughters': [12212, -211], 'comment': '# N(2060)0 -> N(1440)+ + pi-'},
+        {'br': 0.06, 'daughters': [1214, 111], 'comment': '# N(2060)0 -> N(1520)0 + pi0'},
+        {'br': 0.12, 'daughters': [2124, -211], 'comment': '# N(2060)0 -> N(1520)+ + pi-'},
+        {'br': 0.06, 'daughters': [12116, 111], 'comment': '# N(2060)0 -> N(1680)0 + pi0'},
+        {'br': 0.12, 'daughters': [12216, -211], 'comment': '# N(2060)0 -> N(1680)+ + pi-'},
+        {'br': 0.12, 'daughters': [3122, 311], 'comment': '# N(2060)0 -> Lambda + K0'},
+    ],
+
+    # N(2100)+: Neta missing (PDG 5-45%). Replace eta'(7%) with eta(12%). Reduce Nsigma.
+    9922212: [
+        {'br': 0.04, 'daughters': [2212, 111], 'comment': '# N(2100)+ -> p + pi0'},
+        {'br': 0.08, 'daughters': [2112, 211], 'comment': '# N(2100)+ -> n + pi+'},
+        {'br': 0.12, 'daughters': [2212, 221], 'comment': '# N(2100)+ -> p + eta (PDG2025 5-45%)'},
+        {'br': 0.15, 'daughters': [2212, 223], 'comment': '# N(2100)+ -> p + omega(782)'},
+        {'br': 0.06, 'daughters': [2214, 111], 'comment': '# N(2100)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.03, 'daughters': [2114, 211], 'comment': '# N(2100)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.09, 'daughters': [2224, -211], 'comment': '# N(2100)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.13, 'daughters': [2212, 9000221], 'comment': '# N(2100)+ -> p + f(0)(500)'},
+        {'br': 0.10, 'daughters': [22212, 111], 'comment': '# N(2100)+ -> N(1535)+ + pi0'},
+        {'br': 0.20, 'daughters': [22112, 211], 'comment': '# N(2100)+ -> N(1535)0 + pi+'},
+    ],
+    # N(2100)0: isospin mirror
+    9922112: [
+        {'br': 0.04, 'daughters': [2112, 111], 'comment': '# N(2100)0 -> n + pi0'},
+        {'br': 0.08, 'daughters': [2212, -211], 'comment': '# N(2100)0 -> p + pi-'},
+        {'br': 0.12, 'daughters': [2112, 221], 'comment': '# N(2100)0 -> n + eta (PDG2025 5-45%)'},
+        {'br': 0.15, 'daughters': [2112, 223], 'comment': '# N(2100)0 -> n + omega(782)'},
+        {'br': 0.03, 'daughters': [2214, -211], 'comment': '# N(2100)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.06, 'daughters': [2114, 111], 'comment': '# N(2100)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.09, 'daughters': [1114, 211], 'comment': '# N(2100)0 -> Delta(1232)- + pi+'},
+        {'br': 0.13, 'daughters': [2112, 9000221], 'comment': '# N(2100)0 -> n + f(0)(500)'},
+        {'br': 0.10, 'daughters': [22112, 111], 'comment': '# N(2100)0 -> N(1535)0 + pi0'},
+        {'br': 0.20, 'daughters': [22212, -211], 'comment': '# N(2100)0 -> N(1535)+ + pi-'},
+    ],
+
+    # N(2120)+: LambdaK missing (PDG 6-11%). Add LambdaK=8%, Neta=2%. Reduce Delta*pi.
+    9922214: [
+        {'br': 0.03, 'daughters': [2212, 111], 'comment': '# N(2120)+ -> p + pi0'},
+        {'br': 0.06, 'daughters': [2112, 211], 'comment': '# N(2120)+ -> n + pi+'},
+        {'br': 0.02, 'daughters': [2212, 221], 'comment': '# N(2120)+ -> p + eta (PDG2025 1-5%)'},
+        {'br': 0.03, 'daughters': [2212, 331], 'comment': '# N(2120)+ -> p + eta\'(958)'},
+        {'br': 0.10, 'daughters': [2212, 223], 'comment': '# N(2120)+ -> p + omega(782)'},
+        {'br': 0.14, 'daughters': [2214, 111], 'comment': '# N(2120)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.07, 'daughters': [2114, 211], 'comment': '# N(2120)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.21, 'daughters': [2224, -211], 'comment': '# N(2120)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.08, 'daughters': [2212, 9000221], 'comment': '# N(2120)+ -> p + f(0)(500)'},
+        {'br': 0.04, 'daughters': [22212, 111], 'comment': '# N(2120)+ -> N(1535)+ + pi0'},
+        {'br': 0.08, 'daughters': [22112, 211], 'comment': '# N(2120)+ -> N(1535)0 + pi+'},
+        {'br': 0.08, 'daughters': [3122, 321], 'comment': '# N(2120)+ -> Lambda + K+'},
+    ],
+    # N(2120)0: isospin mirror
+    9922114: [
+        {'br': 0.03, 'daughters': [2112, 111], 'comment': '# N(2120)0 -> n + pi0'},
+        {'br': 0.06, 'daughters': [2212, -211], 'comment': '# N(2120)0 -> p + pi-'},
+        {'br': 0.02, 'daughters': [2112, 221], 'comment': '# N(2120)0 -> n + eta'},
+        {'br': 0.03, 'daughters': [2112, 331], 'comment': '# N(2120)0 -> n + eta\'(958)'},
+        {'br': 0.10, 'daughters': [2112, 223], 'comment': '# N(2120)0 -> n + omega(782)'},
+        {'br': 0.07, 'daughters': [2214, -211], 'comment': '# N(2120)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.14, 'daughters': [2114, 111], 'comment': '# N(2120)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.21, 'daughters': [1114, 211], 'comment': '# N(2120)0 -> Delta(1232)- + pi+'},
+        {'br': 0.08, 'daughters': [2112, 9000221], 'comment': '# N(2120)0 -> n + f(0)(500)'},
+        {'br': 0.04, 'daughters': [22112, 111], 'comment': '# N(2120)0 -> N(1535)0 + pi0'},
+        {'br': 0.08, 'daughters': [22212, -211], 'comment': '# N(2120)0 -> N(1535)+ + pi-'},
+        {'br': 0.08, 'daughters': [3122, 311], 'comment': '# N(2120)0 -> Lambda + K0'},
+    ],
+
+    # Delta(2200)++: Npi was 15% (PDG 2-8%). Reduce to 5%, give to Npipi
+    9902228: [
+        {'br': 0.05, 'daughters': [2212, 211], 'comment': '# Delta(2200)++ -> p + pi+ (PDG2025 2-8%)'},
+        {'br': 0.30, 'daughters': [2224, 111], 'comment': '# Delta(2200)++ -> Delta(1232)++ + pi0'},
+        {'br': 0.20, 'daughters': [2214, 211], 'comment': '# Delta(2200)++ -> Delta(1232)+ + pi+'},
+        {'br': 0.38, 'daughters': [2212, 213], 'comment': '# Delta(2200)++ -> p + rho(770)+'},
+        {'br': 0.07, 'daughters': [2224, 221], 'comment': '# Delta(2200)++ -> Delta(1232)++ + eta'},
+    ],
+    # Delta(2200)-
+    9901118: [
+        {'br': 0.05, 'daughters': [2112, -211], 'comment': '# Delta(2200)- -> n + pi-'},
+        {'br': 0.20, 'daughters': [2114, -211], 'comment': '# Delta(2200)- -> Delta(1232)0 + pi-'},
+        {'br': 0.30, 'daughters': [1114, 111], 'comment': '# Delta(2200)- -> Delta(1232)- + pi0'},
+        {'br': 0.38, 'daughters': [2112, -213], 'comment': '# Delta(2200)- -> n + rho(770)-'},
+        {'br': 0.07, 'daughters': [1114, 221], 'comment': '# Delta(2200)- -> Delta(1232)- + eta'},
+    ],
+    # Delta(2200)0
+    9901218: [
+        {'br': 0.033, 'daughters': [2112, 111], 'comment': '# Delta(2200)0 -> n + pi0'},
+        {'br': 0.017, 'daughters': [2212, -211], 'comment': '# Delta(2200)0 -> p + pi-'},
+        {'br': 0.267, 'daughters': [2214, -211], 'comment': '# Delta(2200)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.033, 'daughters': [2114, 111], 'comment': '# Delta(2200)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.20, 'daughters': [1114, 211], 'comment': '# Delta(2200)0 -> Delta(1232)- + pi+'},
+        {'br': 0.127, 'daughters': [2212, -213], 'comment': '# Delta(2200)0 -> p + rho(770)-'},
+        {'br': 0.253, 'daughters': [2112, 113], 'comment': '# Delta(2200)0 -> n + rho(770)0'},
+        {'br': 0.07, 'daughters': [2114, 221], 'comment': '# Delta(2200)0 -> Delta(1232)0 + eta'},
+    ],
+    # Delta(2200)+
+    9902128: [
+        {'br': 0.017, 'daughters': [2112, 211], 'comment': '# Delta(2200)+ -> n + pi+'},
+        {'br': 0.033, 'daughters': [2212, 111], 'comment': '# Delta(2200)+ -> p + pi0'},
+        {'br': 0.20, 'daughters': [2224, -211], 'comment': '# Delta(2200)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.033, 'daughters': [2214, 111], 'comment': '# Delta(2200)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.267, 'daughters': [2114, 211], 'comment': '# Delta(2200)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.253, 'daughters': [2212, 113], 'comment': '# Delta(2200)+ -> p + rho(770)0'},
+        {'br': 0.127, 'daughters': [2112, 213], 'comment': '# Delta(2200)+ -> n + rho(770)+'},
+        {'br': 0.07, 'daughters': [2214, 221], 'comment': '# Delta(2200)+ -> Delta(1232)+ + eta'},
+    ],
+
+    # Lambda(1800): Sigma_pi was 54% (PDG 21-33%). Redistribute: NKbar=35%, Sigma_pi=27%, Lsigma=19%, Sigma1385pi=9%, Leta=10%
+    43122: [
+        {'br': 0.175, 'daughters': [2212, -321], 'comment': '# Lambda(1800) -> p + K-'},
+        {'br': 0.175, 'daughters': [2112, -311], 'comment': '# Lambda(1800) -> n + anti-K0'},
+        {'br': 0.10, 'daughters': [3122, 221], 'comment': '# Lambda(1800) -> Lambda + eta'},
+        {'br': 0.09, 'daughters': [3222, -211], 'comment': '# Lambda(1800) -> Sigma+ + pi-'},
+        {'br': 0.09, 'daughters': [3212, 111], 'comment': '# Lambda(1800) -> Sigma0 + pi0'},
+        {'br': 0.09, 'daughters': [3112, 211], 'comment': '# Lambda(1800) -> Sigma- + pi+'},
+        {'br': 0.19, 'daughters': [3122, 9000221], 'comment': '# Lambda(1800) -> Lambda + f(0)(500) (proxy Lpipi)'},
+        {'br': 0.03, 'daughters': [3224, -211], 'comment': '# Lambda(1800) -> Sigma(1385)+ + pi-'},
+        {'br': 0.03, 'daughters': [3214, 111], 'comment': '# Lambda(1800) -> Sigma(1385)0 + pi0'},
+        {'br': 0.03, 'daughters': [3114, 211], 'comment': '# Lambda(1800) -> Sigma(1385)- + pi+'},
+    ],
+
+    # Lambda(1820): NKbar was 70% (PDG 55-65%), Sigma_pi was 18% (PDG 8-14%).
+    # Reduce NKbar->60%, Sigma_pi->12%, increase Sigma(1385)pi->15%, add NKbar*->13%
+    3126: [
+        {'br': 0.30, 'daughters': [2212, -321], 'comment': '# Lambda(1820) -> p + K-'},
+        {'br': 0.30, 'daughters': [2112, -311], 'comment': '# Lambda(1820) -> n + anti-K0'},
+        {'br': 0.04, 'daughters': [3222, -211], 'comment': '# Lambda(1820) -> Sigma+ + pi-'},
+        {'br': 0.04, 'daughters': [3212, 111], 'comment': '# Lambda(1820) -> Sigma0 + pi0'},
+        {'br': 0.04, 'daughters': [3112, 211], 'comment': '# Lambda(1820) -> Sigma- + pi+'},
+        {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Lambda(1820) -> Sigma(1385)+ + pi-'},
+        {'br': 0.05, 'daughters': [3214, 111], 'comment': '# Lambda(1820) -> Sigma(1385)0 + pi0'},
+        {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Lambda(1820) -> Sigma(1385)- + pi+'},
+        {'br': 0.065, 'daughters': [2212, -323], 'comment': '# Lambda(1820) -> p + K*(892)-'},
+        {'br': 0.065, 'daughters': [2112, -313], 'comment': '# Lambda(1820) -> n + anti-K*(892)0'},
+    ],
+
+    # Lambda(1890): NKbar was 40% (PDG 24-36%), Sigma_pi was 24% (PDG 3-10%).
+    # NKbar->30%, Sigma_pi->6%, increase NKbar*->24%, Sigma(1385)pi->22%
+    23124: [
+        {'br': 0.15, 'daughters': [2212, -321], 'comment': '# Lambda(1890) -> p + K-'},
+        {'br': 0.15, 'daughters': [2112, -311], 'comment': '# Lambda(1890) -> n + anti-K0'},
+        {'br': 0.02, 'daughters': [3222, -211], 'comment': '# Lambda(1890) -> Sigma+ + pi-'},
+        {'br': 0.02, 'daughters': [3212, 111], 'comment': '# Lambda(1890) -> Sigma0 + pi0'},
+        {'br': 0.02, 'daughters': [3112, 211], 'comment': '# Lambda(1890) -> Sigma- + pi+'},
+        {'br': 0.12, 'daughters': [2212, -323], 'comment': '# Lambda(1890) -> p + K*(892)-'},
+        {'br': 0.12, 'daughters': [2112, -313], 'comment': '# Lambda(1890) -> n + anti-K*(892)0'},
+        {'br': 0.073, 'daughters': [3224, -211], 'comment': '# Lambda(1890) -> Sigma(1385)+ + pi-'},
+        {'br': 0.073, 'daughters': [3214, 111], 'comment': '# Lambda(1890) -> Sigma(1385)0 + pi0'},
+        {'br': 0.074, 'daughters': [3114, 211], 'comment': '# Lambda(1890) -> Sigma(1385)- + pi+'},
+    ],
+
+    # Lambda(2100): Sigma_pi was 9% (PDG ~5%). Reduce to 3%, increase NKbar* and Lambda_omega
+    3128: [
+        {'br': 0.15, 'daughters': [2212, -321], 'comment': '# Lambda(2100) -> p + K-'},
+        {'br': 0.15, 'daughters': [2112, -311], 'comment': '# Lambda(2100) -> n + anti-K0'},
+        {'br': 0.01, 'daughters': [3222, -211], 'comment': '# Lambda(2100) -> Sigma+ + pi-'},
+        {'br': 0.01, 'daughters': [3212, 111], 'comment': '# Lambda(2100) -> Sigma0 + pi0'},
+        {'br': 0.01, 'daughters': [3112, 211], 'comment': '# Lambda(2100) -> Sigma- + pi+'},
+        {'br': 0.03, 'daughters': [3122, 221], 'comment': '# Lambda(2100) -> Lambda + eta'},
+        {'br': 0.015, 'daughters': [3322, 311], 'comment': '# Lambda(2100) -> Xi0 + K0'},
+        {'br': 0.015, 'daughters': [3312, 321], 'comment': '# Lambda(2100) -> Xi- + K+'},
+        {'br': 0.10, 'daughters': [3122, 223], 'comment': '# Lambda(2100) -> Lambda + omega(782)'},
+        {'br': 0.12, 'daughters': [2212, -323], 'comment': '# Lambda(2100) -> p + K*(892)-'},
+        {'br': 0.12, 'daughters': [2112, -313], 'comment': '# Lambda(2100) -> n + anti-K*(892)0'},
+        {'br': 0.06, 'daughters': [3224, -211], 'comment': '# Lambda(2100) -> Sigma(1385)+ + pi-'},
+        {'br': 0.06, 'daughters': [3214, 111], 'comment': '# Lambda(2100) -> Sigma(1385)0 + pi0'},
+        {'br': 0.06, 'daughters': [3114, 211], 'comment': '# Lambda(2100) -> Sigma(1385)- + pi+'},
+        {'br': 0.07, 'daughters': [3122, 9000221], 'comment': '# Lambda(2100) -> Lambda + f(0)(500)'},
+    ],
+
+    # Lambda(2350): NKbar was 20% (PDG ~12%), Sigma_pi was 15% (PDG ~10%). Reduce both, increase NKbar*.
+    99031210: [
+        {'br': 0.06, 'daughters': [2212, -321], 'comment': '# Lambda(2350) -> p + K-'},
+        {'br': 0.06, 'daughters': [2112, -311], 'comment': '# Lambda(2350) -> n + anti-K0'},
+        {'br': 0.033, 'daughters': [3222, -211], 'comment': '# Lambda(2350) -> Sigma+ + pi-'},
+        {'br': 0.033, 'daughters': [3212, 111], 'comment': '# Lambda(2350) -> Sigma0 + pi0'},
+        {'br': 0.034, 'daughters': [3112, 211], 'comment': '# Lambda(2350) -> Sigma- + pi+'},
+        {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Lambda(2350) -> Sigma(1385)+ + pi-'},
+        {'br': 0.05, 'daughters': [3214, 111], 'comment': '# Lambda(2350) -> Sigma(1385)0 + pi0'},
+        {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Lambda(2350) -> Sigma(1385)- + pi+'},
+        {'br': 0.28, 'daughters': [2212, -323], 'comment': '# Lambda(2350) -> p + K*(892)-'},
+        {'br': 0.28, 'daughters': [2112, -313], 'comment': '# Lambda(2350) -> n + anti-K*(892)0'},
+    ],
+
+    # Lambda(1810): PDG: NKbar 5-35%, Sigma_pi 11-21%, Sigma(1385)pi 25-55%, NKbar* 30-60%
+    # PDG ranges overlap heavily -- can't satisfy all simultaneously at 100%.
+    # Best compromise: NKbar=20%, Sigma_pi=16%, Sigma(1385)pi=30%, NKbar*=34%
+    53122: [
+        {'br': 0.10, 'daughters': [2212, -321], 'comment': '# Lambda(1810) -> p + K-'},
+        {'br': 0.10, 'daughters': [2112, -311], 'comment': '# Lambda(1810) -> n + anti-K0'},
+        {'br': 0.053, 'daughters': [3222, -211], 'comment': '# Lambda(1810) -> Sigma+ + pi-'},
+        {'br': 0.054, 'daughters': [3212, 111], 'comment': '# Lambda(1810) -> Sigma0 + pi0'},
+        {'br': 0.053, 'daughters': [3112, 211], 'comment': '# Lambda(1810) -> Sigma- + pi+'},
+        {'br': 0.10, 'daughters': [3224, -211], 'comment': '# Lambda(1810) -> Sigma(1385)+ + pi-'},
+        {'br': 0.10, 'daughters': [3214, 111], 'comment': '# Lambda(1810) -> Sigma(1385)0 + pi0'},
+        {'br': 0.10, 'daughters': [3114, 211], 'comment': '# Lambda(1810) -> Sigma(1385)- + pi+'},
+        {'br': 0.17, 'daughters': [2212, -323], 'comment': '# Lambda(1810) -> p + K*(892)-'},
+        {'br': 0.17, 'daughters': [2112, -313], 'comment': '# Lambda(1810) -> n + anti-K*(892)0'},
+    ],
+
+    # Sigma(1670)+: PDG: NKbar 6-12%, Lambda_pi 5-15%, Sigma_pi 30-60%, Sigma_sigma 4-10%, Lambda(1405)pi 2-6%
+    # Fix: NKbar=10%, Lambda_pi=10%, Sigma_pi=50%, Sigma_f0(500)=15%, Lambda(1405)pi=5%, Sigma(1385)pi=10%
+    13224: [
+        {'br': 0.10, 'daughters': [2212, -311], 'comment': '# Sigma(1670)+ -> p + anti-K0'},
+        {'br': 0.10, 'daughters': [3122, 211], 'comment': '# Sigma(1670)+ -> Lambda + pi+'},
+        {'br': 0.25, 'daughters': [3222, 111], 'comment': '# Sigma(1670)+ -> Sigma+ + pi0'},
+        {'br': 0.25, 'daughters': [3212, 211], 'comment': '# Sigma(1670)+ -> Sigma0 + pi+'},
+        {'br': 0.075, 'daughters': [3222, 9000221], 'comment': '# Sigma(1670)+ -> Sigma+ + f(0)(500)'},
+        {'br': 0.075, 'daughters': [3212, 9000221], 'comment': '# Sigma(1670)+ -> Sigma0 + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.05, 'daughters': [13122, 211], 'comment': '# Sigma(1670)+ -> Lambda(1405) + pi+'},
+        {'br': 0.05, 'daughters': [3224, 111], 'comment': '# Sigma(1670)+ -> Sigma(1385)+ + pi0'},
+        {'br': 0.05, 'daughters': [3214, 211], 'comment': '# Sigma(1670)+ -> Sigma(1385)0 + pi+'},
+    ],
+    # Sigma(1670)0
+    13214: [
+        {'br': 0.05, 'daughters': [2212, -321], 'comment': '# Sigma(1670)0 -> p + K-'},
+        {'br': 0.05, 'daughters': [2112, -311], 'comment': '# Sigma(1670)0 -> n + anti-K0'},
+        {'br': 0.10, 'daughters': [3122, 111], 'comment': '# Sigma(1670)0 -> Lambda + pi0'},
+        {'br': 0.25, 'daughters': [3222, -211], 'comment': '# Sigma(1670)0 -> Sigma+ + pi-'},
+        {'br': 0.25, 'daughters': [3112, 211], 'comment': '# Sigma(1670)0 -> Sigma- + pi+'},
+        {'br': 0.075, 'daughters': [3222, 9000221], 'comment': '# Sigma(1670)0 -> Sigma+ + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.075, 'daughters': [3112, 9000221], 'comment': '# Sigma(1670)0 -> Sigma- + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.05, 'daughters': [13122, 111], 'comment': '# Sigma(1670)0 -> Lambda(1405) + pi0'},
+        {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Sigma(1670)0 -> Sigma(1385)+ + pi-'},
+        {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Sigma(1670)0 -> Sigma(1385)- + pi+'},
+    ],
+    # Sigma(1670)-
+    13114: [
+        {'br': 0.10, 'daughters': [2112, -321], 'comment': '# Sigma(1670)- -> n + K-'},
+        {'br': 0.10, 'daughters': [3122, -211], 'comment': '# Sigma(1670)- -> Lambda + pi-'},
+        {'br': 0.25, 'daughters': [3212, -211], 'comment': '# Sigma(1670)- -> Sigma0 + pi-'},
+        {'br': 0.25, 'daughters': [3112, 111], 'comment': '# Sigma(1670)- -> Sigma- + pi0'},
+        {'br': 0.075, 'daughters': [3212, 9000221], 'comment': '# Sigma(1670)- -> Sigma0 + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.075, 'daughters': [3112, 9000221], 'comment': '# Sigma(1670)- -> Sigma- + f(0)(500) [proxy Sigma sigma]'},
+        {'br': 0.05, 'daughters': [13122, -211], 'comment': '# Sigma(1670)- -> Lambda(1405) + pi-'},
+        {'br': 0.05, 'daughters': [3214, -211], 'comment': '# Sigma(1670)- -> Sigma(1385)0 + pi-'},
+        {'br': 0.05, 'daughters': [3114, 111], 'comment': '# Sigma(1670)- -> Sigma(1385)- + pi0'},
+    ],
+
+    # Sigma(1915)+: All channels off. PDG2025: NKbar=5-15%, Lambda_pi=4-8%, Sigma_pi=8-12%
+    # Also has Sigma(1385)pi ~10%, Lambda(1520)pi ~17-23%
+    13226: [
+        {'br': 0.10, 'daughters': [2212, -311], 'comment': '# Sigma(1915)+ -> p + anti-K0'},
+        {'br': 0.04, 'daughters': [3224, 111], 'comment': '# Sigma(1915)+ -> Sigma(1385)+ + pi0'},
+        {'br': 0.04, 'daughters': [3214, 211], 'comment': '# Sigma(1915)+ -> Sigma(1385)0 + pi+'},
+        {'br': 0.06, 'daughters': [3122, 211], 'comment': '# Sigma(1915)+ -> Lambda + pi+'},
+        {'br': 0.05, 'daughters': [3222, 111], 'comment': '# Sigma(1915)+ -> Sigma+ + pi0'},
+        {'br': 0.05, 'daughters': [3212, 211], 'comment': '# Sigma(1915)+ -> Sigma0 + pi+'},
+        {'br': 0.20, 'daughters': [3124, 211], 'comment': '# Sigma(1915)+ -> Lambda(1520) + pi+'},
+        {'br': 0.46, 'daughters': [3122, 9000221], 'comment': '# Sigma(1915)+ -> Lambda + f(0)(500) (multi-body proxy)'},
+    ],
+    # Sigma(1915)0
+    13216: [
+        {'br': 0.05, 'daughters': [2212, -321], 'comment': '# Sigma(1915)0 -> p + K-'},
+        {'br': 0.05, 'daughters': [2112, -311], 'comment': '# Sigma(1915)0 -> n + anti-K0'},
+        {'br': 0.04, 'daughters': [3224, -211], 'comment': '# Sigma(1915)0 -> Sigma(1385)+ + pi-'},
+        {'br': 0.04, 'daughters': [3114, 211], 'comment': '# Sigma(1915)0 -> Sigma(1385)- + pi+'},
+        {'br': 0.06, 'daughters': [3122, 111], 'comment': '# Sigma(1915)0 -> Lambda + pi0'},
+        {'br': 0.05, 'daughters': [3222, -211], 'comment': '# Sigma(1915)0 -> Sigma+ + pi-'},
+        {'br': 0.05, 'daughters': [3112, 211], 'comment': '# Sigma(1915)0 -> Sigma- + pi+'},
+        {'br': 0.20, 'daughters': [3124, 111], 'comment': '# Sigma(1915)0 -> Lambda(1520) + pi0'},
+        {'br': 0.46, 'daughters': [3122, 9000221], 'comment': '# Sigma(1915)0 -> Lambda + f(0)(500)'},
+    ],
+    # Sigma(1915)-
+    13116: [
+        {'br': 0.10, 'daughters': [2112, -321], 'comment': '# Sigma(1915)- -> n + K-'},
+        {'br': 0.04, 'daughters': [3214, -211], 'comment': '# Sigma(1915)- -> Sigma(1385)0 + pi-'},
+        {'br': 0.04, 'daughters': [3114, 111], 'comment': '# Sigma(1915)- -> Sigma(1385)- + pi0'},
+        {'br': 0.06, 'daughters': [3122, -211], 'comment': '# Sigma(1915)- -> Lambda + pi-'},
+        {'br': 0.05, 'daughters': [3212, -211], 'comment': '# Sigma(1915)- -> Sigma0 + pi-'},
+        {'br': 0.05, 'daughters': [3112, 111], 'comment': '# Sigma(1915)- -> Sigma- + pi0'},
+        {'br': 0.20, 'daughters': [3124, -211], 'comment': '# Sigma(1915)- -> Lambda(1520) + pi-'},
+        {'br': 0.46, 'daughters': [3122, 9000221], 'comment': '# Sigma(1915)- -> Lambda + f(0)(500)'},
+    ],
+
+    # =====================================================================
+    # Additional baryon updates found in second-pass cross-check
+    # =====================================================================
+
+    # N(1700)+: PDG: Npi 7-17%, Neta 1-2%, Nomega 10-34%, LambdaK 1-2%
+    # Was: Npi=12%, Neta=0% (missing!), LambdaK=0% (missing!), Deltapi=66%, Nsigma=4%, Nomega=18%
+    # Fix: Add Neta=1.5%, LambdaK=1.5%, reduce Deltapi by 3%
+    # C-G for N(1700)+ I=1/2: Npi -> 2/3 n pi+, 1/3 p pi0
+    22124: [
+        {'br': 0.08, 'daughters': [2112, 211], 'comment': '# N(1700)+ -> n + pi+'},
+        {'br': 0.04, 'daughters': [2212, 111], 'comment': '# N(1700)+ -> p + pi0'},
+        {'br': 0.015, 'daughters': [2212, 221], 'comment': '# N(1700)+ -> p + eta (PDG 1-2%)'},
+        {'br': 0.015, 'daughters': [3122, 321], 'comment': '# N(1700)+ -> Lambda + K+ (PDG 1-2%)'},
+        {'br': 0.04, 'daughters': [2212, 9000221], 'comment': '# N(1700)+ -> p + f(0)(500)'},
+        {'br': 0.10, 'daughters': [2114, 211], 'comment': '# N(1700)+ -> Delta(1232)0 + pi+'},
+        {'br': 0.20, 'daughters': [2214, 111], 'comment': '# N(1700)+ -> Delta(1232)+ + pi0'},
+        {'br': 0.33, 'daughters': [2224, -211], 'comment': '# N(1700)+ -> Delta(1232)++ + pi-'},
+        {'br': 0.18, 'daughters': [2212, 223], 'comment': '# N(1700)+ -> p + omega(782)'},
+    ],
+    # N(1700)0: isospin mirror
+    21214: [
+        {'br': 0.04, 'daughters': [2112, 111], 'comment': '# N(1700)0 -> n + pi0'},
+        {'br': 0.08, 'daughters': [2212, -211], 'comment': '# N(1700)0 -> p + pi-'},
+        {'br': 0.015, 'daughters': [2112, 221], 'comment': '# N(1700)0 -> n + eta (PDG 1-2%)'},
+        {'br': 0.015, 'daughters': [3122, 311], 'comment': '# N(1700)0 -> Lambda + K0 (PDG 1-2%)'},
+        {'br': 0.04, 'daughters': [2112, 9000221], 'comment': '# N(1700)0 -> n + f(0)(500)'},
+        {'br': 0.33, 'daughters': [1114, 211], 'comment': '# N(1700)0 -> Delta(1232)- + pi+'},
+        {'br': 0.20, 'daughters': [2114, 111], 'comment': '# N(1700)0 -> Delta(1232)0 + pi0'},
+        {'br': 0.10, 'daughters': [2214, -211], 'comment': '# N(1700)0 -> Delta(1232)+ + pi-'},
+        {'br': 0.18, 'daughters': [2112, 223], 'comment': '# N(1700)0 -> n + omega(782)'},
+    ],
+
+    # =====================================================================
+    # Xi* and Omega* baryon decay updates
+    # PDG2025 RPP only gives qualitative data (seen/small/large) for these.
+    # Previous FIST had oversimplified single-channel decays for several.
+    # =====================================================================
+
+    # Xi(1820)0: PDG: Lambda Kbar = large, Sigma Kbar = small, Xi pi = small, Xi(1530) pi = small
+    # Was: Lambda Kbar0 = 100%. Fix: distribute among all seen channels.
+    # Estimate: Lambda Kbar ~60%, Sigma Kbar ~15%, Xi pi ~15%, Xi(1530) pi ~10%
+    # Xi(1820) is I=1/2, so isospin C-G apply for Sigma Kbar and Xi pi decomposition
+    13324: [
+        {'br': 0.60, 'daughters': [3122, -311], 'comment': '# Xi(1820)0 -> Lambda + anti-K0'},
+        {'br': 0.10, 'daughters': [3222, -321], 'comment': '# Xi(1820)0 -> Sigma+ + K-'},
+        {'br': 0.05, 'daughters': [3212, -311], 'comment': '# Xi(1820)0 -> Sigma0 + anti-K0'},
+        {'br': 0.05, 'daughters': [3322, 111], 'comment': '# Xi(1820)0 -> Xi0 + pi0'},
+        {'br': 0.10, 'daughters': [3312, 211], 'comment': '# Xi(1820)0 -> Xi- + pi+'},
+        {'br': 0.05, 'daughters': [3324, 111], 'comment': '# Xi(1820)0 -> Xi(1530)0 + pi0'},
+        {'br': 0.05, 'daughters': [3314, 211], 'comment': '# Xi(1820)0 -> Xi(1530)- + pi+'},
+    ],
+    # Xi(1820)-
+    13314: [
+        {'br': 0.60, 'daughters': [3122, -321], 'comment': '# Xi(1820)- -> Lambda + K-'},
+        {'br': 0.05, 'daughters': [3212, -321], 'comment': '# Xi(1820)- -> Sigma0 + K-'},
+        {'br': 0.10, 'daughters': [3112, -311], 'comment': '# Xi(1820)- -> Sigma- + anti-K0'},
+        {'br': 0.10, 'daughters': [3322, -211], 'comment': '# Xi(1820)- -> Xi0 + pi-'},
+        {'br': 0.05, 'daughters': [3312, 111], 'comment': '# Xi(1820)- -> Xi- + pi0'},
+        {'br': 0.05, 'daughters': [3324, -211], 'comment': '# Xi(1820)- -> Xi(1530)0 + pi-'},
+        {'br': 0.05, 'daughters': [3314, 111], 'comment': '# Xi(1820)- -> Xi(1530)- + pi0'},
+    ],
+
+    # Xi(1950)0: PDG: Lambda Kbar = seen, Sigma Kbar = possibly seen, Xi pi = seen
+    # Was: Lambda Kbar 50%, Xi pi 50%. Fix: add Sigma Kbar ~15%
+    # Estimate: Lambda Kbar ~40%, Sigma Kbar ~15%, Xi pi ~45%
+    103326: [
+        {'br': 0.40, 'daughters': [3122, -311], 'comment': '# Xi(1950)0 -> Lambda + anti-K0'},
+        {'br': 0.10, 'daughters': [3222, -321], 'comment': '# Xi(1950)0 -> Sigma+ + K-'},
+        {'br': 0.05, 'daughters': [3212, -311], 'comment': '# Xi(1950)0 -> Sigma0 + anti-K0'},
+        {'br': 0.15, 'daughters': [3322, 111], 'comment': '# Xi(1950)0 -> Xi0 + pi0'},
+        {'br': 0.30, 'daughters': [3312, 211], 'comment': '# Xi(1950)0 -> Xi- + pi+'},
+    ],
+    # Xi(1950)-
+    103316: [
+        {'br': 0.40, 'daughters': [3122, -321], 'comment': '# Xi(1950)- -> Lambda + K-'},
+        {'br': 0.05, 'daughters': [3212, -321], 'comment': '# Xi(1950)- -> Sigma0 + K-'},
+        {'br': 0.10, 'daughters': [3112, -311], 'comment': '# Xi(1950)- -> Sigma- + anti-K0'},
+        {'br': 0.30, 'daughters': [3322, -211], 'comment': '# Xi(1950)- -> Xi0 + pi-'},
+        {'br': 0.15, 'daughters': [3312, 111], 'comment': '# Xi(1950)- -> Xi- + pi0'},
+    ],
+
+    # Xi(2030)0: PDG: Lambda Kbar ~20%, Sigma Kbar ~80%, Xi pi = small, Xi(1530) pi = small
+    # Was: Lambda Kbar 20%, Sigma Kbar 80%. Fix: add small Xi pi and Xi(1530) pi
+    # Estimate: Lambda Kbar ~18%, Sigma Kbar ~70%, Xi pi ~5%, Xi(1530) pi ~7%
+    203326: [
+        {'br': 0.18, 'daughters': [3122, -311], 'comment': '# Xi(2030)0 -> Lambda + anti-K0'},
+        {'br': 0.467, 'daughters': [3222, -321], 'comment': '# Xi(2030)0 -> Sigma+ + K-'},
+        {'br': 0.233, 'daughters': [3212, -311], 'comment': '# Xi(2030)0 -> Sigma0 + anti-K0'},
+        {'br': 0.017, 'daughters': [3322, 111], 'comment': '# Xi(2030)0 -> Xi0 + pi0'},
+        {'br': 0.033, 'daughters': [3312, 211], 'comment': '# Xi(2030)0 -> Xi- + pi+'},
+        {'br': 0.035, 'daughters': [3324, 111], 'comment': '# Xi(2030)0 -> Xi(1530)0 + pi0'},
+        {'br': 0.035, 'daughters': [3314, 211], 'comment': '# Xi(2030)0 -> Xi(1530)- + pi+'},
+    ],
+    # Xi(2030)-
+    203316: [
+        {'br': 0.18, 'daughters': [3122, -321], 'comment': '# Xi(2030)- -> Lambda + K-'},
+        {'br': 0.233, 'daughters': [3212, -321], 'comment': '# Xi(2030)- -> Sigma0 + K-'},
+        {'br': 0.467, 'daughters': [3112, -311], 'comment': '# Xi(2030)- -> Sigma- + anti-K0'},
+        {'br': 0.033, 'daughters': [3322, -211], 'comment': '# Xi(2030)- -> Xi0 + pi-'},
+        {'br': 0.017, 'daughters': [3312, 111], 'comment': '# Xi(2030)- -> Xi- + pi0'},
+        {'br': 0.035, 'daughters': [3324, -211], 'comment': '# Xi(2030)- -> Xi(1530)0 + pi-'},
+        {'br': 0.035, 'daughters': [3314, 111], 'comment': '# Xi(2030)- -> Xi(1530)- + pi0'},
+    ],
+
+    # Omega(2012): PDG: Xi0 K- = seen, Xi- Kbar0 = seen, Xi- pi+ K- = seen
+    # Was: Xi- Kbar0 = 100%. Fix: Omega is I=0, so Xi0 K- and Xi- Kbar0 ~50/50 by isospin.
+    # Xi- pi+ K- (3-body) proxied by Xi(1530)0 K- (Xi(1530)->Xi pi)
+    # Estimate: Xi0 K- = 40%, Xi- Kbar0 = 40%, Xi(1530)0 K- = 20%
+    9903334: [
+        {'br': 0.40, 'daughters': [3322, -321], 'comment': '# Omega(2012) -> Xi0 + K-'},
+        {'br': 0.40, 'daughters': [3312, -311], 'comment': '# Omega(2012) -> Xi- + anti-K0'},
+        {'br': 0.20, 'daughters': [3324, -321], 'comment': '# Omega(2012) -> Xi(1530)0 + K- [proxy for Xi- pi+ K-]'},
+    ],
+
+    # Omega(2250): PDG: Xi- pi+ K- = seen, Xi(1530)0 K- = seen
+    # Was: Xi(1530)0 K- = 100%. Add Xi Kbar channels.
+    # Estimate: Xi(1530)0 K- = 50%, Xi- Kbar0 = 25%, Xi0 K- = 25%
+    203338: [
+        {'br': 0.50, 'daughters': [3324, -321], 'comment': '# Omega(2250) -> Xi(1530)0 + K-'},
+        {'br': 0.25, 'daughters': [3312, -311], 'comment': '# Omega(2250) -> Xi- + anti-K0'},
+        {'br': 0.25, 'daughters': [3322, -321], 'comment': '# Omega(2250) -> Xi0 + K-'},
     ],
 }
 
@@ -1329,11 +1948,12 @@ CHARM_DECAY_UPDATES = {
     ],
 
     # -----------------------------------------------------------------
-    # D*(2007)0:  PDG2025: D0 pi0 61.9%, D0 gamma 38.1%. Already correct.
+    # D*(2007)0:  PDG2025 FC: D0 pi0 64.7%, D0 gamma 35.3%
+    #   (D0 e+e- 0.39% is Dalitz of D0 gamma — not counted separately)
     # -----------------------------------------------------------------
     423: [
-        {'br': 0.619, 'daughters': [421, 111], 'comment': '# D*(2007)0 -> D0 pi0 (PDG 61.9%)'},
-        {'br': 0.381, 'daughters': [421, 22], 'comment': '# D*(2007)0 -> D0 gamma (PDG 38.1%)'},
+        {'br': 0.647, 'daughters': [421, 111], 'comment': '# D*(2007)0 -> D0 pi0 (PDG2025 64.7%)'},
+        {'br': 0.353, 'daughters': [421, 22], 'comment': '# D*(2007)0 -> D0 gamma (PDG2025 35.3%)'},
     ],
 
     # -----------------------------------------------------------------
@@ -1396,6 +2016,53 @@ CHARM_DECAY_UPDATES = {
     427: [
         {'br': 0.50, 'daughters': [411, -211], 'comment': '# D(3)*(2750)0 -> D+ pi-'},
         {'br': 0.50, 'daughters': [413, -211], 'comment': '# D(3)*(2750)0 -> D*+ pi-'},
+    ],
+
+    # -----------------------------------------------------------------
+    # D_s*+ (433):  PDG2025 FC: Ds gamma 93.55%, Ds pi0 5.77%
+    #   (Ds e+e- 0.67% is Dalitz of Ds gamma — not counted separately)
+    #   Renormalized: gamma 94.19%, pi0 5.81%
+    # -----------------------------------------------------------------
+    433: [
+        {'br': 0.9419, 'daughters': [431, 22], 'comment': '# D_s*+ -> D_s+ gamma (PDG2025 93.55%, renorm.)'},
+        {'br': 0.0581, 'daughters': [431, 111], 'comment': '# D_s*+ -> D_s+ pi0 (PDG2025 5.77%, renorm.)'},
+    ],
+
+    # -----------------------------------------------------------------
+    # D_s1(2460)+ (20433): PDG2025:
+    #   D_s*+ pi0 = 48.18%, D_s+ gamma = 18.08%, D_s+ pi+pi- = 4.33%,
+    #   D_s0*(2317)+ gamma = 3.75%.  Sum = 74.3%.
+    #   Catch-all 25.7% -> D_s*+ pi0 (dominant)
+    # -----------------------------------------------------------------
+    20433: [
+        {'br': 0.739, 'daughters': [433, 111], 'comment': '# D_s1(2460)+ -> D_s*+ pi0 (PDG2025 48.18% + 25.7% catch-all)'},
+        {'br': 0.181, 'daughters': [431, 22], 'comment': '# D_s1(2460)+ -> D_s+ gamma (PDG2025 18.08%)'},
+        {'br': 0.043, 'daughters': [431, 211, -211], 'comment': '# D_s1(2460)+ -> D_s+ pi+pi- (PDG2025 4.33%)'},
+        {'br': 0.037, 'daughters': [10431, 22], 'comment': '# D_s1(2460)+ -> D_s0*(2317)+ gamma (PDG2025 3.75%)'},
+    ],
+
+    # -----------------------------------------------------------------
+    # D_s1(2536)+ (10433): PDG2025:
+    #   D*(2007)0 K+ = 35.9%, D*(2010)+ K0 = 30.5%,
+    #   D+ pi- K+ = 1.0%.  Sum = 67.4%.
+    #   Catch-all 32.6% -> D*(2010)+ K0 + D*(2007)0 K+ (dominant D*K modes)
+    # -----------------------------------------------------------------
+    10433: [
+        {'br': 0.522, 'daughters': [423, 321], 'comment': '# D_s1(2536)+ -> D*(2007)0 K+ (PDG2025 35.9% + catch-all share)'},
+        {'br': 0.468, 'daughters': [413, 311], 'comment': '# D_s1(2536)+ -> D*(2010)+ K0 (PDG2025 30.5% + catch-all share)'},
+        {'br': 0.010, 'daughters': [411, -211, 321], 'comment': '# D_s1(2536)+ -> D+ pi- K+ (PDG2025 1.0%)'},
+    ],
+
+    # -----------------------------------------------------------------
+    # D_s2*(2573)+ (435):  PDG2025: D0 K+ = 37.4% (only measured mode).
+    #   By isospin, D+ K0 should be similar. D*K also allowed.
+    #   Assign: D0 K+ 37.4%, D+ K0 37.4%, D*0 K+ 12.6%, D*+ K0 12.6%
+    # -----------------------------------------------------------------
+    435: [
+        {'br': 0.374, 'daughters': [421, 321], 'comment': '# D_s2*(2573)+ -> D0 K+ (PDG2025 37.4%)'},
+        {'br': 0.374, 'daughters': [411, 311], 'comment': '# D_s2*(2573)+ -> D+ K0 (isospin mirror)'},
+        {'br': 0.126, 'daughters': [423, 321], 'comment': '# D_s2*(2573)+ -> D*(2007)0 K+ (catch-all D*K)'},
+        {'br': 0.126, 'daughters': [413, 311], 'comment': '# D_s2*(2573)+ -> D*(2010)+ K0 (catch-all D*K)'},
     ],
 
     # -----------------------------------------------------------------
@@ -1671,6 +2338,20 @@ CHARM_DECAY_UPDATES = {
         {'br': 0.0010, 'daughters': [321, 223], 'comment': '# Ds+ -> K+ omega (PDG 0.10%)'},
         # Catch-all: remaining to generic multi-body
         {'br': 0.0462, 'daughters': [211, 211, -211, 111, 111], 'comment': '# Ds+ -> catch-all (unmeasured modes)'},
+    ],
+
+    # -----------------------------------------------------------------
+    # Lambda_c(2625)+ (104122): PDG2025:
+    #   Lambda_c+ pi+pi- = 50.2% (inclusive, includes Sigma_c pi subprocess)
+    #   UL: Lambda_c+ pi0 < 50%, Lambda_c+ gamma < 26%
+    #   Assign: Lambda_c pi+pi- 50%, Lambda_c pi0 40% (catch-all),
+    #           Sigma_c(2455)++ pi- 5%, Sigma_c(2455)0 pi+ 5%
+    # -----------------------------------------------------------------
+    104122: [
+        {'br': 0.50, 'daughters': [4122, 211, -211], 'comment': '# Lambda_c(2625)+ -> Lambda_c+ pi+pi- (PDG2025 50.2%)'},
+        {'br': 0.40, 'daughters': [4122, 111], 'comment': '# Lambda_c(2625)+ -> Lambda_c+ pi0 (catch-all, PDG UL <50%)'},
+        {'br': 0.05, 'daughters': [4222, -211], 'comment': '# Lambda_c(2625)+ -> Sigma_c(2455)++ pi-'},
+        {'br': 0.05, 'daughters': [4112, 211], 'comment': '# Lambda_c(2625)+ -> Sigma_c(2455)0 pi+'},
     ],
 
     # -----------------------------------------------------------------

@@ -290,6 +290,27 @@ The following corrections were applied manually after generation, based on cross
 |----------|---------|--------|--------|---------------|
 | D\*(2007)0 | D0 pi0 | 0.619 | 0.647 | 64.7 ± 0.9% |
 | D\*(2007)0 | D0 gamma | 0.381 | 0.353 | 35.3 ± 0.9% |
+| D_s\*+ | D_s gamma | 0.942 | 0.942 | 93.55% (renorm. 94.19%) |
+| D_s\*+ | D_s pi0 | 0.058 | 0.058 | 5.77% (renorm. 5.81%) |
+| D_s1(2460)+ | D_s\* pi0 | 0.60 | 0.739 | 48.18% + catch-all |
+| D_s1(2460)+ | D_s gamma | 0.22 | 0.181 | 18.08% |
+| D_s1(2460)+ | D_s pi+pi- | — | 0.043 | 4.33% (new channel) |
+| D_s1(2460)+ | D_s0\*(2317) gamma | 0.04 | 0.037 | 3.75% |
+| D_s1(2460)+ | D_s\* gamma | 0.08 | — | removed (PDG UL <8%) |
+| D_s1(2460)+ | D_s\* pi+pi- | 0.06 | — | removed (no PDG meas.) |
+| D_s1(2536)+ | D\*(2010)+ K0 | 0.85 | 0.468 | 30.5% + catch-all share |
+| D_s1(2536)+ | D\*(2007)0 K+ | — | 0.522 | 35.9% + catch-all share (new) |
+| D_s1(2536)+ | D+ pi- K+ | 0.03 | 0.010 | 1.0% |
+| D_s1(2536)+ | D+ K0 | 0.08 | — | removed (PDG UL <12%) |
+| D_s1(2536)+ | D0 K+ | 0.04 | — | removed (PDG UL <4%) |
+| D_s2\*(2573)+ | D0 K+ | 1.0 | 0.374 | 37.4% |
+| D_s2\*(2573)+ | D+ K0 | — | 0.374 | isospin mirror (new) |
+| D_s2\*(2573)+ | D\*0 K+ | — | 0.126 | catch-all D\*K (new) |
+| D_s2\*(2573)+ | D\*+ K0 | — | 0.126 | catch-all D\*K (new) |
+| Lambda_c(2625)+ | Lambda_c pi+pi- | 0.90 | 0.50 | 50.2% |
+| Lambda_c(2625)+ | Lambda_c pi0 | — | 0.40 | catch-all (PDG UL <50%, new) |
+| Lambda_c(2625)+ | Sigma_c++ pi- | 0.05 | 0.05 | unchanged |
+| Lambda_c(2625)+ | Sigma_c0 pi+ | 0.05 | 0.05 | unchanged |
 
 ### Charm decay catch-all channels
 
@@ -316,8 +337,10 @@ The catch-all channel uses the lightest kinematically allowed final state that c
 - 13 charmonia with existing PDG decay channels: catch-all added for the unmeasured fraction
 - 9 charmonia with no PDG exclusive modes: 100% catch-all
 - 3 ground-state D mesons (D0, D+, Ds+): catch-all for unmeasured weak decay fraction (4.52%, 0.36%, 4.62%)
-- 6 D/D_s meson resonances: 100% catch-all
-- 17 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
+- 4 D_s meson resonances with PDG2025 measured modes (D_s\*, D_s1(2460), D_s1(2536), D_s2\*(2573)): catch-all absorbs unmeasured fraction
+- 2 D/D_s meson resonances with no PDG exclusive modes: 100% catch-all
+- 16 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
+- Lambda_c(2625)+: PDG2025-measured Lambda_c pi+pi- (50%) + catch-all for unmeasured modes
 
 After these additions, all 82 charm particles (73 unstable + 9 stable) have BR sums = 1.0.
 
