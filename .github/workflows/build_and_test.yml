@@ -194,4 +194,27 @@ jobs:
         working-directory: ${{github.workspace}}/build
         shell: bash
         run: ${prefix}example-PCE-Saha-LHC
-        
+
+  wasm_build:
+    # Verify the C++ library compiles with Emscripten (WebAssembly)
+    # Tests library and examples only (no Qt GUI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Create Build Environment
+        run: cmake -E make_directory ${{github.workspace}}/build-wasm
+
+      - name: Configure CMake (Emscripten)
+        shell: bash
+        working-directory: ${{github.workspace}}/build-wasm
+        run: emcmake cmake $GITHUB_WORKSPACE -DTHERMALFIST_WASM=ON -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: ${{github.workspace}}/build-wasm
+        shell: bash
+        run: cmake --build . --config Release

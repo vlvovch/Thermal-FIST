@@ -1686,36 +1686,33 @@
 0.17            3112 211             # Lambda(1670) -> Sigma- + pi+
 0.2             3122 221             # Lambda(1670) -> Lambda + eta
 13114                                    # Sigma(1670)-
-9                                        # 9 decay channels
+8                                        # 8 decay channels
 0.1             2112 -321            # Sigma(1670)- -> n + K-
 0.1             3122 -211            # Sigma(1670)- -> Lambda + pi-
 0.25            3212 -211            # Sigma(1670)- -> Sigma0 + pi-
 0.25            3112 111             # Sigma(1670)- -> Sigma- + pi0
-0.075           3212 9000221         # Sigma(1670)- -> Sigma0 + f(0)(500) [proxy Sigma sigma]
-0.075           3112 9000221         # Sigma(1670)- -> Sigma- + f(0)(500) [proxy Sigma sigma]
+0.15            3112 9000221         # Sigma(1670)- -> Sigma- + f(0)(500) [proxy Sigma sigma]
 0.05            13122 -211           # Sigma(1670)- -> Lambda(1405) + pi-
 0.05            3214 -211            # Sigma(1670)- -> Sigma(1385)0 + pi-
 0.05            3114 111             # Sigma(1670)- -> Sigma(1385)- + pi0
 13214                                    # Sigma(1670)0
-10                                       # 10 decay channels
+9                                        # 9 decay channels
 0.05            2212 -321            # Sigma(1670)0 -> p + K-
 0.05            2112 -311            # Sigma(1670)0 -> n + anti-K0
 0.1             3122 111             # Sigma(1670)0 -> Lambda + pi0
 0.25            3222 -211            # Sigma(1670)0 -> Sigma+ + pi-
 0.25            3112 211             # Sigma(1670)0 -> Sigma- + pi+
-0.075           3222 9000221         # Sigma(1670)0 -> Sigma+ + f(0)(500) [proxy Sigma sigma]
-0.075           3112 9000221         # Sigma(1670)0 -> Sigma- + f(0)(500) [proxy Sigma sigma]
+0.15            3212 9000221         # Sigma(1670)0 -> Sigma0 + f(0)(500) [proxy Sigma sigma]
 0.05            13122 111            # Sigma(1670)0 -> Lambda(1405) + pi0
 0.05            3224 -211            # Sigma(1670)0 -> Sigma(1385)+ + pi-
 0.05            3114 211             # Sigma(1670)0 -> Sigma(1385)- + pi+
 13224                                    # Sigma(1670)+
-9                                        # 9 decay channels
+8                                        # 8 decay channels
 0.1             2212 -311            # Sigma(1670)+ -> p + anti-K0
 0.1             3122 211             # Sigma(1670)+ -> Lambda + pi+
 0.25            3222 111             # Sigma(1670)+ -> Sigma+ + pi0
 0.25            3212 211             # Sigma(1670)+ -> Sigma0 + pi+
-0.075           3222 9000221         # Sigma(1670)+ -> Sigma+ + f(0)(500)
-0.075           3212 9000221         # Sigma(1670)+ -> Sigma0 + f(0)(500) [proxy Sigma sigma]
+0.15            3222 9000221         # Sigma(1670)+ -> Sigma+ + f(0)(500) [proxy Sigma sigma]
 0.05            13122 211            # Sigma(1670)+ -> Lambda(1405) + pi+
 0.05            3224 111             # Sigma(1670)+ -> Sigma(1385)+ + pi0
 0.05            3214 211             # Sigma(1670)+ -> Sigma(1385)0 + pi+
@@ -1867,7 +1864,7 @@
 0.05            3212 -211            # Sigma(1915)- -> Sigma0 + pi-
 0.05            3112 111             # Sigma(1915)- -> Sigma- + pi0
 0.2             3124 -211            # Sigma(1915)- -> Lambda(1520) + pi-
-0.46            3122 9000221         # Sigma(1915)- -> Lambda + f(0)(500)
+0.46            3112 9000221         # Sigma(1915)- -> Sigma- + f(0)(500) (multi-body proxy)
 13216                                    # Sigma(1915)0
 9                                        # 9 decay channels
 0.05            2212 -321            # Sigma(1915)0 -> p + K-
@@ -1888,7 +1885,7 @@
 0.05            3222 111             # Sigma(1915)+ -> Sigma+ + pi0
 0.05            3212 211             # Sigma(1915)+ -> Sigma0 + pi+
 0.2             3124 211             # Sigma(1915)+ -> Lambda(1520) + pi+
-0.46            3122 9000221         # Sigma(1915)+ -> Lambda + f(0)(500) (multi-body proxy)
+0.46            3222 9000221         # Sigma(1915)+ -> Sigma+ + f(0)(500) (multi-body proxy)
 3118                                     # Sigma(2030)-
 11                                       # 11 decay channels
 0.24            2112 -321            # Sigma(2030)- -> n + K-
