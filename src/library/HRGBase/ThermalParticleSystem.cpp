@@ -379,6 +379,8 @@ namespace thermalfist {
       return retorig;
     }
 
+    bool wasCut = false;
+
     for (size_t i = 0; i < tpart.Decays().size(); ++i) {
       double tbr = tpart.Decays()[i].mBratio;
       if (m_ResonanceWidthIntegrationType == ThermalParticle::eBW && firstdecay)
@@ -401,12 +403,10 @@ namespace thermalfist {
           }
           tret = tmp2;
 
-          // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
-          if (tret.size() > 1500) {
-            printf("**WARNING** %s (%lld) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
-              m_Particles[ind].Name().c_str(),
-              m_Particles[ind].PdgId());
-            CuteHRGHelper::cutDecayDistributionsVector(tret);
+          // Restrict maximum number of channels to avoid memory issues
+          if (static_cast<int>(tret.size()) > m_MaxDecayDistributionsSize) {
+            wasCut = true;
+            CuteHRGHelper::cutDecayDistributionsVector(tret, m_MaxDecayDistributionsSize);
           }
         }
       }
@@ -417,12 +417,17 @@ namespace thermalfist {
       }
     }
 
-    // Restrict maximum number of channels to 1500, otherwise memory is an issue, relevant for the THERMUS-3.0 table
-    if (ret.size() > 1500) {
-      printf("**WARNING** %s (%lld) Decay Distributions: Too large array, cutting the number of channels to 1500!\n",
+    // Restrict maximum number of channels to avoid memory issues
+    if (static_cast<int>(ret.size()) > m_MaxDecayDistributionsSize) {
+      wasCut = true;
+      CuteHRGHelper::cutDecayDistributionsVector(ret, m_MaxDecayDistributionsSize);
+    }
+
+    if (wasCut && firstdecay) {
+      printf("**WARNING** %s (%lld) Decay Distributions: Too large array, cutting the number of channels to %d\n",
         m_Particles[ind].Name().c_str(),
-        m_Particles[ind].PdgId());
-      CuteHRGHelper::cutDecayDistributionsVector(ret);
+        m_Particles[ind].PdgId(),
+        m_MaxDecayDistributionsSize);
     }
 
     double totprob = 0.;
@@ -963,6 +968,8 @@ namespace thermalfist {
     m_ResonanceWidthIntegrationType = ThermalParticle::ZeroWidth;
 
     m_SortMode = ThermalParticleSystem::SortByMass;
+
+    m_MaxDecayDistributionsSize = 2000;
 
     m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
@@ -1661,7 +1668,7 @@ namespace thermalfist {
       if (static_cast<int>(vect.size()) > maxsize) {
         std::sort(vect.begin(), vect.end());
         std::reverse(vect.begin(), vect.end());
-        vect.resize(1500);
+        vect.resize(maxsize);
       }
     }
   }

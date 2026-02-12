@@ -365,6 +365,20 @@ namespace thermalfist {
     ThermalParticle::ResonanceWidthIntegration ResonanceWidthIntegrationType() const { return m_ResonanceWidthIntegrationType; }
     //@}
 
+    //@{
+    /**
+     * \brief Maximum number of entries in the final-state decay distribution vector for a single resonance.
+     *
+     * When the number of distinct final states from the recursive
+     * decay chain expansion exceeds this limit, only the entries
+     * with the highest probabilities are kept.
+     * Relevant for charmonia and other resonances with complex multi-step decay chains.
+     * Default value: 2000.
+     */
+    void SetMaxDecayDistributionsSize(int maxsize) { m_MaxDecayDistributionsSize = maxsize; }
+    int  MaxDecayDistributionsSize() const { return m_MaxDecayDistributionsSize; }
+    //@}
+
     /**
      * \brief Get the name of particle species
      *        with the specified PDG ID.
@@ -615,12 +629,14 @@ namespace thermalfist {
     std::vector<ResonanceFinalStatesDistribution> m_DecayDistributionsMap;
 
     SortModeType m_SortMode;
+
+    int m_MaxDecayDistributionsSize;
   };
 
   /// Contains several helper routines.
   namespace CuteHRGHelper {
     std::vector<std::string> split(const std::string &s, char delim);
-    void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 1000);
+    void cutDecayDistributionsVector(std::vector<std::pair<double, std::vector<int> > > &vect, int maxsize = 2000);
   }
 
   /// Contains decay lifetimes needed for propagation in Monte Carlo.
