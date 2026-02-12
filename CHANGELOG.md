@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Version 1.6]
 
-Date: 2026-02-09
+Date: 2026-02-11
 
 Version 1.6 contains two major additions: updated PDG2025 particle lists with an extended and validated charm sector, and WebAssembly (WASM) support for running the GUI in a web browser.
 
