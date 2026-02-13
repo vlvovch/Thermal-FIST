@@ -158,8 +158,8 @@ namespace {
 
   // Verify expected particle counts and list properties
   TEST_F(ParticleListValidation, ParticleCountConsistency) {
-    // PDG2025 list.dat has 246 entries, generating ~440 with antiparticles
-    EXPECT_EQ(TPS->ComponentsNumber(), 440)
+    // PDG2025 list.dat has 248 entries, generating 444 with antiparticles
+    EXPECT_EQ(TPS->ComponentsNumber(), 444)
       << "Unexpected particle count for PDG2025 list.dat";
 
     EXPECT_TRUE(TPS->hasBaryons())
@@ -207,6 +207,158 @@ namespace {
       EXPECT_EQ(TPSmod.Particle(idMod).Decays().size(),
                 TPSmono.Particle(idMono).Decays().size())
         << "Decay channel count mismatch for PDG " << pdg;
+    }
+  }
+
+  // Helper: check that every particle in 'base' also appears in 'extended'
+  // with identical mass, width, quantum numbers, and decay channel count.
+  void CheckExtendedListContainsBase(
+      ThermalParticleSystem& base,
+      ThermalParticleSystem& extended,
+      const std::string& baseName,
+      const std::string& extName)
+  {
+    for (int i = 0; i < base.ComponentsNumber(); ++i) {
+      const ThermalParticle& pBase = base.Particle(i);
+      int idExt = extended.PdgToId(pBase.PdgId());
+
+      ASSERT_GE(idExt, 0)
+        << baseName << " particle " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ") not found in " << extName;
+
+      const ThermalParticle& pExt = extended.Particle(idExt);
+
+      EXPECT_DOUBLE_EQ(pBase.Mass(), pExt.Mass())
+        << "Mass mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ") between "
+        << baseName << " and " << extName;
+
+      EXPECT_DOUBLE_EQ(pBase.ResonanceWidth(), pExt.ResonanceWidth())
+        << "Width mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ") between "
+        << baseName << " and " << extName;
+
+      EXPECT_EQ(pBase.BaryonCharge(), pExt.BaryonCharge())
+        << "Baryon number mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ")";
+
+      EXPECT_EQ(pBase.ElectricCharge(), pExt.ElectricCharge())
+        << "Electric charge mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ")";
+
+      EXPECT_EQ(pBase.Strangeness(), pExt.Strangeness())
+        << "Strangeness mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ")";
+
+      EXPECT_EQ(pBase.Charm(), pExt.Charm())
+        << "Charm mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ")";
+
+      EXPECT_EQ(pBase.Decays().size(), pExt.Decays().size())
+        << "Decay channel count mismatch for " << pBase.Name()
+        << " (PDG " << pBase.PdgId() << ") between "
+        << baseName << " and " << extName;
+    }
+  }
+
+  // Verify list-withcharm.dat is a strict superset of list.dat
+  TEST_F(ParticleListValidation, CharmListContainsBaseList) {
+    ThermalParticleSystem TPScharm(
+      inputDir + "/list/PDG2025/list-withcharm.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+
+    // list-withcharm must contain at least as many particles as list.dat
+    EXPECT_GT(TPScharm.ComponentsNumber(), TPS->ComponentsNumber())
+      << "list-withcharm.dat should have more particles than list.dat";
+
+    CheckExtendedListContainsBase(*TPS, TPScharm, "list.dat", "list-withcharm.dat");
+  }
+
+  // Verify list-withnuclei.dat is a strict superset of list.dat
+  TEST_F(ParticleListValidation, NucleiListContainsBaseList) {
+    ThermalParticleSystem TPSnuc(
+      inputDir + "/list/PDG2025/list-withnuclei.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+
+    EXPECT_GT(TPSnuc.ComponentsNumber(), TPS->ComponentsNumber())
+      << "list-withnuclei.dat should have more particles than list.dat";
+
+    CheckExtendedListContainsBase(*TPS, TPSnuc, "list.dat", "list-withnuclei.dat");
+  }
+
+  // Verify list-withexcitednuclei.dat is a strict superset of list-withnuclei.dat
+  TEST_F(ParticleListValidation, ExcitedNucleiListContainsNucleiList) {
+    ThermalParticleSystem TPSnuc(
+      inputDir + "/list/PDG2025/list-withnuclei.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+    ThermalParticleSystem TPSexc(
+      inputDir + "/list/PDG2025/list-withexcitednuclei.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+
+    EXPECT_GT(TPSexc.ComponentsNumber(), TPSnuc.ComponentsNumber())
+      << "list-withexcitednuclei.dat should have more particles than list-withnuclei.dat";
+
+    CheckExtendedListContainsBase(TPSnuc, TPSexc,
+      "list-withnuclei.dat", "list-withexcitednuclei.dat");
+  }
+
+  // Verify list-withnuclei-weakdecays.dat has same particles as list-withnuclei.dat,
+  // differing only in stability flags (weakly decaying hadrons marked unstable).
+  TEST_F(ParticleListValidation, WeakDecaysListConsistency) {
+    ThermalParticleSystem TPSnuc(
+      inputDir + "/list/PDG2025/list-withnuclei.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+    ThermalParticleSystem TPSweak(
+      inputDir + "/list/PDG2025/list-withnuclei-weakdecays.dat",
+      inputDir + "/list/PDG2025/decays.dat");
+
+    // Same particle count
+    EXPECT_EQ(TPSweak.ComponentsNumber(), TPSnuc.ComponentsNumber())
+      << "list-withnuclei-weakdecays.dat and list-withnuclei.dat particle counts differ";
+
+    // Every particle must match in mass, width, and quantum numbers
+    for (int i = 0; i < TPSnuc.ComponentsNumber(); ++i) {
+      const ThermalParticle& pNuc = TPSnuc.Particle(i);
+      int idWeak = TPSweak.PdgToId(pNuc.PdgId());
+
+      ASSERT_GE(idWeak, 0)
+        << "PDG " << pNuc.PdgId() << " (" << pNuc.Name()
+        << ") not found in list-withnuclei-weakdecays.dat";
+
+      const ThermalParticle& pWeak = TPSweak.Particle(idWeak);
+
+      EXPECT_DOUBLE_EQ(pNuc.Mass(), pWeak.Mass())
+        << "Mass mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      EXPECT_DOUBLE_EQ(pNuc.ResonanceWidth(), pWeak.ResonanceWidth())
+        << "Width mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      EXPECT_EQ(pNuc.BaryonCharge(), pWeak.BaryonCharge())
+        << "Baryon number mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      EXPECT_EQ(pNuc.ElectricCharge(), pWeak.ElectricCharge())
+        << "Electric charge mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      EXPECT_EQ(pNuc.Strangeness(), pWeak.Strangeness())
+        << "Strangeness mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      EXPECT_EQ(pNuc.Charm(), pWeak.Charm())
+        << "Charm mismatch for " << pNuc.Name()
+        << " (PDG " << pNuc.PdgId() << ")";
+
+      // Stability may differ — that's the whole point of this list variant.
+      // But if it does differ, the weakdecays version should be less stable
+      // (stable=0 where the other has stable=1), never the reverse.
+      if (pNuc.IsStable() != pWeak.IsStable()) {
+        EXPECT_TRUE(pNuc.IsStable() && !pWeak.IsStable())
+          << pNuc.Name() << " (PDG " << pNuc.PdgId()
+          << "): weakdecays list is MORE stable than nuclei list (unexpected)";
+      }
     }
   }
 
