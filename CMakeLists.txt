@@ -101,7 +101,7 @@ option (THERMALFIST_WASM
         "Build for WebAssembly (requires Emscripten)" OFF)
 
 option (THERMALFIST_WASM_GUI
-        "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" OFF)
+        "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" ON)
 
 # WebAssembly-specific configuration
 if(THERMALFIST_WASM)

@@ -39,6 +39,8 @@ cd build-wasm
 cmake --build . --parallel
 ```
 
+`THERMALFIST_WASM_GUI` defaults to `ON` for wasm builds. Set `-DTHERMALFIST_WASM_GUI=OFF` only for library-only wasm builds.
+
 ### Multi-threaded Build (Recommended)
 
 For better performance during calculations:
