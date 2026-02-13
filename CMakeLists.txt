@@ -98,7 +98,10 @@ option (USE_QT5
 		"Use Qt5 for GUI instead of Qt6" OFF)
 
 option (THERMALFIST_WASM
-        "Build for WebAssembly (requires Qt6 and Emscripten)" OFF)
+        "Build for WebAssembly (requires Emscripten)" OFF)
+
+option (THERMALFIST_WASM_GUI
+        "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" OFF)
 
 # WebAssembly-specific configuration
 if(THERMALFIST_WASM)
@@ -189,8 +192,10 @@ set (HRGFit_INCLUDE             "${PROJECT_SOURCE_DIR}/include/HRGFit")
 # The main library
 add_subdirectory(src/library)
 
-# GUI
-add_subdirectory(src/gui/QtThermalFIST)
+# GUI (skip for WASM library-only builds without Qt6)
+if(NOT THERMALFIST_WASM OR THERMALFIST_WASM_GUI)
+  add_subdirectory(src/gui/QtThermalFIST)
+endif()
 
 # Routines
 add_subdirectory(src/routines)
