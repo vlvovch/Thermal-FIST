@@ -209,10 +209,10 @@ jobs:
       - name: Create Build Environment
         run: cmake -E make_directory ${{github.workspace}}/build-wasm
 
-      - name: Configure CMake (Emscripten)
+      - name: Configure CMake (Emscripten, no GUI)
         shell: bash
         working-directory: ${{github.workspace}}/build-wasm
-        run: emcmake cmake $GITHUB_WORKSPACE -DTHERMALFIST_WASM=ON -DCMAKE_BUILD_TYPE=Release
+        run: emcmake cmake $GITHUB_WORKSPACE -DTHERMALFIST_WASM=ON -DTHERMALFIST_WASM_GUI=OFF -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         working-directory: ${{github.workspace}}/build-wasm
