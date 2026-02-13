@@ -969,7 +969,7 @@ namespace thermalfist {
 
     m_SortMode = ThermalParticleSystem::SortByMass;
 
-    m_MaxDecayDistributionsSize = 7000;
+    m_MaxDecayDistributionsSize = 8000;
 
     m_DecayContributionsByFeeddown.resize(Feeddown::NumberOfTypes);
 
