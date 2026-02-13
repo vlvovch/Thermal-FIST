@@ -119,6 +119,18 @@ if(THERMALFIST_WASM)
   set(USE_QT5 OFF CACHE BOOL "Use Qt5 for GUI" FORCE)
   message(STATUS "  USE_QT5 forced OFF for wasm (Qt6 required)")
 
+  # If Qt6 is unavailable (e.g. CI library-only wasm job), auto-fallback to
+  # non-GUI wasm build instead of failing configuration.
+  if(THERMALFIST_WASM_GUI)
+    find_package(Qt6 COMPONENTS Core Widgets PrintSupport QUIET)
+    if(NOT Qt6_FOUND)
+      message(WARNING "Qt6 for WebAssembly not found. Falling back to "
+                      "library-only wasm build (THERMALFIST_WASM_GUI=OFF).")
+      set(THERMALFIST_WASM_GUI OFF CACHE BOOL
+          "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" FORCE)
+    endif()
+  endif()
+
   # Disable pedantic flag for Emscripten (can cause issues)
   if(EMSCRIPTEN)
     string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
