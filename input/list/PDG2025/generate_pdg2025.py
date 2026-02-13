@@ -262,6 +262,34 @@ KAPPA_PARTICLES = [
 
 # New strange mesons
 NEW_STRANGE_MESONS = [
+    # K(1460): I(J^P) = 1/2(0-), PDG IDs 100311, 100321
+    # Pseudoscalar kaon radial excitation, now in PDG 2025 summary tables
+    # Mass = 1460 MeV, Width = 260 MeV (PDG 2025)
+    {
+        'pdgid': 100311,
+        'name': 'K(1460)0',
+        'stable': 0,
+        'mass': 1.46,
+        'degeneracy': 1,  # 2J+1 = 1 for J=0
+        'statistics': -1,
+        'B': 0, 'Q': 0, 'S': 1, 'C': 0,
+        'absS': 1, 'absC': 0,
+        'width': 0.26,
+        'threshold': 0
+    },
+    {
+        'pdgid': 100321,
+        'name': 'K(1460)+',
+        'stable': 0,
+        'mass': 1.46,
+        'degeneracy': 1,
+        'statistics': -1,
+        'B': 0, 'Q': 1, 'S': 1, 'C': 0,
+        'absS': 1, 'absC': 0,
+        'width': 0.26,
+        'threshold': 0
+    },
+
     # K(1)(1650): I(J^P) = 1/2(1+), PDG IDs 9000313, 9000323
     {
         'pdgid': 9000313,
@@ -344,6 +372,30 @@ NEW_STRANGE_MESONS = [
 # =====================================================================
 
 NEW_DECAYS = {
+    # K(1460)0: I(J^P) = 1/2(0-)
+    # PDG 2025 modes: K*(892)pi (seen), K rho (seen), K0*(1430)pi (seen), K phi (seen)
+    # All "seen" with no measured BRs. Estimate: K*(892)pi 35%, K rho 30%, K0*(1430)pi 25%, K phi 10%
+    100311: [
+        {'br': 0.117, 'daughters': [313, 111], 'comment': '# K(1460)0 -> K*(892)0 + pi0'},
+        {'br': 0.233, 'daughters': [323, -211], 'comment': '# K(1460)0 -> K*(892)+ + pi-'},
+        {'br': 0.10, 'daughters': [311, 113], 'comment': '# K(1460)0 -> K0 + rho(770)0'},
+        {'br': 0.20, 'daughters': [321, -213], 'comment': '# K(1460)0 -> K+ + rho(770)-'},
+        {'br': 0.083, 'daughters': [10311, 111], 'comment': '# K(1460)0 -> K(0)*(1430)0 + pi0'},
+        {'br': 0.167, 'daughters': [10321, -211], 'comment': '# K(1460)0 -> K(0)*(1430)+ + pi-'},
+        {'br': 0.10, 'daughters': [311, 333], 'comment': '# K(1460)0 -> K0 + phi(1020)'},
+    ],
+
+    # K(1460)+
+    100321: [
+        {'br': 0.233, 'daughters': [313, 211], 'comment': '# K(1460)+ -> K*(892)0 + pi+'},
+        {'br': 0.117, 'daughters': [323, 111], 'comment': '# K(1460)+ -> K*(892)+ + pi0'},
+        {'br': 0.20, 'daughters': [311, 213], 'comment': '# K(1460)+ -> K0 + rho(770)+'},
+        {'br': 0.10, 'daughters': [321, 113], 'comment': '# K(1460)+ -> K+ + rho(770)0'},
+        {'br': 0.167, 'daughters': [10311, 211], 'comment': '# K(1460)+ -> K(0)*(1430)0 + pi+'},
+        {'br': 0.083, 'daughters': [10321, 111], 'comment': '# K(1460)+ -> K(0)*(1430)+ + pi0'},
+        {'br': 0.10, 'daughters': [321, 333], 'comment': '# K(1460)+ -> K+ + phi(1020)'},
+    ],
+
     # f(2)(1565): I^G(J^PC) = 0+(2++)
     # Similar to f(2)(1270) but heavier. Decays to pi pi, KK, eta eta
     9010225: [
@@ -387,23 +439,21 @@ NEW_DECAYS = {
     # K(0)*(700) excluded from particle list; no decay entries needed.
 
     # K(1)(1650)0: I(J^P) = 1/2(1+)
-    # Axial kaon, similar to K(1)(1270) but heavier
-    # Decays to K*(892)pi, K*rho, K omega, K phi
+    # PDG 2025 decay modes: Kpipi (seen), K phi (seen)
+    # Kpipi modeled as K*(892)pi (dominant resonant sub-channel)
+    # Estimate: Kpipi ~ 70%, K phi ~ 30%
     9000313: [
-        {'br': 0.20, 'daughters': [313, 111], 'comment': '# K(1)(1650)0 -> K*(892)0 + pi0'},
-        {'br': 0.40, 'daughters': [323, -211], 'comment': '# K(1)(1650)0 -> K*(892)+ + pi-'},
-        {'br': 0.10, 'daughters': [311, 113], 'comment': '# K(1)(1650)0 -> K0 + rho(770)0'},
-        {'br': 0.20, 'daughters': [321, -213], 'comment': '# K(1)(1650)0 -> K+ + rho(770)-'},
-        {'br': 0.10, 'daughters': [311, 223], 'comment': '# K(1)(1650)0 -> K0 + omega(782)'},
+        {'br': 0.233, 'daughters': [313, 111], 'comment': '# K(1)(1650)0 -> K*(892)0 + pi0'},
+        {'br': 0.467, 'daughters': [323, -211], 'comment': '# K(1)(1650)0 -> K*(892)+ + pi-'},
+        {'br': 0.30, 'daughters': [311, 333], 'comment': '# K(1)(1650)0 -> K0 + phi(1020)'},
     ],
 
     # K(1)(1650)+
+    # PDG 2025 decay modes: Kpipi (seen), K phi (seen)
     9000323: [
-        {'br': 0.40, 'daughters': [313, 211], 'comment': '# K(1)(1650)+ -> K*(892)0 + pi+'},
-        {'br': 0.20, 'daughters': [323, 111], 'comment': '# K(1)(1650)+ -> K*(892)+ + pi0'},
-        {'br': 0.20, 'daughters': [311, 213], 'comment': '# K(1)(1650)+ -> K0 + rho(770)+'},
-        {'br': 0.10, 'daughters': [321, 113], 'comment': '# K(1)(1650)+ -> K+ + rho(770)0'},
-        {'br': 0.10, 'daughters': [321, 223], 'comment': '# K(1)(1650)+ -> K+ + omega(782)'},
+        {'br': 0.467, 'daughters': [313, 211], 'comment': '# K(1)(1650)+ -> K*(892)0 + pi+'},
+        {'br': 0.233, 'daughters': [323, 111], 'comment': '# K(1)(1650)+ -> K*(892)+ + pi0'},
+        {'br': 0.30, 'daughters': [321, 333], 'comment': '# K(1)(1650)+ -> K+ + phi(1020)'},
     ],
 
     # K(0)*(1950)0: I(J^P) = 1/2(0+)
@@ -1401,7 +1451,8 @@ DECAY_UPDATES = {
     ],
 
     # Lambda(1820): NKbar was 70% (PDG 55-65%), Sigma_pi was 18% (PDG 8-14%).
-    # Reduce NKbar->60%, Sigma_pi->12%, increase Sigma(1385)pi->15%, add NKbar*->13%
+    # Reduce NKbar->60%, Sigma_pi->12%, increase Sigma(1385)pi->15%, keep NKbar* strength
+    # but represent near-threshold NK* modes as explicit NKpi channels.
     3126: [
         {'br': 0.30, 'daughters': [2212, -321], 'comment': '# Lambda(1820) -> p + K-'},
         {'br': 0.30, 'daughters': [2112, -311], 'comment': '# Lambda(1820) -> n + anti-K0'},
@@ -1411,8 +1462,8 @@ DECAY_UPDATES = {
         {'br': 0.05, 'daughters': [3224, -211], 'comment': '# Lambda(1820) -> Sigma(1385)+ + pi-'},
         {'br': 0.05, 'daughters': [3214, 111], 'comment': '# Lambda(1820) -> Sigma(1385)0 + pi0'},
         {'br': 0.05, 'daughters': [3114, 211], 'comment': '# Lambda(1820) -> Sigma(1385)- + pi+'},
-        {'br': 0.065, 'daughters': [2212, -323], 'comment': '# Lambda(1820) -> p + K*(892)-'},
-        {'br': 0.065, 'daughters': [2112, -313], 'comment': '# Lambda(1820) -> n + anti-K*(892)0'},
+        {'br': 0.065, 'daughters': [2212, -321, 111], 'comment': '# Lambda(1820) -> p + K- + pi0 [threshold-safe proxy for p K*(892)-]'},
+        {'br': 0.065, 'daughters': [2112, -321, 211], 'comment': '# Lambda(1820) -> n + K- + pi+ [threshold-safe proxy for n anti-K*(892)0]'},
     ],
 
     # Lambda(1890): PDG2025 NKbar=24-36%, Sigma_pi=3-10%
@@ -1468,7 +1519,8 @@ DECAY_UPDATES = {
 
     # Lambda(1810): PDG: NKbar 5-35%, Sigma_pi 11-21%, Sigma(1385)pi 25-55%, NKbar* 30-60%
     # PDG ranges overlap heavily -- can't satisfy all simultaneously at 100%.
-    # Best compromise: NKbar=20%, Sigma_pi=16%, Sigma(1385)pi=30%, NKbar*=34%
+    # Best compromise: NKbar=20%, Sigma_pi=16%, Sigma(1385)pi=30%, NKbar*=34%.
+    # NK* channels are entered as explicit NKpi to keep all channels below threshold.
     53122: [
         {'br': 0.10, 'daughters': [2212, -321], 'comment': '# Lambda(1810) -> p + K-'},
         {'br': 0.10, 'daughters': [2112, -311], 'comment': '# Lambda(1810) -> n + anti-K0'},
@@ -1478,8 +1530,8 @@ DECAY_UPDATES = {
         {'br': 0.10, 'daughters': [3224, -211], 'comment': '# Lambda(1810) -> Sigma(1385)+ + pi-'},
         {'br': 0.10, 'daughters': [3214, 111], 'comment': '# Lambda(1810) -> Sigma(1385)0 + pi0'},
         {'br': 0.10, 'daughters': [3114, 211], 'comment': '# Lambda(1810) -> Sigma(1385)- + pi+'},
-        {'br': 0.17, 'daughters': [2212, -323], 'comment': '# Lambda(1810) -> p + K*(892)-'},
-        {'br': 0.17, 'daughters': [2112, -313], 'comment': '# Lambda(1810) -> n + anti-K*(892)0'},
+        {'br': 0.17, 'daughters': [2212, -321, 111], 'comment': '# Lambda(1810) -> p + K- + pi0 [threshold-safe proxy for p K*(892)-]'},
+        {'br': 0.17, 'daughters': [2112, -321, 211], 'comment': '# Lambda(1810) -> n + K- + pi+ [threshold-safe proxy for n anti-K*(892)0]'},
     ],
 
     # Sigma(1670)+: PDG: NKbar 6-12%, Lambda_pi 5-15%, Sigma_pi 30-60%, Sigma_sigma 4-10%, Lambda(1405)pi 2-6%
@@ -1592,6 +1644,15 @@ DECAY_UPDATES = {
     # Previous FIST had oversimplified single-channel decays for several.
     # =====================================================================
 
+    # Xi(1690)-: keep the previous qualitative split but avoid the near-threshold
+    # Sigma- anti-K0 mode by absorbing it into Sigma0 K-.
+    203312: [
+        {'br': 0.34, 'daughters': [3122, -321], 'comment': '# Xi(1690)- -> Lambda + K-'},
+        {'br': 0.33, 'daughters': [3212, -321], 'comment': '# Xi(1690)- -> Sigma0 + K- [threshold-safe replacement of Sigma- anti-K0]'},
+        {'br': 0.22, 'daughters': [3322, -211], 'comment': '# Xi(1690)- -> Xi0 + pi-'},
+        {'br': 0.11, 'daughters': [3312, 111], 'comment': '# Xi(1690)- -> Xi- + pi0'},
+    ],
+
     # Xi(1820)0: PDG: Lambda Kbar = large, Sigma Kbar = small, Xi pi = small, Xi(1530) pi = small
     # Was: Lambda Kbar0 = 100%. Fix: distribute among all seen channels.
     # Estimate: Lambda Kbar ~60%, Sigma Kbar ~15%, Xi pi ~15%, Xi(1530) pi ~10%
@@ -1660,12 +1721,12 @@ DECAY_UPDATES = {
 
     # Omega(2012): PDG: Xi0 K- = seen, Xi- Kbar0 = seen, Xi- pi+ K- = seen
     # Was: Xi- Kbar0 = 100%. Fix: Omega is I=0, so Xi0 K- and Xi- Kbar0 ~50/50 by isospin.
-    # Xi- pi+ K- (3-body) proxied by Xi(1530)0 K- (Xi(1530)->Xi pi)
-    # Estimate: Xi0 K- = 40%, Xi- Kbar0 = 40%, Xi(1530)0 K- = 20%
+    # Enter Xi- pi+ K- explicitly (instead of Xi(1530)0 K- proxy) to keep thresholds open.
+    # Estimate: Xi0 K- = 40%, Xi- Kbar0 = 40%, Xi- pi+ K- = 20%
     9903334: [
         {'br': 0.40, 'daughters': [3322, -321], 'comment': '# Omega(2012) -> Xi0 + K-'},
         {'br': 0.40, 'daughters': [3312, -311], 'comment': '# Omega(2012) -> Xi- + anti-K0'},
-        {'br': 0.20, 'daughters': [3324, -321], 'comment': '# Omega(2012) -> Xi(1530)0 + K- [proxy for Xi- pi+ K-]'},
+        {'br': 0.20, 'daughters': [3312, 211, -321], 'comment': '# Omega(2012) -> Xi- + pi+ + K-'},
     ],
 
     # Omega(2250): PDG: Xi- pi+ K- = seen, Xi(1530)0 K- = seen
@@ -1675,6 +1736,107 @@ DECAY_UPDATES = {
         {'br': 0.50, 'daughters': [3324, -321], 'comment': '# Omega(2250) -> Xi(1530)0 + K-'},
         {'br': 0.25, 'daughters': [3312, -311], 'comment': '# Omega(2250) -> Xi- + anti-K0'},
         {'br': 0.25, 'daughters': [3322, -321], 'comment': '# Omega(2250) -> Xi0 + K-'},
+    ],
+
+    # K*(1680)0: I(J^P) = 1/2(1-)
+    # PDG 2025: K pi (38.7%), K rho (31.4%), K*(892) pi (29.9%), K phi (seen), K eta (1.4%)
+    # Estimate K phi ~1%, absorb K phi + K eta from K*(892)pi
+    # After rescaling: K pi 38.7%, K rho 31.4%, K*(892)pi 27.5%, K eta 1.4%, K phi 1.0%
+    30313: [
+        {'br': 0.129, 'daughters': [311, 111], 'comment': '# K*(1680)0 -> K0 + pi0'},
+        {'br': 0.258, 'daughters': [321, -211], 'comment': '# K*(1680)0 -> K+ + pi-'},
+        {'br': 0.1047, 'daughters': [311, 113], 'comment': '# K*(1680)0 -> K0 + rho(770)0'},
+        {'br': 0.2093, 'daughters': [321, -213], 'comment': '# K*(1680)0 -> K+ + rho(770)-'},
+        {'br': 0.0917, 'daughters': [313, 111], 'comment': '# K*(1680)0 -> K*(892)0 + pi0'},
+        {'br': 0.1833, 'daughters': [323, -211], 'comment': '# K*(1680)0 -> K*(892)+ + pi-'},
+        {'br': 0.014, 'daughters': [311, 221], 'comment': '# K*(1680)0 -> K0 + eta'},
+        {'br': 0.01, 'daughters': [311, 333], 'comment': '# K*(1680)0 -> K0 + phi(1020)'},
+    ],
+
+    # K*(1680)+
+    # PDG 2025: K pi (38.7%), K rho (31.4%), K*(892) pi (29.9%), K phi (seen), K eta (1.4%)
+    30323: [
+        {'br': 0.258, 'daughters': [311, 211], 'comment': '# K*(1680)+ -> K0 + pi+'},
+        {'br': 0.129, 'daughters': [321, 111], 'comment': '# K*(1680)+ -> K+ + pi0'},
+        {'br': 0.2093, 'daughters': [311, 213], 'comment': '# K*(1680)+ -> K0 + rho(770)+'},
+        {'br': 0.1047, 'daughters': [321, 113], 'comment': '# K*(1680)+ -> K+ + rho(770)0'},
+        {'br': 0.1833, 'daughters': [313, 211], 'comment': '# K*(1680)+ -> K*(892)0 + pi+'},
+        {'br': 0.0917, 'daughters': [323, 111], 'comment': '# K*(1680)+ -> K*(892)+ + pi0'},
+        {'br': 0.014, 'daughters': [321, 221], 'comment': '# K*(1680)+ -> K+ + eta'},
+        {'br': 0.01, 'daughters': [321, 333], 'comment': '# K*(1680)+ -> K+ + phi(1020)'},
+    ],
+
+    # h(1)(1415): I^G(J^PC) = 0-(1+-)
+    # PDG 2025 decay modes: K Kbar*(892) + c.c. (seen), K Kbar pi (seen)
+    # Old PDG2020 decays were rho pi which is NOT listed by PDG at all
+    # K Kbar*(892) is the dominant resonant channel of K Kbar pi
+    # Model entirely as K Kbar*(892) (isospin decomposition)
+    10333: [
+        {'br': 0.25, 'daughters': [321, -323], 'comment': '# h(1)(1415) -> K+ + K*(892)-'},
+        {'br': 0.25, 'daughters': [-321, 323], 'comment': '# h(1)(1415) -> K- + K*(892)+'},
+        {'br': 0.25, 'daughters': [311, -313], 'comment': '# h(1)(1415) -> K0 + anti-K*(892)0'},
+        {'br': 0.25, 'daughters': [-311, 313], 'comment': '# h(1)(1415) -> anti-K0 + K*(892)0'},
+    ],
+
+    # pi(1800)0: I^G(J^PC) = 1-(0-+)
+    # PDG 2025 decay modes (seen): 3pi (via f0(500)pi, f0(980)pi, f0(1370)pi), eta eta pi,
+    #   eta eta'(958) pi, K0*(1430) Kbar, (not seen: f0(1500)pi, rho pi, K*(892) Kbar)
+    # Remove K*(892)K channels (PDG "not seen"), redistribute to seen channels
+    # Estimate: 3pi ~ 22%, eta eta pi ~ 21%, eta eta'(958) pi ~ 21%, K0*(1430) Kbar ~ 18%
+    #           f0(980) pi ~ 9%, f0(1370) pi ~ 9%
+    9010111: [
+        {'br': 0.11, 'daughters': [211, -211, 111], 'comment': '# pi(1800)0 -> pi+ + pi- + pi0'},
+        {'br': 0.11, 'daughters': [111, 111, 111], 'comment': '# pi(1800)0 -> pi0 + pi0 + pi0'},
+        {'br': 0.21, 'daughters': [221, 221, 111], 'comment': '# pi(1800)0 -> eta + eta + pi0'},
+        {'br': 0.21, 'daughters': [221, 331, 111], 'comment': '# pi(1800)0 -> eta + eta\'(958) + pi0'},
+        {'br': 0.06, 'daughters': [10321, -321], 'comment': '# pi(1800)0 -> K(0)*(1430)+ + K-'},
+        {'br': 0.06, 'daughters': [10311, -311], 'comment': '# pi(1800)0 -> K(0)*(1430)0 + anti-K0'},
+        {'br': 0.06, 'daughters': [-10321, 321], 'comment': '# pi(1800)0 -> K(0)*(1430)- + K+'},
+        {'br': 0.06, 'daughters': [-10311, 311], 'comment': '# pi(1800)0 -> anti-K(0)*(1430)0 + K0'},
+        {'br': 0.045, 'daughters': [9010221, 111], 'comment': '# pi(1800)0 -> f(0)(980) + pi0 (seen)'},
+        {'br': 0.045, 'daughters': [10221, 111], 'comment': '# pi(1800)0 -> f(0)(1370) + pi0 (seen)'},
+    ],
+    # pi(1800)+
+    9010211: [
+        {'br': 0.11, 'daughters': [211, 111, 111], 'comment': '# pi(1800)+ -> pi+ + pi0 + pi0'},
+        {'br': 0.11, 'daughters': [211, 211, -211], 'comment': '# pi(1800)+ -> pi+ + pi+ + pi-'},
+        {'br': 0.21, 'daughters': [221, 221, 211], 'comment': '# pi(1800)+ -> eta + eta + pi+'},
+        {'br': 0.21, 'daughters': [221, 331, 211], 'comment': '# pi(1800)+ -> eta + eta\'(958) + pi+'},
+        {'br': 0.12, 'daughters': [10321, -311], 'comment': '# pi(1800)+ -> K(0)*(1430)+ + anti-K0'},
+        {'br': 0.12, 'daughters': [321, -10311], 'comment': '# pi(1800)+ -> K+ + anti-K(0)*(1430)0'},
+        {'br': 0.045, 'daughters': [9010221, 211], 'comment': '# pi(1800)+ -> f(0)(980) + pi+ (seen)'},
+        {'br': 0.045, 'daughters': [10221, 211], 'comment': '# pi(1800)+ -> f(0)(1370) + pi+ (seen)'},
+    ],
+
+    # eta(2)(1645): I^G(J^PC) = 0+(2-+)
+    # Keep the existing equal-weight model but map scalar-pion channels to a0(980)pi.
+    # PDG 2025 listings do not support a0(1450)pi for this state.
+    10225: [
+        {'br': 0.10, 'daughters': [115, 111], 'comment': '# eta(2)(1645) -> a(2)(1320)0 + pi0'},
+        {'br': 0.10, 'daughters': [215, -211], 'comment': '# eta(2)(1645) -> a(2)(1320)+ + pi-'},
+        {'br': 0.10, 'daughters': [-215, 211], 'comment': '# eta(2)(1645) -> a(2)(1320)- + pi+'},
+        {'br': 0.10, 'daughters': [321, -323], 'comment': '# eta(2)(1645) -> K+ + K*(892)-'},
+        {'br': 0.10, 'daughters': [-321, 323], 'comment': '# eta(2)(1645) -> K- + K*(892)+'},
+        {'br': 0.10, 'daughters': [311, -313], 'comment': '# eta(2)(1645) -> K0 + anti-K*(892)0'},
+        {'br': 0.10, 'daughters': [-311, 313], 'comment': '# eta(2)(1645) -> anti-K0 + K*(892)0'},
+        {'br': 0.10, 'daughters': [9000111, 111], 'comment': '# eta(2)(1645) -> a(0)(980)0 + pi0'},
+        {'br': 0.10, 'daughters': [9000211, -211], 'comment': '# eta(2)(1645) -> a(0)(980)+ + pi-'},
+        {'br': 0.10, 'daughters': [-9000211, 211], 'comment': '# eta(2)(1645) -> a(0)(980)- + pi+'},
+    ],
+
+    # eta2(1870): I^G(J^PC) = 0+(2-+)
+    # PDG 2025 decay modes: a2(1320) pi (seen), f2(1270) eta (seen), a0(980) pi (seen), gamma gamma (seen)
+    # Old PDG2020 decays included a0(1450) pi which is NOT listed by PDG
+    # K Kbar and K* Kbar are NOT in PDG 2025 summary table -- removed
+    # Estimate: a2(1320) pi ~ 40%, f2(1270) eta ~ 30%, a0(980) pi ~ 30%
+    10335: [
+        {'br': 0.133, 'daughters': [115, 111], 'comment': '# eta2(1870) -> a(2)(1320)0 + pi0'},
+        {'br': 0.133, 'daughters': [215, -211], 'comment': '# eta2(1870) -> a(2)(1320)+ + pi-'},
+        {'br': 0.133, 'daughters': [-215, 211], 'comment': '# eta2(1870) -> a(2)(1320)- + pi+'},
+        {'br': 0.30, 'daughters': [225, 221], 'comment': '# eta2(1870) -> f(2)(1270) + eta'},
+        {'br': 0.10, 'daughters': [9000111, 111], 'comment': '# eta2(1870) -> a(0)(980)0 + pi0'},
+        {'br': 0.10, 'daughters': [9000211, -211], 'comment': '# eta2(1870) -> a(0)(980)+ + pi-'},
+        {'br': 0.10, 'daughters': [-9000211, 211], 'comment': '# eta2(1870) -> a(0)(980)- + pi+'},
     ],
 }
 
@@ -1919,36 +2081,41 @@ CHARM_DECAY_UPDATES = {
     ],
 
     # -----------------------------------------------------------------
-    # psi(4160):  Above D_s D_s threshold.
-    # Main modes: DDbar, DD*, D*D*, Ds Ds.
+    # psi(4160):  PDG 2025: D Dbar (seen), D*Dbar (seen), D*D* (seen),
+    #   D0D-pi+ excl D*(2010)+D- not seen, DDbar*pi seen,
+    #   Ds+Ds- NOT SEEN, Ds*+Ds- +c.c. seen, Ds*+Ds*- seen
+    # Removed Ds+Ds- (not seen). Redistribute to other modes.
     # -----------------------------------------------------------------
     9010443: [
-        {'br': 0.200, 'daughters': [421, -421], 'comment': '# psi(4160) -> D0 Dbar0'},
-        {'br': 0.150, 'daughters': [411, -411], 'comment': '# psi(4160) -> D+ D-'},
-        {'br': 0.150, 'daughters': [423, -421], 'comment': '# psi(4160) -> D*0 Dbar0'},
-        {'br': 0.150, 'daughters': [413, -411], 'comment': '# psi(4160) -> D*+ D-'},
-        {'br': 0.150, 'daughters': [423, -423], 'comment': '# psi(4160) -> D*0 Dbar*0'},
-        {'br': 0.050, 'daughters': [431, -431], 'comment': '# psi(4160) -> Ds+ Ds-'},
-        {'br': 0.050, 'daughters': [433, -431], 'comment': '# psi(4160) -> Ds*+ Ds-'},
+        {'br': 0.200, 'daughters': [421, -421], 'comment': '# psi(4160) -> D0 Dbar0 (seen)'},
+        {'br': 0.150, 'daughters': [411, -411], 'comment': '# psi(4160) -> D+ D- (seen)'},
+        {'br': 0.150, 'daughters': [423, -421], 'comment': '# psi(4160) -> D*0 Dbar0 (seen)'},
+        {'br': 0.150, 'daughters': [413, -411], 'comment': '# psi(4160) -> D*+ D- (seen)'},
+        {'br': 0.150, 'daughters': [423, -423], 'comment': '# psi(4160) -> D*0 Dbar*0 (seen)'},
+        {'br': 0.050, 'daughters': [433, -431], 'comment': '# psi(4160) -> Ds*+ Ds- (seen)'},
+        {'br': 0.050, 'daughters': [433, -433], 'comment': '# psi(4160) -> Ds*+ Ds*- (seen)'},
         {'br': 0.100, 'daughters': [211, -211, 211, -211, 111], 'comment': '# psi(4160) -> catch-all non-charm'},
     ],
 
     # -----------------------------------------------------------------
-    # psi(4415):  Highest conventional charmonium in list.
-    # PDG: D Dbar2*(2460) -> D0 D- pi+ 10.5%. Rest to generic DDbar modes.
+    # psi(4415):  PDG 2025: D Dbar (seen), D*Dbar (seen), D*D* (seen),
+    #   DDbar2*(2460) -> D0 D- pi+ 10+/-4%, D0 D*- pi+ seen,
+    #   Ds+Ds- NOT SEEN, Ds*+Ds- +c.c. seen, Ds*+Ds*- seen,
+    #   D1(2420) Dbar +c.c. possibly seen
+    # Removed Ds+Ds- (not seen). Redistribute to other modes.
     # -----------------------------------------------------------------
     9020443: [
-        {'br': 0.150, 'daughters': [421, -421], 'comment': '# psi(4415) -> D0 Dbar0'},
-        {'br': 0.120, 'daughters': [411, -411], 'comment': '# psi(4415) -> D+ D-'},
-        {'br': 0.100, 'daughters': [423, -421], 'comment': '# psi(4415) -> D*0 Dbar0'},
-        {'br': 0.100, 'daughters': [413, -411], 'comment': '# psi(4415) -> D*+ D-'},
-        {'br': 0.100, 'daughters': [423, -423], 'comment': '# psi(4415) -> D*0 Dbar*0'},
-        {'br': 0.050, 'daughters': [413, -413], 'comment': '# psi(4415) -> D*+ D*-'},
-        {'br': 0.050, 'daughters': [431, -431], 'comment': '# psi(4415) -> Ds+ Ds-'},
-        {'br': 0.050, 'daughters': [433, -431], 'comment': '# psi(4415) -> Ds*+ Ds-'},
-        {'br': 0.050, 'daughters': [433, -433], 'comment': '# psi(4415) -> Ds*+ Ds*-'},
-        {'br': 0.130, 'daughters': [421, -411, 211], 'comment': '# psi(4415) -> D0 D- pi+ (incl. DDbar2*)'},
-        {'br': 0.100, 'daughters': [211, -211, 211, -211, 111], 'comment': '# psi(4415) -> catch-all non-charm'},
+        {'br': 0.150, 'daughters': [421, -421], 'comment': '# psi(4415) -> D0 Dbar0 (seen)'},
+        {'br': 0.120, 'daughters': [411, -411], 'comment': '# psi(4415) -> D+ D- (seen)'},
+        {'br': 0.100, 'daughters': [423, -421], 'comment': '# psi(4415) -> D*0 Dbar0 (seen)'},
+        {'br': 0.100, 'daughters': [413, -411], 'comment': '# psi(4415) -> D*+ D- (seen)'},
+        {'br': 0.100, 'daughters': [423, -423], 'comment': '# psi(4415) -> D*0 Dbar*0 (seen)'},
+        {'br': 0.050, 'daughters': [413, -413], 'comment': '# psi(4415) -> D*+ D*- (seen)'},
+        {'br': 0.050, 'daughters': [433, -431], 'comment': '# psi(4415) -> Ds*+ Ds- (seen)'},
+        {'br': 0.050, 'daughters': [433, -433], 'comment': '# psi(4415) -> Ds*+ Ds*- (seen)'},
+        {'br': 0.130, 'daughters': [421, -411, 211], 'comment': '# psi(4415) -> D0 D- pi+ (PDG 10+/-4%, incl. DDbar2*)'},
+        {'br': 0.050, 'daughters': [421, -413, 211], 'comment': '# psi(4415) -> D0 D*(2010)- pi+ (seen)'},
+        {'br': 0.050, 'daughters': [211, -211, 211, -211, 111], 'comment': '# psi(4415) -> catch-all non-charm'},
     ],
 
     # -----------------------------------------------------------------
@@ -2058,15 +2225,14 @@ CHARM_DECAY_UPDATES = {
     ],
 
     # -----------------------------------------------------------------
-    # D_s2*(2573)+ (435):  PDG2025: D0 K+ = 37.4% (only measured mode).
-    #   By isospin, D+ K0 should be similar. D*K also allowed.
-    #   Assign: D0 K+ 37.4%, D+ K0 37.4%, D*0 K+ 12.6%, D*+ K0 12.6%
+    # D_s2*(2573)+ (435):  PDG2025: D0 K+ = 37% (measured).
+    #   D*(2007)0 K+ = NOT SEEN. D+ K0_S = seen. D*+ K0_S = seen.
+    #   Remove D*0 K+ (not seen). Keep D0 K+, D+ K0, D*+ K0.
     # -----------------------------------------------------------------
     435: [
-        {'br': 0.374, 'daughters': [421, 321], 'comment': '# D_s2*(2573)+ -> D0 K+ (PDG2025 37.4%)'},
-        {'br': 0.374, 'daughters': [411, 311], 'comment': '# D_s2*(2573)+ -> D+ K0 (isospin mirror)'},
-        {'br': 0.126, 'daughters': [423, 321], 'comment': '# D_s2*(2573)+ -> D*(2007)0 K+ (catch-all D*K)'},
-        {'br': 0.126, 'daughters': [413, 311], 'comment': '# D_s2*(2573)+ -> D*(2010)+ K0 (catch-all D*K)'},
+        {'br': 0.42, 'daughters': [421, 321], 'comment': '# D_s2*(2573)+ -> D0 K+ (PDG2025 37%)'},
+        {'br': 0.42, 'daughters': [411, 311], 'comment': '# D_s2*(2573)+ -> D+ K0 (seen, isospin mirror)'},
+        {'br': 0.16, 'daughters': [413, 311], 'comment': '# D_s2*(2573)+ -> D*(2010)+ K0 (seen)'},
     ],
 
     # -----------------------------------------------------------------
@@ -2094,11 +2260,14 @@ CHARM_DECAY_UPDATES = {
     ],
 
     # -----------------------------------------------------------------
-    # psi(2)(3823): No PDG data. Assume DDbar dominant.
+    # psi(2)(3823): PDG 2025 - only radiative modes listed.
+    # M=3823.5 MeV is below D Dbar threshold (~3730 MeV for D0Dbar0).
+    # chi_c1 gamma: DEFINED AS 1, chi_c2 gamma: 0.28 +/- 0.14
+    # Normalize: chi_c1 gamma ~ 78%, chi_c2 gamma ~ 22%
     # -----------------------------------------------------------------
     30445: [
-        {'br': 0.50, 'daughters': [421, -421], 'comment': '# psi(2)(3823) -> D0 Dbar0'},
-        {'br': 0.50, 'daughters': [411, -411], 'comment': '# psi(2)(3823) -> D+ D-'},
+        {'br': 0.78, 'daughters': [22, 20443], 'comment': '# psi(2)(3823) -> gamma + chi_c1 (PDG DEFINED AS 1)'},
+        {'br': 0.22, 'daughters': [22, 445], 'comment': '# psi(2)(3823) -> gamma + chi_c2 (PDG 0.28+/-0.14)'},
     ],
 
     # -----------------------------------------------------------------
@@ -2118,22 +2287,31 @@ CHARM_DECAY_UPDATES = {
     ],
 
     # chi_c1(4140) aka Y(4140)
+    # PDG 2025: J/psi phi (seen), gamma gamma (not seen)
+    # Ds+ Ds- NOT in PDG listing -- removed
     9050443: [
-        {'br': 0.50, 'daughters': [443, 333], 'comment': '# chi_c1(4140) -> J/psi phi'},
-        {'br': 0.50, 'daughters': [431, -431], 'comment': '# chi_c1(4140) -> Ds+ Ds-'},
+        {'br': 1.00, 'daughters': [443, 333], 'comment': '# chi_c1(4140) -> J/psi phi (seen)'},
     ],
 
-    # psi(4230) aka Y(4230)
+    # psi(4230) aka Y(4230/4260)
+    # PDG 2025: J/psi pi+pi- (seen), hc pi+pi- (seen), psi(2S) pi+pi- (seen),
+    #   chi_c0 omega (seen), D0 D*(2010)- pi+ (seen),
+    #   D Dbar (possibly seen D0Dbar0, D+D-), D*Dbar (not seen),
+    #   D Dbar pi (NOT SEEN) -- removed
     9060443: [
-        {'br': 0.30, 'daughters': [443, 211, -211], 'comment': '# psi(4230) -> J/psi pi+pi-'},
-        {'br': 0.30, 'daughters': [10443, 211, -211], 'comment': '# psi(4230) -> h_c pi+pi-'},
-        {'br': 0.40, 'daughters': [421, -421, 111], 'comment': '# psi(4230) -> DDbar pi'},
+        {'br': 0.25, 'daughters': [443, 211, -211], 'comment': '# psi(4230) -> J/psi pi+pi- (seen)'},
+        {'br': 0.20, 'daughters': [10443, 211, -211], 'comment': '# psi(4230) -> h_c pi+pi- (seen)'},
+        {'br': 0.15, 'daughters': [100443, 211, -211], 'comment': '# psi(4230) -> psi(2S) pi+pi- (seen)'},
+        {'br': 0.15, 'daughters': [10441, 223], 'comment': '# psi(4230) -> chi_c0 omega (seen)'},
+        {'br': 0.15, 'daughters': [421, -413, 211], 'comment': '# psi(4230) -> D0 D*(2010)- pi+ (seen)'},
+        {'br': 0.10, 'daughters': [443, 321, -321], 'comment': '# psi(4230) -> J/psi K+K- (seen)'},
     ],
 
     # chi_c1(4274)
+    # PDG 2025: J/psi phi (seen) -- only listed mode
+    # Ds+ Ds- NOT in PDG listing -- removed
     9070443: [
-        {'br': 0.50, 'daughters': [443, 333], 'comment': '# chi_c1(4274) -> J/psi phi'},
-        {'br': 0.50, 'daughters': [431, -431], 'comment': '# chi_c1(4274) -> Ds+ Ds-'},
+        {'br': 1.00, 'daughters': [443, 333], 'comment': '# chi_c1(4274) -> J/psi phi (seen)'},
     ],
 
     # psi(4360) aka Y(4360)
@@ -2406,39 +2584,45 @@ CHARM_DECAY_UPDATES = {
         {'br': 0.50, 'daughters': [411, 3122], 'comment': '# Xi_c(3055)+ -> D+ Lambda'},
     ],
 
-    # Xi_c(3080)0 -> Lambda_c+ K- (seen)
+    # Xi_c(3080)0: PDG2025: Lambda_c+ Kbar pi (seen), Sigma_c(2455)Kbar (seen),
+    #   Lambda_c+ Kbar (NOT seen). Use 3-body Lambda_c+ Kbar pi channels.
     9204316: [
-        {'br': 0.50, 'daughters': [4122, -321], 'comment': '# Xi_c(3080)0 -> Lambda_c+ K-'},
-        {'br': 0.50, 'daughters': [421, 3312], 'comment': '# Xi_c(3080)0 -> D0 Xi-'},
+        {'br': 0.50, 'daughters': [4122, -311, -211], 'comment': '# Xi_c(3080)0 -> Lambda_c+ Kbar0 pi-'},
+        {'br': 0.50, 'daughters': [4122, -321, 111], 'comment': '# Xi_c(3080)0 -> Lambda_c+ K- pi0'},
     ],
 
-    # Xi_c(3080)+ -> Lambda_c+ K0bar pi+ (seen)
+    # Xi_c(3080)+: PDG2025: Sigma_c(2455)++ K- (seen), Sigma_c(2520)++ K- (seen),
+    #   Lambda_c+ Kbar pi (seen), Lambda D+ (seen).
+    #   Lambda_c+ Kbar (NOT seen), Lambda_c+ Kbar pi+pi- (NOT seen).
     9204326: [
-        {'br': 0.50, 'daughters': [4122, -311, 211], 'comment': '# Xi_c(3080)+ -> Lambda_c+ Kbar0 pi+'},
-        {'br': 0.50, 'daughters': [411, 3322], 'comment': '# Xi_c(3080)+ -> D+ Xi0'},
+        {'br': 0.25, 'daughters': [4222, -321], 'comment': '# Xi_c(3080)+ -> Sigma_c(2455)++ K-'},
+        {'br': 0.25, 'daughters': [4224, -321], 'comment': '# Xi_c(3080)+ -> Sigma_c(2520)++ K-'},
+        {'br': 0.25, 'daughters': [4122, -321, 211], 'comment': '# Xi_c(3080)+ -> Lambda_c+ K- pi+'},
+        {'br': 0.25, 'daughters': [3122, 411], 'comment': '# Xi_c(3080)+ -> Lambda D+'},
     ],
 
-    # Omega_c excited states -> Omega_c pi or Xi_c K
+    # Omega_c excited states -> Xi_c+ K- (PDG2025: seen in Xi_c K)
+    # Parent Omega_c: B=1, Q=0, S=-2, C=1. Xi_c+ K-: Q=1-1=0, S=-1-1=-2, C=1 OK.
     9104332: [  # Omega_c(3000)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3000) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3000) -> Xi_c+ K-'},
     ],
     9104334: [  # Omega_c(3065)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3065) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3065) -> Xi_c+ K-'},
     ],
     9104336: [  # Omega_c(3120)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3120) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3120) -> Xi_c+ K-'},
     ],
     9204332: [  # Omega_c(3050)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3050) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3050) -> Xi_c+ K-'},
     ],
     9204334: [  # Omega_c(3090)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3090) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3090) -> Xi_c+ K-'},
     ],
     9304332: [  # Omega_c(3185)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3185) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3185) -> Xi_c+ K-'},
     ],
     9304334: [  # Omega_c(3327)
-        {'br': 1.0, 'daughters': [4132, 321], 'comment': '# Omega_c(3327) -> Xi_c0 K+'},
+        {'br': 1.0, 'daughters': [4232, -321], 'comment': '# Omega_c(3327) -> Xi_c+ K-'},
     ],
 }
 
@@ -3001,6 +3185,27 @@ def generate_pdg2025():
     if not validate_decays(decays_2025, all_particles, particles_by_id, pid_name_map):
         print("\n  ERROR: Decay validation failed. Aborting.")
         sys.exit(1)
+
+    # =====================================================================
+    # Validate charm decay updates (CHARM_DECAY_UPDATES)
+    # These are written to decays.dat but were not covered by the main
+    # validation above, which only has the base hadron list.
+    # Load list-withcharm.dat to get quantum numbers for charm daughters.
+    # =====================================================================
+
+    charm_list_path = os.path.join(OUTPUT_DIR, "list-withcharm.dat")
+    if os.path.exists(charm_list_path) and CHARM_DECAY_UPDATES:
+        print("\n  Validating CHARM_DECAY_UPDATES...")
+        charm_particles = parse_pdg2020_list(charm_list_path)
+        # Build combined particles_by_id: base hadrons + charm particles
+        charm_particles_by_id = dict(particles_by_id)  # copy base
+        for p in charm_particles:
+            charm_particles_by_id[p['pdgid']] = p
+        if not validate_decays(CHARM_DECAY_UPDATES, charm_particles, charm_particles_by_id, pid_name_map):
+            print("\n  ERROR: Charm decay validation failed. Aborting.")
+            sys.exit(1)
+    elif CHARM_DECAY_UPDATES:
+        print(f"\n  WARNING: {charm_list_path} not found, skipping charm decay validation")
 
     # =====================================================================
     # Normalize all branching ratios to sum to exactly 1.0

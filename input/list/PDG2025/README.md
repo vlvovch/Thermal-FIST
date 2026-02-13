@@ -6,11 +6,11 @@ This directory contains the PDG2025 hadron resonance list and decay channels for
 
 | File | Description |
 |------|-------------|
-| `list.dat` | PDG2025 particle list — 246 light+strange hadrons (440 with antiparticles) |
-| `list-withcharm.dat` | Extended list with charm — 328 particles (582 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
-| `list-withnuclei.dat` | Extended list with stable light nuclei — 254 particles |
-| `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 284 particles |
-| `list-isospin-symmetric.dat` | Isospin-symmetric list — 246 hadrons with enforced isospin mass symmetry, useful for tests |
+| `list.dat` | PDG2025 particle list — 248 light+strange hadrons (444 with antiparticles) |
+| `list-withcharm.dat` | Extended list with charm — 330 particles (586 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
+| `list-withnuclei.dat` | Extended list with stable light nuclei — 256 particles |
+| `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 286 particles |
+| `list-isospin-symmetric.dat` | Isospin-symmetric list — 248 hadrons with enforced isospin mass symmetry, useful for tests |
 | `decays.dat` | Decay channels for all unstable hadrons |
 | `generate_pdg2025.py` | Generation script: takes PDG2020 as base and applies PDG2025 updates |
 | `pdglisting/mass_width_2025.txt` | PDG2025 mass-width summary data used by `generate_pdg2025.py` |
@@ -26,10 +26,11 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
    - pi(1)(1400)0 (9000113), pi(1)(1400)+ (9000213) -- removed from PDG summary tables
    - Sigma(2250)-, Sigma(2250)0, Sigma(2250)+ (33114, 33214, 33224) -- demoted from summary tables
 
-2. **Added 9 new particles** (6 new states, some with multiple charge states):
+2. **Added 11 new particles** (7 new states, some with multiple charge states):
    - f(2)(1565) -- new I=0 tensor meson
    - f(0)(2020) -- new I=0 scalar meson
    - f(2)(2150) -- new I=0 tensor meson
+   - K(1460) -- excited pseudoscalar kaon (K0, K+)
    - K(1)(1650) -- excited axial kaon (K0, K+)
    - K(0)*(1950) -- excited scalar kaon (K0, K+)
    - K(2)*(1980) -- excited tensor kaon (K0, K+)
@@ -44,14 +45,14 @@ This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.da
 | Sector | Particles | Notes |
 |--------|-----------|-------|
 | Light unflavored mesons | 70 | pi through f(2)(2340), including hidden strangeness (eta, phi, ...) |
-| Strange mesons | 30 | K through K(4)*(2045), neutral and charged states |
-| N baryons | 40 | p, n, N(1440) through N(2600), with 0/+ charge states |
+| Strange mesons | 32 | K through K(4)*(2045), neutral and charged states |
+| N baryons | 42 | p, n, N(1440) through N(2600), with 0/+ charge states |
 | Delta baryons | 48 | Delta(1232) through Delta(2420), with -/0/+/++ charge states |
 | Lambda baryons | 14 | Lambda through Lambda(2350) |
 | Sigma baryons | 27 | Sigma+/0/- through Sigma(2030), with 3 charge states |
 | Xi baryons | 12 | Xi0/- through Xi(2030), with 2 charge states |
 | Omega baryons | 3 | Omega-, Omega(2012), Omega(2250) |
-| **Total** | **246** | Antiparticles generated automatically (440 total) |
+| **Total** | **248** | Antiparticles generated automatically (444 total) |
 
 ---
 
@@ -65,10 +66,10 @@ The doubly charmed baryon Xi_cc++ (C=2, pdgid 4422) is intentionally excluded to
 
 | | Count |
 |---|-------|
-| Light + strange hadrons | 246 |
+| Light + strange hadrons | 248 |
 | Charmed hadrons | 82 |
-| **Total particles** | **328** |
-| **Total with antiparticles** | **582** |
+| **Total particles** | **330** |
+| **Total with antiparticles** | **586** |
 
 ### Charm Sector Breakdown
 
@@ -124,7 +125,7 @@ The degeneracies in our lists follow the measured J^P (correct physics). The MCI
 
 ## PDG Monte Carlo ID Numbering Scheme
 
-### Standard PDG IDs (216 particles in list.dat)
+### Standard PDG IDs (218 particles in list.dat)
 
 Most particles use the official PDG Monte Carlo numbering scheme, which encodes quark content and quantum numbers in digit positions:
 
@@ -223,20 +224,20 @@ The `modular/` directory provides the same particle data split into sector-speci
 
 | File | Particles | Description |
 |------|-----------|-------------|
-| `list-hadrons.dat` | 246 | Light + strange hadrons (= `list.dat`) |
+| `list-hadrons.dat` | 248 | Light + strange hadrons (= `list.dat`) |
 | `list-charm.dat` | 82 | Charmed hadrons only |
 | `list-nuclei.dat` | 8 | Stable light nuclei (d, t, 3He, 4He, ...) |
 | `list-excitednuclei.dat` | 30 | Excited light nuclei |
 | `list-exotica.dat` | 6 | Exotic states (hypernuclei) |
 | `list-charged-leptons.dat` | 3 | e, mu, tau |
 | `list-multicharm.dat` | 1 | Multiply charmed hadrons: Xi_cc++ (C=2) |
-| `list-isospin-symmetric.dat` | 246 | Isospin-symmetric hadron list (see below) |
+| `list-isospin-symmetric.dat` | 248 | Isospin-symmetric hadron list (see below) |
 
 ### Decay files
 
 | File | Entries | Description |
 |------|---------|-------------|
-| `decays-hadrons.dat` | 245 | Decays for light + strange hadrons |
+| `decays-hadrons.dat` | 247 | Decays for light + strange hadrons |
 | `decays-charm.dat` | 82 | Decays for charmed hadrons |
 | `decays-excitednuclei.dat` | 30 | Decays for excited nuclei |
 
@@ -303,14 +304,55 @@ The following corrections were applied manually after generation, based on cross
 | D_s1(2536)+ | D+ pi- K+ | 0.03 | 0.010 | 1.0% |
 | D_s1(2536)+ | D+ K0 | 0.08 | — | removed (PDG UL <12%) |
 | D_s1(2536)+ | D0 K+ | 0.04 | — | removed (PDG UL <4%) |
-| D_s2\*(2573)+ | D0 K+ | 1.0 | 0.374 | 37.4% |
-| D_s2\*(2573)+ | D+ K0 | — | 0.374 | isospin mirror (new) |
-| D_s2\*(2573)+ | D\*0 K+ | — | 0.126 | catch-all D\*K (new) |
-| D_s2\*(2573)+ | D\*+ K0 | — | 0.126 | catch-all D\*K (new) |
+| D_s2\*(2573)+ | D0 K+ | 1.0 | 0.42 | 37% (+ catch-all share) |
+| D_s2\*(2573)+ | D+ K0 | — | 0.42 | seen, isospin mirror (new) |
+| D_s2\*(2573)+ | D\*+ K0 | — | 0.16 | seen (new); D\*0 K+ removed (PDG not seen) |
 | Lambda_c(2625)+ | Lambda_c pi+pi- | 0.90 | 0.50 | 50.2% |
 | Lambda_c(2625)+ | Lambda_c pi0 | — | 0.40 | catch-all (PDG UL <50%, new) |
 | Lambda_c(2625)+ | Sigma_c++ pi- | 0.05 | 0.05 | unchanged |
 | Lambda_c(2625)+ | Sigma_c0 pi+ | 0.05 | 0.05 | unchanged |
+
+### Light meson decay fixes (cross-checked against PDG2025 Summary Tables)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| eta(2)(1645) | Replaced a(0)(1450)pi channels with a(0)(980)pi | PDG2025 does not support a(0)(1450)pi |
+| eta(2)(1870) | Removed KKbar, K\*Kbar; added a(0)(980)pi | KKbar, K\*Kbar not in PDG2025 summary table; a(0)(980)pi seen |
+| pi(1800) | Removed K\*(892)K; added f(0)(980)pi, f(0)(1370)pi | K\*(892)K marked "not seen" in PDG2025; f(0)(980)pi, f(0)(1370)pi seen |
+
+### Charmonium decay fixes (cross-checked against PDG2025 Summary Tables)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| psi(2)(3823) | Replaced D0 Dbar0 + D+ D- with gamma chi\_c1 (78%) + gamma chi\_c2 (22%) | Below DD threshold; only radiative modes in PDG2025 |
+| psi(4160) | Removed Ds+ Ds-; added Ds\*+ Ds\*- | Ds+ Ds- marked "not seen"; Ds\*+ Ds\*- seen |
+| psi(4230) | Removed D Dbar pi; added psi(2S) pi+pi-, chi\_c0 omega, D0 D\*- pi+, J/psi K+K- | D Dbar pi marked "not seen"; added modes all seen |
+| psi(4415) | Removed Ds+ Ds-; added D0 D\*(2010)- pi+ | Ds+ Ds- marked "not seen"; D0 D\*- pi+ seen |
+| chi\_c1(4140) | Removed Ds+ Ds-; now 100% J/psi phi | PDG2025 lists only J/psi phi |
+| chi\_c1(4274) | Removed Ds+ Ds-; now 100% J/psi phi | PDG2025 lists only J/psi phi |
+
+### Open charm decay fixes (quantum number violations and PDG cross-checks)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| Xi\_c(3080)0 | Removed D0 Xi- (Q,S violation) and Lambda\_c+ K- (not seen); replaced with Lambda\_c+ Kbar pi channels | Conserves B,Q,S,C; Lambda\_c+ Kbar pi seen in PDG2025 |
+| Xi\_c(3080)+ | Removed Lambda\_c+ Kbar0 pi+ (Q violation) and D+ Xi0 (S violation); replaced with Sigma\_c(2455)++ K-, Sigma\_c(2520)++ K-, Lambda\_c+ K- pi+, Lambda D+ | All channels seen in PDG2025; conserves B,Q,S,C |
+| All 7 Omega\_c excited states | Changed Xi\_c0 K+ to Xi\_c+ K- | Xi\_c0 K+ violated Q and S conservation; Xi\_c+ K- correct |
+| Ds2\*(2573)+ | Removed D\*(2007)0 K+ (not seen); kept D0 K+, D+ K0, D\*(2010)+ K0 | D\*(2007)0 K+ explicitly "not seen" in PDG2025 |
+| psi(4415) | Fixed D0 D\*- pi+ daughter PID: -423 (anti-D\*0) → -413 (D\*(2010)-) | Charge conservation violation caught by new charm validator |
+
+### Threshold-cleanup pass for baryon decays
+
+Six baryon decay channels had daughter mass sums exceeding the parent mass threshold. These were replaced with explicit multi-body final states:
+
+| Particle | Old channel | New channel | Reason |
+|----------|------------|-------------|--------|
+| Lambda(1810) | p + K\*(892)- | p + K- + pi0 | K\*(892) threshold exceeded |
+| Lambda(1810) | n + anti-K\*(892)0 | n + K- + pi+ | K\*(892) threshold exceeded |
+| Lambda(1820) | p + K\*(892)- | p + K- + pi0 | K\*(892) threshold exceeded |
+| Lambda(1820) | n + anti-K\*(892)0 | n + K- + pi+ | K\*(892) threshold exceeded |
+| Xi(1690)- | Sigma- + anti-K0 (near threshold) | Sigma0 + K- | Reassigned to threshold-safe channel |
+| Omega(2012) | Xi(1530)0 + K- | Xi- + pi+ + K- | Explicit 3-body final state |
 
 ### Charm decay catch-all channels
 
@@ -356,11 +398,11 @@ After these additions, all 82 charm particles (73 unstable + 9 stable) have BR s
 1. Verified quantum number consistency (B, Q, S, C, |C|, statistics, degeneracy) for all 82 charm entries
 2. Verified conservation of B, Q, S, C in all threshold decay channels
 3. Confirmed threshold mass values match lightest allowed decay products within 1 MeV
-4. Loaded all 582 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
+4. Loaded all 586 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
 5. Confirmed C ∈ {-1, 0, 1} for all entries (charm-canonical compatibility)
 
 ### decays.dat (charm sector)
 1. Verified all 73 unstable charm particles have BR sum = 1.000 (within 0.001 tolerance)
 2. Verified all daughter particles exist in the particle list
 3. Verified all decay thresholds ≤ parent mass
-4. Charge (Q) conservation verified in all catch-all channels
+4. Conservation of B, Q, S, C verified in all charm decay channels via automated validator in `generate_pdg2025.py` (loads `list-withcharm.dat` for charm daughter quantum numbers)

@@ -139,6 +139,7 @@ struct ChargesFluctuations {
   double chi1S, chi2S, chi3S, chi4S;
   double chi1C, chi2C, chi3C, chi4C;
   double chi11BQ, chi11BS, chi11QS;
+  double chi11BC, chi11QC, chi11SC;
   double chi31BQ, chi31BS, chi31QS;
 };
 

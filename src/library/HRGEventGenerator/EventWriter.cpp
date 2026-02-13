@@ -10,7 +10,8 @@ namespace thermalfist {
 
   EventWriter::EventWriter(const std::string& filename)
   {
-    OpenFile(filename);
+    if (!filename.empty())
+      OpenFile(filename);
   }
 
   EventWriter::~EventWriter()

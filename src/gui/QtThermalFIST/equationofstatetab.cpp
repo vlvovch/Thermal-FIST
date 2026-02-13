@@ -224,6 +224,13 @@ void EoSWorker::run() {
       flucts.chi11QS = model->Susc(thermalfist::ConservedCharge::ElectricCharge,
         thermalfist::ConservedCharge::StrangenessCharge);
 
+      flucts.chi11BC = model->Susc(thermalfist::ConservedCharge::BaryonCharge,
+        thermalfist::ConservedCharge::CharmCharge);
+      flucts.chi11QC = model->Susc(thermalfist::ConservedCharge::ElectricCharge,
+        thermalfist::ConservedCharge::CharmCharge);
+      flucts.chi11SC = model->Susc(thermalfist::ConservedCharge::StrangenessCharge,
+        thermalfist::ConservedCharge::CharmCharge);
+
       flucts.flag = true;
 
       paramsFl->operator [](i) = flucts;
@@ -460,6 +467,41 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     index++;
 
     tname = "χ₄S";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₂C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₃C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₄C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁BC";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁QC";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁SC";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -1749,6 +1791,55 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
     if (tind == index) {
       for (int j = 0; j < tsize; ++j) {
         ret[j] = paramsFl[j].chi4S;
+      }
+    }
+
+    tind = parammap["χ₁C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi1C;
+      }
+    }
+
+    tind = parammap["χ₂C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi2C;
+      }
+    }
+
+    tind = parammap["χ₃C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi3C;
+      }
+    }
+
+    tind = parammap["χ₄C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi4C;
+      }
+    }
+
+    tind = parammap["χ₁₁BC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11BC;
+      }
+    }
+
+    tind = parammap["χ₁₁QC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11QC;
+      }
+    }
+
+    tind = parammap["χ₁₁SC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11SC;
       }
     }
   //}
