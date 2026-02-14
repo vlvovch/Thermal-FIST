@@ -906,7 +906,12 @@ namespace thermalfist {
      * \param order Up to which order the susceptibilities are computed
      * \return std::vector<double> A vector with computed values of diagonal susceptibilities
      */
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+    /**
+     * \param dimensionfull If true, return d^n P / dmu^n (dimensionfull).
+     *                      If false (default), return d^n (P/T^4) / d(mu/T)^n (dimensionless).
+     *                      The dimensionfull option avoids divergences at T=0.
+     */
+    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4, bool dimensionfull = false);
 
     /**
      * \brief Calculates (mixed) susceptibilities of arbitrary "conserved" charges.
@@ -1088,6 +1093,7 @@ namespace thermalfist {
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
     virtual double CalculateEnergyDensityDerivativeT() = 0;
+    virtual double CalculateEntropyDensityDerivativeTZeroTemperature() = 0;
     virtual double CalculateHeatCapacityMu();
     virtual double CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     virtual double CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);

@@ -130,7 +130,9 @@ namespace thermalfist {
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 
-    virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
+    virtual double CalculateEnergyDensityDerivativeT() { throw std::runtime_error("CalculateEnergyDensityDerivativeT not implemented"); return 0.; } // Not implemented
+
+    virtual double CalculateEntropyDensityDerivativeTZeroTemperature() { throw std::runtime_error("CalculateEntropyDensityDerivativeTZeroTemperature not implemented"); return 0.; } // Not implemented
 
     // Override functions end
 

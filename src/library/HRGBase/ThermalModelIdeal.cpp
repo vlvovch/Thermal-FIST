@@ -6,6 +6,7 @@
  * GNU General Public License (GPLv3 or later)
  */
 #include "HRGBase/ThermalModelIdeal.h"
+#include "HRGBase/xMath.h"
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -125,33 +126,21 @@ namespace thermalfist {
     m_FluctuationsCalculated = true;
   }
 
-  std::vector<double> ThermalModelIdeal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+  std::vector<double> ThermalModelIdeal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order, bool dimensionfull)
   {
-    return CalculateGeneralizedSusceptibilities(std::vector<std::vector<double>>(order, chgs));
+    if (!dimensionfull)
+      return CalculateGeneralizedSusceptibilities(std::vector<std::vector<double>>(order, chgs));
 
-    // Deprecated
+    // Dimensionfull: d^n P / dmu^n, using chiDimensionfull which works at T=0
     vector<double> ret(order + 1, 0.);
+    vector<double> current_charges(m_densities.size(), 1.);
 
-    // chi1
-    for (size_t i = 0; i < m_densities.size(); ++i)
-      ret[0] += chgs[i] * m_densities[i];
-
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
-
-    if (order < 2) return ret;
-
-    for (size_t i = 0; i < m_densities.size(); ++i)
-      ret[1] += chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_Chem[i]);
-
-    if (order < 3) return ret;
-
-    for (size_t i = 0; i < m_densities.size(); ++i)
-      ret[2] += chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_Chem[i]);
-
-    if (order < 4) return ret;
-
-    for (size_t i = 0; i < m_densities.size(); ++i)
-      ret[3] += chgs[i] * chgs[i] * chgs[i] * chgs[i] * m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_Chem[i]);
+    for(int iord = 0; iord < order; ++iord) {
+      for(size_t i = 0; i < m_densities.size(); ++i) {
+        current_charges[i] *= chgs[i];
+        ret[iord] += current_charges[i] * m_TPS->Particles()[i].chiDimensionfull(iord + 1, m_Parameters, m_UseWidth, m_Chem[i]);
+      }
+    }
 
     return ret;
   }
@@ -227,6 +216,28 @@ namespace thermalfist {
       ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dedT, m_UseWidth, m_Chem[i]);
 
     return ret;
+  }
+
+  double ThermalModelIdeal::CalculateEntropyDensityDerivativeTZeroTemperature() {
+    assert(std::abs(m_Parameters.T) < 1.e-12);
+    assert(m_QuantumStats);
+
+    if (!m_Calculated)
+      CalculatePrimordialDensities();
+
+    double ret = 0.;
+    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle& part = m_TPS->Particles()[i];
+      if (part.Statistics() != 1)
+        continue;
+
+      double deg = m_TPS->Particles()[i].Degeneracy();
+      double mu = m_Chem[i];
+      double mass = m_TPS->Particles()[i].Mass();
+      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
+      ret += deg * mu / 6. * kF;
+    }
+    return ret * xMath::GeVtoifm3();
   }
 
   double ThermalModelIdeal::ParticleScaledVariance(int part) {

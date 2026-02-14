@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cassert>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -304,6 +305,29 @@ namespace thermalfist {
     return ret;
   }
 
+  double ThermalModelEVDiagonal::CalculateEntropyDensityDerivativeTZeroTemperature() {
+    assert(std::abs(m_Parameters.T) < 1.e-12);
+    assert(m_QuantumStats);
+
+    if (!m_Calculated)
+      CalculatePrimordialDensities();
+
+    double sidsum = 0.;
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle& part = m_TPS->Particles()[i];
+      if (part.Statistics() != 1)
+        continue;
+
+      const double deg = part.Degeneracy();
+      const double mustar = m_Chem[i] - m_v[i] * m_Pressure;
+      const double mass = part.Mass();
+      const double kF = mustar > mass ? std::sqrt(mustar * mustar - mass * mass) : 0.;
+      sidsum += deg * mustar * kF / 6.;
+    }
+
+    return m_Suppression * sidsum * xMath::GeVtoifm3();
+  }
+
   void ThermalModelEVDiagonal::CalculateTemperatureDerivatives() {
     int N = m_TPS->ComponentsNumber();
     m_dndT = vector<double>(N, 0.);
@@ -407,7 +431,7 @@ namespace thermalfist {
   }
 
 
-  std::vector<double> ThermalModelEVDiagonal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+  std::vector<double> ThermalModelEVDiagonal::CalculateChargeFluctuations(const std::vector<double>& chgs, int order, bool dimensionfull)
   {
     vector<double> ret(order + 1, 0.);
 
@@ -415,7 +439,10 @@ namespace thermalfist {
     for (size_t i = 0; i < m_densities.size(); ++i)
       ret[0] += chgs[i] * m_densities[i];
 
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    else
+      ret[0] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 2) return ret;
 
@@ -485,7 +512,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[1] += chgs[i] * dni[i];
 
-    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[1] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 3) return ret;
     // chi3
@@ -527,7 +557,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[2] += chgs[i] * d2ni[i];
 
-    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[2] /= pow(xMath::GeVtoifm(), 3);
 
 
     if (order < 4) return ret;
