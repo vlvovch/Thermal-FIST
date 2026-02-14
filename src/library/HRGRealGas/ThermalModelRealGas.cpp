@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cassert>
 #include <iostream>
 #include <ctime>
 #include <iostream>
@@ -325,14 +326,17 @@ namespace thermalfist {
     ValidateCalculation();
   }
 
-  vector<double> ThermalModelRealGas::CalculateChargeFluctuations(const vector<double>& chgs, int order) {
+  vector<double> ThermalModelRealGas::CalculateChargeFluctuations(const vector<double>& chgs, int order, bool dimensionfull) {
     vector<double> ret(order + 1, 0.);
 
     // chi1
     for (size_t i = 0; i < m_densities.size(); ++i)
       ret[0] += chgs[i] * m_densities[i];
 
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    else
+      ret[0] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 2) return ret;
     // Preparing matrix for system of linear equations
@@ -426,7 +430,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[1] += chgs[i] * dni[i];
 
-    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[1] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 3) return ret;
 
@@ -604,7 +611,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[2] += chgs[i] * d2ni[i];
 
-    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[2] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 4) return ret;
 
@@ -1692,6 +1702,35 @@ namespace thermalfist {
     assert(m_mfmod->dvdT() == 0.0);
 
     return ret;
+  }
+
+  double ThermalModelRealGas::CalculateEntropyDensityDerivativeTZeroTemperature() {
+    assert(std::abs(m_Parameters.T) < 1.e-12);
+    assert(m_QuantumStats);
+    assert(!m_TemperatureDependentAB);
+
+    if (!m_Calculated)
+      CalculatePrimordialDensities();
+
+    // const double eps = 1.e-14;
+    // assert(std::abs(m_mfmod->dvdT()) < eps);
+    // for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+    //   assert(std::abs(m_exvolmod->dfdT(i)) < eps);
+
+    double ret = 0.;
+    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle& part = m_TPS->Particles()[i];
+      if (part.Statistics() != 1)
+        continue;
+
+      double fi = m_exvolmod->f(i);
+      double deg = part.Degeneracy();
+      double mu = m_MuStar[i];
+      double mass = part.Mass();
+      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
+      ret += fi * deg * mu / 6. * kF;
+    }
+    return ret * xMath::GeVtoifm3();
   }
 
   double ThermalModelRealGas::CalculateEnergyDensity() {

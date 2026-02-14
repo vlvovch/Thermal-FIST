@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cassert>
 #include <iostream>
 #include <ctime>
 #include <iomanip>
@@ -603,14 +604,17 @@ namespace thermalfist {
     m_Calculated = true;
   }
 
-  vector<double> ThermalModelVDW::CalculateChargeFluctuations(const vector<double> &chgs, int order) {
+  vector<double> ThermalModelVDW::CalculateChargeFluctuations(const vector<double> &chgs, int order, bool dimensionfull) {
     vector<double> ret(order + 1, 0.);
   
     // chi1
     for(size_t i=0;i<m_densities.size();++i)
       ret[0] += chgs[i] * m_densities[i];
 
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    else
+      ret[0] /= pow(xMath::GeVtoifm(), 3);
 
     if (order<2) return ret;
     // Preparing matrix for system of linear equations
@@ -673,7 +677,10 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[1] += chgs[i] * dni[i];
 
-    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[1] /= pow(xMath::GeVtoifm(), 3);
 
     if (order<3) return ret;
 
@@ -717,7 +724,10 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[2] += chgs[i] * d2ni[i];
 
-    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[2] /= pow(xMath::GeVtoifm(), 3);
 
 
     if (order<4) return ret;
@@ -785,7 +795,7 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[3] += chgs[i] * d3ni[i];
 
-    ret[3] /= pow(xMath::GeVtoifm(), 3);
+    ret[3] /= pow(xMath::GeVtoifm(), 3);  // same for dimensionfull and dimensionless
 
     return ret;
   }
@@ -956,6 +966,41 @@ namespace thermalfist {
     }
 
     return ret;
+  }
+
+  double ThermalModelVDW::CalculateEntropyDensityDerivativeTZeroTemperature() {
+    assert(std::abs(m_Parameters.T) < 1.e-12);
+    assert(m_QuantumStats);
+    assert(!m_TemperatureDependentAB);
+
+    // const double eps = 1.e-14;
+    // for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+    //   for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
+    //     assert(std::abs(m_VirialdT[i][j]) < eps);
+    //     assert(std::abs(m_AttrdT[i][j]) < eps);
+    //   }
+    // }
+
+    if (!m_Calculated)
+      CalculatePrimordialDensities();
+
+    double ret = 0.;
+    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      if (part.Statistics() != 1)
+        continue;
+
+      double fi  = 1.;
+      for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        fi -= m_Virial[k][i] * m_densities[k];
+      }
+      double deg = part.Degeneracy();
+      double mu = m_MuStar[i];
+      double mass = part.Mass();
+      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
+      ret += fi * deg * mu / 6. * kF;
+    }
+    return ret * xMath::GeVtoifm3();
   }
 
   void ThermalModelVDW::CalculateTemperatureDerivatives() {

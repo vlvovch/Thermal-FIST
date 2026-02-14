@@ -173,7 +173,7 @@ namespace thermalfist {
 
     virtual void CalculatePrimordialDensities();
 
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4, bool dimensionfull = false);
 
     virtual std::vector< std::vector<double> >  CalculateFluctuations(int order);
 
@@ -188,6 +188,8 @@ namespace thermalfist {
     virtual double CalculateEntropyDensity();
 
     virtual double CalculateEnergyDensityDerivativeT();
+
+    virtual double CalculateEntropyDensityDerivativeTZeroTemperature();
 
     virtual void CalculateTemperatureDerivatives();
 
@@ -369,4 +371,3 @@ namespace thermalfist {
 } // namespace thermalfist
 
 #endif
-

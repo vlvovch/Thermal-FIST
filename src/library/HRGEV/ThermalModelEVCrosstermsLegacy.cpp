@@ -596,7 +596,7 @@ namespace thermalfist {
     }
   }
 
-  std::vector<double> ThermalModelEVCrosstermsLegacy::CalculateChargeFluctuations(const std::vector<double>& chgs, int order)
+  std::vector<double> ThermalModelEVCrosstermsLegacy::CalculateChargeFluctuations(const std::vector<double>& chgs, int order, bool dimensionfull)
   {
     vector<double> ret(order + 1, 0.);
 
@@ -604,7 +604,10 @@ namespace thermalfist {
     for (size_t i = 0; i < m_densities.size(); ++i)
       ret[0] += chgs[i] * m_densities[i];
 
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    else
+      ret[0] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 2) return ret;
     // Preparing matrix for system of linear equations
@@ -669,7 +672,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[1] += chgs[i] * dni[i];
 
-    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[1] /= pow(xMath::GeVtoifm(), 3);
 
     if (order < 3) return ret;
     // chi3
@@ -711,7 +717,10 @@ namespace thermalfist {
     for (int i = 0; i < NN; ++i)
       ret[2] += chgs[i] * d2ni[i];
 
-    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[2] /= pow(xMath::GeVtoifm(), 3);
 
 
     if (order < 4) return ret;

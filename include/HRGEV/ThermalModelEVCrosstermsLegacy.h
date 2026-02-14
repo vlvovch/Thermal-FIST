@@ -74,7 +74,7 @@ namespace thermalfist {
 
     void CalculateFluctuations();
 
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4, bool dimensionfull = false);
 
     virtual double CalculatePressure();
 
@@ -87,6 +87,8 @@ namespace thermalfist {
     virtual double CalculateMesonMatterEntropyDensity() { return 0.; }
 
     virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
+
+    virtual double CalculateEntropyDensityDerivativeTZeroTemperature() { return 0.; } // Placeholder
 
     // TODO properly with excluded volume
     virtual double ParticleScaledVariance(int /*part*/) { return 1.; }
@@ -252,4 +254,3 @@ namespace thermalfist {
 } // namespace thermalfist
 
 #endif
-

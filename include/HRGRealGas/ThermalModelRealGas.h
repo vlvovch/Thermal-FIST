@@ -139,7 +139,7 @@ namespace thermalfist {
 		 * \param order Order of the fluctuations (default is 4).
 		 * \return Vector of charge fluctuations, one element per particle species.
 		 */
-		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double>& chgs, int order = 4);
+		virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double>& chgs, int order = 4, bool dimensionfull = false);
 
 		/**
 		 * \brief Calculate the charge fluctuations of the particle species (old method).
@@ -195,6 +195,8 @@ namespace thermalfist {
      * \return The derivative of the energy density with respect to temperature.
      */
     virtual double CalculateEnergyDensityDerivativeT();
+
+    virtual double CalculateEntropyDensityDerivativeTZeroTemperature();
 
     /**
      * \brief Calculate the temperature derivatives of the system.
