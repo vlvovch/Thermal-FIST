@@ -179,6 +179,7 @@ namespace thermalfist {
   void ThermalModelBase::SetParameters(const ThermalModelParameters& params) {
     m_Parameters = params;
     m_Volume = m_Parameters.V;
+    FillChemicalPotentials();
     ResetCalculatedFlags();
   }
 
