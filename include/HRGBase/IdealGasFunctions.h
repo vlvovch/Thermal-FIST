@@ -30,7 +30,7 @@ namespace thermalfist {
      */
     enum Quantity { ParticleDensity, EnergyDensity, EntropyDensity, Pressure, chi2, chi3, chi4, ScalarDensity, 
       chi2difull, chi3difull, chi4difull,
-      dndT, d2ndT2, dedT, dedmu, dchi2dT
+      dndT, d2ndT2, dedT, dedmu, dchi2dT, dsdT
     };
     /**
      * \brief Identifies whether quantum statistics
@@ -605,6 +605,18 @@ namespace thermalfist {
      * \param deg Internal degeneracy factor.
      * \return Scalar density [fm-3].
      */
+    /**
+     * \brief Computes ds/dT at zero temperature for a Fermi-Dirac ideal gas.
+     *        ds/dT|_{T=0} = g * mu * pF / 6 * GeVtoifm3  (from Sommerfeld expansion).
+     *
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dsdT [fm-3 * GeV^-1].
+     */
+    double FermiZeroTdsdT(double mu, double m, double deg,
+                           const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
+
     double FermiZeroTScalarDensity(double mu, double m, double deg,
                                    const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());  // TODO: Check for correctness
 
@@ -732,6 +744,18 @@ namespace thermalfist {
     double Boltzmanndchi2dT(double T, double mu, double m, double deg,
                             const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
 
+    /**
+     * \brief Computes the derivative of entropy density wrt T at constant mu for a Maxwell-Boltzmann gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dsdT [fm-3 * GeV^-1].
+     */
+    double BoltzmanndsdT(double T, double mu, double m, double deg,
+                          const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
+
     // Cluster expansion
     /**
      * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
@@ -792,6 +816,18 @@ namespace thermalfist {
      */
     double QuantumClusterExpansiondchi2dT(int statistics, double T, double mu, double m, double deg, int order = 1,
                                          const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
+
+    /**
+     * \brief Computes the derivative of entropy density wrt T at constant mu using the cluster expansion.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dsdT [fm-3 * GeV^-1].
+     */
+    double QuantumClusterExpansiondsdT(int statistics, double T, double mu, double m, double deg, int order = 1,
+                                       const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
 
 
     /**
@@ -855,6 +891,18 @@ namespace thermalfist {
                             const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
 
     /**
+     * \brief Computes the derivative of entropy density wrt T at constant mu using numerical integration.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dsdT [fm-3 * GeV^-1].
+     */
+    double QuantumNumericalIntegrationdsdT(int statistics, double T, double mu, double m, double deg,
+                            const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
+
+    /**
      * \brief Computes the derivative of particle number density wrt T at constant mu for a Maxwell-Boltzmann gas.
      *
      * \param T Temperature [GeV].
@@ -913,6 +961,19 @@ namespace thermalfist {
      */
     double FermiNumericalIntegrationLargeMudchi2dT(double T, double mu, double m, double deg,
                                               const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
+
+    /**
+     * \brief Computes the derivative of entropy density wrt T at constant mu
+     *        using Sommerfeld-Legendre + Laguerre quadrature for degenerate Fermi gas.
+     *
+     * \param T Temperature [GeV].
+     * \param mu Chemical potential [GeV].
+     * \param m  Particle's mass [GeV].
+     * \param deg Internal degeneracy factor.
+     * \return dsdT [fm-3 * GeV^-1].
+     */
+    double FermiNumericalIntegrationLargeMudsdT(double T, double mu, double m, double deg,
+                                                const IdealGasFunctionsExtraConfig& extraConfig = IdealGasFunctionsExtraConfig());
   }
 
   /// \brief Implements the possibility of a generalized calculation of the densities.

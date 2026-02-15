@@ -1394,9 +1394,13 @@ namespace thermalfist {
       nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
       dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]);
       chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
-      // chi2til = chi2 * T^2
-      // dchi2til/dT = T^2 * dchi2/dT +  2 * T * chi2 = T^2 * dchi2/dT + 2 * chi2til / T
-      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      // dchi2idsdT = d(dn^id/dmu*)/dT = T^2 * dchi2/dT + 2 * chi2ids / T
+      // The two terms individually diverge as 1/T but their sum is O(T).
+      // At T=0 the result is exactly zero (Sommerfeld: dn/dmu = const + O(T^2)).
+      if (T > 0.)
+        dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * chi2ids[i] / T);
+      else
+        dchi2idsdT[i] = 0.;
       chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
     }
 
@@ -1635,9 +1639,12 @@ namespace thermalfist {
         solVector = decomp.solve(xVector);
 
         for (int i = 0; i < NN; ++i) {
-          // chi2 = chi2til / T^2
-          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T / T / T
-          m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T^3
+          // Both terms diverge as T -> 0; guard against division by zero.
+          if (T > 0.)
+            m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          else
+            m_PrimChi2sdT[i][j] = 0.;
         }
       }
 
@@ -1704,33 +1711,34 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelRealGas::CalculateEntropyDensityDerivativeTZeroTemperature() {
-    assert(std::abs(m_Parameters.T) < 1.e-12);
-    assert(m_QuantumStats);
-    assert(!m_TemperatureDependentAB);
+  double ThermalModelRealGas::CalculateEntropyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
 
-    if (!m_Calculated)
-      CalculatePrimordialDensities();
-
-    // const double eps = 1.e-14;
-    // assert(std::abs(m_mfmod->dvdT()) < eps);
-    // for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
-    //   assert(std::abs(m_exvolmod->dfdT(i)) < eps);
-
+    // Compute ds/dT
     double ret = 0.;
-    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
-      const ThermalParticle& part = m_TPS->Particles()[i];
-      if (part.Statistics() != 1)
-        continue;
+
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      // Term 1
+      for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        double dfik = m_exvolmod->df(i, k);
+        ret += dfik * m_dndT[k] * part.Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_MuStar[i]);
+      }
 
       double fi = m_exvolmod->f(i);
-      double deg = part.Degeneracy();
-      double mu = m_MuStar[i];
-      double mass = part.Mass();
-      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
-      ret += fi * deg * mu / 6. * kF;
+      double dvi = m_mfmod->dv(i);
+      // Term 2
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dsdT, m_UseWidth, m_MuStar[i]);
+
+      // Term 3
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]) * m_dmusdT[i];
     }
-    return ret * xMath::GeVtoifm3();
+
+    // No T dependence implemented yet
+    assert(m_mfmod->dvdT() == 0.0);
+
+    return ret;
   }
 
   double ThermalModelRealGas::CalculateEnergyDensity() {
@@ -1745,7 +1753,7 @@ namespace thermalfist {
         double tPid = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
         ret += -m_Parameters.T * tPid * m_exvolmod->dfdT(i);
       }
-      ret += m_Parameters.T * m_mfmod->dvdT();
+      ret += -m_Parameters.T * m_mfmod->dvdT();
     }
 
     return ret;
@@ -1760,9 +1768,9 @@ namespace thermalfist {
     if (1 /*&& m_TemperatureDependentAB*/) {
       for (size_t i = 0; i < m_densities.size(); ++i) {
         double tPid = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_MuStar[i]);
-        ret += -m_Parameters.T * tPid * m_exvolmod->dfdT(i);
+        ret += -tPid * m_exvolmod->dfdT(i);
       }
-      ret += m_Parameters.T * m_mfmod->dvdT();
+      ret += -m_mfmod->dvdT();
     }
 
     return ret;

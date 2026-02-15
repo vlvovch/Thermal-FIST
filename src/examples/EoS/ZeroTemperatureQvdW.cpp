@@ -202,10 +202,7 @@ int main(int argc, char *argv[])
     const double cV_BQS = 0.0;
 
     const double cMu = model->HeatCapacityMu();
-    double dsdT_mu_an = std::numeric_limits<double>::quiet_NaN();
-    try {
-      dsdT_mu_an = model->CalculateEntropyDensityDerivativeTZeroTemperature();
-    } catch (...) { }
+    double dsdT_mu_an = model->CalculateEntropyDensityDerivativeT();
 
     // Numerical (ds/dT)_mu cross-check from one-sided derivatives at several dT.
     // For a degenerate Fermi system, corrections are ~T^2 (Sommerfeld), so fit vs dT^2.

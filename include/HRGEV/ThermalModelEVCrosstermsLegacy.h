@@ -88,7 +88,7 @@ namespace thermalfist {
 
     virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
 
-    virtual double CalculateEntropyDensityDerivativeTZeroTemperature() { return 0.; } // Placeholder
+    virtual double CalculateEntropyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
 
     // TODO properly with excluded volume
     virtual double ParticleScaledVariance(int /*part*/) { return 1.; }

@@ -2221,27 +2221,6 @@ namespace thermalfist {
     return ret;
   }
 
-  // Compute (ds/dT)_mu robustly, including the T=0 limit.
-  double GetEntropyDensityDerivativeTMuNumer(ThermalModelBase* model) {
-    const double T = model->Parameters().T;
-    if (std::abs(T) < 1.e-12) {
-      try {
-        return model->CalculateEntropyDensityDerivativeTZeroTemperature();
-      }
-      catch (...) {
-        // Fall back to numerical one-sided derivative for models without an implementation.
-      }
-    }
-    if (T > 0.) {
-      return model->HeatCapacityMu() / T; // ds/dT|mu
-    }
-
-    // T=0 and analytic method not available -- should not happen in practice.
-    std::cerr << "**WARNING** GetEntropyDensityDerivativeTMuNumer: "
-              << "no analytic ds/dT at T=0 available, returning 0." << std::endl;
-    return 0.;
-  }
-
   // Auxiliary function to compute the Hessian matrix of pressure
   MatrixXd GetPressureHessianMatrix(ThermalModelBase* model, const vector<int>& ConservedDensities) {
     int N = 1;
@@ -2253,7 +2232,7 @@ namespace thermalfist {
 
     // Compute the Hessian matrix of pressure
     // Pi(0,0) = d^2 P / d T^2 = ds/dT
-    ret(0, 0) = GetEntropyDensityDerivativeTMuNumer(model); // fm^-3 GeV^-1
+    ret(0, 0) = model->CalculateEntropyDensityDerivativeT(); // fm^-3 GeV^-1
 
     // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
     {

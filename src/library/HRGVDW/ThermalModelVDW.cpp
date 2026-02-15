@@ -968,39 +968,31 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelVDW::CalculateEntropyDensityDerivativeTZeroTemperature() {
-    assert(std::abs(m_Parameters.T) < 1.e-12);
-    assert(m_QuantumStats);
-    assert(!m_TemperatureDependentAB);
+  double ThermalModelVDW::CalculateEntropyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
 
-    // const double eps = 1.e-14;
-    // for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
-    //   for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
-    //     assert(std::abs(m_VirialdT[i][j]) < eps);
-    //     assert(std::abs(m_AttrdT[i][j]) < eps);
-    //   }
-    // }
-
-    if (!m_Calculated)
-      CalculatePrimordialDensities();
-
+    // Compute ds/dT
     double ret = 0.;
-    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
-      const ThermalParticle &part = m_TPS->Particles()[i];
-      if (part.Statistics() != 1)
-        continue;
 
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
       double fi  = 1.;
+      // Term 1
       for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        double dfik = -m_Virial[k][i];
+        ret += dfik * m_dndT[k] * part.Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_MuStar[i]);
         fi -= m_Virial[k][i] * m_densities[k];
       }
-      double deg = part.Degeneracy();
-      double mu = m_MuStar[i];
-      double mass = part.Mass();
-      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
-      ret += fi * deg * mu / 6. * kF;
+
+      // Term 2
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dsdT, m_UseWidth, m_MuStar[i]);
+
+      // Term 3: ds/dmu = dn/dT (Maxwell relation)
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]) * m_dmusdT[i];
     }
-    return ret * xMath::GeVtoifm3();
+
+    return ret;
   }
 
   void ThermalModelVDW::CalculateTemperatureDerivatives() {
@@ -1019,9 +1011,13 @@ namespace thermalfist {
       nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
       dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]);
       chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
-      // chi2til = chi2 * T^2
-      // dchi2til/dT = T^2 * dchi2/dT +  2 * T * chi2 = T^2 * dchi2/dT + 2 * chi2til / T
-      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      // dchi2idsdT = d(dn^id/dmu*)/dT = T^2 * dchi2/dT + 2 * chi2ids / T
+      // The two terms individually diverge as 1/T but their sum is O(T).
+      // At T=0 the result is exactly zero (Sommerfeld: dn/dmu = const + O(T^2)).
+      if (T > 0.)
+        dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * chi2ids[i] / T);
+      else
+        dchi2idsdT[i] = 0.;
       chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
     }
 
@@ -1154,9 +1150,12 @@ namespace thermalfist {
         solVector = decomp.solve(xVector);
 
         for (int i = 0; i < NN; ++i) {
-          // chi2 = chi2til / T^2
-          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T / T / T
-          m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T^3
+          // Both terms diverge as T -> 0; guard against division by zero.
+          if (T > 0.)
+            m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          else
+            m_PrimChi2sdT[i][j] = 0.;
         }
       }
 

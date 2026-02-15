@@ -196,7 +196,12 @@ namespace thermalfist {
      */
     virtual double CalculateEnergyDensityDerivativeT();
 
-    virtual double CalculateEntropyDensityDerivativeTZeroTemperature();
+		/**
+     * \brief Calculate the derivative of the entropy density with respect to temperature.
+     *
+     * \return The derivative of the entropy density with respect to temperature.
+     */
+		virtual double CalculateEntropyDensityDerivativeT();
 
     /**
      * \brief Calculate the temperature derivatives of the system.
