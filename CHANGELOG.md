@@ -24,11 +24,7 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It 
 - Core GUI functionality in the browser, including thermal model calculations, thermal fits, equation of state, and event generator
 - Calculations are performed *locally* (client-side) in the browser using your CPU
 - Supports both single-threaded and multi-threaded builds (Qt 6.10.1 + Emscripten 4.0.7); multi-threaded builds require proper COOP/COEP headers and SharedArrayBuffer support
-<!-- - Browser-based file I/O for loading/saving particle lists and results
-- Docker/Caddy deployment infrastructure for self-hosting
-- Threading detection with automatic fallback for browsers without SharedArrayBuffer (e.g. Safari)
-- Dynamic font and row height scaling for various screen sizes and resolutions
-- See `docs/wasm-build.md` for build and deployment instructions -->
+- See `docs/wasm-build.md` for build and deployment instructions 
 
 ## GUI enhancements
 
