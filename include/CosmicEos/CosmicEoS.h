@@ -346,8 +346,8 @@ namespace thermalfist {
     void SetKaonsInteracting(bool kaonsinteract = true, double fkaChPT = fpi * 1.2);
     
     /**
-     * \brief Checks if kaons are interacting in the model.
-     * 
+     * \brief Checks if pions are interacting in the model.
+     *
      * \return True if pions are interacting, false otherwise.
      */
     bool InteractingPions() const { return m_InteractingPions; }

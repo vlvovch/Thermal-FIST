@@ -373,7 +373,7 @@ namespace thermalfist {
      * decay chain expansion exceeds this limit, only the entries
      * with the highest probabilities are kept.
      * Relevant for charmonia and other resonances with complex multi-step decay chains.
-     * Default value: 2000.
+     * Default value: 8000.
      */
     void SetMaxDecayDistributionsSize(int maxsize) { m_MaxDecayDistributionsSize = maxsize; }
     int  MaxDecayDistributionsSize() const { return m_MaxDecayDistributionsSize; }
