@@ -76,12 +76,7 @@ static ThermoRow Evaluate(ThermalModelBase* model) {
 
   r.cMu = model->HeatCapacityMu();
 
-  if (r.T > 0.)
-    r.dsdT_mu = r.cMu / r.T;
-  else {
-    try   { r.dsdT_mu = model->CalculateEntropyDensityDerivativeTZeroTemperature(); }
-    catch (...) { r.dsdT_mu = std::numeric_limits<double>::quiet_NaN(); }
-  }
+  r.dsdT_mu = model->CalculateEntropyDensityDerivativeT();
 
   r.chi2BB = model->SusceptibilityDimensionfull(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)
              * xMath::GeVtoifm3();

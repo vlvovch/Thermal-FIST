@@ -91,16 +91,7 @@ namespace {
       double cT2 = model->cT2(true, false, false, false);
       pt.cT2_B = std::isfinite(cT2) ? cT2 : std::numeric_limits<double>::quiet_NaN();
 
-      double T = model->Parameters().T;
-      if (T > 0.)
-        pt.dsdT_mu = model->HeatCapacityMu() / T;
-      else {
-        try {
-          pt.dsdT_mu = model->CalculateEntropyDensityDerivativeTZeroTemperature();
-        } catch (...) {
-          pt.dsdT_mu = std::numeric_limits<double>::quiet_NaN();
-        }
-      }
+      pt.dsdT_mu = model->CalculateEntropyDensityDerivativeT();
       return pt;
     }
 

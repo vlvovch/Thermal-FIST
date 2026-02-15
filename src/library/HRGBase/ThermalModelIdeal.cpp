@@ -218,26 +218,17 @@ namespace thermalfist {
     return ret;
   }
 
-  double ThermalModelIdeal::CalculateEntropyDensityDerivativeTZeroTemperature() {
-    assert(std::abs(m_Parameters.T) < 1.e-12);
-    assert(m_QuantumStats);
+  double ThermalModelIdeal::CalculateEntropyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
 
-    if (!m_Calculated)
-      CalculatePrimordialDensities();
-
+    // Compute ds/dT
     double ret = 0.;
-    for(int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
-      const ThermalParticle& part = m_TPS->Particles()[i];
-      if (part.Statistics() != 1)
-        continue;
 
-      double deg = m_TPS->Particles()[i].Degeneracy();
-      double mu = m_Chem[i];
-      double mass = m_TPS->Particles()[i].Mass();
-      double kF = mu > mass ? sqrt(mu*mu - mass*mass) : 0.;
-      ret += deg * mu / 6. * kF;
-    }
-    return ret * xMath::GeVtoifm3();
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
+      ret += m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dsdT, m_UseWidth, m_Chem[i]);
+
+    return ret;
   }
 
   double ThermalModelIdeal::ParticleScaledVariance(int part) {

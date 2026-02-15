@@ -18,7 +18,7 @@
 \newcommand{\vep}{\varepsilon}
 
 \title{Integration-by-parts improvement of Fermi integrals \\
-for baryon number susceptibilities at low temperature}
+for baryon number susceptibilities and entropy derivative at low temperature}
 \author{Technical note for Thermal-FIST}
 \date{\today}
 
@@ -26,9 +26,10 @@ for baryon number susceptibilities at low temperature}
 \maketitle
 
 \begin{abstract}
-We describe the integration-by-parts (IBP) technique used to improve the numerical evaluation of Fermi-Dirac integrals for baryon number susceptibilities $\chi_n^B$ at low temperatures in the hadron resonance gas model.
+We describe the integration-by-parts (IBP) technique used to improve the numerical evaluation of Fermi--Dirac integrals for baryon number susceptibilities $\chi_n^B$ and the entropy density temperature derivative $ds/dT|_\mu$ at low temperatures in the hadron resonance gas model.
 The key idea is to reduce the order of the Fermi--Dirac distribution derivatives appearing in the integrand by one, replacing oscillatory or sharply peaked integrands with smoother ones that are better resolved by the existing Sommerfeld--Legendre + Laguerre quadrature scheme.
 We present the IBP formulas for $\chi_2$, $\chi_3$, and $\chi_4$, derive the analytic $T=0$ limits, and document the numerical improvements achieved.
+For $ds/dT|_\mu$, we derive a double-IBP formula involving the Fermi entropy kernel $\sigma(x)$ that achieves $\sim 2 \times 10^{-4}$ relative accuracy at $T = 1$~$\mu$eV, and explain why the $\chi_2$-type analytical extraction of the $T=0$ value is fundamentally unavailable for temperature derivatives.
 \end{abstract}
 
 \tableofcontents
@@ -492,6 +493,214 @@ RealGas (CS+VDW) & $3.905$      & $3.904$      & $1.7\times 10^{-3}$    & $4.2\t
 
 
 %% ====================================================================
+\section{IBP for the entropy derivative \texorpdfstring{$ds/dT|_\mu$}{ds/dT}}
+\label{sec:dsdT}
+%% ====================================================================
+
+The entropy density temperature derivative at fixed chemical potential is
+\begin{equation}\label{eq:dsdT-direct}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2}\,\frac{1}{T}\int_0^\infty p^2\,x^2\,f(1-f)\,dp\,,
+  \qquad x \equiv \frac{E - \mu}{T}\,.
+\end{equation}
+At $T = 0$, the Sommerfeld expansion gives
+\begin{equation}\label{eq:dsdT-T0}
+  \frac{ds}{dT}\bigg|_{T=0} = \frac{g}{6}\,\mu\,\pF\,,
+\end{equation}
+which has the same structure $\sim \mu\,\pF$ as the $T = 0$ value of $\chi_2$.
+However, as we show below, the numerical treatment of $ds/dT$ is fundamentally more challenging than~$\chi_2$.
+
+\subsection{The numerical problem}
+
+The integrand in \cref{eq:dsdT-direct} is $\propto x^2 f(1{-}f)/T$.
+The factor $x^2 = (E - \mu)^2/T^2$ vanishes at the Fermi surface ($E = \mu$), while $f(1{-}f)/T \to \delta(p - \pF)\,\mu/\pF$.
+The product gives a peaked integrand $\propto T$ near~$\pF$.
+The integral therefore scales as~$T^2$, and dividing by~$T$ yields the finite $T = 0$ limit.
+
+In the original implementation, the code computed this integral directly and subtracted the analytic $T = 0$ value, i.e.
+\begin{equation}
+  \frac{ds}{dT} = \frac{g}{2\pi^2}\left(\frac{\pi^2}{3}\,\mu\,\pF + \Delta_{\rm th}\right),
+\end{equation}
+where $\Delta_{\rm th} = \text{quad}/T - (\pi^2/3)\,\mu\,\pF$ is the thermal correction.
+At low~$T$, both $\text{quad}/T$ and $(\pi^2/3)\,\mu\,\pF$ are large and nearly equal, so their difference suffers from cancellation.
+This led to $\sim 0.35\%$ relative error already at $T = 1$~$\mu$eV.
+
+
+\subsection{First IBP: \texorpdfstring{$f \cdot G$}{f G} form}
+\label{sec:dsdT-ibp1}
+
+Using $f(1{-}f) = -(TE/p)\,df/dp$ as in the $\chi_2$ case, we integrate by parts on the momentum integral.
+The relevant identity is
+\begin{equation}
+  p^2\,\frac{(E-\mu)^2}{T^2}\,f(1-f)
+  = -\frac{1}{T}\,p\,E\,(E-\mu)^2\,\frac{df}{dp}\,.
+\end{equation}
+Integrating by parts with $u = pE(E-\mu)^2$ and $dv = df$, and noting that the boundary terms vanish:
+\begin{equation}\label{eq:dsdT-ibp1}
+  \boxed{\int_0^\infty p^2\,\frac{(E-\mu)^2}{T^2}\,f(1-f)\,dp
+  = \frac{1}{T}\int_0^\infty f(p)\,G(p)\,dp\,,}
+\end{equation}
+where
+\begin{equation}\label{eq:G-def}
+  G(p) = \frac{d}{dp}\bigl[pE(E-\mu)^2\bigr]
+  = \vep\left[\frac{(2p^2+m^2)\,\vep}{E} + 2p^2\right], \qquad \vep \equiv E - \mu\,.
+\end{equation}
+So that
+\begin{equation}\label{eq:dsdT-ibp1-final}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T^2}\int_0^\infty f(p)\,G(p)\,dp\,.
+\end{equation}
+
+\paragraph{Difference from~$\chi_2$.}
+For $\chi_2$, the IBP converts $\int p^2 f(1{-}f)\,dp = T\int (2E - m^2/E)\,f\,dp$, where the integrand $(2E - m^2/E)$ is nonzero at~$\pF$:
+\begin{equation}
+  \frac{2\pF^2 + m^2}{\mu} = \frac{2\pF^2 + m^2}{\mu} \neq 0\,.
+\end{equation}
+The filled Fermi sea therefore contributes $\int_0^{\pF}(2p^2+m^2)/E\,dp = \mu\,\pF \neq 0$, which is the exact $T = 0$ value.
+
+For $ds/dT$, the integrand $G(p)$ vanishes at the Fermi surface because $\vep(\pF) = 0$:
+\begin{equation}
+  G(\pF) = 0\,.
+\end{equation}
+Consequently, the Fermi-sea integral vanishes:
+\begin{equation}
+  \int_0^{\pF} G(p)\,dp = \bigl[pE(E-\mu)^2\bigr]_0^{\pF} = \pF\mu \cdot 0 - 0 = 0\,.
+\end{equation}
+There is \emph{no} $T = 0$ piece to extract analytically --- the entire integral is a thermal contribution of order~$T^2$.
+The result is $ds/dT = (g/2\pi^2 T^2) \times O(T^2)$, which is finite but computed entirely from the quadrature.
+This achieves $\sim 4 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV.
+
+
+\subsection{Double IBP: \texorpdfstring{$\sigma \cdot H$}{sigma H} form}
+\label{sec:dsdT-ibp2}
+
+To improve accuracy further, we perform a second integration by parts, this time converting from $f$ to the Fermi entropy kernel.
+
+\paragraph{The entropy kernel.}
+Define the Fermi entropy function
+\begin{equation}\label{eq:sigma-def}
+  \sigma(x) = -f\ln f - (1-f)\ln(1-f) = \ln(1 + e^{-|x|}) + \frac{|x|}{e^{|x|}+1}\,,
+\end{equation}
+which satisfies
+\begin{equation}\label{eq:dsigma-dx}
+  \sigma'(x) \equiv \frac{d\sigma}{dx} = -x\,f(1-f)\,.
+\end{equation}
+In momentum space:
+\begin{equation}\label{eq:dsigma-dp}
+  \frac{d\sigma}{dp} = \sigma'(x)\,\frac{dx}{dp} = \sigma'(x)\,\frac{p}{TE}
+  = -\frac{p\,(E-\mu)}{T^2 E}\,f(1-f)\,.
+\end{equation}
+
+\paragraph{Derivation.}
+Start from \cref{eq:dsdT-direct}:
+\begin{equation}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2 T}\int_0^\infty p^2\,x^2\,f(1-f)\,dp\,.
+\end{equation}
+Using $\sigma'(x) = -x\,f(1{-}f)$, we have $x^2 f(1{-}f) = -x\,\sigma'(x)$.
+The momentum derivative of~$\sigma$ is $d\sigma/dp = \sigma'(x)\cdot p/(TE)$, so $\sigma'(x) = (TE/p)\,d\sigma/dp$.
+Substituting:
+\begin{equation}
+  p^2\,x^2\,f(1-f) = -p^2 x \cdot \frac{TE}{p}\,\frac{d\sigma}{dp}
+  = -pE(E-\mu)\,\frac{d\sigma}{dp}\,.
+\end{equation}
+Integrating by parts with $u = pE(E-\mu)$ and $dv = d\sigma$, using $[pE(E-\mu)\,\sigma]_0^\infty = 0$ (since $p = 0$ at the lower limit and $\sigma \to 0$ exponentially at the upper limit):
+\begin{equation}\label{eq:dsdT-ibp2}
+  \boxed{\int_0^\infty p^2\,x^2\,f(1-f)\,dp = \int_0^\infty \sigma(x)\,H(p)\,dp\,,}
+\end{equation}
+where
+\begin{equation}\label{eq:H-def}
+  H(p) = \frac{d}{dp}\bigl[pE(E-\mu)\bigr]
+  = \frac{(E-\mu)(2p^2+m^2)}{E} + p^2\,.
+\end{equation}
+The final formula is
+\begin{equation}\label{eq:dsdT-sigma}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T}\int_0^\infty \sigma(x)\,H(p)\,dp\,.
+\end{equation}
+
+\paragraph{Key properties.}
+\begin{itemize}
+  \item The prefactor is $1/T$ (not $1/T^2$ as in the single-IBP form).
+  \item $\sigma(x)$ is intrinsically smooth and \emph{zero} at $T = 0$ (where $f = 0$ or $f = 1$), just like the entropy density integrand $p^2\,\sigma$.
+  \item $H(\pF) = \pF^2 \neq 0$.
+  The Sommerfeld expansion gives
+  $\int_0^\infty \sigma\,H\,dp \approx (\pi^2/3)\,T\,(\mu/\pF)\,H(\pF) = (\pi^2/3)\,\mu\,\pF\,T$,
+  so $ds/dT \approx (g/2\pi^2 T) \times (\pi^2/3)\,\mu\,\pF\,T = (g/6)\,\mu\,\pF$, matching \cref{eq:dsdT-T0}.
+  \item Because $\sigma = 0$ at $T = 0$, the quadrature evaluates the thermal contribution \emph{directly}, with no analytical subtraction needed and no cancellation.
+\end{itemize}
+
+This is the same $\sigma$ kernel used in the entropy density $s = (g/2\pi^2)\int p^2\,\sigma\,dp$, so the quadrature accuracy is comparable to that of~$s$ itself: $\sim 2 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV.
+
+
+\subsection{Can we do better? Obstruction to \texorpdfstring{$\chi_2$}{chi2}-level accuracy}
+\label{sec:dsdT-obstruction}
+
+Since \cref{eq:dsdT-sigma} has only a $1/T$ prefactor (not $1/T^2$), one might hope that a further IBP could convert the $\sigma$ kernel into plain~$f$, producing a $\chi_2$-type formula where the $T = 0$ value emerges as a Fermi-sea integral.
+
+\paragraph{Attempt via $\sigma = \ln(1+e^{-x}) + xf$.}
+One can verify the identity
+\begin{equation}\label{eq:sigma-decomp}
+  \sigma(x) = \ln(1 + e^{-x}) + x\,f(x)\,.
+\end{equation}
+Substituting into \cref{eq:dsdT-ibp2}:
+\begin{equation}
+  \int_0^\infty \sigma\,H\,dp
+  = \int_0^\infty \ln(1+e^{-x})\,H\,dp
+  + \frac{1}{T}\int_0^\infty (E-\mu)\,f\,H\,dp\,.
+\end{equation}
+The second term contains plain~$f$ multiplied by~$H$, which looks promising.
+However, at $T = 0$:
+\begin{equation}
+  \frac{1}{T}\int_0^{\pF} (E-\mu)\,H\,dp
+  = \frac{1}{T}\bigl[\underbrace{pE(E-\mu)^2}_{=\,0}\bigr]_0^{\pF}
+  - \frac{1}{T}\int_0^{\pF} p^2(E-\mu)\,dp
+  = -\frac{1}{T}\int_0^{\pF} p^2(E-\mu)\,dp\,.
+\end{equation}
+This \emph{diverges} as $1/T$.
+Meanwhile, the first term also diverges as $1/T$ because $\ln(1+e^{-x}) \to (\mu - E)/T$ for $p < \pF$ at $T = 0$.
+The two $1/T$ divergences cancel to give the finite $\sigma$ integral, but using them separately reintroduces catastrophic cancellation --- exactly the problem we sought to avoid.
+
+\paragraph{Attempt via $d\sigma/dp$.}
+One could also try IBP on $\int \sigma\,H\,dp$ with $u = \sigma$ and $dv = H\,dp$.
+But $d\sigma/dp = -p(E-\mu)f(1{-}f)/(T^2 E)$ from \cref{eq:dsigma-dp}, which reintroduces $f(1{-}f)$ and $1/T^2$ --- going backwards.
+
+\paragraph{Fundamental reason.}
+For $\chi_2$, the IBP converts $f(1{-}f) \to f$, and the plain-$f$ integrand has a \emph{nonzero} Fermi-sea integral $\int_0^{\pF} (2p^2+m^2)/E\,dp = \mu\,\pF$.
+This works because $\chi_2 = dn/d\mu$ is a chemical potential derivative --- its $T = 0$ value is a property of the filled Fermi sea.
+
+In contrast, $ds/dT|_\mu$ is a \emph{temperature derivative}.
+At $T = 0$, the entropy vanishes ($s = 0$) and $ds/dT|_{T=0}$ is the first nonzero term in $s(T) \approx (ds/dT)\,T$.
+Its value $(g/6)\,\mu\,\pF$ arises entirely from the \emph{thermal smearing} of the Fermi surface, not from the filled sea.
+Any IBP that converts the integrand to plain~$f$ necessarily produces a weight function that vanishes at~$\pF$ (because the temperature derivative of all quantities is zero inside the Fermi sea at $T = 0$), making $\int_0^{\pF} (\text{weight}) \cdot f\,dp = 0$.
+
+Therefore, no IBP decomposition can extract the $T = 0$ value of $ds/dT$ as an analytical Fermi-sea integral in the way $\chi_2$ extracts $\mu\,\pF$.
+The $\sigma \cdot H$ form (\cref{eq:dsdT-sigma}) achieves the best accuracy available from direct quadrature of the thermal contribution.
+
+
+\subsection{Numerical results}
+
+\Cref{tab:dsdT} shows the relative deviation of $ds/dT$ from its $T = 0$ value for the Ideal HRG at $\mu_B = 1.2\GeV$.
+
+\begin{table}[h]
+\centering
+\caption{Relative deviation $(ds/dT(T) - ds/dT(0))/(ds/dT(0))$ at low temperatures for the Ideal HRG at $\mu_B = 1.2\GeV$.}
+\label{tab:dsdT}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}l ccc@{}}
+\toprule
+& \textbf{Original} & \textbf{Single IBP ($f \cdot G$)} & \textbf{Double IBP ($\sigma \cdot H$)} \\
+\midrule
+$T = 0.001\MeV$  & $-3.5\times 10^{-3}$ & $-4.3\times 10^{-4}$ & $-2.2\times 10^{-4}$ \\
+$T = 0.01\MeV$   & $-3.5\times 10^{-3}$ & $-4.4\times 10^{-4}$ & $-2.2\times 10^{-4}$ \\
+$T = 0.1\MeV$    & $-3.7\times 10^{-3}$ & $-5.7\times 10^{-4}$ & $-3.4\times 10^{-4}$ \\
+$T = 1\MeV$      & $-8.4\times 10^{-3}$ & $-8.4\times 10^{-3}$ & $-8.1\times 10^{-3}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The double-IBP $\sigma \cdot H$ form achieves $\sim 16\times$ improvement over the original at $T = 1$~$\mu$eV.
+The accuracy matches that of the entropy density~$s$ itself (which uses the same $\sigma$ kernel), confirming that the quadrature resolution of $\sigma$-weighted integrals is the limiting factor.
+The interacting models (EV, QvdW, RealGas) achieve $\sim 1.8 \times 10^{-4}$ at $T = 1$~$\mu$eV.
+
+
+%% ====================================================================
 \section{Summary}
 \label{sec:summary}
 %% ====================================================================
@@ -505,5 +714,12 @@ Each step replaces an integrand with $k$ sign changes by one with $k{-}1$ sign c
 The improvement is most pronounced for $\chi_3$ (from $\sim 100\%$ to $\sim 10^{-9}$ relative error) and significant for $\chi_4$ (from $\sim 400\%$ to $\sim 10^{-3}$ for interacting models).
 
 For $\chi_2$, the IBP was already implemented earlier and replaces the $f(1{-}f)$ peak by the smooth Fermi step $f$, yielding excellent precision at all temperatures.
+
+For $ds/dT|_\mu$, a \emph{double} IBP replaces the $x^2 f(1{-}f)$ integrand by the entropy kernel $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$:
+\begin{equation}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T}\int_0^\infty \sigma(x)\,\frac{d}{dp}\bigl[pE(E-\mu)\bigr]\,dp\,.
+\end{equation}
+Since $\sigma$ is intrinsically zero at $T = 0$, the quadrature evaluates the thermal contribution directly with no cancellation, achieving $\sim 2 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV --- a $16\times$ improvement.
+Unlike $\chi_2$, the $T = 0$ value of $ds/dT$ cannot be extracted as a Fermi-sea integral because temperature derivatives vanish identically inside the filled sea; the leading Sommerfeld coefficient arises entirely from the thermal smearing at the Fermi surface.
 
 \end{document}

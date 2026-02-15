@@ -1093,7 +1093,7 @@ namespace thermalfist {
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
     virtual double CalculateEnergyDensityDerivativeT() = 0;
-    virtual double CalculateEntropyDensityDerivativeTZeroTemperature() = 0;
+    virtual double CalculateEntropyDensityDerivativeT() = 0;
     virtual double CalculateHeatCapacityMu();
     virtual double CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     virtual double CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
