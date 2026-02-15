@@ -958,7 +958,6 @@ namespace thermalfist {
         if (mu >= m) {
           std::cerr << "**WARNING** QuantumNumericalIntegrationChiNDimensionfull: Bose-Einstein condensation" << std::endl;
           calculationHadBECIssue = true;
-          mu = m;
         }
         return 0.;
       }
