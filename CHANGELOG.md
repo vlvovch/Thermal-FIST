@@ -37,6 +37,15 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It 
 - Improved rendering of lattice QCD data for ratios in the equation of state tab
 - Better default parameter ranges for cosmic trajectory calculations
 
+## Improved low-temperature ideal gas functions
+
+- Applied integration-by-parts (IBP) decomposition to Fermi-Dirac integrands for baryon susceptibilities (χ₂, χ₃, χ₄), replacing oscillatory Fermi-Dirac derivative products with smoother forms amenable to the Sommerfeld-Legendre + Laguerre quadrature scheme
+- Applied double-IBP (σ·H) form for ds/dT achieving ~2×10⁻⁴ relative accuracy at low T (16× improvement over original integrand)
+- Extracted analytic T = 0 values for susceptibilities and entropy/energy density derivatives, decomposing each result into a known constant plus a thermal correction that vanishes as T → 0
+- Added `CalculateEntropyDensityDerivativeT()` and `CalculateEnergyDensityDerivativeT()` to all model classes (Ideal, VDW, EV-Diagonal, RealGas) with proper T = 0 support
+- Added `dimensionfull` flag to `CalculateChargeFluctuations` across all model implementations to avoid T-division that breaks at T = 0
+- Added LaTeX technical note documenting the IBP derivations and numerical improvements (`docs/notes/FermiIntegralIBP/`)
+
 ## Bugfixes
 
 - Fixed calculation of charge susceptibilities at zero temperature
@@ -47,6 +56,13 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It 
 - Thermodynamic stability checks via Hessian eigenvalue analysis
 - More stable cosmic trajectory calculations in the GUI
 - More lenient handling of missing decays
+
+## Effective Mass Model
+
+- Implemented temperature derivatives (ds/dT, de/dT, dn/dT, dχ₂/dT) in the `EffectiveMassModel` via chain rule through the gap equation, supporting both normal and BEC phases
+- Added `DmeffDT()` for computing dm\*/dT from implicit differentiation of the gap equation
+- Fixed `ThermalModelBase::SetParameters()` to call `FillChemicalPotentials()`, ensuring per-species chemical potentials are always up-to-date
+- Added unit tests (`test_EMMDerivatives`) verifying thermodynamic identity, T-derivatives, and μ-derivatives against numerical finite differences to <10⁻⁶ accuracy, including BEC phase
 
 ## Other changes
 
