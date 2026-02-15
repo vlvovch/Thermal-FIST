@@ -19,6 +19,7 @@
  */
 #include <cmath>
 #include <cstdlib>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -137,10 +138,11 @@ static void PrintTable(const string& modelName,
   cout << "\n";
   cout << string(wlab + w * rows.size(), '-') << "\n";
 
-  auto line = [&](const char* label, auto getter) {
+  typedef std::function<double(const ThermoRow&)> RowGetter;
+  auto line = [&](const char* label, RowGetter getter) {
     cout << setw(wlab) << left << label;
-    for (auto& r : rows)
-      cout << setw(w) << right << scientific << setprecision(6) << getter(r);
+    for (size_t i = 0; i < rows.size(); ++i)
+      cout << setw(w) << right << scientific << setprecision(6) << getter(rows[i]);
     cout << "\n";
   };
 
@@ -165,7 +167,7 @@ static void PrintTable(const string& modelName,
     cout << "\n  Relative deviations from T=0:\n";
     cout << string(wlab + w * rows.size(), '-') << "\n";
 
-    auto relline = [&](const char* label, auto getter) {
+    auto relline = [&](const char* label, RowGetter getter) {
       double refv = getter(ref);
       cout << setw(wlab) << left << label;
       for (size_t i = 0; i < rows.size(); ++i) {

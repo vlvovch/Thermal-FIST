@@ -168,11 +168,11 @@ int main(int argc, char *argv[])
     const bool hasQ = (std::abs(rhoQ) > eps);
     const bool hasS = (std::abs(rhoS) > eps);
 
-    const auto safe_cT2 = [&](bool b, bool q, bool ss, double fallback = 0.0) {
+    const auto safe_cT2 = [&](bool b, bool q, bool ss, double fallback) {
       const double v = model->cT2(b, q, ss, false);
       return std::isfinite(v) ? v : fallback;
     };
-    const auto safe_cs2 = [&](bool b, bool q, bool ss, double fallback = 0.0) {
+    const auto safe_cs2 = [&](bool b, bool q, bool ss, double fallback) {
       const double v = model->cs2(b, q, ss, false);
       return std::isfinite(v) ? v : fallback;
     };
