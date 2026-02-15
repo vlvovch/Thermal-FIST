@@ -16,3 +16,6 @@
 *.nav
 *.snm
 *.vrb
+
+# Work in progress
+RealGasModel/
