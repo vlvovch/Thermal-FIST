@@ -26,10 +26,16 @@ for baryon number susceptibilities and entropy derivative at low temperature}
 \maketitle
 
 \begin{abstract}
-We describe the integration-by-parts (IBP) technique used to improve the numerical evaluation of Fermi--Dirac integrals for baryon number susceptibilities $\chi_n^B$ and the entropy density temperature derivative $ds/dT|_\mu$ at low temperatures in the hadron resonance gas model.
-The key idea is to reduce the order of the Fermi--Dirac distribution derivatives appearing in the integrand by one, replacing oscillatory or sharply peaked integrands with smoother ones that are better resolved by the existing Sommerfeld--Legendre + Laguerre quadrature scheme.
-We present the IBP formulas for $\chi_2$, $\chi_3$, and $\chi_4$, derive the analytic $T=0$ limits, and document the numerical improvements achieved.
-For $ds/dT|_\mu$, we derive a double-IBP formula involving the Fermi entropy kernel $\sigma(x)$ that achieves $\sim 2 \times 10^{-4}$ relative accuracy at $T = 1$~$\mu$eV, and explain why the $\chi_2$-type analytical extraction of the $T=0$ value is fundamentally unavailable for temperature derivatives.
+We describe two improvements to the numerical evaluation of Fermi--Dirac integrals at low temperatures in the hadron resonance gas model.
+
+First, we replace the uniform Gauss--Legendre quadrature below the Fermi momentum~$\pF$ with a Sommerfeld--Legendre scheme that uses an adaptive nonlinear mapping to concentrate quadrature nodes near the Fermi surface, with the degree of concentration controlled by $\alpha = \pF^2/(\mu T)$.
+This resolves the sharp Fermi step at low~$T$, where the old uniform mapping under-resolved the Fermi surface.
+
+Second, we apply integration-by-parts (IBP) to reduce the order of Fermi--Dirac distribution derivatives in the integrands, replacing oscillatory or sharply peaked functions with smoother ones.
+We present the IBP formulas for the susceptibilities $\chi_2$, $\chi_3$, and $\chi_4$, derive the analytic $T=0$ limits, and document the numerical improvements achieved.
+For the entropy density temperature derivative $ds/dT|_\mu$, we derive a double-IBP formula involving the Fermi entropy kernel $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$ --- the same kernel that gives the entropy density $s = (g/2\pi^2)\int p^2\,\sigma\,dp$.
+Because $\sigma$ vanishes identically at $T = 0$, the quadrature evaluates the thermal contribution directly with no cancellation, achieving $\sim 2 \times 10^{-4}$ relative accuracy at $T = 1$~$\mu$eV.
+We explain why the $\chi_2$-type analytical extraction of the $T=0$ value is fundamentally unavailable for temperature derivatives.
 \end{abstract}
 
 \tableofcontents
@@ -64,10 +70,24 @@ As $T \to 0$, the factor $f(1-f)/T$ tends to $\delta(E-\mu)$, i.e.\ $\delta(p-\p
 For $\chi_2$ the integrand is a narrow positive peak at~$\pF$; for $\chi_3$ the integrand $f(1-f)(1-2f)/T^2$ has a derivative-of-delta structure (one sign change); for $\chi_4$ the integrand $f(1-f)[1-6f(1-f)]/T^3$ has a second-derivative-of-delta structure (two sign changes).
 Higher-order integrands are increasingly oscillatory and harder for fixed-order quadrature to resolve.
 
-We use a hybrid quadrature scheme:
+The code already splits the integration at the Fermi momentum $\pF$ into a below-$\pF$ Legendre part and an above-$\pF$ shifted Laguerre part.
+The original below-$\pF$ part used a \emph{uniform} (linear) mapping $p = s\,\pF$ with 32-point Gauss--Legendre nodes on $[0,1]$:
+\begin{equation}
+  \int_0^{\pF} F(p)\,dp \approx \pF \sum_{i=1}^{32} w_i^{\rm (Leg)}\,F(s_i\,\pF)\,.
+\end{equation}
+The Legendre nodes $s_i \in [0,1]$ are roughly uniformly spaced, so the mapped momenta $p_i = s_i\,\pF$ are roughly uniformly distributed over $[0,\pF]$.
+At low temperatures, the Fermi--Dirac integrands vary on the scale of $\sim T/v_F$ near the Fermi surface ($p = \pF$), which is much smaller than the average node spacing $\sim \pF/32$.
+This causes the uniform Legendre quadrature to under-resolve the Fermi surface peak, producing errors of 100--400\% for the higher susceptibilities.
+
+The improved quadrature replaces the uniform mapping with an \emph{adaptive} nonlinear mapping (Sommerfeld--Legendre) that concentrates nodes near~$\pF$:
 \begin{itemize}
-  \item \textbf{Sommerfeld--Legendre} (32 points): maps $[0,1] \to [0, \pF]$ with adaptive concentration of quadrature nodes near the Fermi surface, controlled by $\alpha = \pF^2/(\mu T)$.
-  \item \textbf{Shifted Laguerre} (32 points): covers $[\pF, \infty)$ with exponential weight.
+  \item \textbf{Below $\pF$: Sommerfeld--Legendre quadrature} (32 points).
+  A nonlinear mapping $s \in [0,1] \to p \in [0,\pF]$ adaptively concentrates nodes near the Fermi surface.
+  The mapping parameter $\alpha = \pF^2/(\mu T)$ controls the degree of concentration: when $\alpha \gg 1$ (low $T$), nodes cluster tightly near~$\pF$ to resolve the sharp Fermi step; when $\alpha \ll 1$ (high $T$), the mapping reduces to the original uniform $p = s\,\pF$.
+  See \cref{sec:sommerfeld-legendre} for the detailed construction.
+  \item \textbf{Above $\pF$: shifted Laguerre quadrature} (32 points).
+  The substitution $p = \pF + T\,t$ places nodes at momenta $\pF + O(T)$, naturally resolving the thermal tail above the Fermi surface with exponential weight.
+  This part is unchanged from the original code.
 \end{itemize}
 Both sets of nodes are concentrated near~$\pF$, where the Fermi--Dirac integrands peak.
 However, for the oscillatory integrands in $\chi_3$ and especially $\chi_4$, the quadrature accuracy degrades severely at low~$T$.
@@ -328,22 +348,65 @@ For $\chi_3$ and $\chi_4$, the integrands are purely thermal ($\to 0$ everywhere
 %% ====================================================================
 
 \subsection{Quadrature scheme}
+\label{sec:quadrature}
 
 The integration domain $[0,\infty)$ is split at the Fermi momentum $\pF$:
-
-\paragraph{Below $\pF$: Sommerfeld--Legendre quadrature.}
-A nonlinear mapping $s \in [0,1] \to p \in [0, \pF]$ concentrates quadrature nodes near the Fermi surface:
-\begin{equation}
-  p(s) = \pF\left(1 - \frac{u(s)}{\alpha}\right), \qquad
-  u(s) = -\ln\bigl(1 - \beta\,(1-s)\bigr), \qquad
-  \alpha = \frac{\pF^2}{\mu T}, \qquad \beta = 1 - e^{-\alpha}\,.
-\end{equation}
-This is applied with 32-point Gauss--Legendre nodes and weights on~$[0,1]$.
-For $\alpha \ll 1$ (i.e.\ $T \gg \pF^2/\mu$, or equivalently $T \gg$ Fermi energy), the mapping reduces to uniform: $p = s\,\pF$.
 
 \paragraph{Above $\pF$: shifted Laguerre quadrature.}
 The substitution $p = \pF + T\,t$ transforms the Laguerre integration variable $t \in [0,\infty)$ with 32-point Gauss--Laguerre nodes and weights.
 The Jacobian $dp = T\,dt$ contributes a factor~$T$.
+This part is unchanged from the original code.
+
+\paragraph{Below $\pF$: Sommerfeld--Legendre quadrature.}
+\label{sec:sommerfeld-legendre}
+The original code used a uniform (linear) mapping $p = s\,\pF$ with 32-point Gauss--Legendre nodes on~$[0,1]$.
+This distributes nodes roughly uniformly over $[0,\pF]$, giving an average spacing of $\sim \pF/32$.
+At low~$T$, the integrands vary on the scale of $\sim T/v_F \ll \pF/32$ near~$\pF$, so the uniform nodes cannot resolve the Fermi surface peak.
+
+The Sommerfeld--Legendre scheme replaces the uniform mapping with a nonlinear one that adaptively concentrates nodes near~$\pF$.
+The construction is motivated by the Sommerfeld expansion: at low~$T$, Fermi--Dirac integrands are smooth except within a window of width $\sim T$ around the Fermi surface.
+An ideal quadrature should place most of its nodes in this window, while retaining a few nodes in the bulk ($p \ll \pF$) where the integrand varies slowly.
+
+The mapping is defined by
+\begin{equation}\label{eq:sommerfeld-map}
+  p(s) = \pF\left(1 - \frac{u(s)}{\alpha}\right), \qquad
+  u(s) = -\ln\bigl(1 - \beta\,(1-s)\bigr), \qquad
+  \alpha = \frac{\pF^2}{\mu T}, \qquad \beta = 1 - e^{-\alpha}\,.
+\end{equation}
+This is applied with 32-point Gauss--Legendre nodes $\{s_i\}$ and weights $\{w_i\}$ on~$[0,1]$.
+The Jacobian is
+\begin{equation}
+  \frac{dp}{ds} = \frac{\pF}{\alpha} \cdot \frac{\beta}{1 - \beta\,(1-s)}\,.
+\end{equation}
+
+\paragraph{Limiting behavior.}
+The parameter $\alpha = \pF^2/(\mu T) \approx E_F / T$ (where $E_F = \pF^2/(2\mu)$ is the non-relativistic Fermi energy) controls the degree of node concentration:
+\begin{itemize}
+  \item \textbf{Low temperature} ($\alpha \gg 1$, i.e.\ $T \ll E_F$): $\beta \to 1$ and $u(s) \approx -\ln(s)$, so $p(s) \approx \pF(1 + \ln(s)/\alpha)$.
+  As $s$ varies from 0 to 1, the mapped momentum sweeps from $p = 0$ to $p = \pF$, but with strong logarithmic compression near $p = \pF$ (where $s \to 1$).
+  For the standard 32-point Legendre nodes, which are roughly uniformly spaced in~$[0,1]$, this places the majority of mapped momenta within $\sim \pF/\alpha \sim \mu T/\pF \sim T/v_F$ of the Fermi surface --- matching the thermal width of the Fermi step.
+
+  \item \textbf{High temperature} ($\alpha \ll 1$, i.e.\ $T \gg E_F$): $\beta \to \alpha$ and $u(s) \to \alpha\,(1-s)$, so $p(s) \to s\,\pF$ --- the uniform (linear) mapping.
+  The Fermi step is broad and there is no need for node concentration.
+\end{itemize}
+
+\paragraph{Comparison with uniform Legendre.}
+In the old scheme, the below-$\pF$ integration used the uniform mapping $p = s\,\pF$ with 32-point Gauss--Legendre:
+\begin{equation}
+  \int_0^{\pF} F(p)\,dp \approx \pF \sum_{i=1}^{32} w_i^{(\rm Leg)}\, F(s_i\,\pF)\,.
+\end{equation}
+The 32 Legendre nodes are roughly uniformly spaced in $[0,1]$, giving an average spacing of $\Delta p \sim \pF/32$ in momentum.
+For a nucleon ($m \approx 0.938\GeV$) at $\mu_B = 1.2\GeV$ and $T = 0.001\MeV$:
+\begin{equation}
+  \pF \approx 0.73\GeV, \qquad
+  \Delta p \sim \pF/32 \approx 0.023\GeV, \qquad
+  T/v_F \sim \mu T / \pF \approx 1.6 \times 10^{-6}\GeV\,.
+\end{equation}
+The thermal width $T/v_F$ is $\sim 10^4$ times smaller than the node spacing.
+Only 1--2 nodes happen to fall near the Fermi surface, which is completely insufficient for resolving the peaked or oscillatory integrands of $\chi_3$ and $\chi_4$.
+
+In the Sommerfeld--Legendre scheme, the adaptive mapping concentrates $\sim 20$ of the 32 nodes within $\sim T/v_F$ of the Fermi surface at low~$T$, while the remaining nodes cover the bulk.
+Combined with the 32 shifted Laguerre nodes above~$\pF$, the Fermi surface peak is resolved by $\sim 50$ closely spaced nodes --- regardless of how small~$T$ is.
 
 \subsection{Below-\texorpdfstring{$\pF$}{pF} forms}
 
@@ -626,7 +689,47 @@ The final formula is
   \item Because $\sigma = 0$ at $T = 0$, the quadrature evaluates the thermal contribution \emph{directly}, with no analytical subtraction needed and no cancellation.
 \end{itemize}
 
-This is the same $\sigma$ kernel used in the entropy density $s = (g/2\pi^2)\int p^2\,\sigma\,dp$, so the quadrature accuracy is comparable to that of~$s$ itself: $\sim 2 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV.
+\subsection{The \texorpdfstring{$\sigma$}{sigma} representation: entropy and its derivatives}
+\label{sec:sigma-representation}
+
+The Fermi entropy kernel $\sigma(x)$ defined in \cref{eq:sigma-def} is the natural integrand for all entropy-related quantities.
+The entropy density itself is
+\begin{equation}\label{eq:s-sigma}
+  s = \frac{g}{2\pi^2}\int_0^\infty p^2\,\sigma\!\left(\frac{E - \mu}{T}\right) dp\,,
+\end{equation}
+where $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$ is the entropy per mode in a Fermi gas.
+This representation has several advantages over the textbook form $s = (\vep + P - \mu n)/T$:
+
+\begin{enumerate}
+  \item \textbf{No cancellation at low $T$.}
+  The textbook formula involves subtracting three large, individually $O(\pF^4)$ quantities ($\vep$, $P$, $\mu n$) to obtain a result of order $O(T)$ --- a severe cancellation.
+  In the $\sigma$ form, the integrand is directly of order~$T$ (since $\sigma \to 0$ for $|x| \to \infty$, i.e.\ deep inside or far outside the Fermi sea), so no cancellation occurs.
+
+  \item \textbf{Intrinsically non-negative.}
+  $\sigma(x) \geq 0$ for all~$x$, so the integrand is non-negative everywhere.
+  This prevents the sign-change-induced quadrature failures that plague the $\chi_4$ integrand.
+
+  \item \textbf{Smooth and peaked.}
+  $\sigma(x)$ has a maximum $\sigma(0) = \ln 2$ at the Fermi surface ($E = \mu$) and decays exponentially for $|x| \gg 1$.
+  The peak width is $\Delta x \sim O(1)$, corresponding to $\Delta p \sim T/v_F$ in momentum space.
+  The Sommerfeld--Legendre + Laguerre quadrature resolves this peak well.
+
+  \item \textbf{$T = 0$ limit is trivial.}
+  At $T = 0$, every mode is either fully occupied ($f = 1$, $\sigma = 0$) or fully empty ($f = 0$, $\sigma = 0$), so $\sigma = 0$ everywhere and $s = 0$.
+  There is no finite contribution to subtract analytically.
+\end{enumerate}
+
+These same properties carry over to $ds/dT$ through the double-IBP $\sigma \cdot H$ form (\cref{eq:dsdT-sigma}).
+The weight function $H(p) = d[pE(E-\mu)]/dp$ modifies the shape but not the sign or smoothness of the integrand.
+The key point is that $\sigma$ encodes the \emph{thermal} contribution directly, avoiding both the cancellation inherent in $(\vep + P - \mu n)/T$ and the oscillations inherent in $x^2 f(1{-}f)$.
+
+\paragraph{Implementation note.}
+The function $\sigma(x)$ is computed via the numerically stable form
+\begin{equation}
+  \sigma(x) = \ln(1 + e^{-|x|}) + \frac{|x|}{e^{|x|} + 1}\,,
+\end{equation}
+which avoids overflow for large $|x|$ and evaluates correctly to $\sigma(0) = \ln 2$ at the Fermi surface.
+In the code, the entropy density (\cref{eq:s-sigma}) and $ds/dT$ (\cref{eq:dsdT-sigma}) share the same \texttt{FermiEntropySigma} function, ensuring consistency between $s$ and its temperature derivative.
 
 
 \subsection{Can we do better? Obstruction to \texorpdfstring{$\chi_2$}{chi2}-level accuracy}

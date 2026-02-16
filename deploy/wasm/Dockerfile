@@ -20,7 +20,7 @@ FROM thermal-fist-wasm-base AS builder
 # ARG CACHEBUST forces git clone to re-run (bypasses Docker layer cache)
 ARG CACHEBUST=1
 WORKDIR /opt
-RUN git clone --depth 1 -b devel https://github.com/vlvovch/Thermal-FIST.git
+RUN git clone --depth 1 -b master https://github.com/vlvovch/Thermal-FIST.git
 
 WORKDIR /opt/Thermal-FIST/build-wasm
 RUN cd /opt/emsdk && . ./emsdk_env.sh && cd /opt/Thermal-FIST/build-wasm && \
