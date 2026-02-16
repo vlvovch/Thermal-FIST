@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  *
- * Copyright (c) 2014-2025 Volodymyr Vovchenko
+ * Copyright (c) 2014-2026 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */

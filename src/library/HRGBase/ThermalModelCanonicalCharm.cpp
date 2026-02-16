@@ -99,6 +99,12 @@ namespace thermalfist {
 
     CalculateDensitiesGCE();
 
+    // Validate: multi-charmed particles not supported in this model
+    for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
+      if (abs(m_TPS->Particles()[j].Charm()) > 1)
+        throw std::runtime_error("ThermalModelCanonicalCharm::CalculatePrimordialDensities(): Charm particles with absolute charge > 1 not supported! Use ThermalModelCanonical instead.");
+    }
+
     m_Zsum.resize(m_CharmValues.size());
 
     m_partialZ.resize(m_CharmValues.size());
@@ -108,8 +114,6 @@ namespace thermalfist {
       m_partialZ[i] = 0.;
       for (int j = 0; j < m_TPS->ComponentsNumber(); ++j) {
           if (m_CharmValues[i] == m_TPS->Particles()[j].Charm()) m_partialZ[i] += m_densitiesGCE[j] * m_Parameters.SVc;
-          if (abs(m_TPS->Particles()[j].Charm()) > 1)
-            throw std::runtime_error("ThermalModelCanonicalCharm::CalculatePrimordialDensities(): Charm particles with absolute charge > 1 not supported! Use ThermalModelCanonical instead.");
       }
       if (m_partialZ[i] < 1.e-10) m_partialZ[i] += 1e-10;
     }
