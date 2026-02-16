@@ -122,12 +122,12 @@ namespace thermalfist {
     MatrixXd Jinv = Jac.inverse();
 
     // Check for NaN/Inf in inverse
-    bool hasNaN = false;
-    for (int i = 0; i < N && !hasNaN; ++i)
-      for (int j = 0; j < N && !hasNaN; ++j)
+    bool hasNaNInverse = false;
+    for (int i = 0; i < N && !hasNaNInverse; ++i)
+      for (int j = 0; j < N && !hasNaNInverse; ++j)
         if (std::isnan(Jinv(i,j)) || std::isinf(Jinv(i,j)))
-          hasNaN = true;
-    if (hasNaN) {
+          hasNaNInverse = true;
+    if (hasNaNInverse) {
       std::cerr << "**WARNING** NaN/Inf in Jacobian inverse in Broyden::Solve (det=" << det << ")" << std::endl;
       return xcur;
     }
@@ -138,11 +138,11 @@ namespace thermalfist {
       xnew = xold - Jinv * fold;
 
       // Check for NaN in solution
-      bool hasNaN = false;
+      bool hasNaNSolution = false;
       for (int i = 0; i < N; ++i)
         if (std::isnan(xnew[i]) || std::isinf(xnew[i]))
-          hasNaN = true;
-      if (hasNaN) {
+          hasNaNSolution = true;
+      if (hasNaNSolution) {
         std::cerr << "**WARNING** NaN/Inf in Broyden iteration " << m_Iterations << ", solver failed" << std::endl;
         // Return the last valid solution (xold) and mark as failed
         VectorXd::Map(&xcur[0], xcur.size()) = xold;
