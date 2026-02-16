@@ -1119,6 +1119,8 @@ namespace thermalfist {
       m_wtot[i] = m_TotalCorrel[i][i];
       if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
       else m_wtot[i] = 1.;
+      // Guard against NaN propagated from singular correlation matrices
+      if (m_wtot[i] != m_wtot[i]) m_wtot[i] = 1.;
     }
   }
 
@@ -2393,16 +2395,6 @@ namespace thermalfist {
       return nanv;
     }
 
-    // Cross-check: if charge is not constrained, its chemical potential must be zero.
-    for(int i = 0; i < ConservedCharges.size(); ++i) {
-      if (ConservedCharges[i] == 0 && std::abs(mus[i]) > eps) {
-        WarnIllDefinedSoundSpeedOnce(
-          "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
-          "chemical potential of unconstrained charge is non-zero.");
-        return nanv;
-      }
-    }
-
     // Compute fluctuations if not already
     if (!IsFluctuationsCalculated())
       CalculateFluctuations();
@@ -2538,16 +2530,6 @@ namespace thermalfist {
       }
     }
       
-    // Cross-check: if charge is not constrained, its chemical potential must be zero.
-    for(int i = 0; i < ConservedCharges.size(); ++i) {
-      if (ConservedCharges[i] == 0 && std::abs(mus[i]) > eps) {
-        WarnIllDefinedSoundSpeedOnce(
-          "CalculateIsothermalSpeedOfSoundSquared", ConservedCharges, T,
-          "chemical potential of unconstrained charge is non-zero.");
-        return nanv;
-      }
-    }
-
     auto chi2Matr = GetSusceptibilityMatrix(this, ConservedCharges);
     if (!IsMatrixInvertible(chi2Matr)) {
       WarnIllDefinedSoundSpeedOnce(

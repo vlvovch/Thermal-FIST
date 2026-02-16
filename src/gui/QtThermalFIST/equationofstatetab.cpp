@@ -2639,8 +2639,10 @@ void EquationOfStateTab::replot() {
 void EquationOfStateTab::recomputeCalcTable() {
   calcTable.clear();
 
+  int tsize = fCurrentSize;
+
   calcTable.parameter_name = getParameterName();
-  for(int i = 0; i < varvalues.size(); ++i) {
+  for(int i = 0; i < tsize; ++i) {
     calcTable.parameter_values.push_back(varvalues[i]);
     calcTable.temperature_values.push_back(paramsTD[i].T);
   }
@@ -2657,7 +2659,7 @@ void EquationOfStateTab::recomputeCalcTable() {
     calcTable.densities_names.push_back(QString::fromStdString(model->TPS()->Particles()[ic].Name()));
   }
 
-  for(int ir = 0; ir < varvalues.size(); ++ir) {
+  for(int ir = 0; ir < tsize; ++ir) {
     calcTable.densities_values.push_back(paramsTD[ir].densities);
   }
 }

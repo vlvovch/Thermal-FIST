@@ -19,9 +19,27 @@
 
 #include "HelperRoutines.h"
 
+#include <cmath>
+
 #include "HRGBase/ThermalModelBase.h"
 
 using namespace thermalfist;
+
+namespace {
+  // Safe division: returns 0 when denominator is 0
+  inline double safeDiv(double num, double den) {
+    if (den == 0.)
+      return 0.;
+    return num / den;
+  }
+
+  // Create a table item, displaying "–" for NaN/inf values
+  inline QTableWidgetItem* nanSafeItem(double val) {
+    if (std::isfinite(val))
+      return new QTableWidgetItem(QString::number(val));
+    return new QTableWidgetItem(QString::fromUtf8("\xe2\x80\x93")); // en-dash "–"
+  }
+}
 
 CorrelationsDialog::CorrelationsDialog(QWidget* parent, ThermalModelBase* mod) :
   QDialog(parent), model(mod)
@@ -172,7 +190,7 @@ void CorrelationsDialog::recalculate()
           else
             yield2 = model->GetYield(pdg2, feed) - model->GetYield(-pdg2, feed);
 
-          tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(yield1/yield2)));
+          tableCorr->setItem(i, j, nanSafeItem(safeDiv(yield1, yield2)));
         }
         else if (comboQuantity->currentIndex() == 1)
           tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr)));
@@ -223,15 +241,15 @@ void CorrelationsDialog::recalculate()
                 - model->GetDensity(-pdg1, Feeddown::Primordial) * model->Volume();
               N2 = model->GetDensity(pdg2, Feeddown::Primordial) * model->Volume()
                 - model->GetDensity(-pdg2, Feeddown::Primordial) * model->Volume();
-              wn1 = (model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg1)
+              wn1 = safeDiv(model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg1)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg1)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg1)
-                + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1)) / N1;
+                + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1), N1);
               wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
-              wn2 = (model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, pdg2)
+              wn2 = safeDiv(model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, pdg2)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(pdg2, -pdg2)
                 - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg2, pdg2)
-                + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg2, -pdg2)) / N2;
+                + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg2, -pdg2), N2);
               wn2 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
             }
             else {
@@ -239,15 +257,15 @@ void CorrelationsDialog::recalculate()
                 - model->GetDensity(-pdg1, Feeddown::StabilityFlag) * model->Volume();
               N2 = model->GetDensity(pdg2, Feeddown::StabilityFlag) * model->Volume()
                 - model->GetDensity(-pdg2, Feeddown::StabilityFlag) * model->Volume();
-              wn1 = (model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg1)
+              wn1 = safeDiv(model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg1)
                 - model->TwoParticleSusceptibilityFinalByPdg(pdg1, -pdg1)
                 - model->TwoParticleSusceptibilityFinalByPdg(-pdg1, pdg1)
-                + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg1)) / N1;
+                + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg1), N1);
               wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
-              wn2 = (model->TwoParticleSusceptibilityFinalByPdg(pdg2, pdg2)
+              wn2 = safeDiv(model->TwoParticleSusceptibilityFinalByPdg(pdg2, pdg2)
                 - model->TwoParticleSusceptibilityFinalByPdg(pdg2, -pdg2)
                 - model->TwoParticleSusceptibilityFinalByPdg(-pdg2, pdg2)
-                + model->TwoParticleSusceptibilityFinalByPdg(-pdg2, -pdg2)) / N2;
+                + model->TwoParticleSusceptibilityFinalByPdg(-pdg2, -pdg2), N2);
               wn2 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
             }
           }
@@ -261,16 +279,16 @@ void CorrelationsDialog::recalculate()
             }
             if (i != j) {
               //tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
-              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(N1 * N2))));
+              tableCorr->setItem(i, j, nanSafeItem(safeDiv(corr, sqrt(N1 * N2))));
             }
             else {
-              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / N1)));
+              tableCorr->setItem(i, j, nanSafeItem(safeDiv(corr, N1)));
             }
           }
           // Pearson
           else if (comboQuantity->currentIndex() == 4) {
             double var1 = wn1 * N1, var2 = wn2 * N2;
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+            tableCorr->setItem(i, j, nanSafeItem(safeDiv(corr, sqrt(var1 * var2))));
           }
           // Factorial cumulant (coupling)
           else if (comboQuantity->currentIndex() == 5) {
@@ -279,7 +297,7 @@ void CorrelationsDialog::recalculate()
             if (i == j) {
               tcorr -= N1;
             }
-            tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+            tableCorr->setItem(i, j, nanSafeItem(safeDiv(tcorr, mean1 * mean2)));
           }
           else {
             if (pdg1 == pdg2) {
@@ -289,14 +307,14 @@ void CorrelationsDialog::recalculate()
 
             // Delta
             if (comboQuantity->currentIndex() == 6) {
-              double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
-              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(DeltaN1N2)));
+              double DeltaN1N2 = safeDiv(-(N1 * wn2 - N2 * wn1), (N2 - N1));
+              tableCorr->setItem(i, j, nanSafeItem(DeltaN1N2));
               continue;
             }
             // Sigma
             else {
-              double SigmaN1N2 = (N1 * wn2 + N2 * wn1 - 2. * corr) / (N2 + N1);
-              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(SigmaN1N2)));
+              double SigmaN1N2 = safeDiv(N1 * wn2 + N2 * wn1 - 2. * corr, N2 + N1);
+              tableCorr->setItem(i, j, nanSafeItem(SigmaN1N2));
               continue;
             }
           }
@@ -333,7 +351,7 @@ void CorrelationsDialog::recalculate()
             if (comboQuantity->currentIndex() == 0) {
               double yield1 = model->ConservedChargeDensity((ConservedCharge::Name)i);
               double yield2 = model->ConservedChargeDensity((ConservedCharge::Name)j);
-              tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(yield1/yield2)));
+              tableCorr->setItem(i, j, nanSafeItem(safeDiv(yield1, yield2)));
             }
             // Susceptibility
             else if (comboQuantity->currentIndex() == 1) {
@@ -345,8 +363,8 @@ void CorrelationsDialog::recalculate()
             else {
               double N1 = model->ConservedChargeDensity((ConservedCharge::Name)i) * model->Volume();
               double N2 = model->ConservedChargeDensity((ConservedCharge::Name)j) * model->Volume();
-              double wn1 = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)i) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N1;
-              double wn2 = model->Susc((ConservedCharge::Name)j, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
+              double wn1 = safeDiv(model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)i) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N1);
+              double wn2 = safeDiv(model->Susc((ConservedCharge::Name)j, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N2);
               double corr = model->Susc((ConservedCharge::Name)i, (ConservedCharge::Name)j) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
               // Scaled moment
               if (comboQuantity->currentIndex() == 3) {
@@ -354,13 +372,13 @@ void CorrelationsDialog::recalculate()
                   tableCorr->setItem(i, j, new QTableWidgetItem("N/A"));
                 }
                 else {
-                  tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / N1)));
+                  tableCorr->setItem(i, j, nanSafeItem(safeDiv(corr, N1)));
                 }
               }
               // Pearson
               else if (comboQuantity->currentIndex() == 4) {
                 double var1 = wn1 * N1, var2 = wn2 * N2;
-                tableCorr->setItem(i, j, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+                tableCorr->setItem(i, j, nanSafeItem(safeDiv(corr, sqrt(var1 * var2))));
               }
               // Factorial cumulant (coupling)
               else if (comboQuantity->currentIndex() == 5) {
@@ -369,17 +387,17 @@ void CorrelationsDialog::recalculate()
                 if (i1 == i2) {
                   tcorr -= N1;
                 }
-                tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+                tableCorr->setItem(i1, i2, nanSafeItem(safeDiv(tcorr, mean1 * mean2)));
               }
               // Delta
               else if (comboQuantity->currentIndex() == 6) {
-                double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
-                tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
+                double DeltaN1N2 = safeDiv(-(N1 * wn2 - N2 * wn1), N2 - N1);
+                tableCorr->setItem(i1, i2, nanSafeItem(DeltaN1N2));
               }
               // Sigma
               else {
-                double SigmaN1N2 = (N1 * wn2 + N2 * wn1 - 2. * corr) / (N2 + N1);
-                tableCorr->setItem(i1, i2, new QTableWidgetItem(QString::number(SigmaN1N2)));
+                double SigmaN1N2 = safeDiv(N1 * wn2 + N2 * wn1 - 2. * corr, N2 + N1);
+                tableCorr->setItem(i1, i2, nanSafeItem(SigmaN1N2));
               }
             }
             i2++;
@@ -460,7 +478,7 @@ void CorrelationsDialog::recalculate()
                 yield1 = model->GetDensity(pdg1, Feeddown::StabilityFlag) - model->GetDensity(-pdg1, Feeddown::StabilityFlag);
             }
             double yield2 = model->ConservedChargeDensity((ConservedCharge::Name)cc);
-            tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(yield1/yield2)));
+            tableCorr->setItem(i, i2, nanSafeItem(safeDiv(yield1, yield2)));
           }
           else if (comboQuantity->currentIndex() == 1)
             tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr)));
@@ -475,13 +493,13 @@ void CorrelationsDialog::recalculate()
                 N1 = model->GetDensity(pdg1, Feeddown::Primordial) * model->Volume();
                 N2 = model->ConservedChargeDensity((ConservedCharge::Name)cc) * model->Volume();
                 wn1 = model->ScaledVariancePrimordial(model->TPS()->PdgToId(pdg1));
-                wn2 = model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
+                wn2 = safeDiv(model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N2);
               }
               else {
                 N1 = model->GetDensity(pdg1, Feeddown::StabilityFlag) * model->Volume();
                 N2 = model->ConservedChargeDensity((ConservedCharge::Name)cc) * model->Volume();
                 wn1 = model->ScaledVarianceTotal(model->TPS()->PdgToId(pdg1));
-                wn2 = model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
+                wn2 = safeDiv(model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N2);
               }
             }
             else {
@@ -489,23 +507,23 @@ void CorrelationsDialog::recalculate()
                 N1 = model->GetDensity(pdg1, Feeddown::Primordial) * model->Volume()
                   - model->GetDensity(-pdg1, Feeddown::Primordial) * model->Volume();
                 N2 = model->ConservedChargeDensity((ConservedCharge::Name)cc) * model->Volume();
-                wn1 = (model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg1)
+                wn1 = safeDiv(model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, pdg1)
                   - model->TwoParticleSusceptibilityPrimordialByPdg(pdg1, -pdg1)
                   - model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, pdg1)
-                  + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1)) / N1;
+                  + model->TwoParticleSusceptibilityPrimordialByPdg(-pdg1, -pdg1), N1);
                 wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
-                wn2 = model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
+                wn2 = safeDiv(model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N2);
               }
               else {
                 N1 = model->GetDensity(pdg1, Feeddown::StabilityFlag) * model->Volume()
                   - model->GetDensity(-pdg1, Feeddown::StabilityFlag) * model->Volume();
                 N2 = model->ConservedChargeDensity((ConservedCharge::Name)cc) * model->Volume();
-                wn1 = (model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg1)
+                wn1 = safeDiv(model->TwoParticleSusceptibilityFinalByPdg(pdg1, pdg1)
                   - model->TwoParticleSusceptibilityFinalByPdg(pdg1, -pdg1)
                   - model->TwoParticleSusceptibilityFinalByPdg(-pdg1, pdg1)
-                  + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg1)) / N1;
+                  + model->TwoParticleSusceptibilityFinalByPdg(-pdg1, -pdg1), N1);
                 wn1 *= model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3);
-                wn2 = model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3) / N2;
+                wn2 = safeDiv(model->Susc((ConservedCharge::Name)cc, (ConservedCharge::Name)cc) * model->Volume() * pow(model->Parameters().T, 3) * pow(xMath::GeVtoifm(), 3), N2);
               }
             }
 
@@ -518,7 +536,7 @@ void CorrelationsDialog::recalculate()
             // Pearson
             else if (comboQuantity->currentIndex() == 4) {
               double var1 = wn1 * N1, var2 = wn2 * N2;
-              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(corr / sqrt(var1 * var2))));
+              tableCorr->setItem(i, i2, nanSafeItem(safeDiv(corr, sqrt(var1 * var2))));
             }
             // Factorial cumulant (coupling)
             else if (comboQuantity->currentIndex() == 5) {
@@ -527,17 +545,17 @@ void CorrelationsDialog::recalculate()
               if (i == i2) {
                 tcorr -= N1;
               }
-              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(tcorr / mean1 / mean2)));
+              tableCorr->setItem(i, i2, nanSafeItem(safeDiv(tcorr, mean1 * mean2)));
             }
             // Delta
             else if (comboQuantity->currentIndex() == 6) {
-              double DeltaN1N2 = -(N1 * wn2 - N2 * wn1) / (N2 - N1);
-              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(DeltaN1N2)));
+              double DeltaN1N2 = safeDiv(-(N1 * wn2 - N2 * wn1), N2 - N1);
+              tableCorr->setItem(i, i2, nanSafeItem(DeltaN1N2));
             }
             // Sigma
             else {
-              double SigmaN1N2 = (N1 * wn2 + N2 * wn1 - 2. * corr) / (N2 + N1);
-              tableCorr->setItem(i, i2, new QTableWidgetItem(QString::number(SigmaN1N2)));
+              double SigmaN1N2 = safeDiv(N1 * wn2 + N2 * wn1 - 2. * corr, N2 + N1);
+              tableCorr->setItem(i, i2, nanSafeItem(SigmaN1N2));
             }
           }
 
