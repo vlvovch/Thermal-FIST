@@ -89,6 +89,7 @@ class chi2ProfileDialog : public QDialog
 
     bool fRunning;
     std::atomic<int> fStop{0};
+    chi2ProfileWorker *m_worker = nullptr;
 
     thermalfist::ThermalModelBase *model;
     thermalfist::ThermalParticleSystem *TPS;
