@@ -1305,6 +1305,16 @@ namespace thermalfist {
     double ConservedChargeDensity(ConservedCharge::Name chg);
 
     /**
+     * \brief An absolute density of a conserved charge (in fm^-3)
+     *
+     * Sum of absolute values of charge contributions: \f$ \sum_i |q_i| n_i \f$
+     *
+     * \param chg Conserved charge
+     * \return  Absolute conserved charge density
+     */
+    double AbsoluteConservedChargeDensity(ConservedCharge::Name chg);
+
+    /**
      * \brief Temperature derivative of a density of a conserved charge (in fm^-3 GeV^-1)
      *
      * \f$ \frac{\partial \rho_{c_i}}{\partial T} \f$
