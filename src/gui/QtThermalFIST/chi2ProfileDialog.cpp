@@ -369,6 +369,7 @@ void chi2ProfileDialog::calculate() {
 
       chi2ProfileWorker *wrk = new chi2ProfileWorker(modelFit,comboParameter->currentText().toStdString(), &Avalues, &params,
                                                       pCurrentSize, &fStop, this);
+      m_worker = wrk;
 
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
@@ -402,7 +403,7 @@ void chi2ProfileDialog::replot() {
   plot->yAxis->setRange(spinchi2min->value(), spinchi2max->value());
 
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
 
   plot->graph(0)->data()->clear();
@@ -452,7 +453,7 @@ void chi2ProfileDialog::replot() {
 
 void chi2ProfileDialog::updateProgress() {
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
   progBar->setRange(0, vecTotalSize[cindex]);
   progBar->setValue(*vecCurrentSize[cindex]);
@@ -493,7 +494,7 @@ void chi2ProfileDialog::parameterChanged(int index)
 void chi2ProfileDialog::limitsChanged()
 {
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
 
   vecAleft[cindex]  = spinAmin->value();
@@ -503,6 +504,12 @@ void chi2ProfileDialog::limitsChanged()
 
 void chi2ProfileDialog::finalize() {
     calcTimer->stop();
+
+    // Wait for worker thread to finish before deleting objects it may still reference
+    if (m_worker != nullptr) {
+      m_worker->wait();
+      m_worker = nullptr;  // deleteLater() handles actual deletion
+    }
 
     if (modelFit != NULL)
       delete modelFit;
@@ -525,7 +532,7 @@ void chi2ProfileDialog::writetoFile() {
   if (!fRunning) {
 
     int cindex = comboParameter->currentIndex();
-    if (cindex<0 || cindex>static_cast<int>(vecParams.size()))
+    if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
       return;
 
 #ifdef Q_OS_WASM
