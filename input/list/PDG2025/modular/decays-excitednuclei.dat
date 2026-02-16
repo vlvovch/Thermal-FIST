@@ -162,7 +162,7 @@
 1.0             1000020040 2112      # He5(1) -> He4 + n
 
 
-10000305002                              # extra (charm/nuclear)
+100003005002                              # extra (charm/nuclear)
 2                                        # 2 decay channels
 0.7             1000020030 1000010020 # Li5(2) -> He3 + d
 0.3             1000020040 2212      # Li5(2) -> He4 + p
