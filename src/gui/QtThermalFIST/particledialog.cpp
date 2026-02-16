@@ -16,6 +16,7 @@
 #include <QMenu>
 #include <QKeyEvent>
 #include <QDebug>
+#include <QFontDatabase>
 
 #include "SpectralFunctionDialog.h"
 #include "HelperRoutines.h"
@@ -36,8 +37,7 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
   QLabel* labInfo = new QLabel(tr("Information:"));
   labInfo->setFont(font);
   data = new QTextEdit();
-  QFont font2("Monospace");
-  font2.setStyleHint(QFont::TypeWriter);
+  QFont font2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
   data->setFont(font2);
   data->setReadOnly(true);
   data->setPlainText(GetParticleInfo());

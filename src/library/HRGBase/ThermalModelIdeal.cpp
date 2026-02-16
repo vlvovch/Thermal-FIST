@@ -71,6 +71,7 @@ namespace thermalfist {
       m_wprim[i] = m_PrimCorrel[i][i];
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
+      if (m_wprim[i] != m_wprim[i]) m_wprim[i] = 1.;
     }
 
     m_TwoParticleCorrelationsCalculated = true;
@@ -118,9 +119,19 @@ namespace thermalfist {
 
       tmp1 = m_densitiestotal[i];
 
-      m_wtot[i] = tmp2 / tmp1;
-      m_skewtot[i] = tmp3 / tmp2;
-      m_kurttot[i] = tmp4 / tmp2;
+      if (tmp1 > 0.)
+        m_wtot[i] = tmp2 / tmp1;
+      else
+        m_wtot[i] = 1.;
+
+      if (tmp2 > 0.) {
+        m_skewtot[i] = tmp3 / tmp2;
+        m_kurttot[i] = tmp4 / tmp2;
+      }
+      else {
+        m_skewtot[i] = 1.;
+        m_kurttot[i] = 1.;
+      }
     }
 
     m_FluctuationsCalculated = true;

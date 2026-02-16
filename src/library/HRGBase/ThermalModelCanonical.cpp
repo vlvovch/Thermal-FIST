@@ -740,6 +740,7 @@ Obtained: %lf\n\
       m_wprim[i] = m_PrimCorrel[i][i];
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
+      if (m_wprim[i] != m_wprim[i]) m_wprim[i] = 1.;
     }
 
     m_TwoParticleCorrelationsCalculated = true;

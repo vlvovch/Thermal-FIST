@@ -52,6 +52,7 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It 
 - Thermodynamic stability checks via Hessian eigenvalue analysis
 - More stable cosmic trajectory calculations in the GUI
 - More lenient handling of missing decays
+- Fixed slow font lookup on macOS due to missing "Monospace" font family in particle dialog
 
 ## Effective Mass Model
 
