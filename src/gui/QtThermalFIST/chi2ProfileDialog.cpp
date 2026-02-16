@@ -387,8 +387,6 @@ void chi2ProfileDialog::calculate() {
         calcTimer->start(10);
       } else {
         // No threading (single-threaded WASM) - run synchronously
-        // Signal emission is safe here since everything is on main thread
-        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
         wrk->run();
         finalize();
         wrk->deleteLater();
