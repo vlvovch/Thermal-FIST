@@ -905,6 +905,19 @@ namespace thermalfist {
     return 0.0;
   }
 
+  double ThermalModelBase::AbsoluteConservedChargeDensity(ConservedCharge::Name chg)
+  {
+    if (chg == ConservedCharge::BaryonCharge)
+      return AbsoluteBaryonDensity();
+    if (chg == ConservedCharge::ElectricCharge)
+      return AbsoluteElectricChargeDensity();
+    if (chg == ConservedCharge::StrangenessCharge)
+      return AbsoluteStrangenessDensity();
+    if (chg == ConservedCharge::CharmCharge)
+      return AbsoluteCharmDensity();
+    return 0.0;
+  }
+
   double ThermalModelBase::ConservedChargeDensitydT(ConservedCharge::Name chg)
   {
     if (!IsTemperatureDerivativesCalculated())
@@ -2337,7 +2350,16 @@ namespace thermalfist {
       ConservedCharges[2] = 0;
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
-      
+
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the susceptibility/Hessian matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    for (int i = 0; i < 4; ++i) {
+      if (ConservedCharges[i] == 1
+          && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+        ConservedCharges[i] = 0;
+    }
 
     // Zero chemical potentials
     {
@@ -2485,6 +2507,16 @@ namespace thermalfist {
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
 
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the susceptibility matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    for (int i = 0; i < 4; ++i) {
+      if (ConservedCharges[i] == 1
+          && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+        ConservedCharges[i] = 0;
+    }
+
     int Ndens = 0;
     for (int i = 0; i < 4; ++i)
       if (ConservedCharges[i] == 1)
@@ -2577,6 +2609,19 @@ namespace thermalfist {
       ConservedCharges[2] = 0;
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
+
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the Hessian matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    {
+      const double eps = 1e-14;
+      for (int i = 0; i < 4; ++i) {
+        if (ConservedCharges[i] == 1
+            && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+          ConservedCharges[i] = 0;
+      }
+    }
 
     // Calculate the numerator
     double TdsdT = HeatCapacityMu();

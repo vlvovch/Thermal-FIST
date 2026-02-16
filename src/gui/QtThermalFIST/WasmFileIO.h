@@ -108,7 +108,7 @@ inline void openFile(QWidget* parent,
     QFileDialog::getOpenFileContent(
         filter,
         [callback](const QString& fileName, const QByteArray& fileContent) {
-            if (fileName.isEmpty() || fileContent.isEmpty()) {
+            if (fileName.isEmpty()) {
                 callback(QString());
                 return;
             }
