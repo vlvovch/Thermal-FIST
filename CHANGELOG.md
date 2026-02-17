@@ -35,6 +35,7 @@ The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It 
 
 ## Improved low-temperature ideal gas functions
 
+- Replaced simple Gauss-Laguerre quadrature with a **Sommerfeld-Legendre** scheme that splits integration at the Fermi momentum p_F: 32-point Gauss-Legendre below p_F with an adaptive mapping that concentrates nodes near the Fermi surface at low T, plus 32-point shifted Gauss-Laguerre above p_F. The old scheme failed to resolve the sharp Fermi step at low temperatures, producing errors of 100–390% in susceptibilities
 - Applied integration-by-parts (IBP) decomposition to Fermi-Dirac integrands for baryon susceptibilities (χ₂, χ₃, χ₄), replacing oscillatory Fermi-Dirac derivative products with smoother forms amenable to the Sommerfeld-Legendre + Laguerre quadrature scheme
 - Applied double-IBP (σ·H) form for ds/dT achieving ~2×10⁻⁴ relative accuracy at low T (16× improvement over original integrand)
 - Extracted analytic T = 0 values for susceptibilities and entropy/energy density derivatives, decomposing each result into a known constant plus a thermal correction that vanishes as T → 0
