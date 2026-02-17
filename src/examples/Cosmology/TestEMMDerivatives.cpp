@@ -230,3 +230,19 @@ int main() {
 
   return 0;
 }
+
+/**
+ * \example TestEMMDerivatives.cpp
+ *
+ * Tests the thermodynamic consistency of the RealGas HRG model
+ * with effective mass model (EMM) for pions and differentiated
+ * excluded-volume/mean-field parameters for mesons and baryons.
+ *
+ * The program verifies:
+ *   1. The thermodynamic identity: e + P = T*s + sum(mu_i * n_i).
+ *   2. Analytical temperature derivatives (ds/dT, de/dT) against numerical finite differences.
+ *   3. The relations dP/dmuB = nB and dP/dmuQ = nQ.
+ *
+ * Tests are run at various temperatures and chemical potentials,
+ * including configurations in the Bose-Einstein condensation (BEC) phase.
+ */
