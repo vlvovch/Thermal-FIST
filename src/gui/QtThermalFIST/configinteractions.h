@@ -62,6 +62,8 @@ public:
   QLineEdit* leFilePath;
   QPushButton* buttonChooseFile;
 
+  QCheckBox* CBSearchMultipleSolutions;
+
   QGroupBox* groupMC;
   QCheckBox* CBEVMult, * CBEVCoord, * CBEVSPR;
 

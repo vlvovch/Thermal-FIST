@@ -14,12 +14,14 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileDialog>
 #include <QDebug>
 #include <cstdio>
 #include <vector>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -40,6 +42,7 @@
 #include "resultdialog.h"
 #include "fittoexperimenttab.h"
 #include "correlationsdialog.h"
+#include "HelperRoutines.h"
 
 using namespace thermalfist;
 
@@ -64,6 +67,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     tableParticles->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableParticles->setSelectionMode(QAbstractItemView::SingleSelection);
     tableParticles->resizeColumnsToContents();
+    configureTableRowHeight(tableParticles);
     connect(tableParticles->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));
     connect(tableParticles, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(particleInfoDoubleClick(QModelIndex)));
 
@@ -384,9 +388,17 @@ void ModelTab::particleInfoDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
       labelHint->setVisible(false);
+#ifdef Q_OS_WASM
+      // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+      ParticleDialog *dialog = new ParticleDialog(this, model, myModel->GetRowToParticle()[row]);
+      dialog->setAttribute(Qt::WA_DeleteOnClose);
+      dialog->setModal(true);
+      dialog->show();
+#else
       ParticleDialog dialog(this, model, myModel->GetRowToParticle()[row]);
       dialog.setWindowFlags(Qt::Window);
       dialog.exec();
+#endif
     }
 }
 
@@ -505,6 +517,14 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     };
 
     if (messageType != 0) {
+#ifdef Q_OS_WASM
+      // WASM: Use static method which may handle Asyncify better
+      QMessageBox::StandardButton ret = QMessageBox::warning(
+        this, tr("Warning"), messages[messageType],
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      if (ret == QMessageBox::No)
+        return;
+#else
       QMessageBox msgBox;
       msgBox.setText(messages[messageType]);
       msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -512,9 +532,10 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
       int ret = msgBox.exec();
       if (ret == QMessageBox::No)
         return;
+#endif
     }
   }
-  
+
   ThermalModelBase *modelnew;
 
   if (config.ModelType == ThermalModelConfig::DiagonalEV) {
@@ -812,12 +833,10 @@ void ModelTab::calculateFitted()
 
 void ModelTab::writetofile() {
     if (model->IsCalculated()) {
-        QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.dat", tr("*.dat"));
-        if (path.length()>0)
-        {
-            FILE *f = fopen(path.toStdString().c_str(), "w");
+        // Lambda to write the data to a file
+        auto writeData = [this](FILE* f) {
             fprintf(f, "%20s%15s%8s%8s%8s%8s%8s%15s%15s\n", "Name", "PDGID", "Stable", "B", "Q", "S", "C", "Primary yield", "Total yield");
-            for(int i=0;i<model->TPS()->Particles().size();++i) {
+            for(size_t i=0;i<model->TPS()->Particles().size();++i) {
                 fprintf(f, "%20s%15lld%8d%8d%8d%8d%8d%15E%15E\n",
                         model->TPS()->Particles()[i].Name().c_str(),
                         model->TPS()->Particles()[i].PdgId(),
@@ -829,8 +848,33 @@ void ModelTab::writetofile() {
                         model->Densities()[i] * model->Volume(),
                         model->TotalDensities()[i] * model->Volume());
             }
+        };
+
+#ifdef Q_OS_WASM
+        QString tempPath = WasmFileIO::getSandboxTempDir() + "/output.dat";
+        FILE *f = fopen(tempPath.toStdString().c_str(), "w");
+        if (f) {
+            writeData(f);
             fclose(f);
+            // Read back and trigger download
+            QFile file(tempPath);
+            if (file.open(QIODevice::ReadOnly)) {
+                QByteArray data = file.readAll();
+                file.close();
+                WasmFileIO::saveFile(data, "output.dat");
+            }
         }
+#else
+        QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.dat", tr("*.dat"));
+        if (path.length()>0)
+        {
+            FILE *f = fopen(path.toStdString().c_str(), "w");
+            if (f) {
+                writeData(f);
+                fclose(f);
+            }
+        }
+#endif
     }
 }
 
@@ -843,23 +887,49 @@ void ModelTab::switchStability(bool showStable) {
 }
 
 void ModelTab::showResults() {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  ResultDialog *dialog = new ResultDialog(this, model, &flucts);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   ResultDialog dialog(this, model, &flucts);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 void ModelTab::showCorrelations() {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  CorrelationsDialog *dialog = new CorrelationsDialog(this, model);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   CorrelationsDialog dialog(this, model);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 void ModelTab::showValidityCheckLog() {
   if (!model->IsLastSolutionOK()) {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated message box with show() to avoid Asyncify issues
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    msgBox->setText("There were some issues in calculation. See the log below:");
+    msgBox->setDetailedText(model->ValidityCheckLog().c_str());
+    msgBox->setModal(true);
+    msgBox->show();
+#else
     QMessageBox msgBox;
     msgBox.setText("There were some issues in calculation. See the log below:");
     msgBox.setDetailedText(model->ValidityCheckLog().c_str());
     msgBox.exec();
+#endif
   }
 }
 

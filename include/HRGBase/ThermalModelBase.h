@@ -906,7 +906,12 @@ namespace thermalfist {
      * \param order Up to which order the susceptibilities are computed
      * \return std::vector<double> A vector with computed values of diagonal susceptibilities
      */
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+    /**
+     * \param dimensionfull If true, return d^n P / dmu^n (dimensionfull).
+     *                      If false (default), return d^n (P/T^4) / d(mu/T)^n (dimensionless).
+     *                      The dimensionfull option avoids divergences at T=0.
+     */
+    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4, bool dimensionfull = false);
 
     /**
      * \brief Calculates (mixed) susceptibilities of arbitrary "conserved" charges.
@@ -926,6 +931,23 @@ namespace thermalfist {
      * \return std::vector<double> A vector with computed values of susceptibilities
      */
     virtual std::vector<double> CalculateGeneralizedSusceptibilities(const std::vector<std::vector<double>> &chgs);
+
+    /**
+     * \brief Whether to search for multiple solutions for the case when first-order phase transition may be present.
+     * 
+     *        Only relevant for interacting systems. Does nothing elsewhere.
+     * 
+     * \param search Whether multiple solutions should be considered. False by default.
+     */
+    virtual void SetMultipleSolutionsMode(bool search) { }
+
+    /**
+     * \brief Whether multiple solutions are being searched for.
+     * This is a placeholder method as the actual implementation is provided only in interacting systems.
+     *  
+     * \return false Multiple solutions not considered (placeholder)
+     */
+    virtual bool UseMultipleSolutionsMode() const { return false; }
 
 
     //virtual double GetParticlePrimordialDensity(unsigned int);
@@ -969,8 +991,12 @@ namespace thermalfist {
     /// Absolute charm quark content density (fm\f$^{-3}\f$)
     double AbsoluteCharmDensity() { return CalculateAbsoluteCharmDensity(); }
 
-    /// Specific heat at constant chemical potentials, cV = T * (ds/dT)_\mu
-    double SpecificHeatChem() { return CalculateSpecificHeatChem(); }
+    /// Heat capacity at constant chemical potentials, c_\mu = T * (ds/dT)_\mu (fm^-3)
+    double HeatCapacityMu() { return CalculateHeatCapacityMu(); }
+
+    /// @deprecated Use HeatCapacityMu() instead
+    [[deprecated("Use HeatCapacityMu() instead")]]
+    double SpecificHeatChem() { return CalculateHeatCapacityMu(); }
 
     /**
      * \brief Calculates the adiabatic speed of sound squared (cs^2) in the thermal model.
@@ -1013,9 +1039,42 @@ namespace thermalfist {
      *
      * \return The calculated heat capacity at constant volume and densities (c_V) in fm^-3.
      */
-    double HeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) { 
-      return CalculateHeatCapacity(rhoBconst, rhoQconst, rhoSconst, rhoCconst); 
+    double HeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true) {
+      return CalculateHeatCapacity(rhoBconst, rhoQconst, rhoSconst, rhoCconst);
     }
+
+    /**
+     * \brief Computes the pressure Hessian matrix for thermodynamic stability analysis.
+     *
+     * Returns a 5x5 matrix of second derivatives of pressure:
+     * \f[
+     * H = \begin{pmatrix}
+     * \frac{\partial^2 P}{\partial T^2} & \frac{\partial^2 P}{\partial T \partial \mu_B} & \frac{\partial^2 P}{\partial T \partial \mu_Q} & \frac{\partial^2 P}{\partial T \partial \mu_S} & \frac{\partial^2 P}{\partial T \partial \mu_C} \\
+     * \frac{\partial^2 P}{\partial \mu_B \partial T} & \frac{\partial^2 P}{\partial \mu_B^2} & \cdots & \cdots & \cdots \\
+     * \vdots & & \ddots & & \vdots \\
+     * \frac{\partial^2 P}{\partial \mu_C \partial T} & \cdots & \cdots & \cdots & \frac{\partial^2 P}{\partial \mu_C^2}
+     * \end{pmatrix}
+     * \f]
+     *
+     * Matrix indices: 0=T, 1=μ_B, 2=μ_Q, 3=μ_S, 4=μ_C
+     *
+     * The system is thermodynamically stable if the Hessian is positive definite.
+     *
+     * Units: fm^-3 GeV^-1 (second derivatives of pressure w.r.t. T and μ in GeV)
+     *
+     * \return 5x5 Hessian matrix as vector of vectors
+     */
+    std::vector<std::vector<double>> PressureHessian();
+
+    /**
+     * \brief Checks if the system is thermodynamically stable.
+     *
+     * Thermodynamic stability requires the pressure Hessian matrix to be
+     * positive semi-definite, i.e., all eigenvalues must be non-negative.
+     *
+     * \return true if the system is thermodynamically stable, false otherwise
+     */
+    bool IsThermodynamicallyStable();
 
     //@{
     /// Implementation of the equation of state functions
@@ -1034,7 +1093,8 @@ namespace thermalfist {
     virtual double CalculateAbsoluteStrangenessDensityModulo();
     virtual double CalculateAbsoluteCharmDensityModulo();
     virtual double CalculateEnergyDensityDerivativeT() = 0;
-    virtual double CalculateSpecificHeatChem();
+    virtual double CalculateEntropyDensityDerivativeT() = 0;
+    virtual double CalculateHeatCapacityMu();
     virtual double CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     virtual double CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
     virtual double CalculateHeatCapacity(bool rhoBconst = true, bool rhoQconst = true, bool rhoSconst = true, bool rhoCconst = true);
@@ -1151,12 +1211,16 @@ namespace thermalfist {
     /// the CalculateDensities() method
     bool IsCalculated() const { return m_Calculated; }
 
+    /// Whether two-particle correlations were calculated with
+    /// the CalculateTwoParticleCorrelations() method
+    bool IsTwoParticleCorrelationsCalculated() const { return m_TwoParticleCorrelationsCalculated; }
+
     /// Whether fluctuations were calculated with
     /// the CalculateFluctuations() method
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }
 
-    /// Whether fluctuations were calculated with
-    /// the CalculateFluctuations() method
+    /// Whether susceptibilities were calculated with
+    /// the CalculateSusceptibilityMatrix() method
     bool IsSusceptibilitiesCalculated() const { return m_SusceptibilitiesCalculated; }
 
     /// Whether temperature derivatives were calculated with
@@ -1239,6 +1303,16 @@ namespace thermalfist {
      * \return  Conserved charge density \f$ \rho_{c_i} \f$
      */
     double ConservedChargeDensity(ConservedCharge::Name chg);
+
+    /**
+     * \brief An absolute density of a conserved charge (in fm^-3)
+     *
+     * Sum of absolute values of charge contributions: \f$ \sum_i |q_i| n_i \f$
+     *
+     * \param chg Conserved charge
+     * \return  Absolute conserved charge density
+     */
+    double AbsoluteConservedChargeDensity(ConservedCharge::Name chg);
 
     /**
      * \brief Temperature derivative of a density of a conserved charge (in fm^-3 GeV^-1)
@@ -1408,6 +1482,7 @@ namespace thermalfist {
 
     bool m_Calculated;
     bool m_FeeddownCalculated;
+    bool m_TwoParticleCorrelationsCalculated;
     bool m_FluctuationsCalculated;
     bool m_SusceptibilitiesCalculated;
     bool m_GCECalculated;

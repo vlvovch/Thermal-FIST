@@ -1,0 +1,25 @@
+# ALICE Pb-Pb sqrt(sNN) = 5.02 TeV, 80-90% centrality
+# Yields are symmetrized between particles and antiparticles by taking the average
+# (values for charge-conjugate pairs are (particle+antiparticle)/2)
+#
+# Light hadrons:
+#   pi (pdg=211), K (pdg=321), p (pdg=2212)
+#   Source: Table IV in Phys. Rev. C 101, 044907 (2020) (ALICE Collaboration)
+#
+# Strange hadrons:
+#   K0S (pdg=310), Lambda (pdg=3122), Xi- (pdg=3312), Omega- (pdg=3334)
+#   Source: Table 3 in arXiv:2511.10360 (ALICE Collaboration)
+#
+# Resonances:
+#   K*0 (pdg=313), phi (pdg=333)
+#   Note: Pb-Pb 5.02 TeV K*0 and phi yields in Phys. Rev. C 106, 034907 (2022) are available up to 70-80% centrality only (no 80-90%); omitted here
+#
+# Errors are combined as sqrt(stat^2 + syst^2); symmetrized errors are half of charge-summed errors
+#     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error   # reference
+              1            211              0              1              0          8.155        0.45545   # Table IV in PhysRevC.101.044907
+              1            321              0              1              0          1.135         0.0602   # Table IV in PhysRevC.101.044907
+              1           2212              0              1              0           0.46         0.0304   # Table IV in PhysRevC.101.044907
+              1            310              0              1              0           1.07           0.13   # Table 3 in arXiv:2511.10360
+              1           3122              0              1              0          0.335          0.055   # Table 3 in arXiv:2511.10360
+              1           3312              0              1              0           0.04          0.005   # Table 3 in arXiv:2511.10360
+              1           3334              0              1              0          0.004         0.0005   # Table 3 in arXiv:2511.10360
