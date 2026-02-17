@@ -9,6 +9,10 @@
 
 #include <cstdio>
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <set>
+#include <sstream>
 
 #include <Eigen/Dense>
 
@@ -21,6 +25,43 @@ using namespace std;
 
 namespace thermalfist {
 
+  namespace {
+    std::string ConservedChargeTag(const std::vector<int>& conserved)
+    {
+      const char labels[4] = {'B', 'Q', 'S', 'C'};
+      std::string tag;
+      for (int i = 0; i < 4; ++i) {
+        if (conserved[i] == 1)
+          tag.push_back(labels[i]);
+      }
+      if (tag.empty())
+        tag = "none";
+      return tag;
+    }
+
+    void WarnIllDefinedSoundSpeedOnce(const char* func,
+                                      const std::vector<int>& conserved,
+                                      double T,
+                                      const std::string& reason)
+    {
+      static std::set<std::string> warned;
+      std::ostringstream key;
+      key << func << "|" << ConservedChargeTag(conserved) << "|" << reason;
+      if (warned.insert(key.str()).second) {
+        std::cerr << "**WARNING** " << func << ": ill-defined for conserved set "
+                  << ConservedChargeTag(conserved)
+                  << " at T = " << T << " GeV. " << reason << std::endl;
+      }
+    }
+
+    bool IsMatrixInvertible(const MatrixXd& m, double threshold = 1e-14)
+    {
+      FullPivLU<MatrixXd> lu(m);
+      lu.setThreshold(threshold);
+      return lu.isInvertible();
+    }
+  } // namespace
+
   ThermalModelBase::ThermalModelBase(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
     m_TPS(TPS_), 
     m_Parameters(params),
@@ -28,6 +69,7 @@ namespace thermalfist {
     m_PCE(false),
     m_Calculated(false),
     m_FeeddownCalculated(false),
+    m_TwoParticleCorrelationsCalculated(false),
     m_FluctuationsCalculated(false),
     m_TemperatureDerivativesCalculated(false),
     m_GCECalculated(false),
@@ -137,6 +179,7 @@ namespace thermalfist {
   void ThermalModelBase::SetParameters(const ThermalModelParameters& params) {
     m_Parameters = params;
     m_Volume = m_Parameters.V;
+    FillChemicalPotentials();
     ResetCalculatedFlags();
   }
 
@@ -641,7 +684,9 @@ namespace thermalfist {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
-        std::cerr << "**WARNING** Density for particle " << m_TPS->Particle(i).PdgId() << " (" << m_TPS->Particle(i).Name() << ") is NaN!\n\n";
+        sprintf(cc, "Density for particle %d (%s) is NaN!\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+        std::cerr << "**WARNING** " << cc << std::endl;
+        
 
         m_ValidityLog.append(cc);
       }
@@ -649,7 +694,7 @@ namespace thermalfist {
     }
   }
 
-  std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& /*chgs*/, int /*order*/)
+  std::vector<double> ThermalModelBase::CalculateChargeFluctuations(const std::vector<double>& /*chgs*/, int /*order*/, bool /*dimensionfull*/)
   {
     std::cerr << "**WARNING** " << m_TAG << "::CalculateChargeFluctuations(const std::vector<double>& chgs, int order) not implemented!" << std::endl;
     return std::vector<double>();
@@ -840,6 +885,7 @@ namespace thermalfist {
   {
     m_Calculated = false;
     m_FeeddownCalculated = false;
+    m_TwoParticleCorrelationsCalculated = false;
     m_SusceptibilitiesCalculated = false;
     m_FluctuationsCalculated = false;
     m_TemperatureDerivativesCalculated = false;
@@ -856,6 +902,19 @@ namespace thermalfist {
       return StrangenessDensity();
     if (chg == ConservedCharge::CharmCharge)
       return CharmDensity();
+    return 0.0;
+  }
+
+  double ThermalModelBase::AbsoluteConservedChargeDensity(ConservedCharge::Name chg)
+  {
+    if (chg == ConservedCharge::BaryonCharge)
+      return AbsoluteBaryonDensity();
+    if (chg == ConservedCharge::ElectricCharge)
+      return AbsoluteElectricChargeDensity();
+    if (chg == ConservedCharge::StrangenessCharge)
+      return AbsoluteStrangenessDensity();
+    if (chg == ConservedCharge::CharmCharge)
+      return AbsoluteCharmDensity();
     return 0.0;
   }
 
@@ -1060,6 +1119,8 @@ namespace thermalfist {
       m_wtot[i] = m_TotalCorrel[i][i];
       if (m_densitiestotal[i] > 0.) m_wtot[i] *= m_Parameters.T / m_densitiestotal[i];
       else m_wtot[i] = 1.;
+      // Guard against NaN propagated from singular correlation matrices
+      if (m_wtot[i] != m_wtot[i]) m_wtot[i] = 1.;
     }
   }
 
@@ -1291,6 +1352,10 @@ namespace thermalfist {
 
   void ThermalModelBase::CalculateSusceptibilityMatrix()
   {
+    // Ensure two-particle correlations are calculated first
+    if (!m_TwoParticleCorrelationsCalculated)
+      CalculateTwoParticleCorrelations();
+
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
     m_dSuscdT = m_Susc;
@@ -2129,7 +2194,7 @@ namespace thermalfist {
     return ret / xMath::GeVtoifm() / xMath::GeVtoifm() / xMath::GeVtoifm();
   }
 
-  double ThermalModelBase::CalculateSpecificHeatChem()
+  double ThermalModelBase::CalculateHeatCapacityMu()
   {
     double dedT = CalculateEnergyDensityDerivativeT(); // fm^-3
     
@@ -2183,7 +2248,7 @@ namespace thermalfist {
 
     // Compute the Hessian matrix of pressure
     // Pi(0,0) = d^2 P / d T^2 = ds/dT
-    ret(0, 0) = model->SpecificHeatChem() / model->Parameters().T; // fm^-3 GeV^-1
+    ret(0, 0) = model->CalculateEntropyDensityDerivativeT(); // fm^-3 GeV^-1
 
     // Pi(0,i) = Pi(i,0) = d^2 P / dT dmui = d ni / d T
     {
@@ -2216,8 +2281,63 @@ namespace thermalfist {
     return ret;
   }
 
+  vector<vector<double>> ThermalModelBase::PressureHessian()
+  {
+    // Ensure susceptibilities and temperature derivatives are calculated
+    if (!m_FluctuationsCalculated)
+      CalculateFluctuations();
+    if (!m_TemperatureDerivativesCalculated)
+      CalculateTemperatureDerivatives();
+
+    // Use the existing helper with all conserved charges enabled
+    vector<int> allCharges = {1, 1, 1, 1};  // B, Q, S, C
+    MatrixXd H_eigen = GetPressureHessianMatrix(this, allCharges);
+
+    // Convert Eigen matrix to vector<vector<double>>
+    int N = H_eigen.rows();
+    vector<vector<double>> H(N, vector<double>(N, 0.0));
+    for (int i = 0; i < N; ++i) {
+      for (int j = 0; j < N; ++j) {
+        H[i][j] = H_eigen(i, j);
+      }
+    }
+
+    return H;
+  }
+
+  bool ThermalModelBase::IsThermodynamicallyStable()
+  {
+    // Ensure susceptibilities and temperature derivatives are calculated
+    if (!m_FluctuationsCalculated)
+      CalculateFluctuations();
+    if (!m_TemperatureDerivativesCalculated)
+      CalculateTemperatureDerivatives();
+
+    // Get the Hessian matrix using the existing helper
+    vector<int> allCharges = {1, 1, 1, 1};  // B, Q, S, C
+    MatrixXd H = GetPressureHessianMatrix(this, allCharges);
+
+    // Use SelfAdjointEigenSolver since Hessian is symmetric
+    Eigen::SelfAdjointEigenSolver<MatrixXd> solver(H);
+    if (solver.info() != Eigen::Success) {
+      return false;  // Eigenvalue computation failed
+    }
+
+    // Check if all eigenvalues are non-negative (positive semi-definite)
+    const auto& eigenvalues = solver.eigenvalues();
+    for (int i = 0; i < eigenvalues.size(); ++i) {
+      if (eigenvalues(i) < 0.0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   double ThermalModelBase::CalculateAdiabaticSpeedOfSoundSquared(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
     double ret = 0.;
+    const double nanv = std::numeric_limits<double>::quiet_NaN();
+    const double eps = 1e-14;
 
     double T = Parameters().T;
 
@@ -2232,11 +2352,16 @@ namespace thermalfist {
       ConservedCharges[2] = 0;
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
-      
 
-    // Cross-check (if charge is not conserved, its chemical potential should be zero)
-    for(int i = 0; i < ConservedCharges.size(); ++i)
-      assert(ConservedCharges[i] == 1 || mus[i] == 0.0);
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the susceptibility/Hessian matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    for (int i = 0; i < 4; ++i) {
+      if (ConservedCharges[i] == 1
+          && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+        ConservedCharges[i] = 0;
+    }
 
     // Zero chemical potentials
     {
@@ -2244,12 +2369,18 @@ namespace thermalfist {
       for(int i = 0; i < ConservedCharges.size(); ++i)
         AllMuZero &= (ConservedCharges[i] == 0 || mus[i] == 0.0);
       if (AllMuZero) {
+        if (T == 0.) {
+          WarnIllDefinedSoundSpeedOnce(
+            "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+            "all relevant chemical potentials are zero (0/0 limit at T=0).");
+          return nanv;
+        }
         // At mu = 0 cs2 = s(T) / e'(T)
         // Calculate temperature derivatives if not already
         if (!IsTemperatureDerivativesCalculated())
           CalculateTemperatureDerivatives();
         return EntropyDensity() / CalculateEnergyDensityDerivativeT();
-        //return EntropyDensity() / SpecificHeatChem();
+        //return EntropyDensity() / HeatCapacityMu();
       }
     }
 
@@ -2257,6 +2388,12 @@ namespace thermalfist {
     for(int i = 0; i < 4; ++i)
       if (ConservedCharges[i] == 1) 
         Ndens++;
+    if (Ndens == 0) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+        "no conserved densities selected.");
+      return nanv;
+    }
 
     // Compute fluctuations if not already
     if (!IsFluctuationsCalculated())
@@ -2266,6 +2403,12 @@ namespace thermalfist {
     if (T == 0.) {
       
       MatrixXd chi2matr = GetSusceptibilityMatrix(this, ConservedCharges);
+      if (!IsMatrixInvertible(chi2matr)) {
+        WarnIllDefinedSoundSpeedOnce(
+          "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+          "susceptibility matrix is singular at T=0.");
+        return nanv;
+      }
       MatrixXd chi2inv = chi2matr.inverse();
       ret = 0.;
       int i1 = 0, i2 = 0;
@@ -2285,7 +2428,14 @@ namespace thermalfist {
         i1++;
       }
 
-      ret /= (EnergyDensity() + Pressure());
+      const double ep = EnergyDensity() + Pressure();
+      if (std::abs(ep) < eps) {
+        WarnIllDefinedSoundSpeedOnce(
+          "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+          "EnergyDensity + Pressure is zero.");
+        return nanv;
+      }
+      ret /= ep;
       return ret;
     }
 
@@ -2295,11 +2445,17 @@ namespace thermalfist {
     if (!IsTemperatureDerivativesCalculated())
       CalculateTemperatureDerivatives();
 
-    // double dedT = SpecificHeatChem(); // fm^-3
+    // double dedT = HeatCapacityMu(); // fm^-3
     // Compute the Hessian matrix of pressure
     MatrixXd PiMatr = GetPressureHessianMatrix(this, ConservedCharges);
 
     // Compute the inverse of the Hessian matrix
+    if (!IsMatrixInvertible(PiMatr)) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+        "pressure Hessian matrix is singular.");
+      return nanv;
+    }
     MatrixXd PiMatrInv = PiMatr.inverse();
     // Prepare the vector x
     double s = EntropyDensity();
@@ -2312,13 +2468,22 @@ namespace thermalfist {
     for(int i = 0; i < x.size(); ++i)
       for(int j = 0; j < x.size(); ++j)
         ret += x[i] * x[j] * PiMatrInv(i,j);
-    ret /= (EnergyDensity() + Pressure());
+    const double ep = EnergyDensity() + Pressure();
+    if (std::abs(ep) < eps) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateAdiabaticSpeedOfSoundSquared", ConservedCharges, T,
+        "EnergyDensity + Pressure is zero.");
+      return nanv;
+    }
+    ret /= ep;
 
     return ret;
   }
 
   double ThermalModelBase::CalculateIsothermalSpeedOfSoundSquared(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
     double ret = 0.;
+    const double nanv = std::numeric_limits<double>::quiet_NaN();
+    const double eps = 1e-14;
 
     double T = Parameters().T;
 
@@ -2334,6 +2499,27 @@ namespace thermalfist {
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
 
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the susceptibility matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    for (int i = 0; i < 4; ++i) {
+      if (ConservedCharges[i] == 1
+          && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+        ConservedCharges[i] = 0;
+    }
+
+    int Ndens = 0;
+    for (int i = 0; i < 4; ++i)
+      if (ConservedCharges[i] == 1)
+        Ndens++;
+    if (Ndens == 0) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateIsothermalSpeedOfSoundSquared", ConservedCharges, T,
+        "no conserved densities selected.");
+      return nanv;
+    }
+
     // If all chemical potentials are zero, c_T is undefined (return 0.)
     {
       bool AllMuZero = true;
@@ -2344,12 +2530,13 @@ namespace thermalfist {
       }
     }
       
-
-    // Cross-check (if charge is not conserved, its chemical potential should be zero)
-    for(int i = 0; i < ConservedCharges.size(); ++i)
-      assert(ConservedCharges[i] == 1 || mus[i] == 0.0);
-
     auto chi2Matr = GetSusceptibilityMatrix(this, ConservedCharges);
+    if (!IsMatrixInvertible(chi2Matr)) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateIsothermalSpeedOfSoundSquared", ConservedCharges, T,
+        "susceptibility matrix is singular.");
+      return nanv;
+    }
     // Compute the inverse of the susceptibility matrix
     MatrixXd chi2inv= chi2Matr.inverse();
     
@@ -2357,7 +2544,6 @@ namespace thermalfist {
     double denominator = 0.;
     int i1 = 0, i2 = 0;
     for(int i = 0; i < 4; ++i) {
-      \
       if (ConservedCharges[i] == 0)
         continue;
       denominator += mus[i] * ConservedChargeDensity((ConservedCharge::Name)i);
@@ -2378,13 +2564,21 @@ namespace thermalfist {
       i1++;
     }
 
+    if (std::abs(denominator) < eps) {
+      WarnIllDefinedSoundSpeedOnce(
+        "CalculateIsothermalSpeedOfSoundSquared", ConservedCharges, T,
+        "denominator is zero.");
+      return nanv;
+    }
     return numerator / denominator;
   }
 
   double ThermalModelBase::CalculateHeatCapacity(bool rhoBconst, bool rhoQconst, bool rhoSconst, bool rhoCconst) {
     double T = Parameters().T;
 
-    assert(T > 0.);
+    if (T == 0.) {
+      return 0.;
+    }
 
     std::vector<double> mus = {Parameters().muB, Parameters().muQ, Parameters().muS, Parameters().muC};
     std::vector<int> ConservedCharges = {static_cast<int>(rhoBconst), static_cast<int>(rhoQconst), static_cast<int>(rhoSconst), static_cast<int>(rhoCconst)};
@@ -2398,10 +2592,23 @@ namespace thermalfist {
     if (!TPS()->hasCharmed())
       ConservedCharges[3] = 0;
 
-    // Calculate the numerator
-    double TdsdT = SpecificHeatChem();
+    // Drop conserved charge constraints that are vacuous:
+    // if the absolute density is zero, the constraint is trivially satisfied
+    // and including it would make the Hessian matrix singular
+    // (e.g. strangeness at T=0 when mu_S < m_K)
+    {
+      const double eps = 1e-14;
+      for (int i = 0; i < 4; ++i) {
+        if (ConservedCharges[i] == 1
+            && AbsoluteConservedChargeDensity((ConservedCharge::Name)i) < eps)
+          ConservedCharges[i] = 0;
+      }
+    }
 
-    // If all chemical potentials are zero, retur TdsT
+    // Calculate the numerator
+    double TdsdT = HeatCapacityMu();
+
+    // If all chemical potentials are zero, return TdsT
     {
       bool AllMuZero = true;
       for(int i = 0; i < ConservedCharges.size(); ++i)

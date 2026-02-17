@@ -312,38 +312,70 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
 void ModelConfigWidget::conservationLawsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  ConservationLawsDialog *dialog = new ConservationLawsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   ConservationLawsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::interactionsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  InteractionsDialog *dialog = new InteractionsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   InteractionsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::QvdWparametersDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  QvdWParametersTableDialog *dialog = new QvdWParametersTableDialog(this, &currentConfig, model->TPS());
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->showMaximized();
+#else
   QvdWParametersTableDialog dialog(this, &currentConfig, model->TPS());
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
+#ifdef Q_OS_WASM
+  OtherOptionsDialog *dialog = new OtherOptionsDialog(this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  dialog->show();
+#else
   OtherOptionsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
   emit changed();
+#endif
 }
 
 void ModelConfigWidget::modelTypeChanged()
@@ -910,10 +942,10 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   BLayout->addWidget(spinLandauLevels, 1, 1);
   grMagneticField->setLayout(BLayout);
 
-  QGroupBox* grPions = new QGroupBox(tr("Pion interactions"));
+  QGroupBox* grPions = new QGroupBox(tr("Pion/kaon interactions"));
   QVBoxLayout* PionsLayout = new QVBoxLayout();
   
-  CBPionInteractions = new QCheckBox(tr("Effective mass model (a la ChPT)"));
+  CBPionInteractions = new QCheckBox(tr("Pions: Effective mass model (a la ChPT)"));
   CBPionInteractions->setChecked(m_parent->currentConfig.UseEMMPions);
   connect(CBPionInteractions, SIGNAL(toggled(bool)), this, SLOT(UpdateControls()));
   QHBoxLayout* layPionInteractions = new QHBoxLayout();
@@ -925,8 +957,22 @@ OtherOptionsDialog::OtherOptionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layPionInteractions->addWidget(labelPionInteractions);
   layPionInteractions->addWidget(spinfPi);
 
+  CBKaonInteractions = new QCheckBox(tr("Kaons: Effective mass model (a la ChPT)"));
+  CBKaonInteractions->setChecked(m_parent->currentConfig.UseEMMKaons);
+  connect(CBKaonInteractions, SIGNAL(toggled(bool)), this, SLOT(UpdateControls()));
+  QHBoxLayout* layKaonInteractions = new QHBoxLayout();
+  layKaonInteractions->setAlignment(Qt::AlignLeft);
+  QLabel* labelKaonInteractions = new QLabel(tr("f<sub>K</sub> [MeV]:"));
+  spinfKa = new QDoubleSpinBox();
+  spinfKa->setRange(0., 10000.);
+  spinfKa->setValue(m_parent->currentConfig.EMMKaonFKa * 1.e3);
+  layKaonInteractions->addWidget(labelKaonInteractions);
+  layKaonInteractions->addWidget(spinfKa);
+
   PionsLayout->addWidget(CBPionInteractions);
   PionsLayout->addLayout(layPionInteractions);
+  PionsLayout->addWidget(CBKaonInteractions);
+  PionsLayout->addLayout(layKaonInteractions);
   grPions->setLayout(PionsLayout);
 
   layout->addWidget(grReso);
@@ -959,6 +1005,7 @@ void OtherOptionsDialog::UpdateControls()
   spinPionsAnnihilation->setEnabled(PCEControlsEnabled);
 
   spinfPi->setEnabled(CBPionInteractions->isChecked());
+  spinfKa->setEnabled(CBKaonInteractions->isChecked());
 }
 
 
@@ -976,6 +1023,8 @@ void OtherOptionsDialog::OK()
   config.PCEPionAnnihilationNumber = spinPionsAnnihilation->value();
   config.UseEMMPions = CBPionInteractions->isChecked();
   config.EMMPionFPi  = spinfPi->value() * 1.e-3;
+  config.UseEMMKaons = CBKaonInteractions->isChecked();
+  config.EMMKaonFKa = spinfKa->value() * 1.e-3;
   config.MagneticFieldB = spinB->value();
   config.MagneticFieldLmax = spinLandauLevels->value();
   QDialog::accept();

@@ -15,8 +15,10 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QTextStream>
+#include <QBuffer>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -26,6 +28,41 @@
 
 using namespace std;
 using namespace thermalfist;
+
+namespace {
+  // Linear interpolation helper on a QVector grid.
+  // Returns true and sets yOut if x lies within [xs.front(), xs.back()],
+  // otherwise returns false.
+  bool linearInterpolate(const QVector<double>& xs,
+                         const QVector<double>& ys,
+                         double x,
+                         double& yOut)
+  {
+    int n = xs.size();
+    if (n == 0) return false;
+    if (x < xs.front() || x > xs.back()) return false;
+    auto it = std::upper_bound(xs.begin(), xs.end(), x);
+    if (it == xs.begin()) {
+      yOut = ys.front();
+      return true;
+    }
+    if (it == xs.end()) {
+      yOut = ys.back();
+      return true;
+    }
+    int hi = int(it - xs.begin());
+    int lo = hi - 1;
+    double x0 = xs[lo];
+    double x1 = xs[hi];
+    if (x1 == x0) {
+      yOut = ys[lo];
+      return true;
+    }
+    double t = (x - x0) / (x1 - x0);
+    yOut = ys[lo] + t * (ys[hi] - ys[lo]);
+    return true;
+  }
+}
 
 void EoSWorker::run() {
   int i = 0;
@@ -186,6 +223,13 @@ void EoSWorker::run() {
         thermalfist::ConservedCharge::StrangenessCharge);
       flucts.chi11QS = model->Susc(thermalfist::ConservedCharge::ElectricCharge,
         thermalfist::ConservedCharge::StrangenessCharge);
+
+      flucts.chi11BC = model->Susc(thermalfist::ConservedCharge::BaryonCharge,
+        thermalfist::ConservedCharge::CharmCharge);
+      flucts.chi11QC = model->Susc(thermalfist::ConservedCharge::ElectricCharge,
+        thermalfist::ConservedCharge::CharmCharge);
+      flucts.chi11SC = model->Susc(thermalfist::ConservedCharge::StrangenessCharge,
+        thermalfist::ConservedCharge::CharmCharge);
 
       flucts.flag = true;
 
@@ -423,6 +467,41 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     index++;
 
     tname = "χ₄S";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₂C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₃C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₄C";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁BC";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁QC";
+    paramnames.push_back(tname);
+    parammap[tname] = index;
+    index++;
+
+    tname = "χ₁₁SC";
     paramnames.push_back(tname);
     parammap[tname] = index;
     index++;
@@ -679,9 +758,10 @@ EquationOfStateTab::EquationOfStateTab(QWidget *parent, ThermalModelBase *modelo
     fCurrentSize = 0;
     fStop = 1;
     fRunning = false;
+    fExpectedIterations = 0;
 
     calcTimer = new QTimer(this);
-    connect(calcTimer, SIGNAL(timeout()), this, SLOT(replot()));
+    connect(calcTimer, SIGNAL(timeout()), this, SLOT(checkProgress()));
 
     readLatticeData();
 
@@ -786,6 +866,7 @@ void EquationOfStateTab::calculate() {
       int iters = static_cast<int>((pmax - pmin) / dp) + 1;
 
       fCurrentSize = 0;
+      fExpectedIterations = iters;  // Store for completion detection
 
       paramsTD.resize(iters);
       paramsFl.resize(iters);
@@ -795,18 +876,29 @@ void EquationOfStateTab::calculate() {
 
       std::vector<double> mus = {spinmuB->value(), spinmuQ->value(), spinmuS->value(), spinTaux->value()};
 
-      EoSWorker *wrk = new EoSWorker(model, config, pmin, pmax, dp,
+      fWorker = new EoSWorker(model, config, pmin, pmax, dp,
                                      mus, comboMode->currentIndex(),
                                     &paramsTD, &paramsFl, &varvalues, &fCurrentSize, &fStop, this);
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
-      connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
-
-      wrk->start();
+      // Connect finished signal to clean up worker when thread actually ends
+      connect(fWorker, &QThread::finished, fWorker, &QObject::deleteLater);
 
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
+        fWorker->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        // This will block the UI but at least the calculation will complete
+        // Signal emission is safe here since everything is on main thread
+        connect(fWorker, SIGNAL(calculated()), this, SLOT(finalize()));
+        fWorker->run();
+        finalize();
+      }
     }
     else {
       fStop = 1;
@@ -818,6 +910,19 @@ void EquationOfStateTab::finalize() {
     buttonCalculate->setText(tr("Calculate"));
     fRunning = false;
     replot();
+    // Worker cleanup is handled by finished() -> deleteLater() connection
+    fWorker = nullptr;
+}
+
+void EquationOfStateTab::checkProgress() {
+    // Update the plot with current progress
+    replot();
+
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && (fCurrentSize >= fExpectedIterations || fStop)) {
+        finalize();
+    }
 }
 
 void EquationOfStateTab::modelChanged()
@@ -991,10 +1096,10 @@ void EquationOfStateTab::plotLatticeData()
 
     // WB data
     if (mapWB.count(paramname) > 0
-    || (CBratio->isChecked()
-    && mapWB.count(paramnames[index]) && mapWB.count(paramnames[comboQuantity2->currentIndex()])
-    && dataWBx[mapWB[paramnames[index]]].size() == dataWBx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
-    ) {
+        || (CBratio->isChecked()
+            && mapWB.count(paramnames[index])
+            && mapWB.count(paramnames[comboQuantity2->currentIndex()])))
+    {
       
       int indWB = 0;
       if (mapWB.count(paramname))
@@ -1004,8 +1109,6 @@ void EquationOfStateTab::plotLatticeData()
         int index2 = comboQuantity2->currentIndex();
         indWB  = mapWB[paramnames[index]];
         indWB2 = mapWB[paramnames[index2]];
-        if (dataWBx[indWB].size() != dataWBx[indWB2].size())
-          return;
       }
       plotDependence->addGraph();
       plotDependence->graph(graphStart)->setName("LQCD (Wuppertal-Budapest)");
@@ -1018,41 +1121,68 @@ void EquationOfStateTab::plotLatticeData()
       plotDependence->graph(graphStart)->setChannelFillGraph(plotDependence->graph(graphStart+1));
 
       double tmin = 1.e5, tmax = 0.;
-      QVector<double> x0(dataWBx[indWB].size());
-      QVector<double> yConfUpper(dataWBx[indWB].size()), yConfLower(dataWBx[indWB].size());
-      for (int i = 0; i < x0.size(); ++i) {
-        x0[i] = dataWBx[indWB][i];
-        if (mapWB.count(paramname)) {
-          yConfUpper[i] = dataWBy[indWB][i] + dataWByerrp[indWB][i];
-          yConfLower[i] = dataWBy[indWB][i] - dataWByerrm[indWB][i];
-        }
-        else if (CBratio->isChecked()) {
-          double mean = dataWBy[indWB][i] / dataWBy[indWB2][i];
-          double error = mean * sqrt((dataWByerrp[indWB][i]/dataWBy[indWB][i])*(dataWByerrp[indWB][i]/dataWBy[indWB][i])
-                  + (dataWByerrp[indWB2][i]/dataWBy[indWB2][i])*(dataWByerrp[indWB2][i]/dataWBy[indWB2][i]));
+      QVector<double> x0;
+      QVector<double> yConfUpper, yConfLower;
 
-          yConfUpper[i] = mean + error;
-          yConfLower[i] = mean - error;
+      const QVector<double>& xNum = dataWBx[indWB];
+      const QVector<double>& yNum = dataWBy[indWB];
+      const QVector<double>& yNumErr = dataWByerrp[indWB];
+
+      const bool useRatio = CBratio->isChecked() && !mapWB.count(paramname);
+
+      for (int i = 0; i < xNum.size(); ++i) {
+        double x = xNum[i];
+        double yUp = 0.0;
+        double yLow = 0.0;
+
+        if (!useRatio) {
+          yUp  = yNum[i] + dataWByerrp[indWB][i];
+          yLow = yNum[i] - dataWByerrm[indWB][i];
+        } else {
+          // Ratio with linear interpolation of denominator and its error
+          const QVector<double>& xDen = dataWBx[indWB2];
+          const QVector<double>& yDen = dataWBy[indWB2];
+          const QVector<double>& yDenErr = dataWByerrp[indWB2];
+
+          double denVal = 0.0, denErr = 0.0;
+          if (!linearInterpolate(xDen, yDen, x, denVal))
+            continue;
+          if (!linearInterpolate(xDen, yDenErr, x, denErr))
+            continue;
+          if (std::abs(denVal) < 1.e-12 || std::abs(yNum[i]) < 1.e-12)
+            continue;
+
+          double mean = yNum[i] / denVal;
+          double error = mean * std::sqrt((yNumErr[i] / yNum[i]) * (yNumErr[i] / yNum[i])
+                                          + (denErr / denVal) * (denErr / denVal));
+          yUp  = mean + error;
+          yLow = mean - error;
         }
-        if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
-          tmin = std::min(tmin, yConfLower[i]);
-          tmax = std::max(tmax, yConfUpper[i]);
+
+        x0.push_back(x);
+        yConfUpper.push_back(yUp);
+        yConfLower.push_back(yLow);
+
+        if (x >= spinTMin->value() && x <= spinTMax->value()) {
+          tmin = std::min(tmin, yLow);
+          tmax = std::max(tmax, yUp);
         }
       }
 
-      plotDependence->graph(graphStart)->setData(x0, yConfUpper);
-      plotDependence->graph(graphStart+1)->setData(x0, yConfLower);
-
-      plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      if (!x0.isEmpty()) {
+        plotDependence->graph(graphStart)->setData(x0, yConfUpper);
+        plotDependence->graph(graphStart+1)->setData(x0, yConfLower);
+        plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      }
 
       graphStart += 2;
     }
 
     // HotQCD data
-    if (mapHotQCD.count(paramname) > 0 || (CBratio->isChecked()
-      && mapHotQCD.count(paramnames[index]) && mapHotQCD.count(paramnames[comboQuantity2->currentIndex()])
-      && dataHotQCDx[mapHotQCD[paramnames[index]]].size() == dataHotQCDx[mapWB[paramnames[comboQuantity2->currentIndex()]]].size())
-      )
+    if (mapHotQCD.count(paramname) > 0
+        || (CBratio->isChecked()
+            && mapHotQCD.count(paramnames[index])
+            && mapHotQCD.count(paramnames[comboQuantity2->currentIndex()])))
     {
       int indHotQCD = 0;
       if (mapHotQCD.count(paramname))
@@ -1062,8 +1192,6 @@ void EquationOfStateTab::plotLatticeData()
         int index2 = comboQuantity2->currentIndex();
         indHotQCD  = mapHotQCD[paramnames[index]];
         indHotQCD2 = mapHotQCD[paramnames[index2]];
-        if (dataHotQCDx[indHotQCD].size() != dataHotQCDx[indHotQCD2].size())
-          return;
       }
 
       plotDependence->addGraph();
@@ -1077,34 +1205,58 @@ void EquationOfStateTab::plotLatticeData()
       plotDependence->graph(graphStart)->setChannelFillGraph(plotDependence->graph(graphStart + 1));
 
       double tmin = 1.e5, tmax = 0.;
-      QVector<double> x0(dataHotQCDx[indHotQCD].size());
-      QVector<double> yConfUpper(dataHotQCDx[indHotQCD].size()), yConfLower(dataHotQCDx[indHotQCD].size());
-      for (int i = 0; i < x0.size(); ++i) {
-        x0[i] = dataHotQCDx[indHotQCD][i];
+      QVector<double> x0;
+      QVector<double> yConfUpper, yConfLower;
 
-        if (mapHotQCD.count(paramname)) {
-          yConfUpper[i] = dataHotQCDy[indHotQCD][i] + dataHotQCDyerrp[indHotQCD][i];
-          yConfLower[i] = dataHotQCDy[indHotQCD][i] - dataHotQCDyerrm[indHotQCD][i];
+      const QVector<double>& xNumH = dataHotQCDx[indHotQCD];
+      const QVector<double>& yNumH = dataHotQCDy[indHotQCD];
+      const QVector<double>& yNumErrH = dataHotQCDyerrp[indHotQCD];
+
+      const bool useRatioH = CBratio->isChecked() && !mapHotQCD.count(paramname);
+
+      for (int i = 0; i < xNumH.size(); ++i) {
+        double x = xNumH[i];
+        double yUp = 0.0;
+        double yLow = 0.0;
+
+        if (!useRatioH) {
+          yUp  = yNumH[i] + dataHotQCDyerrp[indHotQCD][i];
+          yLow = yNumH[i] - dataHotQCDyerrm[indHotQCD][i];
+        } else {
+          const QVector<double>& xDenH = dataHotQCDx[indHotQCD2];
+          const QVector<double>& yDenH = dataHotQCDy[indHotQCD2];
+          const QVector<double>& yDenErrH = dataHotQCDyerrp[indHotQCD2];
+
+          double denVal = 0.0, denErr = 0.0;
+          if (!linearInterpolate(xDenH, yDenH, x, denVal))
+            continue;
+          if (!linearInterpolate(xDenH, yDenErrH, x, denErr))
+            continue;
+          if (std::abs(denVal) < 1.e-12 || std::abs(yNumH[i]) < 1.e-12)
+            continue;
+
+          double mean = yNumH[i] / denVal;
+          double error = mean * std::sqrt((yNumErrH[i] / yNumH[i]) * (yNumErrH[i] / yNumH[i])
+                                          + (denErr / denVal) * (denErr / denVal));
+          yUp  = mean + error;
+          yLow = mean - error;
         }
-        else if (CBratio->isChecked()) {
-          double mean = dataHotQCDy[indHotQCD][i] / dataHotQCDy[indHotQCD2][i];
-          double error = mean * sqrt((dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])*(dataHotQCDyerrp[indHotQCD][i]/dataHotQCDy[indHotQCD][i])
-                                     + (dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i])*(dataHotQCDyerrp[indHotQCD2][i]/dataHotQCDy[indHotQCD2][i]));
 
-          yConfUpper[i] = mean + error;
-          yConfLower[i] = mean - error;
-        }
+        x0.push_back(x);
+        yConfUpper.push_back(yUp);
+        yConfLower.push_back(yLow);
 
-        if (x0[i] >= spinTMin->value() && x0[i] <= spinTMax->value()) {
-          tmin = std::min(tmin, yConfLower[i]);
-          tmax = std::max(tmax, yConfUpper[i]);
+        if (x >= spinTMin->value() && x <= spinTMax->value()) {
+          tmin = std::min(tmin, yLow);
+          tmax = std::max(tmax, yUp);
         }
       }
 
-      plotDependence->graph(graphStart)->setData(x0, yConfUpper);
-      plotDependence->graph(graphStart + 1)->setData(x0, yConfLower);
-
-      plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      if (!x0.isEmpty()) {
+        plotDependence->graph(graphStart)->setData(x0, yConfUpper);
+        plotDependence->graph(graphStart + 1)->setData(x0, yConfLower);
+        plotDependence->yAxis->setRange(0.*tmin, 1.1*tmax);
+      }
     }
   }
 }
@@ -1112,10 +1264,17 @@ void EquationOfStateTab::plotLatticeData()
 void EquationOfStateTab::showEoSTable() {
   recomputeCalcTable();
 
+#ifdef Q_OS_WASM
+  CalculationTableDialog *dialog = new CalculationTableDialog(this, calcTable);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->showMaximized();
+#else
   CalculationTableDialog dialog(this, calcTable);
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
+#endif
 }
 
 void EquationOfStateTab::fillParticleLists()
@@ -1180,6 +1339,73 @@ void EquationOfStateTab::saveAs(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  // WASM: Save to buffer and trigger browser download
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    // PDF export
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePdf(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else if (type == 1) {
+    // PNG export
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePng(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else {
+    // Data export
+    std::vector<double> yvalues;
+
+    if (CBratio->isChecked() && !CBxAxis->isChecked()) {
+      yvalues = getValuesRatio(comboQuantity->currentIndex(), comboQuantity2->currentIndex());
+    }
+    else {
+      yvalues = getValues(comboQuantity->currentIndex());
+    }
+
+    std::vector<double> xvalues = varvalues;
+    if (CBxAxis->isChecked()) {
+      xvalues = getValues(comboQuantity2->currentIndex(), 1);
+    }
+
+    if (yvalues.size() > 0) {
+      QByteArray data;
+      QBuffer buffer(&data);
+      buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+      QTextStream out(&buffer);
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      if (!CBflipAxes->isChecked()) {
+        out << plotDependence->xAxis->label();
+        out << plotDependence->yAxis->label();
+      } else {
+        out << plotDependence->yAxis->label();
+        out << plotDependence->xAxis->label();
+      }
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      for (size_t i = 0; i < yvalues.size(); ++i) {
+        out.setFieldWidth(15);
+        out.setFieldAlignment(QTextStream::AlignLeft);
+        out << xvalues[i] << yvalues[i];
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      }
+      buffer.close();
+      WasmFileIO::saveFile(data, fileName);
+    }
+  }
+#else
+  // Native: Use standard file dialog
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
   if (path.length()>0)
@@ -1217,7 +1443,7 @@ void EquationOfStateTab::saveAs(int type)
           out << plotDependence->xAxis->label();
         }
         out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
-        for (int i = 0; i < yvalues.size(); ++i) {
+        for (size_t i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << xvalues[i] << yvalues[i];
@@ -1225,10 +1451,11 @@ void EquationOfStateTab::saveAs(int type)
         }
       }
     }
-    
+
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 std::vector<double> EquationOfStateTab::getValues(int index, int num)
@@ -1566,6 +1793,55 @@ std::vector<double> EquationOfStateTab::getValues(int index, int num)
         ret[j] = paramsFl[j].chi4S;
       }
     }
+
+    tind = parammap["χ₁C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi1C;
+      }
+    }
+
+    tind = parammap["χ₂C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi2C;
+      }
+    }
+
+    tind = parammap["χ₃C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi3C;
+      }
+    }
+
+    tind = parammap["χ₄C"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi4C;
+      }
+    }
+
+    tind = parammap["χ₁₁BC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11BC;
+      }
+    }
+
+    tind = parammap["χ₁₁QC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11QC;
+      }
+    }
+
+    tind = parammap["χ₁₁SC"];
+    if (tind == index) {
+      for (int j = 0; j < tsize; ++j) {
+        ret[j] = paramsFl[j].chi11SC;
+      }
+    }
   //}
 
   return ret;
@@ -1583,11 +1859,17 @@ std::vector<double> EquationOfStateTab::getValuesRatio(int index, int index2)
 void EquationOfStateTab::readLatticeData()
 {
   int sizeWB = 0, sizeHotQCD = 0;
-  
+
   ifstream fin;
-  
+
+#ifdef Q_OS_WASM
+  string inputFolder = (WasmFileIO::getSandboxTempDir() + "/default").toStdString();
+#else
+  string inputFolder = string(ThermalFIST_INPUT_FOLDER);
+#endif
+
   // WB thermodynamics
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-EoS.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1662,7 +1944,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi2
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi2-1112.4416.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chi2-1112.4416.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1745,7 +2027,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi11
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chi11-1910.14592.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chi11-1910.14592.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1828,7 +2110,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD thermodynamics
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-EoS.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-EoS.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -1935,7 +2217,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD chi2
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-chi2-1203.0784.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2042,7 +2324,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // HotQCD chi2-chi8
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/HotQCD-chi2-chi8-2001.08530.dat").c_str());
+  fin.open((inputFolder + "/lqcd/HotQCD-chi2-chi8-2001.08530.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2114,7 +2396,7 @@ void EquationOfStateTab::readLatticeData()
   }
 
   // WB chi2-chi8
-  fin.open((string(ThermalFIST_INPUT_FOLDER) + "/lqcd/WB-chiB-1805.04445.dat").c_str());
+  fin.open((inputFolder + "/lqcd/WB-chiB-1805.04445.dat").c_str());
 
   if (fin.is_open()) {
     QString tname;
@@ -2357,8 +2639,10 @@ void EquationOfStateTab::replot() {
 void EquationOfStateTab::recomputeCalcTable() {
   calcTable.clear();
 
+  int tsize = fCurrentSize;
+
   calcTable.parameter_name = getParameterName();
-  for(int i = 0; i < varvalues.size(); ++i) {
+  for(int i = 0; i < tsize; ++i) {
     calcTable.parameter_values.push_back(varvalues[i]);
     calcTable.temperature_values.push_back(paramsTD[i].T);
   }
@@ -2375,7 +2659,7 @@ void EquationOfStateTab::recomputeCalcTable() {
     calcTable.densities_names.push_back(QString::fromStdString(model->TPS()->Particles()[ic].Name()));
   }
 
-  for(int ir = 0; ir < varvalues.size(); ++ir) {
+  for(int ir = 0; ir < tsize; ++ir) {
     calcTable.densities_values.push_back(paramsTD[ir].densities);
   }
 }

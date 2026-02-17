@@ -1,0 +1,828 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{physics}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\newcommand{\pF}{p_{\rm F}}
+\newcommand{\GeV}{\,\text{GeV}}
+\newcommand{\fm}{\,\text{fm}}
+\newcommand{\MeV}{\,\text{MeV}}
+\newcommand{\vep}{\varepsilon}
+
+\title{Integration-by-parts improvement of Fermi integrals \\
+for baryon number susceptibilities and entropy derivative at low temperature}
+\author{Volodymyr Vovchenko \\ {\small Technical note for Thermal-FIST}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We describe two improvements to the numerical evaluation of Fermi--Dirac integrals at low temperatures in the hadron resonance gas model.
+
+First, we replace the uniform Gauss--Legendre quadrature below the Fermi momentum~$\pF$ with a Sommerfeld--Legendre scheme that uses an adaptive nonlinear mapping to concentrate quadrature nodes near the Fermi surface, with the degree of concentration controlled by $\alpha = \pF^2/(\mu T)$.
+This resolves the sharp Fermi step at low~$T$, where the old uniform mapping under-resolved the Fermi surface.
+
+Second, we apply integration-by-parts (IBP) to reduce the order of Fermi--Dirac distribution derivatives in the integrands, replacing oscillatory or sharply peaked functions with smoother ones.
+We present the IBP formulas for the susceptibilities $\chi_2$, $\chi_3$, and $\chi_4$, derive the analytic $T=0$ limits, and document the numerical improvements achieved.
+For the entropy density temperature derivative $ds/dT|_\mu$, we derive a double-IBP formula involving the Fermi entropy kernel $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$ --- the same kernel that gives the entropy density $s = (g/2\pi^2)\int p^2\,\sigma\,dp$.
+Because $\sigma$ vanishes identically at $T = 0$, the quadrature evaluates the thermal contribution directly with no cancellation, achieving $\sim 2 \times 10^{-4}$ relative accuracy at $T = 1$~$\mu$eV.
+We explain why the $\chi_2$-type analytical extraction of the $T=0$ value is fundamentally unavailable for temperature derivatives.
+\end{abstract}
+
+\tableofcontents
+
+%% ====================================================================
+\section{Setup and notation}
+\label{sec:setup}
+%% ====================================================================
+
+Consider a single fermion species with mass~$m$, degeneracy~$g$, at temperature~$T$ and chemical potential~$\mu > m$ (so that the Fermi momentum $\pF = \sqrt{\mu^2 - m^2}$ is real).
+The Fermi--Dirac distribution is
+\begin{equation}
+  f(p) = \frac{1}{e^{(E-\mu)/T} + 1}\,, \qquad E = \sqrt{p^2 + m^2}\,.
+\end{equation}
+The particle number density is
+\begin{equation}
+  n = \frac{g}{2\pi^2} \int_0^\infty p^2 \, f(p) \, dp\,.
+\end{equation}
+The generalized susceptibilities are the $\mu$-derivatives of the pressure, or equivalently:
+\begin{equation}
+  \chi_n \equiv \frac{\partial^n P}{\partial \mu^n} = \frac{\partial^{n-1} n}{\partial \mu^{n-1}}\,.
+\end{equation}
+Using the identity $\partial f / \partial \mu = f(1-f)/T$, the first few susceptibilities involve
+\begin{align}
+  \chi_2 &= \pdv{n}{\mu} = \frac{g}{2\pi^2} \int_0^\infty p^2 \, \frac{f(1-f)}{T} \, dp\,, \label{eq:chi2-direct} \\[6pt]
+  \chi_3 &= \pdv[2]{n}{\mu} = \frac{g}{2\pi^2} \int_0^\infty p^2 \, \frac{f(1-f)(1-2f)}{T^2} \, dp\,, \label{eq:chi3-direct} \\[6pt]
+  \chi_4 &= \pdv[3]{n}{\mu} = \frac{g}{2\pi^2} \int_0^\infty p^2 \, \frac{f(1-f)\bigl[1 - 6f(1-f)\bigr]}{T^3} \, dp\,. \label{eq:chi4-direct}
+\end{align}
+
+\paragraph{The numerical problem.}
+As $T \to 0$, the factor $f(1-f)/T$ tends to $\delta(E-\mu)$, i.e.\ $\delta(p-\pF)/v_F$ with $v_F = \pF/\mu$.
+For $\chi_2$ the integrand is a narrow positive peak at~$\pF$; for $\chi_3$ the integrand $f(1-f)(1-2f)/T^2$ has a derivative-of-delta structure (one sign change); for $\chi_4$ the integrand $f(1-f)[1-6f(1-f)]/T^3$ has a second-derivative-of-delta structure (two sign changes).
+Higher-order integrands are increasingly oscillatory and harder for fixed-order quadrature to resolve.
+
+The code already splits the integration at the Fermi momentum $\pF$ into a below-$\pF$ Legendre part and an above-$\pF$ shifted Laguerre part.
+The original below-$\pF$ part used a \emph{uniform} (linear) mapping $p = s\,\pF$ with 32-point Gauss--Legendre nodes on $[0,1]$:
+\begin{equation}
+  \int_0^{\pF} F(p)\,dp \approx \pF \sum_{i=1}^{32} w_i^{\rm (Leg)}\,F(s_i\,\pF)\,.
+\end{equation}
+The Legendre nodes $s_i \in [0,1]$ are roughly uniformly spaced, so the mapped momenta $p_i = s_i\,\pF$ are roughly uniformly distributed over $[0,\pF]$.
+At low temperatures, the Fermi--Dirac integrands vary on the scale of $\sim T/v_F$ near the Fermi surface ($p = \pF$), which is much smaller than the average node spacing $\sim \pF/32$.
+This causes the uniform Legendre quadrature to under-resolve the Fermi surface peak, producing errors of 100--400\% for the higher susceptibilities.
+
+The improved quadrature replaces the uniform mapping with an \emph{adaptive} nonlinear mapping (Sommerfeld--Legendre) that concentrates nodes near~$\pF$:
+\begin{itemize}
+  \item \textbf{Below $\pF$: Sommerfeld--Legendre quadrature} (32 points).
+  A nonlinear mapping $s \in [0,1] \to p \in [0,\pF]$ adaptively concentrates nodes near the Fermi surface.
+  The mapping parameter $\alpha = \pF^2/(\mu T)$ controls the degree of concentration: when $\alpha \gg 1$ (low $T$), nodes cluster tightly near~$\pF$ to resolve the sharp Fermi step; when $\alpha \ll 1$ (high $T$), the mapping reduces to the original uniform $p = s\,\pF$.
+  See \cref{sec:sommerfeld-legendre} for the detailed construction.
+  \item \textbf{Above $\pF$: shifted Laguerre quadrature} (32 points).
+  The substitution $p = \pF + T\,t$ places nodes at momenta $\pF + O(T)$, naturally resolving the thermal tail above the Fermi surface with exponential weight.
+  This part is unchanged from the original code.
+\end{itemize}
+Both sets of nodes are concentrated near~$\pF$, where the Fermi--Dirac integrands peak.
+However, for the oscillatory integrands in $\chi_3$ and especially $\chi_4$, the quadrature accuracy degrades severely at low~$T$.
+The IBP technique described below smooths the integrands by reducing the derivative order by one.
+
+
+%% ====================================================================
+\section{IBP identities}
+\label{sec:ibp}
+%% ====================================================================
+
+The core identity underlying all IBPs is
+\begin{equation}\label{eq:dfdt-identity}
+  \frac{df}{dp} = -\frac{p}{ET}\,f(1-f)\,.
+\end{equation}
+This allows us to express products of $f$ and its $\mu$-derivatives as total $p$-derivatives, enabling integration by parts.
+
+\subsection{\texorpdfstring{$\chi_2$}{chi2}: first IBP}
+\label{sec:chi2}
+
+From \cref{eq:dfdt-identity}, we have
+\begin{equation}
+  f(1-f) = -T\,\frac{E}{p}\,\frac{df}{dp}\,.
+\end{equation}
+Therefore the $\chi_2$ integrand becomes a total derivative:
+\begin{equation}
+  p^2 \, f(1-f) = -T\,p\,E\,\frac{df}{dp} = -T\,\frac{d}{dp}\bigl[p\,E\,f\bigr] + T\,\frac{d(pE)}{dp}\,f\,.
+\end{equation}
+Since $d(pE)/dp = (2p^2 + m^2)/E$ and the boundary term $[p\,E\,f]_0^\infty = 0$ (vanishes at $p=0$ and exponentially at $p=\infty$), integration by parts gives
+\begin{equation}\label{eq:chi2-ibp}
+  \boxed{\int_0^\infty p^2\,f(1-f)\,dp = T \int_0^\infty \frac{2p^2 + m^2}{E}\,f\,dp\,.}
+\end{equation}
+The left-hand side has integrand $f(1{-}f) \sim \delta(p{-}\pF)$; the right-hand side has integrand $f$, the Fermi step function itself --- smooth, monotonic, and trivial for quadrature.
+
+Using \cref{eq:chi2-ibp} in \cref{eq:chi2-direct}:
+\begin{equation}\label{eq:chi2-final}
+  \chi_2 = \frac{g}{2\pi^2} \int_0^\infty \frac{2p^2 + m^2}{E}\,f\,dp\,.
+\end{equation}
+
+
+\subsection{\texorpdfstring{$\chi_3$}{chi3}: second IBP}
+\label{sec:chi3}
+
+Differentiating $f(1-f) = -T(E/p)\,df/dp$ once more with respect to~$\mu$:
+\begin{equation}
+  \frac{\partial}{\partial\mu}\bigl[f(1-f)\bigr] = \frac{f(1-f)(1-2f)}{T} \quad \Rightarrow \quad f(1-f)(1-2f) = -T\,\frac{E}{p}\,\frac{d}{dp}\bigl[f(1-f)\bigr]\,.
+\end{equation}
+Therefore
+\begin{equation}
+  p^2\,f(1-f)(1-2f) = -T\,p\,E\,\frac{d}{dp}\bigl[f(1-f)\bigr]\,.
+\end{equation}
+Integrating by parts with $[p\,E\,f(1{-}f)]_0^\infty = 0$ (the boundary terms vanish since $pE = 0$ at $p=0$ and $f(1-f)$ decays exponentially at $p \to \infty$):
+\begin{equation}\label{eq:chi3-ibp}
+  \boxed{\int_0^\infty p^2\,f(1-f)(1-2f)\,dp = T \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)\,dp\,.}
+\end{equation}
+The left-hand side has an integrand with one sign change (derivative-of-delta structure); the right-hand side has $f(1{-}f)$, a smooth non-negative peak at~$\pF$ --- the same integrand that appeared in the \emph{un-improved} $\chi_2$.
+
+Using \cref{eq:chi3-ibp} in \cref{eq:chi3-direct}:
+\begin{equation}\label{eq:chi3-final}
+  \chi_3 = \frac{g}{2\pi^2 T} \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)\,dp\,.
+\end{equation}
+
+
+\subsection{\texorpdfstring{$\chi_4$}{chi4}: third IBP}
+\label{sec:chi4}
+
+Similarly, differentiating $f(1-f)(1-2f)$ with respect to~$\mu$:
+\begin{equation}
+  \frac{\partial}{\partial\mu}\bigl[f(1-f)(1-2f)\bigr] = \frac{f(1-f)\bigl[1-6f(1-f)\bigr]}{T}
+\end{equation}
+and thus
+\begin{equation}
+  f(1-f)\bigl[1 - 6f(1-f)\bigr] = -T\,\frac{E}{p}\,\frac{d}{dp}\bigl[f(1-f)(1-2f)\bigr]\,.
+\end{equation}
+Integration by parts with $[p\,E\,f(1{-}f)(1{-}2f)]_0^\infty = 0$ gives:
+\begin{equation}\label{eq:chi4-ibp}
+  \boxed{\int_0^\infty p^2\,f(1-f)\bigl[1-6f(1-f)\bigr]\,dp = T \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)(1-2f)\,dp\,.}
+\end{equation}
+The left-hand side has two sign changes; the right-hand side has one sign change (the same integrand as the \emph{un-improved} $\chi_3$).
+
+Using \cref{eq:chi4-ibp} in \cref{eq:chi4-direct}:
+\begin{equation}\label{eq:chi4-final}
+  \chi_4 = \frac{g}{2\pi^2 T^2} \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)(1-2f)\,dp\,.
+\end{equation}
+
+\subsection{General pattern}
+\label{sec:general}
+
+The IBP has a recursive structure.
+Define
+\begin{equation}
+  F_k(p) \equiv T \frac{\partial^k f}{\partial \mu^k}\,,
+\end{equation}
+so that $F_0 = f$, $F_1 = f(1-f)$, $F_2 = f(1-f)(1-2f)/T$, etc.
+Then the identity $\partial f/\partial p = -(p/ET)\,F_1$ generalizes to
+\begin{equation}
+  F_{k+1} = \frac{\partial F_k}{\partial\mu} = -T\,\frac{E}{p}\,\frac{\partial F_k}{\partial p}\,,
+\end{equation}
+and each IBP step replaces
+\begin{equation}
+  \int_0^\infty p^2 \, F_{k+1}\, dp = T \int_0^\infty \frac{2p^2+m^2}{E}\,F_k\,dp\,,
+\end{equation}
+provided the boundary term $[pE\,F_k]_0^\infty$ vanishes.
+Each step reduces the number of sign changes in the integrand by one, at the cost of introducing one additional power of~$T$ in the denominator when forming~$\chi_n$.
+
+
+%% ====================================================================
+\section{Analytic \texorpdfstring{$T=0$}{T=0} limits}
+\label{sec:T0}
+%% ====================================================================
+
+At $T = 0$, the Fermi--Dirac distribution becomes a step function, $f = \theta(\pF - p)$, and the integrals can be evaluated analytically.
+
+\subsection{Density and equation of state}
+
+\begin{align}
+  n\big|_{T=0} &= \frac{g}{2\pi^2}\,\frac{\pF^3}{3}\,, \\[4pt]
+  P\big|_{T=0} &= \frac{g}{6\pi^2}\left[\mu\,\pF^3 - \tfrac{3}{4}\,\pF^4\,\psi(m/\pF)\right], \\[4pt]
+  \vep\big|_{T=0} &= \frac{g}{2\pi^2}\,\frac{\pF^4}{4}\,\psi(m/\pF)\,,
+\end{align}
+where $\psi(x) = (1+x^2)^{1/2}(1 + \tfrac{1}{2}x^2) - \tfrac{1}{2}x^4\sinh^{-1}(1/x)$.
+
+\subsection{Susceptibilities}
+
+Using $f(1{-}f)/T \to \delta(p - \pF)\,\mu/\pF$ and its derivatives, or by directly differentiating the $T=0$ density:
+\begin{align}
+  \chi_2\big|_{T=0} = \frac{dn}{d\mu}\bigg|_{T=0} &= \frac{g}{2\pi^2}\,\frac{\mu\,\pF}{1} = \frac{g}{2\pi^2}\,\mu\,\pF\,, \label{eq:chi2-T0} \\[6pt]
+  \chi_3\big|_{T=0} = \frac{d^2 n}{d\mu^2}\bigg|_{T=0} &= \frac{g}{2\pi^2}\,\frac{\mu^2 + \pF^2}{\pF}\,, \label{eq:chi3-T0} \\[6pt]
+  \chi_4\big|_{T=0} = \frac{d^3 n}{d\mu^3}\bigg|_{T=0} &= \frac{g}{2\pi^2}\,\frac{\mu\,(3\pF^2 - \mu^2)}{\pF^3}\,. \label{eq:chi4-T0}
+\end{align}
+
+These analytic values serve as reference for assessing the numerical accuracy at finite but small~$T$.
+
+
+%% ====================================================================
+\section{Decomposition into below- and above-\texorpdfstring{$\pF$}{pF} contributions}
+\label{sec:decomposition}
+%% ====================================================================
+
+The quadrature scheme splits every integral at the Fermi momentum~$\pF$:
+\begin{equation}\label{eq:split}
+  \int_0^\infty (\ldots)\,dp = \underbrace{\int_0^{\pF} (\ldots)\,dp}_{\text{below }\pF} \;+\; \underbrace{\int_{\pF}^\infty (\ldots)\,dp}_{\text{above }\pF}\,.
+\end{equation}
+Since $f \to \theta(\pF - p)$ as $T \to 0$, the above-$\pF$ part vanishes exponentially, while the below-$\pF$ part approaches a $T$-independent limit.
+We now show how this split interacts with the IBP integrands of each susceptibility.
+
+\subsection{\texorpdfstring{$\chi_2$}{chi2}: the \texorpdfstring{$T=0$}{T=0} value emerges explicitly}
+\label{sec:chi2-decomp}
+
+The IBP formula for $\chi_2$ (\cref{eq:chi2-ibp}) gives
+\begin{equation}
+  T\,\chi_2 = \frac{g}{2\pi^2} \int_0^\infty \frac{2p^2 + m^2}{E}\,f\,dp\,.
+\end{equation}
+The integrand involves $f$ --- the Fermi step function.
+Below~$\pF$ we write $f = 1 - (1-f)$, obtaining
+\begin{equation}\label{eq:chi2-below}
+  \int_0^{\pF} \frac{2p^2 + m^2}{E}\,f\,dp
+  = \underbrace{\int_0^{\pF} \frac{2p^2 + m^2}{E}\,dp}_{= \;\mu\,\pF}
+  \;-\; \int_0^{\pF} \frac{2p^2 + m^2}{E}\,(1-f)\,dp\,.
+\end{equation}
+The first integral is the \emph{exact} $T = 0$ contribution and can be evaluated analytically:
+\begin{equation}\label{eq:chi2-analytic}
+  \int_0^{\pF} \frac{2p^2 + m^2}{E}\,dp
+  = \int_0^{\pF} \left(2E - \frac{m^2}{E}\right) dp
+  = \bigl[p\,E\bigr]_0^{\pF} = \pF \cdot \mu = \mu\,\pF\,,
+\end{equation}
+where we used $d(pE)/dp = (2p^2 + m^2)/E$ and the boundary values $p\,E|_{p=\pF} = \pF\,\mu$, $p\,E|_{p=0} = 0$.
+
+The remaining terms are thermal corrections that vanish as $T \to 0$:
+\begin{itemize}
+  \item $-\int_0^{\pF} \frac{2p^2+m^2}{E}\,(1-f)\,dp$: the ``hole'' contribution below~$\pF$.
+  At $T = 0$, $1 - f = 0$ for $p < \pF$, so this integral vanishes.
+  At finite $T$, $1 - f$ is exponentially small except near $\pF$, contributing $O(T^2)$.
+  \item $+\int_{\pF}^\infty \frac{2p^2+m^2}{E}\,f\,dp$: the ``tail'' contribution above~$\pF$.
+  Again $f \to 0$ for $p > \pF$ as $T \to 0$, giving $O(T^2)$.
+\end{itemize}
+The code therefore computes
+\begin{equation}\label{eq:chi2-code}
+  T\,\chi_2 = \frac{g}{2\pi^2}\,T\,\bigl(\underbrace{\mu\,\pF}_{\text{ret2}} + \underbrace{\Delta_{\rm th}}_{\text{ret1}}\bigr)\,,
+\end{equation}
+where $\text{ret2} = \mu\,\pF$ is the analytic $T = 0$ value of $\chi_2$ (in natural units, up to the $g/2\pi^2$ prefactor) and
+\begin{equation}
+  \Delta_{\rm th} = -\int_0^{\pF} \frac{2p^2+m^2}{E}\,(1-f)\,dp + \int_{\pF}^\infty \frac{2p^2+m^2}{E}\,f\,dp
+\end{equation}
+is the thermal correction, which tends to zero as $T \to 0$.
+
+\paragraph{Key point.}
+The analytic extraction for $\chi_2$ is \emph{not} a numerical convenience --- it is a structural consequence of the IBP.
+The IBP replaces the sharply peaked integrand $f(1-f)$ by the step-function-like $f$, which \emph{naturally} splits into a filled Fermi sea (yielding the exact $T = 0$ answer) plus corrections from particles and holes near the Fermi surface.
+
+\subsection{\texorpdfstring{$\chi_3$}{chi3}: peaked integrand, no natural \texorpdfstring{$T=0$}{T=0} split}
+\label{sec:chi3-decomp}
+
+The IBP formula for $\chi_3$ (\cref{eq:chi3-ibp}) gives
+\begin{equation}
+  T^2\,\chi_3 = \frac{g}{2\pi^2}\,T \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)\,dp\,.
+\end{equation}
+The integrand $f(1{-}f)$ is a smooth, non-negative peak localized within $\sim T$ of $\pF$.
+Unlike the $\chi_2$ case, $f(1{-}f)$ vanishes at $T = 0$ for all~$p$ (both below and above $\pF$), so there is no filled-Fermi-sea piece to extract directly from the integrand.
+
+Instead, the integral scales as $\sim T$ for small $T$:
+\begin{equation}
+  \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)\,dp \;\xrightarrow{T \to 0}\; T\,\frac{\mu^2 + \pF^2}{\pF}\,,
+\end{equation}
+because $f(1{-}f)/T \to \delta(p - \pF)\,\mu/\pF$.
+Therefore $\chi_3 = \text{quad}/T \to (\mu^2 + \pF^2)/\pF$ as $T \to 0$.
+
+For the $T = 0$ extraction, the code computes
+\begin{equation}\label{eq:chi3-code}
+  T^2\,\chi_3 = \frac{g}{2\pi^2}\,T^2 \bigl(\underbrace{(\mu^2 + \pF^2)/\pF}_{\text{ret2}} + \underbrace{\text{quad}/T - (\mu^2 + \pF^2)/\pF}_{\text{ret1}}\bigr)\,.
+\end{equation}
+Here $\text{ret2}$ is the known $T = 0$ limit and $\text{ret1}$ is the thermal correction.
+Unlike the $\chi_2$ case, $\text{ret2}$ does not emerge organically from splitting the integral at $\pF$ --- it is an independently computed constant that is subtracted.
+This decomposition is mathematically equivalent to the direct computation ($T^2 \times \text{value}/T^2$ round-trips losslessly in IEEE double), but it makes the $T \to 0$ behavior transparent.
+
+\subsection{\texorpdfstring{$\chi_4$}{chi4}: sign-changing integrand}
+\label{sec:chi4-decomp}
+
+The IBP formula for $\chi_4$ (\cref{eq:chi4-ibp}) gives
+\begin{equation}
+  T^3\,\chi_4 = \frac{g}{2\pi^2}\,T \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)(1-2f)\,dp\,.
+\end{equation}
+The integrand $f(1{-}f)(1{-}2f)$ is localized near $\pF$ and changes sign once (positive for $p < \pF$, negative for $p > \pF$, since $1 - 2f$ flips sign at $E = \mu$).
+Like $\chi_3$, the integrand vanishes everywhere at $T = 0$, and the integral scales as $\sim T^2$:
+\begin{equation}
+  \int_0^\infty \frac{2p^2 + m^2}{E}\,f(1-f)(1-2f)\,dp \;\xrightarrow{T \to 0}\; T^2\,\frac{\mu(3\pF^2 - \mu^2)}{\pF^3}\,.
+\end{equation}
+The code uses the same extraction structure:
+\begin{equation}\label{eq:chi4-code}
+  T^3\,\chi_4 = \frac{g}{2\pi^2}\,T^3 \bigl(\underbrace{\mu(3\pF^2 - \mu^2)/\pF^3}_{\text{ret2}} + \underbrace{\text{quad}/T^2 - \mu(3\pF^2 - \mu^2)/\pF^3}_{\text{ret1}}\bigr)\,.
+\end{equation}
+Because $f(1{-}f)(1{-}2f)$ has one sign change, the quadrature accuracy is intermediate between $\chi_2$ (no sign changes, excellent) and the un-improved $\chi_4$ (two sign changes, catastrophic).
+
+\subsection{Comparison of the three cases}
+
+The qualitative difference between $\chi_2$ and $\chi_{3,4}$ is summarized in the following table:
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & $\chi_2$ & $\chi_3$ & $\chi_4$ \\
+\midrule
+IBP integrand & $f$ & $f(1{-}f)$ & $f(1{-}f)(1{-}2f)$ \\
+Sign changes & 0 & 0 & 1 \\
+$T\to 0$ behavior of integrand & $\to \theta(\pF - p)$ & $\to 0$ (peak $\sim T$) & $\to 0$ (peak $\sim T$) \\
+$T{=}0$ from integral splitting? & \textbf{Yes} & No & No \\
+How $T{=}0$ enters & $\int_0^{\pF} \frac{2p^2+m^2}{E}\,dp = \mu\pF$ & $\text{quad}/T \to \text{const}$ & $\text{quad}/T^2 \to \text{const}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+For $\chi_2$, the IBP is special: the integrand $f$ has a non-vanishing $T = 0$ limit (the filled Fermi sea), and splitting $f = 1 - (1-f)$ below~$\pF$ yields the analytic answer \emph{organically}.
+For $\chi_3$ and $\chi_4$, the integrands are purely thermal ($\to 0$ everywhere as $T \to 0$), so the $T = 0$ values emerge only through the scaling of the integral with powers of~$T$, and the analytic extraction is a separate subtraction rather than a structural decomposition.
+
+
+%% ====================================================================
+\section{Implementation details}
+\label{sec:implementation}
+%% ====================================================================
+
+\subsection{Quadrature scheme}
+\label{sec:quadrature}
+
+The integration domain $[0,\infty)$ is split at the Fermi momentum $\pF$:
+
+\paragraph{Above $\pF$: shifted Laguerre quadrature.}
+The substitution $p = \pF + T\,t$ transforms the Laguerre integration variable $t \in [0,\infty)$ with 32-point Gauss--Laguerre nodes and weights.
+The Jacobian $dp = T\,dt$ contributes a factor~$T$.
+This part is unchanged from the original code.
+
+\paragraph{Below $\pF$: Sommerfeld--Legendre quadrature.}
+\label{sec:sommerfeld-legendre}
+The original code used a uniform (linear) mapping $p = s\,\pF$ with 32-point Gauss--Legendre nodes on~$[0,1]$.
+This distributes nodes roughly uniformly over $[0,\pF]$, giving an average spacing of $\sim \pF/32$.
+At low~$T$, the integrands vary on the scale of $\sim T/v_F \ll \pF/32$ near~$\pF$, so the uniform nodes cannot resolve the Fermi surface peak.
+
+The Sommerfeld--Legendre scheme replaces the uniform mapping with a nonlinear one that adaptively concentrates nodes near~$\pF$.
+The construction is motivated by the Sommerfeld expansion: at low~$T$, Fermi--Dirac integrands are smooth except within a window of width $\sim T$ around the Fermi surface.
+An ideal quadrature should place most of its nodes in this window, while retaining a few nodes in the bulk ($p \ll \pF$) where the integrand varies slowly.
+
+The mapping is defined by
+\begin{equation}\label{eq:sommerfeld-map}
+  p(s) = \pF\left(1 - \frac{u(s)}{\alpha}\right), \qquad
+  u(s) = -\ln\bigl(1 - \beta\,(1-s)\bigr), \qquad
+  \alpha = \frac{\pF^2}{\mu T}, \qquad \beta = 1 - e^{-\alpha}\,.
+\end{equation}
+This is applied with 32-point Gauss--Legendre nodes $\{s_i\}$ and weights $\{w_i\}$ on~$[0,1]$.
+The Jacobian is
+\begin{equation}
+  \frac{dp}{ds} = \frac{\pF}{\alpha} \cdot \frac{\beta}{1 - \beta\,(1-s)}\,.
+\end{equation}
+
+\paragraph{Limiting behavior.}
+The parameter $\alpha = \pF^2/(\mu T) \approx E_F / T$ (where $E_F = \pF^2/(2\mu)$ is the non-relativistic Fermi energy) controls the degree of node concentration:
+\begin{itemize}
+  \item \textbf{Low temperature} ($\alpha \gg 1$, i.e.\ $T \ll E_F$): $\beta \to 1$ and $u(s) \approx -\ln(s)$, so $p(s) \approx \pF(1 + \ln(s)/\alpha)$.
+  As $s$ varies from 0 to 1, the mapped momentum sweeps from $p = 0$ to $p = \pF$, but with strong logarithmic compression near $p = \pF$ (where $s \to 1$).
+  For the standard 32-point Legendre nodes, which are roughly uniformly spaced in~$[0,1]$, this places the majority of mapped momenta within $\sim \pF/\alpha \sim \mu T/\pF \sim T/v_F$ of the Fermi surface --- matching the thermal width of the Fermi step.
+
+  \item \textbf{High temperature} ($\alpha \ll 1$, i.e.\ $T \gg E_F$): $\beta \to \alpha$ and $u(s) \to \alpha\,(1-s)$, so $p(s) \to s\,\pF$ --- the uniform (linear) mapping.
+  The Fermi step is broad and there is no need for node concentration.
+\end{itemize}
+
+\paragraph{Comparison with uniform Legendre.}
+In the old scheme, the below-$\pF$ integration used the uniform mapping $p = s\,\pF$ with 32-point Gauss--Legendre:
+\begin{equation}
+  \int_0^{\pF} F(p)\,dp \approx \pF \sum_{i=1}^{32} w_i^{(\rm Leg)}\, F(s_i\,\pF)\,.
+\end{equation}
+The 32 Legendre nodes are roughly uniformly spaced in $[0,1]$, giving an average spacing of $\Delta p \sim \pF/32$ in momentum.
+For a nucleon ($m \approx 0.938\GeV$) at $\mu_B = 1.2\GeV$ and $T = 0.001\MeV$:
+\begin{equation}
+  \pF \approx 0.73\GeV, \qquad
+  \Delta p \sim \pF/32 \approx 0.023\GeV, \qquad
+  T/v_F \sim \mu T / \pF \approx 1.6 \times 10^{-6}\GeV\,.
+\end{equation}
+The thermal width $T/v_F$ is $\sim 10^4$ times smaller than the node spacing.
+Only 1--2 nodes happen to fall near the Fermi surface, which is completely insufficient for resolving the peaked or oscillatory integrands of $\chi_3$ and $\chi_4$.
+
+In the Sommerfeld--Legendre scheme, the adaptive mapping concentrates $\sim 20$ of the 32 nodes within $\sim T/v_F$ of the Fermi surface at low~$T$, while the remaining nodes cover the bulk.
+Combined with the 32 shifted Laguerre nodes above~$\pF$, the Fermi surface peak is resolved by $\sim 50$ closely spaced nodes --- regardless of how small~$T$ is.
+
+\subsection{Below-\texorpdfstring{$\pF$}{pF} forms}
+
+For $p < \pF$, we have $E < \mu$ so $x = (E-\mu)/T < 0$.
+The Fermi--Dirac products are evaluated using $e^x$ (which is $< 1$):
+\begin{align}
+  f &= \frac{1}{e^x + 1}\,, \\[4pt]
+  f(1{-}f) &= \frac{e^x}{(1+e^x)^2}\,, \\[4pt]
+  f(1{-}f)(1{-}2f) &= \frac{e^x}{(1+e^x)^2}\left(1 - \frac{2}{e^x+1}\right) = \frac{e^x(e^x - 1)}{(1+e^x)^3}\,.
+\end{align}
+These forms are numerically stable for all $x < 0$.
+
+For $\chi_2$, the code computes
+\begin{equation}
+  -\int_0^{\pF} \frac{2p^2+m^2}{E}\,\frac{1}{e^{-(E-\mu)/T}+1}\,dp\,,
+\end{equation}
+where the negative sign and $e^{-x}$ in the denominator implement the ``hole'' integrand $-(1-f) = -(e^{-x}/(1+e^{-x})) = -1/(e^{-(E-\mu)/T}+1)$.
+This equals $-\int_0^{\pF} (2p^2+m^2)/E \cdot (1-f)\,dp$, which when combined with the analytic $\mu\,\pF$ from $\int_0^{\pF} (2p^2+m^2)/E\,dp$ gives the total below-$\pF$ contribution.
+
+\subsection{Above-\texorpdfstring{$\pF$}{pF} forms}
+
+For $p > \pF$, we have $x = (E-\mu)/T > 0$.
+The substitution $p = \pF + T\,t$ maps the integration to Laguerre variables $t \in [0,\infty)$, and the Fermi--Dirac products are evaluated using $e^{-x}$ (which is $< 1$):
+\begin{align}
+  f &= \frac{e^{-x}}{1+e^{-x}}\,, \\[4pt]
+  f(1{-}f) &= \frac{e^{-x}}{(1+e^{-x})^2}\,, \\[4pt]
+  f(1{-}f)(1{-}2f) &= \frac{e^{-x}(1 - e^{-x})}{(1+e^{-x})^3}\,.
+\end{align}
+
+In terms of the scaled variable $t$, the momentum is $p = T\,t$, the energy-over-$T$ is $E/T = \sqrt{t^2 + (m/T)^2}$, and $x = E/T - \mu/T$.
+The kinematic factor becomes
+\begin{equation}
+  \frac{2p^2+m^2}{E}\,dp = T^2\,\frac{2t^2 + (m/T)^2}{E/T}\,dt\,.
+\end{equation}
+The extra factor of $T^2$ (one from $dp = T\,dt$, one from $2p^2/E = 2T^2 t^2/(ET)$, but the $m^2/E$ term contributes less) appears in the code as the explicit \texttt{T*T} multiplying the Laguerre contribution.
+
+\subsection{Analytic \texorpdfstring{$T=0$}{T=0} extraction}
+
+The code stores each susceptibility in the form
+\begin{equation}
+  T^k \, \chi_{k+1} = \frac{g}{2\pi^2}\,T^k\bigl(\underbrace{\chi_{k+1}^{(0)}}_{\text{ret2}} + \underbrace{\Delta\chi_{k+1}}_{\text{ret1}}\bigr)\,,
+\end{equation}
+where $\chi_{k+1}^{(0)}$ is the analytic $T=0$ value from \cref{sec:T0} and $\Delta\chi_{k+1} = \text{quad}/T^k - \chi_{k+1}^{(0)}$ is the thermal correction.
+
+\begin{itemize}
+\item For \textbf{$\chi_2$} ($k = 1$): the extraction is structural.
+  The below-$\pF$ quadrature computes the hole contribution
+  $-\int_0^{\pF}(2p^2+m^2)/E\cdot(1-f)\,dp$,
+  the above-$\pF$ quadrature computes the tail
+  $+\int_{\pF}^\infty(2p^2+m^2)/E\cdot f\,dp$,
+  and $\text{ret2} = \mu\,\pF$ is the exact Fermi-sea integral.
+  The sum $\text{ret1} + \text{ret2}$ equals the full $\chi_2$ value to machine precision.
+
+\item For \textbf{$\chi_3$} ($k = 2$): both quadratures compute $\int (2p^2+m^2)/E \cdot f(1{-}f)\,dp$ directly (no $f = 1 - (1-f)$ decomposition, since $f(1{-}f) \to 0$ below~$\pF$).
+  The analytic value $\text{ret2} = (\mu^2 + \pF^2)/\pF$ is subtracted after dividing the total quadrature by~$T$.
+
+\item For \textbf{$\chi_4$} ($k = 3$): similarly, both quadratures compute $\int (2p^2+m^2)/E \cdot f(1{-}f)(1{-}2f)\,dp$ directly, and $\text{ret2} = \mu(3\pF^2 - \mu^2)/\pF^3$ is subtracted after dividing by $T^2$.
+\end{itemize}
+
+Since $T^k \times \text{value} / T^k$ round-trips without precision loss in IEEE-754 double arithmetic (no overflow or underflow for $T \gtrsim 10^{-6}\GeV$), this decomposition is numerically equivalent to the direct computation in all cases.
+
+\subsection{Summary of implemented formulas}
+
+The code computes $T^k\,d^k n/d\mu^k$ for $k = 1,2,3$ using the IBP-improved integrands:
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Quantity} & \textbf{Code returns} & \textbf{IBP integrand} & \textbf{$T{=}0$ value of $d^kn/d\mu^k$} \\
+\midrule
+$\chi_2 = dn/d\mu$ & $T\,dn/d\mu$ & $(2p^2{+}m^2)/E \cdot f$ & $\mu\,\pF$ \\
+$\chi_3 = d^2n/d\mu^2$ & $T^2\,d^2n/d\mu^2$ & $(2p^2{+}m^2)/E \cdot f(1{-}f)$ & $(\mu^2{+}\pF^2)/\pF$ \\
+$\chi_4 = d^3n/d\mu^3$ & $T^3\,d^3n/d\mu^3$ & $(2p^2{+}m^2)/E \cdot f(1{-}f)(1{-}2f)$ & $\mu(3\pF^2{-}\mu^2)/\pF^3$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+All integrands include the common prefactor $g/(2\pi^2)$ and an overall factor of~$T$ from the IBP (absorbed into the $T^k$ prefactor).
+The density ($n$, $k=0$), pressure ($P$), and energy density ($\vep$) do not use IBP --- their integrands ($p^2 f$, $p^4 f/E$, $p^2 E f$) are already smooth.
+
+
+%% ====================================================================
+\section{Numerical results}
+\label{sec:results}
+%% ====================================================================
+
+We test the IBP improvements using the \texttt{ZeroTemperatureComparison} example at $\mu_B = 1.2\GeV$ with the PDG2025 particle list, comparing the Ideal HRG, excluded-volume diagonal (EV), quantum van~der~Waals (QvdW), and real gas (CS+VDW) models.
+All models use quantum statistics with 32+32 quadrature points.
+
+\Cref{tab:chi3,tab:chi4} show relative deviations of the finite-$T$ results from the exact $T=0$ values.
+
+\begin{table}[h]
+\centering
+\caption{Relative deviation $(\chi_3(T) - \chi_3(0))/\chi_3(0)$ at various temperatures.}
+\label{tab:chi3}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}l cc cc@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Old (Laguerre only)}} & \multicolumn{2}{c}{\textbf{New (IBP)}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Model} & $T{=}0.001\MeV$ & $T{=}1\MeV$ & $T{=}0.001\MeV$ & $T{=}1\MeV$ \\
+\midrule
+Ideal HRG        & $-1.000$     & $-1.000$     & $-1.4\times 10^{-4}$  & $4.3\times 10^{-2}$ \\
+EV-Diagonal      & $0.294$      & $0.294$      & $3.5\times 10^{-9}$   & $-1.9\times 10^{-5}$ \\
+QvdW             & $0.202$      & $0.202$      & $2.9\times 10^{-9}$   & $2.1\times 10^{-4}$ \\
+RealGas (CS+VDW) & $0.879$      & $0.879$      & $2.4\times 10^{-8}$   & $-3.6\times 10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Relative deviation $(\chi_4(T) - \chi_4(0))/\chi_4(0)$ at various temperatures.}
+\label{tab:chi4}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}l cc cc@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Old (Laguerre only)}} & \multicolumn{2}{c}{\textbf{New (IBP)}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Model} & $T{=}0.001\MeV$ & $T{=}1\MeV$ & $T{=}0.001\MeV$ & $T{=}1\MeV$ \\
+\midrule
+Ideal HRG        & $-1.000$     & $-1.000$     & $1.46$                 & $-8.7\times 10^{-2}$ \\
+EV-Diagonal      & $0.846$      & $0.846$      & $1.6\times 10^{-4}$    & $9.7\times 10^{-5}$ \\
+QvdW             & $0.505$      & $0.505$      & $6.8\times 10^{-5}$    & $3.3\times 10^{-4}$ \\
+RealGas (CS+VDW) & $3.905$      & $3.904$      & $1.7\times 10^{-3}$    & $4.2\times 10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Key observations.}
+
+\begin{enumerate}
+  \item \textbf{$\chi_3$ (one IBP step):} The old code produced 20--100\% errors for all models below $T \sim 1\MeV$, with the Ideal HRG returning essentially zero (the Laguerre-only quadrature completely misses the Fermi surface peak).
+  After IBP, the integrand $f(1{-}f)$ is a smooth, non-negative peak, and the errors drop to $10^{-9}$--$10^{-4}$ at $T = 0.001\MeV$.
+
+  \item \textbf{$\chi_4$ (one IBP step):} The old code had 50--390\% errors.
+  After IBP, the integrand $f(1{-}f)(1{-}2f)$ still has one sign change, so the improvement is less dramatic but still substantial: errors drop to $10^{-5}$--$10^{-3}$ for interacting models.
+  The Ideal HRG at $T = 0.001\MeV$ remains challenging (146\% error) because many species with large Fermi momenta contribute, and the sign-changing integrand is harder to resolve per species.
+  By $T = 0.1\MeV$ the Ideal HRG error is already below~$0.4\%$.
+
+  \item \textbf{The old errors are flat in $T$:} For the interacting models with the old code, the relative deviations are essentially constant from $T = 0.001\MeV$ to $T = 0.1\MeV$.
+  This confirms the errors are systematic quadrature failures (the Laguerre nodes do not resolve the Fermi surface), not physical effects.
+
+  \item \textbf{A second IBP for $\chi_4$ is not possible.} One might attempt to apply the IBP once more to replace $f(1{-}f)(1{-}2f)$ with $f(1{-}f)$.
+  However, the boundary term $[pE \cdot f(1{-}f)]_0^\infty$ does vanish, but the resulting integrand involves $d[(2p^2{+}m^2)/E]/dp = p(p^2 + 2m^2)/E^3$, which when combined with $pE \cdot f(1{-}f)$ produces terms proportional to $(2p^2 + m^2)/p$ that diverge at $p = 0$.
+  This makes the second IBP inapplicable.
+\end{enumerate}
+
+
+%% ====================================================================
+\section{IBP for the entropy derivative \texorpdfstring{$ds/dT|_\mu$}{ds/dT}}
+\label{sec:dsdT}
+%% ====================================================================
+
+The entropy density temperature derivative at fixed chemical potential is
+\begin{equation}\label{eq:dsdT-direct}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2}\,\frac{1}{T}\int_0^\infty p^2\,x^2\,f(1-f)\,dp\,,
+  \qquad x \equiv \frac{E - \mu}{T}\,.
+\end{equation}
+At $T = 0$, the Sommerfeld expansion gives
+\begin{equation}\label{eq:dsdT-T0}
+  \frac{ds}{dT}\bigg|_{T=0} = \frac{g}{6}\,\mu\,\pF\,,
+\end{equation}
+which has the same structure $\sim \mu\,\pF$ as the $T = 0$ value of $\chi_2$.
+However, as we show below, the numerical treatment of $ds/dT$ is fundamentally more challenging than~$\chi_2$.
+
+\subsection{The numerical problem}
+
+The integrand in \cref{eq:dsdT-direct} is $\propto x^2 f(1{-}f)/T$.
+The factor $x^2 = (E - \mu)^2/T^2$ vanishes at the Fermi surface ($E = \mu$), while $f(1{-}f)/T \to \delta(p - \pF)\,\mu/\pF$.
+The product gives a peaked integrand $\propto T$ near~$\pF$.
+The integral therefore scales as~$T^2$, and dividing by~$T$ yields the finite $T = 0$ limit.
+
+In the original implementation, the code computed this integral directly and subtracted the analytic $T = 0$ value, i.e.
+\begin{equation}
+  \frac{ds}{dT} = \frac{g}{2\pi^2}\left(\frac{\pi^2}{3}\,\mu\,\pF + \Delta_{\rm th}\right),
+\end{equation}
+where $\Delta_{\rm th} = \text{quad}/T - (\pi^2/3)\,\mu\,\pF$ is the thermal correction.
+At low~$T$, both $\text{quad}/T$ and $(\pi^2/3)\,\mu\,\pF$ are large and nearly equal, so their difference suffers from cancellation.
+This led to $\sim 0.35\%$ relative error already at $T = 1$~$\mu$eV.
+
+
+\subsection{First IBP: \texorpdfstring{$f \cdot G$}{f G} form}
+\label{sec:dsdT-ibp1}
+
+Using $f(1{-}f) = -(TE/p)\,df/dp$ as in the $\chi_2$ case, we integrate by parts on the momentum integral.
+The relevant identity is
+\begin{equation}
+  p^2\,\frac{(E-\mu)^2}{T^2}\,f(1-f)
+  = -\frac{1}{T}\,p\,E\,(E-\mu)^2\,\frac{df}{dp}\,.
+\end{equation}
+Integrating by parts with $u = pE(E-\mu)^2$ and $dv = df$, and noting that the boundary terms vanish:
+\begin{equation}\label{eq:dsdT-ibp1}
+  \boxed{\int_0^\infty p^2\,\frac{(E-\mu)^2}{T^2}\,f(1-f)\,dp
+  = \frac{1}{T}\int_0^\infty f(p)\,G(p)\,dp\,,}
+\end{equation}
+where
+\begin{equation}\label{eq:G-def}
+  G(p) = \frac{d}{dp}\bigl[pE(E-\mu)^2\bigr]
+  = \vep\left[\frac{(2p^2+m^2)\,\vep}{E} + 2p^2\right], \qquad \vep \equiv E - \mu\,.
+\end{equation}
+So that
+\begin{equation}\label{eq:dsdT-ibp1-final}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T^2}\int_0^\infty f(p)\,G(p)\,dp\,.
+\end{equation}
+
+\paragraph{Difference from~$\chi_2$.}
+For $\chi_2$, the IBP converts $\int p^2 f(1{-}f)\,dp = T\int (2E - m^2/E)\,f\,dp$, where the integrand $(2E - m^2/E)$ is nonzero at~$\pF$:
+\begin{equation}
+  \frac{2\pF^2 + m^2}{\mu} = \frac{2\pF^2 + m^2}{\mu} \neq 0\,.
+\end{equation}
+The filled Fermi sea therefore contributes $\int_0^{\pF}(2p^2+m^2)/E\,dp = \mu\,\pF \neq 0$, which is the exact $T = 0$ value.
+
+For $ds/dT$, the integrand $G(p)$ vanishes at the Fermi surface because $\vep(\pF) = 0$:
+\begin{equation}
+  G(\pF) = 0\,.
+\end{equation}
+Consequently, the Fermi-sea integral vanishes:
+\begin{equation}
+  \int_0^{\pF} G(p)\,dp = \bigl[pE(E-\mu)^2\bigr]_0^{\pF} = \pF\mu \cdot 0 - 0 = 0\,.
+\end{equation}
+There is \emph{no} $T = 0$ piece to extract analytically --- the entire integral is a thermal contribution of order~$T^2$.
+The result is $ds/dT = (g/2\pi^2 T^2) \times O(T^2)$, which is finite but computed entirely from the quadrature.
+This achieves $\sim 4 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV.
+
+
+\subsection{Double IBP: \texorpdfstring{$\sigma \cdot H$}{sigma H} form}
+\label{sec:dsdT-ibp2}
+
+To improve accuracy further, we perform a second integration by parts, this time converting from $f$ to the Fermi entropy kernel.
+
+\paragraph{The entropy kernel.}
+Define the Fermi entropy function
+\begin{equation}\label{eq:sigma-def}
+  \sigma(x) = -f\ln f - (1-f)\ln(1-f) = \ln(1 + e^{-|x|}) + \frac{|x|}{e^{|x|}+1}\,,
+\end{equation}
+which satisfies
+\begin{equation}\label{eq:dsigma-dx}
+  \sigma'(x) \equiv \frac{d\sigma}{dx} = -x\,f(1-f)\,.
+\end{equation}
+In momentum space:
+\begin{equation}\label{eq:dsigma-dp}
+  \frac{d\sigma}{dp} = \sigma'(x)\,\frac{dx}{dp} = \sigma'(x)\,\frac{p}{TE}
+  = -\frac{p\,(E-\mu)}{T^2 E}\,f(1-f)\,.
+\end{equation}
+
+\paragraph{Derivation.}
+Start from \cref{eq:dsdT-direct}:
+\begin{equation}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2 T}\int_0^\infty p^2\,x^2\,f(1-f)\,dp\,.
+\end{equation}
+Using $\sigma'(x) = -x\,f(1{-}f)$, we have $x^2 f(1{-}f) = -x\,\sigma'(x)$.
+The momentum derivative of~$\sigma$ is $d\sigma/dp = \sigma'(x)\cdot p/(TE)$, so $\sigma'(x) = (TE/p)\,d\sigma/dp$.
+Substituting:
+\begin{equation}
+  p^2\,x^2\,f(1-f) = -p^2 x \cdot \frac{TE}{p}\,\frac{d\sigma}{dp}
+  = -pE(E-\mu)\,\frac{d\sigma}{dp}\,.
+\end{equation}
+Integrating by parts with $u = pE(E-\mu)$ and $dv = d\sigma$, using $[pE(E-\mu)\,\sigma]_0^\infty = 0$ (since $p = 0$ at the lower limit and $\sigma \to 0$ exponentially at the upper limit):
+\begin{equation}\label{eq:dsdT-ibp2}
+  \boxed{\int_0^\infty p^2\,x^2\,f(1-f)\,dp = \int_0^\infty \sigma(x)\,H(p)\,dp\,,}
+\end{equation}
+where
+\begin{equation}\label{eq:H-def}
+  H(p) = \frac{d}{dp}\bigl[pE(E-\mu)\bigr]
+  = \frac{(E-\mu)(2p^2+m^2)}{E} + p^2\,.
+\end{equation}
+The final formula is
+\begin{equation}\label{eq:dsdT-sigma}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T}\int_0^\infty \sigma(x)\,H(p)\,dp\,.
+\end{equation}
+
+\paragraph{Key properties.}
+\begin{itemize}
+  \item The prefactor is $1/T$ (not $1/T^2$ as in the single-IBP form).
+  \item $\sigma(x)$ is intrinsically smooth and \emph{zero} at $T = 0$ (where $f = 0$ or $f = 1$), just like the entropy density integrand $p^2\,\sigma$.
+  \item $H(\pF) = \pF^2 \neq 0$.
+  The Sommerfeld expansion gives
+  $\int_0^\infty \sigma\,H\,dp \approx (\pi^2/3)\,T\,(\mu/\pF)\,H(\pF) = (\pi^2/3)\,\mu\,\pF\,T$,
+  so $ds/dT \approx (g/2\pi^2 T) \times (\pi^2/3)\,\mu\,\pF\,T = (g/6)\,\mu\,\pF$, matching \cref{eq:dsdT-T0}.
+  \item Because $\sigma = 0$ at $T = 0$, the quadrature evaluates the thermal contribution \emph{directly}, with no analytical subtraction needed and no cancellation.
+\end{itemize}
+
+\subsection{The \texorpdfstring{$\sigma$}{sigma} representation: entropy and its derivatives}
+\label{sec:sigma-representation}
+
+The Fermi entropy kernel $\sigma(x)$ defined in \cref{eq:sigma-def} is the natural integrand for all entropy-related quantities.
+The entropy density itself is
+\begin{equation}\label{eq:s-sigma}
+  s = \frac{g}{2\pi^2}\int_0^\infty p^2\,\sigma\!\left(\frac{E - \mu}{T}\right) dp\,,
+\end{equation}
+where $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$ is the entropy per mode in a Fermi gas.
+This representation has several advantages over the textbook form $s = (\vep + P - \mu n)/T$:
+
+\begin{enumerate}
+  \item \textbf{No cancellation at low $T$.}
+  The textbook formula involves subtracting three large, individually $O(\pF^4)$ quantities ($\vep$, $P$, $\mu n$) to obtain a result of order $O(T)$ --- a severe cancellation.
+  In the $\sigma$ form, the integrand is directly of order~$T$ (since $\sigma \to 0$ for $|x| \to \infty$, i.e.\ deep inside or far outside the Fermi sea), so no cancellation occurs.
+
+  \item \textbf{Intrinsically non-negative.}
+  $\sigma(x) \geq 0$ for all~$x$, so the integrand is non-negative everywhere.
+  This prevents the sign-change-induced quadrature failures that plague the $\chi_4$ integrand.
+
+  \item \textbf{Smooth and peaked.}
+  $\sigma(x)$ has a maximum $\sigma(0) = \ln 2$ at the Fermi surface ($E = \mu$) and decays exponentially for $|x| \gg 1$.
+  The peak width is $\Delta x \sim O(1)$, corresponding to $\Delta p \sim T/v_F$ in momentum space.
+  The Sommerfeld--Legendre + Laguerre quadrature resolves this peak well.
+
+  \item \textbf{$T = 0$ limit is trivial.}
+  At $T = 0$, every mode is either fully occupied ($f = 1$, $\sigma = 0$) or fully empty ($f = 0$, $\sigma = 0$), so $\sigma = 0$ everywhere and $s = 0$.
+  There is no finite contribution to subtract analytically.
+\end{enumerate}
+
+These same properties carry over to $ds/dT$ through the double-IBP $\sigma \cdot H$ form (\cref{eq:dsdT-sigma}).
+The weight function $H(p) = d[pE(E-\mu)]/dp$ modifies the shape but not the sign or smoothness of the integrand.
+The key point is that $\sigma$ encodes the \emph{thermal} contribution directly, avoiding both the cancellation inherent in $(\vep + P - \mu n)/T$ and the oscillations inherent in $x^2 f(1{-}f)$.
+
+\paragraph{Implementation note.}
+The function $\sigma(x)$ is computed via the numerically stable form
+\begin{equation}
+  \sigma(x) = \ln(1 + e^{-|x|}) + \frac{|x|}{e^{|x|} + 1}\,,
+\end{equation}
+which avoids overflow for large $|x|$ and evaluates correctly to $\sigma(0) = \ln 2$ at the Fermi surface.
+In the code, the entropy density (\cref{eq:s-sigma}) and $ds/dT$ (\cref{eq:dsdT-sigma}) share the same \texttt{FermiEntropySigma} function, ensuring consistency between $s$ and its temperature derivative.
+
+
+\subsection{Can we do better? Obstruction to \texorpdfstring{$\chi_2$}{chi2}-level accuracy}
+\label{sec:dsdT-obstruction}
+
+Since \cref{eq:dsdT-sigma} has only a $1/T$ prefactor (not $1/T^2$), one might hope that a further IBP could convert the $\sigma$ kernel into plain~$f$, producing a $\chi_2$-type formula where the $T = 0$ value emerges as a Fermi-sea integral.
+
+\paragraph{Attempt via $\sigma = \ln(1+e^{-x}) + xf$.}
+One can verify the identity
+\begin{equation}\label{eq:sigma-decomp}
+  \sigma(x) = \ln(1 + e^{-x}) + x\,f(x)\,.
+\end{equation}
+Substituting into \cref{eq:dsdT-ibp2}:
+\begin{equation}
+  \int_0^\infty \sigma\,H\,dp
+  = \int_0^\infty \ln(1+e^{-x})\,H\,dp
+  + \frac{1}{T}\int_0^\infty (E-\mu)\,f\,H\,dp\,.
+\end{equation}
+The second term contains plain~$f$ multiplied by~$H$, which looks promising.
+However, at $T = 0$:
+\begin{equation}
+  \frac{1}{T}\int_0^{\pF} (E-\mu)\,H\,dp
+  = \frac{1}{T}\bigl[\underbrace{pE(E-\mu)^2}_{=\,0}\bigr]_0^{\pF}
+  - \frac{1}{T}\int_0^{\pF} p^2(E-\mu)\,dp
+  = -\frac{1}{T}\int_0^{\pF} p^2(E-\mu)\,dp\,.
+\end{equation}
+This \emph{diverges} as $1/T$.
+Meanwhile, the first term also diverges as $1/T$ because $\ln(1+e^{-x}) \to (\mu - E)/T$ for $p < \pF$ at $T = 0$.
+The two $1/T$ divergences cancel to give the finite $\sigma$ integral, but using them separately reintroduces catastrophic cancellation --- exactly the problem we sought to avoid.
+
+\paragraph{Attempt via $d\sigma/dp$.}
+One could also try IBP on $\int \sigma\,H\,dp$ with $u = \sigma$ and $dv = H\,dp$.
+But $d\sigma/dp = -p(E-\mu)f(1{-}f)/(T^2 E)$ from \cref{eq:dsigma-dp}, which reintroduces $f(1{-}f)$ and $1/T^2$ --- going backwards.
+
+\paragraph{Fundamental reason.}
+For $\chi_2$, the IBP converts $f(1{-}f) \to f$, and the plain-$f$ integrand has a \emph{nonzero} Fermi-sea integral $\int_0^{\pF} (2p^2+m^2)/E\,dp = \mu\,\pF$.
+This works because $\chi_2 = dn/d\mu$ is a chemical potential derivative --- its $T = 0$ value is a property of the filled Fermi sea.
+
+In contrast, $ds/dT|_\mu$ is a \emph{temperature derivative}.
+At $T = 0$, the entropy vanishes ($s = 0$) and $ds/dT|_{T=0}$ is the first nonzero term in $s(T) \approx (ds/dT)\,T$.
+Its value $(g/6)\,\mu\,\pF$ arises entirely from the \emph{thermal smearing} of the Fermi surface, not from the filled sea.
+Any IBP that converts the integrand to plain~$f$ necessarily produces a weight function that vanishes at~$\pF$ (because the temperature derivative of all quantities is zero inside the Fermi sea at $T = 0$), making $\int_0^{\pF} (\text{weight}) \cdot f\,dp = 0$.
+
+Therefore, no IBP decomposition can extract the $T = 0$ value of $ds/dT$ as an analytical Fermi-sea integral in the way $\chi_2$ extracts $\mu\,\pF$.
+The $\sigma \cdot H$ form (\cref{eq:dsdT-sigma}) achieves the best accuracy available from direct quadrature of the thermal contribution.
+
+
+\subsection{Numerical results}
+
+\Cref{tab:dsdT} shows the relative deviation of $ds/dT$ from its $T = 0$ value for the Ideal HRG at $\mu_B = 1.2\GeV$.
+
+\begin{table}[h]
+\centering
+\caption{Relative deviation $(ds/dT(T) - ds/dT(0))/(ds/dT(0))$ at low temperatures for the Ideal HRG at $\mu_B = 1.2\GeV$.}
+\label{tab:dsdT}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}l ccc@{}}
+\toprule
+& \textbf{Original} & \textbf{Single IBP ($f \cdot G$)} & \textbf{Double IBP ($\sigma \cdot H$)} \\
+\midrule
+$T = 0.001\MeV$  & $-3.5\times 10^{-3}$ & $-4.3\times 10^{-4}$ & $-2.2\times 10^{-4}$ \\
+$T = 0.01\MeV$   & $-3.5\times 10^{-3}$ & $-4.4\times 10^{-4}$ & $-2.2\times 10^{-4}$ \\
+$T = 0.1\MeV$    & $-3.7\times 10^{-3}$ & $-5.7\times 10^{-4}$ & $-3.4\times 10^{-4}$ \\
+$T = 1\MeV$      & $-8.4\times 10^{-3}$ & $-8.4\times 10^{-3}$ & $-8.1\times 10^{-3}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The double-IBP $\sigma \cdot H$ form achieves $\sim 16\times$ improvement over the original at $T = 1$~$\mu$eV.
+The accuracy matches that of the entropy density~$s$ itself (which uses the same $\sigma$ kernel), confirming that the quadrature resolution of $\sigma$-weighted integrals is the limiting factor.
+The interacting models (EV, QvdW, RealGas) achieve $\sim 1.8 \times 10^{-4}$ at $T = 1$~$\mu$eV.
+
+
+%% ====================================================================
+\section{Summary}
+\label{sec:summary}
+%% ====================================================================
+
+The IBP improvement consists of one integration-by-parts step for each susceptibility $\chi_n$ ($n \geq 2$), using the identity
+\begin{equation}
+  \int_0^\infty p^2\,F_{k+1}(p)\,dp = T \int_0^\infty \frac{2p^2 + m^2}{E}\,F_k(p)\,dp\,,
+\end{equation}
+where $F_k = T\,\partial^k f/\partial\mu^k$.
+Each step replaces an integrand with $k$ sign changes by one with $k{-}1$ sign changes, dramatically improving quadrature convergence at low~$T$.
+The improvement is most pronounced for $\chi_3$ (from $\sim 100\%$ to $\sim 10^{-9}$ relative error) and significant for $\chi_4$ (from $\sim 400\%$ to $\sim 10^{-3}$ for interacting models).
+
+For $\chi_2$, the IBP was already implemented earlier and replaces the $f(1{-}f)$ peak by the smooth Fermi step $f$, yielding excellent precision at all temperatures.
+
+For $ds/dT|_\mu$, a \emph{double} IBP replaces the $x^2 f(1{-}f)$ integrand by the entropy kernel $\sigma(x) = -f\ln f - (1{-}f)\ln(1{-}f)$:
+\begin{equation}
+  \frac{ds}{dT}\bigg|_\mu = \frac{g}{2\pi^2\,T}\int_0^\infty \sigma(x)\,\frac{d}{dp}\bigl[pE(E-\mu)\bigr]\,dp\,.
+\end{equation}
+Since $\sigma$ is intrinsically zero at $T = 0$, the quadrature evaluates the thermal contribution directly with no cancellation, achieving $\sim 2 \times 10^{-4}$ relative error at $T = 1$~$\mu$eV --- a $16\times$ improvement.
+Unlike $\chi_2$, the $T = 0$ value of $ds/dT$ cannot be extracted as a Fermi-sea integral because temperature derivatives vanish identically inside the filled sea; the leading Sommerfeld coefficient arises entirely from the thermal smearing at the Fermi surface.
+
+\end{document}

@@ -16,6 +16,7 @@
 #include <QMenu>
 #include <QKeyEvent>
 #include <QDebug>
+#include <QFontDatabase>
 
 #include "SpectralFunctionDialog.h"
 #include "HelperRoutines.h"
@@ -36,8 +37,7 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
   QLabel* labInfo = new QLabel(tr("Information:"));
   labInfo->setFont(font);
   data = new QTextEdit();
-  QFont font2("Monospace");
-  font2.setStyleHint(QFont::TypeWriter);
+  QFont font2 = QFontDatabase::systemFont(QFontDatabase::FixedFont);
   data->setFont(font2);
   data->setReadOnly(true);
   data->setPlainText(GetParticleInfo());
@@ -50,6 +50,7 @@ ParticleDialog::ParticleDialog(QWidget* parent, ThermalModelBase* mod, int Parti
   tableDecays = new QTableView();
   tableDecays->setModel(myModel);
   tableDecays->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+  configureTableRowHeight(tableDecays);
 
   QHBoxLayout* layoutButtons = new QHBoxLayout();
   layoutButtons->setAlignment(Qt::AlignLeft);
@@ -316,10 +317,18 @@ void ParticleDialog::removeColumn() {
 
 void ParticleDialog::showSpectralFunction()
 {
+#ifdef Q_OS_WASM
+  SpectralFunctionDialog *dialog = new SpectralFunctionDialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setMinimumSize(QSize(800, 400));
+  dialog->setModal(true);
+  dialog->show();
+#else
   SpectralFunctionDialog dialog(this, &model->TPS()->Particle(pid), model->Parameters().T, model->ChemicalPotential(pid), static_cast<int>(model->TPS()->ResonanceWidthIntegrationType() == ThermalParticle::eBW));
   dialog.setWindowFlags(Qt::Window);
   dialog.setMinimumSize(QSize(800, 400));
   dialog.exec();
+#endif
 }
 
 

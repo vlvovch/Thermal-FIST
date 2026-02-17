@@ -18,6 +18,7 @@
 #include <QComboBox>
 #include <QTimer>
 #include <map>
+#include <atomic>
 
 #include "HRGBase/ThermalParticle.h"
 #include "BaseStructures.h"
@@ -45,7 +46,7 @@ class SpectralFunctionDialog : public QDialog
     std::vector< int > vecTotalSize;
 
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
 
     thermalfist::ThermalParticle *particle;
     

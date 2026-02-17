@@ -20,8 +20,11 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QDebug>
+#include <QTimer>
 #include "listtablemodel.h"
 #include "decayseditor.h"
+#include "WasmFileIO.h"
+#include "HelperRoutines.h"
 
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalParticleSystem.h"
@@ -42,6 +45,7 @@ ListEditorTab::ListEditorTab(QWidget *parent, thermalfist::ThermalModelBase *mod
   tableParticles->setSelectionBehavior(QAbstractItemView::SelectRows);
   tableParticles->setSelectionMode(QAbstractItemView::SingleSelection);
   tableParticles->resizeColumnsToContents();
+  configureTableRowHeight(tableParticles);
   connect(tableParticles->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(changedRow()));
   connect(tableParticles, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(editDecaysDoubleClick(QModelIndex)));
   //tableParticles->setSortingEnabled(true);
@@ -349,7 +353,36 @@ void ListEditorTab::applyChanges()
     QMessageBox::information(this, tr("Apply changes"), tr("No new changes detected!"));
     return;
   }
-  
+
+  auto doApply = [this]() {
+    std::vector<thermalfist::ThermalParticle> particles = myModel->GetTPS()->Particles();
+    myModel->GetTPS()->SetTableFromVector(particles, true);
+
+    myModel->applyChanges();
+
+    *model->TPS() = *myModel->GetTPS();
+    model->ChangeTPS(model->TPS());
+
+    resetTPS();
+  };
+
+#ifdef Q_OS_WASM
+  // WASM: Use non-blocking dialog to avoid issues with exec()
+  QMessageBox *msgBox = new QMessageBox(this);
+  msgBox->setWindowTitle(tr("Apply changes"));
+  msgBox->setText(tr("Do you want to apply changes to the particle list to use in the current session?"));
+  QPushButton *applyButton = msgBox->addButton(tr("Apply"), QMessageBox::ApplyRole);
+  msgBox->addButton(tr("No"), QMessageBox::NoRole);
+  msgBox->setAttribute(Qt::WA_DeleteOnClose);
+
+  connect(msgBox, &QMessageBox::finished, this, [this, msgBox, applyButton, doApply](int) {
+    if (msgBox->clickedButton() == applyButton && myModel->haveChanges()) {
+      doApply();
+    }
+  });
+
+  msgBox->open();
+#else
   QMessageBox msgBox;
   QPushButton *applyButton = msgBox.addButton(tr("Apply"), QMessageBox::ApplyRole);
   QPushButton *abortButton = msgBox.addButton(tr("No"), QMessageBox::NoRole);
@@ -357,20 +390,12 @@ void ListEditorTab::applyChanges()
   msgBox.setText(tr("Do you want to apply changes to the particle list to use in the current session?"));
 
   msgBox.exec();
-  
+
   if (msgBox.clickedButton() == abortButton || !myModel->haveChanges())
     return;
 
-  std::vector<ThermalParticle> particles = myModel->GetTPS()->Particles();
-  myModel->GetTPS()->SetTableFromVector(particles, true);
-  
-  myModel->applyChanges();
-
-  *model->TPS() = *myModel->GetTPS();
-  model->ChangeTPS(model->TPS());
-
-  resetTPS();
-
+  doApply();
+#endif
 }
 
 void ListEditorTab::changedRow()
@@ -405,9 +430,16 @@ void ListEditorTab::editDecays()
 {
   int row = getCurrentRow();
   if (row >= 0) {
+#ifdef Q_OS_WASM
+    decayseditor *dialog = new decayseditor(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     decayseditor dialog(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
     //dialog.setWordCount(document().wordCount());
     dialog.exec();
+#endif
   }
 }
 
@@ -570,8 +602,15 @@ void ListEditorTab::StableEdited()
 void ListEditorTab::editDecaysDoubleClick(const QModelIndex & index) {
   int row = index.row();
   if (row >= 0) {
+#ifdef Q_OS_WASM
+    decayseditor *dialog = new decayseditor(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     decayseditor dialog(this, &myModel->GetTPS()->Particle(myModel->GetRowToParticle()[row]), myModel->GetTPS());
     dialog.exec();
+#endif
   }
 }
 
@@ -752,6 +791,52 @@ void ListEditorTab::setAllThresholds()
 
 void ListEditorTab::saveToFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Write to sandbox FS and trigger browser downloads
+  // Note: QFileDialog::saveFileContent is async and opens a browser dialog,
+  // so we must delay the second download to avoid conflicts
+  QString tempListPath = WasmFileIO::getSandboxTempDir() + "/list.dat";
+  QString tempDecaysPath = WasmFileIO::getSandboxTempDir() + "/decays.dat";
+
+  myModel->GetTPS()->WriteTableToFile(tempListPath.toStdString());
+  myModel->GetTPS()->WriteDecaysToFile(tempDecaysPath.toStdString());
+
+  // Build descriptive filenames from currentPath (e.g. "PDG2025-list-withnuclei.dat")
+  QString listSuggestedName = "list.dat";
+  QString decaysSuggestedName = "decays.dat";
+  if (!currentPath.isEmpty()) {
+    QFileInfo fi(currentPath);
+    QString dirName = fi.dir().dirName();   // e.g. "PDG2025" or "default"
+    QString fileName = fi.fileName();       // e.g. "list-withnuclei.dat"
+    if (!dirName.isEmpty() && dirName != "." && dirName != "default") {
+      listSuggestedName = dirName + "-" + fileName;
+      decaysSuggestedName = dirName + "-decays.dat";
+    } else {
+      listSuggestedName = fileName;
+    }
+  }
+
+  // Download particle list first
+  QFile listFile(tempListPath);
+  if (listFile.open(QIODevice::ReadOnly)) {
+    QByteArray listData = listFile.readAll();
+    listFile.close();
+    WasmFileIO::saveFile(listData, listSuggestedName);
+  }
+
+  // Download decays file after a delay so the browser can process the first download
+  QByteArray decaysData;
+  QFile decaysFile(tempDecaysPath);
+  if (decaysFile.open(QIODevice::ReadOnly)) {
+    decaysData = decaysFile.readAll();
+    decaysFile.close();
+  }
+  if (!decaysData.isEmpty()) {
+    QTimer::singleShot(1000, this, [decaysData, decaysSuggestedName]() {
+      WasmFileIO::saveFile(decaysData, decaysSuggestedName);
+    });
+  }
+#else
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/list.dat";
   if (currentPath.size() != 0) {
     listpathprefix = currentPath;
@@ -771,6 +856,7 @@ void ListEditorTab::saveToFile()
       currentPath = path;
     }
   }
+#endif
 
   if (myModel->haveChanges())
     applyChanges();
@@ -779,15 +865,8 @@ void ListEditorTab::saveToFile()
 
 void ListEditorTab::loadMassesWidthsFromPdg()
 {
-  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/mass_width_2020.mcd";
-  if (currentPath.size() != 0) {
-    listpathprefix = QFileInfo(currentPath).absolutePath() + "/pdglisting/";
-  }
-  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list from PDG website"), 
-    listpathprefix, 
-    tr("PDG file (*.mcd)"));
-  if (path.length() > 0)
-  {
+  // Lambda to process the PDG file content from a given path
+  auto processPdgFile = [this](const QString& path) {
     std::ifstream fin(path.toStdString());
     if (fin.is_open()) {
       char cc[2000];
@@ -824,7 +903,7 @@ void ListEditorTab::loadMassesWidthsFromPdg()
         if (!(issnam >> pname))
           pname = "";
 
-        for (int i = 0; i < pdgs.size(); ++i) {
+        for (size_t i = 0; i < pdgs.size(); ++i) {
           tpdg = pdgs[i];
           int tid = myModel->GetTPS()->PdgToId(tpdg);
           if (tid != -1) {
@@ -859,10 +938,29 @@ void ListEditorTab::loadMassesWidthsFromPdg()
         }
       }
       fin.close();
-
-      //myModel->reset();
     }
+  };
+
+#ifdef Q_OS_WASM
+  WasmFileIO::openFile(this, tr("Open file with particle list from PDG website"), "*.mcd",
+    [this, processPdgFile](const QString& sandboxPath) {
+      if (!sandboxPath.isEmpty()) {
+        processPdgFile(sandboxPath);
+      }
+    });
+#else
+  QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/mass_width_2020.mcd";
+  if (currentPath.size() != 0) {
+    listpathprefix = QFileInfo(currentPath).absolutePath() + "/pdglisting/";
   }
+  QString path = QFileDialog::getOpenFileName(this, tr("Open file with particle list from PDG website"),
+    listpathprefix,
+    tr("PDG file (*.mcd)"));
+  if (path.length() > 0)
+  {
+    processPdgFile(path);
+  }
+#endif
 }
 
 bool ListEditorTab::haveChangesToList()

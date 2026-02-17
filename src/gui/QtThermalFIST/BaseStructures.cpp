@@ -67,6 +67,7 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.vdWparams.m_aij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 0.));
   ret.vdWparams.m_bij = std::vector<std::vector<double>>(model->ComponentsNumber(), std::vector<double>(model->ComponentsNumber(), 1.));
   ret.InteractionInput = "";
+  ret.SearchMultipleSolutions = false;
 
   ret.RealGasExcludedVolumePrescription = 0;
   
@@ -156,6 +157,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.UseEMMPions = false;
   ret.EMMPionFPi  = 0.133;
+
+  ret.UseEMMKaons = false;
+  ret.EMMKaonFKa  = 0.160;
 
   ret.MagneticFieldB = model->GetIdealGasFunctionsExtraConfig().MagneticField.B;
   ret.MagneticFieldLmax = model->GetIdealGasFunctionsExtraConfig().MagneticField.lmax;
@@ -248,13 +252,25 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
   model->ClearDensityModels();
   if (config.UseEMMPions) {
     std::vector<long long> pdgs = {211, 111, -211};
-    int emmid = 0;
     for(auto tpdg : pdgs) {
       if (model->TPS()->PdgToId(tpdg) != -1) {
         const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
         model->SetDensityModelForParticleSpeciesByPdg(
                 tpdg,
                 new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMPionFPi))
+        );
+      }
+    }
+  }
+
+  if (config.UseEMMKaons) {
+    std::vector<long long> pdgs = {321, -321, 311, -311};
+    for(auto tpdg : pdgs) {
+      if (model->TPS()->PdgToId(tpdg) != -1) {
+        const ThermalParticle& part = model->TPS()->ParticleByPDG(tpdg);
+        model->SetDensityModelForParticleSpeciesByPdg(
+                tpdg,
+                new EffectiveMassModel(part, new EMMFieldPressureChPT(part.Mass(), config.EMMKaonFKa))
         );
       }
     }
@@ -305,6 +321,7 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
     static_cast<ThermalModelRealGas*>(model)->SetMeanFieldModel(new MeanFieldModelMultiVDW(config.vdWparams.m_aij));
   }
 
+  model->SetMultipleSolutionsMode(config.SearchMultipleSolutions);
 
   return;
   

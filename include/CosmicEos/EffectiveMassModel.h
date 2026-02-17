@@ -276,8 +276,28 @@ namespace thermalfist {
       virtual double Quantity(IdealGasFunctions::Quantity quantity, double T, double mu);
 
       /**
+       * \brief Computes the temperature derivative of the effective mass dm_eff/dT at fixed mu.
+       *
+       * From implicit differentiation of the gap equation p_f'(m_eff) = rho_scalar(T, mu, m_eff):
+       * dm_eff/dT = (d rho_scalar / dT) / [p_f''(m_eff) - (d rho_scalar / dm_eff)]
+       *
+       * \return dm_eff/dT in GeV/GeV (dimensionless).
+       */
+      double DmeffDT() const;
+
+      /**
+       * \brief Computes the derivative of an ideal gas quantity with respect to mass,
+       *        (dQ^id/dm)|_{T,mu}, evaluated at the current effective mass m*.
+       *        Uses central finite differences.
+       *
+       * \param quantity The ideal gas quantity.
+       * \return The mass derivative.
+       */
+      double IdealGasQuantityMassDerivative(IdealGasFunctions::Quantity quantity) const;
+
+      /**
        * \brief Gets the effective mass.
-       * 
+       *
        * \return The effective mass value.
        */
       virtual double EffectiveMass() const { return Meff(); }

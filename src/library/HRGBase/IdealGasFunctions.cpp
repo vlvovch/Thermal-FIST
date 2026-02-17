@@ -512,7 +512,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -565,7 +566,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationPressure: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -621,7 +623,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationEnergyDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -672,6 +675,17 @@ namespace thermalfist {
       if (T == 0.)
         return 0.;
 
+      if (statistics == -1 && mu > m) {
+        std::cerr << "**WARNING** QuantumNumericalIntegrationEntropyDensity: Bose-Einstein condensation" << std::endl;
+        calculationHadBECIssue = true;
+        mu = m;
+        // return 0.;
+      }
+
+      // Use direct entropy integrand for degenerate Fermi gas (avoids (P+e-mu*n)/T cancellation)
+      if (statistics == 1 && mu > m)
+        return FermiNumericalIntegrationLargeMuEntropyDensity(T, mu, m, deg, extraConfig);
+
       double ret = (QuantumNumericalIntegrationPressure(statistics, T, mu, m, deg, extraConfig)
                     + QuantumNumericalIntegrationEnergyDensity(statistics, T, mu, m, deg, extraConfig)
                     - mu * QuantumNumericalIntegrationDensity(statistics, T, mu, m, deg, extraConfig)) / T;
@@ -691,7 +705,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -744,7 +759,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT1dn1dmu1: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -799,7 +815,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT2dn2dmu2: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -855,7 +872,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationT3dn3dmu3: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -964,6 +982,36 @@ namespace thermalfist {
       return 2. * tmpsqrt + 2. * x2 * log((1. + tmpsqrt) / x);
     }
 
+    /// \brief Sommerfeld-inspired variable substitution for the Legendre part
+    ///        of the large-mu Fermi integrals.
+    ///
+    /// Maps s in [0,1] (Legendre node) to momentum p in [0, pF] such that
+    /// nodes cluster near pF at low T (resolving the Fermi surface)
+    /// while reducing to the uniform mapping p = s * pF at high T.
+    ///
+    /// Substitution:  u = -log(1 - beta * (1 - s)),   p = pF * (1 - u / alpha)
+    /// where alpha = pF^2 / (mu * T),  beta = 1 - exp(-alpha).
+    ///
+    /// Returns p and dp/ds.
+    inline void SommerfeldLegendreMap(double s, double pf, double mu, double T,
+                                      double& p, double& dpds)
+    {
+      double alpha = pf * pf / (mu * T);
+      if (alpha < 1.e-6) {
+        // Small alpha: uniform mapping (avoid catastrophic cancellation in beta)
+        p = s * pf;
+        dpds = pf;
+        return;
+      }
+      double expmAlpha = exp(-alpha);
+      double beta = 1. - expmAlpha;
+      double t = 1. - s;
+      double oneMinusBetaT = 1. - beta * t;
+      double u = -log(oneMinusBetaT);
+      p = pf * (1. - u / alpha);
+      dpds = pf / alpha * beta / oneMinusBetaT;
+    }
+
     double FermiNumericalIntegrationLargeMuDensity(double T, double mu, double m, double deg,
                                                    const IdealGasFunctionsExtraConfig& extraConfig)
     {
@@ -975,7 +1023,9 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf / (exp(-(sqrt(legx32[i] * legx32[i] * pf * pf + m * m) - mu) / T) + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        ret1 += -legw32[i] * dpds * p * p / (exp(-(sqrt(p * p + m * m) - mu) / T) + 1.);
       }
 
       double moverT = m / T;
@@ -1006,9 +1056,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double x2 = legx32[i] * pf * legx32[i] * pf;
-        double E = sqrt(legx32[i] * legx32[i] * pf*pf + m * m);
-        ret1 += -legw32[i] * pf * x2 * x2 / E / (exp(-(E - mu) / T) + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double p2 = p * p;
+        double E = sqrt(p2 + m * m);
+        ret1 += -legw32[i] * dpds * p2 * p2 / E / (exp(-(E - mu) / T) + 1.);
       }
 
       double moverT = m / T;
@@ -1041,7 +1093,10 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * sqrt(legx32[i] * legx32[i] * pf*pf + m * m) / (exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T) + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m * m);
+        ret1 += -legw32[i] * dpds * p * p * E / (exp(-(E - mu) / T) + 1.);
       }
 
       double moverT = m / T;
@@ -1059,17 +1114,50 @@ namespace thermalfist {
       return ret1 + ret2;
     }
 
+    /// \brief Entropy integrand per mode: sigma(x) = -f*ln(f) - (1-f)*ln(1-f)
+    ///        where f = 1/(e^x + 1) and x = (E - mu)/T.
+    ///
+    /// Numerically stable form: sigma = |x| / (e^{|x|} + 1) + ln(1 + e^{-|x|})
+    inline double FermiEntropySigma(double x)
+    {
+      double ax = std::abs(x);
+      return log(1. + exp(-ax)) + ax / (exp(ax) + 1.);
+    }
+
     double FermiNumericalIntegrationLargeMuEntropyDensity(double T, double mu, double m, double deg,
                                                           const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      double ret = (FermiNumericalIntegrationLargeMuPressure(T, mu, m, deg, extraConfig)
-                    + FermiNumericalIntegrationLargeMuEnergyDensity(T, mu, m, deg, extraConfig)
-                    - mu * FermiNumericalIntegrationLargeMuDensity(T, mu, m, deg, extraConfig)) / T;
+      if (mu <= m)
+        return QuantumNumericalIntegrationEntropyDensity(1, T, mu, m, deg, extraConfig);
 
-      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
-        ret -= extraConfig.MagneticField.B * FermiNumericalIntegrationLargeMuMagnetization(T, mu, m, deg, extraConfig) * xMath::GeVtoifm3() / T;
+      assert(extraConfig.MagneticField.B == 0.0);
 
-      return ret;
+      double pf = sqrt(mu * mu - m * m);
+      double ret1 = 0.;
+
+      // Legendre on [0, pF] with Sommerfeld mapping: sigma is non-zero only near pF
+      for (int i = 0; i < 32; i++) {
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m * m);
+        double x = (E - mu) / T;
+        ret1 += legw32[i] * dpds * p * p * FermiEntropySigma(x);
+      }
+
+      // Shifted Laguerre above pF
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double E = sqrt(tx * tx + moverT * moverT);
+        double x = E - muoverT;
+        ret1 += lagw32[i] * T * tx * T * tx * T * FermiEntropySigma(x);
+      }
+
+      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+
+      // No ret2: at T=0 sigma=0 everywhere, so the analytic T=0 part is exactly zero
+      return ret1;
     }
 
     double FermiNumericalIntegrationLargeMuScalarDensity(double T, double mu, double m, double deg,
@@ -1083,7 +1171,10 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * m / sqrt(legx32[i] * legx32[i] * pf*pf + m * m) / (exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T) + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m * m);
+        ret1 += -legw32[i] * dpds * p * p * m / E / (exp(-(E - mu) / T) + 1.);
       }
 
       double moverT = m / T;
@@ -1110,27 +1201,43 @@ namespace thermalfist {
       assert(extraConfig.MagneticField.B == 0.0);
 
       double pf = sqrt(mu*mu - m * m);
+
+      // Integration-by-parts (IBP) decomposition:
+      //   int p^2 f(1-f) dp = T * int (2E - m^2/E) f dp
+      //     (via df/dp = -f(1-f)/T * p/E)
+      //   = T * [ int_0^pF (2E - m^2/E) dp  +  thermal correction ]
+      //   = T * [ mu*pF + O(T^2) ]
+      //
+      // The analytic part mu*pF is extracted exactly, ensuring the correct
+      // T->0 limit:  T * dn/dmu -> g/(2pi^2) * mu * pF  (no precision loss).
+      // The thermal correction (ret1) vanishes as T->0.
+      //
+      // The Sommerfeld-Legendre quadrature splits the correction into:
+      //   ret1 = -int_0^pF (2E - m^2/E)(1-f) dp  +  int_pF^inf (2E - m^2/E) f dp
+
+      double m2 = m * m;
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * 1. / (1. + 1./Eexp) / (Eexp + 1.);
-        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * Eexp / (Eexp + 1.) / (Eexp + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m2);
+        ret1 += -legw32[i] * dpds * (2. * E - m2 / E) / (exp(-(E - mu) / T) + 1.);
       }
 
       double moverT = m / T;
       double muoverT = mu / T;
+      double moverT2 = moverT * moverT;
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
-        double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * 1. / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + 1.) / (Eexp + 1.);
+        double EoverT = sqrt(tx * tx + moverT2);
+        ret1 += lagw32[i] * T * T * (2. * tx * tx + moverT2) / EoverT / (exp(EoverT - muoverT) + 1.);
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
 
-      // The remaining factor cancels out with the derivatives of the integral limits wrt pF/mu
+      double ret2 = deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() * mu * pf;
 
-      return ret1;
+      return T * (ret1 + ret2);
     }
 
     double FermiNumericalIntegrationLargeMuT2dn2dmu2(double T, double mu, double m, double deg,
@@ -1142,25 +1249,61 @@ namespace thermalfist {
       assert(extraConfig.MagneticField.B == 0.0);
 
       double pf = sqrt(mu*mu - m * m);
-      double ret1 = 0.;
+
+      // Integration-by-parts (IBP) decomposition:
+      //   This function returns T^2 * d^2n/dmu^2
+      //     = g/(2pi^2) * int p^2 f(1-f)(1-2f) dp
+      //     = g/(2pi^2) * T * int (2p^2+m^2)/E f(1-f) dp
+      //
+      // via f(1-f)(1-2f) = -T*(E/p) * d/dp[f(1-f)], integrate by parts,
+      // boundary terms vanish.
+      //
+      // The integrand (2p^2+m^2)/E * f(1-f) is a smooth peaked function
+      // ~1/(4 cosh^2((E-mu)/(2T))) with no explicit 1/T factor.
+      // The Sommerfeld-Legendre + Laguerre quadrature concentrates points
+      // near the Fermi surface.
+      //
+      // The T->0 limit of d^2n/dmu^2 is (mu^2+pF^2)/pF, recovered via
+      //   d^2n/dmu^2 = (1/T) * int (2p^2+m^2)/E f(1-f) dp
+      //              ~ (1/T) * T*(mu^2+pF^2)/pF = (mu^2+pF^2)/pF
+      //
+      // Analytic T=0 term is extracted exactly (ret2), thermal correction
+      // computed via quadrature (ret1).  Since T^2 * (ret2 + ret1) / T^2
+      // round-trips without precision loss in IEEE double, this ensures
+      // accuracy even when the caller divides by T^2 to get d^2n/dmu^2.
+
+      double m2 = m * m;
+      double quad = 0.;
       for (int i = 0; i < 32; i++) {
-        double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (1. - 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m2);
+        double x = (E - mu) / T;
+        // f(1-f) = exp(x)/(1+exp(x))^2, stable for x < 0 (below pF)
+        double ex = exp(x);
+        double ff1mf = ex / ((1. + ex) * (1. + ex));
+        quad += legw32[i] * dpds * (2. * p * p + m2) / E * ff1mf;
       }
 
       double moverT = m / T;
       double muoverT = mu / T;
+      double moverT2 = moverT * moverT;
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
-        double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * (1. - 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp - Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        double EoverT = sqrt(tx * tx + moverT2);
+        double x = EoverT - muoverT;
+        // f(1-f) = exp(-x)/(1+exp(-x))^2, stable for x > 0 (above pF)
+        double emx = exp(-x);
+        double ff1mf = emx / ((1. + emx) * (1. + emx));
+        quad += lagw32[i] * T * T * (2. * tx * tx + moverT2) / EoverT * ff1mf;
       }
 
-      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      // quad = int (2p^2+m^2)/E f(1-f) dp  ~  T*(mu^2+pF^2)/pF as T->0
+      // d^2n/dmu^2 = quad/T = (mu^2+pF^2)/pF + O(T^2)
+      double ret2 = (mu * mu + pf * pf) / pf;   // analytic T=0 value of d^2n/dmu^2
+      double ret1 = quad / T - ret2;             // thermal correction, -> 0 as T->0
 
-      return ret1;
+      return T * T * (ret2 + ret1) * deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
     }
 
     double FermiNumericalIntegrationLargeMuT3dn3dmu3(double T, double mu, double m, double deg,
@@ -1172,25 +1315,55 @@ namespace thermalfist {
       assert(extraConfig.MagneticField.B == 0.0);
 
       double pf = sqrt(mu*mu - m * m);
-      double ret1 = 0.;
+
+      // Integration-by-parts (IBP) decomposition:
+      //   This function returns T^3 * d^3n/dmu^3
+      //     = g/(2pi^2) * int p^2 f(1-f)(1-6f(1-f)) dp
+      //     = g/(2pi^2) * T * int (2p^2+m^2)/E f(1-f)(1-2f) dp
+      //
+      // via f(1-f)(1-6f(1-f)) = -T*(E/p) * d/dp[f(1-f)(1-2f)],
+      // integrate by parts, boundary terms vanish.
+      //
+      // The T->0 value of d^3n/dmu^3 is mu*(3*pF^2-mu^2)/pF^3,
+      // extracted analytically (ret2).  Thermal correction (ret1)
+      // computed via quadrature, -> 0 as T->0.
+
+      double m2 = m * m;
+      double quad = 0.;
       for (int i = 0; i < 32; i++) {
-        double Eexp = exp(-(sqrt(legx32[i] * legx32[i] * pf*pf + m * m) - mu) / T);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (1. - 4./Eexp + 1./Eexp / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m2);
+        double x = (E - mu) / T;
+        // f(1-f)(1-2f): use exp(x) form, stable for x < 0 (below pF)
+        double ex = exp(x);
+        double f = 1. / (ex + 1.);
+        double ff1mf = ex / ((1. + ex) * (1. + ex));
+        double ff1mf_1m2f = ff1mf * (1. - 2. * f);
+        quad += legw32[i] * dpds * (2. * p * p + m2) / E * ff1mf_1m2f;
       }
 
       double moverT = m / T;
       double muoverT = mu / T;
+      double moverT2 = moverT * moverT;
       for (int i = 0; i < 32; i++) {
         double tx = pf / T + lagx32[i];
-        double Eexp = exp(sqrt(tx*tx + moverT * moverT) - muoverT);
-        ret1 += lagw32[i] * T * tx * T * tx * T * (1. - 4. / Eexp + 1. / Eexp / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += lagw32[i] * T * tx * T * tx * T * (Eexp*Eexp*Eexp - 4.*Eexp*Eexp + Eexp) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.) / (Eexp + 1.);
+        double EoverT = sqrt(tx * tx + moverT2);
+        double x = EoverT - muoverT;
+        // Above pF: x > 0, use exp(-x) forms for stability
+        double emx = exp(-x);
+        double f = emx / (1. + emx);
+        double ff1mf = emx / ((1. + emx) * (1. + emx));
+        double ff1mf_1m2f = ff1mf * (1. - 2. * f);
+        quad += lagw32[i] * T * T * (2. * tx * tx + moverT2) / EoverT * ff1mf_1m2f;
       }
 
-      ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      // quad = int (2p^2+m^2)/E f(1-f)(1-2f) dp  ~  T^2 * mu*(3pF^2-mu^2)/pF^3 as T->0
+      // d^3n/dmu^3 = quad/T^2 = mu*(3pF^2-mu^2)/pF^3 + O(T^2)
+      double ret2 = mu * (3. * pf * pf - mu * mu) / (pf * pf * pf);  // analytic T=0
+      double ret1 = quad / (T * T) - ret2;                            // thermal correction
 
-      return ret1;
+      return T * T * T * (ret2 + ret1) * deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
     }
 
     double FermiNumericalIntegrationLargeMuTdndmu(int N, double T, double mu, double m, double deg,
@@ -1272,6 +1445,17 @@ namespace thermalfist {
                                     const IdealGasFunctionsExtraConfig& extraConfig)
     {
       return 0.0;
+    }
+
+    double FermiZeroTdsdT(double mu, double m, double deg,
+                           const IdealGasFunctionsExtraConfig& extraConfig)
+    {
+      // ds/dT|_{T=0} = g/(2pi^2) * pi^2/3 * mu * pF = g * mu * pF / 6
+      assert(extraConfig.MagneticField.B == 0.0);
+      if (m >= mu)
+        return 0.0;
+      double pf = sqrt(mu * mu - m * m);
+      return deg * mu * pf / 6. * xMath::GeVtoifm3();
     }
 
     double FermiZeroTScalarDensity(double mu, double m, double deg,
@@ -1390,6 +1574,8 @@ namespace thermalfist {
           return Boltzmanndedmu(T, mu, m, deg, extraConfig);
         if (quantity == dchi2dT)
           return Boltzmanndchi2dT(T, mu, m, deg, extraConfig);
+        if (quantity == dsdT)
+          return BoltzmanndsdT(T, mu, m, deg, extraConfig);
       }
       else {
         if (calctype == ClusterExpansion) {
@@ -1426,6 +1612,8 @@ namespace thermalfist {
             return QuantumClusterExpansiondedmu(statistics, T, mu, m, deg, order, extraConfig);
           if (quantity == dchi2dT)
             return QuantumClusterExpansiondchi2dT(statistics, T, mu, m, deg, order, extraConfig);
+          if (quantity == dsdT)
+            return QuantumClusterExpansiondsdT(statistics, T, mu, m, deg, order, extraConfig);
         }
         else {
           if (quantity == ParticleDensity)
@@ -1461,6 +1649,8 @@ namespace thermalfist {
             return QuantumNumericalIntegrationdedmu(statistics, T, mu, m, deg, extraConfig);
           if (quantity == dchi2dT)
             return QuantumNumericalIntegrationdchi2dT(statistics, T, mu, m, deg, extraConfig);
+          if (quantity == dsdT)
+            return QuantumNumericalIntegrationdsdT(statistics, T, mu, m, deg, extraConfig);
         }
       }
       std::cerr << "**WARNING** IdealGasFunctions::IdealGasQuantity: Unknown quantity" << std::endl;
@@ -1546,7 +1736,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationScalarDensity: Bose-Einstein condensation" << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1652,6 +1843,10 @@ namespace thermalfist {
       return deg * m * m / 2. / T / T / T / T / xMath::Pi() / xMath::Pi()
         * (m * xMath::BesselKexp(1, m / T) - mu * xMath::BesselKexp(2, m / T))
         * exp((mu - m) / T);
+    }
+
+    double BoltzmanndsdT(double T, double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
+      return (BoltzmanndedT(T, mu, m, deg, extraConfig) - mu * BoltzmanndndT(T, mu, m, deg, extraConfig)) / T;
     }
 
     double QuantumClusterExpansiondndT(int statistics, double T, double mu, double m, double deg, int order,
@@ -1859,6 +2054,12 @@ namespace thermalfist {
       return ret * prefactor;
     }
 
+    double QuantumClusterExpansiondsdT(int statistics, double T, double mu, double m, double deg, int order,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      return (QuantumClusterExpansiondedT(statistics, T, mu, m, deg, order, extraConfig)
+              - mu * QuantumClusterExpansiondndT(statistics, T, mu, m, deg, order, extraConfig)) / T;
+    }
+
     double QuantumNumericalIntegrationdndT(int statistics, double T, double mu, double m, double deg,
                                        const IdealGasFunctionsExtraConfig &extraConfig) {
       if (statistics == 0)            return BoltzmanndndT(T, mu, m, deg, extraConfig);
@@ -1867,7 +2068,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1899,7 +2101,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1933,7 +2136,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1962,7 +2166,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -1991,7 +2196,8 @@ namespace thermalfist {
       if (statistics == -1 && mu > m) {
         std::cerr << "**WARNING** QuantumNumericalIntegrationDensity: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
         calculationHadBECIssue = true;
-        return 0.;
+        mu = m;
+        // return 0.;
       }
       if (statistics == -1 && T == 0.) return 0.;
 
@@ -2017,6 +2223,38 @@ namespace thermalfist {
       return ret;
     }
 
+    double QuantumNumericalIntegrationdsdT(int statistics, double T, double mu, double m, double deg,
+                                       const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (statistics == 0)            return BoltzmanndsdT(T, mu, m, deg, extraConfig);
+      if (statistics == 1 && T == 0.) return FermiZeroTdsdT(mu, m, deg, extraConfig);
+      if (statistics == 1 && mu > m)  return FermiNumericalIntegrationLargeMudsdT(T, mu, m, deg, extraConfig);
+      if (statistics == -1 && mu > m) {
+        std::cerr << "**WARNING** QuantumNumericalIntegrationdsdT: Bose-Einstein condensation, mass = " << m << ", mu = " << mu << std::endl;
+        calculationHadBECIssue = true;
+        mu = m;
+      }
+      if (statistics == -1 && T == 0.) return 0.;
+
+      // ds/dT|_mu = g/(2pi^2) * (1/T) * int p^2 (E-mu)^2/T^2 f(1-f) dp
+      // = g/(2pi^2) * (1/T^3) * int p^2 (E-mu)^2 f(1 +/- statistics*f) dp   [signs differ for B/F]
+      // For Fermi: f(1-f) = f - f^2;  For Bose: f(1+f)
+      double ret = 0.;
+      double moverT = m / T;
+      double muoverT = mu / T;
+      for (int i = 0; i < 32; i++) {
+        double tx = lagx32[i];
+        double EoverT = sqrt(tx*tx + moverT * moverT);
+        double Eexp = exp(EoverT - muoverT);
+        double f = 1. / (Eexp + statistics);
+        double xval = EoverT - muoverT;
+        ret += lagw32[i] * T * tx * T * tx * T * xval * xval * f * (1. - statistics * f);
+      }
+
+      ret *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() / T;
+
+      return ret;
+    }
+
     double FermiNumericalIntegrationLargeMudndT(double T, double mu, double m, double deg,
                                                 const IdealGasFunctionsExtraConfig &extraConfig) {
       if (mu <= m)
@@ -2027,9 +2265,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double en = sqrt(p * p + m * m);
         double fbar = 1. / (exp(-(en - mu) / T) + 1.);
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (mu - en) / T / T * fbar * (1. - fbar);
+        ret1 += -legw32[i] * dpds * p * p * (mu - en) / T / T * fbar * (1. - fbar);
       }
 
       double moverT = m / T;
@@ -2056,9 +2296,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double en = sqrt(p * p + m * m);
         double fbar = 1. / (exp(-(en - mu) / T) + 1.);
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * (mu - en) / T / T / T
+        ret1 += -legw32[i] * dpds * p * p * (mu - en) / T / T / T
                 * fbar * (1. - fbar) * ((mu - en) / T * (1.-2.*fbar) - 2.);
       }
 
@@ -2087,9 +2329,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double en = sqrt(p * p + m * m);
         double fbar = 1. / (exp(-(en - mu) / T) + 1.);
-        ret1 += -legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * en * (mu - en) / T / T * fbar * (1. - fbar);
+        ret1 += -legw32[i] * dpds * p * p * en * (mu - en) / T / T * fbar * (1. - fbar);
       }
 
       double moverT = m / T;
@@ -2116,10 +2360,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double en = sqrt(p * p + m * m);
         double Eexp = exp(-(en - mu) / T);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * en * 1. / (1. + 1./Eexp) / (Eexp + 1.);
-        //ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf * Eexp / (Eexp + 1.) / (Eexp + 1.);
+        ret1 += legw32[i] * dpds * p * p * en * 1. / (1. + 1./Eexp) / (Eexp + 1.);
       }
 
       double moverT = m / T;
@@ -2129,7 +2374,6 @@ namespace thermalfist {
         double EoverT = sqrt(tx*tx + moverT * moverT);
         double Eexp = exp(EoverT - muoverT);
         ret1 += lagw32[i] * T * tx * T * tx * T * EoverT * T * 1. / (1. + 1. / Eexp) / (Eexp + 1.);
-        //ret1 += lagw32[i] * T * tx * T * tx * T * Eexp / (Eexp + 1.) / (Eexp + 1.);
       }
 
       ret1 *= deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() / T;
@@ -2147,9 +2391,11 @@ namespace thermalfist {
       double pf = sqrt(mu*mu - m * m);
       double ret1 = 0.;
       for (int i = 0; i < 32; i++) {
-        double en = sqrt(legx32[i] * legx32[i] * pf * pf + m * m);
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double en = sqrt(p * p + m * m);
         double fbar = 1. / (exp(-(en - mu) / T) + 1.);
-        ret1 += legw32[i] * pf * legx32[i] * pf * legx32[i] * pf
+        ret1 += legw32[i] * dpds * p * p
                 * fbar * (1. - fbar) * ((mu - en) / T * (1. - 2. * fbar) - 3.);
       }
 
@@ -2167,6 +2413,60 @@ namespace thermalfist {
 
       return ret1;
     }
+    double FermiNumericalIntegrationLargeMudsdT(double T, double mu, double m, double deg,
+                                                const IdealGasFunctionsExtraConfig &extraConfig) {
+      if (mu <= m)
+        return QuantumNumericalIntegrationdsdT(1, T, mu, m, deg, extraConfig);
+
+      assert(extraConfig.MagneticField.B == 0.0);
+
+      double pf = sqrt(mu*mu - m * m);
+      double m2 = m * m;
+
+      // Double-IBP (sigma) form:  ds/dT|_mu = g/(2pi^2 T) * int_0^inf sigma(x) H(p) dp
+      //
+      // Starting from ds/dT = g/(2pi^2 T) * int p^2 x^2 f(1-f) dp,  x = (E-mu)/T:
+      //
+      // Step 1: x^2 f(1-f) = -x sigma'(x),  sigma = -f ln f - (1-f)ln(1-f)
+      // Step 2: IBP on p using d(sigma)/dp = sigma'(x) p/(TE):
+      //   int p^2 x^2 f(1-f) dp = int sigma(x) d/dp[pE(E-mu)] dp
+      //
+      // H(p) = d/dp[pE(E-mu)] = (E-mu)(2p^2+m^2)/E + p^2
+      //
+      // Key: sigma(x) is intrinsically smooth and zero at T=0 (f=0 or 1),
+      // so the quadrature evaluates the thermal contribution directly
+      // with no analytical subtraction needed.
+
+      double ret1 = 0.;
+
+      // Legendre on [0, pF] with Sommerfeld mapping
+      for (int i = 0; i < 32; i++) {
+        double p, dpds;
+        SommerfeldLegendreMap(legx32[i], pf, mu, T, p, dpds);
+        double E = sqrt(p * p + m2);
+        double x = (E - mu) / T;
+        double H = (E - mu) * (2. * p * p + m2) / E + p * p;
+        ret1 += legw32[i] * dpds * FermiEntropySigma(x) * H;
+      }
+
+      // Laguerre above pF
+      double moverT = m / T;
+      double muoverT = mu / T;
+      double moverT2 = moverT * moverT;
+      for (int i = 0; i < 32; i++) {
+        double tx = pf / T + lagx32[i];
+        double pT = tx * T;
+        double EoverT = sqrt(tx * tx + moverT2);
+        double ET = EoverT * T;
+        double eps = ET - mu;
+        double H = eps * (2. * pT * pT + m2) / ET + pT * pT;
+        double x = EoverT - muoverT;
+        ret1 += lagw32[i] * T * FermiEntropySigma(x) * H;
+      }
+
+      return ret1 * deg / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3() / T;
+    }
+
   } // namespace IdealGasFunctions
 
 } // namespace thermalfist

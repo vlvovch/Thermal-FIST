@@ -336,10 +336,18 @@ namespace thermalfist {
      * \param fpiChPT The pion decay constant (default: fpi).
      */
     void SetPionsInteracting(bool pionsinteract = true, double fpiChPT = fpi);
+
+    /**
+     * \brief Sets whether to include kaon interactions via effective mass model.
+     * 
+     * \param kaonsinteract If true, kaon interactions are included.
+     * \param fKChPT The kaon decay constant (default: 1.2 * fpi, see e.g. PHYSICAL REVIEW D 89, 094024 (2014)).
+     */
+    void SetKaonsInteracting(bool kaonsinteract = true, double fkaChPT = fpi * 1.2);
     
     /**
      * \brief Checks if pions are interacting in the model.
-     * 
+     *
      * \return True if pions are interacting, false otherwise.
      */
     bool InteractingPions() const { return m_InteractingPions; }
@@ -419,6 +427,11 @@ namespace thermalfist {
      * \brief Clears the effective mass models.
      */
     void ClearEMMs();
+
+    /**
+     * \brief Clears the effective mass model by PDG code.
+     */
+    void ClearEMMByPdg(long long pdg);
 
     /**
      * \brief Class implementing the Broyden equations for cosmology.

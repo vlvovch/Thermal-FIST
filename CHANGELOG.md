@@ -4,6 +4,71 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6]
+
+Date: 2026-02-16
+
+Version 1.6 contains two major additions: updated PDG2025 particle lists with an extended and validated charm sector, and WebAssembly (WASM) support for running the GUI in a web browser.
+
+## PDG2025 particle lists
+
+- The default particle list is now based on the **2025 edition of the PDG listing**
+- **Significantly extended and validated charm sector**: charmed hadrons and charmonia cross-checked against PDG2025 mass/width data, with corrected branching ratios and catch-all decay channels for completeness
+- Modular list structure in `input/list/PDG2025/modular/` for fine-grained customization
+- Isospin-symmetric list available (`list-isospin-symmetric.dat`)
+
+## WebAssembly (WASM) support
+
+The QtThermalFIST GUI can now run directly in a web browser via WebAssembly. It can be accessed directly at [**thermal-fist.vovchenko.net**](https://thermal-fist.vovchenko.net/). Chrome is recommended for multi-threaded execution.
+
+- Core GUI functionality in the browser, including thermal model calculations, thermal fits, equation of state, and event generator
+- Calculations are performed *locally* (client-side) in the browser using your CPU
+- Supports both single-threaded and multi-threaded builds (Qt 6.10.1 + Emscripten 4.0.7); multi-threaded builds require proper COOP/COEP headers and SharedArrayBuffer support
+- See `docs/wasm-build.md` for build and deployment instructions 
+
+## GUI enhancements
+
+- Quick particle list switching via two combo boxes: PDG edition (PDG2014/2020/2025) and list variant (default, no nuclei, with charm, etc.)
+- Informative display of loaded particle list with particle count
+- Improved rendering of lattice QCD data for ratios in the equation of state tab
+- Better default parameter ranges for cosmic trajectory calculations
+
+## Improved low-temperature ideal gas functions
+
+- Applied integration-by-parts (IBP) decomposition to Fermi-Dirac integrands for baryon susceptibilities (χ₂, χ₃, χ₄), replacing oscillatory Fermi-Dirac derivative products with smoother forms amenable to the Sommerfeld-Legendre + Laguerre quadrature scheme
+- Applied double-IBP (σ·H) form for ds/dT achieving ~2×10⁻⁴ relative accuracy at low T (16× improvement over original integrand)
+- Extracted analytic T = 0 values for susceptibilities and entropy/energy density derivatives, decomposing each result into a known constant plus a thermal correction that vanishes as T → 0
+- Added `CalculateEntropyDensityDerivativeT()` and `CalculateEnergyDensityDerivativeT()` to all model classes (Ideal, VDW, EV-Diagonal, RealGas) with proper T = 0 support
+- Added `dimensionfull` flag to `CalculateChargeFluctuations` across all model implementations to avoid T-division that breaks at T = 0
+- Added LaTeX technical note documenting the IBP derivations and numerical improvements (`docs/notes/FermiIntegralIBP/`)
+
+## Bugfixes
+
+- Fixed calculation of charge susceptibilities at zero temperature
+- Fixed Bose-Einstein integrals at T = 0 and μ > m
+- Fixed Broyden solver stability issues with `SearchFirstSolution` fallback
+- Fixed V_c fits in charm-canonical ensemble
+- Added check for multi-charmed states in `ThermalModelCanonicalCharm`
+- Thermodynamic stability checks via Hessian eigenvalue analysis
+- More stable cosmic trajectory calculations in the GUI
+- More lenient handling of missing decays
+- Fixed slow font lookup on macOS due to missing "Monospace" font family in particle dialog
+
+## Effective Mass Model
+
+- Implemented temperature derivatives (ds/dT, de/dT, dn/dT, dχ₂/dT) in the `EffectiveMassModel` via chain rule through the gap equation, supporting both normal and BEC phases
+- Added `DmeffDT()` for computing dm\*/dT from implicit differentiation of the gap equation
+- Fixed `ThermalModelBase::SetParameters()` to call `FillChemicalPotentials()`, ensuring per-species chemical potentials are always up-to-date
+- Added unit tests (`test_EMMDerivatives`) verifying thermodynamic identity, T-derivatives, and μ-derivatives against numerical finite differences to <10⁻⁶ accuracy, including BEC phase
+
+## Other changes
+
+- Option to use effective mass model for kaon interactions to reach large strangeness/charge chemical potentials (similar to pion implementation which was done before)
+- Added `CITATION.cff` for automated citation metadata and Zenodo integration
+- Unified `configureTableRowHeight` implementation across all platforms
+- Various CI/CD improvements
+- Added ALICE Pb-Pb 5.02 TeV symmetrized yield data
+
 ## [Version 1.5.2]
 
 Date: 2025-07-23
@@ -367,6 +432,8 @@ Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
 
+[Version 1.6]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.2...v1.6
+
 [Version 1.5.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.1...v1.5.2
 
 [Version 1.5.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5...v1.5.1
@@ -402,4 +469,3 @@ Date: 2018-08-02
 [Version 0.7]: https://github.com/vlvovch/Thermal-FIST/compare/v0.6...v0.7
 
 [Version 0.6]: https://github.com/vlvovch/Thermal-FIST/releases/tag/v0.6
-

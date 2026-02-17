@@ -22,6 +22,7 @@
 #include <QTextEdit>
 #include <QElapsedTimer>
 #include <QThread>
+#include <atomic>
 
 #include "BaseStructures.h"
 #include "configwidgets.h"
@@ -35,14 +36,15 @@ class FitWorker : public QThread
     Q_OBJECT
 
     thermalfist::ThermalModelFit *fTHMFit;
-
-    void run() Q_DECL_OVERRIDE;
+    std::atomic<bool> *fComplete;  // Pointer to completion flag for WASM threading
 
 public:
+    void run() Q_DECL_OVERRIDE;
     FitWorker(
            thermalfist::ThermalModelFit *THMFit=NULL,
+           std::atomic<bool> *complete = nullptr,
            QObject * parent = 0) :
-        QThread(parent), fTHMFit(THMFit)
+        QThread(parent), fTHMFit(THMFit), fComplete(complete)
     {
     }
 signals:
@@ -91,6 +93,9 @@ class FitToExperimentTab : public QWidget
 
     QElapsedTimer timer;
     QTimer *calcTimer;
+
+    bool fRunning{false};  // Track if fit is running
+    std::atomic<bool> fFitComplete{false};  // Completion flag for WASM threading
 
     QString cpath;
 

@@ -1,0 +1,14 @@
+services:
+  thermal-fist-wasm:
+    build: .
+    image: thermal-fist-wasm:latest
+    container_name: thermal-fist-wasm
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    # Resource limits (optional, adjust as needed)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 512M

@@ -9,7 +9,8 @@ namespace thermalfist {
 
   HepMCEventWriter::HepMCEventWriter(const std::string& filename)
   {
-    OpenFile(filename);
+    if (!filename.empty())
+      OpenFile(filename);
   }
 
   HepMCEventWriter::~HepMCEventWriter()

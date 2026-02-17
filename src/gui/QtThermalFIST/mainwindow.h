@@ -11,6 +11,7 @@
 #include <QMainWindow>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QComboBox>
 #include <QTableView>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
@@ -50,6 +51,8 @@ class MainWindow : public QMainWindow
     TrajectoriesTab *tabTrajectories;
 
     QLineEdit *leList;
+    QComboBox *comboPDGEdition;
+    QComboBox *comboListVariant;
     QPushButton *buttonLoad;
     QPushButton *buttonLoadDecays;
 
@@ -68,15 +71,24 @@ protected:
 #endif // QT_NO_CONTEXTMENU
 private:
     void createMenus();
+    void applyParticleList(const std::vector<std::string>& listPaths,
+                           const std::vector<std::string>& decayPaths,
+                           const QString& displayName);
+    static QString shortListDisplayName(const QString& fullPath);
 private slots:
     void loadList();
     void loadDecays();
+    void switchParticleList();
+    void updateListVariants();
     void tabChanged(int newIndex);
     void about();
     void documentation();
     void quickstartguide();
     void increaseFontSize();
     void decreaseFontSize();
+#ifdef Q_OS_WASM
+    void toggleFullscreen();
+#endif
 };
 
 #endif // MAINWINDOW_H

@@ -1,0 +1,13 @@
+:80 {
+    root * /srv
+    file_server
+
+    # Note: COOP/COEP headers for SharedArrayBuffer should be set by the
+    # outer reverse proxy (e.g., main Caddy server) to avoid duplicates
+
+    # Serve QtThermalFIST.html as index
+    try_files {path} /QtThermalFIST.html
+
+    # Enable compression
+    encode gzip
+}

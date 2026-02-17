@@ -7,8 +7,8 @@ project (ThermalFIST)
 
 # The version number.
 set (ThermalFIST_VERSION_MAJOR 1)
-set (ThermalFIST_VERSION_MINOR 5)
-set (ThermalFIST_VERSION_DEVEL 2)
+set (ThermalFIST_VERSION_MINOR 6)
+set (ThermalFIST_VERSION_DEVEL 0)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -91,23 +91,68 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif(MSVC)
 
 
-option (STANDALONE_MINUIT 
-        "Build Minuit2 within project instead of linking one from ROOT distribution" OFF) 
+option (STANDALONE_MINUIT
+        "Build Minuit2 within project instead of linking one from ROOT distribution" OFF)
 
-option (USE_QT5 
-		"Use Qt5 for GUI instead of Qt6" OFF) 
+option (USE_QT5
+		"Use Qt5 for GUI instead of Qt6" OFF)
 
-string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
-if(result)
-  set(ROOT_FOUND 0)
-  set(STANDALONE_MINUIT 1)
-else(result)
-  set(ROOT_FOUND 1)
-  find_library(MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
-  if(NOT MINUIT2_LIB)
-    set(STANDALONE_MINUIT 1)
+option (THERMALFIST_WASM
+        "Build for WebAssembly (requires Emscripten)" OFF)
+
+option (THERMALFIST_WASM_GUI
+        "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" ON)
+
+# WebAssembly-specific configuration
+if(THERMALFIST_WASM)
+  message(STATUS "Building for WebAssembly")
+
+  # Force standalone Minuit2 (ROOT is not available in wasm)
+  set(STANDALONE_MINUIT ON CACHE BOOL "Build Minuit2 within project" FORCE)
+  message(STATUS "  STANDALONE_MINUIT forced ON for wasm")
+
+  # Force OpenMP off (not available in wasm)
+  set(USE_OpenMP OFF CACHE BOOL "Use OpenMP" FORCE)
+  message(STATUS "  USE_OpenMP forced OFF for wasm")
+
+  # Force Qt6 (Qt5 is not supported for wasm)
+  set(USE_QT5 OFF CACHE BOOL "Use Qt5 for GUI" FORCE)
+  message(STATUS "  USE_QT5 forced OFF for wasm (Qt6 required)")
+
+  # If Qt6 is unavailable (e.g. CI library-only wasm job), auto-fallback to
+  # non-GUI wasm build instead of failing configuration.
+  if(THERMALFIST_WASM_GUI)
+    find_package(Qt6 COMPONENTS Core Widgets PrintSupport QUIET)
+    if(NOT Qt6_FOUND)
+      message(WARNING "Qt6 for WebAssembly not found. Falling back to "
+                      "library-only wasm build (THERMALFIST_WASM_GUI=OFF).")
+      set(THERMALFIST_WASM_GUI OFF CACHE BOOL
+          "Build the Qt GUI for WebAssembly (requires Qt6 for wasm)" FORCE)
+    endif()
   endif()
-endif(result)
+
+  # Disable pedantic flag for Emscripten (can cause issues)
+  if(EMSCRIPTEN)
+    string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  endif()
+endif()
+
+# ROOT/Minuit2 detection (skip for wasm builds)
+if(NOT THERMALFIST_WASM)
+  string(COMPARE EQUAL "$ENV{ROOTSYS}" "" result)
+  if(result)
+    set(ROOT_FOUND 0)
+    set(STANDALONE_MINUIT 1)
+  else(result)
+    set(ROOT_FOUND 1)
+    find_library(MINUIT2_LIB NAMES Minuit2 libMinuit2.lib PATHS "$ENV{ROOTSYS}/lib/root/" "$ENV{ROOTSYS}/lib/")
+    if(NOT MINUIT2_LIB)
+      set(STANDALONE_MINUIT 1)
+    endif()
+  endif(result)
+else()
+  set(ROOT_FOUND 0)
+endif()
 
 # Check whether the size of int is at least 32-bit
 INCLUDE (CheckTypeSize)
@@ -159,8 +204,10 @@ set (HRGFit_INCLUDE             "${PROJECT_SOURCE_DIR}/include/HRGFit")
 # The main library
 add_subdirectory(src/library)
 
-# GUI
-add_subdirectory(src/gui/QtThermalFIST)
+# GUI (skip for WASM library-only builds without Qt6)
+if(NOT THERMALFIST_WASM OR THERMALFIST_WASM_GUI)
+  add_subdirectory(src/gui/QtThermalFIST)
+endif()
 
 # Routines
 add_subdirectory(src/routines)

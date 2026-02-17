@@ -18,6 +18,7 @@
 #include <QThread>
 #include <QTimer>
 #include <map>
+#include <atomic>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "qcustomplot.h"
@@ -37,16 +38,16 @@ class CosmicEoSWorker : public QThread
   std::vector<double> cParams;
   std::vector<double> chems;
   int mode;
-  int *currentSize;
-  int *stop;
+  std::atomic<int> *currentSize;
+  std::atomic<int> *stop;
+  bool reverseDir;
 
   std::vector< ThermodynamicsCosmic > *paramsTD;
   std::vector< Thermodynamics > *paramsTDHRG;
   std::vector<double> *varvalues;
 
-  void run() Q_DECL_OVERRIDE;
-
 public:
+  void run() Q_DECL_OVERRIDE;
   CosmicEoSWorker(thermalfist::CosmicEoS *mod = NULL,
       double Tmin = 10.,
       double Tmax = 200.,
@@ -55,8 +56,9 @@ public:
       std::vector< ThermodynamicsCosmic > *paramsTDo = NULL,
       std::vector< Thermodynamics > *paramsTDHRGo = NULL,
       std::vector<double> *varvalueso = NULL,
-      int *currentSizeo = NULL,
-      int *stopo = NULL,
+      std::atomic<int> *currentSizeo = NULL,
+      std::atomic<int> *stopo = NULL,
+      bool reverseDiro = false,
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals) {
       cosmos = mod;
@@ -65,6 +67,7 @@ public:
       varvalues = varvalueso;
       currentSize = currentSizeo;
       stop = stopo;
+      reverseDir = reverseDiro;
 
       chems = std::vector<double>({ 0.700, -1.e-7, -1.e-7, -1.e-7, -1.e-7 });
 
@@ -92,6 +95,8 @@ class CosmicEoSTab : public QWidget
 
     QCheckBox *CBflipAxes;
 
+    QCheckBox *CBreverseDir;
+
     QLabel *labelmuB, *labelTMin, *labelTMax, *labeldT;
 
     QCustomPlot *plotDependence;
@@ -101,9 +106,10 @@ class CosmicEoSTab : public QWidget
 //    std::vector<ChargesFluctuations> paramsFl;
     std::vector<double> varvalues;
 
-    int fCurrentSize;
+    std::atomic<int> fCurrentSize{0};
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
+    int fExpectedIterations{0};  // Expected number of iterations for completion detection
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;
@@ -142,6 +148,7 @@ public slots:
     void calculate();
     void replot();
     void finalize();
+    void checkProgress();  // Timer-based progress check for WASM threading
     void modelChanged();
     void resetTPS();
     void fillParticleLists();

@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cassert>
 #include <iostream>
 #include <ctime>
 #include <iomanip>
@@ -328,7 +329,10 @@ namespace thermalfist {
     for(int isol = 0; isol < iters; ++isol) {
       double tmu = muBmin + (0.5 + isol) * dmu;
       for(size_t j = 0; j < curmust.size(); ++j) {
-        curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        if (m_Parameters.muB != 0.0)
+          curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        else
+          curmust[j] = tmu;
         if (m_TPS->Particles()[j].Statistics()==-1 && curmust[j] > m_TPS->Particles()[j].Mass()) 
           curmust[j] = 0.98 * m_TPS->Particles()[j].Mass();
       }
@@ -388,14 +392,55 @@ namespace thermalfist {
       vector<double> muStarInit = m_MuStar;
 
       for(size_t i=0;i<muStarInit.size();++i) {
-        if (m_TPS->Particles()[i].Statistics()==-1 && muStarInit[i] > m_TPS->Particles()[i].Mass()) 
+        if (m_TPS->Particles()[i].Statistics()==-1 && muStarInit[i] > m_TPS->Particles()[i].Mass())
           muStarInit[i] = 0.98 * m_TPS->Particles()[i].Mass();
       }
       m_MuStar = SearchSingleSolution(muStarInit);
+
+      // If single solution failed, try alternative initial conditions
+      if (!m_LastBroydenSuccessFlag) {
+        m_MuStar = SearchFirstSolution(50);
+      }
     }
     else {
       m_MuStar = SearchMultipleSolutions(100);
     }
+  }
+
+  vector<double> ThermalModelVDW::SearchFirstSolution(int iters) {
+    // Try different initial conditions and return the first successful solution
+    double muBmin = m_Parameters.muB - 0.5 * xMath::mnucleon();
+    double muBmax = m_Parameters.muB + 0.5 * xMath::mnucleon();
+    double dmu = (muBmax - muBmin) / iters;
+    vector<double> curmust(m_densities.size(), 0.);
+
+    for (int isol = 0; isol < iters; ++isol) {
+      double tmu = muBmin + (0.5 + isol) * dmu;
+      for (size_t j = 0; j < curmust.size(); ++j) {
+        if (m_Parameters.muB != 0.0)
+          curmust[j] = m_Chem[j] + (tmu - m_Parameters.muB) * m_Chem[j] / m_Parameters.muB;
+        else
+          curmust[j] = tmu;
+        if (m_TPS->Particles()[j].Statistics() == -1 && curmust[j] > m_TPS->Particles()[j].Mass())
+          curmust[j] = 0.98 * m_TPS->Particles()[j].Mass();
+      }
+
+      vector<double> sol = SearchSingleSolution(curmust);
+
+      // Check if solution is valid (no NaN and Broyden succeeded)
+      bool valid = m_LastBroydenSuccessFlag;
+      for (size_t i = 0; i < sol.size() && valid; ++i)
+        if (sol[i] != sol[i])  // NaN check
+          valid = false;
+
+      if (valid) {
+        return sol;  // Return first valid solution found
+      }
+    }
+
+    // No valid solution found
+    m_LastBroydenSuccessFlag = false;
+    return m_MuStar;  // Return current (possibly invalid) values
   }
 
   void ThermalModelVDW::CalculatePrimordialDensities() {
@@ -559,14 +604,17 @@ namespace thermalfist {
     m_Calculated = true;
   }
 
-  vector<double> ThermalModelVDW::CalculateChargeFluctuations(const vector<double> &chgs, int order) {
+  vector<double> ThermalModelVDW::CalculateChargeFluctuations(const vector<double> &chgs, int order, bool dimensionfull) {
     vector<double> ret(order + 1, 0.);
   
     // chi1
     for(size_t i=0;i<m_densities.size();++i)
       ret[0] += chgs[i] * m_densities[i];
 
-    ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[0] /= pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    else
+      ret[0] /= pow(xMath::GeVtoifm(), 3);
 
     if (order<2) return ret;
     // Preparing matrix for system of linear equations
@@ -576,7 +624,8 @@ namespace thermalfist {
 
     vector<double> chi2id(m_densities.size());
     for(int i=0;i<NN;++i) 
-      chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi2id[i] = m_TPS->Particles()[i].chi(2, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi2id[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     for(int i=0;i<NN;++i)
       for(int j=0;j<NN;++j) {
@@ -593,7 +642,7 @@ namespace thermalfist {
       for(int k=0;k<NN;++k) {
         densMatrix(i,NN+i) += m_Virial[k][i] * m_densities[k];
       }
-      densMatrix(i,NN+i) = (densMatrix(i,NN+i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T;
+      densMatrix(i,NN+i) = (densMatrix(i,NN+i) - 1.) * chi2id[i] * pow(xMath::GeVtoifm(), 3);
     }
 
     for(int i=0;i<NN;++i)
@@ -628,7 +677,10 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[1] += chgs[i] * dni[i];
 
-    ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[1] /= pow(m_Parameters.T, 2) * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[1] /= pow(xMath::GeVtoifm(), 3);
 
     if (order<3) return ret;
 
@@ -637,26 +689,27 @@ namespace thermalfist {
 
     vector<double> chi3id(m_densities.size());
     for(int i=0;i<NN;++i) 
-      chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi3id[i] = m_TPS->Particles()[i].chi(3, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi3id[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     for(int i=0;i<NN;++i) {
       xVector[i]    = 0.;
 
       double tmp = 0.;
       for(int j=0;j<NN;++j) tmp += m_Virial[j][i] * dni[j];
-      tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+      tmp = -2. * tmp * chi2id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i];
       xVector[i] += tmp;
 
       tmp = 0.;
       for(int j=0;j<NN;++j) tmp += m_Virial[j][i] * m_densities[j];
-      tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i];
+      tmp = -(tmp - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i];
       xVector[i] += tmp;
     }
     for(int i=0;i<NN;++i) {
       xVector[NN+i]    = 0.;
 
       double tmp = 0.;
-      for(int j=0;j<NN;++j) tmp += -m_Virial[i][j] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[j];
+      for(int j=0;j<NN;++j) tmp += -m_Virial[i][j] * dmus[j] * chi2id[j] * pow(xMath::GeVtoifm(), 3) * dmus[j];
     
       xVector[NN+i] = tmp;
     }
@@ -671,7 +724,10 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[2] += chgs[i] * d2ni[i];
 
-    ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    if (!dimensionfull)
+      ret[2] /= m_Parameters.T * pow(xMath::GeVtoifm(), 3);
+    else
+      ret[2] /= pow(xMath::GeVtoifm(), 3);
 
 
     if (order<4) return ret;
@@ -681,17 +737,18 @@ namespace thermalfist {
 
     vector<double> chi4id(m_densities.size());
     for (int i = 0; i < NN; ++i)
-      chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_MuStar[i]);
+      // chi4id[i] = m_TPS->Particles()[i].chi(4, m_Parameters, m_UseWidth, m_MuStar[i]);
+      chi4id[i] = m_TPS->Particles()[i].chiDimensionfull(4, m_Parameters, m_UseWidth, m_MuStar[i]);
 
     vector<double> dnis(NN, 0.);
     for(int i=0;i<NN;++i) {
-      dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * dmus[i];
+      dnis[i] = chi2id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i];
     }
 
     vector<double> d2nis(NN, 0.);
     for(int i=0;i<NN;++i) {
-      d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * dmus[i] * dmus[i] + 
-        chi2id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * m_Parameters.T * d2mus[i];
+      d2nis[i] = chi3id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] + 
+        chi2id[i] * pow(xMath::GeVtoifm(), 3) * d2mus[i];
     }
 
     for(int i=0;i<NN;++i) {
@@ -710,7 +767,7 @@ namespace thermalfist {
       double tmps = 0.;
       for(int j=0;j<NN;++j) tmps += m_Virial[j][i] * m_densities[j];
 
-      tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * m_Parameters.T * d2mus[i] * 3. * dmus[i];
+      tmp = -(tmps - 1.) * chi3id[i] * pow(xMath::GeVtoifm(), 3) * d2mus[i] * 3. * dmus[i];
       xVector[i] += tmp;
 
       tmp = -(tmps - 1.) * chi4id[i] * pow(xMath::GeVtoifm(), 3) * dmus[i] * dmus[i] * dmus[i];
@@ -738,7 +795,7 @@ namespace thermalfist {
     for(int i=0;i<NN;++i)
       ret[3] += chgs[i] * d3ni[i];
 
-    ret[3] /= pow(xMath::GeVtoifm(), 3);
+    ret[3] /= pow(xMath::GeVtoifm(), 3);  // same for dimensionfull and dimensionless
 
     return ret;
   }
@@ -852,8 +909,10 @@ namespace thermalfist {
       m_wprim[i] = m_PrimCorrel[i][i];
       if (m_densities[i] > 0.) m_wprim[i] *= m_Parameters.T / m_densities[i];
       else m_wprim[i] = 1.;
+      if (m_wprim[i] != m_wprim[i]) m_wprim[i] = 1.;
     }
-    
+
+    m_TwoParticleCorrelationsCalculated = true;
   }
 
   void ThermalModelVDW::CalculateFluctuations()
@@ -910,6 +969,33 @@ namespace thermalfist {
     return ret;
   }
 
+  double ThermalModelVDW::CalculateEntropyDensityDerivativeT() {
+    if (!IsTemperatureDerivativesCalculated())
+      CalculateTemperatureDerivatives();
+
+    // Compute ds/dT
+    double ret = 0.;
+
+    for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
+      const ThermalParticle &part = m_TPS->Particles()[i];
+      double fi  = 1.;
+      // Term 1
+      for (int k = 0; k < m_TPS->ComponentsNumber(); ++k) {
+        double dfik = -m_Virial[k][i];
+        ret += dfik * m_dndT[k] * part.Density(m_Parameters, IdealGasFunctions::EntropyDensity, m_UseWidth, m_MuStar[i]);
+        fi -= m_Virial[k][i] * m_densities[k];
+      }
+
+      // Term 2
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dsdT, m_UseWidth, m_MuStar[i]);
+
+      // Term 3: ds/dmu = dn/dT (Maxwell relation)
+      ret += fi * part.Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]) * m_dmusdT[i];
+    }
+
+    return ret;
+  }
+
   void ThermalModelVDW::CalculateTemperatureDerivatives() {
     if (!IsCalculated())
       CalculatePrimordialDensities();
@@ -926,9 +1012,13 @@ namespace thermalfist {
       nids[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_MuStar[i]);
       dniddTs[i] = m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dndT, m_UseWidth, m_MuStar[i]);
       chi2ids[i] = m_TPS->Particles()[i].chiDimensionfull(2, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
-      // chi2til = chi2 * T^2
-      // dchi2til/dT = T^2 * dchi2/dT +  2 * T * chi2 = T^2 * dchi2/dT + 2 * chi2til / T
-      dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * T * chi2ids[i] / T / T);
+      // dchi2idsdT = d(dn^id/dmu*)/dT = T^2 * dchi2/dT + 2 * chi2ids / T
+      // The two terms individually diverge as 1/T but their sum is O(T).
+      // At T=0 the result is exactly zero (Sommerfeld: dn/dmu = const + O(T^2)).
+      if (T > 0.)
+        dchi2idsdT[i] = (T * T * m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::dchi2dT, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3() + 2. * chi2ids[i] / T);
+      else
+        dchi2idsdT[i] = 0.;
       chi3ids[i] = m_TPS->Particles()[i].chiDimensionfull(3, m_Parameters, m_UseWidth, m_MuStar[i]) * xMath::GeVtoifm3();
     }
 
@@ -1061,9 +1151,12 @@ namespace thermalfist {
         solVector = decomp.solve(xVector);
 
         for (int i = 0; i < NN; ++i) {
-          // chi2 = chi2til / T^2
-          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T / T / T
-          m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          // dchi2/dT = dchi2til/dT / T^2  - 2 * chi2til / T^3
+          // Both terms diverge as T -> 0; guard against division by zero.
+          if (T > 0.)
+            m_PrimChi2sdT[i][j] = solVector[i] / (xMath::GeVtoifm3() * T * T) - 2. * m_PrimCorrel[i][j] / T / T / T / xMath::GeVtoifm3();
+          else
+            m_PrimChi2sdT[i][j] = 0.;
         }
       }
 

@@ -112,18 +112,43 @@ namespace thermalfist {
 
     MatrixXd Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
 
-    if (Jac.determinant() == 0.0)
+    double det = Jac.determinant();
+    if (det == 0.0 || std::abs(det) < 1.e-300)
     {
-      std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve" << std::endl;
+      std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve (det=" << det << ")" << std::endl;
       return xcur;
     }
 
     MatrixXd Jinv = Jac.inverse();
+
+    // Check for NaN/Inf in inverse
+    bool hasNaNInverse = false;
+    for (int i = 0; i < N && !hasNaNInverse; ++i)
+      for (int j = 0; j < N && !hasNaNInverse; ++j)
+        if (std::isnan(Jinv(i,j)) || std::isinf(Jinv(i,j)))
+          hasNaNInverse = true;
+    if (hasNaNInverse) {
+      std::cerr << "**WARNING** NaN/Inf in Jacobian inverse in Broyden::Solve (det=" << det << ")" << std::endl;
+      return xcur;
+    }
     tmpvec = m_Equations->Equations(xcur);
     fold   = VectorXd::Map(&tmpvec[0], tmpvec.size());
 
     for (m_Iterations = 1; m_Iterations < max_iterations; ++m_Iterations) {
       xnew = xold - Jinv * fold;
+
+      // Check for NaN in solution
+      bool hasNaNSolution = false;
+      for (int i = 0; i < N; ++i)
+        if (std::isnan(xnew[i]) || std::isinf(xnew[i]))
+          hasNaNSolution = true;
+      if (hasNaNSolution) {
+        std::cerr << "**WARNING** NaN/Inf in Broyden iteration " << m_Iterations << ", solver failed" << std::endl;
+        // Return the last valid solution (xold) and mark as failed
+        VectorXd::Map(&xcur[0], xcur.size()) = xold;
+        m_Iterations = max_iterations;  // Signal failure
+        break;
+      }
 
       VectorXd::Map(&xcur[0], xcur.size()) = xnew;
 
@@ -147,15 +172,25 @@ namespace thermalfist {
 
       if (!m_UseNewton) // Use Broyden's method
       {
-        
+
         double norm = 0.;
         for (int i = 0; i < N; ++i)
           for (int j = 0; j < N; ++j)
             norm += xdelta[i] * Jinv(i, j) * fdelta[j];
-        VectorXd p1(N);
-        p1 = (xdelta - Jinv * fdelta);
-        for (int i = 0; i < N; ++i) p1[i] *= 1. / norm;
-        Jinv = Jinv + (p1 * xdelta.transpose()) * Jinv;
+
+        // Protect against degenerate Broyden update when norm is too small
+        if (std::abs(norm) < 1.e-25) {
+          // Fall back to Newton's method for this iteration
+          Jac = Eigen::Map< Matrix<double, Dynamic, Dynamic, RowMajor> >(&JacobianInUse->Jacobian(xcur)[0], N, N);
+          if (Jac.determinant() != 0.0)
+            Jinv = Jac.inverse();
+        }
+        else {
+          VectorXd p1(N);
+          p1 = (xdelta - Jinv * fdelta);
+          for (int i = 0; i < N; ++i) p1[i] *= 1. / norm;
+          Jinv = Jinv + (p1 * xdelta.transpose()) * Jinv;
+        }
       }
       else // Use Newton's method
       {

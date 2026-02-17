@@ -1,31 +1,49 @@
-# Check C++17 support needed for Qt6
-if (NOT USE_QT5)
-  include(CheckCXXCompilerFlag)
-  CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+# WebAssembly build configuration
+if(THERMALFIST_WASM)
+  message(STATUS "Configuring QtThermalFIST for WebAssembly")
 
-  if (COMPILER_SUPPORTS_CXX17)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    find_package(Qt6 COMPONENTS Core Widgets PrintSupport)
-  else()
-    message(WARNING "C++17 not supported. Cannot use Qt6.")
-    set(CMAKE_CXX_STANDARD 11)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  endif()
-endif()
-
-if (Qt6_FOUND)
+  # Qt6 is required for wasm
   set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(UseQt6 TRUE)
-else()
-  message(WARNING "Qt6 not found or not used. Reverting to Qt5...")
-  find_package(Qt5 COMPONENTS Core Widgets PrintSupport)
-  if (Qt5_FOUND)
-    set(UseQt5 TRUE)
+  find_package(Qt6 COMPONENTS Core Widgets PrintSupport REQUIRED)
+
+  if (Qt6_FOUND)
+    set(UseQt6 TRUE)
+    message(STATUS "Found Qt6 for WebAssembly build")
   else()
-    message(STATUS "Qt5 and Qt6 not found. QtThermalFIST will not be built.")
-    set(UseQt5 FALSE)
+    message(FATAL_ERROR "Qt6 is required for WebAssembly build but was not found")
+  endif()
+
+else()
+  # Native build - check C++17 support needed for Qt6
+  if (NOT USE_QT5)
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+
+    if (COMPILER_SUPPORTS_CXX17)
+      set(CMAKE_CXX_STANDARD 17)
+      set(CMAKE_CXX_STANDARD_REQUIRED ON)
+      find_package(Qt6 COMPONENTS Core Widgets PrintSupport)
+    else()
+      message(WARNING "C++17 not supported. Cannot use Qt6.")
+      set(CMAKE_CXX_STANDARD 11)
+      set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    endif()
+  endif()
+
+  if (Qt6_FOUND)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(UseQt6 TRUE)
+  else()
+    message(WARNING "Qt6 not found or not used. Reverting to Qt5...")
+    find_package(Qt5 COMPONENTS Core Widgets PrintSupport)
+    if (Qt5_FOUND)
+      set(UseQt5 TRUE)
+    else()
+      message(STATUS "Qt5 and Qt6 not found. QtThermalFIST will not be built.")
+      set(UseQt5 FALSE)
+    endif()
   endif()
 endif()
 #
@@ -63,26 +81,56 @@ endif(UseQt6)
 
 add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060700)
 
-# Tell CMake to create the executable
-add_executable(QtThermalFIST ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE} qttfres.qrc qttficon.rc trajectoriestab.cpp)
+# Collect source files - exclude Windows resource for non-Windows/wasm builds
+set(QTHRG_ALL_SOURCES ${QTHRG_SOURCES} ${QCUSTOMPLOT_HEADER} ${QCUSTOMPLOT_SOURCE} qttfres.qrc trajectoriestab.cpp)
 
-if(WIN32)
-  if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")
-    add_custom_command(TARGET QtThermalFIST 
-                       POST_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.exe")
-  else()
-    add_custom_command(TARGET QtThermalFIST 
-                       POST_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}.exe")
+# Add Windows icon resource only for native Windows builds
+if(WIN32 AND NOT THERMALFIST_WASM)
+  list(APPEND QTHRG_ALL_SOURCES qttficon.rc)
+endif()
+
+# Add WASM data resources (default particle list) for WebAssembly builds
+if(THERMALFIST_WASM)
+  list(APPEND QTHRG_ALL_SOURCES wasmdata.qrc)
+endif()
+
+# Tell CMake to create the executable
+if(THERMALFIST_WASM)
+  # For WebAssembly, use qt_add_executable which handles wasm-specific setup
+  qt_add_executable(QtThermalFIST ${QTHRG_ALL_SOURCES})
+
+  # Set wasm-specific target properties
+  set_target_properties(QtThermalFIST PROPERTIES
+    # Enable threading support (pthreads)
+    QT_WASM_PTHREAD_POOL_SIZE 4
+  )
+
+  # Add wasm-specific compile definitions
+  target_compile_definitions(QtThermalFIST PRIVATE Q_OS_WASM)
+
+else()
+  # Native build
+  add_executable(QtThermalFIST ${QTHRG_ALL_SOURCES})
+
+  # Windows-specific post-build copy (only for native Windows builds)
+  if(WIN32)
+    if(${ThermalFIST_VERSION_DEVEL} STREQUAL "0")
+      add_custom_command(TARGET QtThermalFIST
+                         POST_BUILD
+                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.exe")
+    else()
+      add_custom_command(TARGET QtThermalFIST
+                         POST_BUILD
+                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:QtThermalFIST> $<TARGET_FILE:QtThermalFIST>"/../QtThermalFIST-${ThermalFIST_VERSION_MAJOR}.${ThermalFIST_VERSION_MINOR}.${ThermalFIST_VERSION_DEVEL}.exe")
+    endif()
   endif()
 endif()
 
-# Use the Widgets module from Qt 5.
+# Link Qt libraries (use PRIVATE keyword for compatibility with qt_add_executable)
 if(UseQt6)
-  target_link_libraries(QtThermalFIST ThermalFIST Qt6::Core Qt6::Widgets Qt6::PrintSupport)
+  target_link_libraries(QtThermalFIST PRIVATE ThermalFIST Qt6::Core Qt6::Widgets Qt6::PrintSupport)
 else()
-  target_link_libraries(QtThermalFIST ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
+  target_link_libraries(QtThermalFIST PRIVATE ThermalFIST Qt5::Core Qt5::Widgets Qt5::PrintSupport)
 endif(UseQt6)
 
 target_include_directories(QtThermalFIST PUBLIC "${PROJECT_SOURCE_DIR}/thirdparty/QCustomPlot")

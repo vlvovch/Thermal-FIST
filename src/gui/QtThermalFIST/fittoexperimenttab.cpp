@@ -41,12 +41,17 @@
 #include "chi2ProfileDialog.h"
 #include "thermalfitplots.h"
 #include "fitparametersmodel.h"
+#include "WasmFileIO.h"
+#include "HelperRoutines.h"
 
 using namespace thermalfist;
 
 void FitWorker::run()
 {
      fTHMFit->PerformFit();
+     if (fComplete != nullptr) {
+         *fComplete = true;  // Signal completion for timer-based detection
+     }
      emit calculated();
 }
 
@@ -80,6 +85,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableQuantities->setSelectionMode(QAbstractItemView::SingleSelection);
     tableQuantities->setItemDelegate(new ItemDelegateCustom(this));
     tableQuantities->resizeColumnsToContents();
+    configureTableRowHeight(tableQuantities);
     connect(tableQuantities, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
     
     layoutTop->addWidget(labelQuantities);
@@ -182,6 +188,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
     tableFitParameters->setModel(fitParametersModel);
     tableFitParameters->setItemDelegate(new ItemDelegateCustom(this));
     tableFitParameters->resizeColumnsToContents();
+    configureTableRowHeight(tableFitParameters);
 
 
     QHBoxLayout *layCE = new QHBoxLayout();
@@ -279,8 +286,15 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
     modelChanged();
 
+#ifdef Q_OS_WASM
+    // WASM: Load experimental data from sandbox where it was extracted by mainwindow
+    QString expDataPath = WasmFileIO::getSandboxTempDir() + "/default/ALICE-PbPb2.76TeV-0-10-all.dat";
+    quantities = ThermalModelFit::loadExpDataFromFile(expDataPath.toStdString());
+    QString datapathprefix = WasmFileIO::getSandboxTempDir() + "/default";
+#else
     QString datapathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/data";
     quantities = ThermalModelFit::loadExpDataFromFile((QString(ThermalFIST_INPUT_FOLDER) + "/data/ALICE-PbPb2.76TeV-0-10-all.dat").toStdString());
+#endif
     myModel->setQuantities(&quantities);
     tableQuantities->resizeColumnsToContents();
 
@@ -369,6 +383,14 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
     };
 
     if (messageType != 0) {
+#ifdef Q_OS_WASM
+      // WASM: Use static method which may handle Asyncify better
+      QMessageBox::StandardButton ret = QMessageBox::warning(
+        this, tr("Warning"), messages[messageType],
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+      if (ret == QMessageBox::No)
+        return;
+#else
       QMessageBox msgBox;
       msgBox.setText(messages[messageType]);
       msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -376,6 +398,7 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
       int ret = msgBox.exec();
       if (ret == QMessageBox::No)
         return;
+#endif
     }
   }
 
@@ -464,17 +487,30 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
   myModel->setModel(fitcopy);
 
-  FitWorker *wrk = new FitWorker(fit);
+  fRunning = true;
+  fFitComplete = false;
 
-  connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+  FitWorker *wrk = new FitWorker(fit, &fFitComplete);
+
   connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
 
   buttonCalculate->setEnabled(false);
 
-  wrk->start();
-
-  calcTimer->start(100);
+  if (WasmFileIO::isThreadingAvailable()) {
+    // Threading available - run in background thread
+    // Don't connect calculated() signal - use timer-based completion detection instead
+    // to avoid WASM threading issues with cross-thread signal emission
+    wrk->start();
+    calcTimer->start(100);
+  } else {
+    // No threading (single-threaded WASM) - run synchronously
+    // Signal emission is safe here since everything is on main thread
+    connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+    wrk->run();
+    finalize();
+    wrk->deleteLater();
+  }
 
   lastconfig = config;
 }
@@ -485,17 +521,34 @@ void FitToExperimentTab::calculate() {
 }
 
 void FitToExperimentTab::showResults() {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+    ResultDialog *dialog = new ResultDialog(this, model);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    dialog->show();
+#else
     ResultDialog dialog(this, model);
     dialog.setWindowFlags(Qt::Window);
     dialog.exec();
+#endif
 }
 
 void FitToExperimentTab::showChi2Profile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+  chi2ProfileDialog *dialog = new chi2ProfileDialog(this, TPS, getConfig(), getFitParameters(), quantities, fitcopy);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setMinimumSize(QSize(800, 400));
+  dialog->setModal(true);
+  dialog->show();
+#else
   chi2ProfileDialog dialog(this, TPS, getConfig(), getFitParameters(), quantities, fitcopy);
   dialog.setWindowFlags(Qt::Window);
   dialog.setMinimumSize(QSize(800, 400));
   dialog.exec();
+#endif
 }
 
 void FitToExperimentTab::setModel(ThermalModelBase *modelop) {
@@ -512,20 +565,55 @@ void FitToExperimentTab::quantityDoubleClick(const QModelIndex & index) {
     int row = index.row();
     if (row>=0) {
       labelHint->setVisible(false);
+#ifdef Q_OS_WASM
+      // WASM: Use heap-allocated dialog with show() to avoid Asyncify issues
+      QuantityDialog *dialog = new QuantityDialog(this, model, &quantities[row]);
+      dialog->setAttribute(Qt::WA_DeleteOnClose);
+      dialog->setModal(true);
+      dialog->show();
+#else
       QuantityDialog dialog(this, model, &quantities[row]);
       dialog.setWindowFlags(Qt::Window);
       dialog.exec();
+#endif
     }
 }
 
 void FitToExperimentTab::addQuantity() {
     myModel->addQuantity();
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated dialog with open() and callback to handle rejection
+    QuantityDialog *dialog = new QuantityDialog(this, model, &quantities[quantities.size()-1]);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->setModal(true);
+    connect(dialog, &QDialog::rejected, this, [this]() {
+      myModel->removeQuantity(quantities.size()-1);
+    });
+    dialog->open();
+#else
     QuantityDialog dialog(this, model, &quantities[quantities.size()-1]);
     dialog.setWindowFlags(Qt::Window);
     if (dialog.exec()==QDialog::Rejected) myModel->removeQuantity(quantities.size()-1);
+#endif
 }
 
 void FitToExperimentTab::loadFromFile() {
+#ifdef Q_OS_WASM
+    // WASM: Use getOpenFileContent for browser file picker
+    WasmFileIO::openFile(this, tr("Open file with experimental data to fit"), "*.dat *.txt *.*",
+      [this](const QString& sandboxPath) {
+        if (sandboxPath.isEmpty())
+          return;
+
+        quantities = ThermalModelFit::loadExpDataFromFile(sandboxPath.toStdString());
+        if (fitcopy != NULL)
+          fitcopy->ClearModelData();
+        myModel->setQuantities(&quantities);
+        tableQuantities->resizeColumnsToContents();
+        cpath = sandboxPath;
+      }
+    );
+#else
     QString path = QFileDialog::getOpenFileName(this, tr("Open file with experimental data to fit"), cpath);
     if (path.length()>0)
     {
@@ -536,16 +624,31 @@ void FitToExperimentTab::loadFromFile() {
         tableQuantities->resizeColumnsToContents();
         cpath = path;
     }
+#endif
 }
 
 void FitToExperimentTab::saveToFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Generate data and trigger browser download
+  // Write to a temporary file, read it back, and download
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/expdata.dat";
+  ThermalModelFit::saveExpDataToFile(quantities, tempPath.toStdString());
+
+  QFile tempFile(tempPath);
+  if (tempFile.open(QIODevice::ReadOnly)) {
+    QByteArray data = tempFile.readAll();
+    tempFile.close();
+    WasmFileIO::saveFile(data, "expdata.dat");
+  }
+#else
   QString path = QFileDialog::getSaveFileName(this, tr("Save experimental data to file"), cpath);
   if (path.length()>0)
   {
     ThermalModelFit::saveExpDataToFile(quantities, path.toStdString());
     cpath = path;
   }
+#endif
 }
 
 void FitToExperimentTab::modelChanged()
@@ -677,6 +780,29 @@ void FitToExperimentTab::resetTPS() {
 
 void FitToExperimentTab::writetofile() {
     if (model->IsCalculated()) {
+#ifdef Q_OS_WASM
+        // WASM: Write to sandbox and trigger downloads
+        if (fitcopy != NULL) {
+            QString basePath = WasmFileIO::getSandboxTempDir() + "/output";
+            std::string tpath = basePath.toStdString();
+
+            fitcopy->PrintYieldsLatexAll(tpath + ".tex", tpath);
+            fitcopy->PrintYieldsTable(tpath + ".out");
+            std::string cmmnt = "Thermal fit to " + cpath.toStdString() + " within " + fitcopy->model()->TAG();
+            fitcopy->PrintFitLog(tpath + ".txt", cmmnt);
+
+            // Download each generated file
+            QStringList extensions = {".tex", ".out", ".txt"};
+            for (const QString& ext : extensions) {
+                QFile file(basePath + ext);
+                if (file.open(QIODevice::ReadOnly)) {
+                    QByteArray data = file.readAll();
+                    file.close();
+                    WasmFileIO::saveFile(data, "output" + ext);
+                }
+            }
+        }
+#else
         QString path = QFileDialog::getSaveFileName(this, tr("Save data to file"), QApplication::applicationDirPath() + "/output.out", tr("*.out"));
         if (path.length()>0)
         {
@@ -689,6 +815,7 @@ void FitToExperimentTab::writetofile() {
                 fitcopy->PrintFitLog(std::string(tpath + ".txt"), cmmnt);
             }
         }
+#endif
     }
 }
 
@@ -734,6 +861,12 @@ void FitToExperimentTab::updateProgress() {
   dbgstr.clear();
 
   myModel->updateAll();
+
+  // Check if calculation is complete (timer-based completion detection for WASM threading)
+  // This avoids cross-thread signal emission which can cause memory errors in WASM
+  if (fRunning && fFitComplete) {
+      finalize();
+  }
 }
 
 void FitToExperimentTab::finalize() {
@@ -1036,15 +1169,26 @@ void FitToExperimentTab::finalize() {
 
   fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
 
+  fRunning = false;
   modelChanged();
 }
 
 void FitToExperimentTab::showValidityCheckLog() {
   if (!model->IsLastSolutionOK()) {
+#ifdef Q_OS_WASM
+    // WASM: Use heap-allocated message box with show() to avoid Asyncify issues
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    msgBox->setText("There were some issues in calculation. See the log below:");
+    msgBox->setDetailedText(model->ValidityCheckLog().c_str());
+    msgBox->setModal(true);
+    msgBox->show();
+#else
     QMessageBox msgBox;
     msgBox.setText("There were some issues in calculation. See the log below:");
     msgBox.setDetailedText(model->ValidityCheckLog().c_str());
     msgBox.exec();
+#endif
   }
 }
 

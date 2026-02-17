@@ -1,7 +1,7 @@
 /*
  * Thermal-FIST package
  * 
- * Copyright (c) 2019-2025 Volodymyr Vovchenko
+ * Copyright (c) 2019-2026 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
@@ -94,7 +94,7 @@ namespace thermalfist {
     email += ".";
     email += "edu";
 
-    tmpstr = "Copyright (c) 2023 Volodymyr Vovchenko <" + email + ">";
+    tmpstr = "Copyright (c) 2026 Volodymyr Vovchenko <" + email + ">";
 
     tmpstr = OutputString(tmpstr);
 

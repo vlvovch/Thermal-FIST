@@ -44,6 +44,9 @@
 #include "spectramodel.h"
 #include "particlespectra.h"
 #include "qcustomplot.h"
+#include "WasmFileIO.h"
+#include "HelperRoutines.h"
+#include <QBuffer>
 
 using namespace thermalfist;
 
@@ -60,8 +63,8 @@ EventGeneratorWorker::EventGeneratorWorker(
   ParticlesSpectra* spec,
   QMutex* mut,
   int totalEvents,
-  int* evproc,
-  int* stopo,
+  std::atomic<int>* evproc,
+  std::atomic<int>* stopo,
   double* nEp,
   bool pDecays,
   std::string fileout,
@@ -111,10 +114,12 @@ void EventGeneratorWorker::run()
 BinningDialog::BinningDialog(BinningConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
 {
   if (config == 0) {
-    QMessageBox msgBox;
-    msgBox.setText(tr("Empty binning config!"));
-    msgBox.exec();
-    QDialog::reject();
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setText(tr("Empty binning config!"));
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    connect(msgBox, &QMessageBox::finished, this, &QDialog::reject);
+    msgBox->open();
+    return;
   }
   
   QVBoxLayout* layout = new QVBoxLayout();
@@ -174,10 +179,12 @@ void BinningDialog::OK()
 ParticlesAnalyzeDialog::ParticlesAnalyzeDialog(ParticlesAnalyzeConfig* config, QWidget* parent) : QDialog(parent), m_config(config)
 {
   if (config == 0) {
-    QMessageBox msgBox;
-    msgBox.setText(tr("Empty particle list config!"));
-    msgBox.exec();
-    QDialog::reject();
+    QMessageBox *msgBox = new QMessageBox(this);
+    msgBox->setText(tr("Empty particle list config!"));
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    connect(msgBox, &QMessageBox::finished, this, &QDialog::reject);
+    msgBox->open();
+    return;
   }
 
   QVBoxLayout* layout = new QVBoxLayout();
@@ -307,6 +314,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     tableSpectra->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableSpectra->setSelectionMode(QAbstractItemView::SingleSelection);
     tableSpectra->resizeColumnsToContents();
+    configureTableRowHeight(tableSpectra);
     //connect(tableSpectra, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(quantityDoubleClick(QModelIndex)));
 
     connect(tableSpectra->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(changedRow()));
@@ -1018,9 +1026,10 @@ void EventGeneratorTab::calculate() {
         double npow = spinn->value();
         double betaS = (2. + npow) / 2. * betaT;
         if (betaS >= 1.0) {
-          QMessageBox msgBox;
-          msgBox.setText(QString("Too high transverse flow! The flow velocity at the surface exceeds the speed of light, β<sub>s</sub> = %1").arg(betaS));
-          msgBox.exec();
+          QMessageBox *msgBox = new QMessageBox(this);
+          msgBox->setText(QString("Too high transverse flow! The flow velocity at the surface exceeds the speed of light, β<sub>s</sub> = %1").arg(betaS));
+          msgBox->setAttribute(Qt::WA_DeleteOnClose);
+          msgBox->open();
           return;
         }
       }
@@ -1117,6 +1126,12 @@ void EventGeneratorTab::updateProgress() {
     }
 
     mutex.unlock();
+
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && (fCurrentSize >= fTotalSize || fStop)) {
+        finalize();
+    }
 }
 
 void EventGeneratorTab::setModel(ThermalModelBase *modelop) {
@@ -1130,13 +1145,27 @@ void EventGeneratorTab::quantityDoubleClick(const QModelIndex & index) {
 }
 
 void EventGeneratorTab::chooseOutputFile() {
+#ifdef Q_OS_WASM
+  // WASM: File writing for events is not directly supported in browser
+  // Events can still be written to sandbox FS, but downloading large files is impractical
+  QMessageBox::information(this, tr("WebAssembly Mode"),
+    tr("Direct file output is not available in browser mode. "
+       "Events will be generated but not saved to file."));
+#else
   QString path = QFileDialog::getSaveFileName(this, tr("Choose file to write events"), leFilePath->text());
   if (path.length()>0) leFilePath->setText(path);
+#endif
 }
 
 void EventGeneratorTab::loadAcceptance() {
-    QString path = QFileDialog::getExistingDirectory(this, tr("Open folder with acceptance data"), leAcceptancePath->text());
-    if (path.length()>0) leAcceptancePath->setText(path);
+#ifdef Q_OS_WASM
+  // WASM: Directory selection not supported in browser
+  QMessageBox::information(this, tr("WebAssembly Mode"),
+    tr("Loading acceptance data from directory is not available in browser mode."));
+#else
+  QString path = QFileDialog::getExistingDirectory(this, tr("Open folder with acceptance data"), leAcceptancePath->text());
+  if (path.length()>0) leAcceptancePath->setText(path);
+#endif
 }
 
 void EventGeneratorTab::changePlot() {
@@ -1503,18 +1532,28 @@ void EventGeneratorTab::generateEvents(const ThermalModelConfig & config)
 
     EventGeneratorWorker *wrk = new EventGeneratorWorker(generator, spectra, &mutex, fTotalSize, &fCurrentSize, &fStop, &nE, checkDecays->isChecked(), filepath);
 
-    connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
     connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
 
     progBar->setFormat("");
-
-    wrk->start();
 
     buttonCalculate->setText(tr("Stop"));
     fRunning = true;
     progBar->setVisible(true);
 
-    calcTimer->start(150);
+    if (WasmFileIO::isThreadingAvailable()) {
+      // Threading available - run in background thread
+      // Don't connect calculated() signal - use timer-based completion detection instead
+      // to avoid WASM threading issues with cross-thread signal emission
+      wrk->start();
+      calcTimer->start(150);
+    } else {
+      // No threading (single-threaded WASM) - run synchronously
+      // Signal emission is safe here since everything is on main thread
+      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+      wrk->run();
+      finalize();
+      wrk->deleteLater();
+    }
 }
 
 void EventGeneratorTab::changeVolumeRSC(double VRSC)
@@ -1563,7 +1602,7 @@ void EventGeneratorTab::saveAs1D(int type)
 
   {
     int id = getCurrentRow();
-    if (id >= 0 && id < spectra->fParticles.size()) {
+    if (id >= 0 && id < static_cast<int>(spectra->fParticles.size())) {
       if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
         tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
       }
@@ -1575,6 +1614,51 @@ void EventGeneratorTab::saveAs1D(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDistr->savePdf(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else if (type == 1) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDistr->savePng(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+    out.setFieldWidth(15);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << plotDistr->xAxis->label();
+    out << plotDistr->yAxis->label();
+    out << "error";
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    for (int i = 0; i < plotDistr->graph(0)->data()->size(); ++i) {
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      double x = plotDistr->graph(0)->data()->at(i)->key;
+      double y = plotDistr->graph(0)->data()->at(i)->value;
+      double yerr = errorBars->data()->at(i).errorPlus;
+      out << x << y << yerr;
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    }
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
 
@@ -1610,6 +1694,7 @@ void EventGeneratorTab::saveAs1D(int type)
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 void EventGeneratorTab::contextMenuRequestPlot2D(QPoint pos)
@@ -1635,7 +1720,7 @@ void EventGeneratorTab::saveAs2D(int type)
 
   {
     int id = getCurrentRow();
-    if (id >= 0 && id < spectra->fParticles.size()) {
+    if (id >= 0 && id < static_cast<int>(spectra->fParticles.size())) {
       if (TPS->PdgToId(spectra->fParticles[id].GetPDGID()) != -1) {
         tname = QString::fromStdString(TPS->ParticleByPDG(spectra->fParticles[id].GetPDGID()).Name() + ".") + tname;
       }
@@ -1647,6 +1732,49 @@ void EventGeneratorTab::saveAs2D(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plot2D->savePdf(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else if (type == 1) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plot2D->savePng(tempPath, plotDistr->width(), plotDistr->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else {
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+    out.setFieldWidth(15);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << plot2D->xAxis->label();
+    out << plot2D->yAxis->label();
+    out << plotName;
+    out << "error";
+    out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    for (size_t i = 0; i < fXv.size(); ++i) {
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+    }
+    buffer.close();
+    WasmFileIO::saveFile(data, fileName);
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
 
@@ -1668,7 +1796,7 @@ void EventGeneratorTab::saveAs2D(int type)
         out << plotName;
         out << "error";
         out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
-        for (int i = 0; i < fXv.size(); ++i) {
+        for (size_t i = 0; i < fXv.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << fXv[i] << fYv[i] << fZv[i] << fZvErr[i];
@@ -1680,19 +1808,34 @@ void EventGeneratorTab::saveAs2D(int type)
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 void EventGeneratorTab::changeParticles()
 {
+#ifdef Q_OS_WASM
+  ParticlesAnalyzeDialog *dialog = new ParticlesAnalyzeDialog(&partsConfig, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   ParticlesAnalyzeDialog dialog(&partsConfig, this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }
 
 
 void EventGeneratorTab::changeBinning()
 {
+#ifdef Q_OS_WASM
+  BinningDialog *dialog = new BinningDialog(&binConfig, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->show();
+#else
   BinningDialog dialog(&binConfig, this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
+#endif
 }

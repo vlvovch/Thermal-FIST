@@ -25,6 +25,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QElapsedTimer>
+#include <atomic>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "HRGEventGenerator/EventGeneratorBase.h"
@@ -52,8 +53,8 @@ class EventGeneratorWorker : public QThread
     QMutex *mutex;
     int events;
     double wsum, w2sum;
-    int *eventsProcessed;
-    int *stop;
+    std::atomic<int> *eventsProcessed;
+    std::atomic<int> *stop;
     double *nE;
     bool performDecays;
 
@@ -62,16 +63,15 @@ class EventGeneratorWorker : public QThread
 
     thermalfist::HepMCEventWriter hepmcout;
 
-    void run() Q_DECL_OVERRIDE;
-
 public:
+    void run() Q_DECL_OVERRIDE;
   EventGeneratorWorker(
     thermalfist::EventGeneratorBase* gen = NULL,
     ParticlesSpectra* spec = NULL,
     QMutex* mut = NULL,
     int totalEvents = 0,
-    int* evproc = NULL,
-    int* stopo = NULL,
+    std::atomic<int>* evproc = NULL,
+    std::atomic<int>* stopo = NULL,
     double* nEp = NULL,
     bool pDecays = false,
     std::string fileout = "",
@@ -201,11 +201,11 @@ class EventGeneratorTab : public QWidget
 
     int getCurrentRow();
 
-    int fCurrentSize;
+    std::atomic<int> fCurrentSize{0};
     int fTotalSize;
     double nE;
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
     QTimer *calcTimer;
 
     QCheckBox *checkAcceptance;

@@ -1,0 +1,29 @@
+# ALICE Pb-Pb sqrt(sNN) = 5.02 TeV, 0-10% centrality
+# Yields are symmetrized between particles and antiparticles by taking the average
+# (values for charge-conjugate pairs are (particle+antiparticle)/2)
+#
+# Light hadrons:
+#   pi (pdg=211), K (pdg=321), p (pdg=2212)
+#   Source: Table IV in Phys. Rev. C 101, 044907 (2020) (ALICE Collaboration)
+#   Note: 0-10% values are constructed as an arithmetic mean of the 0-5% and 5-10% bins from Table IV
+#
+# Strange hadrons:
+#   K0S (pdg=310), Lambda (pdg=3122), Xi- (pdg=3312), Omega- (pdg=3334)
+#   Source: Table 3 in arXiv:2511.10360 (ALICE Collaboration)
+#
+# Resonances:
+#   K*0 (pdg=313), phi (pdg=333)
+#   Source: Table III in Phys. Rev. C 106, 034907 (2022) (ALICE Collaboration)
+#   Note: K*0 is included but marked as not fitted (is_fitted=0)
+#
+# Errors are combined as sqrt(stat^2 + syst^2); symmetrized errors are half of charge-summed errors
+#     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error   # reference
+              1            211              0              1              0       769.3225        45.9534   # Table IV in PhysRevC.101.044907
+              1            321              0              1              0       123.9725        5.24995   # Table IV in PhysRevC.101.044907
+              1           2212              0              1              0        34.0175        1.67015   # Table IV in PhysRevC.101.044907
+              1            310              0              1              0         115.69         7.9604   # Table 3 in arXiv:2511.10360
+              0            313              0              1              0         19.726         2.8226   # Table III in PhysRevC.106.034907
+              1            333              0              1              0         14.937         1.2198   # Table III in PhysRevC.106.034907
+              1           3122              0              1              0          27.81         2.13115   # Table 3 in arXiv:2511.10360
+              1           3312              0              1              0           5.07         0.4954   # Table 3 in arXiv:2511.10360
+              1           3334              0              1              0           0.68         0.1174   # Table 3 in arXiv:2511.10360
