@@ -135,7 +135,7 @@ namespace thermalfist {
      * \return true  Multiple solutions considered
      * \return false Multiple solutions not considered
      */
-    bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
+    virtual bool UseMultipleSolutionsMode() const { return m_SearchMultipleSolutions; }
 
     /// The shifted chemical potential of particle species i.
     double MuStar(int i) const { return m_MuStar[i]; }
@@ -173,7 +173,7 @@ namespace thermalfist {
 
     virtual void CalculatePrimordialDensities();
 
-    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4);
+    virtual std::vector<double> CalculateChargeFluctuations(const std::vector<double> &chgs, int order = 4, bool dimensionfull = false);
 
     virtual std::vector< std::vector<double> >  CalculateFluctuations(int order);
 
@@ -188,6 +188,8 @@ namespace thermalfist {
     virtual double CalculateEntropyDensity();
 
     virtual double CalculateEnergyDensityDerivativeT();
+
+    virtual double CalculateEntropyDensityDerivativeT();
 
     virtual void CalculateTemperatureDerivatives();
 
@@ -247,6 +249,16 @@ namespace thermalfist {
      * \return std::vector<double> The solution with the largest pressure among those which were found
      */
     std::vector<double> SearchMultipleSolutions(int iters = 300);
+
+    /**
+     * \brief Try different initial guesses and return the first valid solution found.
+     *
+     * Used as a fallback when the default single-solution search fails.
+     *
+     * \param iters Number of different initial guesses to try
+     * \return std::vector<double> The first valid solution found
+     */
+    std::vector<double> SearchFirstSolution(int iters = 50);
 
     /// Solve the transcedental equations for the
     /// shifted chemical potentials
@@ -359,4 +371,3 @@ namespace thermalfist {
 } // namespace thermalfist
 
 #endif
-

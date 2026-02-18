@@ -45,6 +45,7 @@ struct ThermalModelConfig {
   QvdWParameters vdWparams;
 
   int RealGasExcludedVolumePrescription; // 0 - vdW, 1 - CS, 2 - virial, 3 - TVM
+  bool SearchMultipleSolutions; // false - off, true - on
 
   /// Thermal parameters
   double T;
@@ -101,6 +102,10 @@ struct ThermalModelConfig {
   bool  UseEMMPions;
   double EMMPionFPi;
 
+  /// Effective mass model (kaons)
+  bool  UseEMMKaons;
+  double EMMKaonFKa;
+
   double MagneticFieldB;
   int MagneticFieldLmax;
 
@@ -108,33 +113,34 @@ struct ThermalModelConfig {
 };
 
 struct ThermodynamicsCosmic {
-  bool flag;
-  double T, muB, muQ, mu_e, mu_mu, mu_tau;
-  double pT4, eT4, IT4, sT3;
-  double p, e, I, s;
-  double rhoB, rhoQ, rhoE, rhoMu, rhoTau;
+  bool flag = false;
+  double T = 0., muB = 0., muQ = 0., mu_e = 0., mu_mu = 0., mu_tau = 0.;
+  double pT4 = 0., eT4 = 0., IT4 = 0., sT3 = 0.;
+  double p = 0., e = 0., I = 0., s = 0.;
+  double rhoB = 0., rhoQ = 0., rhoE = 0., rhoMu = 0., rhoTau = 0.;
   std::vector<double> densities; // gamma, e+-, mu+-, tau+-, neutrinos
 };
 
 struct Thermodynamics {
-  bool flag;
-  double T, muB, muQ, muS, muC;
-  double pT4, eT4, IT4, sT3;
-  double p, e, I, s;
-  double rhoB, rhoQ, rhoS, rhoC;
-  double nh;
-  double cs2, cVT3;
+  bool flag = false;
+  double T = 0., muB = 0., muQ = 0., muS = 0., muC = 0.;
+  double pT4 = 0., eT4 = 0., IT4 = 0., sT3 = 0.;
+  double p = 0., e = 0., I = 0., s = 0.;
+  double rhoB = 0., rhoQ = 0., rhoS = 0., rhoC = 0.;
+  double nh = 0.;
+  double cs2 = 0., cVT3 = 0.;
   std::vector< std::vector<double> > densities;
 };
 
 struct ChargesFluctuations {
-  bool flag;
-  double chi1B, chi2B, chi3B, chi4B;
-  double chi1Q, chi2Q, chi3Q, chi4Q;
-  double chi1S, chi2S, chi3S, chi4S;
-  double chi1C, chi2C, chi3C, chi4C;
-  double chi11BQ, chi11BS, chi11QS;
-  double chi31BQ, chi31BS, chi31QS;
+  bool flag = false;
+  double chi1B = 0., chi2B = 0., chi3B = 0., chi4B = 0.;
+  double chi1Q = 0., chi2Q = 0., chi3Q = 0., chi4Q = 0.;
+  double chi1S = 0., chi2S = 0., chi3S = 0., chi4S = 0.;
+  double chi1C = 0., chi2C = 0., chi3C = 0., chi4C = 0.;
+  double chi11BQ = 0., chi11BS = 0., chi11QS = 0.;
+  double chi11BC = 0., chi11QC = 0., chi11SC = 0.;
+  double chi31BQ = 0., chi31BS = 0., chi31QS = 0.;
 };
 
 void SetThermalModelParameters(thermalfist::ThermalModelBase* model, const ThermalModelConfig& config);

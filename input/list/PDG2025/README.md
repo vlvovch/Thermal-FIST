@@ -1,0 +1,408 @@
+# PDG2025 Particle List for Thermal-FIST
+
+This directory contains the PDG2025 hadron resonance list and decay channels for use with Thermal-FIST.
+
+## Contents
+
+| File | Description |
+|------|-------------|
+| `list.dat` | PDG2025 particle list — 248 light+strange hadrons (444 with antiparticles) |
+| `list-withcharm.dat` | Extended list with charm — 330 particles (586 with antiparticles). C ∈ {-1, 0, 1}, compatible with charm-canonical ensemble |
+| `list-withnuclei.dat` | Extended list with stable light nuclei — 256 particles |
+| `list-withexcitednuclei.dat` | Extended list with stable and excited light nuclei — 286 particles |
+| `list-isospin-symmetric.dat` | Isospin-symmetric list — 248 hadrons with enforced isospin mass symmetry, useful for tests |
+| `decays.dat` | Decay channels for all unstable hadrons |
+| `generate_pdg2025.py` | Generation script: takes PDG2020 as base and applies PDG2025 updates |
+| `pdglisting/mass_width_2025.txt` | PDG2025 mass-width summary data used by `generate_pdg2025.py` |
+| `modular/` | Sector-split modular files (see below) |
+
+## How the PDG2025 List Was Generated
+
+### Primary script: `generate_pdg2025.py`
+
+This script takes the PDG2020 list (`../PDG2020/list.dat`, `../PDG2020/decays.dat`) as a base and applies the following updates:
+
+1. **Removed 5 particles** not established in PDG2025:
+   - pi(1)(1400)0 (9000113), pi(1)(1400)+ (9000213) -- removed from PDG summary tables
+   - Sigma(2250)-, Sigma(2250)0, Sigma(2250)+ (33114, 33214, 33224) -- demoted from summary tables
+
+2. **Added 11 new particles** (7 new states, some with multiple charge states):
+   - f(2)(1565) -- new I=0 tensor meson
+   - f(0)(2020) -- new I=0 scalar meson
+   - f(2)(2150) -- new I=0 tensor meson
+   - K(1460) -- excited pseudoscalar kaon (K0, K+)
+   - K(1)(1650) -- excited axial kaon (K0, K+)
+   - K(0)*(1950) -- excited scalar kaon (K0, K+)
+   - K(2)*(1980) -- excited tensor kaon (K0, K+)
+   - K(0)*(700) / kappa -- light scalar kaon (K0, K+) — **commented out** in `list.dat` (its thermal contribution is cancelled by the repulsive I=3/2 Kpi channel; no other particle decays into it)
+
+3. **Updated masses and widths** from PDG2025 data for all existing particles, using `pdglisting/mass_width_2025.txt`.
+
+4. **Updated decay branching fractions** for select particles based on PDG2025 values, including refined isospin decomposition of baryon decay channels with Clebsch-Gordan coefficients.
+
+## Particle Count by Sector (list.dat)
+
+| Sector | Particles | Notes |
+|--------|-----------|-------|
+| Light unflavored mesons | 70 | pi through f(2)(2340), including hidden strangeness (eta, phi, ...) |
+| Strange mesons | 32 | K through K(4)*(2045), neutral and charged states |
+| N baryons | 42 | p, n, N(1440) through N(2600), with 0/+ charge states |
+| Delta baryons | 48 | Delta(1232) through Delta(2420), with -/0/+/++ charge states |
+| Lambda baryons | 14 | Lambda through Lambda(2350) |
+| Sigma baryons | 27 | Sigma+/0/- through Sigma(2030), with 3 charge states |
+| Xi baryons | 12 | Xi0/- through Xi(2030), with 2 charge states |
+| Omega baryons | 3 | Omega-, Omega(2012), Omega(2250) |
+| **Total** | **248** | Antiparticles generated automatically (444 total) |
+
+---
+
+## list-withcharm.dat — Charm-Extended Particle List
+
+### Overview
+
+`list-withcharm.dat` extends `list.dat` with 82 charmed hadrons from the PDG2025 Review of Particle Physics Summary Tables. All entries satisfy C ∈ {-1, 0, 1}, making the list compatible with charm-canonical ensemble calculations.
+
+The doubly charmed baryon Xi_cc++ (C=2, pdgid 4422) is intentionally excluded to maintain this compatibility. It is available separately in `modular/list-multicharm.dat`.
+
+| | Count |
+|---|-------|
+| Light + strange hadrons | 248 |
+| Charmed hadrons | 82 |
+| **Total particles** | **330** |
+| **Total with antiparticles** | **586** |
+
+### Charm Sector Breakdown
+
+| Sector | Entries | Notes |
+|--------|---------|-------|
+| Charmonium (cc̄) | 22 | eta_c through psi(4660); C=0, \|C\|=2 |
+| D mesons | 13 | D through D*_3(2750); C=±1, S=0 |
+| D_s mesons | 8 | D_s through D*_s3(2860); C=±1, S=±1 |
+| Lambda_c | 6 | Lambda_c+ through Lambda_c(2940)+ |
+| Sigma_c | 9 | Sigma_c(2455) through Sigma_c(2800), 3 charges each |
+| Xi_c | 15 | Xi_c through Xi_c(3080), 1–2 charges |
+| Omega_c | 9 | Omega_c through Omega_c(3327) |
+| **Total charm** | **82** | |
+
+### States with Assigned J^P
+
+Several charmed baryons appear in the PDG2025 RPP with J^P = ??. Degeneracy (2J+1) was assigned using quark model predictions, following the same approach used for non-charm states with unknown J^P (e.g., Xi(1950), Xi(2030), Omega(2250)). Reasoning is documented in `#` comment blocks in the data file.
+
+| State | Assigned J^P | deg | Reasoning |
+|-------|-------------|-----|-----------|
+| Sigma_c(2800) | 3/2- | 4 | 1P excitation; broad width (~70 MeV) favors lower J over 5/2-. Analog: Sigma(1670) |
+| Xi_c(3055)+ | 3/2+ | 4 | D-wave (L=2) excitation; narrow width (7.8 MeV) |
+| Xi_c(3080) | 5/2+ | 6 | D-wave partner of Xi_c(3055); narrower width (3.6–5.6 MeV) |
+| Omega_c(3000) | 1/2- | 2 | 1P quintuplet (LHCb 2017); QCD sum rules (Wang et al., EPJC 77, 2017) |
+| Omega_c(3050) | 1/2- | 2 | 1P quintuplet |
+| Omega_c(3065) | 3/2- | 4 | 1P quintuplet |
+| Omega_c(3090) | 3/2- | 4 | 1P quintuplet |
+| Omega_c(3120) | 5/2- | 6 | 1P quintuplet |
+| Omega_c(3185) | 1/2+ | 2 | 2S radial excitation; broad width (50 MeV) favors lower J |
+| Omega_c(3327) | 3/2+ | 4 | 1D excitation; moderate width (20 MeV) |
+
+**Note on the Omega_c P-wave quintuplet:** Some quark models swap J^P assignments between individual states within the quintuplet; the total degeneracy sum (2+2+4+4+6=18) across all five states is robust regardless of the specific ordering.
+
+### MC ID Convention for Charm Entries
+
+- **Standard PDG IDs** (e.g., 441, 443, 4122, 4232): official MC numbering
+- **PDG IEXTRA IDs** (9000000–9099999, e.g., 9000443 for psi(4040)): official PDG assignments for overflow states
+- **Custom IDs** (90XXXXX): for states without official MC IDs. Format: `9` + counter + quark-content digits + `2J+1` suffix. Examples: `9004224` = Sigma_c(2800)++, `9104332` = Omega_c(3000), `9204326` = Xi_c(3080)+
+
+### Known MCID-degeneracy mismatches (official PDG numbering)
+
+Three charmed baryons have official PDG MCIDs whose last digit does not match the actual J^P. These are historical artifacts — the MCIDs were assigned before J was measured, and were never updated to avoid breaking Monte Carlo generators:
+
+| Particle | MCID | Last digit implies | Actual J^P | deg |
+|----------|------|-------------------|------------|-----|
+| Lambda_c(2625)+ | 104122 | J=1/2 | 3/2- | 4 |
+| Xi_c(2790)+/0 | 104324/104314 | J=3/2 | 1/2- | 2 |
+| Xi_c(2815)+/0 | 104322/104312 | J=1/2 | 3/2- | 4 |
+
+The degeneracies in our lists follow the measured J^P (correct physics). The MCIDs are kept as the official PDG assignments.
+
+---
+
+## PDG Monte Carlo ID Numbering Scheme
+
+### Standard PDG IDs (218 particles in list.dat)
+
+Most particles use the official PDG Monte Carlo numbering scheme, which encodes quark content and quantum numbers in digit positions:
+
+**Mesons:** `n_r n_L n_q1 n_q2 2S+1` (up to 6 digits)
+- Example: `111` = pi0, `113` = rho(770)0, `10113` = b(1)(1235)0, `100113` = rho(1450)0
+
+**Baryons:** `n_r n_q1 n_q2 n_q3 2J+1` (up to 5 digits, 6 for excited states)
+- Example: `2212` = proton, `2112` = neutron, `12212` = N(1440)+, `1114` = Delta(1232)-
+
+**PDG "IEXTRA" range (9000000-9099999):** Used for particles that cannot be accommodated in the standard digit-encoding scheme (e.g., very broad states, additional states with same quantum numbers). These IDs are assigned by PDG.
+- Examples: `9000221` = f(0)(500), `9010221` = f(0)(980), `9030221` = f(0)(1500)
+
+### Charge state patterns for standard baryons
+
+For baryons with multiple charge states, the standard PDG scheme increments specific digit positions:
+
+| Particle | I | Q=-1 | Q=0 | Q=+1 | Q=+2 |
+|----------|---|------|-----|------|------|
+| N(939) | 1/2 | -- | 2112 | 2212 | -- |
+| Delta(1232) | 3/2 | 1114 | 2114 | 2214 | 2224 |
+| Sigma | 1 | 3112 | 3212 | 3222 | -- |
+| Xi | 1/2 | 3312 | 3322 | -- | -- |
+
+For excited states with the same pattern:
+| N(1440) | 1/2 | -- | 12112 | 12212 | -- |
+| N(1520) | 1/2 | -- | 1214 | 2124 | -- |
+| Delta(1600) | 3/2 | 31114 | 32114 | 32214 | 32224 |
+
+The pattern: changing the leading quark-content digits by `1000` or `100` shifts between u and d quarks, encoding the charge state.
+
+### Custom Thermal-FIST IDs for light/strange baryons (30 particles)
+
+Thirty high-mass baryon resonances cannot be accommodated in the standard 5-digit PDG scheme because all available digit combinations for their quantum numbers are already used by lower-mass states. These use 7-8 digit IDs in the `99xxxxx` range:
+
+**Nucleon resonances (20 IDs, 10 states x 2 charges):**
+
+| State | Q=0 ID | Q=+1 ID | Pattern |
+|-------|--------|---------|---------|
+| N(1875) | 9902114 | 9902214 | `99` + `0` + `2112/2212` + `4` |
+| N(1880) | 9902112 | 9902212 | `99` + `0` + `2112/2212` + `2` |
+| N(1895) | 9912112 | 9912212 | `99` + `1` + `2112/2212` + `2` |
+| N(1900) | 9912114 | 9912214 | `99` + `1` + `2112/2212` + `4` |
+| N(2060) | 9902116 | 9902216 | `99` + `0` + `2112/2212` + `6` |
+| N(2100) | 9922112 | 9922212 | `99` + `2` + `2112/2212` + `2` |
+| N(2120) | 9922114 | 9922214 | `99` + `2` + `2112/2212` + `4` |
+| N(2220) | 99021110 | 99022110 | `99` + `0` + `21110/22110` |
+| N(2250) | 99121110 | 99122110 | `99` + `1` + `21110/22110` |
+| N(2600) | 99021112 | 99022112 | `99` + `0` + `21112/22112` |
+
+**Delta resonances (8 IDs, 2 states x 4 charges):**
+
+| State | Q=-1 | Q=0 | Q=+1 | Q=+2 |
+|-------|------|-----|------|------|
+| Delta(2200) | 9901118 | 9901218 | 9902128 | 9902228 |
+| Delta(2420) | 99011112 | 99012112 | 99021212 | 99022212 |
+
+**Strange baryons (2 IDs):**
+
+| State | ID |
+|-------|-----|
+| Lambda(2350) | 99031210 |
+| Omega(2012) | 9903334 |
+
+The construction follows the pattern: `99` prefix + radial counter + standard baryon quark-content digits + `2J+1` suffix. The charge state is encoded using the same quark-digit shifting as in the standard scheme (`2112` <-> `2212` for N, `1112` <-> `1212` <-> `2122` <-> `2222` for Delta). All 30 custom IDs were inherited unchanged from the PDG2020 list used in Thermal-FIST.
+
+## File Formats
+
+### list.dat format (14 columns)
+
+```
+pdgid  name  stable  mass[GeV]  degeneracy  statistics  B  Q  S  C  |S|  |C|  width[GeV]  threshold[GeV]
+```
+
+- `stable`: 1 if treated as stable (very narrow width), 0 if decays are resolved
+- `degeneracy`: 2J+1 (exception: f(0)(500)/sigma has degeneracy 0 — its thermal contribution is cancelled by the repulsive I=2 pipi channel in the S-matrix approach; see Broniowski et al., PRC 92, 034905, 2015). K(0)*(700)/kappa is similarly excluded (repulsive I=3/2 Kpi channel) and is commented out entirely since no other particle decays into it.
+- `statistics`: -1 for mesons (Bose-Einstein), +1 for baryons (Fermi-Dirac)
+- `|S|`, `|C|`: absolute strangeness/charm content (not net strangeness). E.g., eta has |S|=1.33, phi has |S|=2
+- `threshold`: lightest decay channel mass sum (GeV)
+
+### decays.dat format
+
+```
+pdgid                    # particle name
+N                        # number of decay channels
+BR  daughter1 daughter2  # branching ratio and daughter PDG IDs
+...
+```
+
+Antiparticle decays are not listed; they are generated automatically by charge conjugation.
+
+## Modular Directory (`modular/`)
+
+The `modular/` directory provides the same particle data split into sector-specific files, following the structure of `PDG2020_modular/`. This allows loading only the sectors needed for a given calculation.
+
+### Particle lists
+
+| File | Particles | Description |
+|------|-----------|-------------|
+| `list-hadrons.dat` | 248 | Light + strange hadrons (= `list.dat`) |
+| `list-charm.dat` | 82 | Charmed hadrons only |
+| `list-nuclei.dat` | 8 | Stable light nuclei (d, t, 3He, 4He, ...) |
+| `list-excitednuclei.dat` | 30 | Excited light nuclei |
+| `list-exotica.dat` | 6 | Exotic states (hypernuclei) |
+| `list-charged-leptons.dat` | 3 | e, mu, tau |
+| `list-multicharm.dat` | 1 | Multiply charmed hadrons: Xi_cc++ (C=2) |
+| `list-isospin-symmetric.dat` | 248 | Isospin-symmetric hadron list (see below) |
+
+### Decay files
+
+| File | Entries | Description |
+|------|---------|-------------|
+| `decays-hadrons.dat` | 247 | Decays for light + strange hadrons |
+| `decays-charm.dat` | 82 | Decays for charmed hadrons |
+| `decays-excitednuclei.dat` | 30 | Decays for excited nuclei |
+
+All modular files are verified particle-by-particle and channel-by-channel identical to the corresponding monolithic files.
+
+---
+
+## Isospin-Symmetric List (`list-isospin-symmetric.dat`)
+
+Enforces exact isospin symmetry by setting a common mass for each isospin multiplet. Sorted globally by mass. Useful for tests requiring exact isospin symmetry.
+
+### Symmetrized masses
+
+| Multiplet | Common mass (MeV) | Members |
+|-----------|-------------------|---------|
+| pi | 138 | pi0, pi+ |
+| K | 494 | K+, K0 |
+| rho(770) | 775.2 | rho+, rho0 |
+| K*(892) | 894 | K*(892)+, K*(892)0 |
+| N | 938 | p, n |
+| Sigma | 1192 | Sigma+, Sigma0, Sigma- |
+| Sigma(1385) | 1384 | Sigma(1385)+/0/- |
+| Xi | 1315 | Xi0, Xi- |
+| Xi(1530) | 1532 | Xi(1530)0, Xi(1530)- |
+| K2*(1430) | 1430 | K2*(1430)+, K2*(1430)0 |
+
+Weakly-decaying strange baryons (Lambda, Sigma+/-, Xi0/-, Omega) are set to `stable=0`. Widths and thresholds are unchanged.
+
+---
+
+## Post-Generation Corrections
+
+The following corrections were applied manually after generation, based on cross-checks against the PDG2025 API database and MC data files.
+
+### Property fixes
+
+| File | Particle | Property | Old | New | PDG2025 value |
+|------|----------|----------|-----|-----|---------------|
+| `list.dat`, `list-withcharm.dat` | pi2(1880) | mass | 1.895 GeV | 1.874 GeV | 1874 +26/-5 MeV |
+| `list-withcharm.dat` | D(1)(2420)+ | mass | 2.4261 GeV | 2.4221 GeV | 2422.1 ± 0.5 MeV |
+| `list-withcharm.dat` | D(2)\*(2460)+ | mass | 2.4635 GeV | 2.4611 GeV | 2461.1 ± 0.8 MeV (isospin avg) |
+| `list-withcharm.dat` | h_c(1P) | width | 0.7 MeV | 0.78 MeV | 0.78 ± 0.28 MeV |
+| `list-withcharm.dat` | eta_c(2S) | mass | 3.6375 GeV | 3.6378 GeV | 3637.8 ± 0.6 MeV |
+| `list-withcharm.dat` | eta_c(2S) | width | 11.3 MeV | 11.6 MeV | 11.6 ± 1.4 MeV |
+| `list-withcharm.dat` | chi_c2(3930) | mass | 3.9222 GeV | 3.9225 GeV | 3922.5 ± 1.0 MeV |
+| `list-withcharm.dat` | chi_c0(1P) | width | 10.8 MeV | 10.9 MeV | 10.9 ± 0.6 MeV |
+
+### Branching ratio fixes
+
+| Particle | Channel | Old BR | New BR | PDG2025 value |
+|----------|---------|--------|--------|---------------|
+| D\*(2007)0 | D0 pi0 | 0.619 | 0.647 | 64.7 ± 0.9% |
+| D\*(2007)0 | D0 gamma | 0.381 | 0.353 | 35.3 ± 0.9% |
+| D_s\*+ | D_s gamma | 0.942 | 0.942 | 93.55% (renorm. 94.19%) |
+| D_s\*+ | D_s pi0 | 0.058 | 0.058 | 5.77% (renorm. 5.81%) |
+| D_s1(2460)+ | D_s\* pi0 | 0.60 | 0.739 | 48.18% + catch-all |
+| D_s1(2460)+ | D_s gamma | 0.22 | 0.181 | 18.08% |
+| D_s1(2460)+ | D_s pi+pi- | — | 0.043 | 4.33% (new channel) |
+| D_s1(2460)+ | D_s0\*(2317) gamma | 0.04 | 0.037 | 3.75% |
+| D_s1(2460)+ | D_s\* gamma | 0.08 | — | removed (PDG UL <8%) |
+| D_s1(2460)+ | D_s\* pi+pi- | 0.06 | — | removed (no PDG meas.) |
+| D_s1(2536)+ | D\*(2010)+ K0 | 0.85 | 0.468 | 30.5% + catch-all share |
+| D_s1(2536)+ | D\*(2007)0 K+ | — | 0.522 | 35.9% + catch-all share (new) |
+| D_s1(2536)+ | D+ pi- K+ | 0.03 | 0.010 | 1.0% |
+| D_s1(2536)+ | D+ K0 | 0.08 | — | removed (PDG UL <12%) |
+| D_s1(2536)+ | D0 K+ | 0.04 | — | removed (PDG UL <4%) |
+| D_s2\*(2573)+ | D0 K+ | 1.0 | 0.42 | 37% (+ catch-all share) |
+| D_s2\*(2573)+ | D+ K0 | — | 0.42 | seen, isospin mirror (new) |
+| D_s2\*(2573)+ | D\*+ K0 | — | 0.16 | seen (new); D\*0 K+ removed (PDG not seen) |
+| Lambda_c(2625)+ | Lambda_c pi+pi- | 0.90 | 0.50 | 50.2% |
+| Lambda_c(2625)+ | Lambda_c pi0 | — | 0.40 | catch-all (PDG UL <50%, new) |
+| Lambda_c(2625)+ | Sigma_c++ pi- | 0.05 | 0.05 | unchanged |
+| Lambda_c(2625)+ | Sigma_c0 pi+ | 0.05 | 0.05 | unchanged |
+
+### Light meson decay fixes (cross-checked against PDG2025 Summary Tables)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| eta(2)(1645) | Replaced a(0)(1450)pi channels with a(0)(980)pi | PDG2025 does not support a(0)(1450)pi |
+| eta(2)(1870) | Removed KKbar, K\*Kbar; added a(0)(980)pi | KKbar, K\*Kbar not in PDG2025 summary table; a(0)(980)pi seen |
+| pi(1800) | Removed K\*(892)K; added f(0)(980)pi, f(0)(1370)pi | K\*(892)K marked "not seen" in PDG2025; f(0)(980)pi, f(0)(1370)pi seen |
+
+### Charmonium decay fixes (cross-checked against PDG2025 Summary Tables)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| psi(2)(3823) | Replaced D0 Dbar0 + D+ D- with gamma chi\_c1 (78%) + gamma chi\_c2 (22%) | Below DD threshold; only radiative modes in PDG2025 |
+| psi(4160) | Removed Ds+ Ds-; added Ds\*+ Ds\*- | Ds+ Ds- marked "not seen"; Ds\*+ Ds\*- seen |
+| psi(4230) | Removed D Dbar pi; added psi(2S) pi+pi-, chi\_c0 omega, D0 D\*- pi+, J/psi K+K- | D Dbar pi marked "not seen"; added modes all seen |
+| psi(4415) | Removed Ds+ Ds-; added D0 D\*(2010)- pi+ | Ds+ Ds- marked "not seen"; D0 D\*- pi+ seen |
+| chi\_c1(4140) | Removed Ds+ Ds-; now 100% J/psi phi | PDG2025 lists only J/psi phi |
+| chi\_c1(4274) | Removed Ds+ Ds-; now 100% J/psi phi | PDG2025 lists only J/psi phi |
+
+### Open charm decay fixes (quantum number violations and PDG cross-checks)
+
+| Particle | Change | Rationale |
+|----------|--------|-----------|
+| Xi\_c(3080)0 | Removed D0 Xi- (Q,S violation) and Lambda\_c+ K- (not seen); replaced with Lambda\_c+ Kbar pi channels | Conserves B,Q,S,C; Lambda\_c+ Kbar pi seen in PDG2025 |
+| Xi\_c(3080)+ | Removed Lambda\_c+ Kbar0 pi+ (Q violation) and D+ Xi0 (S violation); replaced with Sigma\_c(2455)++ K-, Sigma\_c(2520)++ K-, Lambda\_c+ K- pi+, Lambda D+ | All channels seen in PDG2025; conserves B,Q,S,C |
+| All 7 Omega\_c excited states | Changed Xi\_c0 K+ to Xi\_c+ K- | Xi\_c0 K+ violated Q and S conservation; Xi\_c+ K- correct |
+| Ds2\*(2573)+ | Removed D\*(2007)0 K+ (not seen); kept D0 K+, D+ K0, D\*(2010)+ K0 | D\*(2007)0 K+ explicitly "not seen" in PDG2025 |
+| psi(4415) | Fixed D0 D\*- pi+ daughter PID: -423 (anti-D\*0) → -413 (D\*(2010)-) | Charge conservation violation caught by new charm validator |
+
+### Threshold-cleanup pass for baryon decays
+
+Six baryon decay channels had daughter mass sums exceeding the parent mass threshold. These were replaced with explicit multi-body final states:
+
+| Particle | Old channel | New channel | Reason |
+|----------|------------|-------------|--------|
+| Lambda(1810) | p + K\*(892)- | p + K- + pi0 | K\*(892) threshold exceeded |
+| Lambda(1810) | n + anti-K\*(892)0 | n + K- + pi+ | K\*(892) threshold exceeded |
+| Lambda(1820) | p + K\*(892)- | p + K- + pi0 | K\*(892) threshold exceeded |
+| Lambda(1820) | n + anti-K\*(892)0 | n + K- + pi+ | K\*(892) threshold exceeded |
+| Xi(1690)- | Sigma- + anti-K0 (near threshold) | Sigma0 + K- | Reassigned to threshold-safe channel |
+| Omega(2012) | Xi(1530)0 + K- | Xi- + pi+ + K- | Explicit 3-body final state |
+
+### Charm decay catch-all channels
+
+Branching ratios from the PDG are often incomplete: only experimentally measured exclusive modes are listed, so the sum of known BRs is frequently less than 100%. For thermal model feeddown calculations, BR sums must equal 1.0 to ensure proper normalization.
+
+To handle this, an explicit **catch-all decay channel** is added to each charm particle, carrying the unmeasured fraction BR = 1.0 - (sum of known BRs). For particles with no measured exclusive modes, the catch-all carries 100%.
+
+The catch-all channel uses the lightest kinematically allowed final state that conserves the appropriate quantum numbers:
+
+| Particle type | Catch-all channel | Daughters | Rationale |
+|---------------|-------------------|-----------|-----------|
+| Charmonia (cc&#x0304;, C=0) | pi+ pi- pi0 | 211 -211 111 | Lightest hadronic state with correct quantum numbers |
+| D0 (weak decay) | 2pi+ 2pi- pi0 | 211 -211 211 -211 111 | Generic multi-pion final state (Q=0, 4.52%) |
+| D+ (weak decay) | K- 3pi+ pi- pi0 | -321 211 211 211 -211 111 | CF hadronic final state (Q=+1, 0.36%) |
+| Ds+ (weak decay) | 2pi+ pi- 2pi0 | 211 211 -211 111 111 | Generic multi-pion final state (Q=+1, 4.62%) |
+| D resonances (C=1, S=0) | D + pi | 421 211 or 421 111 | Lightest open-charm + pion (charge-appropriate) |
+| D_s resonances (C=1, S=1) | D_s + pi0 | 431 111 | Lightest open-charm-strange + pion |
+| Lambda_c, Sigma_c (C=1, S=0) | Lambda_c + pi | 4122 + pi | Lightest charmed baryon + pion |
+| Xi_c (C=1, S=-1) | Xi_c + pi | 4232/4132 + pi | Lightest charmed-strange baryon + pion |
+| Omega_c (C=1, S=-2) | Omega_c + pi0 | 4332 111 | Lightest charmed-double-strange baryon + pion |
+
+**Summary of catch-all additions in `decays.dat`:**
+
+- 13 charmonia with existing PDG decay channels: catch-all added for the unmeasured fraction
+- 9 charmonia with no PDG exclusive modes: 100% catch-all
+- 3 ground-state D mesons (D0, D+, Ds+): catch-all for unmeasured weak decay fraction (4.52%, 0.36%, 4.62%)
+- 4 D_s meson resonances with PDG2025 measured modes (D_s\*, D_s1(2460), D_s1(2536), D_s2\*(2573)): catch-all absorbs unmeasured fraction
+- 2 D/D_s meson resonances with no PDG exclusive modes: 100% catch-all
+- 16 charmed baryon resonances (Lambda_c, Sigma_c, Xi_c, Omega_c): 100% catch-all
+- Lambda_c(2625)+: PDG2025-measured Lambda_c pi+pi- (50%) + catch-all for unmeasured modes
+
+After these additions, all 82 charm particles (73 unstable + 9 stable) have BR sums = 1.0.
+
+---
+
+## Validation
+
+### list.dat
+1. Cross-checked all particle properties against independently encoded PDG2025 Summary Table data
+2. Computed HRG thermodynamics at T=155 MeV, muB=0 with Thermal-FIST and confirmed exact agreement between original and independently generated lists
+
+### list-withcharm.dat
+1. Verified quantum number consistency (B, Q, S, C, |C|, statistics, degeneracy) for all 82 charm entries
+2. Verified conservation of B, Q, S, C in all threshold decay channels
+3. Confirmed threshold mass values match lightest allowed decay products within 1 MeV
+4. Loaded all 586 particles in Thermal-FIST C++ and computed thermal densities at T=155 MeV
+5. Confirmed C ∈ {-1, 0, 1} for all entries (charm-canonical compatibility)
+
+### decays.dat (charm sector)
+1. Verified all 73 unstable charm particles have BR sum = 1.000 (within 0.001 tolerance)
+2. Verified all daughter particles exist in the particle list
+3. Verified all decay thresholds ≤ parent mass
+4. Conservation of B, Q, S, C verified in all charm decay channels via automated validator in `generate_pdg2025.py` (loads `list-withcharm.dat` for charm daughter quantum numbers)

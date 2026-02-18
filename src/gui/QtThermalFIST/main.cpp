@@ -1,6 +1,6 @@
 /*
  * Thermal-FIST package
- * 
+ *
  * Copyright (c) 2014-2018 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
@@ -10,10 +10,67 @@
 #include <QTranslator>
 #include <QLibraryInfo>
 #include <QtGlobal>
+#include <QScreen>
+
+#ifdef Q_OS_WASM
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
 
 //#define CRTDBG_MAP_ALLOC
 //#include <stdlib.h>
 //#include <crtdbg.h>
+
+#ifdef Q_OS_WASM
+// Global pointer for resize callback
+static MainWindow* g_mainWindow = nullptr;
+
+// Resize canvas and Qt window to fill browser
+static void resizeToFillBrowser()
+{
+    // Get browser window size and device pixel ratio
+    double dpr = EM_ASM_DOUBLE({ return window.devicePixelRatio || 1; });
+    int cssWidth = EM_ASM_INT({ return window.innerWidth; });
+    int cssHeight = EM_ASM_INT({ return window.innerHeight; });
+
+    // Canvas internal resolution (accounting for device pixel ratio)
+    int canvasWidth = static_cast<int>(cssWidth * dpr);
+    int canvasHeight = static_cast<int>(cssHeight * dpr);
+
+    // Set canvas internal size (resolution) and CSS display size
+    EM_ASM({
+        var canvas = document.querySelector('canvas');
+        if (canvas) {
+            // Set internal resolution
+            canvas.width = $0;
+            canvas.height = $1;
+            // Set CSS display size
+            canvas.style.width = $2 + 'px';
+            canvas.style.height = $3 + 'px';
+        }
+        // Prevent scrollbars
+        document.body.style.margin = '0';
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+    }, canvasWidth, canvasHeight, cssWidth, cssHeight);
+
+    // Resize Qt window to match CSS size and update layout
+    if (g_mainWindow) {
+        g_mainWindow->setGeometry(0, 0, cssWidth, cssHeight);
+        g_mainWindow->updateGeometry();
+    }
+}
+
+// Callback for browser resize events
+EM_BOOL onBrowserResize(int eventType, const EmscriptenUiEvent *uiEvent, void *userData)
+{
+    Q_UNUSED(eventType);
+    Q_UNUSED(uiEvent);
+    Q_UNUSED(userData);
+    resizeToFillBrowser();
+    return EM_TRUE;
+}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +80,17 @@ int main(int argc, char *argv[])
 
     QFont font = QApplication::font();
     QFont fontSmall = font;
+#ifdef Q_OS_WASM
+    // Scale font based on browser window height
+    int windowHeight = EM_ASM_INT({ return window.innerHeight; });
+    // Base: 9pt for ~800px height, scale proportionally (min 7pt, max 11pt)
+    int fontSize = windowHeight / 90;
+    if (fontSize < 7) fontSize = 7;
+    if (fontSize > 11) fontSize = 11;
+    font.setPointSize(fontSize);
+#else
     font.setPointSize(10);
+#endif
     QApplication::setFont(font);
 
     QPixmap pixmap(":/images/FIST.png");
@@ -47,13 +114,27 @@ int main(int argc, char *argv[])
     myappTranslator.load("HadronResonanceGas_" + QLocale::system().name());
     a.installTranslator(&myappTranslator);
 
-    
+
 
     //std::ios_base::sync_with_stdio(false);
-  
+
 
     MainWindow w;
+
+#ifdef Q_OS_WASM
+    // WASM: Set up automatic window resizing to fill browser
+    g_mainWindow = &w;
+
+    // Register resize callback for browser window resize events
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, EM_TRUE, onBrowserResize);
+
+    // Resize canvas and force maximized state
+    resizeToFillBrowser();
+    w.showNormal();
     w.showMaximized();
+#else
+    w.showMaximized();
+#endif
 
     splash.finish(&w);
 

@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
 
   // Particle list for the HRG model
-  ThermalParticleSystem parts(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list.dat");
+  ThermalParticleSystem parts(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list.dat");
 
   // HRG model
   ThermalModelIdeal modelHRG(&parts);
