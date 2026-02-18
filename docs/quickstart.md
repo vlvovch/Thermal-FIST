@@ -29,6 +29,20 @@ and a couple of sample macros in `build/bin/examples`.
 
 Please see also the commands listed in the [**.github/workflows/build_and_test.yml**](../.github/workflows/build_and_test.yml) file for another example of building and running the package under various systems.
 
+### Building for WebAssembly (Browser)
+
+QtThermalFIST can be compiled to WebAssembly to run directly in a web browser.
+
+Quick start:
+~~~.bash
+source /path/to/emsdk/emsdk_env.sh
+mkdir build-wasm && cd build-wasm
+/path/to/Qt/6.x.x/wasm_singlethread/bin/qt-cmake ../ -DTHERMALFIST_WASM=ON
+cmake --build . --parallel
+~~~
+
+See [**wasm-build.md**](wasm-build.md) for detailed instructions on prerequisites, multi-threaded builds, deployment, and troubleshooting.
+
 ### QtThermalFIST
 
 The standard analysis can be performed within the GUI.

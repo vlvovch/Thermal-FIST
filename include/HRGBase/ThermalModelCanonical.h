@@ -238,6 +238,8 @@ namespace thermalfist {
 
     virtual double CalculateEnergyDensityDerivativeT() { throw std::runtime_error("CalculateEnergyDensityDerivativeT not implemented"); return 0.; } // Not implemented
 
+    virtual double CalculateEntropyDensityDerivativeT() { throw std::runtime_error("CalculateEntropyDensityDerivativeT not implemented"); return 0.; } // Not implemented
+
     /**
      * \brief Returns the scalar density of a particle species.
      * 

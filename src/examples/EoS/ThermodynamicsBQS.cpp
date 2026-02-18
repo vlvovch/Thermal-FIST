@@ -123,8 +123,8 @@ int main(int argc, char *argv[])
   
   
   // Create the hadron list instance and read the list from file
-  ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list.dat");  // <-- Default list, no light nuclei
-  //ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2020/list-withnuclei.dat");  // <-- Default list, with light nuclei
+  ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list.dat");  // <-- Default list, no light nuclei
+  //ThermalParticleSystem TPS(string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list-withnuclei.dat");  // <-- Default list, with light nuclei
 
   // Create the ThermalModel instance
   // Choose the class which fits the required variant of HRG model

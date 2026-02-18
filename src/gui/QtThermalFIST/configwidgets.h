@@ -135,6 +135,8 @@ public:
 
   QCheckBox *CBPionInteractions;
   QDoubleSpinBox *spinfPi;
+  QCheckBox *CBKaonInteractions;
+  QDoubleSpinBox *spinfKa;
 
 public:
   explicit  OtherOptionsDialog(ModelConfigWidget *parent = 0);

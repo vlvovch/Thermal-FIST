@@ -10,11 +10,14 @@
 #include <QLayout>
 #include <QLabel>
 #include <QDebug>
+#include <QBuffer>
+#include <QTextStream>
 
 #include <fstream>
 #include <iomanip>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -89,7 +92,7 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
 
       vecAvalues.push_back(std::vector<double>(0));
       vecParams.push_back(std::vector<double>(0));
-      vecCurrentSize.push_back(0);
+      vecCurrentSize.push_back(std::make_unique<std::atomic<int>>(0));
       vecTotalSize.push_back(0);
     }
   }
@@ -333,7 +336,7 @@ void chi2ProfileDialog::calculate() {
       if (cindex<0 || cindex>=vecParams.size())
         return;
 
-      int &fCurrentSize = vecCurrentSize[cindex];
+      std::atomic<int> *pCurrentSize = vecCurrentSize[cindex].get();
       int &fTotalSize   = vecTotalSize[cindex];
       std::vector<double> &Avalues = vecAvalues[cindex];
       std::vector<double> &params  = vecParams[cindex];
@@ -345,7 +348,7 @@ void chi2ProfileDialog::calculate() {
               params.push_back(0.);
           }
 
-      fCurrentSize = 0;
+      *pCurrentSize = 0;
       //fPreviousSize = 0;
       fTotalSize = spinAiter->value();
       fStop = 0;
@@ -360,17 +363,15 @@ void chi2ProfileDialog::calculate() {
       modelFit->FixVcOverV(modelFitInput->FixVcOverV());
       modelFit->SetVcOverV(modelFitInput->VcOverV());
 
-      for (int i = 0; i<quantities.size(); ++i) {
+      for (size_t i = 0; i<quantities.size(); ++i) {
         modelFit->AddQuantity(quantities[i]);
       }
 
       chi2ProfileWorker *wrk = new chi2ProfileWorker(modelFit,comboParameter->currentText().toStdString(), &Avalues, &params,
-                                                      &fCurrentSize, &fStop, this);
+                                                      pCurrentSize, &fStop, this);
+      m_worker = wrk;
 
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
-
-      wrk->start();
 
       comboParameter->setEnabled(false);
       buttonCalculate->setText(tr("Stop"));
@@ -379,7 +380,18 @@ void chi2ProfileDialog::calculate() {
       fRunning = true;
       progBar->setVisible(true);
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
+        wrk->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        wrk->run();
+        finalize();
+        wrk->deleteLater();
+      }
   }
   else {
       fStop = 1;
@@ -391,12 +403,12 @@ void chi2ProfileDialog::replot() {
   plot->yAxis->setRange(spinchi2min->value(), spinchi2max->value());
 
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
 
   plot->graph(0)->data()->clear();
 
-  int fCurrentSize = vecCurrentSize[cindex];
+  int fCurrentSize = *vecCurrentSize[cindex];
   std::vector<double> &Avalues = vecAvalues[cindex];
   std::vector<double> &params  = vecParams[cindex];
 
@@ -441,11 +453,17 @@ void chi2ProfileDialog::replot() {
 
 void chi2ProfileDialog::updateProgress() {
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
   progBar->setRange(0, vecTotalSize[cindex]);
-  progBar->setValue(vecCurrentSize[cindex]);
+  progBar->setValue(*vecCurrentSize[cindex]);
   replot();
+
+  // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+  // This avoids cross-thread signal emission which can cause memory errors in WASM
+  if (fRunning && (*vecCurrentSize[cindex] >= vecTotalSize[cindex] || fStop)) {
+    finalize();
+  }
 }
 
 void chi2ProfileDialog::parameterChanged(int index)
@@ -476,7 +494,7 @@ void chi2ProfileDialog::parameterChanged(int index)
 void chi2ProfileDialog::limitsChanged()
 {
   int cindex = comboParameter->currentIndex();
-  if (cindex<0 || cindex>vecParams.size())
+  if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
     return;
 
   vecAleft[cindex]  = spinAmin->value();
@@ -486,6 +504,12 @@ void chi2ProfileDialog::limitsChanged()
 
 void chi2ProfileDialog::finalize() {
     calcTimer->stop();
+
+    // Wait for worker thread to finish before deleting objects it may still reference
+    if (m_worker != nullptr) {
+      m_worker->wait();
+      m_worker = nullptr;  // deleteLater() handles actual deletion
+    }
 
     if (modelFit != NULL)
       delete modelFit;
@@ -508,9 +532,33 @@ void chi2ProfileDialog::writetoFile() {
   if (!fRunning) {
 
     int cindex = comboParameter->currentIndex();
-    if (cindex<0 || cindex>vecParams.size())
+    if (cindex<0 || cindex>=static_cast<int>(vecParams.size()))
       return;
 
+#ifdef Q_OS_WASM
+    // WASM: Write to buffer and trigger browser download
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&buffer);
+
+    out.setFieldWidth(20);
+    out.setFieldAlignment(QTextStream::AlignLeft);
+    out << comboParameter->currentText() << "chi2";
+    out << qSetFieldWidth(0) << Qt::endl;
+
+    int fCurrentSize = *vecCurrentSize[cindex];
+    std::vector<double> &Avalues = vecAvalues[cindex];
+    std::vector<double> &params = vecParams[cindex];
+    for (int i = 0; i < fCurrentSize; ++i) {
+      out.setFieldWidth(20);
+      out << Avalues[i] << params[i];
+      out << qSetFieldWidth(0) << Qt::endl;
+    }
+
+    buffer.close();
+    WasmFileIO::saveFile(data, "chi2profile.out");
+#else
     if (lastFilePath == "")
       lastFilePath = QApplication::applicationDirPath() + "/chi2profile.out";
     QString path = QFileDialog::getSaveFileName(this, tr("Save chi2 profile to file"), lastFilePath, tr("*.out"));
@@ -522,7 +570,7 @@ void chi2ProfileDialog::writetoFile() {
       fout << std::setw(20) << comboParameter->currentText().toStdString()
            << std::setw(20) << "chi2" << std::endl;
 
-      int fCurrentSize = vecCurrentSize[cindex];
+      int fCurrentSize = *vecCurrentSize[cindex];
       std::vector<double> &Avalues = vecAvalues[cindex];
       std::vector<double> &params = vecParams[cindex];
       for (int i = 0; i<fCurrentSize; ++i) {
@@ -532,6 +580,7 @@ void chi2ProfileDialog::writetoFile() {
 
       fout.close();
     }
+#endif
   }
 }
 

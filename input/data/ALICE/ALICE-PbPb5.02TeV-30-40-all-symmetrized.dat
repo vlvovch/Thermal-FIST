@@ -1,0 +1,28 @@
+# ALICE Pb-Pb sqrt(sNN) = 5.02 TeV, 30-40% centrality
+# Yields are symmetrized between particles and antiparticles by taking the average
+# (values for charge-conjugate pairs are (particle+antiparticle)/2)
+#
+# Light hadrons:
+#   pi (pdg=211), K (pdg=321), p (pdg=2212)
+#   Source: Table IV in Phys. Rev. C 101, 044907 (2020) (ALICE Collaboration)
+#
+# Strange hadrons:
+#   K0S (pdg=310), Lambda (pdg=3122), Xi- (pdg=3312), Omega- (pdg=3334)
+#   Source: Table 3 in arXiv:2511.10360 (ALICE Collaboration)
+#
+# Resonances:
+#   K*0 (pdg=313), phi (pdg=333)
+#   Source: Table III in Phys. Rev. C 106, 034907 (2022) (ALICE Collaboration)
+#   Note: K*0 is included but marked as not fitted (is_fitted=0)
+#
+# Errors are combined as sqrt(stat^2 + syst^2); symmetrized errors are half of charge-summed errors
+#     is_fitted           pdg1           pdg2      feeddown1      feeddown2          value          error   # reference
+              1            211              0              1              0         233.88        11.9857   # Table IV in PhysRevC.101.044907
+              1            321              0              1              0           37.5         1.4807   # Table IV in PhysRevC.101.044907
+              1           2212              0              1              0         11.255         0.5052   # Table IV in PhysRevC.101.044907
+              1            310              0              1              0          33.77         2.6802   # Table 3 in arXiv:2511.10360
+              0            313              0              1              0           8.26         1.1682   # Table III in PhysRevC.106.034907
+              1            333              0              1              0          5.192        0.40786   # Table III in PhysRevC.106.034907
+              1           3122              0              1              0          8.975        0.76015   # Table 3 in arXiv:2511.10360
+              1           3312              0              1              0           1.58         0.1401   # Table 3 in arXiv:2511.10360
+              1           3334              0              1              0          0.209         0.0353   # Table 3 in arXiv:2511.10360

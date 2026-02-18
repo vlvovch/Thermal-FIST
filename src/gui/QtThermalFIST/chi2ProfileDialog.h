@@ -18,6 +18,8 @@
 #include <QComboBox>
 #include <QTimer>
 #include <map>
+#include <memory>
+#include <atomic>
 
 #include "HRGFit/ThermalModelFit.h"
 #include "BaseStructures.h"
@@ -32,15 +34,16 @@ class chi2ProfileWorker : public QThread
     Q_OBJECT
 
     thermalfist::ThermalModelFit *modelFit;
-    int *currentSize;
-    int *stop;
+    std::atomic<int> *currentSize;
+    std::atomic<int> *stop;
 
     std::string ParameterName;
     std::vector< double > *params;
     std::vector<double> *Avalues;
 
+public:
     void run() Q_DECL_OVERRIDE {
-        for(int i=0;i<Avalues->size() && !(*stop);++i) {
+        for(size_t i=0;i<Avalues->size() && !(*stop);++i) {
             double tmpParam = Avalues->operator [](i);
             if (ParameterName == "T" || ParameterName == "muB" ||
               ParameterName == "muQ" || ParameterName == "muS" ||
@@ -55,14 +58,12 @@ class chi2ProfileWorker : public QThread
         }
         emit calculated();
     }
-
-public:
   chi2ProfileWorker(thermalfist::ThermalModelFit *mod = NULL,
            std::string inParameterName = "T",
            std::vector<double> *Avalueso = NULL,
            std::vector<double> *paramso = NULL,
-           int *currentSizeo = NULL,
-           int *stopo = NULL,
+           std::atomic<int> *currentSizeo = NULL,
+           std::atomic<int> *stopo = NULL,
            QObject * parent = 0) :
         QThread(parent) {
             modelFit = mod;
@@ -83,11 +84,12 @@ class chi2ProfileDialog : public QDialog
     std::vector< std::vector<double> > vecParams;
     std::vector< std::vector<double> > vecAvalues;
     std::vector< double > vecAleft, vecAright;
-    std::vector< int > vecCurrentSize;
+    std::vector< std::unique_ptr<std::atomic<int>> > vecCurrentSize;
     std::vector< int > vecTotalSize;
 
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
+    chi2ProfileWorker *m_worker = nullptr;
 
     thermalfist::ThermalModelBase *model;
     thermalfist::ThermalParticleSystem *TPS;

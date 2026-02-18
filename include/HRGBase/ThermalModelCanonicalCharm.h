@@ -113,7 +113,9 @@ namespace thermalfist {
 
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
 
-    virtual double CalculateEnergyDensityDerivativeT() { exit(1); return 0.; } // Not implemented
+    virtual double CalculateEnergyDensityDerivativeT() { throw std::runtime_error("CalculateEnergyDensityDerivativeT not implemented"); return 0.; } // Not implemented
+
+    virtual double CalculateEntropyDensityDerivativeT() { throw std::runtime_error("CalculateEntropyDensityDerivativeT not implemented"); return 0.; } // Not implemented
 
     virtual bool IsConservedChargeCanonical(ConservedCharge::Name charge) const;
 

@@ -1,0 +1,38 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource prefix="/data">
+    <!-- Default particle list and decays for WASM builds -->
+    <file alias="list.dat">../../../input/list/PDG2025/list-withnuclei.dat</file>
+    <file alias="decays.dat">../../../input/list/PDG2025/decays.dat</file>
+    <!-- Built-in particle list presets for quick switching -->
+    <!-- PDG2025 -->
+    <file alias="lists/PDG2025/list-withnuclei.dat">../../../input/list/PDG2025/list-withnuclei.dat</file>
+    <file alias="lists/PDG2025/list.dat">../../../input/list/PDG2025/list.dat</file>
+    <file alias="lists/PDG2025/list-withcharm.dat">../../../input/list/PDG2025/list-withcharm.dat</file>
+    <file alias="lists/PDG2025/list-withexcitednuclei.dat">../../../input/list/PDG2025/list-withexcitednuclei.dat</file>
+    <file alias="lists/PDG2025/list-isospin-symmetric.dat">../../../input/list/PDG2025/list-isospin-symmetric.dat</file>
+    <file alias="lists/PDG2025/decays.dat">../../../input/list/PDG2025/decays.dat</file>
+    <!-- PDG2020 -->
+    <file alias="lists/PDG2020/list-withnuclei.dat">../../../input/list/PDG2020/list-withnuclei.dat</file>
+    <file alias="lists/PDG2020/list.dat">../../../input/list/PDG2020/list.dat</file>
+    <file alias="lists/PDG2020/list-withcharm.dat">../../../input/list/PDG2020/list-withcharm.dat</file>
+    <file alias="lists/PDG2020/list-withexcitednuclei.dat">../../../input/list/PDG2020/list-withexcitednuclei.dat</file>
+    <file alias="lists/PDG2020/list-isospin-symmetric.dat">../../../input/list/PDG2020/list-isospin-symmetric.dat</file>
+    <file alias="lists/PDG2020/decays.dat">../../../input/list/PDG2020/decays.dat</file>
+    <!-- PDG2014 -->
+    <file alias="lists/PDG2014/list-withnuclei.dat">../../../input/list/PDG2014/list-withnuclei.dat</file>
+    <file alias="lists/PDG2014/list.dat">../../../input/list/PDG2014/list.dat</file>
+    <file alias="lists/PDG2014/list-withcharm.dat">../../../input/list/PDG2014/list-withcharm.dat</file>
+    <file alias="lists/PDG2014/list-withexcitednuclei.dat">../../../input/list/PDG2014/list-withexcitednuclei.dat</file>
+    <file alias="lists/PDG2014/decays.dat">../../../input/list/PDG2014/decays.dat</file>
+    <!-- Default experimental data for WASM builds -->
+    <file alias="ALICE-PbPb2.76TeV-0-10-all.dat">../../../input/data/ALICE-PbPb2.76TeV-0-10-all.dat</file>
+    <!-- Lattice QCD data for WASM builds -->
+    <file alias="lqcd/WB-EoS.dat">../../../input/lqcd/WB-EoS.dat</file>
+    <file alias="lqcd/WB-chi2-1112.4416.dat">../../../input/lqcd/WB-chi2-1112.4416.dat</file>
+    <file alias="lqcd/WB-chi11-1910.14592.dat">../../../input/lqcd/WB-chi11-1910.14592.dat</file>
+    <file alias="lqcd/WB-chiB-1805.04445.dat">../../../input/lqcd/WB-chiB-1805.04445.dat</file>
+    <file alias="lqcd/HotQCD-EoS.dat">../../../input/lqcd/HotQCD-EoS.dat</file>
+    <file alias="lqcd/HotQCD-chi2-1203.0784.dat">../../../input/lqcd/HotQCD-chi2-1203.0784.dat</file>
+    <file alias="lqcd/HotQCD-chi2-chi8-2001.08530.dat">../../../input/lqcd/HotQCD-chi2-chi8-2001.08530.dat</file>
+  </qresource>
+</RCC>

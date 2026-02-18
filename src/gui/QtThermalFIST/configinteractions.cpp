@@ -28,6 +28,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "WasmFileIO.h"
+
 #include "HelperRoutines.h"
 #include "BaseStructures.h"
 
@@ -234,6 +236,16 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(pare
   layout->addLayout(layFile);
 
 
+  // QGroupBox* groupMultipleSolutions = new QGroupBox(tr("Multiple solutions"));
+  QVBoxLayout* layoutMultipleSolutions = new QVBoxLayout();
+  CBSearchMultipleSolutions = new QCheckBox(tr("Search for multiple solutions (in case of phase transition)"));
+  CBSearchMultipleSolutions->setChecked(m_parent->currentConfig.SearchMultipleSolutions);
+  layoutMultipleSolutions->addWidget(CBSearchMultipleSolutions);
+  // groupMultipleSolutions->setLayout(layoutMultipleSolutions);
+  layout->addLayout(layoutMultipleSolutions);
+  // layout->addWidget(groupMultipleSolutions);
+
+
   groupMC = new QGroupBox(tr("Event generator options"));
   QVBoxLayout* layoutMC = new QVBoxLayout();
   CBEVMult = new QCheckBox(tr("Use rejection sampling for excluded volume multiplicities"));
@@ -396,6 +408,16 @@ void InteractionsDialog::modeToggled()
 
 void InteractionsDialog::chooseInputFile()
 {
+#ifdef Q_OS_WASM
+  // WASM: Use getOpenFileContent for browser file picker
+  WasmFileIO::openFile(this, tr("Open file with EV/vdW parameters"), "*.dat *.txt *.*",
+    [this](const QString& sandboxPath) {
+      if (sandboxPath.isEmpty())
+        return;
+      leFilePath->setText(sandboxPath);
+    }
+  );
+#else
   QString listpathprefix = QString(ThermalFIST_INPUT_FOLDER) + "/interaction";
   if (leFilePath->text().size() != 0)
     listpathprefix = QString(leFilePath->text());
@@ -404,6 +426,7 @@ void InteractionsDialog::chooseInputFile()
   {
     leFilePath->setText(path);
   }
+#endif
 }
 
 void InteractionsDialog::updateRadius()
@@ -445,6 +468,8 @@ void InteractionsDialog::OK()
   m_parent->currentConfig.vdWbBantiB = spinB_BaB->value();
   m_parent->currentConfig.vdWbMB = spinB_MB->value();
   m_parent->currentConfig.vdWbMM = spinB_MM->value();
+
+  m_parent->currentConfig.SearchMultipleSolutions = CBSearchMultipleSolutions->isChecked();
 
   m_parent->currentConfig.fUseEVRejectionMultiplicity = CBEVMult->isChecked();
   m_parent->currentConfig.fUseEVRejectionCoordinates = CBEVCoord->isChecked();

@@ -8,6 +8,8 @@
 #include "thermalfitplots.h"
 
 #include <QDebug>
+#include <QBuffer>
+#include "WasmFileIO.h"
 
 using namespace thermalfist;
 
@@ -31,22 +33,44 @@ PlotDialog::PlotDialog(QWidget * parent, QCustomPlot * plotin) : QDialog(parent)
 
 void PlotDialog::saveAsPdf()
 {
+#ifdef Q_OS_WASM
+  QString fileName = plot->objectName() + ".pdf";
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+  plot->savePdf(tempPath, plot->width(), plot->height());
+  QFile file(tempPath);
+  if (file.open(QIODevice::ReadOnly)) {
+    WasmFileIO::saveFile(file.readAll(), fileName);
+    file.close();
+  }
+#else
   QString listpathprefix = QApplication::applicationDirPath() + "/" + plot->objectName() + ".pdf";
   QString path = QFileDialog::getSaveFileName(this, tr("Save plot as pdf"), listpathprefix, "*.pdf");
   if (path.length()>0)
   {
     plot->savePdf(path, plot->width(), plot->height());
   }
+#endif
 }
 
 void PlotDialog::saveAsPng()
 {
+#ifdef Q_OS_WASM
+  QString fileName = plot->objectName() + ".png";
+  QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+  plot->savePng(tempPath, plot->width(), plot->height());
+  QFile file(tempPath);
+  if (file.open(QIODevice::ReadOnly)) {
+    WasmFileIO::saveFile(file.readAll(), fileName);
+    file.close();
+  }
+#else
   QString listpathprefix = QApplication::applicationDirPath() + "/" + plot->objectName() + ".png";
   QString path = QFileDialog::getSaveFileName(this, tr("Save plot as png"), listpathprefix, "*.png");
   if (path.length()>0)
   {
     plot->savePng(path, plot->width(), plot->height());
   }
+#endif
 }
 
 void PlotDialog::resetScales()

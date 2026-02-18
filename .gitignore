@@ -5,12 +5,14 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 CTestTestfile.cmake
+Testing
 build*/*
 Debug*/*
 Release*/*
 local*/*
 cmake-*/*
 .idea/*
+.cache/*
 
 # Visual Studio
 .vs/*
@@ -22,3 +24,10 @@ docs/doxygen/html*
 
 # Apple
 *.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# aqtinstall
+aqtinstall.log

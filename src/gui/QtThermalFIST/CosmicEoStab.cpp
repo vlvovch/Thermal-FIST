@@ -15,8 +15,10 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QTextStream>
+#include <QBuffer>
 
 #include "ThermalFISTConfig.h"
+#include "WasmFileIO.h"
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
@@ -28,10 +30,37 @@ using namespace std;
 using namespace thermalfist;
 
 void CosmicEoSWorker::run() {
+  double Tprev = 0., Tprev2 = 0.;
+  vector<double> chemsprev, chemsprev2;
+
   int i = 0;
-  for (double param = Tmin; param <= Tmax + 1.e-10 && !(*stop); param += dT, ++i) {
+  vector<double> params;
+  if (reverseDir) {
+    for (double param = Tmax; param >= Tmin - 1.e-10; param -= dT) {
+      params.push_back(param);
+    }
+  }
+  else {
+    for (double param = Tmin; param <= Tmax + 1.e-10; param += dT) {
+      params.push_back(param);
+    }
+  }
+  for (double param : params) {
     if (i < paramsTD->size()) {
+      if (i > 1) {
+        double dTcur = param - Tprev2;
+        double dTder = Tprev - Tprev2;
+        for(int i = 0; i < 5; i++) {
+          chems[i] = chemsprev2[i] + (chemsprev[i] - chemsprev2[i]) * dTcur / dTder;
+        }
+      }
+
       chems = cosmos->SolveChemicalPotentials(param * 1.e-3, chems);
+      // printf("Param: %f %E %E %E %E %E\n", param, chems[0], chems[1], chems[2], chems[3], chems[4]);
+      Tprev2 = Tprev;
+      Tprev = param;
+      chemsprev2 = chemsprev;
+      chemsprev = chems;
 
       varvalues->operator [](i) = param;
       double T = param;
@@ -94,6 +123,7 @@ void CosmicEoSWorker::run() {
 
       (*currentSize)++;
     }
+    i++;
   }
   emit calculated();
 }
@@ -429,14 +459,17 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     spinTMax->setDecimals(3);
     spinTMax->setMinimum(0.01);
     spinTMax->setMaximum(10000.);
-    spinTMax->setValue(200.);
+    spinTMax->setValue(180.);
 
     labeldT = new QLabel(tr("∆T (MeV):"));
     spindT = new QDoubleSpinBox();
     spindT->setDecimals(3);
     spindT->setMinimum(0.);
     spindT->setMaximum(10000.);
-    spindT->setValue(2.);
+    spindT->setValue(1.);
+
+    CBreverseDir = new QCheckBox(tr("Reverse direction"));
+    CBreverseDir->setChecked(true);
 
 
     layBounds->addWidget(labelTMin, 0, 0);
@@ -445,11 +478,13 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     layBounds->addWidget(spinTMax, 0, 3);
     layBounds->addWidget(labeldT, 0, 4);
     layBounds->addWidget(spindT, 0, 5);
+    // layBounds->addWidget(CBreverseDir, 0, 6);
 
 //    labelConstr = new QLabel(tr(""));
 
 
     layParamBounds->addLayout(layBounds);
+    layParamBounds->addWidget(CBreverseDir, 0, Qt::AlignLeft);
     // layParamBounds->addWidget(labelConstr, 0, Qt::AlignLeft);
 
     grRange->setLayout(layParamBounds);
@@ -470,9 +505,10 @@ CosmicEoSTab::CosmicEoSTab(QWidget *parent, ThermalModelBase *modelop) :
     fCurrentSize = 0;
     fStop = 1;
     fRunning = false;
+    fExpectedIterations = 0;
 
     calcTimer = new QTimer(this);
-    connect(calcTimer, SIGNAL(timeout()), this, SLOT(replot()));
+    connect(calcTimer, SIGNAL(timeout()), this, SLOT(checkProgress()));
 
     fillParticleLists();
 
@@ -562,7 +598,11 @@ void CosmicEoSTab::calculate() {
 
 
 
-      cosmos = new CosmicEoS(model, config.UseEMMPions);
+      cosmos = new CosmicEoS(model, false);
+      if (config.UseEMMPions)
+        cosmos->SetPionsInteracting(true, config.EMMPionFPi);
+      if (config.UseEMMKaons)
+        cosmos->SetKaonsInteracting(true, config.EMMKaonFKa);
 
       paramsTD.resize(0);
       paramsTDHRG.resize(0);
@@ -571,6 +611,7 @@ void CosmicEoSTab::calculate() {
       int iters = static_cast<int>((spinTMax->value() - spinTMin->value()) / spindT->value()) + 1;
 
       fCurrentSize = 0;
+      fExpectedIterations = iters;  // Store for completion detection
 
       paramsTD.resize(iters);
       paramsTDHRG.resize(iters);
@@ -588,17 +629,27 @@ void CosmicEoSTab::calculate() {
 
       CosmicEoSWorker *wrk = new CosmicEoSWorker(cosmos, spinTMin->value(), spinTMax->value(), spindT->value(),
                                                  asymmetries, &paramsTD, &paramsTDHRG,
-                                                 &varvalues, &fCurrentSize, &fStop, this);
+                                                 &varvalues, &fCurrentSize, &fStop, CBreverseDir->isChecked(), this);
 
-      connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
       connect(wrk, SIGNAL(finished()), wrk, SLOT(deleteLater()));
-
-      wrk->start();
 
       buttonCalculate->setText(tr("Stop"));
       fRunning = true;
 
-      calcTimer->start(10);
+      if (WasmFileIO::isThreadingAvailable()) {
+        // Threading available - run in background thread
+        // Don't connect calculated() signal - use timer-based completion detection instead
+        // to avoid WASM threading issues with cross-thread signal emission
+        wrk->start();
+        calcTimer->start(10);
+      } else {
+        // No threading (single-threaded WASM) - run synchronously
+        // Signal emission is safe here since everything is on main thread
+        connect(wrk, SIGNAL(calculated()), this, SLOT(finalize()));
+        wrk->run();
+        finalize();
+        wrk->deleteLater();
+      }
     }
     else {
       fStop = 1;
@@ -610,6 +661,17 @@ void CosmicEoSTab::finalize() {
     buttonCalculate->setText(tr("Calculate"));
     fRunning = false;
     replot();
+}
+
+void CosmicEoSTab::checkProgress() {
+    // Update the plot with current progress
+    replot();
+
+    // Check if calculation is complete or stopped (timer-based completion detection for WASM threading)
+    // This avoids cross-thread signal emission which can cause memory errors in WASM
+    if (fRunning && (fCurrentSize >= fExpectedIterations || fStop)) {
+        finalize();
+    }
 }
 
 void CosmicEoSTab::modelChanged()
@@ -730,6 +792,69 @@ void CosmicEoSTab::saveAs(int type)
   exts.push_back("png");
   exts.push_back("dat");
 
+#ifdef Q_OS_WASM
+  // WASM: Save to buffer and trigger browser download
+  QString fileName = tname + "." + exts[type];
+
+  if (type == 0) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePdf(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else if (type == 1) {
+    QString tempPath = WasmFileIO::getSandboxTempDir() + "/" + fileName;
+    plotDependence->savePng(tempPath, plotDependence->width(), plotDependence->height());
+    QFile file(tempPath);
+    if (file.open(QIODevice::ReadOnly)) {
+      WasmFileIO::saveFile(file.readAll(), fileName);
+      file.close();
+    }
+  }
+  else {
+    std::vector<double> yvalues;
+
+    if (CBratio->isChecked() && !CBxAxis->isChecked()) {
+      yvalues = getValuesRatio(comboQuantity->currentIndex(), comboQuantity2->currentIndex());
+    }
+    else {
+      yvalues = getValues(comboQuantity->currentIndex());
+    }
+
+    std::vector<double> xvalues = varvalues;
+    if (CBxAxis->isChecked()) {
+      xvalues = getValues(comboQuantity2->currentIndex(), 1);
+    }
+
+    if (yvalues.size() > 0) {
+      QByteArray data;
+      QBuffer buffer(&data);
+      buffer.open(QIODevice::WriteOnly | QIODevice::Text);
+      QTextStream out(&buffer);
+      out.setFieldWidth(15);
+      out.setFieldAlignment(QTextStream::AlignLeft);
+      if (!CBflipAxes->isChecked()) {
+        out << plotDependence->xAxis->label();
+        out << plotDependence->yAxis->label();
+      } else {
+        out << plotDependence->yAxis->label();
+        out << plotDependence->xAxis->label();
+      }
+      out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      for (size_t i = 0; i < yvalues.size(); ++i) {
+        out.setFieldWidth(15);
+        out.setFieldAlignment(QTextStream::AlignLeft);
+        out << xvalues[i] << yvalues[i];
+        out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
+      }
+      buffer.close();
+      WasmFileIO::saveFile(data, fileName);
+    }
+  }
+#else
   QString listpathprefix = cpath + "/" + tname + "." + exts[type];
   QString path = QFileDialog::getSaveFileName(this, "Save plot as " + exts[type], listpathprefix, "*." + exts[type]);
   if (path.length()>0)
@@ -767,7 +892,7 @@ void CosmicEoSTab::saveAs(int type)
           out << plotDependence->xAxis->label();
         }
         out << qSetFieldWidth(0) << Qt::endl << qSetFieldWidth(15);
-        for (int i = 0; i < yvalues.size(); ++i) {
+        for (size_t i = 0; i < yvalues.size(); ++i) {
           out.setFieldWidth(15);
           out.setFieldAlignment(QTextStream::AlignLeft);
           out << xvalues[i] << yvalues[i];
@@ -775,10 +900,11 @@ void CosmicEoSTab::saveAs(int type)
         }
       }
     }
-    
+
     QFileInfo saved(path);
     cpath = saved.absolutePath();
   }
+#endif
 }
 
 std::vector<double> CosmicEoSTab::getValues(int index, int num)
@@ -1164,18 +1290,27 @@ QString CosmicEoSTab::getParameterName() const {
 void CosmicEoSTab::showEoSTable() {
   recomputeCalcTable();
 
+#ifdef Q_OS_WASM
+  CalculationTableDialog *dialog = new CalculationTableDialog(this, calcTable);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->showMaximized();
+#else
   CalculationTableDialog dialog(this, calcTable);
   dialog.setWindowFlags(Qt::Window);
   dialog.showMaximized();
   dialog.exec();
+#endif
 }
 
 
 void CosmicEoSTab::recomputeCalcTable() {
   calcTable.clear();
 
+  int tsize = fCurrentSize;
+
   calcTable.parameter_name = getParameterName();
-  for(int i = 0; i < varvalues.size(); ++i) {
+  for(int i = 0; i < tsize; ++i) {
     calcTable.parameter_values.push_back(varvalues[i]);
     calcTable.temperature_values.push_back(paramsTD[i].T);
   }
@@ -1195,7 +1330,7 @@ void CosmicEoSTab::recomputeCalcTable() {
     calcTable.densities_names.push_back(QString::fromStdString(model->TPS()->Particles()[ic].Name()));
   }
 
-  for(int ir = 0; ir < varvalues.size(); ++ir) {
+  for(int ir = 0; ir < tsize; ++ir) {
     calcTable.densities_values.push_back(paramsTDHRG[ir].densities);
   }
 
@@ -1203,7 +1338,7 @@ void CosmicEoSTab::recomputeCalcTable() {
     calcTable.quantities_names.push_back(QString::fromStdString(
             "n(" + cosmos->GetSpeciesName(ilep) + ")/T³"));
     std::vector<double> lepton_densities;
-    for(int ival = 0; ival < varvalues.size(); ++ival) {
+    for(int ival = 0; ival < tsize; ++ival) {
       lepton_densities.push_back(paramsTD[ival].densities[ilep] / pow(paramsTD[ival].T * xMath::GeVtoifm(), 3.));
     }
     calcTable.quantities_values.push_back(lepton_densities);

@@ -268,9 +268,157 @@ namespace thermalfist {
       return Quantity(IdealGasFunctions::chi4difull, T, mu);
     }
 
+    // Temperature derivatives: dQ/dT = (dQ^id/dT)|_{m*} + (dQ^id/dm*)|_T * dm*/dT
+    // In BEC phase m* = mu (fixed), so dm*/dT = 0
+
+    if (quantity == IdealGasFunctions::dndT) {
+      if (m_T == 0.0)
+        return 0.;
+
+      if (!IsBECPhase()) {
+        // Normal phase: dn/dT = (dn^id/dT)|_{m*} + (dn^id/dm*) * dm*/dT
+        double dndT_fixedm = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::dndT, IdealGasFunctions::Quadratures,
+          m_Particle.Statistics(), m_T, m_Mu, m_Meff, m_Particle.Degeneracy());
+        double dndm = IdealGasQuantityMassDerivative(IdealGasFunctions::ParticleDensity);
+        return dndT_fixedm + dndm * DmeffDT();
+      }
+      else {
+        // BEC phase: n = n^id - rho_scalar^id + p_f'(m*), with m* = mu fixed
+        // dn/dT = (dn^id/dT)|_{m*} - (drho_scalar^id/dT)|_{m*}
+        double dndT_fixedm = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::dndT, IdealGasFunctions::Quadratures,
+          m_Particle.Statistics(), m_T, m_Mu, m_Meff, m_Particle.Degeneracy());
+        // d(rho_scalar)/dT at fixed m* via finite differences
+        double dT = 1.e-4 * m_T;
+        double rhos_p = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures,
+          m_Particle.Statistics(), m_T + 0.5 * dT, m_Mu, m_Meff, m_Particle.Degeneracy());
+        double rhos_m = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures,
+          m_Particle.Statistics(), m_T - 0.5 * dT, m_Mu, m_Meff, m_Particle.Degeneracy());
+        double drhosdT = (rhos_p - rhos_m) / dT;
+        return dndT_fixedm - drhosdT;
+      }
+    }
+
+    if (quantity == IdealGasFunctions::d2ndT2) {
+      // Use numerical finite differences of dndT
+      if (m_T == 0.0)
+        return 0.;
+      double dT = 1.e-4 * m_T;
+      double dndT_p = Quantity(IdealGasFunctions::dndT, T + 0.5 * dT, mu);
+      double dndT_m = Quantity(IdealGasFunctions::dndT, T - 0.5 * dT, mu);
+      SetParameters(T, mu);
+      SolveMeff();
+      return (dndT_p - dndT_m) / dT;
+    }
+
+    if (quantity == IdealGasFunctions::dedT) {
+      if (m_T == 0.0)
+        return 0.;
+      // de/dT = T * ds/dT + s + mu * dn/dT  (from e = -P + Ts + mu*n)
+      // Or use numerical finite differences for simplicity and consistency
+      double dT = 1.e-4 * m_T;
+      double e_p = Quantity(IdealGasFunctions::EnergyDensity, T + 0.5 * dT, mu);
+      double e_m = Quantity(IdealGasFunctions::EnergyDensity, T - 0.5 * dT, mu);
+      SetParameters(T, mu);
+      SolveMeff();
+      return (e_p - e_m) / dT;
+    }
+
+    if (quantity == IdealGasFunctions::dedmu) {
+      // de/dmu at fixed T: use finite differences
+      double dmu = 0.001 * m_Particle.Mass();
+      double e_p = Quantity(IdealGasFunctions::EnergyDensity, T, mu + 0.5 * dmu);
+      double e_m = Quantity(IdealGasFunctions::EnergyDensity, T, mu - 0.5 * dmu);
+      SetParameters(T, mu);
+      SolveMeff();
+      return (e_p - e_m) / dmu;
+    }
+
+    if (quantity == IdealGasFunctions::dchi2dT) {
+      // dchi2/dT where chi2 = T^{-2} * dn/dmu (dimensionless)
+      // Use numerical finite differences of chi2
+      if (m_T == 0.0)
+        return 0.;
+      double dT = 1.e-4 * m_T;
+      double chi2_p = Quantity(IdealGasFunctions::chi2, T + 0.5 * dT, mu);
+      double chi2_m = Quantity(IdealGasFunctions::chi2, T - 0.5 * dT, mu);
+      SetParameters(T, mu);
+      SolveMeff();
+      return (chi2_p - chi2_m) / dT;
+    }
+
+    if (quantity == IdealGasFunctions::dsdT) {
+      if (m_T == 0.0)
+        return 0.;
+
+      // ds/dT = (ds^id/dT)|_{m*} + (ds^id/dm*)|_T * dm*/dT
+      // The entropy is s = s^id(T, mu, m*) regardless of BEC phase
+      // In BEC phase m* = mu (fixed), dm*/dT = 0
+      double dsdT_fixedm = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::dsdT, IdealGasFunctions::Quadratures,
+        m_Particle.Statistics(), m_T, m_Mu, m_Meff, m_Particle.Degeneracy());
+      if (!IsBECPhase()) {
+        double dsdm = IdealGasQuantityMassDerivative(IdealGasFunctions::EntropyDensity);
+        return dsdT_fixedm + dsdm * DmeffDT();
+      }
+      else {
+        return dsdT_fixedm;
+      }
+    }
+
     throw std::runtime_error("**ERROR** EffectiveMassModel::Quantity(): Calculate " + std::to_string(static_cast<int>(quantity)) + " quantity is not implemented!");
 
     return 0.0;
+  }
+
+  double EffectiveMassModel::DmeffDT() const
+  {
+    if (!IsSolved() || m_T == 0.0)
+      return 0.;
+
+    // In BEC phase, m* = mu which is independent of T
+    if (IsBECPhase())
+      return 0.;
+
+    // Gap equation: p_f'(m*) = rho_scalar(T, mu, m*)
+    // Implicit differentiation:
+    // p_f''(m*) * dm*/dT = (d rho_scalar/dT)|_{m*} + (d rho_scalar/dm*)|_T * dm*/dT
+    // => dm*/dT = (d rho_scalar/dT)|_{m*} / [p_f''(m*) - (d rho_scalar/dm*)|_T]
+
+    // d rho_scalar / dT at fixed m*
+    double dT = 1.e-4 * m_T;
+    double rhos_p = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures,
+      m_Particle.Statistics(), m_T + 0.5 * dT, m_Mu, m_Meff, m_Particle.Degeneracy());
+    double rhos_m = IdealGasFunctions::IdealGasQuantity(IdealGasFunctions::ScalarDensity, IdealGasFunctions::Quadratures,
+      m_Particle.Statistics(), m_T - 0.5 * dT, m_Mu, m_Meff, m_Particle.Degeneracy());
+    double drhosdT = (rhos_p - rhos_m) / dT;
+
+    // d rho_scalar / dm* at fixed T
+    double drhosdm = IdealGasQuantityMassDerivative(IdealGasFunctions::ScalarDensity);
+
+    double D2pf = m_FieldPressure->D2pf(m_Meff);
+    double denom = D2pf - drhosdm;
+
+    // If denominator is too small, the gap equation is degenerate
+    if (std::abs(denom) < 1.e-20)
+      return 0.;
+
+    return drhosdT / denom;
+  }
+
+  double EffectiveMassModel::IdealGasQuantityMassDerivative(IdealGasFunctions::Quantity quantity) const
+  {
+    if (!IsSolved() || m_T == 0.0)
+      return 0.;
+
+    double dm = 1.e-4 * m_Meff;
+    if (dm < 1.e-8)
+      dm = 1.e-8;
+
+    double Q_p = IdealGasFunctions::IdealGasQuantity(quantity, IdealGasFunctions::Quadratures,
+      m_Particle.Statistics(), m_T, m_Mu, m_Meff + 0.5 * dm, m_Particle.Degeneracy());
+    double Q_m = IdealGasFunctions::IdealGasQuantity(quantity, IdealGasFunctions::Quadratures,
+      m_Particle.Statistics(), m_T, m_Mu, m_Meff - 0.5 * dm, m_Particle.Degeneracy());
+
+    return (Q_p - Q_m) / dm;
   }
 
   std::vector<double> EffectiveMassModel::BroydenEquationsEMMTBEC::Equations(const std::vector<double> &x)

@@ -3,6 +3,22 @@ add_executable(test_IdealGasFunctions test_IdealGasFunctions.cpp)
 target_link_libraries(test_IdealGasFunctions ThermalFIST GTest::gtest_main)
 set_property(TARGET test_IdealGasFunctions PROPERTY FOLDER tests)
 
+add_executable(test_QvdWHRG test_QvdWHRG.cpp)
+target_link_libraries(test_QvdWHRG ThermalFIST GTest::gtest_main)
+set_property(TARGET test_QvdWHRG PROPERTY FOLDER tests)
+
+add_executable(test_ParticleListValidation test_ParticleListValidation.cpp)
+target_link_libraries(test_ParticleListValidation ThermalFIST GTest::gtest_main)
+set_property(TARGET test_ParticleListValidation PROPERTY FOLDER tests)
+
+add_executable(test_ZeroTemperature test_ZeroTemperature.cpp)
+target_link_libraries(test_ZeroTemperature ThermalFIST GTest::gtest_main)
+set_property(TARGET test_ZeroTemperature PROPERTY FOLDER tests)
+
+add_executable(test_EMMDerivatives test_EMMDerivatives.cpp)
+target_link_libraries(test_EMMDerivatives ThermalFIST GTest::gtest_main)
+set_property(TARGET test_EMMDerivatives PROPERTY FOLDER tests)
+
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
 set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
@@ -10,7 +26,19 @@ set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
 include(GoogleTest)
 
 # IdealGasFunctions tests
-gtest_discover_tests(test_IdealGasFunctions) 
+gtest_discover_tests(test_IdealGasFunctions)
+
+# QvdW-HRG stress tests
+gtest_discover_tests(test_QvdWHRG)
+
+# Particle list validation tests
+gtest_discover_tests(test_ParticleListValidation)
+
+# Zero-temperature convergence tests
+gtest_discover_tests(test_ZeroTemperature)
+
+# EMM derivatives tests
+gtest_discover_tests(test_EMMDerivatives)
 
 
 # CPC tests

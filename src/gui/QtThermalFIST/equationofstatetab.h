@@ -18,6 +18,7 @@
 #include <QThread>
 #include <QTimer>
 #include <map>
+#include <atomic>
 
 #include "HRGBase/ThermalModelBase.h"
 #include "qcustomplot.h"
@@ -37,19 +38,18 @@ class EoSWorker : public QThread
   double Tmin, Tmax, dT;
   std::vector<double> cParams;
   int mode;
-  int *currentSize;
-  int *stop;
+  std::atomic<int> *currentSize;
+  std::atomic<int> *stop;
 
   std::vector< Thermodynamics > *paramsTD;
   std::vector< ChargesFluctuations > *paramsFl;
   std::vector<double> *varvalues;
 
-  void run() Q_DECL_OVERRIDE;
-
 public:
+  void run() Q_DECL_OVERRIDE;
   EoSWorker(thermalfist::ThermalModelBase *mod = NULL,
       const ThermalModelConfig& cconfig = ThermalModelConfig(),
-      double Tmin = 100., 
+      double Tmin = 100.,
       double Tmax = 200.,
       double dT = 5.,
       const std::vector<double>& cParamVals = {0.,0.,0.},
@@ -57,8 +57,8 @@ public:
       std::vector< Thermodynamics > *paramsTDo = NULL,
       std::vector< ChargesFluctuations > *paramsFlo = NULL,
       std::vector<double> *varvalueso = NULL,
-      int *currentSizeo = NULL,
-      int *stopo = NULL,
+      std::atomic<int> *currentSizeo = NULL,
+      std::atomic<int> *stopo = NULL,
       QObject * parent = 0) :
   QThread(parent), Tmin(Tmin), Tmax(Tmax), dT(dT), cParams(cParamVals), mode(mmode) {
       model = mod;
@@ -116,9 +116,11 @@ class EquationOfStateTab : public QWidget
     std::vector<ChargesFluctuations> paramsFl;
     std::vector<double> varvalues;
 
-    int fCurrentSize;
+    std::atomic<int> fCurrentSize{0};
     bool fRunning;
-    int fStop;
+    std::atomic<int> fStop{0};
+    int fExpectedIterations{0};  // Expected number of iterations for completion detection
+    EoSWorker *fWorker{nullptr};  // Pointer to current worker for explicit cleanup
 
     std::map<QString, int> parammap;
     std::vector<QString> paramnames;
@@ -167,6 +169,7 @@ public slots:
     void calculate();
     void replot();
     void finalize();
+    void checkProgress();  // Timer-based progress check for WASM threading
     void modelChanged();
     void resetTPS();
     void plotLatticeData();
