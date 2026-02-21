@@ -1,0 +1,755 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{physics}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\newcommand{\GeV}{\,\text{GeV}}
+\newcommand{\fm}{\,\text{fm}}
+\newcommand{\MeV}{\,\text{MeV}}
+\newcommand{\vep}{\varepsilon}
+\newcommand{\bphi}{\bm{\phi}}
+\newcommand{\bq}{\bm{q}}
+\newcommand{\bQ}{\bm{Q}}
+\newcommand{\bA}{\bm{A}}
+
+\title{Saddle-point adapted quadrature for canonical partition function integrals}
+\author{Volodymyr Vovchenko \\ {\small Technical note for Thermal-FIST}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The canonical ensemble partition function in the hadron resonance gas involves multi-dimensional integrals over fugacity angles $\bphi = (\phi_B, \phi_S, \phi_Q, \phi_C)$.
+The current implementation uses composite Gauss--Legendre quadrature, which converges only algebraically for these smooth periodic integrands.
+We describe three improvements.
+First, the trapezoidal rule, which converges exponentially for periodic analytic functions and is equivalent to computing the discrete Fourier transform of the integrand.
+Second, a saddle-point factoring that analytically extracts the Gaussian peak of the integrand, leaving a flatter remainder for the quadrature to handle.
+We analyze the effectiveness of the saddle-point factoring with and without solving the grand-canonical equations for the fugacity shifts, and show that the full saddle-point shift renders the quadrature cost essentially independent of volume and conserved charges.
+Third, a Fourier convolution approach that analytically factors out the dominant charge-sector contributions using modified Bessel functions, leaving a bounded remainder for numerical integration.
+We show that a naive polynomial Gaussian extraction fails due to fundamental overflow issues with non-periodic functions, and that a per-sector Bessel function extraction --- a direct generalization of the existing analytical baryon fugacity trick --- resolves this problem.
+\end{abstract}
+
+\tableofcontents
+
+
+%% ====================================================================
+\section{Setup}
+\label{sec:setup}
+%% ====================================================================
+
+The canonical partition function of the hadron resonance gas with fixed conserved charges $\bQ = (B, S, Q, C)$ is obtained from the grand-canonical one by projection:
+\begin{equation}\label{eq:ZC}
+  Z_C(\bQ) = \prod_{\alpha} \int_0^{2\pi} \frac{d\phi_\alpha}{2\pi}\;
+  e^{F(\bphi)}\;
+  \cos(\bQ \cdot \bphi)\,,
+\end{equation}
+where $\bphi = (\phi_B, \phi_S, \phi_Q, \phi_C)$ are the fugacity angles, the product runs over the conserved charges that are treated canonically, and the exponent is
+\begin{equation}\label{eq:F-general}
+  F(\bphi) = \sum_i \sum_{n=1}^{n_{\max}} \frac{N_i^{(n)}}{n}\,\bigl[\cos(n\,\bq_i \cdot \bphi) - 1\bigr]\,.
+\end{equation}
+Here $\bq_i = (B_i, S_i, Q_i, C_i)$ is the charge vector of species~$i$ and $N_i^{(n)}$ is the $n$-th cluster integral contribution to the grand-canonical multiplicity, with the sum over $n$ implementing quantum statistics via the cluster expansion.
+In the Boltzmann approximation ($n_{\max} = 1$) the sum reduces to $F(\bphi) = \sum_i N_i\,[\cos(\bq_i \cdot \bphi) - 1]$; for quantum statistics the higher clusters ($n = 2, 3, \ldots$) contribute harmonics at multiples $n\,\bq_i$ of the fundamental charge vector, with alternating signs for fermions ($N_i^{(n)} \propto (\mp 1)^{n+1}$).
+
+Each integral runs over $[0, 2\pi]$ (or equivalently $[-\pi, \pi]$).
+The integrand is $2\pi$-periodic and analytic in each $\phi_\alpha$.
+
+In the current implementation, the integrals in \cref{eq:ZC} are evaluated using composite Gauss--Legendre quadrature: each $[0, \pi]$ half-period is divided into $n_{\max}$ subintervals, and a 10-point Gauss--Legendre rule is applied to each subinterval, giving a total of $20\,n_{\max}$ points per fugacity angle.
+The scaling $n_{\max} = \max(3, \sqrt{B^2 + Q^2 + S^2 + C^2})$ is chosen so that the $\cos(\bQ \cdot \bphi)$ oscillation is resolved.
+An external multiplier allows the user to increase $n_{\max}$.
+
+
+%% ====================================================================
+\section{Current implementation}
+\label{sec:current}
+%% ====================================================================
+
+This section documents the structure of the current code in \texttt{Thermal\-Model\-Canonical::Calculate\-Partition\-Functions}, which employs several symmetries and numerical tricks beyond a straightforward composite Gauss--Legendre quadrature.
+
+\subsection{Charge-sector grouping}
+\label{sec:charge-sector}
+
+The code does not evaluate $F(\bphi)$ by summing over all $\sim 500$ particle species at every quadrature point.
+Instead, particles are pre-grouped by their charge vector.
+Two arrays \texttt{Nsx}$[\bq]$ and \texttt{Nsy}$[\bq]$ store the total real and imaginary parts of the multiplicity for each distinct charge sector~$\bq$:
+\begin{equation}\label{eq:Nsx-Nsy}
+  \texttt{Nsx}[\bq] = V_c \sum_{\substack{i,n:\\ n\,\bq_i = \bq}} \frac{N_i^{(n)}}{n}\,\cosh\!\left(\frac{n\,\mu_i}{T}\right),
+  \qquad
+  \texttt{Nsy}[\bq] = V_c \sum_{\substack{i,n:\\ n\,\bq_i = \bq}} \frac{N_i^{(n)}}{n}\,\sinh\!\left(\frac{n\,\mu_i}{T}\right),
+\end{equation}
+where $\mu_i$ is the effective chemical potential of species~$i$ (zero for fully canonical charges) and $V_c$ is the canonical volume.
+The inner quadrature loop then iterates over the much smaller set of distinct charge sectors rather than individual species.
+
+When all chemical potentials vanish (\texttt{AllMuZero = true}), the $\texttt{Nsy}$ array is zero and only cosine terms contribute, so all sine evaluations are skipped.
+
+\subsection{Integration domain and the half-range symmetry}
+\label{sec:integration-domain}
+
+The full integrand $e^{F(\bphi)}\cos(\bQ_g \cdot \bphi)$ is an even function of~$\bphi$: under the simultaneous reflection $\bphi \to -\bphi$, the cosine terms in $F$ are invariant ($\cos$ is even) and $\cos(\bQ_g \cdot (-\bphi)) = \cos(\bQ_g \cdot \bphi)$.
+This is the C-conjugation symmetry of the HRG: every species with charge $\bq$ has an antiparticle with charge $-\bq$ and the same mass, so $\texttt{Nsx}[\bq] = \texttt{Nsx}[-\bq]$ at zero chemical potential.
+
+Note that this is a symmetry under simultaneous flip of \emph{all} angles, not under flipping a single angle.
+The single-angle reflection $\phi_Q \to -\phi_Q$ (with other angles fixed) would require $\texttt{Nsx}[(B,Q,S,C)] = \texttt{Nsx}[(B,-Q,S,C)]$, which is not true: for example, the sector $(1,+1,0,0)$ contains the proton and all $N^+$ excitations, while $(1,-1,0,0)$ contains only $\Delta^-$-like resonances.
+
+Nevertheless, the full $\bphi \to -\bphi$ symmetry can be used to halve the integration range of \textbf{one} angle.
+In the code, $\phi_Q$ is chosen: the $\phi_Q$ integral is split into $[-\pi, 0]$ and $[0, \pi]$.
+In the $[-\pi, 0]$ piece, the substitution $\phi_Q \to -\phi_Q$ together with $\phi_\alpha \to -\phi_\alpha$ for all other angles maps the domain to $[0, \pi]$.
+Since the other angles are integrated over the symmetric range $[-\pi, \pi]$, the simultaneous sign flip is just a relabeling of dummy variables, and the integrand is invariant.
+Hence
+\begin{equation}
+  \int_{-\pi}^{\pi} \!\prod_\alpha d\phi_\alpha\; e^{F(\bphi)}\cos(\bQ_g\!\cdot\!\bphi)
+  = 2\!\int_0^{\pi}\!d\phi_Q \int_{-\pi}^{\pi}\!\prod_{\alpha \neq Q} d\phi_\alpha\; e^{F(\bphi)}\cos(\bQ_g\!\cdot\!\bphi)\,.
+\end{equation}
+The result is multiplied by~2 at the end, halving the number of quadrature points in the $\phi_Q$ direction.
+
+The choice of $\phi_Q$ is arbitrary --- the same trick could be applied to any single angle.
+However, it can only be applied to \emph{one} angle: once $\phi_Q$ is restricted to $[0, \pi]$, the simultaneous flip $\bphi \to -\bphi$ would take $\phi_Q$ outside this range, so the symmetry cannot be reused for a second angle.
+
+\subsection{Integration domain for the remaining angles}
+\label{sec:subinterval-ordering}
+
+For $\phi_B$, $\phi_S$, and $\phi_C$, the integration covers the full period $[-\pi, \pi]$, split into $2\,n_{\max}$ subintervals of width $\Delta\phi = \pi/n_{\max}$.
+The subintervals are laid out as follows:
+\begin{itemize}
+  \item For $k < n_{\max}$: the subinterval is $[k\,\Delta\phi,\;(k+1)\,\Delta\phi]$, covering $[0, \pi]$.
+  \item For $k \geq n_{\max}$: the left endpoint is $a = \pi - (k+1)\Delta\phi < 0$, covering $[-\pi, 0]$ in reverse order.
+\end{itemize}
+Together the $2\,n_{\max}$ subintervals tile $[-\pi, \pi]$ exactly.
+
+For $\phi_Q$, only $n_{\max}$ subintervals cover $[0, \pi]$, laid out sequentially.
+
+\subsection{Overflow protection via the \texorpdfstring{$\cos - 1$}{cos-1} form}
+\label{sec:overflow}
+
+The exponent $F(\bphi)$ is not computed as $\sum N_i \cos(\bq_i \cdot \bphi)$ and then subtracting $\sum N_i$.
+Instead, the accumulator \texttt{mx} directly sums
+\begin{equation}
+  \texttt{mx} = \sum_{\bq} \texttt{Nsx}[\bq]\,\bigl(\cos(\bq \cdot \bphi) - 1\bigr)\,,
+\end{equation}
+so that $\texttt{mx} \leq 0$ always and $e^{\texttt{mx}} \leq 1$.
+This avoids overflow for large volumes where $\sum N_i \sim 10^3$--$10^4$.
+The overall factor $e^{\sum N_i}$ cancels in the ratio $Z_C(\bQ)/Z_C(\bm{0})$ that gives the canonical correction factors.
+
+\subsection{Analytical baryon fugacity (Bessel function trick)}
+\label{sec:banalyt}
+
+When all particles in the list have $|B_i| \leq 1$ (no multi-baryon states or high-order clusters with $|nB_i| > 1$) and all four charges are treated canonically, the integral over $\phi_B$ is performed analytically using the identity
+\begin{equation}\label{eq:bessel-identity}
+  \int_0^{2\pi} \frac{d\phi_B}{2\pi}\,e^{2w\cos(\phi_B - \alpha)}\,e^{-iB\phi_B}
+  = I_B(2w)\,e^{-iB\alpha}\,,
+\end{equation}
+where $I_B$ is the modified Bessel function.
+Here $w\,e^{i\alpha}$ is the complex sum of $|B|=1$ contributions at the current values of $(\phi_S, \phi_Q, \phi_C)$:
+\begin{equation}
+  w\,e^{i\alpha} = \sum_{\bq:\,B_q = 1} \texttt{Nsx}[\bq]\,e^{i(S_q\,\phi_S + Q_q\,\phi_Q + C_q\,\phi_C)}\,.
+\end{equation}
+The code computes $w_x = \text{Re}(w\,e^{i\alpha})$ and $w_y = \text{Im}(w\,e^{i\alpha})$, then $|w| = \sqrt{w_x^2 + w_y^2}$ and $\alpha = \text{atan2}(w_y, w_x)$.
+The $|B|=0$ (mesonic) contributions are accumulated in~\texttt{mx} as before, while $|B|=1$ baryonic contributions enter through the Bessel function.
+
+For numerical stability at large arguments, the code uses the scaled form $I_B^{\rm exp}(x) = I_B(x)\,e^{-x}$ (\texttt{BesselIexp}) and carries the exponential factor separately:
+\begin{equation}
+  e^{\texttt{mx}}\,I_B(2|w|) = e^{\texttt{mx} + 2|w| - M}\,I_B^{\rm exp}(2|w|)\,e^{M}\,,
+\end{equation}
+where $M = \texttt{m\_MultExpBanalyt}$ is the total $|B|=1$ multiplicity factored out to prevent overflow.
+This reduces the integration from 4D to 3D (or fewer if some charges are trivial), which is a major speedup.
+
+\subsection{Simultaneous computation of all charge sectors}
+\label{sec:simultaneous}
+
+The innermost loop does not compute $Z_C(\bQ)$ for a single target charge~$\bQ$.
+Instead, at each quadrature point~$\bphi$, the code evaluates $e^{F(\bphi)}$ once and then accumulates contributions to \emph{all} needed partition functions $Z_C(\bQ - \bq_{\rm iN})$ simultaneously (the loop over \texttt{iN} at line~544).
+The expensive exponential and trigonometric evaluations are shared across all charge sectors.
+
+The full set of computed partition functions spans the grid $|B| \leq B_{\max}$, $|Q| \leq Q_{\max}$, $|S| \leq S_{\max}$, $|C| \leq C_{\max}$, where the ranges $B_{\max}$, etc.\ are determined by the maximum charges in the particle list (doubled when fluctuations are requested, since the scaled variance involves $Z_C(\bQ - 2\bq_i)$).
+
+\subsection{Canonical correction factors}
+\label{sec:corr}
+
+The physical output is not $Z_C(\bQ)$ itself (which depends on the arbitrary normalization from the $e^{-\sum N_i}$ factor), but the ratio
+\begin{equation}\label{eq:corr}
+  C(\bq) \equiv \frac{Z_C(\bQ - \bq)}{Z_C(\bQ)}\,,
+\end{equation}
+stored in \texttt{m\_Corr}.
+The canonical density of a species with charge vector~$\bq_j$ is then
+\begin{equation}
+  n_j^{\rm CE} = C(\bq_j)\,n_j^{\rm GCE}\,.
+\end{equation}
+Taking the ratio cancels all overall constants, including the $e^{-\sum N_i}$ overflow protection factor and the $1/(2\pi)^d$ normalization.
+
+
+%% ====================================================================
+\section{Trapezoidal rule for periodic integrands}
+\label{sec:trapezoidal}
+%% ====================================================================
+
+\subsection{Exponential convergence}
+
+The key observation is that the integrand in \cref{eq:ZC} is a smooth, $2\pi$-periodic, analytic function of each $\phi_\alpha$.
+For such functions, the trapezoidal rule converges exponentially:
+\begin{equation}\label{eq:trap-convergence}
+  \int_0^{2\pi} g(\phi)\,\frac{d\phi}{2\pi}
+  \approx \frac{1}{N}\sum_{k=0}^{N-1} g\!\left(\frac{2\pi k}{N}\right)
+  = \hat{g}_0 + \sum_{n \neq 0,\, n \equiv 0 \bmod N} \hat{g}_n\,,
+\end{equation}
+where $\hat{g}_n$ are the Fourier coefficients of $g$.
+The error consists of all aliased Fourier modes $|n| \geq N$, which for analytic $g$ decay exponentially: $|\hat{g}_n| \sim e^{-c\,|n|}$ for some $c > 0$ determined by the width of the analyticity strip.
+This gives an error that decays as $O(e^{-cN})$, in contrast to the algebraic $O(N^{-(2p+1)})$ convergence of $p$-point Gauss--Legendre on each subinterval.
+
+Equivalently, the $N$-point trapezoidal sum is a discrete Fourier transform that captures \emph{all} Fourier modes $|n| < N/2$ exactly.
+For the canonical partition function, the relevant Fourier mode is $n = Q_\alpha$ (the conserved charge projected onto direction~$\alpha$).
+As long as $N/2 > |Q_\alpha|$ plus the width of the Fourier spectrum of the exponential factor, the integral is computed with exponential accuracy.
+
+\subsection{Comparison with Gauss--Legendre}
+
+Gauss--Legendre quadrature is designed for polynomial integrands on finite intervals.
+Applied to periodic functions, it converges algebraically --- it does not exploit the periodicity.
+For the canonical integrals, the composite 10-point Gauss--Legendre on $n_{\max}$ subintervals achieves $O(n_{\max}^{-20})$ convergence, which is fast but still polynomial.
+
+The trapezoidal rule with $N$ points achieves $O(e^{-cN})$ convergence.
+In practice, the crossover occurs at modest~$N$: for the same accuracy, the trapezoidal rule typically requires fewer total points once the integrand has a few significant Fourier harmonics.
+The computational cost per point is the same (one function evaluation), and the trapezoidal rule has the additional advantage of uniform spacing, which simplifies implementation and avoids the overhead of computing Gauss--Legendre nodes and weights on each subinterval.
+
+\subsection{Fourier structure of the integrand}
+
+The integrand in \cref{eq:ZC} has the form $e^{F(\bphi)} \cos(\bQ \cdot \bphi)$, where $F(\bphi)$ is defined in \cref{eq:F-general}.
+Each cluster contribution generates Fourier harmonics at integer multiples of $n\,\bq_i$.
+The exponential $e^{F}$ generates all integer linear combinations of these harmonics.
+Because $F(\bphi) \leq 0$ with equality only at $\bphi = \bm{0}$ (each cosine term achieves its maximum there), the exponential suppresses the contributions away from $\bphi = \bm{0}$, effectively concentrating the integrand in a peak of angular width $\sim 1/\sqrt{N_{\rm tot}}$, where $N_{\rm tot} = \sum_i \sum_n N_i^{(n)}/n$ is the total grand-canonical multiplicity.
+
+The Fourier coefficients of $e^{F}$ therefore decay exponentially with a rate $c \sim \sqrt{N_{\rm tot}}$.
+This means that $N \sim$ a few times $\sqrt{N_{\rm tot}}$ trapezoidal points per direction suffice for exponential accuracy --- far fewer than the $O(N_{\rm tot})$ points one might naively expect.
+
+The $\cos(\bQ \cdot \bphi)$ factor shifts the relevant Fourier mode to $\bQ$, requiring $N/2 > |\bQ|$ per direction.
+The total number of points needed scales as $\max(|Q_\alpha|, \sqrt{N_{\rm tot}})$ per direction.
+
+
+%% ====================================================================
+\section{Saddle-point adapted quadrature}
+\label{sec:saddle}
+%% ====================================================================
+
+The exponential convergence of the trapezoidal rule is controlled by the analyticity strip width of the integrand, which is related to the peak sharpness.
+As $N_{\rm tot}$ grows, the peak at $\bphi = \bm{0}$ (or the shifted saddle point) becomes narrower, and the Fourier coefficients decay faster --- so the trapezoidal rule actually becomes \emph{more} efficient at larger volumes.
+However, the oscillatory $\cos(\bQ \cdot \bphi)$ factor still requires resolving the charge-dependent Fourier mode.
+
+The idea of saddle-point adapted quadrature is to analytically factor out the Gaussian part of the peak, leaving a flatter remainder for the trapezoidal rule to handle.
+
+\subsection{Gaussian approximation of the peak}
+
+Expanding $F(\bphi)$ to second order around $\bphi = \bm{0}$:
+\begin{equation}\label{eq:F-expand}
+  F(\bphi) \approx -\frac{1}{2}\,\bphi^T \bA\,\bphi\,,
+\end{equation}
+where the curvature matrix is
+\begin{equation}\label{eq:A-def}
+  A_{\alpha\beta} = \sum_i \sum_{n=1}^{n_{\max}} n\,N_i^{(n)}\,q_{i,\alpha}\,q_{i,\beta}\,.
+\end{equation}
+In the Boltzmann limit this reduces to $A_{\alpha\beta} = \sum_i N_i\,q_{i,\alpha}\,q_{i,\beta}$, which is the matrix of second moments of the charge distribution in the grand-canonical ensemble: $A_{\alpha\beta} = \langle \delta Q_\alpha\,\delta Q_\beta \rangle_{\rm GC}$.
+The cluster contributions $N_i^{(n)}$ grouped by charge sector are already computed in the existing code (stored in \texttt{Nsx}).
+
+\subsection{Factored integrand}
+
+We write the integrand as
+\begin{equation}\label{eq:factored}
+  e^{F(\bphi)} = e^{-\frac{1}{2}\bphi^T \bA\,\bphi} \cdot \underbrace{e^{F(\bphi) + \frac{1}{2}\bphi^T \bA\,\bphi}}_{R(\bphi)}\,.
+\end{equation}
+The remainder $R(\bphi)$ satisfies $R(\bm{0}) = 1$ and $\nabla^2 R(\bm{0}) = 0$ (since we have subtracted the exact quadratic term), so $R$ is a much flatter function than $e^{F}$.
+The integral becomes
+\begin{equation}\label{eq:ZC-factored}
+  Z_C(\bQ) = \prod_\alpha \int_0^{2\pi} \frac{d\phi_\alpha}{2\pi}\;
+  e^{-\frac{1}{2}\bphi^T \bA\,\bphi}\;R(\bphi)\;\cos(\bQ \cdot \bphi)\,.
+\end{equation}
+
+Now there are two distinct contributions to the Fourier complexity:
+\begin{enumerate}
+  \item The Gaussian factor $e^{-\frac{1}{2}\bphi^T \bA\,\bphi}$, which has Fourier width $\sim \sqrt{A_{\alpha\alpha}} \sim \sqrt{N_{\rm tot}}$.
+  Its Fourier transform is known analytically (it is another Gaussian in Fourier space), so it does not need to be resolved by quadrature points.
+  \item The product $R(\bphi)\,\cos(\bQ \cdot \bphi)$, whose Fourier complexity is determined by the non-Gaussian corrections to $F$ and the charge projection.
+\end{enumerate}
+
+The non-Gaussian corrections in $R$ come from third- and higher-order terms in the Taylor expansion of $F$:
+\begin{equation}
+  F(\bphi) + \tfrac{1}{2}\bphi^T \bA\,\bphi = \sum_{n \geq 3} \frac{1}{n!}\sum_i N_i\,(-1)^{n/2}\,(\bq_i \cdot \bphi)^n\,[\text{from }\cos\text{ expansion}]\,.
+\end{equation}
+For a hadron resonance gas with many species (the full HRG list has $\gtrsim 500$ species), the central limit theorem ensures that these corrections are suppressed by $1/\sqrt{N_{\rm tot}}$ relative to the quadratic term.
+The remainder $R$ is therefore close to unity over the peak region, and has a much broader Fourier spectrum than $e^{F}$ itself.
+
+\subsection{Implementation without Gaussian convolution}
+
+The simplest implementation does not actually require performing the Gaussian convolution analytically.
+Instead, one simply uses the trapezoidal rule on the full integrand $e^{F(\bphi)}\,\cos(\bQ \cdot \bphi)$, but with the number of quadrature points informed by the factored analysis:
+\begin{itemize}
+  \item The Gaussian peak requires $\sim \sqrt{A_{\alpha\alpha}}$ points to resolve, but since it is well-approximated by a Gaussian, the trapezoidal rule handles it efficiently.
+  \item The $\cos(\bQ \cdot \bphi)$ oscillation requires $N/2 > |Q_\alpha|$ points.
+\end{itemize}
+The total number of points per direction is $N_\alpha \sim \max(c_1\,\sqrt{A_{\alpha\alpha}},\; c_2\,|Q_\alpha|)$ for small constants $c_1, c_2$.
+
+This is already an improvement over the current Gauss--Legendre scheme: the exponential convergence of the trapezoidal rule means that $c_1$ and $c_2$ need only be $O(1)$ (e.g., $c_1 \approx 3$--$5$, $c_2 \approx 2$--$3$), whereas the algebraic convergence of Gauss--Legendre requires many more subintervals for comparable accuracy.
+
+
+%% ====================================================================
+\section{Effectiveness without solving GCE equations}
+\label{sec:without-gce}
+%% ====================================================================
+
+The analysis above assumes the saddle point is at $\bphi = \bm{0}$, which is exact when all chemical potentials are zero.
+In the current code, the $N_i$ are computed at $\mu = 0$ when all charges are canonically conserved.
+The Gaussian peak is then centered at $\bphi = \bm{0}$, and the factoring described in \cref{sec:saddle} applies directly.
+
+The key question is: how effective is this without shifting the saddle point to account for finite conserved charges?
+
+The integral we need to compute is
+\begin{equation}
+  Z_C(\bQ) \propto \int e^{-\frac{1}{2}\bphi^T \bA\,\bphi}\;R(\bphi)\;\cos(\bQ \cdot \bphi)\;d^d\bphi\,.
+\end{equation}
+The Gaussian has width $\sigma_\alpha \sim 1/\sqrt{A_{\alpha\alpha}}$ in each direction.
+The cosine $\cos(\bQ \cdot \bphi)$ oscillates with angular frequency $Q_\alpha$ in each direction.
+The number of oscillations within the Gaussian peak is
+\begin{equation}\label{eq:n-osc}
+  n_{\rm osc} \sim \frac{|Q_\alpha|}{\sqrt{A_{\alpha\alpha}}}\,.
+\end{equation}
+When $n_{\rm osc} \ll 1$ (i.e., $|Q_\alpha| \ll \sqrt{A_{\alpha\alpha}} \sim \sqrt{N_{\rm tot}}$), the cosine is essentially constant over the peak, and the factoring helps enormously: the quadrature only needs to resolve $R$, which is nearly flat.
+This is the situation at the LHC, where the fireball volume is large ($N_{\rm tot} \sim 10^3$--$10^4$) but the net charges are small ($B, Q, S \sim O(1)$--$O(10)$).
+
+When $n_{\rm osc} \sim O(1)$ or larger, the cosine oscillates significantly within the peak.
+The quadrature must then resolve these oscillations, requiring $N_\alpha \sim |Q_\alpha|$ points regardless of the factoring.
+This is the situation for finite systems with large net charges, e.g., atomic nuclei or neutron-rich matter.
+
+The honest assessment is:
+\begin{itemize}
+  \item \textbf{LHC conditions} ($\bQ \ll \sqrt{N_{\rm tot}}$): The Gaussian factoring at $\bphi = \bm{0}$ helps substantially.
+  The cost is controlled by the Gaussian width, not the charges, and scales as $\sim \sqrt{N_{\rm tot}}$ per direction --- independent of $\bQ$.
+  \item \textbf{Finite charges comparable to $\sqrt{N_{\rm tot}}$}: The improvement is modest.
+  The cost scales as $\sim |Q_\alpha|$ per direction, which is the same scaling as the current code.
+  The exponential convergence of the trapezoidal rule still provides a constant-factor improvement over Gauss--Legendre, but no qualitative change in scaling.
+  \item \textbf{Small systems} ($N_{\rm tot} \sim O(1)$): The Gaussian approximation is poor (the peak is broad), and the factoring provides little benefit.
+  However, the integrals are cheap in this regime anyway.
+\end{itemize}
+
+
+%% ====================================================================
+\section{Full saddle-point shift}
+\label{sec:full-shift}
+%% ====================================================================
+
+The limitation identified in \cref{sec:without-gce} --- that $\cos(\bQ \cdot \bphi)$ oscillates within the Gaussian peak --- can be removed by shifting the integration contour to the saddle point.
+
+\subsection{Saddle-point equations}
+
+The saddle point $\bphi^*$ of the integrand $e^{F(\bphi)} \cdot e^{-i\bQ \cdot \bphi}$ (using the complex exponential form) satisfies
+\begin{equation}\label{eq:saddle-eq}
+  \nabla F(\bphi^*) = i\,\bQ
+  \quad \Longleftrightarrow \quad
+  -\sum_i N_i\,\bq_i\,\sin(\bq_i \cdot \bphi^*) = i\,\bQ\,.
+\end{equation}
+For real $\bphi^* = i\,\bm{\mu}/T$ (imaginary fugacity angles corresponding to real chemical potentials), this becomes
+\begin{equation}\label{eq:gce-eq}
+  \sum_i N_i(\bm{\mu})\,\bq_i = \bQ\,,
+\end{equation}
+where $N_i(\bm{\mu})$ is the grand-canonical multiplicity of species~$i$ at chemical potentials $\bm{\mu}$.
+This is exactly the grand-canonical equation: find the chemical potentials $\bm{\mu}$ such that the mean charges equal the target $\bQ$.
+
+\subsection{Shifted integration}
+
+After the change of variables $\bphi \to \bphi + i\,\bm{\mu}/T$ (Cauchy's theorem for periodic functions of complex variables), the integral becomes
+\begin{equation}\label{eq:ZC-shifted}
+  Z_C(\bQ) \propto \int_0^{2\pi} \prod_\alpha \frac{d\phi_\alpha}{2\pi}\;
+  e^{F_{\bm{\mu}}(\bphi)}\;\cos(\bQ \cdot \bphi)\,,
+\end{equation}
+where the shifted exponent is
+\begin{equation}\label{eq:F-shifted}
+  F_{\bm{\mu}}(\bphi) = \sum_i \sum_{n=1}^{n_{\max}} \frac{N_i^{(n)}(\bm{\mu})}{n}\,[\cos(n\,\bq_i \cdot \bphi) - 1]
+\end{equation}
+with $N_i^{(n)}(\bm{\mu})$ the cluster integrals evaluated at the shifted chemical potentials, and the overall multiplicative factor (absorbed into the proportionality) accounts for the contour shift.
+
+The crucial point is that the $\cos(\bQ \cdot \bphi)$ factor now plays a different role.
+At $\bphi = \bm{0}$ in the shifted frame, the saddle-point condition \cref{eq:gce-eq} ensures that the first derivative of $F_{\bm{\mu}}$ vanishes and the linear-in-$\bphi$ term from $\cos(\bQ \cdot \bphi)$ is exactly cancelled.
+In other words, the integrand $e^{F_{\bm{\mu}}(\bphi)} \cos(\bQ \cdot \bphi)$ now has a genuine stationary point at $\bphi = \bm{0}$, with no residual oscillation of the cosine against the peak.
+
+The curvature matrix at the saddle point is
+\begin{equation}\label{eq:A-shifted}
+  A_{\alpha\beta}^{(\bm{\mu})} = \sum_i \sum_{n} n\,N_i^{(n)}(\bm{\mu})\,q_{i,\alpha}\,q_{i,\beta}\,,
+\end{equation}
+which is the susceptibility matrix evaluated at the grand-canonical chemical potentials.
+The Gaussian factoring now gives a remainder $R_{\bm{\mu}}(\bphi)$ that is close to unity everywhere in the peak, and the $\cos(\bQ \cdot \bphi)$ does not oscillate within the peak because $Q_\alpha$ is absorbed into the shift.
+
+\subsection{Quadrature cost after shift}
+
+With the full saddle-point shift, the integrand $e^{F_{\bm{\mu}}(\bphi)} \cos(\bQ \cdot \bphi)$ is a peaked, non-oscillatory function centered at $\bphi = \bm{0}$.
+The Fourier complexity is determined solely by the peak width $\sim 1/\sqrt{A^{(\bm{\mu})}_{\alpha\alpha}}$ and the non-Gaussianity of the peak (controlled by $1/\sqrt{N_{\rm tot}}$ via the central limit theorem).
+
+The number of quadrature points per direction required for a given accuracy becomes
+\begin{equation}\label{eq:N-saddle}
+  N_\alpha \sim c\,\sqrt{A^{(\bm{\mu})}_{\alpha\alpha}}
+\end{equation}
+with $c = O(1)$, \emph{independent of the conserved charges}~$\bQ$.
+For the full HRG at temperatures $T \sim 150$--$160\MeV$ and LHC-like volumes:
+\begin{itemize}
+  \item $\sqrt{A_{BB}} \sim \sqrt{\langle (\delta B)^2 \rangle} \sim$ a few hundred.
+  \item With $c \approx 3$--$5$, this gives $N_B \sim 10$--$20$ trapezoidal points.
+  \item For smaller volumes (e.g., $V \sim 10\fm^3$), $\sqrt{A_{BB}} \sim 3$--$5$, giving $N_B \sim 10$--$15$.
+\end{itemize}
+
+In all cases, the cost is determined by the fluctuations in the grand-canonical ensemble, not by the fixed charges.
+This is the key advantage: the method becomes volume- and charge-independent in computational cost (up to logarithmic corrections from the non-Gaussian tails).
+
+\subsection{Connection to the event generator}
+
+The grand-canonical equations \cref{eq:gce-eq} are already solved in the Thermal-FIST event generator module (\texttt{EventGeneratorBase}), which needs the GCE chemical potentials to set up the sampling.
+The same solver can be reused for the canonical partition function calculation, avoiding any additional implementation effort for the GCE equation solving.
+
+
+%% ====================================================================
+\section{Practical algorithm}
+\label{sec:algorithm}
+%% ====================================================================
+
+We outline the algorithm for computing the canonical partition function with the saddle-point adapted trapezoidal rule.
+
+\begin{enumerate}
+  \item \textbf{Compute GCE multiplicities} $N_i$ at the given temperature and volume.
+  If all charges are canonically conserved, this is done at $\mu = 0$.
+  If some charges are treated grand-canonically, the corresponding chemical potentials are fixed.
+
+  \item \textbf{(Optional) Solve GCE equations} for the chemical potentials $\bm{\mu}$ satisfying $\sum_i N_i(\bm{\mu})\,\bq_i = \bQ$.
+  Recompute $N_i(\bm{\mu})$ at the solution.
+  This step is recommended whenever $|\bQ| \gtrsim \sqrt{N_{\rm tot}}$ and is always beneficial.
+
+  \item \textbf{Compute the curvature matrix} $A_{\alpha\beta} = \sum_i N_i\,q_{i,\alpha}\,q_{i,\beta}$.
+  This is a $d \times d$ matrix, where $d$ is the number of canonically conserved charges (at most~4).
+
+  \item \textbf{Choose the number of trapezoidal points} per direction:
+  \begin{equation}
+    N_\alpha = 2\left\lceil c\,\sqrt{A_{\alpha\alpha}} \right\rceil + 1\,,
+  \end{equation}
+  where $c$ is a tunable parameter (e.g., $c = 4$).
+  The factor of~2 and the $+1$ ensure $N_\alpha$ is odd and large enough.
+  If the GCE equations were not solved (step~2 skipped), also ensure $N_\alpha \geq 2\,|Q_\alpha| + 1$.
+
+  \item \textbf{Evaluate the trapezoidal sum}:
+  \begin{equation}\label{eq:trap-sum}
+    Z_C(\bQ) \propto \prod_\alpha \frac{1}{N_\alpha} \sum_{k_\alpha = 0}^{N_\alpha - 1}
+    e^{F(\bphi_{\bm{k}})}\;\cos(\bQ \cdot \bphi_{\bm{k}})\,,
+  \end{equation}
+  where $\phi_{\bm{k},\alpha} = 2\pi k_\alpha / N_\alpha$.
+  The sum is over all grid points $\bm{k} = (k_B, k_S, k_Q, k_C)$.
+
+  \item \textbf{Compute particle densities} by evaluating the same sum with modified weights:
+  \begin{equation}
+    n_j = \frac{n_j^{\rm GCE}}{Z_C(\bQ)} \prod_\alpha \frac{1}{N_\alpha} \sum_{k_\alpha}
+    e^{F(\bphi_{\bm{k}})}\;\cos((\bQ - \bq_j) \cdot \bphi_{\bm{k}})\,,
+  \end{equation}
+  where $n_j^{\rm GCE}$ is the grand-canonical density and $\bq_j$ is the charge vector of species~$j$.
+  All species with the same charge vector share the same cosine factor.
+\end{enumerate}
+
+The dominant cost is step~5, which requires $\prod_\alpha N_\alpha$ function evaluations.
+Each evaluation involves computing $F(\bphi)$, which sums over all species with nonzero $N_i$.
+The total cost scales as $N_{\rm species} \times \prod_\alpha N_\alpha$.
+
+
+%% ====================================================================
+\section{Fourier convolution with analytical extraction}
+\label{sec:fourier-convolution}
+%% ====================================================================
+
+The trapezoidal rule from \cref{sec:trapezoidal} computes the Fourier coefficients of $e^{F(\bphi)}$ by direct quadrature.
+At large volumes, the integrand is sharply peaked (width $\sim 1/\sqrt{N_{\rm tot}}$), requiring $O(\sqrt{N_{\rm tot}})$ quadrature points per direction to resolve the peak.
+An alternative strategy is to analytically factor out the peaked part of the integrand and compute its Fourier coefficients exactly, leaving a smoother remainder that requires fewer quadrature points.
+
+\subsection{Convolution structure}
+\label{sec:convolution-structure}
+
+Write the integrand as a product
+\begin{equation}\label{eq:convolution-factoring}
+  e^{F(\bphi)} = G(\bphi) \cdot R(\bphi)\,,
+\end{equation}
+where $G(\bphi)$ captures the dominant peaked behavior and $R(\bphi) = e^{F(\bphi)} / G(\bphi)$ is a smooth remainder close to unity.
+By the convolution theorem for Fourier series, the canonical partition function becomes
+\begin{equation}\label{eq:convolution}
+  Z_C(\bQ) = \sum_{\bQ'} \hat{R}(\bQ') \cdot \hat{G}(\bQ - \bQ')\,,
+\end{equation}
+where $\hat{R}$ and $\hat{G}$ are the Fourier coefficients of $R$ and $G$ respectively, and the sum runs over all charge sectors $\bQ'$ in the computed grid.
+
+The advantage of this decomposition is that:
+\begin{enumerate}
+  \item If $\hat{G}$ can be computed analytically, the sharp peak does not need to be resolved by the quadrature.
+  \item The remainder $R$ is smoother than $e^{F}$, so its Fourier coefficients $\hat{R}$ can be obtained with fewer trapezoidal points.
+  \item The convolution~\cref{eq:convolution} is a finite sum over the charge-sector grid (typically $\sim 10^2$ terms), which is computationally inexpensive.
+\end{enumerate}
+
+\subsection{Polynomial Gaussian extraction}
+\label{sec:poly-gaussian}
+
+The simplest choice for $G$ is the Gaussian approximation of the peak.
+Expanding $F(\bphi)$ to second order around $\bphi = \bm{0}$ gives the curvature matrix $\bA$ from \cref{eq:A-def}, and the Gaussian factor is
+\begin{equation}\label{eq:gaussian-factor}
+  G_{\rm poly}(\bphi) = e^{-\frac{1}{2}\bphi^T \bA\,\bphi}\,.
+\end{equation}
+This is a non-periodic function, but its Fourier coefficients on $[0, 2\pi]^d$ can be computed exactly via the Poisson summation formula:
+\begin{equation}\label{eq:poisson-sum}
+  \hat{G}_{\rm poly}(\bm{n}) = \frac{1}{(2\pi)^{d/2}\,\sqrt{\det \bA}}
+  \sum_{\bm{k} \in \mathbb{Z}^d}
+  \exp\!\left(-\frac{1}{2}(\bm{n} + N\bm{k})^T \bA^{-1} (\bm{n} + N\bm{k})\right)\,,
+\end{equation}
+where $N$ is the number of grid points (or equivalently, the Poisson summation wraps the non-periodic Gaussian onto the torus).
+For $\bA \gg 1$ (large volume), the sum is dominated by the $\bm{k} = \bm{0}$ term, giving the standard Gaussian Fourier transform $\hat{G}_{\rm poly}(\bm{n}) \approx (2\pi)^{-d/2}\,(\det \bA)^{-1/2}\,\exp(-\frac{1}{2}\bm{n}^T \bA^{-1} \bm{n})$.
+
+The remainder is
+\begin{equation}\label{eq:remainder-poly}
+  R_{\rm poly}(\bphi) = \exp\!\left(F(\bphi) + \tfrac{1}{2}\bphi^T \bA\,\bphi\right)\,.
+\end{equation}
+At $\bphi = \bm{0}$, $R_{\rm poly} = 1$ and the first two derivatives vanish (by construction of $\bA$), so $R$ is locally flat.
+
+\subsection{Numerical failure of polynomial extraction}
+\label{sec:poly-failure}
+
+Despite its appealing analytical properties near $\bphi = \bm{0}$, the polynomial Gaussian extraction suffers from a \emph{fundamental} numerical instability at large angles.
+
+The issue is that $G_{\rm poly}(\bphi) = e^{-\frac{1}{2}\bphi^T \bA\,\bphi}$ is a non-periodic function, while the true integrand $e^{F(\bphi)}$ is $2\pi$-periodic.
+The periodic exponent $F(\bphi)$ is bounded: each cosine term satisfies $\cos(\bq \cdot \bphi) - 1 \in [-2, 0]$, so $F(\bphi) \in [-2\sum_k \texttt{Nsx}_k, 0]$.
+In contrast, the polynomial $\frac{1}{2}\bphi^T \bA\,\bphi$ grows without bound as $|\bphi| \to \pi$.
+
+Consider the remainder~\cref{eq:remainder-poly} at $\phi = \pi$ for a single sector with charge $q$ and multiplicity $N$:
+\begin{align}\label{eq:remainder-bound}
+  \log R_{\rm poly}(\pi) &= N\,[\cos(q\pi) - 1] + \tfrac{1}{2}\,N\,q^2\,\pi^2 \nonumber\\
+  &\leq N\,[-(-1) - 1] + \tfrac{1}{2}\,N\,q^2\,\pi^2 = \tfrac{1}{2}\,N\,q^2\,\pi^2\,.
+\end{align}
+For the worst case $\cos(q\pi) = +1$ (even $q$), $\log R \approx \frac{1}{2} N q^2 \pi^2$; for $\cos(q\pi) = -1$ (odd $q$), $\log R \approx N(q^2 \pi^2/2 - 2)$.
+In both cases, $\log R$ is positive and proportional to~$N$.
+
+Summing over all sectors, the maximum of $\log R_{\rm poly}$ scales as $O(V)$:
+for a typical setup with $V = 5000\fm^3$ at $T = 155\MeV$, numerical experiments give $\max_{\bphi} \log R_{\rm poly} \approx 8000\text{--}15000$.
+The DFT of such a function --- ranging from $R \approx 1$ near $\bphi = \bm{0}$ to $R \sim e^{10^4}$ at the boundary --- is numerically intractable.
+No subtraction of a global maximum or rescaling can help: the dynamic range of $R_{\rm poly}$ exceeds $e^{10^4}$, which is far beyond double-precision floating-point range ($e^{709}$).
+
+This is not a bug or a fixable numerical issue.
+It is a \emph{fundamental incompatibility} between a non-periodic polynomial extraction and a periodic integrand: the polynomial $\frac{1}{2}\bphi^T \bA\,\bphi$ approximates $|F(\bphi)|$ well near $\bphi = \bm{0}$ but diverges from it at the periodic boundary, making the remainder $R_{\rm poly}$ unbounded.
+Any extraction function $G(\bphi)$ used in the convolution approach must itself be periodic to avoid this problem.
+
+
+%% ====================================================================
+\section{Per-sector Bessel function extraction}
+\label{sec:bessel-extraction}
+%% ====================================================================
+
+The failure of the polynomial Gaussian extraction (\cref{sec:poly-failure}) motivates a periodic extraction function.
+The natural choice is to use the exact Fourier structure of the individual sector contributions.
+
+\subsection{Bessel function identity}
+\label{sec:bessel-identity}
+
+The key identity is the Fourier expansion of the modified Bessel function:
+\begin{equation}\label{eq:bessel-fourier}
+  e^{A\cos\theta} = \sum_{n=-\infty}^{\infty} I_n(A)\,e^{in\theta}
+  = I_0(A) + 2\sum_{n=1}^{\infty} I_n(A)\,\cos(n\theta)\,,
+\end{equation}
+where $I_n(A)$ is the modified Bessel function of the first kind.
+This is exact for all $A$ and $\theta$.
+
+For a single charge sector~$k$ with charge vector $\bq_k$ and multiplicity $A_k = \texttt{Nsx}_k$, the contribution to the integrand is
+\begin{equation}\label{eq:sector-contribution}
+  e^{A_k\,(\cos(\bq_k \cdot \bphi) - 1)}
+  = e^{-A_k} \sum_{m=-\infty}^{\infty} I_m(A_k)\,e^{im\,\bq_k \cdot \bphi}\,.
+\end{equation}
+The Fourier coefficients with respect to the multi-dimensional angle $\bphi$ are
+\begin{equation}\label{eq:sector-fourier}
+  \widehat{G}_k(\bm{n}) = \begin{cases}
+    e^{-A_k}\,I_m(A_k) & \text{if } \bm{n} = m\,\bq_k \text{ for some } m \in \mathbb{Z}\,, \\
+    0 & \text{otherwise}\,.
+  \end{cases}
+\end{equation}
+The coefficients are nonzero only along the ``ray'' $\bm{n} \propto \bq_k$ in charge space.
+
+\subsection{Numerical stability}
+\label{sec:bessel-stability}
+
+For large arguments $A \gg 1$, the Bessel function $I_n(A)$ grows exponentially as $e^A / \sqrt{2\pi A}$.
+The product $e^{-A}\,I_n(A)$, however, remains $O(1)$ and is the quantity computed by the \texttt{BesselIexp} function already present in Thermal-FIST's \texttt{xMath} library:
+\begin{equation}\label{eq:besselIexp}
+  I_n^{\exp}(A) \equiv I_n(A)\,e^{-A}\,.
+\end{equation}
+This is the same function used in the existing analytical baryon fugacity path (\cref{sec:banalyt}).
+The per-sector Fourier coefficients~\cref{eq:sector-fourier} are therefore computed in a numerically stable way as $\widehat{G}_k(m\,\bq_k) = I_m^{\exp}(A_k)$, with the factor $e^{-A_k}$ absorbed into the overall normalization that cancels in ratios $Z_C(\bQ)/Z_C(\bm{0})$.
+
+Moreover, $I_n^{\exp}(A)$ decays rapidly for $|n| > A$: asymptotically, $I_n(A) \sim (A/2)^n / n!$ for $n \gg A$, so $I_n^{\exp}(A) \sim e^{-A} (A/2)^n / n!$ which is negligible for $n \gtrsim A + c\sqrt{A}$.
+This means only $O(A_k)$ Bessel coefficients are needed per extracted sector.
+
+\subsection{Decomposition into extracted and perturbation sectors}
+\label{sec:decomposition}
+
+The full exponent decomposes as a sum over charge sectors:
+\begin{equation}\label{eq:sector-sum}
+  F(\bphi) = \sum_k A_k\,[\cos(\bq_k \cdot \bphi) - 1]\,,
+\end{equation}
+where $k$ runs over distinct nonzero charge sectors.
+We partition these sectors into two groups:
+\begin{itemize}
+  \item \textbf{Extracted sectors} $\mathcal{E}$: those with $A_k$ above a threshold (e.g., $A_k > 1$), whose Fourier structure is handled analytically via Bessel functions.
+  \item \textbf{Perturbation sectors} $\mathcal{P}$: the rest, with $A_k = O(1)$ or smaller, whose contribution is integrated numerically.
+\end{itemize}
+The integrand factors as
+\begin{equation}\label{eq:bessel-factoring}
+  e^{F(\bphi)} = \underbrace{\prod_{k \in \mathcal{E}} e^{A_k\,(\cos(\bq_k \cdot \bphi) - 1)}}_{G_{\rm ref}(\bphi)}
+  \cdot \underbrace{\prod_{k \in \mathcal{P}} e^{A_k\,(\cos(\bq_k \cdot \bphi) - 1)}}_{R(\bphi)}\,.
+\end{equation}
+
+The remainder $R(\bphi)$ is bounded:
+since each factor satisfies $e^{A_k\,(\cos(\bq_k \cdot \bphi) - 1)} \in [e^{-2A_k}, 1]$,
+\begin{equation}\label{eq:remainder-bounded}
+  R(\bphi) \in \left[\exp\!\left(-2\sum_{k \in \mathcal{P}} A_k\right),\; 1\right]\,.
+\end{equation}
+When the dominant sectors are extracted, $\sum_{k \in \mathcal{P}} A_k$ is small, and $R \approx 1$.
+This is the key advantage over the polynomial extraction: \emph{the remainder is guaranteed bounded regardless of volume}, since the extraction function $G_{\rm ref}$ is itself $2\pi$-periodic.
+
+\subsection{Iterated Bessel convolution}
+\label{sec:iterated-convolution}
+
+The Fourier coefficients of $G_{\rm ref}$ are obtained by convolving the individual sector spectra~\cref{eq:sector-fourier}:
+\begin{equation}\label{eq:iterated-conv}
+  \widehat{G}_{\rm ref}(\bm{n}) = \bigl(\widehat{G}_1 * \widehat{G}_2 * \cdots * \widehat{G}_M\bigr)(\bm{n})\,,
+\end{equation}
+where $M = |\mathcal{E}|$ is the number of extracted sectors.
+
+This is computed by iterated convolution:
+\begin{enumerate}
+  \item Initialize: $\widehat{G}^{(0)}(\bm{n}) = \delta_{\bm{n}, \bm{0}}$ (the Fourier coefficients of the constant function~1).
+  \item For each extracted sector $k = 1, \ldots, M$:
+  \begin{equation}\label{eq:conv-step}
+    \widehat{G}^{(k)}(\bm{n}) = \sum_{m} \widehat{G}^{(k-1)}(\bm{n} - m\,\bq_k)\,I_m^{\exp}(A_k)\,,
+  \end{equation}
+  where the sum over $m$ runs from $-m_{\max}$ to $+m_{\max}$ with $m_{\max}$ chosen so that $I_m^{\exp}(A_k)$ is negligible.
+  \item The final result is $\widehat{G}_{\rm ref} = \widehat{G}^{(M)}$.
+\end{enumerate}
+
+The cost of each convolution step is $O(m_{\max} \cdot N_{\rm sectors})$, where $N_{\rm sectors}$ is the size of the charge-sector grid.
+The total cost is $O(M \cdot \bar{m}_{\max} \cdot N_{\rm sectors})$, where $\bar{m}_{\max}$ is the average truncation order.
+
+\subsection{Relation to the analytical baryon fugacity}
+\label{sec:relation-banalyt}
+
+The per-sector Bessel extraction is a direct generalization of the existing analytical baryon fugacity integration described in \cref{sec:banalyt}.
+In the Banalyt path, all sectors with $|B| = 1$ are grouped together, their complex sum $w\,e^{i\alpha}$ is formed at each value of $(\phi_S, \phi_Q, \phi_C)$, and the $\phi_B$ integral is performed analytically using the identity $\int e^{2w\cos(\phi_B - \alpha)} e^{-iB\phi_B}\,d\phi_B = I_B(2w)\,e^{-iB\alpha}$.
+
+The Bessel extraction extends this to the remaining charge directions.
+Where Banalyt handles all $|B|=1$ sectors together via the complex modulus trick, the Bessel extraction handles each non-baryonic charge sector individually via its Bessel spectrum.
+The two approaches use the same \texttt{BesselIexp} function and the same overflow-safe arithmetic.
+
+When the Banalyt path is active, the baryon direction is already integrated analytically and should be excluded from the Bessel extraction.
+The extracted sectors $\mathcal{E}$ then consist of the dominant mesonic charge sectors (those with $B = 0$ and large~$A_k$).
+
+\subsection{The neutral sector}
+\label{sec:neutral-sector}
+
+The charge-neutral sector $\bq = (0, 0, 0, 0)$ typically has the largest $A_k$ (it contains $\pi^0$, $\eta$, $\omega$, $\rho^0$, etc.), but its contribution to $F$ is $A_0\,[\cos(0) - 1] = 0$ --- it is angle-independent and contributes only to the overall normalization factor $e^{-\sum_k A_k}$.
+It should therefore be excluded from the extraction set, as it carries no angular structure.
+
+\subsection{Choice of extraction threshold}
+\label{sec:threshold}
+
+The threshold for extraction should be chosen so that the perturbation sectors have $A_k = O(1)$, making $R(\bphi)$ a smooth function with few significant Fourier harmonics.
+A simple strategy is to extract all sectors with $A_k > A_{\rm thr}$, where $A_{\rm thr}$ is a fixed threshold (e.g., $A_{\rm thr} = 1$).
+This automatically adapts to volume: at large~$V$, more sectors exceed the threshold and are extracted, while at small~$V$ fewer sectors need extraction (and the integrals are cheap regardless).
+
+At $T = 155\MeV$ with the PDG2020 particle list and Banalyt active (baryons handled separately), the dominant mesonic sectors and their typical multiplicities $A_k/V$ are:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Sector $(Q, S)$ & Representative particles & $A_k / V$ (fm$^{-3}$) \\
+\midrule
+$(\pm 1, 0)$ & $\pi^\pm$, $\rho^\pm$, \ldots & $\sim 0.04$ \\
+$(0, \pm 1)$ & $K^0$, $\bar{K}^0$ & $\sim 0.01$ \\
+$(\pm 1, \mp 1)$ & $K^\pm$, $K^{*\pm}$ & $\sim 0.01$ \\
+$(\pm 2, 0)$ & rare mesonic excitations & $\sim 0.003$ \\
+$(0, \pm 2)$ & $\phi \to K\bar{K}$ (indirect) & $\sim 0.001$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+At $V = 5000\fm^3$: $A \approx 200$ for $(\pm 1, 0)$, $\approx 50$ for $(0, \pm 1)$ and $(\pm 1, \mp 1)$, and $\lesssim 15$ for $(\pm 2, 0)$.
+With a threshold $A_{\rm thr} = 1$, about 6--8 sectors are extracted, capturing the dominant peak structure and leaving $R \approx 1$.
+
+\subsection{Full algorithm}
+\label{sec:bessel-algorithm}
+
+The Bessel extraction algorithm proceeds in three phases:
+
+\paragraph{Phase~1: Analytical Fourier coefficients.}
+Compute the iterated Bessel convolution~\cref{eq:iterated-conv} over the extracted sectors $\mathcal{E}$, producing $\widehat{G}_{\rm ref}(\bm{n})$ for all charge vectors $\bm{n}$ in the computed grid.
+
+\paragraph{Phase~2: Trapezoidal DFT of the remainder.}
+Evaluate $R(\bphi)$ on a uniform grid and compute its Fourier coefficients $\hat{R}(\bQ')$ via the trapezoidal rule.
+At each grid point, the exponent of $R$ is
+\begin{equation}\label{eq:remainder-exponent}
+  \log R(\bphi) = \sum_{k \in \mathcal{P}} A_k\,[\cos(\bq_k \cdot \bphi) - 1]\,,
+\end{equation}
+which is bounded in $[-2\sum_{k \in \mathcal{P}} A_k,\, 0]$.
+The grid size can be chosen based on the Fourier complexity of $R$ rather than of $e^F$, which is substantially smaller when the dominant sectors are extracted.
+
+\paragraph{Phase~3: Convolution.}
+Compute the canonical partition functions via~\cref{eq:convolution}:
+\begin{equation}
+  Z_C(\bQ) = \sum_{\bQ'} \hat{R}(\bQ') \cdot \widehat{G}_{\rm ref}(\bQ - \bQ')\,,
+\end{equation}
+summing over all charge sectors $\bQ'$ in the grid.
+This is $O(N_{\rm sectors}^2)$ operations.
+
+\subsection{Advantages and trade-offs}
+\label{sec:bessel-tradeoffs}
+
+The per-sector Bessel extraction has several advantages over the polynomial Gaussian approach:
+\begin{enumerate}
+  \item \textbf{Numerical stability}: The remainder $R$ is bounded by construction (\cref{eq:remainder-bounded}), avoiding the catastrophic overflow of the polynomial approach.
+  No special overflow handling is needed.
+  \item \textbf{Exactness}: The Bessel identity~\cref{eq:bessel-fourier} is exact --- there is no Taylor truncation error.
+  The only approximation is the truncation of the Bessel series at $|m| > m_{\max}$, which introduces exponentially small errors.
+  \item \textbf{Reuse of existing infrastructure}: The \texttt{BesselIexp} function and the overflow-safe arithmetic from the Banalyt path are directly applicable.
+  \item \textbf{Adaptive extraction}: The number of extracted sectors automatically scales with volume, providing more extraction at large~$V$ where it is needed most.
+\end{enumerate}
+
+The main trade-offs are:
+\begin{enumerate}
+  \item \textbf{Iterated convolution cost}: $O(M \cdot \bar{m}_{\max} \cdot N_{\rm sectors})$ operations.
+  For typical parameters ($M \sim 8$, $\bar{m}_{\max} \sim 50$, $N_{\rm sectors} \sim 10^2$), this is $\sim 4 \times 10^4$ operations --- negligible compared to the DFT cost.
+  \item \textbf{Coupled charges}: Sectors with multi-component charge vectors (e.g., $K^+$ with $\bq = (0, 1, 1, 0)$) spread their Bessel coefficients along diagonal lines in charge space, coupling the $Q$ and $S$ directions.
+  This is handled automatically by the convolution over the full charge-sector grid.
+  \item \textbf{Grid size reduction}: The main performance benefit comes from reducing the trapezoidal grid for~$R$ (Phase~2), which requires characterizing the Fourier complexity of the remainder.
+  This is a direction for future optimization.
+\end{enumerate}
+
+
+%% ====================================================================
+\section{Summary}
+\label{sec:summary}
+%% ====================================================================
+
+Three improvements to the canonical partition function quadrature are proposed:
+
+\begin{enumerate}
+  \item \textbf{Trapezoidal rule} replaces Gauss--Legendre (\cref{sec:trapezoidal}).
+  For the smooth, periodic, analytic integrands of the canonical ensemble, the trapezoidal rule converges exponentially $O(e^{-cN})$ versus algebraically $O(N^{-2p})$ for $p$-point Gauss--Legendre.
+  The implementation is simpler (uniform grid, no precomputed nodes/weights per subinterval).
+
+  \item \textbf{Saddle-point adapted quadrature} factors out the Gaussian peak analytically (\cref{sec:saddle,sec:full-shift}).
+  Without solving the GCE equations, this helps primarily at LHC conditions where $|\bQ| \ll \sqrt{N_{\rm tot}}$; at finite charges comparable to $\sqrt{N_{\rm tot}}$, the improvement is a constant factor from the exponential convergence.
+  With the full saddle-point shift (solving GCE equations, reusing the existing event generator solver), the $\cos(\bQ \cdot \bphi)$ oscillation is absorbed into the contour shift, and the quadrature cost becomes independent of the conserved charges --- determined solely by the grand-canonical fluctuations.
+
+  \item \textbf{Fourier convolution with per-sector Bessel extraction} (\cref{sec:fourier-convolution,sec:bessel-extraction}).
+  The integrand is factored into a product of analytically tractable sector contributions and a smooth remainder.
+  A naive polynomial Gaussian extraction fails catastrophically due to the non-periodicity of the polynomial approximation (\cref{sec:poly-failure}).
+  Instead, using the exact Bessel function identity $e^{A\cos\theta} = \sum_n I_n(A)\,e^{in\theta}$ for each dominant charge sector yields a numerically stable decomposition: the extracted part has analytically known Fourier coefficients (computed via iterated Bessel convolution), while the remainder is bounded in $[e^{-\text{small}}, 1]$ and can be integrated on a coarser grid.
+  This approach is a direct generalization of the existing analytical baryon fugacity trick (\cref{sec:banalyt}) and reuses the same \texttt{BesselIexp} infrastructure.
+\end{enumerate}
+
+The combination of these improvements would make the canonical ensemble calculation efficient across all regimes: small and large volumes, zero and finite net charges.
+The trapezoidal rule and Bessel extraction are complementary: the trapezoidal rule provides the uniform grid needed for the DFT of the remainder, while the Bessel extraction reduces the number of grid points required by flattening the integrand.
+The saddle-point shift can be combined with either approach and is recommended whenever finite conserved charges are comparable to $\sqrt{N_{\rm tot}}$.
+
+\end{document}
