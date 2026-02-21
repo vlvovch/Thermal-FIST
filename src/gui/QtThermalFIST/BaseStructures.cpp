@@ -116,6 +116,8 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.CanonicalC = true;// model->IsConservedChargeCanonical(ConservedCharge::CharmCharge);
 
+  ret.CanonicalMethod = 0; // Gauss-Legendre by default
+
   ret.SoverB = model->SoverB();
 
   ret.RhoB = model->BaryonDensity();
@@ -195,7 +197,12 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     modcan->ConserveStrangeness(config.CanonicalS);
     modcan->ConserveCharm(config.CanonicalC);
 
-    //modcan->SetIntegrationIterationsMultiplier(1);
+    if (config.CanonicalMethod == 2)
+      modcan->SetMethod(thermalfist::SaddlePointNLO);
+    else if (config.CanonicalMethod == 1)
+      modcan->SetMethod(thermalfist::SaddlePoint);
+    else
+      modcan->SetMethod(thermalfist::GaussLegendre);
   }
 
   if (config.WidthShape == 0)

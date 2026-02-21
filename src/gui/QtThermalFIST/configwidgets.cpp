@@ -706,6 +706,18 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   if (m_parent->model->TPS()->hasCharmed())
     layMixCan->addWidget(checkCConserve);
 
+  QHBoxLayout* layMethod = new QHBoxLayout();
+  layMethod->setAlignment(Qt::AlignLeft);
+  QLabel* labelMethod = new QLabel(tr("Method:"));
+  comboCanonicalMethod = new QComboBox();
+  comboCanonicalMethod->addItem(tr("Gauss-Legendre quadrature"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approximation"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approx. (NLO)"));
+  comboCanonicalMethod->setCurrentIndex(m_parent->currentConfig.CanonicalMethod);
+  layMethod->addWidget(labelMethod);
+  layMethod->addWidget(comboCanonicalMethod);
+  layMixCan->addLayout(layMethod);
+
   grMixCan->setLayout(layMixCan);
 
   if (m_parent->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE && layMixCan->count() > 0)
@@ -805,6 +817,7 @@ void ConservationLawsDialog::OK()
   m_parent->currentConfig.CanonicalQ = checkQConserve->isChecked();
   m_parent->currentConfig.CanonicalS = checkSConserve->isChecked();
   m_parent->currentConfig.CanonicalC = checkCConserve->isChecked();
+  m_parent->currentConfig.CanonicalMethod = comboCanonicalMethod->currentIndex();
   QDialog::accept();
 }
 

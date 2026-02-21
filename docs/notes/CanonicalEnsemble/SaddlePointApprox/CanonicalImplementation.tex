@@ -1,0 +1,285 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\newcommand{\bphi}{\bm{\phi}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\blam}{\bm{\lambda}}
+\newcommand{\bq}{\mathbf{q}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\bN}{\mathbf{N}}
+\newcommand{\Tr}{\mathrm{Tr}}
+\newcommand{\CE}{\mathrm{CE}}
+\newcommand{\GCE}{\mathrm{GCE}}
+\newcommand{\covv}{\mathrm{cov}}
+\newcommand{\varr}{\mathrm{var}}
+\newcommand{\LO}{\mathrm{LO}}
+\newcommand{\NLO}{\mathrm{NLO}}
+
+\title{\Large \bf Canonical ensemble methods in Thermal-FIST}
+\author{V.~Vovchenko}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+The \texttt{ThermalModelCanonical} class computes thermodynamics of a hadron resonance gas (HRG) in the canonical ensemble (CE) with exact conservation of baryon number~$B$, electric charge~$Q$, strangeness~$S$, and optionally charm~$C$.
+The CE partition function reads
+\begin{align}
+  Z(\bN) &= \int_{-\pi}^{\pi}\!\frac{d\phi_B}{2\pi}
+             \int_{-\pi}^{\pi}\!\frac{d\phi_Q}{2\pi}
+             \int_{-\pi}^{\pi}\!\frac{d\phi_S}{2\pi}\;
+             e^{\,g(\bphi)} \,,
+  \label{eq:ZCE}
+\end{align}
+where $\bN = (B,Q,S,\ldots)$ are the conserved charges and
+\begin{align}
+  g(\bphi) &= -i\,\bN\!\cdot\!\bphi
+              + \sum_j \sum_{n=1}^{n_\mathrm{max}} z_j^n\,
+                e^{\,i\,n\,\bq_j\cdot\bphi} \,.
+  \label{eq:gdef}
+\end{align}
+Mean multiplicities and covariances are obtained from partition function ratios $R(\bc) \equiv Z(\bN - \bc)/Z(\bN)$:
+\begin{align}
+  \langle N_j\rangle_\CE
+  &= \sum_{n} n\,z_j^n\;R(n\,\bq_j) \,,
+  \label{eq:Nce}\\
+  \covv_\CE(N_j, N_k)
+  &= \delta_{jk}\sum_n n^2\,z_j^n\,R(n\,\bq_j)
+    + \sum_{n,m} nm\,z_j^n\,z_k^m\,
+      \Big[R(n\,\bq_j + m\,\bq_k) - R(n\,\bq_j)\,R(m\,\bq_k)\Big] \,.
+  \label{eq:cov_exact}
+\end{align}
+
+Three methods are available, selected via \texttt{SetMethod()}:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\texttt{CanonicalMethod} & Value & Description \\
+\midrule
+\texttt{GaussLegendre}  & 0 & Multi-dimensional numerical quadrature \\
+\texttt{SaddlePoint}     & 1 & Per-quantum-number saddle-point solve \\
+\texttt{SaddlePointNLO}  & 2 & Analytic LO+NLO from CGF expansion \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+\section{Gauss--Legendre quadrature (\texttt{GaussLegendre})}
+\label{sec:GL}
+
+The multi-dimensional Fourier integral~\eqref{eq:ZCE} is evaluated by composite 10-point Gauss--Legendre quadrature on $[0,\pi]^d$ ($d$ = number of canonical charges).
+The interval for each angle is divided into $n_\mathrm{max}$ subintervals, with
+\begin{align}
+  n_\mathrm{max} = m \times \max\!\Big(3,\;\sqrt{B^2+Q^2+S^2+C^2}\Big) \,,
+\end{align}
+where $m \geq 1$ is a user-adjustable multiplier (\texttt{SetIntegrationIterationsMultiplier()}).
+
+\paragraph{Baryon analytical integration.}
+When enabled (\texttt{m\_Banalyt}), the baryon fugacity $\phi_B$ is integrated analytically using modified Bessel functions, reducing the quadrature dimension by one:
+\begin{align}
+  \int_0^\pi \frac{d\phi_B}{\pi}\;\cos(B_g\,\phi_B)\;\exp\!\Big(2|w|\cos(\phi_B - \psi)\Big)
+  = I_{B_g}(2|w|) \,.
+\end{align}
+
+\paragraph{Outputs.}
+The quadrature produces $Z(\bN-\bc)$ for all needed charge vectors~$\bc$.
+The ratios $R(\bc)$ are then fed into Eqs.~\eqref{eq:Nce}--\eqref{eq:cov_exact} to obtain means and covariances.
+
+\paragraph{Limitations.}
+At large correlation volumes ($V_c \gtrsim 5000$~fm$^3$), catastrophic cancellation in double precision degrades the fluctuation observables: $R(\bc+\bc')/[R(\bc)\,R(\bc')]$ deviates from unity by only $\mathcal{O}(V_c^{-1})$ but both numerator and denominator are $\sim e^{\mathcal{O}(V_c)}$.
+
+\section{Saddle-point approximation (\texttt{SaddlePoint})}
+\label{sec:SP1}
+
+This method applies the Gaussian saddle-point approximation to each partition function individually, then forms ratios.
+
+\subsection{Saddle-point ingredients}
+
+Deform the contour $\phi_a = \mu_a/T + i\theta_a$ and define:
+\begin{align}
+  \omega_j^{*,n} &\equiv z_j^n\,\exp\!\Big(n\,\bq_j\cdot\frac{\bmu^*}{T}\Big) \,,
+  \label{eq:omega}
+\end{align}
+where $\bmu^*/T$ solves the saddle-point (GCE constraint) equations:
+\begin{align}
+  \sum_j \sum_n n\,q_{a,j}\,\omega_j^{*,n} = N_a \,,
+  \qquad a \in \{B,Q,S,\ldots\} \,.
+  \label{eq:saddle}
+\end{align}
+The \emph{susceptibility matrix} is
+\begin{align}
+  \Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)} \,,
+  \qquad
+  W_j^{(k)} \equiv \sum_{n} n^k\,\omega_j^{*,n} \,.
+  \label{eq:Sigma}
+\end{align}
+
+\subsection{Partition function ratios}
+
+For each charge vector~$\bc$, solve the shifted saddle-point equations for $\bmu_\bc^*$ with charges $\bN - \bc$ and compute the ratio as
+\begin{align}
+  \boxed{
+  \ln R(\bc)
+  = \frac{V_c}{T}\big[p(\bmu_\bc^*) - p(\bmu_0^*)\big]
+  - \bigg[\sum_a \frac{\mu_{\bc,a}^*(N_a-c_a)}{T} - \sum_a \frac{\mu_{0,a}^* N_a}{T}\bigg]
+  - \frac{1}{2}\big[\ln\det\Sigma_\bc - \ln\det\Sigma_0\big] \,,
+  }
+  \label{eq:SP1_lnR}
+\end{align}
+where $p(\bmu) = \sum_j p_j(T,\mu_j^*)$ is the total GCE pressure and $\Sigma_\bc$ is evaluated at $\bmu_\bc^*$.
+Each of the three terms is $\mathcal{O}(1)$, avoiding the catastrophic cancellation that plagues GL at large~$V_c$.
+
+\subsection{Algorithm}
+
+\begin{enumerate}
+  \item Solve Eq.~\eqref{eq:saddle} for $\bmu^*_0$ and compute $p_0$, $\Sigma_0$, $\ln\det\Sigma_0$.
+  \item For each $\bc \neq 0$: solve the shifted equations via Broyden's method (warm-started from the previous solution), compute $p_\bc$, $\Sigma_\bc$, and evaluate Eq.~\eqref{eq:SP1_lnR}.
+  \item Feed the $R(\bc)$ values into Eqs.~\eqref{eq:Nce}--\eqref{eq:cov_exact}.
+\end{enumerate}
+
+\paragraph{Conservation laws.}
+Mean charges $\sum_j q_{a,j}\langle N_j\rangle_\CE$ deviate from~$N_a$ by $\mathcal{O}(V_c^{-1})$, since the Gaussian saddle-point for each $R(\bc)$ is evaluated independently.
+
+
+\section{Saddle-point NLO (\texttt{SaddlePointNLO})}
+\label{sec:SP2}
+
+This method computes means and covariances directly from the saddle-point expansion of the cumulant generating function (CGF), bypassing partition function ratios entirely.
+See the companion note~\cite{SaddlePointNote} for full derivations.
+
+\subsection{Key quantities}
+
+At the saddle point $\bmu^*/T$ (Eq.~\ref{eq:saddle}), define:
+\begin{itemize}
+  \item Cluster moments: $W_j^{(k)} = \sum_n n^k\,\omega_j^{*,n}$ \quad ($k = 1,2,3,4$).
+  \item Susceptibility matrix: $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$.
+  \item Projection: $G_{jk} = \bq_j^T\,\Sigma^{-1}\,\bq_k$ \quad [$\mathcal{O}(V_c^{-1})$].
+  \item Response matrix: $D_{jm} = \delta_{jm} - W_m^{(2)}\,G_{jm}$.
+\end{itemize}
+
+\subsection{Mean yields (LO + NLO)}
+
+\begin{align}
+  \boxed{
+  \langle N_l\rangle_\CE
+  = W_l^{(1)}
+    - \frac{1}{2}\,W_l^{(3)}\,G_{ll}
+    + \frac{1}{2}\,W_l^{(2)}\sum_j W_j^{(3)}\,G_{jj}\,G_{jl}
+    + \mathcal{O}(V_c^{-1}) \,.
+  }
+  \label{eq:mean}
+\end{align}
+The first term is the GCE mean [$\mathcal{O}(V_c)$].
+The second and third are the NLO canonical correction [$\mathcal{O}(V_c^0)$], involving the third cluster moment~$W^{(3)}$ (quantum-statistical skewness).
+
+\subsection{Covariances (LO + NLO)}
+
+\begin{align}
+  \covv_\CE(N_l, N_m)
+  = \underbrace{\delta_{lm}\,W_l^{(2)} - W_l^{(2)}\,W_m^{(2)}\,G_{lm}}_{\text{LO: } \mathcal{O}(V_c)}
+  \underbrace{- \frac{1}{2}\,B_{lm} + \frac{1}{2}\,C_{lm}}_{\text{NLO: } \mathcal{O}(1)}
+  + \mathcal{O}(V_c^{-1}) \,,
+  \label{eq:cov}
+\end{align}
+where the NLO terms involve auxiliary quantities:
+\begin{align}
+  C_{lm} &= \Tr(M_l\,M_m) \,, \quad
+  (M_l)_{ca} = \sum_j W_j^{(3)}\,D_{jl}\,P_{j,c}\,q_{a,j} \,,
+  \quad P_{j,a} = \sum_b (\Sigma^{-1})_{ab}\,q_{b,j} \,,
+  \label{eq:Clm}
+\end{align}
+\begin{align}
+  B_{lm} &= \sum_j G_{jj}\Big[W_j^{(4)}\,D_{jl}\,D_{jm}
+  + W_j^{(3)}\,\frac{\partial^2\tilde{\alpha}_j}{\partial\alpha_l\partial\alpha_m}\bigg|_0\Big] \,,
+  \label{eq:Blm}
+\end{align}
+with the second-derivative response
+\begin{align}
+  \frac{\partial^2\tilde{\alpha}_j}{\partial\alpha_l\partial\alpha_m}\bigg|_0
+  = -\sum_a q_{a,j}\sum_b (\Sigma^{-1})_{ab}\,S_{b,lm} \,,
+  \qquad
+  S_{b,lm} = \sum_k q_{b,k}\,W_k^{(3)}\,D_{kl}\,D_{km} \,.
+  \label{eq:d2alpha}
+\end{align}
+
+\subsection{Algorithm}
+
+\begin{enumerate}
+  \item Solve Eq.~\eqref{eq:saddle} for $\bmu^*/T$ via Broyden's method.
+  \item Compute $W_j^{(k)}$ ($k = 1,\ldots,4$) for all species from the cluster expansion.
+  \item Build $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ directly from the $W^{(2)}$ values.  Invert to get $\Sigma^{-1}$.
+  \item Compute $G_{jj}$, $P_{j,a}$, and $D_{jl}$ for all species.
+  \item Evaluate means from Eq.~\eqref{eq:mean}: cost $\mathcal{O}(N_\mathrm{spec}^2)$.
+  \item If fluctuations are requested, evaluate the full covariance matrix from Eqs.~\eqref{eq:cov}--\eqref{eq:d2alpha}: cost $\mathcal{O}(N_\mathrm{spec}^3)$.
+\end{enumerate}
+
+\paragraph{Conservation laws.}
+The identity $\sum_l q_{a,l}\,D_{jl} = 0$ ensures $\sum_l q_{a,l}\,\langle N_l\rangle_\CE = N_a$ exactly, order by order.
+Similarly, $\varr_\CE(Q_a) = 0$ is satisfied at LO by $\Sigma - \Sigma\,\Sigma^{-1}\,\Sigma = 0$.
+
+
+\section{Selective canonical treatment}
+
+Any subset of charges can be treated canonically while the rest remain grand-canonical.
+For example, canonical $B$ and $S$ with grand-canonical $Q$: the saddle-point integral becomes two-dimensional, with a $2\times2$ susceptibility submatrix.
+All formulas hold with $\Sigma^{-1}$ restricted to the canonical subspace and charge vectors projected accordingly.
+
+
+\section{Comparison}
+\label{sec:comparison}
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \texttt{GaussLegendre} & \texttt{SaddlePoint} & \texttt{SaddlePointNLO} \\
+\midrule
+Partition functions & GL quadrature & per-$\bc$ SP solve & not computed \\
+Mean yields         & from $R(\bc)$ & from $R(\bc)$ & direct (Eq.~\ref{eq:mean}) \\
+Fluctuations        & from $R(\bc+\bc')$ & from $R(\bc+\bc')$ & analytic (Eq.~\ref{eq:cov}) \\
+Exact conservation  & up to quad.\ error & broken at $\mathcal{O}(V_c^{-1})$ & exact by construction \\
+Large-$V_c$ stability & degrades & stable & stable \\
+Small-$V_c$ validity  & exact & breaks down & breaks down \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Timing (full HRG, ${\sim}500$ species, $V_c = 5000$~fm$^3$):}} \\
+Means only           & $\sim 10$~ms & $\sim 20$~ms & $\sim 20$~ms \\
+With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{When to use which.}
+\begin{itemize}
+  \item \textbf{GaussLegendre}: Small volumes ($V_c \lesssim 100$~fm$^3$) or when the saddle-point approximation is not reliable.
+    Increase the multiplier $m$ for better precision.
+  \item \textbf{SaddlePoint}: Large volumes where GL suffers from cancellation.
+    Best when exact partition function ratios $R(\bc)$ are needed (e.g.\ for higher-order cumulants beyond covariances).
+  \item \textbf{SaddlePointNLO}: Large volumes when exact conservation of mean charges matters (e.g.\ thermal fits).
+    Fastest for fluctuations. Does not compute individual $R(\bc)$ values.
+\end{itemize}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{SaddlePointNote}
+  V.~Vovchenko,
+  ``Saddle-point approximation for the canonical partition function:
+  cumulant generating function, means, correlations, and fluctuations'',
+  companion note (2025).
+
+\bibitem{Vovchenko:2019kes}
+  V.~Vovchenko, B.~D\"onigus and H.~Stoecker,
+  Phys.\ Rev.\ C \textbf{100}, 054906 (2019),
+  arXiv:1906.03145 [hep-ph].
+
+\end{thebibliography}
+
+\end{document}
