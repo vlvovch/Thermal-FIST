@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6.1]
+
+Date: TBD
+
+### Charm fugacity constraint
+
+- Added the ability to constrain the charm fugacity (gammaC) from a target number of cc-bar pairs using a 1D secant method
+- New `ConstrainGammaC`/`SetNccbar`/`NccbarGoal`/`GetNccbar` API in `ThermalModelBase`
+- GUI: Added gammaC constraint checkbox and Nccbar spinbox to conservation laws dialog
+
 ## [Version 1.6]
 
 Date: 2026-02-16
@@ -432,6 +442,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.6.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.6...v1.6.1
 
 [Version 1.6]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.2...v1.6
 
