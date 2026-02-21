@@ -496,7 +496,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   QElapsedTimer timerc;
   timerc.start();
 
-  if (config.ModelType == ThermalModelConfig::CE) {
+  if (config.ModelType == ThermalModelConfig::CE && config.CanonicalMethod == 0) {
+    // Warnings only for Gauss-Legendre quadrature; saddle-point methods are fast
     int messageType = 0;
     // 0 - Ok
     // 1 - Warning, light nuclei in the list
@@ -511,9 +512,9 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
     QVector<QString> messages = {
       "Everything is OK",
-      "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list.\n\nDo you want to proceed with the calculation?",
-      "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only.\n\nDo you want to proceed with the calculation?",
-      "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects.\n\nDo you want to proceed with the calculation?"
+      "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list or using the saddle-point method.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only or the saddle-point method.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects or using the saddle-point method.\n\nDo you want to proceed with the calculation?"
     };
 
     if (messageType != 0) {

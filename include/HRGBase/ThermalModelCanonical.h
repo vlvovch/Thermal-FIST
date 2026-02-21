@@ -50,6 +50,15 @@ namespace thermalfist {
   };
 
   /**
+   * \brief Method used for computing the canonical partition functions.
+   */
+  enum CanonicalMethod {
+    GaussLegendre   = 0,  ///< Composite 10-point Gauss-Legendre on subintervals (default)
+    SaddlePoint     = 1,  ///< Saddle-point approximation (per-QN solve)
+    SaddlePointNLO  = 2   ///< Saddle-point with systematic NLO expansion (preserves exact conservation laws)
+  };
+
+  /**
    * \brief Class implementing the ideal HRG model
    *        in the canonical ensemble.
    * 
@@ -181,8 +190,20 @@ namespace thermalfist {
      * \param The multiplier
      */
     void SetIntegrationIterationsMultiplier(int multiplier) { (multiplier > 0 ? m_IntegrationIterationsMultiplier = multiplier : m_IntegrationIterationsMultiplier = 1); }
-    
-    /* 
+
+    /**
+     * \brief Returns the method used for computing the canonical partition functions.
+     */
+    CanonicalMethod Method() const { return m_Method; }
+
+    /**
+     * \brief Sets the method for computing the canonical partition functions.
+     *
+     * \param method GaussLegendre (default) or SaddlePoint
+     */
+    void SetMethod(CanonicalMethod method) { m_Method = method; m_PartialZCalculated = false; }
+
+    /*
      * \brief Reset all flags which correspond to a calculation status
      */
     virtual void ResetCalculatedFlags() {
@@ -267,6 +288,26 @@ namespace thermalfist {
     void CleanModelGCE();    /**< Cleares the ThermalModelIdeal copy */
     //@}
 
+    //@{
+    /**
+     * Helper methods for the saddle-point approximation (SaddlePoint quadrature method).
+     */
+    void ComputeSaddlePointPartitionFunctions();  ///< Orchestrates the full saddle-point computation
+    void SolveSaddlePointEquations();             ///< Finds saddle-point chemical potentials mu*/T
+    void BuildSusceptibilityMatrix();             ///< Builds Sigma and its inverse from per-particle chi2
+
+    /// Compute ln Z_SP given per-particle chemical potentials, target charges, and log-det of Sigma.
+    double ComputeLnZSP(const std::vector<double>& muStar, const double* muOverT, const double* Ntarget, double logDetSigma);
+
+    /// Build the d x d susceptibility matrix from per-particle chi2 evaluated at the given mu values.
+    /// Returns log(det(Sigma)).  If storeSigmaInv is true, also stores Sigma and Sigma^{-1}.
+    double ComputeSigmaLogDet(const std::vector<double>& muStar, bool storeSigmaInv = false);
+
+    /// Mode 2 (SaddlePointNLO): compute analytic LO+NLO means (and optionally covariances) from the CGF expansion.
+    /// The covariance matrix (O(N^2)) is only computed when computeCovariance is true.
+    void ComputeAnalyticCumulants(bool computeCovariance = false);
+    //@}
+
   protected:
 
     /**
@@ -312,6 +353,8 @@ namespace thermalfist {
      */
     int m_IntegrationIterationsMultiplier;
 
+    CanonicalMethod m_Method; ///< Method for computing the canonical partition functions
+
     int m_BMAX; ///< Maximum baryon number
     int m_QMAX; ///< Maximum electric charge
     int m_SMAX; ///< Maximum strangeness
@@ -336,6 +379,18 @@ namespace thermalfist {
 
     bool m_PartialZCalculated;
     bool m_PartialZCalculatedFlucts;
+
+    //@{
+    /// Saddle-point approximation data (for SaddlePoint quadrature method)
+    int m_SaddlePointDim;    ///< Number of canonically conserved charges (d <= 4)
+    std::vector<int> m_SaddlePointChargeIndices;  ///< Which of {B=0,Q=1,S=2,C=3} are canonical
+    std::vector<double> m_SaddlePointMu;          ///< Saddle-point mu*_a/T for each conserved charge (size 4)
+    std::vector<double> m_SaddlePointMuStar;      ///< Per-particle full chemical potential at saddle point
+    std::vector<double> m_SaddlePointSigma;       ///< d x d susceptibility matrix (row-major)
+    std::vector<double> m_SaddlePointSigmaInv;    ///< d x d inverse susceptibility matrix (row-major)
+    double m_SaddlePointLogDetSigma;              ///< log(det(Sigma))
+    std::vector<double> m_W2;                      ///< Per-particle W^(2) = Vc * chi2 (for SaddlePointNLO)
+    //@}
   };
 
 } // namespace thermalfist

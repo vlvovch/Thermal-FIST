@@ -100,6 +100,7 @@ public:
   QCheckBox *checkQConserve;
   QCheckBox *checkSConserve;
   QCheckBox *checkCConserve;
+  QComboBox *comboCanonicalMethod;
 public:
   explicit  ConservationLawsDialog(ModelConfigWidget *parent = 0);
 private slots:

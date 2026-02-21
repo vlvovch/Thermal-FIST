@@ -16,6 +16,8 @@
 #include "HRGBase/xMath.h"
 #include "HRGBase/NumericalIntegration.h"
 
+#include <Eigen/Dense>
+
 using namespace std;
 
 namespace thermalfist {
@@ -25,8 +27,9 @@ namespace thermalfist {
     m_BCE(1), 
     m_QCE(1), 
     m_SCE(1), 
-    m_CCE(1), 
-    m_IntegrationIterationsMultiplier(1)
+    m_CCE(1),
+    m_IntegrationIterationsMultiplier(1),
+    m_Method(GaussLegendre)
   {
 
     m_TAG = "ThermalModelCanonical";
@@ -39,6 +42,9 @@ namespace thermalfist {
     m_Banalyt = false;
     m_PartialZCalculated = false;
     m_PartialZCalculatedFlucts = false;
+
+    m_SaddlePointDim = 0;
+    m_SaddlePointLogDetSigma = 0.0;
   }
 
 
@@ -96,8 +102,6 @@ namespace thermalfist {
     m_QMAX *= m_QCE;
     m_SMAX *= m_SCE;
     m_CMAX *= m_CCE;
-
-    std::cout << "BMAX = " << m_BMAX << "\tQMAX = " << m_QMAX << "\tSMAX = " << m_SMAX << "\tCMAX = " << m_CMAX << std::endl;
 
     m_QNMap.clear();
     m_QNvec.resize(0);
@@ -164,7 +168,21 @@ namespace thermalfist {
     if (m_PartialZ.size() == 0)
       CalculateQuantumNumbersRange();
 
-    if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE && !UsePartialChemicalEquilibrium()) {
+    // SaddlePointNLO: compute means directly from CGF expansion, bypass partition functions
+    if (m_Method == SaddlePointNLO) {
+      m_Banalyt = false;
+      ComputeAnalyticCumulants(false);
+      m_Calculated = true;
+      ValidateCalculation();
+      return;
+    }
+
+    if (m_Method == SaddlePoint) {
+      // Saddle-point method: chemical potentials will be handled inside
+      // ComputeSaddlePointPartitionFunctions() — zeroed after saddle point is found
+      m_Banalyt = false;
+    }
+    else if (m_BMAX_list == 1 && m_BCE && m_QCE && m_SCE && m_CCE && !UsePartialChemicalEquilibrium()) {
       m_Banalyt = true;
       m_Parameters.muB = 0.0;
       m_Parameters.muQ = 0.0;
@@ -306,7 +324,7 @@ Obtained: %lf\n\
     if (Vc < 0.0)
       Vc = m_Parameters.SVc;
 
-    if (!UsePartialChemicalEquilibrium()) 
+    if (!UsePartialChemicalEquilibrium())
       FillChemicalPotentials();
     else {
       // Partial chemical equilibrium canonical ensemble currently works only if there is particle-antiparticle symmetry
@@ -319,6 +337,20 @@ Obtained: %lf\n\
         }
       }
     }
+
+    // Saddle-point: self-contained, no need for Fourier coefficients
+    if (m_Method == SaddlePoint) {
+      ComputeSaddlePointPartitionFunctions();
+
+      m_Corr.resize(m_PartialZ.size());
+      for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
+        m_Corr[iN] = m_PartialZ[iN] / m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]];
+      }
+      m_PartialZCalculated = true;
+      return;
+    }
+
+    // --- Gauss-Legendre quadrature ---
 
     bool AllMuZero = true;
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -386,23 +418,14 @@ Obtained: %lf\n\
       m_PartialZ[i] = 0.;
     }
 
-    int nmax = max(3, (int)sqrt(m_Parameters.B*m_Parameters.B + m_Parameters.Q*m_Parameters.Q + m_Parameters.S*m_Parameters.S + m_Parameters.C*m_Parameters.C));
+    {
+    // --- Gauss-Legendre quadrature ---
+
+    int nmax = max(3, (int)sqrt((double)(m_Parameters.B*m_Parameters.B + m_Parameters.Q*m_Parameters.Q + m_Parameters.S*m_Parameters.S + m_Parameters.C*m_Parameters.C)));
     if (m_Parameters.B == 0 && m_Parameters.Q == 0 && m_Parameters.S == 0 && m_Parameters.C == 0)
       nmax = 4;
 
-
-    
-    int nmaxB = max(4, m_Parameters.B);
-    int nmaxQ = max(4, m_Parameters.Q);
-    int nmaxS = max(4, m_Parameters.S);
-    int nmaxC = max(4, m_Parameters.C);
-
-    // UPDATE: allow to increase the number of interations externally
     nmax *= m_IntegrationIterationsMultiplier;
-    nmaxB = nmaxQ = nmaxS = nmaxC = nmax;
-
-
-
 
 
     m_MultExp = 0.;
@@ -414,8 +437,8 @@ Obtained: %lf\n\
         m_MultExpBanalyt += Nsx[i];
     }
 
-    double dphiB = xMath::Pi() / nmaxB;
-    int maxB = 2 * nmaxB;
+    double dphiB = xMath::Pi() / nmax;
+    int maxB = 2 * nmax;
     if (m_BMAX == 0 || m_Banalyt)
       maxB = 1;
 
@@ -425,7 +448,7 @@ Obtained: %lf\n\
 
       if (m_BMAX != 0 && !m_Banalyt) {
         double aB = iB * dphiB;
-        if (iB >= nmaxB) aB = xMath::Pi() - (iB + 1) * dphiB;
+        if (iB >= nmax) aB = xMath::Pi() - (iB + 1) * dphiB;
         double bB = aB + dphiB;
         NumericalIntegration::GetCoefsIntegrateLegendre10(aB, bB, &xlegB, &wlegB);
       }
@@ -437,8 +460,8 @@ Obtained: %lf\n\
       }
 
 
-      double dphiS = xMath::Pi() / nmaxS;
-      int maxS = 2 * nmaxS;
+      double dphiS = xMath::Pi() / nmax;
+      int maxS = 2 * nmax;
       if (m_SMAX == 0)
         maxS = 1;
 
@@ -447,7 +470,7 @@ Obtained: %lf\n\
 
         if (m_SMAX != 0) {
           double aS = iS * dphiS;
-          if (iS >= nmaxS) aS = xMath::Pi() - (iS + 1) * dphiS;
+          if (iS >= nmax) aS = xMath::Pi() - (iS + 1) * dphiS;
           double bS = aS + dphiS;
           NumericalIntegration::GetCoefsIntegrateLegendre10(aS, bS, &xlegS, &wlegS);
         }
@@ -458,8 +481,8 @@ Obtained: %lf\n\
           wlegS[0] = 1.;
         }
 
-        double dphiQ = xMath::Pi() / nmaxQ;
-        int maxQ = nmaxQ;
+        double dphiQ = xMath::Pi() / nmax;
+        int maxQ = nmax;
         if (m_QMAX == 0)
           maxQ = 1;
 
@@ -478,8 +501,8 @@ Obtained: %lf\n\
             wlegQ[0] = 1.;
           }
 
-          double dphiC = xMath::Pi() / nmaxC;
-          int maxC = 2 * nmaxC;
+          double dphiC = xMath::Pi() / nmax;
+          int maxC = 2 * nmax;
           if (m_CMAX == 0)
             maxC = 1;
 
@@ -487,7 +510,7 @@ Obtained: %lf\n\
             vector<double> xlegC, wlegC;
             if (m_CMAX != 0) {
               double aC = iC * dphiC;
-              if (iC >= nmaxC) aC = xMath::Pi() - (iC + 1) * dphiC;
+              if (iC >= nmax) aC = xMath::Pi() - (iC + 1) * dphiC;
               double bC = aC + dphiC;
               NumericalIntegration::GetCoefsIntegrateLegendre10(aC, bC, &xlegC, &wlegC);
             }
@@ -588,6 +611,7 @@ Obtained: %lf\n\
         m_PartialZ[iN] /= 2. * xMath::Pi();
     }
 
+    } // end GL quadrature block
 
     m_Corr.resize(m_PartialZ.size());
     for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
@@ -747,12 +771,22 @@ Obtained: %lf\n\
   }
 
   void ThermalModelCanonical::CalculateFluctuations() {
-    if (!m_PartialZCalculatedFlucts) {
-      CalculateQuantumNumbersRange(true);
-      CalculatePrimordialDensities();
+    if (m_Method == SaddlePointNLO) {
+      // SaddlePointNLO: compute means + covariance in one shot
+      if (m_PartialZ.size() == 0)
+        CalculateQuantumNumbersRange();
+      ComputeAnalyticCumulants(true);
+      m_Calculated = true;
+      // Skip CalculateTwoParticleCorrelations — already filled by ComputeAnalyticCumulants
     }
-      
-    CalculateTwoParticleCorrelations();
+    else {
+      if (!m_PartialZCalculatedFlucts) {
+        CalculateQuantumNumbersRange(true);
+        CalculatePrimordialDensities();
+      }
+      CalculateTwoParticleCorrelations();
+    }
+
     CalculateSusceptibilityMatrix();
     CalculateTwoParticleFluctuationsDecays();
     CalculateProxySusceptibilityMatrix();
@@ -934,6 +968,539 @@ Obtained: %lf\n\
       delete m_modelgce;
       m_modelgce = NULL;
     }
+  }
+
+  // --- Saddle-point approximation methods ---
+
+  void ThermalModelCanonical::SolveSaddlePointEquations()
+  {
+    // Use PrepareModelGCE to solve the GCE constraint equations:
+    //   <Q_a>_GCE(mu*/T) = N_a / V_c
+    // This IS the saddle-point condition.
+    PrepareModelGCE();
+
+    // Store saddle-point chemical potentials mu*_a/T
+    m_SaddlePointMu.resize(4);
+    m_SaddlePointMu[0] = m_Parameters.muB / m_Parameters.T;
+    m_SaddlePointMu[1] = m_Parameters.muQ / m_Parameters.T;
+    m_SaddlePointMu[2] = m_Parameters.muS / m_Parameters.T;
+    m_SaddlePointMu[3] = m_Parameters.muC / m_Parameters.T;
+
+    // Store per-particle chemical potentials at the saddle point
+    int N = m_TPS->ComponentsNumber();
+    m_SaddlePointMuStar.resize(N);
+    for (int j = 0; j < N; ++j) {
+      m_SaddlePointMuStar[j] = m_modelgce->ChemicalPotential(j);
+    }
+
+    CleanModelGCE();
+
+    // Zero the canonical chemical potentials
+    if (m_BCE)
+      m_Parameters.muB = 0.0;
+    if (m_QCE)
+      m_Parameters.muQ = 0.0;
+    if (m_SCE)
+      m_Parameters.muS = 0.0;
+    if (m_CCE)
+      m_Parameters.muC = 0.0;
+
+    FillChemicalPotentials();
+  }
+
+  void ThermalModelCanonical::BuildSusceptibilityMatrix()
+  {
+    m_SaddlePointChargeIndices.clear();
+    if (m_BCE && m_BMAX_list > 0) m_SaddlePointChargeIndices.push_back(0);  // B
+    if (m_QCE && m_QMAX_list > 0) m_SaddlePointChargeIndices.push_back(1);  // Q
+    if (m_SCE && m_SMAX_list > 0) m_SaddlePointChargeIndices.push_back(2);  // S
+    if (m_CCE && m_CMAX_list > 0) m_SaddlePointChargeIndices.push_back(3);  // C
+    m_SaddlePointDim = static_cast<int>(m_SaddlePointChargeIndices.size());
+
+    if (m_SaddlePointDim == 0)
+      return;
+
+    // Build Sigma at the saddle point and store Sigma, Sigma^{-1}
+    ComputeSigmaLogDet(m_SaddlePointMuStar, true);
+  }
+
+  void ThermalModelCanonical::ComputeSaddlePointPartitionFunctions()
+  {
+    // Step 1: Find saddle-point chemical potentials
+    SolveSaddlePointEquations();
+
+    // Step 2: Build susceptibility matrix
+    BuildSusceptibilityMatrix();
+
+    int d = m_SaddlePointDim;
+    m_MultExp = 0.0;
+    m_MultExpBanalyt = 0.0;
+
+    // Reference charges
+    double Nref[4] = {
+      static_cast<double>(m_Parameters.B),
+      static_cast<double>(m_Parameters.Q),
+      static_cast<double>(m_Parameters.S),
+      static_cast<double>(m_Parameters.C)
+    };
+
+    // Compute ln Z_SP(N)
+    double lnZN = ComputeLnZSP(m_SaddlePointMuStar, m_SaddlePointMu.data(), Nref, m_SaddlePointLogDetSigma);
+    m_MultExp = lnZN;
+
+    // Per-QN solve: for each c, re-solve and compute ratio
+    int Nparts = m_TPS->ComponentsNumber();
+    double Vc = m_Parameters.SVc;
+
+    ThermalModelIdeal tempModel(m_TPS, m_Parameters);
+    tempModel.SetUseWidth(m_UseWidth);
+
+    double muBguess = m_SaddlePointMu[0] * m_Parameters.T;
+    double muQguess = m_SaddlePointMu[1] * m_Parameters.T;
+    double muSguess = m_SaddlePointMu[2] * m_Parameters.T;
+    double muCguess = m_SaddlePointMu[3] * m_Parameters.T;
+
+    // Reference pressure
+    double p0 = 0.0;
+    for (int j = 0; j < Nparts; ++j) {
+      p0 += m_TPS->Particle(j).Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_SaddlePointMuStar[j]);
+    }
+
+    // Reference mu . N term
+    double muDotN_0 = 0.0;
+    for (int ia = 0; ia < d; ++ia) {
+      int a = m_SaddlePointChargeIndices[ia];
+      muDotN_0 += m_SaddlePointMu[a] * Nref[a];
+    }
+
+    double logDetSigma_0 = m_SaddlePointLogDetSigma;
+
+    int zeroIdx = m_QNMap[QuantumNumbers(0, 0, 0, 0)];
+
+    for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
+      if (static_cast<int>(iN) == zeroIdx) {
+        m_PartialZ[iN] = 1.0;
+        continue;
+      }
+
+      int charges[4] = { m_QNvec[iN].B, m_QNvec[iN].Q, m_QNvec[iN].S, m_QNvec[iN].C };
+
+      // Shifted target charges
+      double Nshifted[4] = { Nref[0], Nref[1], Nref[2], Nref[3] };
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        Nshifted[a] -= charges[a];
+      }
+
+      // Solve GCE constraint equations for shifted charges
+      tempModel.SolveChemicalPotentials(
+        Nshifted[0], Nshifted[1], Nshifted[2], Nshifted[3],
+        muBguess, muQguess, muSguess, muCguess,
+        static_cast<bool>(m_BCE), static_cast<bool>(m_QCE),
+        static_cast<bool>(m_SCE), static_cast<bool>(m_CCE));
+
+      double muOverT_c[4];
+      muOverT_c[0] = tempModel.Parameters().muB / m_Parameters.T;
+      muOverT_c[1] = tempModel.Parameters().muQ / m_Parameters.T;
+      muOverT_c[2] = tempModel.Parameters().muS / m_Parameters.T;
+      muOverT_c[3] = tempModel.Parameters().muC / m_Parameters.T;
+
+      muBguess = tempModel.Parameters().muB;
+      muQguess = tempModel.Parameters().muQ;
+      muSguess = tempModel.Parameters().muS;
+      muCguess = tempModel.Parameters().muC;
+
+      std::vector<double> muStar_c(Nparts);
+      for (int j = 0; j < Nparts; ++j) {
+        muStar_c[j] = tempModel.ChemicalPotential(j);
+      }
+
+      // Term 1: Vc/T * [p_c - p_0]
+      double p_c = 0.0;
+      for (int j = 0; j < Nparts; ++j) {
+        p_c += m_TPS->Particle(j).Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, muStar_c[j]);
+      }
+      double deltaP = Vc * (p_c - p0) / m_Parameters.T;
+
+      // Term 2: -[mu_c . N' - mu_0 . N]/T
+      double muDotN_c = 0.0;
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        muDotN_c += muOverT_c[a] * Nshifted[a];
+      }
+      double deltaMuN = muDotN_c - muDotN_0;
+
+      // Term 3: -1/2 * [ln det Sigma_c - ln det Sigma_0]
+      double logDetSigma_c = ComputeSigmaLogDet(muStar_c, false);
+      double deltaLogDet = logDetSigma_c - logDetSigma_0;
+
+      // ln R(c) = deltaP - deltaMuN - 1/2 * deltaLogDet
+      double lnR = deltaP - deltaMuN - 0.5 * deltaLogDet;
+      m_PartialZ[iN] = exp(lnR);
+    }
+  }
+
+  double ThermalModelCanonical::ComputeSigmaLogDet(const std::vector<double>& muStar, bool storeSigmaInv)
+  {
+    int d = m_SaddlePointDim;
+    if (d == 0)
+      return 0.0;
+
+    double Vc = m_Parameters.SVc;
+    int Nparts = m_TPS->ComponentsNumber();
+    double GeVtoifm3 = 1.0 / (xMath::GeVtoifm() * xMath::GeVtoifm() * xMath::GeVtoifm());
+
+    Eigen::MatrixXd Sigma = Eigen::MatrixXd::Zero(d, d);
+
+    for (int j = 0; j < Nparts; ++j) {
+      double chi2 = m_TPS->Particle(j).chi(2, m_Parameters, m_UseWidth, muStar[j]);
+      double w = chi2 * GeVtoifm3 * Vc;
+      int charges[4] = {
+        m_TPS->Particle(j).BaryonCharge(),
+        m_TPS->Particle(j).ElectricCharge(),
+        m_TPS->Particle(j).Strangeness(),
+        m_TPS->Particle(j).Charm()
+      };
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        for (int ib = ia; ib < d; ++ib) {
+          int b = m_SaddlePointChargeIndices[ib];
+          double val = charges[a] * charges[b] * w;
+          Sigma(ia, ib) += val;
+          if (ia != ib) Sigma(ib, ia) += val;
+        }
+      }
+    }
+
+    double logDet = log(Sigma.determinant());
+
+    if (storeSigmaInv) {
+      m_SaddlePointSigma.resize(d * d);
+      m_SaddlePointSigmaInv.resize(d * d);
+      Eigen::MatrixXd SigmaInv = Sigma.inverse();
+      for (int ia = 0; ia < d; ++ia) {
+        for (int ib = 0; ib < d; ++ib) {
+          m_SaddlePointSigma[ia * d + ib] = Sigma(ia, ib);
+          m_SaddlePointSigmaInv[ia * d + ib] = SigmaInv(ia, ib);
+        }
+      }
+      m_SaddlePointLogDetSigma = logDet;
+    }
+
+    return logDet;
+  }
+
+  double ThermalModelCanonical::ComputeLnZSP(const std::vector<double>& muStar,
+                                             const double* muOverT,
+                                             const double* Ntarget,
+                                             double logDetSigma)
+  {
+    int d = m_SaddlePointDim;
+    int Nparts = m_TPS->ComponentsNumber();
+    double Vc = m_Parameters.SVc;
+
+    // Term 1: Vc * sum_j p_j(T,mu*_j) / T
+    double term1 = 0.0;
+    for (int j = 0; j < Nparts; ++j) {
+      term1 += m_TPS->Particle(j).Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, muStar[j]);
+    }
+    term1 *= Vc / m_Parameters.T;
+
+    // Term 2: -sum_a mu*_a * Ntarget_a / T
+    double term2 = 0.0;
+    for (int ia = 0; ia < d; ++ia) {
+      int a = m_SaddlePointChargeIndices[ia];
+      term2 -= muOverT[a] * Ntarget[a];
+    }
+
+    // Term 3: -d/2 * ln(2*pi) - 1/2 * ln(det(Sigma))
+    double term3 = -0.5 * d * log(2.0 * xMath::Pi()) - 0.5 * logDetSigma;
+
+    return term1 + term2 + term3;
+  }
+
+  void ThermalModelCanonical::ComputeAnalyticCumulants(bool computeCovariance)
+  {
+    // SaddlePointNLO: Analytic LO+NLO from the CGF expansion.
+    // Single saddle-point solve, then direct computation of means and (optionally) covariances.
+
+    // Step 1: Solve saddle-point and build Sigma (same as SP1)
+    SolveSaddlePointEquations();
+    BuildSusceptibilityMatrix();
+
+    int d = m_SaddlePointDim;
+    int Nparts = m_TPS->ComponentsNumber();
+    double Vc = m_Parameters.SVc;
+
+    // Set m_MultExp for entropy (same formula as other modes)
+    double Nref[4] = {
+      static_cast<double>(m_Parameters.B),
+      static_cast<double>(m_Parameters.Q),
+      static_cast<double>(m_Parameters.S),
+      static_cast<double>(m_Parameters.C)
+    };
+    m_MultExp = ComputeLnZSP(m_SaddlePointMuStar, m_SaddlePointMu.data(), Nref, m_SaddlePointLogDetSigma);
+    m_MultExpBanalyt = 0.0;
+
+    // Step 2: Compute cluster moments W_j^(k) for k = 1,2,3,4 at the saddle point
+    std::vector<double> W1(Nparts, 0.0);  // W_j^(1) = <N_j>_GCE
+    std::vector<double> W2(Nparts, 0.0);  // W_j^(2) = var_GCE(N_j)
+    std::vector<double> W3(Nparts, 0.0);  // W_j^(3)
+    std::vector<double> W4(Nparts, 0.0);  // W_j^(4)
+
+    for (int j = 0; j < Nparts; ++j) {
+      ThermalParticle& tpart = m_TPS->Particle(j);
+      if (!IsParticleCanonical(tpart))
+        continue;
+
+      if (tpart.Statistics() == 0
+        || tpart.CalculationType() != IdealGasFunctions::ClusterExpansion)
+      {
+        // Boltzmann: all W^(k) equal, and equal to Vc * density
+        double dens = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_SaddlePointMuStar[j]);
+        double omega = dens * Vc;
+        W1[j] = omega;
+        W2[j] = omega;
+        W3[j] = omega;
+        W4[j] = omega;
+      }
+      else {
+        // Quantum statistics with cluster expansion
+        for (int n = 1; n <= tpart.ClusterExpansionOrder(); ++n) {
+          double dens_n = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_SaddlePointMuStar[j]);
+          double omega_n = dens_n * Vc / static_cast<double>(n);
+          W1[j] += n * omega_n;
+          W2[j] += n * n * omega_n;
+          W3[j] += n * n * n * omega_n;
+          W4[j] += n * n * n * n * omega_n;
+        }
+      }
+    }
+
+    // Step 3: Compute G_jk = q_j^T Sigma^{-1}_note q_k
+    // Build Sigma in the note convention directly from the W2 values:
+    //   Sigma_note[a][b] = sum_j q_{a,j} * q_{b,j} * W2[j]
+    // Then P_{j,a} = sum_b SigmaInv_note_{ab} * q_{b,j}
+    // Build d x d Sigma_note from W2
+    Eigen::MatrixXd SigmaNote = Eigen::MatrixXd::Zero(d, d);
+    for (int j = 0; j < Nparts; ++j) {
+      if (W2[j] == 0.0)
+        continue;
+      int charges[4] = {
+        m_TPS->Particle(j).BaryonCharge(),
+        m_TPS->Particle(j).ElectricCharge(),
+        m_TPS->Particle(j).Strangeness(),
+        m_TPS->Particle(j).Charm()
+      };
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        for (int ib = ia; ib < d; ++ib) {
+          int b = m_SaddlePointChargeIndices[ib];
+          double val = charges[a] * charges[b] * W2[j];
+          SigmaNote(ia, ib) += val;
+          if (ia != ib)
+            SigmaNote(ib, ia) += val;
+        }
+      }
+    }
+    Eigen::MatrixXd SigmaNoteInv = SigmaNote.inverse();
+
+    // Precompute P_{j,a} = sum_b SigmaNoteInv_{ab} * q_{b,j}
+    std::vector<double> P(Nparts * d, 0.0);
+    for (int j = 0; j < Nparts; ++j) {
+      for (int ia = 0; ia < d; ++ia) {
+        double val = 0.0;
+        for (int ib = 0; ib < d; ++ib) {
+          int b = m_SaddlePointChargeIndices[ib];
+          val += SigmaNoteInv(ia, ib) * m_TPS->Particle(j).GetCharge(b);
+        }
+        P[j * d + ia] = val;
+      }
+    }
+
+    // G_jj for each species
+    std::vector<double> Gjj(Nparts, 0.0);
+    for (int j = 0; j < Nparts; ++j) {
+      double g = 0.0;
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        g += m_TPS->Particle(j).GetCharge(a) * P[j * d + ia];
+      }
+      Gjj[j] = g;
+    }
+
+    // Helper lambda: compute G_jk from precomputed P
+    auto computeG = [&](int j, int k) -> double {
+      double g = 0.0;
+      for (int ia = 0; ia < d; ++ia) {
+        int a = m_SaddlePointChargeIndices[ia];
+        g += m_TPS->Particle(j).GetCharge(a) * P[k * d + ia];
+      }
+      return g;
+    };
+
+    // Step 4: Compute LO + NLO means
+    for (int l = 0; l < Nparts; ++l) {
+      ThermalParticle& tpart = m_TPS->Particle(l);
+      if (!IsParticleCanonical(tpart)) {
+        m_densities[l] = tpart.Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[l]);
+        continue;
+      }
+
+      // LO mean
+      double mean = W1[l];
+
+      // NLO correction: -1/2 * sum_j G_jj * W_j^(3) * D_jl
+      double nloTerm1 = -0.5 * W3[l] * Gjj[l];
+
+      double sumGjjW3Gjl = 0.0;
+      for (int j = 0; j < Nparts; ++j) {
+        if (W3[j] == 0.0 || Gjj[j] == 0.0)
+          continue;
+        double G_jl = computeG(j, l);
+        sumGjjW3Gjl += W3[j] * Gjj[j] * G_jl;
+      }
+      double nloTerm2 = 0.5 * W2[l] * sumGjjW3Gjl;
+
+      mean += nloTerm1 + nloTerm2;
+
+      m_densities[l] = mean / Vc;
+    }
+
+    if (!computeCovariance)
+      return;
+
+    // Step 5: Compute LO + NLO covariance matrix
+    int NN = Nparts;
+
+    m_PrimCorrel.resize(NN);
+    for (int i = 0; i < NN; ++i)
+      m_PrimCorrel[i].resize(NN, 0.0);
+    m_TotalCorrel = m_PrimCorrel;
+
+    // Non-canonical species: GCE scaled variance on diagonal
+    for (int l = 0; l < NN; ++l) {
+      if (!IsParticleCanonical(m_TPS->Particle(l))) {
+        double w_gce = m_TPS->Particle(l).ScaledVariance(m_Parameters, m_UseWidth, m_Chem[l]);
+        m_PrimCorrel[l][l] = w_gce * m_densities[l] / m_Parameters.T;
+        continue;
+      }
+    }
+
+    // Canonical species: LO + NLO covariance
+    for (int l = 0; l < NN; ++l) {
+      if (!IsParticleCanonical(m_TPS->Particle(l)))
+        continue;
+
+      for (int m = l; m < NN; ++m) {
+        if (!IsParticleCanonical(m_TPS->Particle(m)))
+          continue;
+
+        // LO covariance: delta_lm * W_l^(2) - W_l^(2) * W_m^(2) * G_lm
+        double cov = 0.0;
+        if (l == m)
+          cov += W2[l];
+        double G_lm = computeG(l, m);
+        cov -= W2[l] * W2[m] * G_lm;
+
+        // NLO: -1/2 B_lm + 1/2 C_lm
+
+        // --- C_lm ---
+        // Build M_l and M_m (d x d matrices)
+        std::vector<double> Ml(d * d, 0.0);
+        std::vector<double> Mm(d * d, 0.0);
+
+        for (int j = 0; j < Nparts; ++j) {
+          if (W3[j] == 0.0)
+            continue;
+
+          double D_jl = (j == l ? 1.0 : 0.0) - W2[l] * computeG(j, l);
+          double D_jm = (j == m ? 1.0 : 0.0) - W2[m] * computeG(j, m);
+
+          double w3Djl = W3[j] * D_jl;
+          double w3Djm = W3[j] * D_jm;
+
+          for (int ic = 0; ic < d; ++ic) {
+            double Pjc = P[j * d + ic];
+            for (int ia = 0; ia < d; ++ia) {
+              int a = m_SaddlePointChargeIndices[ia];
+              double q_aj = m_TPS->Particle(j).GetCharge(a);
+              Ml[ic * d + ia] += w3Djl * Pjc * q_aj;
+              Mm[ic * d + ia] += w3Djm * Pjc * q_aj;
+            }
+          }
+        }
+
+        double C_lm = 0.0;
+        for (int ic = 0; ic < d; ++ic)
+          for (int ia = 0; ia < d; ++ia)
+            C_lm += Ml[ic * d + ia] * Mm[ia * d + ic];
+
+        // --- B_lm ---
+        // S_{b,lm} = sum_k q_{b,k} W_k^(3) D_kl D_km
+        std::vector<double> S_blm(d, 0.0);
+        for (int k = 0; k < Nparts; ++k) {
+          if (W3[k] == 0.0)
+            continue;
+          double D_kl = (k == l ? 1.0 : 0.0) - W2[l] * computeG(k, l);
+          double D_km = (k == m ? 1.0 : 0.0) - W2[m] * computeG(k, m);
+          double w3DklDkm = W3[k] * D_kl * D_km;
+          for (int ib = 0; ib < d; ++ib) {
+            int b = m_SaddlePointChargeIndices[ib];
+            S_blm[ib] += m_TPS->Particle(k).GetCharge(b) * w3DklDkm;
+          }
+        }
+
+        // SigmaInv_note . S_blm  (using the note-convention inverse computed above)
+        std::vector<double> SinvS(d, 0.0);
+        for (int ia = 0; ia < d; ++ia) {
+          for (int ib = 0; ib < d; ++ib)
+            SinvS[ia] += SigmaNoteInv(ia, ib) * S_blm[ib];
+        }
+
+        double B_lm = 0.0;
+        for (int j = 0; j < Nparts; ++j) {
+          if (Gjj[j] == 0.0)
+            continue;
+
+          double D_jl = (j == l ? 1.0 : 0.0) - W2[l] * computeG(j, l);
+          double D_jm = (j == m ? 1.0 : 0.0) - W2[m] * computeG(j, m);
+
+          double term1 = W4[j] * D_jl * D_jm;
+
+          double d2alpha_j = 0.0;
+          for (int ia = 0; ia < d; ++ia) {
+            int a = m_SaddlePointChargeIndices[ia];
+            d2alpha_j -= m_TPS->Particle(j).GetCharge(a) * SinvS[ia];
+          }
+          double term2 = W3[j] * d2alpha_j;
+
+          B_lm += Gjj[j] * (term1 + term2);
+        }
+
+        // Total covariance
+        cov += -0.5 * B_lm + 0.5 * C_lm;
+
+        // Store as susceptibility chi_lm = cov(N_l, N_m) / (Vc * T)
+        double susc = cov / (Vc * m_Parameters.T);
+        m_PrimCorrel[l][m] = susc;
+        if (l != m)
+          m_PrimCorrel[m][l] = susc;
+      }
+    }
+
+    // Set scaled variances
+    for (int i = 0; i < NN; ++i) {
+      m_wprim[i] = m_PrimCorrel[i][i];
+      if (m_densities[i] > 0.)
+        m_wprim[i] *= m_Parameters.T / m_densities[i];
+      else
+        m_wprim[i] = 1.;
+      if (m_wprim[i] != m_wprim[i])
+        m_wprim[i] = 1.;
+    }
+
+    m_TwoParticleCorrelationsCalculated = true;
   }
 
 } // namespace thermalfist
