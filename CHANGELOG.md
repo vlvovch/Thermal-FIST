@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6.1]
+
+Date: TBD
+
+### Saddle-point methods for canonical ensemble
+
+- Added two new methods for computing canonical ensemble partition functions in `ThermalModelCanonical`, alongside the existing Gauss-Legendre (GL) quadrature:
+  - **Saddle-point approximation (SP1)**: Gaussian approximation around the saddle point of the integrand. Dramatically faster than GL at large volumes with comparable accuracy
+  - **Saddle-point with NLO corrections (SP2)**: Includes systematic next-to-leading-order corrections via cluster moments and projection operators. Provides exact conservation of all conserved charges by construction
+- New `CanonicalMethod` enum (`GaussLegendre`, `SaddlePoint`, `SaddlePointNLO`) for method selection
+- GUI: Added method selection combo box in the conservation laws dialog
+- Mixed-canonical ensembles (any subset of B, Q, S, C conserved exactly) fully supported by all three methods
+- Charm canonical ensemble supported with the modular particle list containing charmed hadrons
+- Added comprehensive test suite for canonical ensemble calculations (`test_ThermalModelCanonical`)
+- Added implementation technical note (`docs/notes/CanonicalEnsemble/SaddlePointApprox/CanonicalImplementation.tex`)
+
 ## [Version 1.6]
 
 Date: 2026-02-16
@@ -432,6 +448,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.6.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.6...v1.6.1
 
 [Version 1.6]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.2...v1.6
 
