@@ -406,6 +406,42 @@ This is the key advantage: the method becomes volume- and charge-independent in 
 The grand-canonical equations \cref{eq:gce-eq} are already solved in the Thermal-FIST event generator module (\texttt{EventGeneratorBase}), which needs the GCE chemical potentials to set up the sampling.
 The same solver can be reused for the canonical partition function calculation, avoiding any additional implementation effort for the GCE equation solving.
 
+\subsection{Implementation in the Gauss--Legendre code path}
+\label{sec:gl-contour-shift}
+
+The saddle-point contour shift has been implemented directly in the existing composite Gauss--Legendre quadrature path of \texttt{CalculatePartitionFunctions}.
+Before the GL integration loop begins, the code calls \texttt{PrepareModelGCE()}, which solves the GCE constraint equations~\cref{eq:gce-eq} for the saddle-point chemical potentials $\bm{\mu}_{\rm sp}$, followed by \texttt{FillChemicalPotentials()} to propagate the solved chemical potentials to each particle species.
+
+This shifts the \texttt{Nsx} and \texttt{Nsy} arrays defined in \cref{eq:Nsx-Nsy}: the chemical potentials $\mu_i = \bm{\mu}_{\rm sp} \cdot \bq_i$ are no longer zero for canonically conserved charges, so $\texttt{Nsy}[\bq] \neq 0$ and the $\sinh$ terms contribute.
+At the saddle point, the condition $\sum_i N_i(\bm{\mu}_{\rm sp})\,\bq_i = \bQ$ translates to
+\begin{equation}\label{eq:nsy-cancellation}
+  \sum_{\bq} q_\alpha\,\texttt{Nsy}[\bq] = Q_\alpha\,,
+\end{equation}
+for each canonical charge $\alpha$.
+The linear term in the phase of the integrand, $-Q_\alpha\,\phi_\alpha + \sum_{\bq} q_\alpha\,\texttt{Nsy}[\bq]\,\sin(q_\alpha\,\phi_\alpha)$, then vanishes at $\bphi = \bm{0}$ to first order: the derivative $\sum_{\bq} q_\alpha\,\texttt{Nsy}[\bq] - Q_\alpha = 0$.
+This eliminates the linear phase oscillation that causes cancellation problems at finite~$\bm{\mu}$.
+
+\paragraph{Prefactor cancellation.}
+The contour shift introduces a multiplicative prefactor $e^{-\bQ \cdot \bm{\mu}_{\rm sp}/T}$ relating the shifted partition function $\tilde{Z}_C$ to the original one: $Z_C(\bQ) = e^{-\bQ \cdot \bm{\mu}_{\rm sp}/T}\,\tilde{Z}_C(\bQ)$.
+In the implementation, this prefactor does \emph{not} need to be applied explicitly.
+The canonical correction factors~\cref{eq:corr} involve ratios $\tilde{Z}_C(\bQ - \bq)/\tilde{Z}_C(\bQ)$, in which the prefactors partially cancel, leaving a factor $e^{\bq \cdot \bm{\mu}_{\rm sp}/T}$ per unit charge~$\bq$.
+This factor is exactly compensated by the shifted GCE multiplicities used in the density formula $n_j^{\rm CE} = C(\bq_j)\,n_j^{\rm GCE}(\bm{\mu}_{\rm sp})$: the density $n_j^{\rm GCE}(\bm{\mu}_{\rm sp})$ already contains $e^{\bq_j \cdot \bm{\mu}_{\rm sp}/T}$ relative to $n_j^{\rm GCE}(\bm{0})$.
+The two factors cancel, and the final canonical density is correct without any post-correction.
+
+For entropy, the canonical correction involves $\ln Z_C(\bQ) = -\bQ \cdot \bm{\mu}_{\rm sp}/T + \ln \tilde{Z}_C(\bQ)$.
+The first term generates a contribution $-\bm{\mu}_{\rm sp} \cdot \bQ / (T\,V_c)$ to the entropy density, which combines with the shifted $\ln \tilde{Z}_C$ and the shifted thermal contributions to reproduce the correct canonical entropy.
+All thermodynamic quantities --- pressure, energy density, fluctuations --- are automatically correct.
+
+\paragraph{Incompatibility with analytical baryon fugacity.}
+The contour shift is \emph{not} applied when the analytical baryon fugacity path (\texttt{m\_Banalyt}, \cref{sec:banalyt}) is active.
+The Banalyt approach evaluates the $\phi_B$ integral analytically via the identity~\cref{eq:bessel-identity}, which relies on grouping all $|B|=1$ sectors by their complex modulus $w\,e^{i\alpha}$.
+This grouping implicitly assumes $\texttt{Nsx}[\bq] = \texttt{Nsx}[-\bq]$ for baryonic sectors, i.e., particle--antiparticle symmetry.
+At the shifted chemical potentials $\bm{\mu}_{\rm sp} \neq \bm{0}$, this symmetry is broken: for example, $\texttt{Nsx}[(1,0,1,0)] \neq \texttt{Nsx}[(-1,0,-1,0)]$ when $\mu_B \neq 0$.
+The Bessel identity~\cref{eq:bessel-identity} would need to be generalized to include a ratio $(N_+/N_-)^{k/2}$ inside the Bessel function argument, which is not implemented.
+
+In practice this restriction is benign: \texttt{m\_Banalyt} is activated only when \emph{all four} charges $(B, S, Q, C)$ are treated canonically, in which case all chemical potentials are zero before the shift and the GL integrand at $\bm{\mu} = \bm{0}$ has no oscillation problem (the integrand is symmetric under $\bphi \to -\bphi$).
+The contour shift addresses a different regime: partial canonical ensembles (e.g., strangeness-canonical at finite $\mu_B$), where \texttt{m\_Banalyt} is not active and the shift proceeds without restriction.
+
 
 %% ====================================================================
 \section{Practical algorithm}
@@ -740,6 +776,9 @@ Three improvements to the canonical partition function quadrature are proposed:
   \item \textbf{Saddle-point adapted quadrature} factors out the Gaussian peak analytically (\cref{sec:saddle,sec:full-shift}).
   Without solving the GCE equations, this helps primarily at LHC conditions where $|\bQ| \ll \sqrt{N_{\rm tot}}$; at finite charges comparable to $\sqrt{N_{\rm tot}}$, the improvement is a constant factor from the exponential convergence.
   With the full saddle-point shift (solving GCE equations, reusing the existing event generator solver), the $\cos(\bQ \cdot \bphi)$ oscillation is absorbed into the contour shift, and the quadrature cost becomes independent of the conserved charges --- determined solely by the grand-canonical fluctuations.
+  This shift has been implemented in the existing GL code path (\cref{sec:gl-contour-shift}): before the quadrature loop, the GCE saddle-point chemical potentials are solved and propagated to the particle list, eliminating the linear phase oscillation at finite~$\bm{\mu}$.
+  The prefactor from the contour shift cancels implicitly in all observables.
+  The shift is not applied in the analytical baryon fugacity mode, which is restricted to the fully canonical ensemble where the GL integrand is already well-behaved at $\bm{\mu} = \bm{0}$.
 
   \item \textbf{Fourier convolution with per-sector Bessel extraction} (\cref{sec:fourier-convolution,sec:bessel-extraction}).
   The integrand is factored into a product of analytically tractable sector contributions and a smooth remainder.
