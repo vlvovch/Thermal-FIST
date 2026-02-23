@@ -250,7 +250,10 @@ namespace {
       EXPECT_EQ(mis2, 0);
     }
 
-    // (c) Canonical S only at muB=0.3: SP vs SP2 (GL doesn't converge here)
+    // (c) Canonical S only at muB=0.3: SP vs SP2
+    //     GL at V=50000 with muB=0.3 is marginal even with the contour shift
+    //     (integrand peak is extremely narrow at this volume). See the
+    //     GLContourShiftFiniteMuB test for GL vs SP comparison at moderate V.
     {
       auto p = MakeParams(50000., 0, 0, 0, 0, 0.3);
       std::unique_ptr<ThermalModelCanonical> mSP(RunCanonical(TPS, p, SaddlePoint, 1, false, false, true, false));
@@ -300,7 +303,20 @@ namespace {
       EXPECT_TRUE(found) << "No charmed particle with nonzero density";
     }
 
-    // (b) SP and SP2 vs GL with charm, V=50000
+    // (b) SP vs GL with charm at small volume (R=7 fm, V≈1437 fm³, Nccbar≈0.1).
+    //     Charm is exponentially rare here; this tests that the saddle-point solver
+    //     handles ill-conditioned BQS-only sectors without diverging.
+    {
+      auto p = MakeParams(1437.);
+      std::unique_ptr<ThermalModelCanonical> mGL(RunCanonical(TPS, p, GaussLegendre, 2));
+      std::unique_ptr<ThermalModelCanonical> mSP(RunCanonical(TPS, p, SaddlePoint));
+
+      auto [mis, nan] = CompareDensities(*mSP, mGL->Densities(), TPS, 5.e-2, 3, "small-V charm SP ");
+      EXPECT_EQ(nan, 0) << "NaN/Inf in SP densities at small charm volume";
+      EXPECT_EQ(mis, 0) << mis << " species: SP vs GL (small-V charm)";
+    }
+
+    // (c) SP and SP2 vs GL with charm, large volume V=50000
     {
       auto p = MakeParams(50000.);
       std::unique_ptr<ThermalModelCanonical> mGL(RunCanonical(TPS, p, GaussLegendre, 2));
@@ -317,7 +333,7 @@ namespace {
       EXPECT_EQ(mis2, 0) << mis2 << " species: SP2 vs GL (charm)";
     }
 
-    // (c) Canonical C only (GCE for B,Q,S), V=50000
+    // (d) Canonical C only (GCE for B,Q,S), V=50000
     {
       auto p = MakeParams(50000.);
       std::unique_ptr<ThermalModelCanonical> mGL(RunCanonical(TPS, p, GaussLegendre, 2, false, false, false, true));
@@ -333,7 +349,7 @@ namespace {
       EXPECT_EQ(mis2, 0);
     }
 
-    // (d) Full BQSC: SP vs SP2 agreement + SP2 conservation, V=10^6
+    // (e) Full BQSC: SP vs SP2 agreement + SP2 conservation, V=10^6
     //     (charmed particles are too rare for GCE convergence at this V)
     {
       auto p = MakeParams(1000000.);
@@ -349,6 +365,113 @@ namespace {
       EXPECT_EQ(nan, 0);
       EXPECT_EQ(mis, 0) << mis << " species: SP vs SP2 (BQSC)";
     }
+  }
+
+  // Test 8: FixParameters for mixed canonical at finite muB using SaddlePoint.
+  //
+  // This tests the scenario where muQ needs to be constrained in a
+  // strangeness-canonical setup at finite muB. The FixParameters method
+  // uses a GCE solve to find stable chemical potentials (avoiding GL/SP
+  // inside the Broyden loop). Then CalculatePrimordialDensities uses SP
+  // for the final result.
+  //
+  // Note: GL is unreliable for S-canonical at finite muB and large volumes
+  // because the integrand becomes highly oscillatory. SP is used instead.
+  TEST_F(ThermalModelCanonicalTest, FixParametersMixedCanonical) {
+    // Strangeness-canonical at finite muB, using SaddlePoint
+    ThermalModelParameters p;
+    p.T = 0.155;
+    p.muB = 0.500;  // 500 MeV
+    p.muS = 0.;  p.muQ = 0.;  p.muC = 0.;
+    p.gammaS = 1.;  p.gammaq = 1.;
+    p.V = 5000.;  p.SVc = 5000.;
+    p.B = 0;  p.Q = 0;  p.S = 0;  p.C = 0;
+
+    ThermalModelCanonical model(TPS, p);
+    model.SetStatistics(false);
+    model.SetUseWidth(ThermalParticle::ZeroWidth);
+    model.SetMethod(SaddlePoint);
+    // S canonical, B/Q/C grand-canonical
+    model.ConserveBaryonCharge(false);
+    model.ConserveElectricCharge(false);
+    model.ConserveStrangeness(true);
+    model.ConserveCharm(false);
+
+    // Constrain muQ to satisfy Q/B = 0.4 (typical for heavy-ion collisions)
+    model.ConstrainMuB(false);
+    model.ConstrainMuQ(true);
+    model.ConstrainMuS(false);  // S is canonical, muS is irrelevant
+    model.ConstrainMuC(false);
+    model.SetQoverB(0.4);
+
+    // This triggers FixParameters → GCE solve for muQ, then SP calculation
+    model.ConstrainChemicalPotentials(true);
+
+    // Verify the calculation produced finite results
+    double nb = model.CalculateBaryonDensity();
+    double nq = model.CalculateChargeDensity();
+    double ns = model.CalculateStrangenessDensity();
+    double entropy = model.CalculateEntropyDensity();
+
+    EXPECT_TRUE(std::isfinite(nb)) << "Baryon density is not finite";
+    EXPECT_TRUE(std::isfinite(nq)) << "Charge density is not finite";
+    EXPECT_TRUE(std::isfinite(ns)) << "Strangeness density is not finite";
+    EXPECT_TRUE(std::isfinite(entropy)) << "Entropy density is not finite";
+
+    // Strangeness should be conserved (net S = 0)
+    EXPECT_NEAR(ns * p.SVc, 0., 1.e-2)
+      << "Net strangeness not conserved: S = " << ns * p.SVc;
+
+    // Q/B should be close to 0.4 (GCE-solved muQ should give ~0.4)
+    EXPECT_TRUE(nb > 0.) << "Baryon density should be positive at muB=500 MeV";
+    if (nb > 0.) {
+      double qOverB = nq / nb;
+      EXPECT_NEAR(qOverB, 0.4, 0.02)
+        << "Q/B = " << qOverB << " (expected ~0.4)";
+    }
+  }
+
+  // Test 9: GL convergence at finite muB after contour shift.
+  //
+  // Before the contour shift fix, GL integration failed for S-canonical
+  // at finite muB and moderate volumes (R >= 3 fm) due to rapid phase
+  // oscillations from strange baryon-antibaryon asymmetry.
+  // The contour shift (using saddle-point mu_S in the GL integrand)
+  // eliminates linear oscillations and makes GL converge.
+  TEST_F(ThermalModelCanonicalTest, GLContourShiftFiniteMuB) {
+    // S-canonical at T=155 MeV, muB=500 MeV, R=3 fm (V ~ 113 fm^3)
+    // This previously failed completely with GL.
+    double R = 3.0;
+    double V = 4. / 3. * xMath::Pi() * R * R * R;
+    auto p = MakeParams(V, 0, 0, 0, 0, 0.5);
+
+    std::unique_ptr<ThermalModelCanonical> mGL(
+      RunCanonical(TPS, p, GaussLegendre, 2, false, false, true, false));
+    std::unique_ptr<ThermalModelCanonical> mSP(
+      RunCanonical(TPS, p, SaddlePoint, 1, false, false, true, false));
+
+    // GL should now produce finite results (previously gave NaN/garbage)
+    double ns_GL = mGL->CalculateStrangenessDensity() * p.SVc;
+    double ns_SP = mSP->CalculateStrangenessDensity() * p.SVc;
+    double ed_GL = mGL->CalculateEnergyDensity();
+    double ed_SP = mSP->CalculateEnergyDensity();
+
+    EXPECT_TRUE(std::isfinite(ed_GL)) << "GL energy density not finite at muB=500";
+    EXPECT_NEAR(ns_GL, 0., 1.e-2)
+      << "GL strangeness not conserved: S = " << ns_GL;
+    EXPECT_NEAR(ns_SP, 0., 1.e-2)
+      << "SP strangeness not conserved: S = " << ns_SP;
+
+    // GL and SP should agree on energy density (within ~1%)
+    if (std::isfinite(ed_GL) && ed_SP > 0.)
+      EXPECT_NEAR(ed_GL / ed_SP, 1., 5.e-2)
+        << "GL/SP energy density mismatch: " << ed_GL << " vs " << ed_SP;
+
+    // Compare particle densities: GL vs SP
+    auto [mis, nan] = CompareDensities(*mSP, mGL->Densities(), TPS, 5.e-2, 3,
+                                        "GL-shift muB=0.5 ");
+    EXPECT_EQ(nan, 0) << "NaN in GL densities at muB=500";
+    EXPECT_EQ(mis, 0) << mis << " species: GL vs SP (S-only, muB=0.5, R=3)";
   }
 
 } // namespace

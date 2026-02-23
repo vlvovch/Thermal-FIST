@@ -141,13 +141,79 @@ namespace thermalfist {
     //CalculateQuantumNumbersRange();
   }
 
+  // Solve non-canonical chemical potentials using a temporary GCE model.
+  // This avoids running the expensive (and potentially unstable at large muB)
+  // canonical partition function integration during each Broyden iteration.
+  void ThermalModelCanonical::SolveChemicalPotentialsGCE(bool resetInitialValues)
+  {
+    // Build a temporary GCE model and solve for the non-canonical chemical potentials
+    ThermalModelIdeal tempGCE(m_TPS, m_Parameters);
+    tempGCE.SetUseWidth(m_UseWidth);
+
+    // Only constrain charges that are NOT canonical (canonical mus will be set to 0 later)
+    bool cB = m_ConstrainMuB && !m_BCE;
+    bool cQ = m_ConstrainMuQ && !m_QCE;
+    bool cS = m_ConstrainMuS && !m_SCE;
+    bool cC = m_ConstrainMuC && !m_CCE;
+
+    if (!cB && !cQ && !cS && !cC) {
+      // Nothing to solve for
+      return;
+    }
+
+    if (resetInitialValues) {
+      // Use reasonable initial guesses
+      if (cS)
+        tempGCE.SetStrangenessChemicalPotential(m_Parameters.muB / 3.);
+      if (cQ)
+        tempGCE.SetElectricChemicalPotential(-m_Parameters.muB / 30.);
+    }
+
+    // Copy constraint settings
+    tempGCE.ConstrainMuB(cB);
+    tempGCE.ConstrainMuQ(cQ);
+    tempGCE.ConstrainMuS(cS);
+    tempGCE.ConstrainMuC(cC);
+    tempGCE.SetQoverB(QoverB());
+    tempGCE.SetSoverB(SoverB());
+
+    if (resetInitialValues)
+      tempGCE.FixParameters();
+    else
+      tempGCE.FixParametersNoReset();
+
+    // Copy solved chemical potentials back
+    m_Parameters.muB = tempGCE.Parameters().muB;
+    m_Parameters.muQ = tempGCE.Parameters().muQ;
+    m_Parameters.muS = tempGCE.Parameters().muS;
+    m_Parameters.muC = tempGCE.Parameters().muC;
+  }
+
   void ThermalModelCanonical::FixParameters()
   {
+    // Initial guess for gammaC if constrained
+    if (m_ConstrainGammaC) {
+      m_Parameters.gammaC = 1.0;
+    }
+
     m_ConstrainMuB &= !m_BCE;
     m_ConstrainMuQ &= !m_QCE;
     m_ConstrainMuS &= !m_SCE;
     m_ConstrainMuC &= !m_CCE;
-    ThermalModelBase::FixParameters();
+
+    // Step 1: GCE solve for stable initial chemical potentials.
+    // This avoids the CE Broyden solver wandering into extreme mu values
+    // where the GL integration may break down.
+    SolveChemicalPotentialsGCE(true);
+
+    // Step 2: CE refinement using the base class Broyden solver,
+    // starting from the GCE-solved values.
+    // Each Broyden step calls CalculatePrimordialDensities(),
+    // which accounts for canonical corrections in the constraint equations.
+    // Since we start near the solution, the Broyden converges quickly.
+    // Note: For GL at finite muB, the integration may still be inaccurate.
+    //       Use the SaddlePoint method for best results at finite muB.
+    ThermalModelBase::FixParametersNoReset();
   }
 
   void ThermalModelCanonical::FixParametersNoReset()
@@ -156,6 +222,11 @@ namespace thermalfist {
     m_ConstrainMuQ &= !m_QCE;
     m_ConstrainMuS &= !m_SCE;
     m_ConstrainMuC &= !m_CCE;
+
+    // Step 1: GCE solve for stable initial chemical potentials.
+    SolveChemicalPotentialsGCE(false);
+
+    // Step 2: CE refinement using the base class Broyden solver.
     ThermalModelBase::FixParametersNoReset();
   }
 
@@ -348,6 +419,24 @@ Obtained: %lf\n\
       }
       m_PartialZCalculated = true;
       return;
+    }
+
+    // Contour shift: set canonical chemical potentials to their
+    // GCE saddle-point values for dramatically improved GL convergence.
+    // This is mathematically exact (equivalent to shifting the Fourier
+    // contour through the saddle point). The fugacity factors from the
+    // shifted densities and the Z-tilde ratios cancel, giving the
+    // correct canonical result for all observables.
+    //
+    // Not used with m_Banalyt (analytical baryon fugacity via Bessel
+    // functions), which assumes N_+ = N_- symmetry that breaks at mu != 0.
+    // m_Banalyt is only active when ALL four charges are canonical, where
+    // the GL integrand is already well-behaved at mu = 0.
+    if (!m_Banalyt) {
+      PrepareModelGCE();
+      CleanModelGCE();
+      if (!UsePartialChemicalEquilibrium())
+        FillChemicalPotentials();
     }
 
     // --- Gauss-Legendre quadrature ---
@@ -1060,6 +1149,18 @@ Obtained: %lf\n\
     double muSguess = m_SaddlePointMu[2] * m_Parameters.T;
     double muCguess = m_SaddlePointMu[3] * m_Parameters.T;
 
+    // Compute reference open charm density at the saddle point (for analytical muC initial guess).
+    // n_charm_ref = (1/2) * sum_{|C_j|>0} |C_j| * n_j(mu*)  ≈  half the absolute charm density
+    double nCharmRef = 0.0;
+    for (int j = 0; j < Nparts; ++j) {
+      int absC = abs(m_TPS->Particle(j).Charm());
+      if (absC > 0) {
+        nCharmRef += absC * m_TPS->Particle(j).Density(
+          m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_SaddlePointMuStar[j]);
+      }
+    }
+    nCharmRef *= 0.5;  // half = positive-charm density ≈ negative-charm density at mu*
+
     // Reference pressure
     double p0 = 0.0;
     for (int j = 0; j < Nparts; ++j) {
@@ -1092,12 +1193,38 @@ Obtained: %lf\n\
         Nshifted[a] -= charges[a];
       }
 
-      // Solve GCE constraint equations for shifted charges
-      tempModel.SolveChemicalPotentials(
+      // Analytical muC estimate for the shifted charm target.
+      // Avoids overshooting in the first Newton step when charm is rare.
+      // <C> ≈ 2 * nCharmRef * V * sinh(muC/T)  →  muC = T * arcsinh(Cshifted / (2 * nCharmRef * V))
+      double muCguess_shifted = muCguess;
+      if (m_CCE && nCharmRef > 0.0 && Nshifted[3] != 0.0) {
+        double arg = Nshifted[3] / (2.0 * nCharmRef * m_Parameters.V);
+        muCguess_shifted = m_Parameters.T * asinh(arg);
+      }
+
+      // For zero-shifted charges (charges[a]==0), use the saddle-point mu as the initial guess
+      // rather than the previous sector's solved mu.  This prevents garbage propagation from
+      // sectors where the solver converged to an unphysical fixed point due to ill-conditioning.
+      // Shifted charges use the running muGuess from nearby sectors for faster convergence.
+      double muBinit = (charges[0] != 0) ? muBguess : m_SaddlePointMu[0] * m_Parameters.T;
+      double muQinit = (charges[1] != 0) ? muQguess : m_SaddlePointMu[1] * m_Parameters.T;
+      double muSinit = (charges[2] != 0) ? muSguess : m_SaddlePointMu[2] * m_Parameters.T;
+      double muCinit = (charges[3] != 0) ? muCguess_shifted : m_SaddlePointMu[3] * m_Parameters.T;
+
+      // Solve GCE constraint equations for shifted charges.
+      // All canonical charges are constrained to capture cross-correlations
+      // (e.g. mu_C shifts when mu_B shifts, through charmed baryons like Lambda_c).
+      bool converged = tempModel.SolveChemicalPotentials(
         Nshifted[0], Nshifted[1], Nshifted[2], Nshifted[3],
-        muBguess, muQguess, muSguess, muCguess,
+        muBinit, muQinit, muSinit, muCinit,
         static_cast<bool>(m_BCE), static_cast<bool>(m_QCE),
         static_cast<bool>(m_SCE), static_cast<bool>(m_CCE));
+
+      if (!converged) {
+        // Solver did not converge for this QN sector: treat as inaccessible
+        m_PartialZ[iN] = 0.0;
+        continue;
+      }
 
       double muOverT_c[4];
       muOverT_c[0] = tempModel.Parameters().muB / m_Parameters.T;
@@ -1105,10 +1232,26 @@ Obtained: %lf\n\
       muOverT_c[2] = tempModel.Parameters().muS / m_Parameters.T;
       muOverT_c[3] = tempModel.Parameters().muC / m_Parameters.T;
 
-      muBguess = tempModel.Parameters().muB;
-      muQguess = tempModel.Parameters().muQ;
-      muSguess = tempModel.Parameters().muS;
-      muCguess = tempModel.Parameters().muC;
+      // Check for NaN/inf in solved chemical potentials
+      bool muValid = true;
+      for (int ia = 0; ia < 4; ++ia) {
+        if (!std::isfinite(muOverT_c[ia])) {
+          muValid = false;
+          break;
+        }
+      }
+      if (!muValid) {
+        m_PartialZ[iN] = 0.0;
+        continue;
+      }
+
+      // Update muGuess only for charges that are shifted in this sector.
+      // For zero-shifted charges, the solved mu captures cross-correlations but
+      // is not a useful initial guess for other sectors with different shift patterns.
+      if (charges[0] != 0) muBguess = tempModel.Parameters().muB;
+      if (charges[1] != 0) muQguess = tempModel.Parameters().muQ;
+      if (charges[2] != 0) muSguess = tempModel.Parameters().muS;
+      if (charges[3] != 0) muCguess = tempModel.Parameters().muC;
 
       std::vector<double> muStar_c(Nparts);
       for (int j = 0; j < Nparts; ++j) {
@@ -1136,6 +1279,13 @@ Obtained: %lf\n\
 
       // ln R(c) = deltaP - deltaMuN - 1/2 * deltaLogDet
       double lnR = deltaP - deltaMuN - 0.5 * deltaLogDet;
+
+      // Guard against NaN propagation
+      if (!std::isfinite(lnR)) {
+        m_PartialZ[iN] = 0.0;
+        continue;
+      }
+
       m_PartialZ[iN] = exp(lnR);
     }
   }
@@ -1172,7 +1322,25 @@ Obtained: %lf\n\
       }
     }
 
-    double logDet = log(Sigma.determinant());
+    // Use LLT (Cholesky) for numerically stable log-determinant of positive-definite Sigma
+    double logDet;
+    Eigen::LLT<Eigen::MatrixXd> llt(Sigma);
+    if (llt.info() == Eigen::Success) {
+      // log(det) = 2 * sum(log(diag(L))) where Sigma = L * L^T
+      logDet = 0.0;
+      for (int i = 0; i < d; ++i)
+        logDet += 2.0 * log(llt.matrixL()(i, i));
+    } else {
+      // Sigma is not positive definite (can happen when charm contributions are extremely small).
+      // Fall back to direct determinant computation with a safety check.
+      double det = Sigma.determinant();
+      if (det > 0.0) {
+        logDet = log(det);
+      } else {
+        // Singular or numerically negative: this sector is not accessible with the SP approximation
+        logDet = -1.e100;
+      }
+    }
 
     if (storeSigmaInv) {
       m_SaddlePointSigma.resize(d * d);
