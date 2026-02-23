@@ -105,6 +105,7 @@ At the saddle point, the condition $\sum_{\bq} q_a\,\texttt{Nsy}[\bq] = N_a$ ens
 This eliminates the rapid oscillation that occurs at finite chemical potentials (e.g.\ strangeness-canonical at nonzero~$\mu_B$), where the large $\texttt{Nsy}$ terms from strange baryons cause severe cancellation in the integrand.
 
 The multiplicative prefactor $e^{-\bN\cdot\bmu_\mathrm{sp}/T}$ introduced by the contour shift cancels implicitly: in the partition function ratios $R(\bc) = Z(\bN-\bc)/Z(\bN)$, it leaves a residual factor $e^{\bc\cdot\bmu_\mathrm{sp}/T}$ that is exactly compensated by the shifted GCE densities $n_j^{\GCE}(\bmu_\mathrm{sp})$ already used in $\langle N_j\rangle_\CE = R(\bq_j)\,n_j^{\GCE}$.
+For entropy, the shift contributes $\ln Z(\bN) = -\bN\cdot\bmu_\mathrm{sp}/T + \ln\tilde{Z}(\bN)$; the additional term $-\bmu_\mathrm{sp}\cdot\bN/(T\,V_c)$ combines with the shifted thermal contributions to reproduce the correct canonical entropy.
 No explicit prefactor correction is needed for any thermodynamic observable.
 
 The contour shift is \emph{not} applied in the \texttt{m\_Banalyt} mode.
