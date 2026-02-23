@@ -90,12 +90,35 @@ When enabled (\texttt{m\_Banalyt}), the baryon fugacity $\phi_B$ is integrated a
   = I_{B_g}(2|w|) \,.
 \end{align}
 
+\paragraph{Saddle-point contour shift.}
+When the baryon analytical path is \emph{not} active (\texttt{m\_Banalyt = false}), the code shifts the Fourier integration contour through the saddle point before evaluating the GL quadrature.
+Concretely, \texttt{PrepareModelGCE()} solves the GCE constraint equations
+\begin{align}
+  \sum_j \sum_n n\,q_{a,j}\,\omega_j^{*,n} = N_a
+  \qquad (a \in \text{canonical charges})
+\end{align}
+for the saddle-point chemical potentials $\bmu_\mathrm{sp}$, and \texttt{FillChemicalPotentials()} propagates them to each species.
+This is equivalent to the contour deformation $\phi_a \to \phi_a + i\mu_{\mathrm{sp},a}/T$ (Cauchy's theorem for periodic analytic functions) and is mathematically exact.
+
+The effect is to populate the antisymmetric multiplicities $\texttt{Nsy}[\bq] = V_c\sum_{j:\bq_j=\bq}\sinh(\mu_j/T)\,z_j$ in the integrand (Eq.~\ref{eq:gdef}).
+At the saddle point, the condition $\sum_{\bq} q_a\,\texttt{Nsy}[\bq] = N_a$ ensures that the linear phase term $-N_a\,\phi_a + \sum_{\bq} q_a\,\texttt{Nsy}[\bq]\sin(q_a\,\phi_a)$ vanishes at $\bphi = 0$ to first order.
+This eliminates the rapid oscillation that occurs at finite chemical potentials (e.g.\ strangeness-canonical at nonzero~$\mu_B$), where the large $\texttt{Nsy}$ terms from strange baryons cause severe cancellation in the integrand.
+
+The multiplicative prefactor $e^{-\bN\cdot\bmu_\mathrm{sp}/T}$ introduced by the contour shift cancels implicitly: in the partition function ratios $R(\bc) = Z(\bN-\bc)/Z(\bN)$, it leaves a residual factor $e^{\bc\cdot\bmu_\mathrm{sp}/T}$ that is exactly compensated by the shifted GCE densities $n_j^{\GCE}(\bmu_\mathrm{sp})$ already used in $\langle N_j\rangle_\CE = R(\bq_j)\,n_j^{\GCE}$.
+No explicit prefactor correction is needed for any thermodynamic observable.
+
+The contour shift is \emph{not} applied in the \texttt{m\_Banalyt} mode.
+The Bessel identity used there assumes particle--antiparticle symmetry ($\texttt{Nsx}[\bq] = \texttt{Nsx}[-\bq]$), which breaks at $\bmu \neq 0$.
+This restriction is benign: \texttt{m\_Banalyt} is active only when all four charges are canonical, where the integrand at $\bmu = 0$ is already symmetric under $\bphi \to -\bphi$ and has no oscillation problem.
+
 \paragraph{Outputs.}
 The quadrature produces $Z(\bN-\bc)$ for all needed charge vectors~$\bc$.
 The ratios $R(\bc)$ are then fed into Eqs.~\eqref{eq:Nce}--\eqref{eq:cov_exact} to obtain means and covariances.
 
 \paragraph{Limitations.}
 At large correlation volumes ($V_c \gtrsim 5000$~fm$^3$), catastrophic cancellation in double precision degrades the fluctuation observables: $R(\bc+\bc')/[R(\bc)\,R(\bc')]$ deviates from unity by only $\mathcal{O}(V_c^{-1})$ but both numerator and denominator are $\sim e^{\mathcal{O}(V_c)}$.
+The saddle-point contour shift eliminates the oscillation problem at finite~$\bmu$ but does not resolve the peak-narrowness issue at very large volumes: the integrand peak width scales as $\sim 1/\sqrt{N_\mathrm{tot}}$, which can be too narrow for the GL quadrature to resolve even with the contour shift.
+In this regime, the saddle-point methods (Sections~\ref{sec:SP1}--\ref{sec:SP2}) should be used instead.
 
 \section{Saddle-point approximation (\texttt{SaddlePoint})}
 \label{sec:SP1}
@@ -246,6 +269,7 @@ Partition functions & GL quadrature & per-$\bc$ SP solve & not computed \\
 Mean yields         & from $R(\bc)$ & from $R(\bc)$ & direct (Eq.~\ref{eq:mean}) \\
 Fluctuations        & from $R(\bc+\bc')$ & from $R(\bc+\bc')$ & analytic (Eq.~\ref{eq:cov}) \\
 Exact conservation  & up to quad.\ error & broken at $\mathcal{O}(V_c^{-1})$ & exact by construction \\
+Finite-$\bmu$ stability & contour shift & native & native \\
 Large-$V_c$ stability & degrades & stable & stable \\
 Small-$V_c$ validity  & exact & breaks down & breaks down \\
 \midrule
@@ -258,7 +282,8 @@ With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s \\
 
 \paragraph{When to use which.}
 \begin{itemize}
-  \item \textbf{GaussLegendre}: Small volumes ($V_c \lesssim 100$~fm$^3$) or when the saddle-point approximation is not reliable.
+  \item \textbf{GaussLegendre}: Small to moderate volumes ($V_c \lesssim 100$--$1000$~fm$^3$) or when the saddle-point approximation is not reliable.
+    The saddle-point contour shift enables use at finite~$\bmu$ for partial canonical ensembles.
     Increase the multiplier $m$ for better precision.
   \item \textbf{SaddlePoint}: Large volumes where GL suffers from cancellation.
     Best when exact partition function ratios $R(\bc)$ are needed (e.g.\ for higher-order cumulants beyond covariances).
