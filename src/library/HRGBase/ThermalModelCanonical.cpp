@@ -688,11 +688,11 @@ Obtained: %lf\n\
     }
 
     for (size_t iN = 0; iN < m_PartialZ.size(); ++iN) {
-      if (m_BMAX != 0 && m_BMAX != 1 && !m_Banalyt) // TODO: cross-check
+      if (m_BMAX != 0 && !m_Banalyt)
         m_PartialZ[iN] /= 2. * xMath::Pi();
       if (m_QMAX != 0) {
         m_PartialZ[iN] /= 2. * xMath::Pi();
-        m_PartialZ[iN] *= 2.; /// TODO: Extra cross-check the factor 2, can be important for entropy density, irrelevant for everything else
+        m_PartialZ[iN] *= 2.; // Factor 2 from half-range [0,pi] integration for phi_Q
       }
       if (m_SMAX != 0)
         m_PartialZ[iN] /= 2. * xMath::Pi();
