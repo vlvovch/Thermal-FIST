@@ -62,6 +62,50 @@ In the Boltzmann approximation ($n_{\max} = 1$) the sum reduces to $F(\bphi) = \
 Each integral runs over $[0, 2\pi]$ (or equivalently $[-\pi, \pi]$).
 The integrand is $2\pi$-periodic and analytic in each $\phi_\alpha$.
 
+\subsection{Reduction to cosine form}
+\label{sec:cosine-reduction}
+
+The starting point is the Fourier projection with a complex exponential phase:
+\begin{equation}\label{eq:ZC-complex}
+  Z_C(\bQ) = \prod_{\alpha} \int_{-\pi}^{\pi} \frac{d\phi_\alpha}{2\pi}\;
+  \exp\!\Bigg(\sum_i \sum_{n} \frac{N_i^{(n)}}{n}\,
+  e^{\,i\,n\,\bq_i \cdot \bphi} - \sum_i \sum_{n} \frac{N_i^{(n)}}{n}\Bigg)\;
+  e^{-i\,\bQ \cdot \bphi}\,.
+\end{equation}
+To reduce this to the cosine form~\cref{eq:ZC}, group each species~$i$ with its antiparticle~$\bar{\imath}$ (charge $-\bq_i$, same mass).
+Their contributions to the exponent combine as
+\begin{equation}\label{eq:pairing}
+  \frac{N_i^{(n)}}{n}\,e^{\,i\,n\,\bq_i \cdot \bphi}
+  + \frac{N_{\bar{\imath}}^{(n)}}{n}\,e^{-i\,n\,\bq_i \cdot \bphi}
+  = \frac{2\bar{N}_i^{(n)}}{n}\cos(n\,\bq_i \cdot \bphi)
+  + \frac{2i\,\delta N_i^{(n)}}{n}\sin(n\,\bq_i \cdot \bphi)\,,
+\end{equation}
+where $\bar{N}_i^{(n)} = (N_i^{(n)} + N_{\bar{\imath}}^{(n)})/2$ and $\delta N_i^{(n)} = (N_i^{(n)} - N_{\bar{\imath}}^{(n)})/2$.
+When all chemical potentials vanish, $N_i^{(n)} = N_{\bar{\imath}}^{(n)}$ so $\delta N_i^{(n)} = 0$ and only cosines survive; at finite chemical potentials for grand-canonical charges, $\delta N_i^{(n)} \neq 0$ and the exponent acquires an imaginary part.
+
+After subtracting the constant $\sum_i \sum_n N_i^{(n)}/n$, the exponent splits into real and imaginary parts:
+\begin{equation}\label{eq:F-split}
+  F_R(\bphi) = \sum_i \sum_n \frac{\bar{N}_i^{(n)}}{n}\bigl[\cos(n\,\bq_i\cdot\bphi) - 1\bigr]\,,
+  \qquad
+  F_I(\bphi) = \sum_i \sum_n \frac{\delta N_i^{(n)}}{n}\sin(n\,\bq_i\cdot\bphi)\,.
+\end{equation}
+Here $F_R$ is a real, even function of~$\bphi$ and $F_I$ is a real, odd function.
+The full integrand becomes
+\begin{equation}\label{eq:integrand-split}
+  e^{F_R + iF_I}\,e^{-i\,\bQ\cdot\bphi}
+  = e^{F_R}\bigl[\cos F_I + i\sin F_I\bigr]\bigl[\cos(\bQ\cdot\bphi) - i\sin(\bQ\cdot\bphi)\bigr]\,.
+\end{equation}
+The real part of this product is $e^{F_R}\cos(\bQ\cdot\bphi - F_I)$; the imaginary part is $-e^{F_R}\sin(\bQ\cdot\bphi - F_I)$.
+Under $\bphi \to -\bphi$: $F_R$ is invariant, $F_I$ changes sign, so $\sin(\bQ\cdot\bphi - F_I) \to \sin(-\bQ\cdot\bphi + F_I) = -\sin(\bQ\cdot\bphi - F_I)$.
+The imaginary part is therefore odd and integrates to zero over $[-\pi,\pi]^d$.
+The cosine term, $\cos(\bQ\cdot\bphi - F_I) \to \cos(-\bQ\cdot\bphi + F_I) = \cos(\bQ\cdot\bphi - F_I)$, is even and survives, giving
+\begin{equation}\label{eq:ZC-general}
+  Z_C(\bQ) = \prod_{\alpha} \int_{-\pi}^{\pi} \frac{d\phi_\alpha}{2\pi}\;
+  e^{F_R(\bphi)}\;\cos\bigl(\bQ \cdot \bphi - F_I(\bphi)\bigr)\,.
+\end{equation}
+This is the general form implemented in the code as \texttt{exp(mx) * cos(phase -- my)}, where $\texttt{mx} = F_R$, $\texttt{phase} = \bQ \cdot \bphi$, and $\texttt{my} = F_I$.
+At zero chemical potential, $F_I = 0$ and \cref{eq:ZC-general} reduces to \cref{eq:ZC}.
+
 In the current implementation, the integrals in \cref{eq:ZC} are evaluated using composite Gauss--Legendre quadrature: each $[0, \pi]$ half-period is divided into $n_{\max}$ subintervals, and a 10-point Gauss--Legendre rule is applied to each subinterval, giving a total of $20\,n_{\max}$ points per fugacity angle.
 The scaling $n_{\max} = \max(3, \sqrt{B^2 + Q^2 + S^2 + C^2})$ is chosen so that the $\cos(\bQ \cdot \bphi)$ oscillation is resolved.
 An external multiplier allows the user to increase $n_{\max}$.
