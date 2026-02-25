@@ -235,6 +235,10 @@ namespace thermalfist {
 
     virtual void FixParametersNoReset();
 
+    /// Solve non-canonical chemical potentials using a temporary GCE model,
+    /// avoiding the expensive canonical partition function computation.
+    void SolveChemicalPotentialsGCE(bool resetInitialValues);
+
     virtual void CalculatePrimordialDensities();
 
     virtual void ValidateCalculation();
@@ -390,6 +394,11 @@ namespace thermalfist {
     std::vector<double> m_SaddlePointSigmaInv;    ///< d x d inverse susceptibility matrix (row-major)
     double m_SaddlePointLogDetSigma;              ///< log(det(Sigma))
     std::vector<double> m_W2;                      ///< Per-particle W^(2) = Vc * chi2 (for SaddlePointNLO)
+
+    /// NLO thermodynamic quantities computed by ComputeAnalyticCumulants().
+    /// These are exact at O(1/Vc) including quantum statistics (cluster expansion).
+    double m_NLOEnergyDensity;   ///< ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
+    double m_NLOPressure;        ///< P = p^GCE(μ*) - d·T/(2·Vc)
     //@}
   };
 
