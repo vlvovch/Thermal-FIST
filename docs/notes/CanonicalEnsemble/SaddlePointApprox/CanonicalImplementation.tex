@@ -235,13 +235,199 @@ with the second-derivative response
   \label{eq:d2alpha}
 \end{align}
 
+\subsection{Thermodynamic quantities (LO + NLO)}
+\label{sec:thermo}
+
+Bulk thermodynamic quantities---pressure, energy density, and entropy density---follow from derivatives of $\ln Z(\bN)$ with respect to the thermodynamic variables.
+We derive each in turn, starting from the saddle-point expression for the canonical partition function.
+
+\subsubsection{Starting point: saddle-point $\ln Z$}
+
+After performing the Gaussian integral around the saddle point $\bmu^*/T$, the canonical partition function is
+\begin{align}
+  \ln Z(\bN) = \frac{V_c}{T}\,p^{\GCE}(\bmu^*) - \sum_a \frac{\mu_a^* N_a}{T}
+  - \frac{1}{2}\ln\det\Sigma + \frac{d}{2}\ln(2\pi) + \mathcal{O}(V_c^{-1}) \,,
+  \label{eq:lnZ_SP}
+\end{align}
+where $p^{\GCE}(\bmu^*) = T\sum_j \sum_n \omega_j^{*,n}/V_c$ is the GCE pressure at the saddle-point chemical potentials, $d$ is the number of canonically conserved charges with nonzero susceptibility (i.e.\ $d = \mathrm{rank}(\Sigma)$), and $\Sigma_{ab}$ is defined in Eq.~\eqref{eq:Sigma}.
+
+\paragraph{Stationarity.}
+The saddle-point condition~\eqref{eq:saddle} ensures $\partial(\ln Z)/\partial\alpha_a^* = 0$ (where $\alpha_a \equiv \mu_a/T$).
+This means that when differentiating $\ln Z$ with respect to external parameters ($T$, $V_c$), the implicit dependence $\bmu^*(T, V_c)$ drops out, and only the \emph{explicit} dependence on $T$ and $V_c$ contributes.
+This is the key simplification.
+
+\subsubsection{Pressure}
+
+The canonical pressure is
+\begin{align}
+  P = T\,\frac{\partial \ln Z(\bN)}{\partial V_c}\bigg|_T \,.
+\end{align}
+From Eq.~\eqref{eq:lnZ_SP}, the $V_c$-dependent terms are:
+\begin{itemize}
+  \item $V_c\,p^{\GCE}/T$: Since $\omega_j^{*,n} \propto V_c$ at fixed $\alpha_a^* = \mu_a^*/T$, the GCE pressure $p^{\GCE}$ is $V_c$-independent, so $\partial(V_c\,p^{\GCE}/T)/\partial V_c = p^{\GCE}/T$.
+  \item $-\sum_a \mu_a^* N_a/T$: By stationarity, this is constant (the saddle-point $\bmu^*$ does not change with $V_c$ at fixed $\alpha^* = \mu^*/T$, and $N_a$ is fixed).
+  \item $-\tfrac{1}{2}\ln\det\Sigma$: Since $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ and each $W_j^{(2)} = \sum_n n^2\,\omega_j^{*,n} \propto V_c$ at fixed $\alpha^*$, we have $\Sigma = V_c\,\hat\Sigma$ where $\hat\Sigma$ is $V_c$-independent. Thus $\ln\det\Sigma = d\ln V_c + \ln\det\hat\Sigma$, and $\partial\ln\det\Sigma/\partial V_c = d/V_c$.
+\end{itemize}
+Combining:
+\begin{align}
+  \boxed{
+  P = p^{\GCE}(\bmu^*) - \frac{d\,T}{2\,V_c} + \mathcal{O}(V_c^{-2}) \,.
+  }
+  \label{eq:pressure}
+\end{align}
+The NLO correction $-dT/(2V_c)$ is purely geometric (it counts the number of conserved-charge constraints) and is independent of the particle content.
+
+\subsubsection{Energy density}
+
+The canonical energy density is
+\begin{align}
+  \varepsilon = \frac{T^2}{V_c}\,\frac{\partial \ln Z(\bN)}{\partial T}\bigg|_{V_c} \,.
+  \label{eq:eps_def}
+\end{align}
+We differentiate Eq.~\eqref{eq:lnZ_SP} with respect to $T$ at fixed $V_c$, using stationarity to ignore the implicit $T$-dependence through $\bmu^*(T)$.
+Writing $\alpha_a^* = \mu_a^*/T$, the ``fixed $\alpha^*$'' derivatives are:
+\begin{itemize}
+  \item $\partial(V_c\,p^{\GCE}/T)/\partial T\big|_{\alpha^*} = V_c\,\varepsilon^{\GCE}/T^2$, from the identity $T^2\,\partial(p/T)/\partial T\big|_{\alpha} = \varepsilon$ (derived below, Eq.~\ref{eq:dpoverTdT}).
+  \item $\partial(-\sum_a \alpha_a^* N_a)/\partial T\big|_{\alpha^*} = 0$ (fixed).
+  \item $-\tfrac{1}{2}\,\partial\ln\det\Sigma/\partial T\big|_{\alpha^*} = -\tfrac{1}{2}\,\Tr(\Sigma^{-1}\,\partial\Sigma/\partial T\big|_{\alpha^*})$.
+\end{itemize}
+The first two terms give the LO contribution $\varepsilon^{\GCE}(\bmu^*)$.
+The NLO correction requires computing $\partial\Sigma/\partial T\big|_{\alpha^*}$.
+
+\paragraph{Temperature derivative of $\Sigma$.}
+Since $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ and $W_j^{(2)} = \sum_n n^2\,\omega_j^{*,n}$, we need $\partial\omega_j^{*,n}/\partial T\big|_{\alpha^*}$.
+From the definition~\eqref{eq:omega}, $\omega_j^{*,n} = V_c\,p_{j,n}/T$, where $p_{j,n}$ is the $n$-th cluster contribution to the GCE pressure of species~$j$.
+The standard cluster expansion gives
+\begin{align}
+  p_{j,n} = \frac{(\pm 1)^{n+1}}{n}\,\frac{d_j\,T}{2\pi^2}\,m_j^2\,K_2\!\Big(\frac{n\,m_j}{T}\Big)\,e^{n\mu_j/T}
+  = (\pm 1)^{n+1}\,p_j^{\mathrm{Boltz}}\!\Big(\frac{T}{n},\,\mu_j\Big) \,,
+  \label{eq:pjn}
+\end{align}
+where the second equality holds because the Boltzmann pressure at temperature $T/n$ has a prefactor $d_j\,(T/n)/(2\pi^2) = d_j\,T/(n\cdot 2\pi^2)$, which precisely absorbs the cluster-expansion factor $1/n$.
+This is what \texttt{DensityCluster($n$, Pressure)} returns.
+
+We define $\varepsilon_{j,n}$ through the same relation used for the total pressure:
+\begin{align}
+  \varepsilon_{j,n} \equiv T^2\,\frac{\partial(p_{j,n}/T)}{\partial T}\bigg|_{\alpha} \,.
+  \label{eq:epsjn_def}
+\end{align}
+Using the identity (proved below) $T^2\,\partial(p/T)/\partial T\big|_\alpha = \varepsilon$, this gives
+\begin{align}
+  \frac{\partial\omega_j^{*,n}}{\partial T}\bigg|_{\alpha^*}
+  = \frac{V_c}{T^2}\,\varepsilon_{j,n}(\mu_j^*) \,.
+  \label{eq:domega_dT}
+\end{align}
+One can verify that $\varepsilon_{j,n} = (\pm 1)^{n+1}\,\varepsilon_j^{\mathrm{Boltz}}(T/n,\,\mu_j)$, which is what \texttt{DensityCluster($n$, EnergyDensity)} returns (see below).
+
+\paragraph{Proof of the identity $T^2\,\partial(p/T)/\partial T\big|_\alpha = \varepsilon$.}
+One might naively expect the entropy density here, since $\partial p/\partial T|_\mu = s$.
+The key is that we differentiate $p/T$ (not~$p$) and hold $\alpha = \mu/T$ fixed (not~$\mu$).
+Using $\mu = \alpha T$ and the chain rule:
+\begin{align}
+  \frac{\partial p}{\partial T}\bigg|_{\alpha}
+  = \frac{\partial p}{\partial T}\bigg|_{\mu} + \frac{\partial p}{\partial \mu}\bigg|_{T}\,\frac{\mu}{T}
+  = s + \frac{n\mu}{T} \,,
+\end{align}
+where $s$ and $n$ are the entropy and number densities.
+Then:
+\begin{align}
+  \frac{\partial(p/T)}{\partial T}\bigg|_{\alpha}
+  = \frac{1}{T}\frac{\partial p}{\partial T}\bigg|_{\alpha} - \frac{p}{T^2}
+  = \frac{Ts + n\mu - p}{T^2}
+  = \frac{\varepsilon}{T^2} \,,
+  \label{eq:dpoverTdT}
+\end{align}
+where the last step uses the Euler relation $\varepsilon + p = Ts + \mu\,n$.
+
+\paragraph{Proof that $\varepsilon_{j,n} = (\pm 1)^{n+1}\,\varepsilon_j^{\mathrm{Boltz}}(T/n,\,\mu_j)$.}
+From Eq.~\eqref{eq:pjn}, $p_{j,n}/T = (\pm 1)^{n+1}\,p_j^{\mathrm{Boltz}}(T/n,\,\mu_j)/T$.
+Let $\tilde{T} = T/n$, so $T = n\tilde{T}$.
+At fixed $\alpha = \mu/T$, the ratio $\mu/\tilde{T} = n\alpha$ is also constant.
+Hence $\partial/\partial T\big|_\alpha = (1/n)\,\partial/\partial\tilde{T}\big|_{\mu/\tilde{T}}$ and
+\begin{align}
+  T^2\,\frac{\partial(p^{\mathrm{Boltz}}(\tilde{T},\mu)/(n\tilde{T}))}{\partial T}\bigg|_\alpha
+  = \frac{n^2\tilde{T}^2}{n}\cdot\frac{1}{n}\,\frac{\partial(p^{\mathrm{Boltz}}/\tilde{T})}{\partial\tilde{T}}\bigg|_{\mu/\tilde{T}}
+  = \tilde{T}^2\,\frac{\partial(p^{\mathrm{Boltz}}/\tilde{T})}{\partial\tilde{T}}\bigg|_{\mu/\tilde{T}}
+  = \varepsilon^{\mathrm{Boltz}}(\tilde{T},\mu) \,,
+\end{align}
+where the last equality uses Eq.~\eqref{eq:dpoverTdT} for a Boltzmann gas at temperature~$\tilde{T}$.
+Therefore $\varepsilon_{j,n} = (\pm 1)^{n+1}\,\varepsilon_j^{\mathrm{Boltz}}(T/n,\,\mu_j)$, confirming that \texttt{DensityCluster($n$, EnergyDensity)} directly gives~$\varepsilon_{j,n}$.
+
+Therefore:
+\begin{align}
+  \frac{\partial W_j^{(2)}}{\partial T}\bigg|_{\alpha^*}
+  = \sum_n n^2\,\frac{\partial\omega_j^{*,n}}{\partial T}\bigg|_{\alpha^*}
+  = \frac{V_c}{T^2}\sum_n n^2\,\varepsilon_{j,n}(\mu_j^*) \,.
+  \label{eq:dW2dT}
+\end{align}
+Define the \emph{energy-weighted cluster sum}:
+\begin{align}
+  \boxed{
+  E_j \equiv \sum_{n=1}^{n_\mathrm{max}} n^2\,\varepsilon_{j,n}(\mu_j^*) \,.
+  }
+  \label{eq:Ej}
+\end{align}
+The $n^2$ factor arises because $W_j^{(2)} = \sum_n n^2\,\omega_j^{*,n}$, so differentiating brings down $n^2$ times $\partial\omega/\partial T$.
+For Boltzmann statistics only $n=1$ contributes, giving $E_j = \varepsilon_j^{\GCE}(\mu_j^*)$.
+
+\paragraph{Trace formula.}
+Substituting into the susceptibility derivative:
+\begin{align}
+  \frac{\partial\Sigma_{ab}}{\partial T}\bigg|_{\alpha^*}
+  = \sum_j q_{a,j}\,q_{b,j}\,\frac{V_c\,E_j}{T^2} \,,
+\end{align}
+and using $G_{jk} = \bq_j^T\Sigma^{-1}\bq_k$:
+\begin{align}
+  \Tr\!\Big(\Sigma^{-1}\,\frac{\partial\Sigma}{\partial T}\Big\rvert_{\alpha^*}\Big)
+  = \sum_j G_{jj}\,\frac{V_c\,E_j}{T^2} \,.
+\end{align}
+The NLO energy correction is thus
+\begin{align}
+  \delta\varepsilon = -\frac{T^2}{2V_c}\,\Tr\!\Big(\Sigma^{-1}\,\frac{\partial\Sigma}{\partial T}\Big\rvert_{\alpha^*}\Big)
+  = -\frac{1}{2}\sum_j E_j\,G_{jj} \,,
+\end{align}
+giving the full result:
+\begin{align}
+  \boxed{
+  \varepsilon = \varepsilon^{\GCE}(\bmu^*)
+  - \frac{1}{2}\sum_j E_j\,G_{jj}
+  + \mathcal{O}(V_c^{-2}) \,,
+  }
+  \label{eq:energy}
+\end{align}
+where $\varepsilon^{\GCE}(\bmu^*) = \sum_j \varepsilon_j(T,\mu_j^*)$ is the GCE energy density at the saddle point.
+
+\subsubsection{Entropy density}
+
+The canonical entropy density follows from the exact statistical mechanics identity (no chemical potential term in the canonical ensemble since the charges are fixed):
+\begin{align}
+  \boxed{
+  s = \frac{\ln Z(\bN)}{V_c} + \frac{\varepsilon}{T} \,.
+  }
+  \label{eq:entropy}
+\end{align}
+This holds at any volume.
+Here $\ln Z(\bN)$ is given by the saddle-point expression~\eqref{eq:lnZ_SP}, already computed and stored in \texttt{m\_MultExp}.
+The energy density $\varepsilon$ is given by Eq.~\eqref{eq:energy}.
+No separate NLO formula is needed---the entropy is automatically consistent through $\ln Z$ and $\varepsilon$.
+
+\paragraph{Euler relation.}
+The Euler relation $P = Ts - \varepsilon$ (equivalently $PV_c = T\ln Z$) holds only in the thermodynamic limit $V_c \to \infty$.
+At finite~$V_c$, the deviation $s - (\varepsilon + P)/T = \ln Z/V_c - P/T$ is $\mathcal{O}(V_c^{-1})$.
+This can be verified explicitly: using Eq.~\eqref{eq:lnZ_SP},
+\begin{align}
+  \frac{\ln Z}{V_c} = \frac{p^{\GCE}}{T} - \frac{\bmu^*\cdot\bN}{TV_c} - \frac{\ln\det\Sigma}{2V_c} + \frac{d\ln(2\pi)}{2V_c} \,,
+\end{align}
+while $P/T = p^{\GCE}/T - d/(2V_c)$, so the difference is $\mathcal{O}(V_c^{-1})$ as expected.
+
 \subsection{Algorithm}
 
 \begin{enumerate}
   \item Solve Eq.~\eqref{eq:saddle} for $\bmu^*/T$ via Broyden's method.
-  \item Compute $W_j^{(k)}$ ($k = 1,\ldots,4$) for all species from the cluster expansion.
+  \item Compute $W_j^{(k)}$ ($k = 1,\ldots,4$), the GCE energy density $\varepsilon^{\GCE}(\bmu^*)$ and pressure $p^{\GCE}(\bmu^*)$, and the energy-weighted cluster sums~$E_j$ for all species from the cluster expansion.
   \item Build $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ directly from the $W^{(2)}$ values.  Invert to get $\Sigma^{-1}$.
   \item Compute $G_{jj}$, $P_{j,a}$, and $D_{jl}$ for all species.
+  \item Evaluate NLO thermodynamic quantities from Eqs.~\eqref{eq:pressure}--\eqref{eq:energy}.
   \item Evaluate means from Eq.~\eqref{eq:mean}: cost $\mathcal{O}(N_\mathrm{spec}^2)$.
   \item If fluctuations are requested, evaluate the full covariance matrix from Eqs.~\eqref{eq:cov}--\eqref{eq:d2alpha}: cost $\mathcal{O}(N_\mathrm{spec}^3)$.
 \end{enumerate}
@@ -269,6 +455,7 @@ All formulas hold with $\Sigma^{-1}$ restricted to the canonical subspace and ch
 Partition functions & GL quadrature & per-$\bc$ SP solve & not computed \\
 Mean yields         & from $R(\bc)$ & from $R(\bc)$ & direct (Eq.~\ref{eq:mean}) \\
 Fluctuations        & from $R(\bc+\bc')$ & from $R(\bc+\bc')$ & analytic (Eq.~\ref{eq:cov}) \\
+Thermodynamics      & from $R(\bc)$ \& GCE & from $R(\bc)$ \& GCE & direct (Eqs.~\ref{eq:pressure}--\ref{eq:energy}) \\
 Exact conservation  & up to quad.\ error & broken at $\mathcal{O}(V_c^{-1})$ & exact by construction \\
 Finite-$\bmu$ stability & contour shift & native & native \\
 Large-$V_c$ stability & degrades & stable & stable \\

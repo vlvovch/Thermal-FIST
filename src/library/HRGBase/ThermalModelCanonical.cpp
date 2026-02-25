@@ -45,6 +45,8 @@ namespace thermalfist {
 
     m_SaddlePointDim = 0;
     m_SaddlePointLogDetSigma = 0.0;
+    m_NLOEnergyDensity = 0.0;
+    m_NLOPressure = 0.0;
   }
 
 
@@ -893,6 +895,13 @@ Obtained: %lf\n\
 
   double ThermalModelCanonical::CalculateEnergyDensity() {
     if (!m_Calculated) CalculateDensities();
+
+    // SaddlePointNLO: exact NLO energy density from saddle-point expansion
+    //   ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
+    // Computed and stored by ComputeAnalyticCumulants().
+    if (m_Method == SaddlePointNLO)
+      return m_NLOEnergyDensity;
+
     double ret = 0.;
 
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -923,6 +932,13 @@ Obtained: %lf\n\
 
   double ThermalModelCanonical::CalculatePressure() {
     if (!m_Calculated) CalculateDensities();
+
+    // SaddlePointNLO: exact NLO pressure from saddle-point expansion
+    //   P = p^GCE(μ*) - d·T/(2·Vc)
+    // Computed and stored by ComputeAnalyticCumulants().
+    if (m_Method == SaddlePointNLO)
+      return m_NLOPressure;
+
     double ret = 0.;
 
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -1410,14 +1426,36 @@ Obtained: %lf\n\
     m_MultExp = ComputeLnZSP(m_SaddlePointMuStar, m_SaddlePointMu.data(), Nref, m_SaddlePointLogDetSigma);
     m_MultExpBanalyt = 0.0;
 
-    // Step 2: Compute cluster moments W_j^(k) for k = 1,2,3,4 at the saddle point
+    // Set reference partition function to 1 so that log(m_PartialZ[0]) = 0
+    // in CalculateEntropyDensity(), which uses m_MultExp + log(m_PartialZ[0]).
+    m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]] = 1.0;
+
+    // Step 2: Compute cluster moments W_j^(k) for k = 1,2,3,4 at the saddle point,
+    //         GCE thermodynamic densities at mu*, and energy-weighted cluster sums E_j.
     std::vector<double> W1(Nparts, 0.0);  // W_j^(1) = <N_j>_GCE
     std::vector<double> W2(Nparts, 0.0);  // W_j^(2) = var_GCE(N_j)
     std::vector<double> W3(Nparts, 0.0);  // W_j^(3)
     std::vector<double> W4(Nparts, 0.0);  // W_j^(4)
 
+    // Energy-weighted cluster sum for canonical species:
+    //   E_j = sum_n n^2 * DensityCluster(n, EnergyDensity, mu*_j)
+    // Derivation: dSigma/dT|_{alpha*} = sum_j q_aj q_bj dW_j^(2)/dT,
+    //   dW_j^(2)/dT = sum_n n^2 * d(omega_j^n)/dT = (Vc/T^2) sum_n n^2 eps_{j,n}
+    // since d(omega)/dT|_{alpha*} = Vc * eps_{j,n} / T^2.
+    // For Boltzmann (n=1 only): E_j = eps_j^GCE(mu*).
+    std::vector<double> Ej(Nparts, 0.0);
+
+    // GCE energy density and pressure at mu* (LO contribution)
+    double epsGCE = 0.0;
+    double pGCE = 0.0;
+
     for (int j = 0; j < Nparts; ++j) {
       ThermalParticle& tpart = m_TPS->Particle(j);
+
+      // All species contribute to GCE energy and pressure at the saddle point
+      epsGCE += tpart.Density(m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_SaddlePointMuStar[j]);
+      pGCE   += tpart.Density(m_Parameters, IdealGasFunctions::Pressure, m_UseWidth, m_SaddlePointMuStar[j]);
+
       if (!IsParticleCanonical(tpart))
         continue;
 
@@ -1431,6 +1469,9 @@ Obtained: %lf\n\
         W2[j] = omega;
         W3[j] = omega;
         W4[j] = omega;
+
+        // Boltzmann: E_j = eps_j(mu*)
+        Ej[j] = tpart.DensityCluster(1, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_SaddlePointMuStar[j]);
       }
       else {
         // Quantum statistics with cluster expansion
@@ -1441,6 +1482,11 @@ Obtained: %lf\n\
           W2[j] += n * n * omega_n;
           W3[j] += n * n * n * omega_n;
           W4[j] += n * n * n * n * omega_n;
+
+          // Energy-weighted cluster sum: E_j = sum_n n^2 * eps_{j,n}(mu*)
+          // The n^2 arises because dW^(2)/dT = sum_n n^2 * d(omega)/dT
+          double edens_n = tpart.DensityCluster(n, m_Parameters, IdealGasFunctions::EnergyDensity, m_UseWidth, m_SaddlePointMuStar[j]);
+          Ej[j] += n * n * edens_n;
         }
       }
     }
@@ -1506,6 +1552,31 @@ Obtained: %lf\n\
       }
       return g;
     };
+
+    // Step 3b: Compute exact NLO thermodynamic quantities.
+    //
+    // Energy: ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
+    //   where E_j = Σ_n n² · ε_{j,n}(μ*) is the energy-weighted cluster sum.
+    //   Derivation: ε = (T²/Vc) ∂ln Z/∂T. By stationarity, only explicit
+    //   T-dependence contributes. The NLO correction is
+    //   δε = -(T²/2Vc) Tr(Σ⁻¹ ∂Σ/∂T|_α*).
+    //   Since ∂ω_{j,n}/∂T|_α* = Vc ε_{j,n}/T² and W^(2) = Σ_n n² ω_n,
+    //   we get ∂W^(2)/∂T = (Vc/T²) Σ_n n² ε_{j,n}, hence the n² weighting.
+    //
+    // Pressure: P = p^GCE(μ*) - d·T/(2Vc)
+    //   where d = rank(Σ) = number of canonical charges with nonzero susceptibility.
+    //   Derivation: P = T ∂ln Z/∂Vc. Since Σ ∝ Vc, ln det Σ = d ln Vc + const,
+    //   so ∂ln det Σ/∂Vc = d/Vc. Purely geometric correction.
+    {
+      double deltaEps = 0.0;
+      for (int j = 0; j < Nparts; ++j) {
+        if (Ej[j] == 0.0 || Gjj[j] == 0.0)
+          continue;
+        deltaEps += Ej[j] * Gjj[j];
+      }
+      m_NLOEnergyDensity = epsGCE - 0.5 * deltaEps;
+      m_NLOPressure = pGCE - d * m_Parameters.T / (2.0 * Vc);
+    }
 
     // Step 4: Compute LO + NLO means
     for (int l = 0; l < Nparts; ++l) {
