@@ -246,7 +246,7 @@ We derive each in turn, starting from the saddle-point expression for the canoni
 After performing the Gaussian integral around the saddle point $\bmu^*/T$, the canonical partition function is
 \begin{align}
   \ln Z(\bN) = \frac{V_c}{T}\,p^{\GCE}(\bmu^*) - \sum_a \frac{\mu_a^* N_a}{T}
-  - \frac{1}{2}\ln\det\Sigma + \frac{d}{2}\ln(2\pi) + \mathcal{O}(V_c^{-1}) \,,
+  - \frac{d}{2}\ln(2\pi) - \frac{1}{2}\ln\det\Sigma + \mathcal{O}(V_c^{-1}) \,,
   \label{eq:lnZ_SP}
 \end{align}
 where $p^{\GCE}(\bmu^*) = T\sum_j \sum_n \omega_j^{*,n}/V_c$ is the GCE pressure at the saddle-point chemical potentials, $d$ is the number of canonically conserved charges with nonzero susceptibility (i.e.\ $d = \mathrm{rank}(\Sigma)$), and $\Sigma_{ab}$ is defined in Eq.~\eqref{eq:Sigma}.
@@ -416,9 +416,62 @@ The Euler relation $P = Ts - \varepsilon$ (equivalently $PV_c = T\ln Z$) holds o
 At finite~$V_c$, the deviation $s - (\varepsilon + P)/T = \ln Z/V_c - P/T$ is $\mathcal{O}(V_c^{-1})$.
 This can be verified explicitly: using Eq.~\eqref{eq:lnZ_SP},
 \begin{align}
-  \frac{\ln Z}{V_c} = \frac{p^{\GCE}}{T} - \frac{\bmu^*\cdot\bN}{TV_c} - \frac{\ln\det\Sigma}{2V_c} + \frac{d\ln(2\pi)}{2V_c} \,,
+  \frac{\ln Z}{V_c} = \frac{p^{\GCE}}{T} - \frac{\bmu^*\cdot\bN}{TV_c} - \frac{d\ln(2\pi)}{2V_c} - \frac{\ln\det\Sigma}{2V_c} \,,
 \end{align}
 while $P/T = p^{\GCE}/T - d/(2V_c)$, so the difference is $\mathcal{O}(V_c^{-1})$ as expected.
+
+\subsubsection{Numerical validation}
+\label{sec:nlo_validation}
+
+The NLO corrections to pressure and energy density have been validated numerically by comparing against exact Gauss--Legendre (GL) quadrature results at moderate volumes.
+
+\paragraph{Method.}
+For a range of correlation volumes $V_c$, the GL method (Section~\ref{sec:GL}) provides numerically exact results (up to quadrature error).
+At large enough~$V_c$, all thermodynamic densities admit a $1/V_c$ expansion:
+\begin{align}
+  f(V_c) = f_\LO + \frac{f_{\NLO}}{V_c} + \mathcal{O}(V_c^{-2}) \,.
+\end{align}
+The NLO coefficient $f_{\NLO}$ can be extracted from GL data via linear regression of~$f$ against $1/V_c$.
+Independently, the analytic NLO prediction is obtained from two \texttt{SaddlePointNLO} calculations at well-separated volumes $V_1$ and $V_2$:
+\begin{align}
+  f_\NLO^\mathrm{(analytic)} = \frac{V_1\,V_2\,\big[f(V_1) - f(V_2)\big]}{V_2 - V_1} \,.
+\end{align}
+
+\paragraph{Results: $d = 3$ (no charmed hadrons).}
+Using the PDG2020 particle list without charmed hadrons at $T = 155$~MeV, $\bN = 0$, with canonical $B$, $Q$, $S$, $C$ conservation and Boltzmann statistics, GL calculations at $V_c = 500$--$2000$~fm$^3$ with integration multiplier~$m = 3$ give:
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Quantity & GL slope & NLO slope & Ratio & Analytic \\
+\midrule
+$\varepsilon$ & agrees & agrees & $\approx 0.99$ & --- \\
+$P$           & $\approx -0.233$ & $\approx -0.233$ & $\approx 0.99$ & $-3T/2 = -0.2325$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The pressure slope matches the analytic prediction $-dT/2$ with $d = 3$, corresponding to $\mathrm{rank}(\Sigma) = 3$: although charm is formally canonical, the particle list contains no charmed hadrons, so $\Sigma_{CC} = 0$ and the charm direction does not contribute.
+
+\paragraph{Results: $d = 4$ (with charmed hadrons).}
+Switching to the particle list with charmed hadrons and setting a large charm fugacity $\gamma_C \gg 1$ to ensure $\Sigma_{CC}\,V_c \gg 1$, the GL pressure slope at $V_c = 200$--$1000$~fm$^3$ gives $\approx -0.297$, consistent with the analytic prediction $-4T/2 = -0.310$.
+At physical $\gamma_C = 1$, where charm production is thermally suppressed ($\Sigma_{CC}\,V_c \ll 1$), the GL slope reverts to $\approx -0.240$, closer to $d = 3$.
+
+\paragraph{Effective dimensionality.}
+The parameter $d$ in the NLO pressure formula~\eqref{eq:pressure} is the number of charge directions for which the saddle-point (Gaussian) approximation is valid.
+The Gaussian approximation for charge~$a$ requires that the integration range $[-\pi, \pi]$ be much wider than the Gaussian width $\sigma_a \sim 1/\sqrt{\Sigma_{aa}\,V_c}$, i.e.\
+\begin{align}
+  \Sigma_{aa}\,V_c \gg 1 \,.
+  \label{eq:validity}
+\end{align}
+When this condition is violated (as for charm at physical $\gamma_C$), the Gaussian extends well beyond $[-\pi, \pi]$ and the saddle-point approximation breaks down for that direction.
+The NLO formula then overestimates the correction from that charge: it predicts a $-T/(2V_c)$ contribution per charge, but the true correction is exponentially small when $\Sigma_{aa}\,V_c \to 0$.
+In practice, the effective dimensionality is $d = \mathrm{rank}_\mathrm{eff}(\Sigma\,V_c)$, counting only the directions satisfying~\eqref{eq:validity}.
+
+\paragraph{Entropy limitation.}
+The NLO entropy density~\eqref{eq:entropy} inherits a limitation from the saddle-point $\ln Z$ expression~\eqref{eq:lnZ_SP}.
+The NLO terms in $\varepsilon$ and~$P$ are correctly captured because they arise from derivatives of $\ln Z$ with respect to $T$ and $V_c$, which naturally select the $\mathcal{O}(V_c^0)$ and $\mathcal{O}(V_c^{-1})$ contributions.
+However, $\ln Z$ itself contains an $\mathcal{O}(1)$ NNLO correction (from the next term in the saddle-point expansion) that is not computed.
+Since $s = \ln Z/V_c + \varepsilon/T$, this missing $\mathcal{O}(1)$ term in $\ln Z$ produces an $\mathcal{O}(V_c^{-1})$ error in~$s$.
+This is a limitation of both the \texttt{SaddlePoint} and \texttt{SaddlePointNLO} methods---they share the same saddle-point $\ln Z$---and does not affect $\varepsilon$ or~$P$.
 
 \subsection{Algorithm}
 
