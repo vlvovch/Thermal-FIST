@@ -152,4 +152,11 @@ void SetThermalModelParameters(thermalfist::ThermalModelBase* model, const Therm
 void SetThermalModelConfiguration(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 void SetThermalModelInteraction(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 
+/// Creates a pre-configured GCE model suitable for SetModelGCE() on a canonical model.
+/// Returns nullptr if config.InteractionModel is InteractionIdeal.
+/// Caller is responsible for deleting the returned model.
+thermalfist::ThermalModelBase* CreateGCEModelForCanonical(
+    thermalfist::ThermalParticleSystem* TPS,
+    const ThermalModelConfig& config);
+
 #endif

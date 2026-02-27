@@ -311,6 +311,7 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
 FitToExperimentTab::~FitToExperimentTab()
 {
+    if (m_modelGCE != nullptr) { delete m_modelGCE; m_modelGCE = nullptr; }
     if (fitcopy!=NULL) { delete fitcopy; }
     delete model;
 }
@@ -473,7 +474,21 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
   fit->SetPCEPionAnnihilationNumber(config.PCEPionAnnihilationNumber);
 
 
-  SetThermalModelInteraction(model, config);
+  // For non-ideal CE: interactions are set on the auxiliary GCE model, not the canonical model itself.
+  // SetThermalModelInteraction does static_casts that are only valid for the matching model type.
+  if (m_modelGCE != nullptr) {
+    delete m_modelGCE;
+    m_modelGCE = nullptr;
+  }
+  if (config.ModelType == ThermalModelConfig::CE
+      && config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+    m_modelGCE = CreateGCEModelForCanonical(model->TPS(), config);
+    if (m_modelGCE != nullptr) {
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(m_modelGCE);
+    }
+  } else {
+    SetThermalModelInteraction(model, config);
+  }
 
   if (config.ModelType == ThermalModelConfig::CE) {
     static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(false);
@@ -1169,6 +1184,14 @@ void FitToExperimentTab::finalize() {
   labelValid->setVisible(true);
 
   fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
+
+  // Clean up auxiliary GCE model for non-ideal CE
+  if (m_modelGCE != nullptr) {
+    if (model->Ensemble() == ThermalModelBase::CE)
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(nullptr);
+    delete m_modelGCE;
+    m_modelGCE = nullptr;
+  }
 
   fRunning = false;
   modelChanged();
