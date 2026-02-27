@@ -197,7 +197,9 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     modcan->ConserveStrangeness(config.CanonicalS);
     modcan->ConserveCharm(config.CanonicalC);
 
-    if (config.CanonicalMethod == 2)
+    if (config.CanonicalMethod == 3)
+      modcan->SetMethod(thermalfist::SaddlePointLO);
+    else if (config.CanonicalMethod == 2)
       modcan->SetMethod(thermalfist::SaddlePointNLO);
     else if (config.CanonicalMethod == 1)
       modcan->SetMethod(thermalfist::SaddlePoint);

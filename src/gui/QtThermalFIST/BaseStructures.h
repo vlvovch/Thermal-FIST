@@ -58,7 +58,7 @@ struct ThermalModelConfig {
   bool CanonicalQ;
   bool CanonicalS;
   bool CanonicalC;
-  int CanonicalMethod; ///< 0 - Gauss-Legendre, 1 - Saddle point
+  int CanonicalMethod; ///< 0 - Gauss-Legendre, 1 - Saddle point, 2 - Saddle point NLO, 3 - Saddle point LO
 
   /// Constraints on mu's
   double SoverB;

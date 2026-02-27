@@ -713,6 +713,7 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   comboCanonicalMethod->addItem(tr("Gauss-Legendre quadrature"));
   comboCanonicalMethod->addItem(tr("Saddle-point approximation"));
   comboCanonicalMethod->addItem(tr("Saddle-point approx. (NLO)"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approx. (LO)"));
   comboCanonicalMethod->setCurrentIndex(m_parent->currentConfig.CanonicalMethod);
   layMethod->addWidget(labelMethod);
   layMethod->addWidget(comboCanonicalMethod);

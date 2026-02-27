@@ -1215,6 +1215,10 @@ namespace thermalfist {
     /// the CalculateTwoParticleCorrelations() method
     bool IsTwoParticleCorrelationsCalculated() const { return m_TwoParticleCorrelationsCalculated; }
 
+    /// Returns the primordial two-particle susceptibility matrix
+    /// \f$ \chi_{ij} = \frac{1}{VT^3} \langle \Delta N_i^* \Delta N_j^* \rangle \f$
+    const std::vector<std::vector<double>>& PrimCorrel() const { return m_PrimCorrel; }
+
     /// Whether fluctuations were calculated with
     /// the CalculateFluctuations() method
     bool IsFluctuationsCalculated() const { return m_FluctuationsCalculated; }

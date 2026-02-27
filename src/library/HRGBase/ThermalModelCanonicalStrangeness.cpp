@@ -36,6 +36,8 @@ namespace thermalfist {
 
     m_Parameters.muS = 0.;
 
+    m_xiSum = 0.0;
+
     m_TAG = "ThermalModelCanonicalStrangeness";
 
     m_Ensemble = SCE;
@@ -123,14 +125,19 @@ namespace thermalfist {
     // TODO: Choose iters dynamically based on total strangeness
     int iters = 20;
 
+    // Use exponentially-scaled Bessel functions to avoid overflow for large xi.
+    // BesselIexp(n, x) = I_n(x) * exp(-|x|), so the common factor exp(xi0+xi1+xi2)
+    // cancels in the ratio m_Zsum[i]/m_Zsum[0] used for densities.
+    m_xiSum = xi[0] + xi[1] + xi[2];
+
     for (unsigned int i = 0; i < m_StrVals.size(); ++i) {
       double res = 0.;
 
       for (int m = -iters; m <= iters; ++m)
         for (int n = -iters; n <= iters; ++n) {
-          double tmp = xMath::BesselI(abs(3 * m + 2 * n - m_StrVals[i]), xi[0]) *
-            xMath::BesselI(abs(n), xi[1]) *
-            xMath::BesselI(abs(m), xi[2]) *
+          double tmp = xMath::BesselIexp(abs(3 * m + 2 * n - m_StrVals[i]), xi[0]) *
+            xMath::BesselIexp(abs(n), xi[1]) *
+            xMath::BesselIexp(abs(m), xi[2]) *
             pow(yi[0], m_StrVals[i] - 3 * m - 2 * n) *
             pow(yi[1], n) *
             pow(yi[2], m);
@@ -193,7 +200,9 @@ namespace thermalfist {
 
 
   double ThermalModelCanonicalStrangeness::CalculateEntropyDensity() {
-    double ret = log(m_Zsum[m_StrMap[0]]) / m_Parameters.SVc;
+    // m_Zsum stores BesselIexp-based values (scaled by exp(-xiSum)), so
+    // log(Z_0) = log(m_Zsum[0]) + xiSum
+    double ret = (log(m_Zsum[m_StrMap[0]]) + m_xiSum) / m_Parameters.SVc;
     if (m_energydensitiesGCE.size() == 0)
       CalculateEnergyDensitiesGCE();
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i)
