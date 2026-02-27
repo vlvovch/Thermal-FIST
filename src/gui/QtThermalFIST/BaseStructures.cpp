@@ -200,7 +200,10 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     modcan->ConserveStrangeness(config.CanonicalS);
     modcan->ConserveCharm(config.CanonicalC);
 
-    if (config.CanonicalMethod == 3)
+    // Non-ideal interactions only work with SaddlePointLO
+    if (config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+      modcan->SetMethod(thermalfist::SaddlePointLO);
+    } else if (config.CanonicalMethod == 3)
       modcan->SetMethod(thermalfist::SaddlePointLO);
     else if (config.CanonicalMethod == 2)
       modcan->SetMethod(thermalfist::SaddlePointNLO);
@@ -430,4 +433,27 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
   if (config.InteractionScaling == 3) {
     model->ReadInteractionParameters(config.InteractionInput);
   }
+}
+
+ThermalModelBase* CreateGCEModelForCanonical(
+    ThermalParticleSystem* TPS,
+    const ThermalModelConfig& config)
+{
+  if (config.InteractionModel == ThermalModelConfig::InteractionIdeal)
+    return nullptr;
+
+  ThermalModelBase* modelGCE = nullptr;
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
+    modelGCE = new ThermalModelEVDiagonal(TPS);
+  else if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
+    modelGCE = new ThermalModelVDW(TPS);
+  else if (config.InteractionModel == ThermalModelConfig::InteractionRealGas)
+    modelGCE = new ThermalModelRealGas(TPS);
+  else
+    return nullptr;
+
+  SetThermalModelConfiguration(modelGCE, config);
+  SetThermalModelInteraction(modelGCE, config);
+
+  return modelGCE;
 }

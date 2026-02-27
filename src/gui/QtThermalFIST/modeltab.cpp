@@ -591,9 +591,18 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   SetThermalModelConfiguration(model, config);
 
-  //if (config.InteractionModel != ThermalModelConfig::InteractionIdeal)
-  SetThermalModelInteraction(model, config);
-
+  // For non-ideal CE: interactions are set on the auxiliary GCE model, not the canonical model itself.
+  // SetThermalModelInteraction does static_casts that are only valid for the matching model type.
+  ThermalModelBase *modelGCE = nullptr;
+  if (config.ModelType == ThermalModelConfig::CE
+      && config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+    modelGCE = CreateGCEModelForCanonical(model->TPS(), config);
+    if (modelGCE != nullptr) {
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(modelGCE);
+    }
+  } else {
+    SetThermalModelInteraction(model, config);
+  }
 
   // If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
   if (config.ModelType == ThermalModelConfig::CE) {
@@ -792,6 +801,13 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     labelValid->setStyleSheet("border : none; background-color : red;");
   }
   labelValid->setVisible(true);
+
+  // Clean up auxiliary GCE model for non-ideal CE
+  if (modelGCE != nullptr) {
+    static_cast<ThermalModelCanonical*>(model)->SetModelGCE(nullptr);
+    delete modelGCE;
+    modelGCE = nullptr;
+  }
 
   // // Clean EMM for pions
   // {
