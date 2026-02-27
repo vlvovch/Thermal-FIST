@@ -569,10 +569,11 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
 
   QGroupBox* grLaws = new QGroupBox(tr("Conservation laws"));
 
-  QVBoxLayout* grLayout = new QVBoxLayout();
+  QGridLayout* grLayout = new QGridLayout();
+  grLayout->setColumnStretch(0, 1);
+  int row = 0;
 
-  QHBoxLayout* laymuB = new QHBoxLayout();
-  laymuB->setAlignment(Qt::AlignLeft);
+  // Row 0: Constrain muB from S/B
   CBmuB = new QCheckBox(tr("Constrain μB from entropy per baryon ratio, S/B:"));
   CBmuB->setChecked(m_parent->currentConfig.ConstrainMuB && m_parent->currentConfig.ConstrainMuBType == 0);
   connect(CBmuB, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
@@ -582,18 +583,11 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   spinSBRatio->setMaximum(100000.);
   spinSBRatio->setSingleStep(10.);
   spinSBRatio->setValue(m_parent->currentConfig.SoverB);
+  grLayout->addWidget(CBmuB, row, 0);
+  grLayout->addWidget(spinSBRatio, row, 1);
+  row++;
 
-  laymuB->addWidget(CBmuB);
-  laymuB->addWidget(spinSBRatio);
-  laymuB->setContentsMargins(0, 0, 0, 0);
-
-
-  CBmuBfull = new QWidget();
-  CBmuBfull->setLayout(laymuB);
-
-
-  QHBoxLayout* laymuBdens = new QHBoxLayout();
-  laymuBdens->setAlignment(Qt::AlignLeft);
+  // Row 1: Constrain muB from baryon density
   CBmuBdens = new QCheckBox(tr("Constrain μB from baryon density, nB (fm^-3):"));
   CBmuBdens->setChecked(m_parent->currentConfig.ConstrainMuB && m_parent->currentConfig.ConstrainMuBType == 1);
   connect(CBmuBdens, &QCheckBox::toggled, this, &ConservationLawsDialog::toggleMuB);
@@ -603,17 +597,11 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   spinRhoB->setMaximum(100.);
   spinRhoB->setSingleStep(0.01);
   spinRhoB->setValue(m_parent->currentConfig.RhoB);
+  grLayout->addWidget(CBmuBdens, row, 0);
+  grLayout->addWidget(spinRhoB, row, 1);
+  row++;
 
-  laymuBdens->addWidget(CBmuBdens);
-  laymuBdens->addWidget(spinRhoB);
-  laymuBdens->setContentsMargins(0, 0, 0, 0);
-
-
-  CBmuBdensfull = new QWidget();
-  CBmuBdensfull->setLayout(laymuBdens);
-
-  QHBoxLayout* laymuQ = new QHBoxLayout();
-  laymuQ->setAlignment(Qt::AlignLeft);
+  // Row 2: Constrain muQ from Q/B
   CBmuQ = new QCheckBox(tr("Constrain μQ from electric-to-baryon charge ratio, Q/B:"));
   CBmuQ->setChecked(m_parent->currentConfig.ConstrainMuQ);
   connect(CBmuQ, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
@@ -622,43 +610,35 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   spinQBRatio->setMinimum(0.);
   spinQBRatio->setSingleStep(0.1);
   spinQBRatio->setValue(m_parent->currentConfig.QoverB);
+  grLayout->addWidget(CBmuQ, row, 0);
+  grLayout->addWidget(spinQBRatio, row, 1);
+  row++;
 
-  laymuQ->addWidget(CBmuQ);
-  laymuQ->addWidget(spinQBRatio);
-  laymuQ->setContentsMargins(0, 0, 0, 0);
-
-  CBmuQfull = new QWidget();
-  CBmuQfull->setLayout(laymuQ);
-
+  // Row 3: Constrain muS (strangeness neutrality)
   CBmuS = new QCheckBox(tr("Constrain μS from the condition of zero net strangeness"));
   CBmuS->setChecked(m_parent->currentConfig.ConstrainMuS);
+  grLayout->addWidget(CBmuS, row, 0, 1, 2);
+  row++;
 
+  // Row 4: Constrain muC (charm neutrality)
   CBmuC = new QCheckBox(tr("Constrain μC from the condition of zero net charm"));
   CBmuC->setChecked(m_parent->currentConfig.ConstrainMuC);
+  grLayout->addWidget(CBmuC, row, 0, 1, 2);
+  row++;
 
-  //if (m_parent->model->TPS()->hasBaryons()
-  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
-  //    !m_parent->currentConfig.CanonicalB))
-  grLayout->addWidget(CBmuBfull);
-  grLayout->addWidget(CBmuBdensfull);
-
-  //if (m_parent->model->TPS()->hasCharged()
-  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
-  //    !m_parent->currentConfig.CanonicalQ))
-  grLayout->addWidget(CBmuQfull);
-
-  //if (m_parent->model->TPS()->hasStrange() 
-  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
-  //    !m_parent->currentConfig.CanonicalS)
-  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE)
-  grLayout->addWidget(CBmuS);
-
-  //if (m_parent->model->TPS()->hasCharmed() 
-  //  && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
-  //    !m_parent->currentConfig.CanonicalC)
-  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleSCE
-  //  && m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCCE)
-  grLayout->addWidget(CBmuC);
+  // Row 5: Constrain gammaC from Nccbar
+  CBgammaC = new QCheckBox(tr("Constrain γC from target number of cc-bar pairs, Nccbar:"));
+  CBgammaC->setChecked(m_parent->currentConfig.ConstrainGammaC);
+  connect(CBgammaC, &QCheckBox::toggled, this, &ConservationLawsDialog::updateControls);
+  spinNccbar = new QDoubleSpinBox();
+  spinNccbar->setDecimals(4);
+  spinNccbar->setMinimum(0.0001);
+  spinNccbar->setMaximum(1000.);
+  spinNccbar->setSingleStep(0.1);
+  spinNccbar->setValue(m_parent->currentConfig.NccbarGoal > 0. ? m_parent->currentConfig.NccbarGoal : 1.0);
+  grLayout->addWidget(CBgammaC, row, 0);
+  grLayout->addWidget(spinNccbar, row, 1);
+  row++;
 
   labelNothing = new QLabel(tr("It appears none of the chemical potentials can be constrained"));
   //grLayout->addWidget(labelNothing);
@@ -763,23 +743,30 @@ void ConservationLawsDialog::updateControls()
   if (m_parent->model->TPS()->hasBaryons()
     && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
       !checkBConserve->isChecked())) {
-    CBmuBfull->setEnabled(true);
+    CBmuB->setEnabled(true);
+    spinSBRatio->setEnabled(CBmuB->isChecked());
     CBmuBdens->setEnabled(true);
+    spinRhoB->setEnabled(CBmuBdens->isChecked());
     fl = true;
   }
   else {
-    CBmuBfull->setEnabled(false);
+    CBmuB->setEnabled(false);
+    spinSBRatio->setEnabled(false);
     CBmuBdens->setEnabled(false);
+    spinRhoB->setEnabled(false);
   }
 
   if (m_parent->model->TPS()->hasCharged()
     && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
       !checkQConserve->isChecked())) {
-    CBmuQfull->setEnabled(true);
+    CBmuQ->setEnabled(true);
+    spinQBRatio->setEnabled(CBmuQ->isChecked());
     fl = true;
   }
-  else
-    CBmuQfull->setEnabled(false);
+  else {
+    CBmuQ->setEnabled(false);
+    spinQBRatio->setEnabled(false);
+  }
 
   if (m_parent->model->TPS()->hasStrange()
     && (m_parent->currentConfig.Ensemble != ThermalModelConfig::EnsembleCE ||
@@ -801,6 +788,15 @@ void ConservationLawsDialog::updateControls()
   }
   else
     CBmuC->setEnabled(false);
+
+  if (m_parent->model->TPS()->hasCharmed()) {
+    CBgammaC->setEnabled(true);
+    spinNccbar->setEnabled(CBgammaC->isChecked());
+  }
+  else {
+    CBgammaC->setEnabled(false);
+    spinNccbar->setEnabled(false);
+  }
 }
 
 void ConservationLawsDialog::OK()
@@ -813,6 +809,9 @@ void ConservationLawsDialog::OK()
   m_parent->currentConfig.QoverB = spinQBRatio->value();
   m_parent->currentConfig.ConstrainMuS = CBmuS->isChecked();
   m_parent->currentConfig.ConstrainMuC = CBmuC->isChecked();
+
+  m_parent->currentConfig.ConstrainGammaC = CBgammaC->isChecked();
+  m_parent->currentConfig.NccbarGoal = spinNccbar->value();
 
   m_parent->currentConfig.CanonicalB = checkBConserve->isChecked();
   m_parent->currentConfig.CanonicalQ = checkQConserve->isChecked();
