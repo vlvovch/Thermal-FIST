@@ -128,6 +128,7 @@ namespace thermalfist {
     std::map<int, int>  m_CharmMap;
     std::vector<double> m_Zsum;
     std::vector<double> m_partialZ;
+    double m_xi0;  ///< Bessel function argument, stored for entropy calculation
   };
 
 } // namespace thermalfist

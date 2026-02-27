@@ -59,7 +59,7 @@ Mean multiplicities and covariances are obtained from partition function ratios 
   \label{eq:cov_exact}
 \end{align}
 
-Three methods are available, selected via \texttt{SetMethod()}:
+Four methods are available, selected via \texttt{SetMethod()}:
 \begin{center}
 \begin{tabular}{lll}
 \toprule
@@ -68,6 +68,7 @@ Three methods are available, selected via \texttt{SetMethod()}:
 \texttt{GaussLegendre}  & 0 & Multi-dimensional numerical quadrature \\
 \texttt{SaddlePoint}     & 1 & Per-quantum-number saddle-point solve \\
 \texttt{SaddlePointNLO}  & 2 & Analytic LO+NLO from CGF expansion \\
+\texttt{SaddlePointLO}   & 3 & Analytic LO only from CGF expansion \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -501,22 +502,22 @@ All formulas hold with $\Sigma^{-1}$ restricted to the canonical subspace and ch
 \label{sec:comparison}
 
 \begin{center}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
- & \texttt{GaussLegendre} & \texttt{SaddlePoint} & \texttt{SaddlePointNLO} \\
+ & \texttt{GaussLegendre} & \texttt{SaddlePoint} & \texttt{SaddlePointNLO} & \texttt{SaddlePointLO} \\
 \midrule
-Partition functions & GL quadrature & per-$\bc$ SP solve & not computed \\
-Mean yields         & from $R(\bc)$ & from $R(\bc)$ & direct (Eq.~\ref{eq:mean}) \\
-Fluctuations        & from $R(\bc+\bc')$ & from $R(\bc+\bc')$ & analytic (Eq.~\ref{eq:cov}) \\
-Thermodynamics      & from $R(\bc)$ \& GCE & from $R(\bc)$ \& GCE & direct (Eqs.~\ref{eq:pressure}--\ref{eq:energy}) \\
-Exact conservation  & up to quad.\ error & broken at $\mathcal{O}(V_c^{-1})$ & exact by construction \\
-Finite-$\bmu$ stability & contour shift & native & native \\
-Large-$V_c$ stability & degrades & stable & stable \\
-Small-$V_c$ validity  & exact & breaks down & breaks down \\
+Partition functions & GL quadrature & per-$\bc$ SP solve & not computed & not computed \\
+Mean yields         & from $R(\bc)$ & from $R(\bc)$ & direct (Eq.~\ref{eq:mean}) & GCE at $\bmu^*$ \\
+Fluctuations        & from $R(\bc+\bc')$ & from $R(\bc+\bc')$ & analytic (Eq.~\ref{eq:cov}) & LO of Eq.~\eqref{eq:cov} \\
+Thermodynamics      & from $R(\bc)$ \& GCE & from $R(\bc)$ \& GCE & Eqs.~\ref{eq:pressure}--\ref{eq:energy} & GCE at $\bmu^*$ \\
+Exact conservation  & up to quad.\ error & broken at $\mathcal{O}(V_c^{-1})$ & exact by construction & exact by construction \\
+Finite-$\bmu$ stability & contour shift & native & native & native \\
+Large-$V_c$ stability & degrades & stable & stable & stable \\
+Small-$V_c$ validity  & exact & breaks down & breaks down & breaks down \\
 \midrule
-\multicolumn{4}{@{}l}{\textit{Timing (full HRG, ${\sim}500$ species, $V_c = 5000$~fm$^3$):}} \\
-Means only           & $\sim 10$~ms & $\sim 20$~ms & $\sim 20$~ms \\
-With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s \\
+\multicolumn{5}{@{}l}{\textit{Timing (full HRG, ${\sim}500$ species, $V_c = 5000$~fm$^3$):}} \\
+Means only           & $\sim 10$~ms & $\sim 20$~ms & $\sim 20$~ms & $\sim 20$~ms \\
+With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s & $< 1$~s \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -530,6 +531,9 @@ With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s \\
     Best when exact partition function ratios $R(\bc)$ are needed (e.g.\ for higher-order cumulants beyond covariances).
   \item \textbf{SaddlePointNLO}: Large volumes when exact conservation of mean charges matters (e.g.\ thermal fits).
     Fastest for fluctuations. Does not compute individual $R(\bc)$ values.
+  \item \textbf{SaddlePointLO}: Large volumes when only leading-order results are needed.
+    Mean yields and thermodynamics coincide with GCE at $\bmu^*$, but fluctuations include canonical suppression ($-W_l^{(2)} W_m^{(2)} G_{lm}$ term).
+    Useful as a baseline or for non-ideal models where NLO corrections have not been derived.
 \end{itemize}
 
 

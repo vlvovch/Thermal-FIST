@@ -51,24 +51,98 @@ namespace thermalfist {
 
   /**
    * \brief Method used for computing the canonical partition functions.
+   *
+   * The canonical ensemble constrains all conserved charges (B, Q, S, C) to
+   * fixed integer values.  Computing canonical densities and fluctuations is
+   * done by first computing the canonical partition functions for each
+   * set of quantum numbers, and then constructing the chemical factors.
+   *
+   * Four algorithms are available, trading accuracy for speed:
+   *
+   * - **GaussLegendre** (default): Numerically integrates the Fourier
+   *   representation of the canonical partition functions using composite
+   *   Gauss-Legendre quadrature.  Most accurate for small systems but
+   *   O(N_QN * N_int) per species.
+   *
+   * - **SaddlePoint**: Evaluates the canonical partition function for each
+   *   quantum-number sector at a single saddle point.  Fast, but computes
+   *   a separate saddle point for each QN combination.
+   *
+   * - **SaddlePointNLO**: A single saddle-point solve for the dominant QN
+   *   sector, followed by a systematic 1/V expansion of means, covariances,
+   *   and thermodynamic quantities up to next-to-leading order (NLO).
+   *   Preserves exact conservation laws.  Ideal-gas models only.
+   *
+   * - **SaddlePointLO**: Same saddle-point solve as NLO but keeps only
+   *   the leading-order terms.  Densities and thermodynamic quantities
+   *   coincide with the GCE evaluated at the saddle-point chemical
+   *   potentials μ*.  Fluctuations (covariances) are modified by canonical
+   *   conservation laws.  Supports non-ideal interaction models via
+   *   SetModelGCE().
+   *
+   * The SaddlePointLO covariance formula is equivalent to the subensemble
+   * acceptance method (SAM) at acceptance fraction α = 1; see
+   * V. Vovchenko, R.V. Poberezhnyuk, V. Koch,
+   * JHEP 10 (2020) 089 [arXiv:2007.03850], Eq. (2.85).
    */
   enum CanonicalMethod {
     GaussLegendre   = 0,  ///< Composite 10-point Gauss-Legendre on subintervals (default)
     SaddlePoint     = 1,  ///< Saddle-point approximation (per-QN solve)
-    SaddlePointNLO  = 2   ///< Saddle-point with systematic NLO expansion (preserves exact conservation laws)
+    SaddlePointNLO  = 2,  ///< Saddle-point with systematic NLO expansion (preserves exact conservation laws)
+    SaddlePointLO   = 3   ///< Saddle-point LO only (GCE densities/thermo, canonical LO fluctuations)
   };
 
   /**
-   * \brief Class implementing the ideal HRG model
-   *        in the canonical ensemble.
-   * 
-   * Calculation of particle densities proceeds as described in
-   * F. Becattini, U. Heinz, Z. Phys. C76, 269 (1997), [https://arxiv.org/pdf/hep-ph/9702274.pdf](https://arxiv.org/pdf/hep-ph/9702274.pdf)
-   * 
-   * Particle number fluctuations are determined through the derivatives with respect to the
-   * fictitous fugacities, as is usually done in HRG,
-   * see e.g. [https://arxiv.org/pdf/nucl-th/0404056.pdf](https://arxiv.org/pdf/nucl-th/0404056.pdf) 
-   * 
+   * \brief Class implementing the HRG model in the canonical ensemble.
+   *
+   * Computes particle densities and fluctuations with exact conservation
+   * of an arbitrary subset of {B, Q, S, C}.  Several computational methods
+   * are available (see CanonicalMethod):
+   *
+   * - **GaussLegendre / SaddlePoint**: numerical integration or per-QN
+   *   saddle-point evaluation; ideal gas only.
+   * - **SaddlePointNLO**: systematic 1/V expansion including O(1/V_c)
+   *   corrections to means, covariances, and thermodynamics; ideal gas only.
+   * - **SaddlePointLO**: leading-order saddle-point; supports non-ideal
+   *   equations of state via SetModelGCE().
+   *
+   * ## Non-ideal interactions (SaddlePointLO only)
+   *
+   * Provide a pre-configured GCE model via SetModelGCE():
+   * \code
+   * auto* rg = new ThermalModelRealGas(&TPS, params);
+   * rg->SetExcludedVolumeModel(...);
+   * model.SetModelGCE(rg);    // borrow; caller retains ownership
+   * \endcode
+   *
+   * ## LO covariance formula
+   *
+   * The SaddlePointLO covariance is computed from the general formula
+   * \f[
+   *   \mathrm{cov}(N_l, N_m) = \chi^{\rm GCE}_{lm}
+   *     - \sum_{a,b} v_{l,a}\,[\Sigma_\chi^{-1}]_{ab}\,v_{m,b}
+   * \f]
+   * where \f$\chi^{\rm GCE}_{jk}\f$ is the GCE species-level susceptibility
+   * matrix (diagonal for ideal gas, full for interacting models),
+   * \f$v_{l,a} = \sum_j q_{a,j}\,\chi^{\rm GCE}_{jl}\f$,
+   * and \f$\Sigma_{ab} = \sum_{j,k} q_{a,j}\,q_{b,k}\,\chi^{\rm GCE}_{jk}\f$.
+   *
+   * This is equivalent to the subensemble acceptance method (SAM)
+   * at full acceptance (\f$\alpha = 1\f$), specifically Eq. (2.86) of
+   * V. Vovchenko, R.V. Poberezhnyuk, V. Koch,
+   * JHEP 10 (2020) 089 [arXiv:2007.03850]:
+   * \f$\chi_{pp}^{\rm ce} = \det\tilde\chi / \det\chi\f$,
+   * via the Schur complement identity.
+   *
+   * ## References
+   *
+   * - F. Becattini, U. Heinz, Z. Phys. C76, 269 (1997)
+   *   [hep-ph/9702274](https://arxiv.org/pdf/hep-ph/9702274.pdf)
+   * - Fluctuations via fictitious fugacities:
+   *   [nucl-th/0404056](https://arxiv.org/pdf/nucl-th/0404056.pdf)
+   * - SAM formalism:
+   *   V. Vovchenko, R.V. Poberezhnyuk, V. Koch,
+   *   JHEP 10 (2020) 089 [arXiv:2007.03850](https://arxiv.org/abs/2007.03850)
    */
   class ThermalModelCanonical :
     public ThermalModelBase
@@ -203,6 +277,24 @@ namespace thermalfist {
      */
     void SetMethod(CanonicalMethod method) { m_Method = method; m_PartialZCalculated = false; }
 
+    /**
+     * \brief Sets an external GCE model to use in the saddle-point approach.
+     *
+     * This is the only way to use non-ideal interactions with the canonical
+     * ensemble (SaddlePointLO method only).  The provided model is borrowed
+     * (not owned) by the canonical model.  The caller retains ownership and
+     * must ensure the model remains valid during canonical calculations.
+     *
+     * The model's thermal parameters and chemical potentials will be
+     * overwritten during the saddle-point solve.
+     * The interaction parameters (virial, attraction, etc.) are preserved.
+     *
+     * Pass nullptr to revert to the default ideal gas.
+     *
+     * \param model  Pointer to a pre-configured GCE model, or nullptr to clear
+     */
+    void SetModelGCE(ThermalModelBase* model);
+
     /*
      * \brief Reset all flags which correspond to a calculation status
      */
@@ -281,15 +373,20 @@ namespace thermalfist {
   private:
     //@{
     /**
-     * Functions for a different evaluation method,
-     * which uses finite conserved charges chemical potentials
-     * instead of zero chemical potentials.
-     * Currently not used. 
-     * 
+     * \brief Internal GCE model management for the saddle-point approach.
+     *
+     * The saddle-point solve requires a GCE model to evaluate densities
+     * and susceptibilities at the saddle-point chemical potentials μ*.
+     *
+     * **PrepareModelGCE()** selects the GCE model to use:
+     *   - If an external model was set via SetModelGCE(), use it.
+     *   - Otherwise, use the persistent default ThermalModelIdeal.
+     *   Then solve for chemical potentials matching the target quantum numbers.
+     *
+     * **CleanModelGCE()** resets the active model pointer (no deletion).
      */
-    void PrepareModelGCE();  /**< Creates the ThermalModelIdeal copy */
-
-    void CleanModelGCE();    /**< Cleares the ThermalModelIdeal copy */
+    virtual void PrepareModelGCE();
+    void CleanModelGCE();
     //@}
 
     //@{
@@ -297,19 +394,41 @@ namespace thermalfist {
      * Helper methods for the saddle-point approximation (SaddlePoint quadrature method).
      */
     void ComputeSaddlePointPartitionFunctions();  ///< Orchestrates the full saddle-point computation
-    void SolveSaddlePointEquations();             ///< Finds saddle-point chemical potentials mu*/T
-    void BuildSusceptibilityMatrix();             ///< Builds Sigma and its inverse from per-particle chi2
+    void SolveSaddlePointEquations();             ///< Finds saddle-point chemical potentials mu* /T
+    void SetupSaddlePointChargeIndices();          ///< Determines which charges (B,Q,S,C) are canonical
 
-    /// Compute ln Z_SP given per-particle chemical potentials, target charges, and log-det of Sigma.
-    double ComputeLnZSP(const std::vector<double>& muStar, const double* muOverT, const double* Ntarget, double logDetSigma);
+    /// Build Sigma from m_modelgce->PrimCorrel() (full interacting chi^GCE).
+    /// Returns log(det(Sigma)).  Requires m_modelgce with two-particle correlations computed.
+    double ComputeSigmaLogDetFromModel();
 
-    /// Build the d x d susceptibility matrix from per-particle chi2 evaluated at the given mu values.
-    /// Returns log(det(Sigma)).  If storeSigmaInv is true, also stores Sigma and Sigma^{-1}.
-    double ComputeSigmaLogDet(const std::vector<double>& muStar, bool storeSigmaInv = false);
-
-    /// Mode 2 (SaddlePointNLO): compute analytic LO+NLO means (and optionally covariances) from the CGF expansion.
-    /// The covariance matrix (O(N^2)) is only computed when computeCovariance is true.
+    /**
+     * \brief Compute analytic means and (optionally) covariances from the
+     *        saddle-point cumulant generating function expansion.
+     *
+     * This implements both SaddlePointNLO and SaddlePointLO modes:
+     *
+     * **Algorithm outline:**
+     * 1. Solve the saddle-point equations for mu* /T.
+     * 2. Compute GCE two-particle correlations at the saddle point
+     *    (via m_modelgce->CalculateTwoParticleCorrelations()).
+     * 3. Build per-species cluster moments W_j^{(k)} at μ*.
+     * 4. Build the d×d charge susceptibility matrix Σ and its inverse.
+     * 5. Compute primordial densities (LO, or LO + NLO correction).
+     * 6. If computeCovariance is true:
+     *    - **Ideal gas** (fast path): cov(l,m) = δ_{lm} W2[l] − W2[l] W2[m] G_{lm},
+     *      using precomputed Σ^{−1}. No N×N allocation needed.
+     *    - **Non-ideal** (general path): use the full N×N PrimCorrel from
+     *      m_modelgce, then cov(l,m) = χ^{GCE}_{lm} − v_l^T Σ^{−1} v_m.
+     *    - (NLO) Add O(1/V_c) corrections B_lm, C_lm.
+     *
+     * The LO covariance formula is the Schur complement of the extended
+     * susceptibility matrix χ̃ from SAM Eq. (2.74), giving the SAM result
+     * Eq. (2.86): χ_{pp}^{ce} = det(χ̃) / det(χ).
+     *
+     * \param computeCovariance  If true, compute the full N×N covariance matrix.
+     */
     void ComputeAnalyticCumulants(bool computeCovariance = false);
+
     //@}
 
   protected:
@@ -368,8 +487,11 @@ namespace thermalfist {
     double m_MultExp; ///< Exponential multiplier for canonical partition function calculations
     double m_MultExpBanalyt; ///< Exponential multiplier for analytical baryon fugacity calculations
 
-    /// Pointer to a ThermalModelIdeal object used for GCE calculations.
-    ThermalModelIdeal *m_modelgce;
+    /// Active GCE model pointer (set by PrepareModelGCE, cleared by CleanModelGCE).
+    /// Points to either m_modelgce_default or m_modelgce_ext; never owned.
+    ThermalModelBase *m_modelgce;
+    ThermalModelBase *m_modelgce_default; ///< Default ideal-gas GCE model (owned, created once)
+    ThermalModelBase *m_modelgce_ext;     ///< External GCE model (not owned), set via SetModelGCE()
 
     int m_BCE; ///< Flag indicating if baryon charge is conserved canonically
     int m_QCE; ///< Flag indicating if electric charge is conserved canonically
@@ -390,8 +512,6 @@ namespace thermalfist {
     std::vector<int> m_SaddlePointChargeIndices;  ///< Which of {B=0,Q=1,S=2,C=3} are canonical
     std::vector<double> m_SaddlePointMu;          ///< Saddle-point mu*_a/T for each conserved charge (size 4)
     std::vector<double> m_SaddlePointMuStar;      ///< Per-particle full chemical potential at saddle point
-    std::vector<double> m_SaddlePointSigma;       ///< d x d susceptibility matrix (row-major)
-    std::vector<double> m_SaddlePointSigmaInv;    ///< d x d inverse susceptibility matrix (row-major)
     double m_SaddlePointLogDetSigma;              ///< log(det(Sigma))
     std::vector<double> m_W2;                      ///< Per-particle W^(2) = Vc * chi2 (for SaddlePointNLO)
 
