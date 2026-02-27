@@ -446,7 +446,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     labelgammaC = new QLabel(tr("γ<sub>C</sub>:"));
     spingammaC = new QDoubleSpinBox();
     spingammaC->setMinimum(0.);
-    spingammaC->setMaximum(50.);
+    spingammaC->setMaximum(1000.);
     spingammaC->setDecimals(4);
     spingammaC->setValue(model->Parameters().gammaC);
     spingammaC->setToolTip(tr("Chemical non-equilibrium factor for charm quarks"));
