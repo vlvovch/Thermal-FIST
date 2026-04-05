@@ -72,6 +72,10 @@ struct ThermalModelConfig {
   bool ConstrainMuC;
   int ConstrainMuBType; // 0 - Entropy per baryon, 1 - Baryon density
 
+  /// Constraint on gammaC
+  bool ConstrainGammaC;
+  double NccbarGoal;
+
   /// Extra flags
   int FiniteWidth; /**< 0 - zero, 1 - BW-2Gamma, 2 - eBW */
   int WidthShape;  /**< 0 - Relativistic Breit-Wigner, 1 - Nonrelativistic Breit-Wigner */
