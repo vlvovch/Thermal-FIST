@@ -185,17 +185,17 @@ namespace thermalfist {
 
 	double MeanFieldModelChargeDensityDependent::d2v(int i, int j) const
 	{
-		return m_mfmodel->dv(2, m_nB) * m_charges[i];
+		return m_mfmodel->dv(2, m_nB) * m_charges[i] * m_charges[j];
 	}
 
 	double MeanFieldModelChargeDensityDependent::d3v(int i, int j, int k) const
 	{
-		return m_mfmodel->dv(3, m_nB) * m_charges[i];
+		return m_mfmodel->dv(3, m_nB) * m_charges[i] * m_charges[j] * m_charges[k];
 	}
 
 	double MeanFieldModelChargeDensityDependent::d4v(int i, int j, int k, int l) const
 	{
-		return m_mfmodel->dv(4, m_nB) * m_charges[i];
+		return m_mfmodel->dv(4, m_nB) * m_charges[i] * m_charges[j] * m_charges[k] * m_charges[l];
 	}
 
 	double MeanFieldModelChargeDensityDependent::dvdT() const
