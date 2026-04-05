@@ -157,7 +157,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     labelgammaC = new QLabel(tr("γ<sub>C</sub>:"));
     spingammaC = new QDoubleSpinBox();
     spingammaC->setMinimum(0.);
-    spingammaC->setMaximum(50.);
+    spingammaC->setMaximum(1000.);
     spingammaC->setDecimals(4);
     spingammaC->setValue(model->Parameters().gammaC);
     spingammaC->setToolTip(tr("Chemical non-equilibrium factor for charm quarks"));
@@ -682,8 +682,10 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << Qt::endl;
   if (model->TPS()->hasStrange())
     dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << Qt::endl;
-  if (model->TPS()->hasCharmed())
+  if (model->TPS()->hasCharmed()) {
     dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << Qt::endl;
+    dbgstrm << "Nccbar\t\t= " << model->GetNccbar() << Qt::endl;
+  }
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
     dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
   dbgstrm << Qt::endl;
@@ -808,14 +810,21 @@ void ModelTab::calculate() {
   ThermalModelConfig config = getConfig();
   performCalculation(config);
 
-  if (!(config.Ensemble == ThermalModelConfig::EnsembleCE)) {
+  // Update chemical potential spinboxes with the solved values.
+  // For canonical ensembles, only update non-canonical charges
+  // (canonical charges have their mu solved internally in PrepareModelGCE).
+  if (!model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
     spinmuB->setValue(model->Parameters().muB * 1.e3);
+  if (!model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
     spinmuQ->setValue(model->Parameters().muQ * 1.e3);
-    if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE))
-      spinmuS->setValue(model->Parameters().muS * 1.e3);
-    if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE) && !(config.Ensemble == ThermalModelConfig::EnsembleCCE))
-      spinmuC->setValue(model->Parameters().muC * 1.e3);
-  }
+  if (!model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+    spinmuS->setValue(model->Parameters().muS * 1.e3);
+  if (!model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
+    spinmuC->setValue(model->Parameters().muC * 1.e3);
+
+  // Update gammaC spinbox with the solved value if constrained
+  if (config.ConstrainGammaC)
+    spingammaC->setValue(model->Parameters().gammaC);
 
   spinrhoB->setValue(model->BaryonDensity());
   spinrhoQ->setValue(model->ElectricChargeDensity());
@@ -1147,6 +1156,9 @@ void ModelTab::modelChanged()
   spingammaC->setVisible(model->TPS()->hasCharmed());
   labelgammaS->setVisible(model->TPS()->hasStrange());
   labelgammaC->setVisible(model->TPS()->hasCharmed());
+
+  // Disable gammaC spinbox when it is constrained from Nccbar
+  spingammaC->setEnabled(!configWidget->currentConfig.ConstrainGammaC);
 }
 
 void ModelTab::updateFontSizes() {

@@ -477,6 +477,26 @@ namespace thermalfist {
     /// by the condition of charm neutrality
     void ConstrainMuC(bool constrain) { m_ConstrainMuC = constrain; }
 
+    /// Whether gammaC (charm fugacity) is to be constrained
+    /// by a fixed target number of cc-bar pairs NccbarGoal()
+    bool ConstrainGammaC() const { return m_ConstrainGammaC; }
+
+    /// Sets whether gammaC is constrained from target Nccbar
+    void ConstrainGammaC(bool constrain) { m_ConstrainGammaC = constrain; }
+
+    //@{
+      /**
+       * \brief The target number of cc-bar pairs
+       *        to be used to constrain gammaC.
+       *
+       * Nccbar = V * AbsoluteCharmDensity() / 2
+       *
+       * \param Nccbar The target number of cc-bar pairs
+       */
+    void SetNccbar(double Nccbar) { m_NccbarGoal = Nccbar; }
+    double NccbarGoal() const { return m_NccbarGoal; }
+    //@}
+
     /// Sets whether partial chemical equilibrium with additional chemical potentials is used
     void UsePartialChemicalEquilibrium(bool usePCE) { m_PCE = usePCE; }
 
@@ -998,6 +1018,9 @@ namespace thermalfist {
     /// Absolute charm quark content density (fm\f$^{-3}\f$)
     double AbsoluteCharmDensity() { return CalculateAbsoluteCharmDensity(); }
 
+    /// Number of cc-bar pairs: \f$ N_{c\bar{c}} = V \cdot \sum |C_i| \, n_i \, / \, 2 \f$
+    double GetNccbar() { return AbsoluteCharmDensity() * Volume() / 2.0; }
+
     /// Heat capacity at constant chemical potentials, c_\mu = T * (ds/dT)_\mu (fm^-3)
     double HeatCapacityMu() { return CalculateHeatCapacityMu(); }
 
@@ -1505,6 +1528,9 @@ namespace thermalfist {
     bool m_ConstrainMuS;
     bool m_ConstrainMuC;
 
+    bool m_ConstrainGammaC;
+    double m_NccbarGoal;
+
     bool m_PCE;
 
     bool m_useOpenMP;
@@ -1572,7 +1598,10 @@ namespace thermalfist {
 
     /// Shift in chemical potential of particle species id due to interactions
     virtual double MuShift(int /*id*/) const { return 0.; }
-    
+
+    /// Constrains gammaC using a 1D secant method
+    /// For each trial gammaC, calls ConstrainChemicalPotentials() to refit the mu's
+    void ConstrainGammaCFromNccbar();
 
   private:
     void ResetChemicalPotentials();

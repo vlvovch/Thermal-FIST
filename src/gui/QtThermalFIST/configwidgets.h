@@ -92,8 +92,9 @@ public:
 
   QDoubleSpinBox *spinRhoB;
 
-  QWidget *CBmuBfull, *CBmuBdensfull, *CBmuQfull;
-  //QHBoxLayout *laymuB, *laymuQ;
+  QCheckBox *CBgammaC;
+  QDoubleSpinBox *spinNccbar;
+
   QLabel *labelNothing;
   
   QCheckBox *checkBConserve;

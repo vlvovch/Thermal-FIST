@@ -134,6 +134,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.ConstrainMuC = model->ConstrainMuC();
 
+  ret.ConstrainGammaC = model->ConstrainGammaC();
+  ret.NccbarGoal = model->NccbarGoal();
+
   ret.FiniteWidth = static_cast<int>(model->TPS()->ResonanceWidthIntegrationType());
 
   ret.WidthShape = static_cast<int>(model->TPS()->ResonanceWidthShape());
@@ -220,6 +223,9 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
   model->ConstrainMuQ(config.ConstrainMuQ);
   model->ConstrainMuS(config.ConstrainMuS);
   model->ConstrainMuC(config.ConstrainMuC);
+
+  model->ConstrainGammaC(config.ConstrainGammaC);
+  model->SetNccbar(config.NccbarGoal);
 
   model->SetNormBratio(config.RenormalizeBR);
 
