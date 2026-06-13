@@ -23,8 +23,9 @@ if ! docker image inspect thermal-fist-wasm-base >/dev/null 2>&1; then
 fi
 
 echo "=== Building Thermal-FIST WASM ==="
-docker compose down
+# Build new image while old container keeps serving traffic
 docker compose build --build-arg CACHEBUST=$(date +%s)
+# Recreate container with new image (only seconds of downtime)
 docker compose up -d
 echo ""
 echo "=== Done ==="
