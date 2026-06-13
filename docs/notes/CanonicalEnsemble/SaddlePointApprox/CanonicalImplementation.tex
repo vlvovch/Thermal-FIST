@@ -152,12 +152,10 @@ The \emph{susceptibility matrix} is
 
 For each charge vector~$\bc$, solve the shifted saddle-point equations for $\bmu_\bc^*$ with charges $\bN - \bc$ and compute the ratio as
 \begin{align}
-  \boxed{
   \ln R(\bc)
   = \frac{V_c}{T}\big[p(\bmu_\bc^*) - p(\bmu_0^*)\big]
   - \bigg[\sum_a \frac{\mu_{\bc,a}^*(N_a-c_a)}{T} - \sum_a \frac{\mu_{0,a}^* N_a}{T}\bigg]
   - \frac{1}{2}\big[\ln\det\Sigma_\bc - \ln\det\Sigma_0\big] \,,
-  }
   \label{eq:SP1_lnR}
 \end{align}
 where $p(\bmu) = \sum_j p_j(T,\mu_j^*)$ is the total GCE pressure and $\Sigma_\bc$ is evaluated at $\bmu_\bc^*$.
@@ -194,13 +192,11 @@ At the saddle point $\bmu^*/T$ (Eq.~\ref{eq:saddle}), define:
 \subsection{Mean yields (LO + NLO)}
 
 \begin{align}
-  \boxed{
   \langle N_l\rangle_\CE
   = W_l^{(1)}
     - \frac{1}{2}\,W_l^{(3)}\,G_{ll}
     + \frac{1}{2}\,W_l^{(2)}\sum_j W_j^{(3)}\,G_{jj}\,G_{jl}
     + \mathcal{O}(V_c^{-1}) \,.
-  }
   \label{eq:mean}
 \end{align}
 The first term is the GCE mean [$\mathcal{O}(V_c)$].
@@ -239,8 +235,7 @@ with the second-derivative response
 \subsection{Thermodynamic quantities (LO + NLO)}
 \label{sec:thermo}
 
-Bulk thermodynamic quantities---pressure, energy density, and entropy density---follow from derivatives of $\ln Z(\bN)$ with respect to the thermodynamic variables.
-We derive each in turn, starting from the saddle-point expression for the canonical partition function.
+Pressure, energy density, and entropy density follow from derivatives of $\ln Z(\bN)$ with respect to $V_c$ and $T$, starting from the saddle-point form of $\ln Z(\bN)$ below.
 
 \subsubsection{Starting point: saddle-point $\ln Z$}
 
@@ -254,8 +249,7 @@ where $p^{\GCE}(\bmu^*) = T\sum_j \sum_n \omega_j^{*,n}/V_c$ is the GCE pressure
 
 \paragraph{Stationarity.}
 The saddle-point condition~\eqref{eq:saddle} ensures $\partial(\ln Z)/\partial\alpha_a^* = 0$ (where $\alpha_a \equiv \mu_a/T$).
-This means that when differentiating $\ln Z$ with respect to external parameters ($T$, $V_c$), the implicit dependence $\bmu^*(T, V_c)$ drops out, and only the \emph{explicit} dependence on $T$ and $V_c$ contributes.
-This is the key simplification.
+So when differentiating $\ln Z$ with respect to the external parameters $T$ and $V_c$, the implicit dependence through $\bmu^*(T, V_c)$ drops out and only the \emph{explicit} $T$- and $V_c$-dependence contributes, which is what makes the derivatives below tractable.
 
 \subsubsection{Pressure}
 
@@ -271,9 +265,7 @@ From Eq.~\eqref{eq:lnZ_SP}, the $V_c$-dependent terms are:
 \end{itemize}
 Combining:
 \begin{align}
-  \boxed{
   P = p^{\GCE}(\bmu^*) - \frac{d\,T}{2\,V_c} + \mathcal{O}(V_c^{-2}) \,.
-  }
   \label{eq:pressure}
 \end{align}
 The NLO correction $-dT/(2V_c)$ is purely geometric (it counts the number of conserved-charge constraints) and is independent of the particle content.
@@ -363,9 +355,7 @@ Therefore:
 \end{align}
 Define the \emph{energy-weighted cluster sum}:
 \begin{align}
-  \boxed{
   E_j \equiv \sum_{n=1}^{n_\mathrm{max}} n^2\,\varepsilon_{j,n}(\mu_j^*) \,.
-  }
   \label{eq:Ej}
 \end{align}
 The $n^2$ factor arises because $W_j^{(2)} = \sum_n n^2\,\omega_j^{*,n}$, so differentiating brings down $n^2$ times $\partial\omega/\partial T$.
@@ -389,11 +379,9 @@ The NLO energy correction is thus
 \end{align}
 giving the full result:
 \begin{align}
-  \boxed{
   \varepsilon = \varepsilon^{\GCE}(\bmu^*)
   - \frac{1}{2}\sum_j E_j\,G_{jj}
   + \mathcal{O}(V_c^{-2}) \,,
-  }
   \label{eq:energy}
 \end{align}
 where $\varepsilon^{\GCE}(\bmu^*) = \sum_j \varepsilon_j(T,\mu_j^*)$ is the GCE energy density at the saddle point.
@@ -402,9 +390,7 @@ where $\varepsilon^{\GCE}(\bmu^*) = \sum_j \varepsilon_j(T,\mu_j^*)$ is the GCE 
 
 The canonical entropy density follows from the exact statistical mechanics identity (no chemical potential term in the canonical ensemble since the charges are fixed):
 \begin{align}
-  \boxed{
   s = \frac{\ln Z(\bN)}{V_c} + \frac{\varepsilon}{T} \,.
-  }
   \label{eq:entropy}
 \end{align}
 This holds at any volume.
@@ -466,6 +452,7 @@ The Gaussian approximation for charge~$a$ requires that the integration range $[
 When this condition is violated (as for charm at physical $\gamma_C$), the Gaussian extends well beyond $[-\pi, \pi]$ and the saddle-point approximation breaks down for that direction.
 The NLO formula then overestimates the correction from that charge: it predicts a $-T/(2V_c)$ contribution per charge, but the true correction is exponentially small when $\Sigma_{aa}\,V_c \to 0$.
 In practice, the effective dimensionality is $d = \mathrm{rank}_\mathrm{eff}(\Sigma\,V_c)$, counting only the directions satisfying~\eqref{eq:validity}.
+A related but distinct degeneracy occurs when two conserved charges are carried by exactly the same species in the same proportion (e.g.\ baryon number and electric charge in a proton-only gas, where $q_B = q_Q$ for every particle).  Then $\Sigma$ is exactly rank-deficient and cannot be inverted.  The implementation guards against this by greedily dropping linearly dependent charge axes before forming $\Sigma^{-1}$, so the working basis always has $d = \mathrm{rank}(\Sigma)$; conservation of a dropped charge is then automatic, since it is a linear combination of the retained ones.
 
 \paragraph{Entropy limitation.}
 The NLO entropy density~\eqref{eq:entropy} inherits a limitation from the saddle-point $\ln Z$ expression~\eqref{eq:lnZ_SP}.
@@ -479,7 +466,7 @@ This is a limitation of both the \texttt{SaddlePoint} and \texttt{SaddlePointNLO
 \begin{enumerate}
   \item Solve Eq.~\eqref{eq:saddle} for $\bmu^*/T$ via Broyden's method.
   \item Compute $W_j^{(k)}$ ($k = 1,\ldots,4$), the GCE energy density $\varepsilon^{\GCE}(\bmu^*)$ and pressure $p^{\GCE}(\bmu^*)$, and the energy-weighted cluster sums~$E_j$ for all species from the cluster expansion.
-  \item Build $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ directly from the $W^{(2)}$ values.  Invert to get $\Sigma^{-1}$.
+  \item Build $\Sigma_{ab} = \sum_j q_{a,j}\,q_{b,j}\,W_j^{(2)}$ directly from the $W^{(2)}$ values, dropping any linearly dependent charge axes so that $\Sigma$ is full rank.  Invert to get $\Sigma^{-1}$.
   \item Compute $G_{jj}$, $P_{j,a}$, and $D_{jl}$ for all species.
   \item Evaluate NLO thermodynamic quantities from Eqs.~\eqref{eq:pressure}--\eqref{eq:energy}.
   \item Evaluate means from Eq.~\eqref{eq:mean}: cost $\mathcal{O}(N_\mathrm{spec}^2)$.
@@ -489,6 +476,69 @@ This is a limitation of both the \texttt{SaddlePoint} and \texttt{SaddlePointNLO
 \paragraph{Conservation laws.}
 The identity $\sum_l q_{a,l}\,D_{jl} = 0$ ensures $\sum_l q_{a,l}\,\langle N_l\rangle_\CE = N_a$ exactly, order by order.
 Similarly, $\varr_\CE(Q_a) = 0$ is satisfied at LO by $\Sigma - \Sigma\,\Sigma^{-1}\,\Sigma = 0$.
+
+
+\section{Saddle-point LO and non-ideal interactions (\texttt{SaddlePointLO})}
+\label{sec:SPLO}
+
+\texttt{SaddlePointLO} uses the same saddle-point solve as \texttt{SaddlePointNLO} but drops the $\mathcal{O}(1)$ terms, keeping only the leading order in $1/V_c$.
+Mean yields and bulk thermodynamics then reduce to their grand-canonical values at the saddle-point chemical potentials $\bmu^*$,
+\begin{align}
+  \langle N_l\rangle_\CE = W_l^{(1)} = V_c\,n_l^{\GCE}(\bmu^*) \,, \qquad
+  P = p^{\GCE}(\bmu^*) \,, \qquad
+  \varepsilon = \varepsilon^{\GCE}(\bmu^*) \,, \qquad
+  s = s^{\GCE}(\bmu^*) \,,
+\end{align}
+while the covariance keeps the LO term of Eq.~\eqref{eq:cov}.
+The only canonical effect left at this order is the suppression of fluctuations by the conservation laws; the means and the equation of state are those of the GCE evaluated at $\bmu^*$.
+For consistency the entropy uses the GCE form $s^{\GCE}(\bmu^*)$, not the saddle-point expression of Eq.~\eqref{eq:entropy}: the $-\tfrac12\ln\det\Sigma$ Gaussian term there is an $\mathcal{O}(1/V_c)$ (NLO) contribution and is dropped at LO, exactly as the $-dT/2V_c$ term is dropped from~$P$.
+
+This is the one method that admits non-ideal equations of state, and the reason is structural.
+\texttt{SaddlePoint} and \texttt{SaddlePointNLO} build $\Sigma$ and every NLO term from the ideal-gas cluster moments $W_j^{(k)} = \sum_n n^k\,\omega_j^{*,n}$, which assume a free quantum gas.
+The LO covariance needs only the grand-canonical susceptibilities at $\bmu^*$, and any GCE model can supply those.
+
+\subsection{General covariance formula}
+
+Let $\chi^{\GCE}_{jk} = \covv_{\GCE}(N_j, N_k)$ be the grand-canonical covariance of the species numbers $N_j$ and $N_k$ at $\bmu^*$.
+The canonical covariance at LO is
+\begin{align}
+  \covv_\CE(N_l, N_m) = \chi^{\GCE}_{lm} - \sum_{a,b} v_{l,a}\,(\Sigma^{-1})_{ab}\,v_{m,b} \,,
+  \qquad
+  v_{l,a} = \sum_j q_{a,j}\,\chi^{\GCE}_{jl} \,,
+  \quad
+  \Sigma_{ab} = \sum_{j,k} q_{a,j}\,q_{b,k}\,\chi^{\GCE}_{jk} \,.
+  \label{eq:covLO}
+\end{align}
+For an ideal gas $\chi^{\GCE}$ is diagonal, $\chi^{\GCE}_{jk} = \delta_{jk}\,W_j^{(2)}$, and Eq.~\eqref{eq:covLO} collapses to the LO term of Eq.~\eqref{eq:cov}, $\delta_{lm}\,W_l^{(2)} - W_l^{(2)}\,W_m^{(2)}\,G_{lm}$.
+For an interacting model $\chi^{\GCE}$ is a full $N\times N$ matrix, and its off-diagonal correlations enter both $\Sigma$ and $v_l$.
+
+Eq.~\eqref{eq:covLO} is the subensemble acceptance method (SAM) at full acceptance $\alpha = 1$: the canonical covariance is the Schur complement of the extended susceptibility matrix $\tilde\chi$, i.e.\ Eq.~(2.86) of Ref.~\cite{SAM}, $\chi^{\rm ce}_{pp} = \det\tilde\chi/\det\chi$.
+
+\subsection{Using a non-ideal model}
+
+A pre-configured GCE model is passed in through \texttt{SetModelGCE()}:
+\begin{verbatim}
+auto* rg = new ThermalModelRealGas(&TPS, params);
+rg->SetExcludedVolumeModel(...);   // EV, QvdW, mean field, ...
+canon.SetModelGCE(rg);             // borrowed, not owned
+canon.SetMethod(SaddlePointLO);
+\end{verbatim}
+The canonical model borrows the pointer and never deletes it, so the caller keeps ownership and must keep the model alive during the calculation.
+The saddle-point solve overwrites the model's temperature and chemical potentials but leaves the interaction parameters (excluded volumes, attraction, mean-field couplings) intact.
+The covariance then reads $\chi^{\GCE}$ off the model's two-particle correlation matrix \texttt{PrimCorrel()}.
+
+Two code paths handle this:
+\begin{itemize}
+  \item \emph{Ideal gas}: $\chi^{\GCE}$ is diagonal, so the covariance uses $\covv_\CE(N_l, N_m) = \delta_{lm}\,W_l^{(2)} - W_l^{(2)}\,W_m^{(2)}\,G_{lm}$ with the precomputed $\Sigma^{-1}$.  No $N\times N$ matrix is allocated.
+  \item \emph{Non-ideal}: the full $N\times N$ \texttt{PrimCorrel} is used, and $\Sigma$, $v_l$, and the covariance follow Eq.~\eqref{eq:covLO}.
+\end{itemize}
+
+If a non-ideal model is set together with any other method, the code emits a warning and falls back to \texttt{SaddlePointLO}, because the ideal-gas cluster moments that \texttt{SaddlePoint} and \texttt{SaddlePointNLO} need are no longer valid once interactions are switched on.
+Passing \texttt{nullptr} to \texttt{SetModelGCE()} restores the default ideal gas.
+
+\paragraph{Scope.}
+Only the leading order is available for non-ideal models.
+Means and thermodynamics are the GCE values at $\bmu^*$, and the conservation laws hold exactly at this order, but the $\mathcal{O}(1)$ NLO corrections of Section~\ref{sec:SP2} have not been derived for interacting equations of state.
 
 
 \section{Selective canonical treatment}
@@ -549,6 +599,11 @@ With fluctuations    & $\sim 18$--140~s & $\sim 1.5$~s & $\sim 1$~s & $< 1$~s \\
   V.~Vovchenko, B.~D\"onigus and H.~Stoecker,
   Phys.\ Rev.\ C \textbf{100}, 054906 (2019),
   arXiv:1906.03145 [hep-ph].
+
+\bibitem{SAM}
+  V.~Vovchenko, R.~V.~Poberezhnyuk and V.~Koch,
+  JHEP \textbf{10}, 089 (2020),
+  arXiv:2007.03850 [hep-ph].
 
 \end{thebibliography}
 
