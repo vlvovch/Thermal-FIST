@@ -5,7 +5,7 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 
 #include <cassert>
 #include <stdexcept>

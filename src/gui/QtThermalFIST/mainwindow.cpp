@@ -27,8 +27,8 @@
 #endif
 #include "HRGBase/ThermalModelIdeal.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 
 #include "aboutdialog.h"
 
