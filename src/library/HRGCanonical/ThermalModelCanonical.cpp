@@ -21,7 +21,22 @@
 
 using namespace std;
 
+// ============================================================================
+//  Contents (search the "==== N." banners below to jump to a section):
+//    1. Construction & configuration
+//    2. Primordial densities & validation
+//    3. Gauss-Legendre quadrature (canonical partition functions)
+//    4. Fluctuations & thermodynamics
+//    5. Helpers & charge predicates
+//    6. GCE model management (shared by the GL contour shift and saddle point)
+//    7. Saddle-point methods (SaddlePoint / SaddlePointNLO / SaddlePointLO)
+// ============================================================================
+
 namespace thermalfist {
+
+  // ==========================================================================
+  //  1. Construction & configuration
+  // ==========================================================================
 
   ThermalModelCanonical::ThermalModelCanonical(ThermalParticleSystem *TPS_, const ThermalModelParameters& params) :
     ThermalModelBase(TPS_, params), 
@@ -239,6 +254,10 @@ namespace thermalfist {
   }
 
 
+  // ==========================================================================
+  //  2. Primordial densities & validation
+  // ==========================================================================
+
   void ThermalModelCanonical::CalculatePrimordialDensities() {
     assert(m_IGFExtraConfig.MagneticField.B == 0.); // No magnetic field supported currently
 
@@ -401,6 +420,10 @@ Obtained: %lf\n\
       }
     }
   }
+
+  // ==========================================================================
+  //  3. Gauss-Legendre quadrature (canonical partition functions)
+  // ==========================================================================
 
   void ThermalModelCanonical::CalculatePartitionFunctions(double Vc)
   {
@@ -731,6 +754,10 @@ Obtained: %lf\n\
     m_PartialZCalculated = true;
   }
 
+  // ==========================================================================
+  //  4. Fluctuations & thermodynamics
+  // ==========================================================================
+
   double ThermalModelCanonical::ParticleScaledVariance(int part)
   {
     ThermalParticle &tpart = m_TPS->Particle(part);
@@ -1026,6 +1053,10 @@ Obtained: %lf\n\
     return ret;
   }
 
+  // ==========================================================================
+  //  5. Helpers & charge predicates
+  // ==========================================================================
+
   double ThermalModelCanonical::GetGCEDensity(int i) const
   {
     return m_TPS->Particles()[i].Density(m_Parameters, IdealGasFunctions::ParticleDensity, m_UseWidth, m_Chem[i]);
@@ -1062,6 +1093,10 @@ Obtained: %lf\n\
   // otherwise uses the persistent default ThermalModelIdeal.
   // Both models share the same TPS, so statistics and width settings
   // are already in sync.  Only thermal parameters need to be updated.
+  // ==========================================================================
+  //  6. GCE model management (shared by the GL contour shift and saddle point)
+  // ==========================================================================
+
   void ThermalModelCanonical::PrepareModelGCE()
   {
     m_modelgce = (m_modelgce_ext != NULL) ? m_modelgce_ext : m_modelgce_default;
@@ -1126,7 +1161,9 @@ Obtained: %lf\n\
     }
   }
 
-  // --- Saddle-point approximation methods ---
+  // ==========================================================================
+  //  7. Saddle-point methods (SaddlePoint / SaddlePointNLO / SaddlePointLO)
+  // ==========================================================================
 
   void ThermalModelCanonical::SolveSaddlePointEquations()
   {
