@@ -387,6 +387,11 @@ namespace thermalfist {
      */
     virtual void PrepareModelGCE();
     void CleanModelGCE();
+
+    /// Enforce that non-ideal interaction models only run with SaddlePointLO.
+    /// Any other method falls back to SaddlePointLO (with a warning), since the
+    /// remaining methods assume an ideal gas.
+    void EnforceSaddlePointLOForNonIdeal();
     //@}
 
     //@{
@@ -517,8 +522,9 @@ namespace thermalfist {
 
     /// NLO thermodynamic quantities computed by ComputeAnalyticCumulants().
     /// These are exact at O(1/Vc) including quantum statistics (cluster expansion).
-    double m_NLOEnergyDensity;   ///< ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
-    double m_NLOPressure;        ///< P = p^GCE(μ*) - d·T/(2·Vc)
+    double m_NLOEnergyDensity;   ///< ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj (LO: ε^GCE(μ*))
+    double m_NLOPressure;        ///< P = p^GCE(μ*) - d·T/(2·Vc) (LO: p^GCE(μ*))
+    double m_NLOEntropyDensity;  ///< LO entropy: s^GCE(μ*) (used only by SaddlePointLO; NLO uses lnZ_SP)
     //@}
   };
 

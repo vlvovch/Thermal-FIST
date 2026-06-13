@@ -50,6 +50,7 @@ namespace thermalfist {
     m_SaddlePointLogDetSigma = 0.0;
     m_NLOEnergyDensity = 0.0;
     m_NLOPressure = 0.0;
+    m_NLOEntropyDensity = 0.0;
   }
 
 
@@ -246,15 +247,12 @@ namespace thermalfist {
     if (m_PartialZ.size() == 0)
       CalculateQuantumNumbersRange();
 
+    // Non-ideal interaction models are only supported with SaddlePointLO; any
+    // other method (incl. GaussLegendre and plain SaddlePoint) falls back to it.
+    EnforceSaddlePointLOForNonIdeal();
+
     // SaddlePointNLO/LO: compute means directly from CGF expansion, bypass partition functions
     if (m_Method == SaddlePointNLO || m_Method == SaddlePointLO) {
-      // Non-ideal interaction models are only supported with SaddlePointLO
-      if (m_InteractionModel != Ideal && m_Method != SaddlePointLO) {
-        std::cerr << "**WARNING** " << m_TAG
-                  << ": Non-ideal interaction model is only supported with SaddlePointLO method. "
-                  << "Falling back to SaddlePointLO." << std::endl;
-        m_Method = SaddlePointLO;
-      }
       m_Banalyt = false;
       ComputeAnalyticCumulants(false);
       m_Calculated = true;
@@ -406,6 +404,15 @@ Obtained: %lf\n\
 
   void ThermalModelCanonical::CalculatePartitionFunctions(double Vc)
   {
+    // This method is public, so a direct external call must not bypass the
+    // non-ideal -> SaddlePointLO fallback that guards CalculateDensities() and
+    // CalculateFluctuations().  SaddlePointLO/NLO do not use precomputed
+    // partition functions (means and fluctuations come from
+    // ComputeAnalyticCumulants()), so there is nothing to compute here for them.
+    EnforceSaddlePointLOForNonIdeal();
+    if (m_Method == SaddlePointLO || m_Method == SaddlePointNLO)
+      return;
+
     if (Vc < 0.0)
       Vc = m_Parameters.SVc;
 
@@ -874,14 +881,8 @@ Obtained: %lf\n\
   }
 
   void ThermalModelCanonical::CalculateFluctuations() {
+    EnforceSaddlePointLOForNonIdeal();
     if (m_Method == SaddlePointNLO || m_Method == SaddlePointLO) {
-      // Non-ideal interaction models are only supported with SaddlePointLO
-      if (m_InteractionModel != Ideal && m_Method != SaddlePointLO) {
-        std::cerr << "**WARNING** " << m_TAG
-                  << ": Non-ideal interaction model is only supported with SaddlePointLO method. "
-                  << "Falling back to SaddlePointLO." << std::endl;
-        m_Method = SaddlePointLO;
-      }
       // SaddlePointNLO/LO: compute means + covariance in one shot
       if (m_PartialZ.size() == 0)
         CalculateQuantumNumbersRange();
@@ -991,6 +992,15 @@ Obtained: %lf\n\
 
   double ThermalModelCanonical::CalculateEntropyDensity()
   {
+    if (!m_Calculated) CalculateDensities();
+
+    // SaddlePointLO: entropy is the GCE entropy at the saddle point μ*,
+    // consistent with the LO pressure and energy density (the ln det Sigma
+    // Gaussian term is an NLO effect).  Stored by ComputeAnalyticCumulants().
+    // NLO and the other methods use the ln Z_SP form below.
+    if (m_Method == SaddlePointLO)
+      return m_NLOEntropyDensity;
+
     double ret = (CalculateEnergyDensity() / m_Parameters.T) + (m_MultExp + m_MultExpBanalyt + log(m_PartialZ[m_QNMap[QuantumNumbers(0, 0, 0, 0)]])) / m_Parameters.SVc;
 
     if (m_BCE)
@@ -1068,7 +1078,10 @@ Obtained: %lf\n\
     if (!m_BCE && m_QCE)
       m_Parameters.muQ = -m_Parameters.muB / 30.;
 
-    m_Parameters.muC = 0.;
+    // Only reset muC when charm is canonical; otherwise muC is a fixed
+    // grand-canonical input and must be preserved through the GCE solve.
+    if (m_CCE)
+      m_Parameters.muC = 0.;
 
     m_modelgce->SolveChemicalPotentials(m_Parameters.B, m_Parameters.Q, m_Parameters.S, m_Parameters.C,
       m_Parameters.muB, m_Parameters.muQ, m_Parameters.muS, m_Parameters.muC,
@@ -1096,6 +1109,21 @@ Obtained: %lf\n\
     else
       m_InteractionModel = Ideal;
     m_PartialZCalculated = false;
+  }
+
+  void ThermalModelCanonical::EnforceSaddlePointLOForNonIdeal()
+  {
+    // Non-ideal equations of state are only supported by the SaddlePointLO
+    // method.  Every other method (GaussLegendre, SaddlePoint, SaddlePointNLO)
+    // assumes an ideal gas, so silently mixing a non-ideal GCE model with them
+    // would be inconsistent (ratios/thermodynamics from the interacting model,
+    // densities from ideal-gas cluster sums).  Fall back to SaddlePointLO.
+    if (m_InteractionModel != Ideal && m_Method != SaddlePointLO) {
+      std::cerr << "**WARNING** " << m_TAG
+                << ": Non-ideal interaction model is only supported with the SaddlePointLO method. "
+                << "Falling back to SaddlePointLO." << std::endl;
+      m_Method = SaddlePointLO;
+    }
   }
 
   // --- Saddle-point approximation methods ---
@@ -1412,7 +1440,6 @@ Obtained: %lf\n\
     // non-ideal equations of state.
     SetupSaddlePointChargeIndices();
 
-    int d = m_SaddlePointDim;
     int Nparts = m_TPS->ComponentsNumber();
     double Vc = m_Parameters.SVc;
     double T  = m_Parameters.T;
@@ -1436,26 +1463,58 @@ Obtained: %lf\n\
       W2[j] = pc[j][j] * Vc * T;
     }
 
-    // Build the charge susceptibility matrix Sigma from PrimCorrel:
+    // Build the charge susceptibility matrix over a given set of charge axes
+    // (indices into {B=0,Q=1,S=2,C=3}):
     //   Sigma_{ab} = sum_{j,k} q_{a,j} q_{b,k} chi^GCE_{jk}
     // For ideal gas (diagonal PrimCorrel), this reduces to sum_j q_aj q_bj W2[j].
     // For interacting models, off-diagonal chi^GCE_{jk} are included.
-    Eigen::MatrixXd Sigma = Eigen::MatrixXd::Zero(d, d);
-    for (int j = 0; j < Nparts; ++j) {
-      for (int k = 0; k < Nparts; ++k) {
-        if (pc[j][k] == 0.0) continue;
-        double chi_jk = pc[j][k] * Vc * T;
-        for (int ia = 0; ia < d; ++ia) {
-          int a = m_SaddlePointChargeIndices[ia];
-          double q_aj = m_TPS->Particle(j).GetCharge(a);
-          if (q_aj == 0.0) continue;
-          for (int ib = 0; ib < d; ++ib) {
-            int b = m_SaddlePointChargeIndices[ib];
-            Sigma(ia, ib) += q_aj * m_TPS->Particle(k).GetCharge(b) * chi_jk;
+    auto buildSigma = [&](const std::vector<int>& idx) -> Eigen::MatrixXd {
+      int dd = static_cast<int>(idx.size());
+      Eigen::MatrixXd S = Eigen::MatrixXd::Zero(dd, dd);
+      for (int j = 0; j < Nparts; ++j) {
+        for (int k = 0; k < Nparts; ++k) {
+          if (pc[j][k] == 0.0) continue;
+          double chi_jk = pc[j][k] * Vc * T;
+          for (int ia = 0; ia < dd; ++ia) {
+            double q_aj = m_TPS->Particle(j).GetCharge(idx[ia]);
+            if (q_aj == 0.0) continue;
+            for (int ib = 0; ib < dd; ++ib)
+              S(ia, ib) += q_aj * m_TPS->Particle(k).GetCharge(idx[ib]) * chi_jk;
           }
         }
       }
+      return S;
+    };
+
+    // Drop linearly dependent (redundant) charge axes so that Sigma is full
+    // rank before it is inverted.  Example: a proton-only gas with canonical B
+    // and Q has q_B = q_Q for every species, so Sigma is rank 1 and the second
+    // axis must be removed.  Greedily keep an axis only if it strictly raises
+    // the rank (keeps Sigma positive definite).  The surviving count is then
+    // d = rank(Sigma), the effective dimensionality used in the NLO pressure.
+    {
+      std::vector<int> cand = m_SaddlePointChargeIndices;
+      std::vector<int> kept;
+      for (size_t c = 0; c < cand.size(); ++c) {
+        std::vector<int> trial = kept;
+        trial.push_back(cand[c]);
+        Eigen::MatrixXd St = buildSigma(trial);
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(St, Eigen::EigenvaluesOnly);
+        double maxEv = es.eigenvalues()(trial.size() - 1);
+        double minEv = es.eigenvalues()(0);
+        if (maxEv > 0.0 && minEv > 1.e-10 * maxEv)
+          kept = trial;
+        else
+          std::cerr << "**WARNING** " << m_TAG
+                    << ": dropping linearly dependent conserved-charge axis "
+                    << cand[c] << " (B=0,Q=1,S=2,C=3) from the saddle-point basis." << std::endl;
+      }
+      m_SaddlePointChargeIndices = kept;
+      m_SaddlePointDim = static_cast<int>(kept.size());
     }
+
+    int d = m_SaddlePointDim;
+    Eigen::MatrixXd Sigma = buildSigma(m_SaddlePointChargeIndices);
 
     // Compute log(det(Sigma)) for entropy
     double logDetSigma = 0.0;
@@ -1581,11 +1640,14 @@ Obtained: %lf\n\
     // Step 3b: Compute thermodynamic quantities.
     //
     // NLO:
-    //   Energy: ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
+    //   Energy:  ε = ε^GCE(μ*) - (1/2) Σ_j E_j G_jj
     //   Pressure: P = p^GCE(μ*) - d·T/(2Vc)
+    //   Entropy: s = ln Z_SP / Vc + ε/T  (computed in CalculateEntropyDensity)
     // LO:
-    //   Energy: ε = ε^GCE(μ*)
+    //   Energy:  ε = ε^GCE(μ*)
     //   Pressure: P = p^GCE(μ*)
+    //   Entropy: s = s^GCE(μ*)  (pure GCE, consistent with the LO P and ε;
+    //            the ln det Sigma Gaussian term is an NLO effect and is dropped)
     if (isNLO) {
       double deltaEps = 0.0;
       for (int j = 0; j < Nparts; ++j) {
@@ -1595,10 +1657,12 @@ Obtained: %lf\n\
       }
       m_NLOEnergyDensity = epsGCE - 0.5 * deltaEps;
       m_NLOPressure = pGCE - d * T / (2.0 * Vc);
+      m_NLOEntropyDensity = 0.; // unused for NLO; entropy comes from ln Z_SP path
     }
     else {
       m_NLOEnergyDensity = epsGCE;
       m_NLOPressure = pGCE;
+      m_NLOEntropyDensity = m_modelgce->CalculateEntropyDensity(); // s^GCE(μ*)
     }
 
     // Step 4: Compute means (LO, or LO + NLO if isNLO)
