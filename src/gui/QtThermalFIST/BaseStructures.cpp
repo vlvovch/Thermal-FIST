@@ -2,8 +2,8 @@
 
 #include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGEV.h"
-#include "HRGVDW.h""
-#include "HRGRealGas.h""
+#include "HRGVDW.h"
+#include "HRGRealGas.h"
 #include "HRGCanonical/ThermalModelCanonical.h"
 #include "CosmicEos/EffectiveMassModel.h"
 
@@ -117,6 +117,10 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.CanonicalC = true;// model->IsConservedChargeCanonical(ConservedCharge::CharmCharge);
 
   ret.CanonicalMethod = 0; // Gauss-Legendre by default
+  // Read the actual canonical method back from the model (Ensemble()==CE
+  // uniquely identifies ThermalModelCanonical; the index maps 1:1 to the enum).
+  if (model->Ensemble() == ThermalModelBase::CE)
+    ret.CanonicalMethod = static_cast<int>(static_cast<ThermalModelCanonical*>(model)->Method());
 
   ret.SoverB = model->SoverB();
 
