@@ -83,6 +83,7 @@ class FitToExperimentTab : public QWidget
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
+    thermalfist::ThermalModelBase *m_modelGCE{nullptr}; ///< Auxiliary GCE model for non-ideal CE fits
     thermalfist::ThermalModelFit *fitcopy;
 
     ThermalModelConfig lastconfig;

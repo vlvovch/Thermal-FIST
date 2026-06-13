@@ -58,6 +58,7 @@ struct ThermalModelConfig {
   bool CanonicalQ;
   bool CanonicalS;
   bool CanonicalC;
+  int CanonicalMethod; ///< 0 - Gauss-Legendre, 1 - Saddle point, 2 - Saddle point NLO, 3 - Saddle point LO
 
   /// Constraints on mu's
   double SoverB;
@@ -150,5 +151,12 @@ struct ChargesFluctuations {
 void SetThermalModelParameters(thermalfist::ThermalModelBase* model, const ThermalModelConfig& config);
 void SetThermalModelConfiguration(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
 void SetThermalModelInteraction(thermalfist::ThermalModelBase *model, const ThermalModelConfig &config);
+
+/// Creates a pre-configured GCE model suitable for SetModelGCE() on a canonical model.
+/// Returns nullptr if config.InteractionModel is InteractionIdeal.
+/// Caller is responsible for deleting the returned model.
+thermalfist::ThermalModelBase* CreateGCEModelForCanonical(
+    thermalfist::ThermalParticleSystem* TPS,
+    const ThermalModelConfig& config);
 
 #endif

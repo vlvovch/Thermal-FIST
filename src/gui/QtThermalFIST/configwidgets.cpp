@@ -25,11 +25,11 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGBase/ThermalModelCanonical.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
 
 #include "DebugText.h"
@@ -269,6 +269,16 @@ ThermalModelConfig ModelConfigWidget::updatedConfig()
     ret.InteractionModel = ThermalModelConfig::InteractionRealGas;
   }
 
+  // CE with non-ideal model: derive InteractionModel from comboModel
+  if (ret.ModelType == ThermalModelConfig::CE) {
+    if (comboModel->currentText() == ModelDEV)
+      ret.InteractionModel = ThermalModelConfig::InteractionEVDiagonal;
+    if (comboModel->currentText() == ModelQvdW)
+      ret.InteractionModel = ThermalModelConfig::InteractionQVDW;
+    if (comboModel->currentText() == ModelRealGas)
+      ret.InteractionModel = ThermalModelConfig::InteractionRealGas;
+  }
+
   // Event generator mode
   if (m_eventGeneratorMode) {
     ret.InteractionModel = ThermalModelConfig::InteractionIdeal;
@@ -316,13 +326,15 @@ void ModelConfigWidget::conservationLawsDialog()
   ConservationLawsDialog *dialog = new ConservationLawsDialog(this);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   dialog->setModal(true);
-  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
+  connect(dialog, &QDialog::finished, this, [this]() {
+    ensembleChanged();  // refresh model combo (e.g. interacting models for CE+SaddlePointLO)
+  });
   dialog->show();
 #else
   ConservationLawsDialog dialog(this);
   dialog.setWindowFlags(Qt::Window);
   dialog.exec();
-  emit changed();
+  ensembleChanged();  // refresh model combo (e.g. interacting models for CE+SaddlePointLO)
 #endif
 }
 
@@ -439,18 +451,28 @@ void ModelConfigWidget::ensembleChanged()
   QVector<QString> newitems;
   newitems.push_back(ModelIdeal);
 
+  // Non-ideal models available for CE only when SaddlePointLO (index 3) is selected
+  bool canonicalSaddlePointLO = (comboEnsemble->currentText() == tr("Canonical")
+    && currentConfig.CanonicalMethod == 3);
+
   if (comboEnsemble->currentText() == tr("Grand-canonical")
-    || comboEnsemble->currentText() == tr("Strangeness-canonical") || m_eventGeneratorMode)
+    || comboEnsemble->currentText() == tr("Strangeness-canonical")
+    || canonicalSaddlePointLO
+    || m_eventGeneratorMode)
     newitems.push_back(ModelDEV);
 
   if (comboEnsemble->currentText() == tr("Grand-canonical") || m_eventGeneratorMode)
     newitems.push_back(ModelCRSEV);
 
   if (comboEnsemble->currentText() == tr("Grand-canonical")
-    || comboEnsemble->currentText() == tr("Strangeness-canonical") || m_eventGeneratorMode)
+    || comboEnsemble->currentText() == tr("Strangeness-canonical")
+    || canonicalSaddlePointLO
+    || m_eventGeneratorMode)
     newitems.push_back(ModelQvdW);
 
-  if (comboEnsemble->currentText() == tr("Grand-canonical") || m_eventGeneratorMode)
+  if (comboEnsemble->currentText() == tr("Grand-canonical")
+    || canonicalSaddlePointLO
+    || m_eventGeneratorMode)
     newitems.push_back(ModelRealGas);
 
   if (newitems != olditems) {
@@ -686,6 +708,27 @@ ConservationLawsDialog::ConservationLawsDialog(ModelConfigWidget* parent) : QDia
   if (m_parent->model->TPS()->hasCharmed())
     layMixCan->addWidget(checkCConserve);
 
+  QHBoxLayout* layMethod = new QHBoxLayout();
+  layMethod->setAlignment(Qt::AlignLeft);
+  QLabel* labelMethod = new QLabel(tr("Method:"));
+  comboCanonicalMethod = new QComboBox();
+  comboCanonicalMethod->addItem(tr("Gauss-Legendre quadrature"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approximation"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approx. (NLO)"));
+  comboCanonicalMethod->addItem(tr("Saddle-point approx. (LO)"));
+  comboCanonicalMethod->setCurrentIndex(m_parent->currentConfig.CanonicalMethod);
+
+  // Non-ideal CE only supports SaddlePointLO — lock the method selection
+  if (m_parent->currentConfig.InteractionModel != ThermalModelConfig::InteractionIdeal
+      && m_parent->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE) {
+    comboCanonicalMethod->setCurrentIndex(3);  // SaddlePointLO
+    comboCanonicalMethod->setEnabled(false);
+  }
+
+  layMethod->addWidget(labelMethod);
+  layMethod->addWidget(comboCanonicalMethod);
+  layMixCan->addLayout(layMethod);
+
   grMixCan->setLayout(layMixCan);
 
   if (m_parent->currentConfig.Ensemble == ThermalModelConfig::EnsembleCE && layMixCan->count() > 0)
@@ -804,6 +847,7 @@ void ConservationLawsDialog::OK()
   m_parent->currentConfig.CanonicalQ = checkQConserve->isChecked();
   m_parent->currentConfig.CanonicalS = checkSConserve->isChecked();
   m_parent->currentConfig.CanonicalC = checkCConserve->isChecked();
+  m_parent->currentConfig.CanonicalMethod = comboCanonicalMethod->currentIndex();
   QDialog::accept();
 }
 
