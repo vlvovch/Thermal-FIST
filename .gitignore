@@ -31,3 +31,6 @@ __pycache__/
 
 # aqtinstall
 aqtinstall.log
+
+# Claude
+.claude/*
