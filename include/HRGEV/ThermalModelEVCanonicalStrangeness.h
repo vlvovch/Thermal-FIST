@@ -11,7 +11,7 @@
 #include <map>
 #include <iostream>
 
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVDiagonal.h"
 
 namespace thermalfist {

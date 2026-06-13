@@ -22,11 +22,11 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGBase/ThermalModelCanonical.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 
 #include "qcustomplot.h"
 
@@ -38,6 +38,7 @@ chi2ProfileDialog::chi2ProfileDialog(QWidget *parent, ThermalParticleSystem *inT
   fitParams = inFit->Parameters();
   
   model = NULL;
+  modelGCE = NULL;
   modelFit = NULL;
 
   lastFilePath = "";
@@ -247,6 +248,10 @@ void chi2ProfileDialog::setModel()
 {
   if (model != NULL)
     delete model;
+  if (modelGCE != NULL) {
+    delete modelGCE;
+    modelGCE = NULL;
+  }
 
   if (config.ModelType == ThermalModelConfig::DiagonalEV)
     model = new ThermalModelEVDiagonal(TPS);
@@ -320,7 +325,17 @@ void chi2ProfileDialog::setModel()
 
   SetThermalModelConfiguration(model, config);
 
-  SetThermalModelInteraction(model, config);
+  // For non-ideal CE: interactions are set on the auxiliary GCE model, not the
+  // canonical model itself. SetThermalModelInteraction does static_casts that
+  // are only valid for the matching (non-canonical) model type.
+  if (config.ModelType == ThermalModelConfig::CE
+      && config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+    modelGCE = CreateGCEModelForCanonical(model->TPS(), config);
+    if (modelGCE != nullptr)
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(modelGCE);
+  } else {
+    SetThermalModelInteraction(model, config);
+  }
 
   if (config.ModelType == ThermalModelConfig::CE) {
     static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(false);
@@ -518,6 +533,9 @@ void chi2ProfileDialog::finalize() {
     if (model != NULL)
       delete model;
     model = NULL;
+    if (modelGCE != NULL)
+      delete modelGCE;
+    modelGCE = NULL;
 
     buttonCalculate->setText(tr("Calculate"));
     comboParameter->setEnabled(true);

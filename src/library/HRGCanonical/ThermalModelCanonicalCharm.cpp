@@ -5,7 +5,7 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 
 #include <cassert>
 #include <stdexcept>
@@ -31,6 +31,8 @@ namespace thermalfist {
     for (unsigned int i = 0; i < m_CharmValues.size(); ++i) m_CharmMap[m_CharmValues[i]] = i;
 
     m_Parameters.muC = 0.;
+
+    m_xi0 = 0.0;
 
     m_TAG = "ThermalModelCanonicalCharm";
 
@@ -123,12 +125,13 @@ namespace thermalfist {
       xi[i] = 2. * sqrt(m_partialZ[m_CharmMap[i + 1]] * m_partialZ[m_CharmMap[-(i + 1)]]);
       yi[i] = sqrt(m_partialZ[m_CharmMap[i + 1]] / m_partialZ[m_CharmMap[-(i + 1)]]);
     }
+    m_xi0 = xi[0];
 
+    // Use exponentially-scaled Bessel functions to avoid overflow for large xi.
+    // BesselIexp(n, x) = I_n(x) * exp(-|x|), so the exp(x) factor cancels in
+    // the ratio m_Zsum[i]/m_Zsum[0] used below.
     for (size_t i = 0; i < m_CharmValues.size(); ++i) {
-      double res = 0.;
-
-      res = xMath::BesselI(abs(-m_CharmValues[i]), xi[0]) * pow(yi[0], m_CharmValues[i]);
-      m_Zsum[i] = res;
+      m_Zsum[i] = xMath::BesselIexp(abs(m_CharmValues[i]), xi[0]) * pow(yi[0], m_CharmValues[i]);
     }
 
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) {
@@ -159,7 +162,9 @@ namespace thermalfist {
   }
 
   double ThermalModelCanonicalCharm::CalculateEntropyDensity() {
-    double ret = m_partialZ[0] + log(m_Zsum[m_CharmMap[0]]);
+    // m_Zsum stores BesselIexp values (scaled by exp(-xi)), so
+    // log(Z_0) = log(BesselI(0,xi)) = log(BesselIexp(0,xi)) + xi
+    double ret = m_partialZ[0] + log(m_Zsum[m_CharmMap[0]]) + m_xi0;
     if (m_energydensitiesGCE.size() == 0) CalculateEnergyDensitiesGCE();
     for (int i = 0; i < m_TPS->ComponentsNumber(); ++i) if (m_CharmMap.count(-m_TPS->Particles()[i].Charm())) ret += (m_Zsum[m_CharmMap[-m_TPS->Particles()[i].Charm()]] / m_Zsum[m_CharmMap[0]]) * ((m_energydensitiesGCE[i] - (m_Parameters.muB * m_TPS->Particles()[i].BaryonCharge() + m_Parameters.muQ * m_TPS->Particles()[i].ElectricCharge() + m_Parameters.muS * m_TPS->Particles()[i].Strangeness()) * m_densitiesGCE[i]) / m_Parameters.T);
     return ret;
