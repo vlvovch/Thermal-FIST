@@ -4,7 +4,7 @@
 #include "HRGEV.h"
 #include "HRGVDW.h""
 #include "HRGRealGas.h""
-#include "HRGBase/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
 #include "CosmicEos/EffectiveMassModel.h"
 
 using namespace thermalfist;

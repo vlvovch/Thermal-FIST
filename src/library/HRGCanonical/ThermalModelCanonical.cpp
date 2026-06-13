@@ -5,7 +5,7 @@
  *
  * GNU General Public License (GPLv3 or later)
  */
-#include "HRGBase/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
 
 #include <iostream>
 #include <cmath>
