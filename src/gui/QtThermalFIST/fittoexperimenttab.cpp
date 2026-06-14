@@ -311,9 +311,11 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 
 FitToExperimentTab::~FitToExperimentTab()
 {
-    if (m_modelGCE != nullptr) { delete m_modelGCE; m_modelGCE = nullptr; }
     if (fitcopy!=NULL) { delete fitcopy; }
+    // Delete the (possibly borrowing) canonical model before the GCE model it
+    // borrows via SetModelGCE(), so model never holds a dangling pointer.
     delete model;
+    if (m_modelGCE != nullptr) { delete m_modelGCE; m_modelGCE = nullptr; }
 }
 
 

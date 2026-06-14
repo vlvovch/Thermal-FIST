@@ -77,6 +77,9 @@ namespace thermalfist {
 
   void ThermalModelCanonical::ChangeTPS(ThermalParticleSystem *TPS_) {
     ThermalModelBase::ChangeTPS(TPS_);
+    // m_modelgce may alias the default model we are about to free; clear it so
+    // it cannot dangle (PrepareModelGCE() re-sets it before any use).
+    CleanModelGCE();
     delete m_modelgce_default;
     m_modelgce_default = new ThermalModelIdeal(m_TPS, m_Parameters);
   }
