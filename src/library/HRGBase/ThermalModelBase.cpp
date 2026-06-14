@@ -778,7 +778,7 @@ namespace thermalfist {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
-        sprintf(cc, "Density for particle %d (%s) is NaN!\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+        sprintf(cc, "Density for particle %lld (%s) is NaN!\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
         std::cerr << "**WARNING** " << cc << std::endl;
         
 
