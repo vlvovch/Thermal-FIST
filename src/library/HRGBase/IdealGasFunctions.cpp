@@ -497,11 +497,11 @@ namespace thermalfist {
     }
 
     // Gauss-Legendre 32-point quadrature for [0,1] interval
-    const double* legx32 = NumericalIntegration::coefficients_xleg32_zeroone;
-    const double* legw32 = NumericalIntegration::coefficients_wleg32_zeroone;
+    const double* legx32 = NumericalIntegration::GetGaussLegendreNodesZeroOne(32).data();
+    const double* legw32 = NumericalIntegration::GetGaussLegendreWeightsZeroOne(32).data();
     // Gauss-Laguerre 32-point quadrature for [0,\infty] interval
-    const double* lagx32 = NumericalIntegration::coefficients_xlag32;
-    const double* lagw32 = NumericalIntegration::coefficients_wlag32;
+    const double* lagx32 = NumericalIntegration::GetGaussLaguerreNodes(32).data();
+    const double* lagw32 = NumericalIntegration::GetGaussLaguerreWeights(32).data();
 
     double QuantumNumericalIntegrationDensity(int statistics, double T, double mu, double m, double deg,
                                               const IdealGasFunctionsExtraConfig& extraConfig)

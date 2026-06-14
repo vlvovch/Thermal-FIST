@@ -19,6 +19,10 @@ add_executable(test_EMMDerivatives test_EMMDerivatives.cpp)
 target_link_libraries(test_EMMDerivatives ThermalFIST GTest::gtest_main)
 set_property(TARGET test_EMMDerivatives PROPERTY FOLDER tests)
 
+add_executable(test_NumericalIntegration test_NumericalIntegration.cpp)
+target_link_libraries(test_NumericalIntegration ThermalFIST GTest::gtest_main)
+set_property(TARGET test_NumericalIntegration PROPERTY FOLDER tests)
+
 add_executable(test_ThermalModelCanonical test_ThermalModelCanonical.cpp)
 target_link_libraries(test_ThermalModelCanonical ThermalFIST GTest::gtest_main)
 set_property(TARGET test_ThermalModelCanonical PROPERTY FOLDER tests)
@@ -47,6 +51,9 @@ gtest_discover_tests(test_ZeroTemperature)
 
 # EMM derivatives tests
 gtest_discover_tests(test_EMMDerivatives)
+
+# Numerical integration (Gauss quadrature) tests
+gtest_discover_tests(test_NumericalIntegration)
 
 # Canonical ensemble tests
 gtest_discover_tests(test_ThermalModelCanonical)
