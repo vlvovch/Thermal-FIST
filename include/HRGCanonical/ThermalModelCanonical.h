@@ -261,7 +261,7 @@ namespace thermalfist {
      *
      * The minimum value of multiplier is 1. Increase to improve the numerical accuracy of the canonical ensemble calculations.
      *
-     * \param The multiplier
+     * \param multiplier The multiplier (clamped to a minimum of 1).
      */
     void SetIntegrationIterationsMultiplier(int multiplier) { (multiplier > 0 ? m_IntegrationIterationsMultiplier = multiplier : m_IntegrationIterationsMultiplier = 1); }
 
@@ -363,7 +363,6 @@ namespace thermalfist {
      * This method is not implemented for the canonical ensemble model,
      * hence it returns a constant value of 0.0.
      *
-     * \param part The particle species index.
      * \return double The scalar density, which is 0.0 in this implementation.
      */
     virtual double ParticleScalarDensity(int /*part*/) { return 0.; }
