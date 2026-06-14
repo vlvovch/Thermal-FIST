@@ -479,4 +479,44 @@ namespace {
     EXPECT_EQ(mis, 0) << mis << " species: GL vs SP (S-only, muB=0.5, R=3)";
   }
 
+  // ---- gammaC constraint -----------------------------------------------------
+
+  // Regression guard for the ConstrainGammaC/SetNccbar/GetNccbar API: verify the
+  // secant solver actually drives the charm fugacity gammaC so that the computed
+  // Nccbar reaches the requested target (and stays finite) on a charm list.
+  TEST_F(ThermalModelCanonicalCharmTest, GammaCConstraintReachesNccbar) {
+    ThermalModelParameters p;
+    p.T = 0.155;
+    p.muB = 0.; p.muQ = 0.; p.muS = 0.; p.muC = 0.;
+    p.gammaS = 1.; p.gammaq = 1.; p.gammaC = 1.;
+    p.V = 5000.; p.SVc = 5000.;
+
+    ThermalModelIdeal model(TPS, p);
+    model.SetStatistics(false);
+    model.SetUseWidth(ThermalParticle::ZeroWidth);
+
+    // Baseline Nccbar at gammaC = 1; target twice that so the solve lands on a
+    // modest, overflow-free gammaC regardless of the absolute charm scale.
+    model.CalculateDensities();
+    double Nccbar0 = model.GetNccbar();
+    ASSERT_GT(Nccbar0, 0.) << "no charm content at gammaC = 1";
+
+    const double targetNccbar = 2.0 * Nccbar0;
+    model.ConstrainGammaC(true);
+    model.SetNccbar(targetNccbar);
+
+    // Runs the secant solve for gammaC (ConstrainGammaCFromNccbar)
+    model.ConstrainChemicalPotentials();
+
+    const double gammaC = model.Parameters().gammaC;
+    const double Nccbar = model.GetNccbar();
+
+    EXPECT_TRUE(std::isfinite(gammaC)) << "gammaC is not finite";
+    EXPECT_GT(gammaC, 0.) << "gammaC must be positive";
+    EXPECT_TRUE(std::isfinite(Nccbar)) << "Nccbar is not finite";
+    EXPECT_NEAR(Nccbar, targetNccbar, 1.e-3 * targetNccbar)
+      << "secant solver did not reach target Nccbar: got " << Nccbar
+      << " (target " << targetNccbar << ", gammaC " << gammaC << ")";
+  }
+
 } // namespace
