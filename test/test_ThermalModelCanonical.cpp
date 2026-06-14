@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
+#include <utility>
+#include <algorithm>
 #include "ThermalFISTConfig.h"
 #include "HRGBase/ThermalModelParameters.h"
 #include "HRGBase/ThermalParticleSystem.h"

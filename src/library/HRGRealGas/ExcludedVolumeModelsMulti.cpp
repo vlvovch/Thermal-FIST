@@ -1,5 +1,6 @@
 #include "HRGRealGas/ExcludedVolumeModelsMulti.h"
 #include <cmath>
+#include <iostream>
 #include <map>
 
 #include <Eigen/Dense>
@@ -305,7 +306,9 @@ namespace thermalfist {
 		if (m_hasPreviousSolComponents && (int)m_previousSolComponents.size() == m_componentsNumber) {
 			Broyden broydn(&eqs, &jac);
 			sol = broydn.Solve(m_previousSolComponents, &crit);
-			converged = (broydn.Iterations() < broydn.MaxIterations());
+			// Iterations() == 0 means Solve() bailed out before iterating (singular
+			// or NaN Jacobian); that must not be mistaken for convergence.
+			converged = (broydn.Iterations() > 0 && broydn.Iterations() < broydn.MaxIterations());
 		}
 
 		// Fall back to unit initial guess (no suppression)
@@ -313,7 +316,7 @@ namespace thermalfist {
 			Broyden broydn2(&eqs, &jac);
 			std::vector<double> sol1(m_componentsNumber, 1.);
 			sol = broydn2.Solve(sol1, &crit);
-			converged = (broydn2.Iterations() < broydn2.MaxIterations());
+			converged = (broydn2.Iterations() > 0 && broydn2.Iterations() < broydn2.MaxIterations());
 		}
 
 		// Fall back to zero initial guess
@@ -321,7 +324,7 @@ namespace thermalfist {
 			Broyden broydn3(&eqs, &jac);
 			std::vector<double> sol0(m_componentsNumber, 0.);
 			sol = broydn3.Solve(sol0, &crit);
-			converged = (broydn3.Iterations() < broydn3.MaxIterations());
+			converged = (broydn3.Iterations() > 0 && broydn3.Iterations() < broydn3.MaxIterations());
 		}
 
 		// Last resort: fixed-point iteration (guaranteed to stay in physical bounds)
@@ -347,15 +350,23 @@ namespace thermalfist {
 			}
 		}
 
-		// Only cache if converged to avoid propagating bad solutions
+		// Only cache a converged solution; never seed the next solve with a
+		// non-converged best-effort guess.
 		if (converged) {
 			m_previousSolComponents = sol;
 			m_hasPreviousSolComponents = true;
-
-			for (int i = 0; i < m_N; ++i)
-				ret[i] = ntil[i] * sol[m_components[i]];
 		}
-		// If all methods failed, ret stays at zeros (safe fallback)
+		else {
+			std::cerr << "**WARNING** ExcludedVolumeModelMultiBase::nsolBroydenComponents: "
+			          << "no solver fully converged; returning best-effort solution." << std::endl;
+		}
+
+		// Fill the output from the best available solution. Even when nothing
+		// formally converged, `sol` holds the fixed-point fallback result, which
+		// is clamped to the physical range [0,1]. That is far safer than returning
+		// all zeros, which would silently null out densities downstream.
+		for (int i = 0; i < m_N; ++i)
+			ret[i] = ntil[i] * sol[m_components[i]];
 
 		return ret;
 	}
