@@ -29,6 +29,11 @@ Date: TBD
 - New `ConstrainGammaC`/`SetNccbar`/`NccbarGoal`/`GetNccbar` API in `ThermalModelBase`
 - GUI: Added gammaC constraint checkbox and Nccbar spinbox to conservation laws dialog
 
+### Real-gas and mean-field models
+
+- Fixed the charge-density-dependent mean-field derivatives `d2v`/`d3v`/`d4v`, which were missing per-index charge factors (only the i-index factor was applied). This corrects susceptibilities and fluctuations for charge-density-dependent mean-field models.
+- More robust multi-component Broyden solver: the previous solution is cached and reused as the initial guess, improving convergence.
+
 ## [Version 1.6]
 
 Date: 2026-02-16
