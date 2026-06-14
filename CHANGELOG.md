@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Version 1.6.1]
 
-Date: TBD
+Date: 2026-06-14
 
 ### Saddle-point methods for canonical ensemble
 
