@@ -1226,11 +1226,16 @@ namespace thermalfist {
       if(TPS()->Particles()[i].BaryonCharge() == -1) nBbar += m_densities[i];
     }
 
-    double chi1B = nB / pow(m_Parameters.T * xMath::GeVtoifm(), 3);
-    double chi1Bbar = nBbar / pow(m_Parameters.T * xMath::GeVtoifm(), 3);
+    // The toy model rescales baryon/antibaryon yields and correlations and
+    // divides by nB and nBbar throughout, so it is undefined without both
+    // present (e.g. a meson-only list, or nBbar underflowing at very large muB).
+    if (nB <= 0. || nBbar <= 0.) {
+      std::cerr << "**WARNING** ThermalModelBase::ApplyBaryonAnnihilation: "
+                << "no baryons and/or antibaryons present; skipping." << std::endl;
+      return;
+    }
 
     double gammaB = gammaBbar * nBbar / nB + (nB - nBbar) / nB;
-    double gammaBav = (gammaB * nB + gammaBbar * nBbar) / (nB + nBbar);
 
     double wp = 0., wm = 0.;
     for(int i = 0; i < ComponentsNumber(); ++i) {
