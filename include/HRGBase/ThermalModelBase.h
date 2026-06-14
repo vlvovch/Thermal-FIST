@@ -759,9 +759,11 @@ namespace thermalfist {
     virtual void CalculateTwoParticleFluctuationsDecays();
 
     /**
-     * \brief Applies baryon annihilation toy model to baryon yields and susceptibilities with the given gammaBbar
-     *   Currently may not conserve electric charge and strangeness 100%
-     * 
+     * \brief [EXPERIMENTAL] Applies a baryon annihilation toy model to baryon yields and susceptibilities with the given gammaBbar.
+     *
+     * \warning Experimental toy model. It rescales baryon/antibaryon yields and
+     *          second moments by a gammaBbar factor and currently does not
+     *          conserve electric charge and strangeness exactly. Use with care.
      */
     virtual void ApplyBaryonAnnihilation(double gammaBbar);
 
