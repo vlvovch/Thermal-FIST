@@ -24,11 +24,11 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGBase/ThermalModelCanonical.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
 
 #include "ItemDelegateCustom.h"
@@ -312,7 +312,10 @@ FitToExperimentTab::FitToExperimentTab(QWidget *parent, ThermalModelBase *modelo
 FitToExperimentTab::~FitToExperimentTab()
 {
     if (fitcopy!=NULL) { delete fitcopy; }
+    // Delete the (possibly borrowing) canonical model before the GCE model it
+    // borrows via SetModelGCE(), so model never holds a dangling pointer.
     delete model;
+    if (m_modelGCE != nullptr) { delete m_modelGCE; m_modelGCE = nullptr; }
 }
 
 
@@ -362,7 +365,8 @@ void FitToExperimentTab::changedRow()
 
 void FitToExperimentTab::performFit(const ThermalModelConfig & config, const ThermalModelFitParameters & params)
 {
-  if (config.ModelType == ThermalModelConfig::CE) {
+  if (config.ModelType == ThermalModelConfig::CE && config.CanonicalMethod == 0) {
+    // Warnings only for Gauss-Legendre quadrature; saddle-point methods are fast
     int messageType = 0;
     // 0 - Ok
     // 1 - Warning, light nuclei in the list
@@ -377,9 +381,9 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
 
     QVector<QString> messages = {
             "Everything is OK",
-            "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list.\n\nDo you want to proceed with the calculation?",
-            "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only.\n\nDo you want to proceed with the calculation?",
-            "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects.\n\nDo you want to proceed with the calculation?"
+            "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list or using the saddle-point method.\n\nDo you want to proceed with the calculation?",
+            "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only or the saddle-point method.\n\nDo you want to proceed with the calculation?",
+            "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects or using the saddle-point method.\n\nDo you want to proceed with the calculation?"
     };
 
     if (messageType != 0) {
@@ -472,7 +476,21 @@ void FitToExperimentTab::performFit(const ThermalModelConfig & config, const The
   fit->SetPCEPionAnnihilationNumber(config.PCEPionAnnihilationNumber);
 
 
-  SetThermalModelInteraction(model, config);
+  // For non-ideal CE: interactions are set on the auxiliary GCE model, not the canonical model itself.
+  // SetThermalModelInteraction does static_casts that are only valid for the matching model type.
+  if (m_modelGCE != nullptr) {
+    delete m_modelGCE;
+    m_modelGCE = nullptr;
+  }
+  if (config.ModelType == ThermalModelConfig::CE
+      && config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+    m_modelGCE = CreateGCEModelForCanonical(model->TPS(), config);
+    if (m_modelGCE != nullptr) {
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(m_modelGCE);
+    }
+  } else {
+    SetThermalModelInteraction(model, config);
+  }
 
   if (config.ModelType == ThermalModelConfig::CE) {
     static_cast<ThermalModelCanonical*>(model)->CalculateQuantumNumbersRange(false);
@@ -1168,6 +1186,14 @@ void FitToExperimentTab::finalize() {
   labelValid->setVisible(true);
 
   fitcopy->PrintYieldsLatexAll("Yield.dat", "p+p");
+
+  // Clean up auxiliary GCE model for non-ideal CE
+  if (m_modelGCE != nullptr) {
+    if (model->Ensemble() == ThermalModelBase::CE)
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(nullptr);
+    delete m_modelGCE;
+    m_modelGCE = nullptr;
+  }
 
   fRunning = false;
   modelChanged();

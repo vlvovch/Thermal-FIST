@@ -19,6 +19,14 @@ add_executable(test_EMMDerivatives test_EMMDerivatives.cpp)
 target_link_libraries(test_EMMDerivatives ThermalFIST GTest::gtest_main)
 set_property(TARGET test_EMMDerivatives PROPERTY FOLDER tests)
 
+add_executable(test_ThermalModelCanonical test_ThermalModelCanonical.cpp)
+target_link_libraries(test_ThermalModelCanonical ThermalFIST GTest::gtest_main)
+set_property(TARGET test_ThermalModelCanonical PROPERTY FOLDER tests)
+# This test uses C++17 structured bindings. The library itself targets an older
+# standard, and MSVC's default mode lacks them, so require C++17 for this target.
+set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD 17)
+set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD_REQUIRED ON)
+
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
 set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
@@ -39,6 +47,9 @@ gtest_discover_tests(test_ZeroTemperature)
 
 # EMM derivatives tests
 gtest_discover_tests(test_EMMDerivatives)
+
+# Canonical ensemble tests
+gtest_discover_tests(test_ThermalModelCanonical)
 
 
 # CPC tests

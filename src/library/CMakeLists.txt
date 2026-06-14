@@ -15,9 +15,6 @@ HRGBase/NumericalIntegration.cpp
 HRGBase/ParticleDecay.cpp
 HRGBase/ThermalModelIdeal.cpp
 HRGBase/ThermalModelBase.cpp
-HRGBase/ThermalModelCanonical.cpp
-HRGBase/ThermalModelCanonicalCharm.cpp
-HRGBase/ThermalModelCanonicalStrangeness.cpp
 HRGBase/ThermalParticle.cpp
 HRGBase/ThermalParticleSystem.cpp
 HRGBase/Utility.cpp
@@ -50,6 +47,23 @@ ${PROJECT_SOURCE_DIR}/include/HRGBase/ExtraParticles.h
 )	  
 
 source_group("HRGBase\\Header Files" FILES ${HEADERS_HRGBase})
+
+# Canonical ensemble part of the library
+set(SRCS_HRGCanonical
+HRGCanonical/ThermalModelCanonical.cpp
+HRGCanonical/ThermalModelCanonicalCharm.cpp
+HRGCanonical/ThermalModelCanonicalStrangeness.cpp
+)
+
+source_group("HRGCanonical\\Source Files" FILES ${SRCS_HRGCanonical})
+
+set(HEADERS_HRGCanonical
+${PROJECT_SOURCE_DIR}/include/HRGCanonical/ThermalModelCanonical.h
+${PROJECT_SOURCE_DIR}/include/HRGCanonical/ThermalModelCanonicalCharm.h
+${PROJECT_SOURCE_DIR}/include/HRGCanonical/ThermalModelCanonicalStrangeness.h
+)
+
+source_group("HRGCanonical\\Header Files" FILES ${HEADERS_HRGCanonical})
 
 # Excluded-volume part of the library
 set(SRCS_HRGEV
@@ -207,9 +221,10 @@ endif (NOT STANDALONE_MINUIT)
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
-add_library(ThermalFIST 
-${SRCS_HRGBase} ${HEADERS_HRGBase} 
-${SRCS_HRGEV} ${HEADERS_HRGEV} 
+add_library(ThermalFIST
+${SRCS_HRGBase} ${HEADERS_HRGBase}
+${SRCS_HRGCanonical} ${HEADERS_HRGCanonical}
+${SRCS_HRGEV} ${HEADERS_HRGEV}
 ${SRCS_HRGVDW} ${HEADERS_HRGVDW} 
 ${SRCS_HRGRealGas} ${HEADERS_HRGRealGas} 
 ${SRCS_HRGFit} ${HEADERS_HRGFit} 

@@ -40,7 +40,7 @@ namespace thermalfist {
     muC = FitParameter("muC", false, params.muC);
     gammaq = FitParameter("gammaq", false, params.gammaq, 0.5, 0.01, 3.);
     gammaS = FitParameter("gammaS", false, params.gammaS, 0.5, 0.01, 3.);
-    gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 50.);
+    gammaC = FitParameter("gammaC", false, params.gammaC, 0.5, 0.01, 1000.);
     //V = FitParameter("V", true, V_, 2000., 1., 20000.);  // Volume no longer used
     R = FitParameter("R", true, pow(3. * params.V / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 25.0);
     Rc = FitParameter("Rc", true, pow(3. * params.SVc / 16. / xMath::Pi(), 1. / 3.), 1.0, 0., 10.0);

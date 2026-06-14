@@ -92,6 +92,10 @@ class chi2ProfileDialog : public QDialog
     chi2ProfileWorker *m_worker = nullptr;
 
     thermalfist::ThermalModelBase *model;
+    /// Auxiliary GCE model backing the non-ideal canonical ensemble.
+    /// Owned here; borrowed by the CE model via SetModelGCE(). Must outlive the
+    /// CE calculation, so it is a member (freed in setModel()/finalize()).
+    thermalfist::ThermalModelBase *modelGCE;
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelFit *modelFit, *modelFitInput;
     thermalfist::ThermalModelFitParameters fitParams;
