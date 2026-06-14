@@ -295,15 +295,67 @@ namespace thermalfist {
 	{
 		BroydenEquationsEVMulti eqs(this, &ntil, true);
 		BroydenJacobianEVMulti jac(this, &ntil, true);
-		Broyden broydn(&eqs, &jac);
 		Broyden::BroydenSolutionCriterium crit(1.0E-10);
 
 		std::vector<double> ret(m_N, 0.);
 		std::vector<double> sol(m_componentsNumber, 0.);
+		bool converged = false;
 
-	  sol = broydn.Solve(sol, &crit);
-		for (int i = 0; i < m_N; ++i)
-			ret[i] = ntil[i] * sol[m_components[i]];
+		// Try cached previous solution as initial guess first
+		if (m_hasPreviousSolComponents && (int)m_previousSolComponents.size() == m_componentsNumber) {
+			Broyden broydn(&eqs, &jac);
+			sol = broydn.Solve(m_previousSolComponents, &crit);
+			converged = (broydn.Iterations() < broydn.MaxIterations());
+		}
+
+		// Fall back to unit initial guess (no suppression)
+		if (!converged) {
+			Broyden broydn2(&eqs, &jac);
+			std::vector<double> sol1(m_componentsNumber, 1.);
+			sol = broydn2.Solve(sol1, &crit);
+			converged = (broydn2.Iterations() < broydn2.MaxIterations());
+		}
+
+		// Fall back to zero initial guess
+		if (!converged) {
+			Broyden broydn3(&eqs, &jac);
+			std::vector<double> sol0(m_componentsNumber, 0.);
+			sol = broydn3.Solve(sol0, &crit);
+			converged = (broydn3.Iterations() < broydn3.MaxIterations());
+		}
+
+		// Last resort: fixed-point iteration (guaranteed to stay in physical bounds)
+		if (!converged) {
+			sol = std::vector<double>(m_componentsNumber, 1.);
+			double alpha = 0.5;
+			for (int iter = 0; iter < 10000; ++iter) {
+				auto residual = eqs.Equations(sol);
+				double maxres = 0.;
+				for (int c = 0; c < m_componentsNumber; ++c)
+					if (std::abs(residual[c]) > maxres) maxres = std::abs(residual[c]);
+				if (maxres < 1.0E-10) {
+					converged = true;
+					break;
+				}
+				// sol_new[c] = sol[c] - residual[c] = f(eta_c), clamp to [0, 1]
+				for (int c = 0; c < m_componentsNumber; ++c) {
+					double sol_new = sol[c] - residual[c];
+					if (sol_new < 0.) sol_new = 0.;
+					if (sol_new > 1.) sol_new = 1.;
+					sol[c] = alpha * sol_new + (1. - alpha) * sol[c];
+				}
+			}
+		}
+
+		// Only cache if converged to avoid propagating bad solutions
+		if (converged) {
+			m_previousSolComponents = sol;
+			m_hasPreviousSolComponents = true;
+
+			for (int i = 0; i < m_N; ++i)
+				ret[i] = ntil[i] * sol[m_components[i]];
+		}
+		// If all methods failed, ret stays at zeros (safe fallback)
 
 		return ret;
 	}

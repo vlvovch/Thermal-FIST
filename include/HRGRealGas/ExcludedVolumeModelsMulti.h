@@ -158,6 +158,10 @@ namespace thermalfist {
 		std::vector<int> m_componentsFrom;
 		int m_componentsNumber;
 
+		/// Cached previous Broyden solution (per component) for use as initial guess
+		std::vector<double> m_previousSolComponents;
+		bool m_hasPreviousSolComponents = false;
+
 	  class BroydenEquationsEVMulti : public BroydenEquations
 		{
 		public:
