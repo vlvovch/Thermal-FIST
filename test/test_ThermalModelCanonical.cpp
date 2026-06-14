@@ -151,6 +151,7 @@ namespace {
 
       auto [mis, nan] = CompareDensities(*mCE, mGCE.Densities(), TPS, 1.e-2, 5, "GCE ");
       EXPECT_EQ(mis, 0) << mis << " species exceed GCE tolerance";
+      EXPECT_EQ(nan, 0) << nan << " species with NaN/Inf density (GCE limit)";
     }
     // (b) Convergence: multiplier=1 vs 2 at V=5000
     {
@@ -159,6 +160,7 @@ namespace {
       std::unique_ptr<ThermalModelCanonical> m2(RunCanonical(TPS, p, GaussLegendre, 2));
       auto [mis, nan] = CompareDensities(*m1, m2->Densities(), TPS, 2.e-4, 5, "conv ");
       EXPECT_EQ(mis, 0) << mis << " species exceed convergence tolerance";
+      EXPECT_EQ(nan, 0) << nan << " species with NaN/Inf density (convergence)";
     }
   }
 
