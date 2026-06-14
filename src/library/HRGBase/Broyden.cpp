@@ -128,7 +128,6 @@ namespace thermalfist {
         if (std::isnan(Jinv(i,j)) || std::isinf(Jinv(i,j)))
           hasNaNInverse = true;
     if (hasNaNInverse) {
-      std::cerr << "**WARNING** NaN/Inf in Jacobian inverse in Broyden::Solve (det=" << det << ")" << std::endl;
       return xcur;
     }
     tmpvec = m_Equations->Equations(xcur);

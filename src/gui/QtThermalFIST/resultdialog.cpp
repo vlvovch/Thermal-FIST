@@ -199,6 +199,12 @@ QString ResultDialog::GetResults() {
   ret += QString(cc);
   ret += QString::number(model->CalculateCharmDensity()*model->Volume()) + "\r\n";
 
+  if (model->TPS()->hasCharmed()) {
+    sprintf(cc, "%-25s = ", "Nccbar");
+    ret += QString(cc);
+    ret += QString::number(model->GetNccbar()) + "\r\n";
+  }
+
   ret += "\r\n";
 
   sprintf(cc, "%-25s = ", "Energy density");

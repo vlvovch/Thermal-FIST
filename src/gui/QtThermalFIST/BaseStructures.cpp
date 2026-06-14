@@ -2,9 +2,9 @@
 
 #include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGEV.h"
-#include "HRGVDW.h""
-#include "HRGRealGas.h""
-#include "HRGBase/ThermalModelCanonical.h"
+#include "HRGVDW.h"
+#include "HRGRealGas.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
 #include "CosmicEos/EffectiveMassModel.h"
 
 using namespace thermalfist;
@@ -116,6 +116,12 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
 
   ret.CanonicalC = true;// model->IsConservedChargeCanonical(ConservedCharge::CharmCharge);
 
+  ret.CanonicalMethod = 0; // Gauss-Legendre by default
+  // Read the actual canonical method back from the model (Ensemble()==CE
+  // uniquely identifies ThermalModelCanonical; the index maps 1:1 to the enum).
+  if (model->Ensemble() == ThermalModelBase::CE)
+    ret.CanonicalMethod = static_cast<int>(static_cast<ThermalModelCanonical*>(model)->Method());
+
   ret.SoverB = model->SoverB();
 
   ret.RhoB = model->BaryonDensity();
@@ -133,6 +139,9 @@ ThermalModelConfig ThermalModelConfig::fromThermalModel(ThermalModelBase * model
   ret.ConstrainMuS = model->ConstrainMuS();
 
   ret.ConstrainMuC = model->ConstrainMuC();
+
+  ret.ConstrainGammaC = model->ConstrainGammaC();
+  ret.NccbarGoal = model->NccbarGoal();
 
   ret.FiniteWidth = static_cast<int>(model->TPS()->ResonanceWidthIntegrationType());
 
@@ -195,7 +204,17 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
     modcan->ConserveStrangeness(config.CanonicalS);
     modcan->ConserveCharm(config.CanonicalC);
 
-    //modcan->SetIntegrationIterationsMultiplier(1);
+    // Non-ideal interactions only work with SaddlePointLO
+    if (config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+      modcan->SetMethod(thermalfist::SaddlePointLO);
+    } else if (config.CanonicalMethod == 3)
+      modcan->SetMethod(thermalfist::SaddlePointLO);
+    else if (config.CanonicalMethod == 2)
+      modcan->SetMethod(thermalfist::SaddlePointNLO);
+    else if (config.CanonicalMethod == 1)
+      modcan->SetMethod(thermalfist::SaddlePoint);
+    else
+      modcan->SetMethod(thermalfist::GaussLegendre);
   }
 
   if (config.WidthShape == 0)
@@ -220,6 +239,9 @@ void SetThermalModelConfiguration(thermalfist::ThermalModelBase * model, const T
   model->ConstrainMuQ(config.ConstrainMuQ);
   model->ConstrainMuS(config.ConstrainMuS);
   model->ConstrainMuC(config.ConstrainMuC);
+
+  model->ConstrainGammaC(config.ConstrainGammaC);
+  model->SetNccbar(config.NccbarGoal);
 
   model->SetNormBratio(config.RenormalizeBR);
 
@@ -415,4 +437,27 @@ void SetThermalModelInteraction(ThermalModelBase * model, const ThermalModelConf
   if (config.InteractionScaling == 3) {
     model->ReadInteractionParameters(config.InteractionInput);
   }
+}
+
+ThermalModelBase* CreateGCEModelForCanonical(
+    ThermalParticleSystem* TPS,
+    const ThermalModelConfig& config)
+{
+  if (config.InteractionModel == ThermalModelConfig::InteractionIdeal)
+    return nullptr;
+
+  ThermalModelBase* modelGCE = nullptr;
+  if (config.InteractionModel == ThermalModelConfig::InteractionEVDiagonal)
+    modelGCE = new ThermalModelEVDiagonal(TPS);
+  else if (config.InteractionModel == ThermalModelConfig::InteractionQVDW)
+    modelGCE = new ThermalModelVDW(TPS);
+  else if (config.InteractionModel == ThermalModelConfig::InteractionRealGas)
+    modelGCE = new ThermalModelRealGas(TPS);
+  else
+    return nullptr;
+
+  SetThermalModelConfiguration(modelGCE, config);
+  SetThermalModelInteraction(modelGCE, config);
+
+  return modelGCE;
 }

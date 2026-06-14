@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6.1]
+
+Date: TBD
+
+### Saddle-point methods for canonical ensemble
+
+- Added new methods for computing canonical ensemble partition functions in `ThermalModelCanonical`, alongside the existing Gauss-Legendre (GL) quadrature:
+  - **Saddle-point approximation (`SaddlePoint`)**: Gaussian approximation around the saddle point of the integrand. Dramatically faster than GL at large volumes with comparable accuracy
+  - **Saddle-point with NLO corrections (`SaddlePointNLO`)**: systematic next-to-leading-order corrections via cluster moments and projection operators. Exact conservation of all conserved charges by construction
+  - **Saddle-point leading order (`SaddlePointLO`)**: leading-order means and thermodynamics (GCE evaluated at the saddle point) with canonical fluctuation suppression; the only method that supports non-ideal equations of state (via `SetModelGCE()`)
+- New `CanonicalMethod` enum (`GaussLegendre`, `SaddlePoint`, `SaddlePointNLO`, `SaddlePointLO`) for method selection
+- Saddle-point contour shift for the GL method, greatly improving convergence at finite chemical potential
+- GUI: method selection combo box in the conservation laws dialog; non-ideal HRG models can now be combined with the canonical ensemble (routed through `SaddlePointLO`)
+- Mixed-canonical ensembles (any subset of B, Q, S, C conserved exactly) supported
+- Charm canonical ensemble supported with the modular particle list containing charmed hadrons
+- Canonical models moved to a dedicated `HRGCanonical` module (backward-compatible forwarding headers retained in `HRGBase`)
+- Added a comprehensive test suite for canonical ensemble calculations (`test_ThermalModelCanonical`)
+- Added implementation technical notes under `docs/notes/CanonicalEnsemble/`
+
+### Charm fugacity constraint
+
+- Added the ability to constrain the charm fugacity (gammaC) from a target number of cc-bar pairs using a 1D secant method
+- New `ConstrainGammaC`/`SetNccbar`/`NccbarGoal`/`GetNccbar` API in `ThermalModelBase`
+- GUI: Added gammaC constraint checkbox and Nccbar spinbox to conservation laws dialog
+
+### Real-gas and mean-field models
+
+- Fixed the charge-density-dependent mean-field derivatives `d2v`/`d3v`/`d4v`, which were missing per-index charge factors (only the i-index factor was applied). This corrects susceptibilities and fluctuations for charge-density-dependent mean-field models.
+- More robust multi-component Broyden solver: the previous solution is cached and reused as the initial guess, improving convergence.
+
 ## [Version 1.6]
 
 Date: 2026-02-16
@@ -432,6 +462,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.6.1]: https://github.com/vlvovch/Thermal-FIST/compare/v1.6...v1.6.1
 
 [Version 1.6]: https://github.com/vlvovch/Thermal-FIST/compare/v1.5.2...v1.6
 

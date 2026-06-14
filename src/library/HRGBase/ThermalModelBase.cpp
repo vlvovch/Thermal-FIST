@@ -101,6 +101,9 @@ namespace thermalfist {
     m_ConstrainMuB = false;
     m_ConstrainMuC = m_ConstrainMuQ = m_ConstrainMuS = true;
 
+    m_ConstrainGammaC = false;
+    m_NccbarGoal = 0.;
+
     m_Susc.resize(4);
     for (int i = 0; i < 4; ++i) m_Susc[i].resize(4);
     m_dSuscdT = m_Susc;
@@ -496,6 +499,11 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::FixParameters() {
+    // Initial guess for gammaC if constrained
+    if (m_ConstrainGammaC) {
+      m_Parameters.gammaC = 1.0;
+    }
+
     if (fabs(m_Parameters.muB) < 1e-6 && !m_ConstrainMuB) {
       if (m_ConstrainMuS)
         m_Parameters.muS = 0.;
@@ -505,6 +513,7 @@ namespace thermalfist {
         m_Parameters.muC = 0.;
       FillChemicalPotentials();
       CalculatePrimordialDensities();
+      ConstrainGammaCFromNccbar();
       return;
     }
     if (m_ConstrainMuB) {
@@ -539,6 +548,7 @@ namespace thermalfist {
       //m_Parameters.muS = m_Parameters.muQ = m_Parameters.muC = 0.;
       FillChemicalPotentials();
       CalculatePrimordialDensities();
+      ConstrainGammaCFromNccbar();
       return;
     }
 
@@ -567,6 +577,90 @@ namespace thermalfist {
       //std::cerr << "Broyden iters: " << broydn.Iterations() << std::endl;
       break;
     }
+
+    ConstrainGammaCFromNccbar();
+  }
+
+  void ThermalModelBase::ConstrainGammaCFromNccbar() {
+    if (!m_ConstrainGammaC || m_NccbarGoal <= 0.)
+      return;
+
+    if (!m_TPS->hasCharmed()) {
+      std::cerr << "**WARNING** ConstrainGammaCFromNccbar: "
+                << "No charmed particles in the list, cannot constrain gammaC" << std::endl;
+      return;
+    }
+
+    double V = m_Parameters.V;
+    double targetNccbar = m_NccbarGoal;
+
+    // Helper: given log(gammaC), set gammaC, constrain mu's, return Nccbar residual
+    auto computeResidual = [&](double log_gammaC) -> double {
+      double gc = exp(log_gammaC);
+      SetGammaC(gc);
+
+      // Refit constrained chemical potentials for this gammaC (without resetting initial guesses)
+      bool anyMuConstrained = m_ConstrainMuB || m_ConstrainMuQ || m_ConstrainMuS || m_ConstrainMuC;
+      if (anyMuConstrained) {
+        // Temporarily disable gammaC constraint to avoid recursion
+        m_ConstrainGammaC = false;
+        ConstrainChemicalPotentials(false);
+        m_ConstrainGammaC = true;
+      }
+      else {
+        FillChemicalPotentials();
+        CalculatePrimordialDensities();
+      }
+
+      double absCharmDens = CalculateAbsoluteCharmDensity();
+      double currentNccbar = V * absCharmDens / 2.0;
+      // Guard against NaN from overflow in density calculation (e.g. Bessel overflow)
+      if (!std::isfinite(currentNccbar))
+        return std::numeric_limits<double>::max();
+      return currentNccbar - targetNccbar;
+    };
+
+    // Initial points for secant method
+    double x0 = log(std::max(m_Parameters.gammaC, 1.e-4));
+    double x1 = x0 + 0.1;
+
+    double f0 = computeResidual(x0);
+    double f1 = computeResidual(x1);
+
+    const int maxIter = 50;
+    const double tol = 1.e-8;
+
+    int iter = 0;
+    for (iter = 0; iter < maxIter; ++iter) {
+      if (fabs(f1) < tol * std::max(1.0, targetNccbar))
+        break;
+
+      if (fabs(f1 - f0) < 1.e-15) {
+        // Secant slope too small, perturb
+        x1 += 0.05;
+        f1 = computeResidual(x1);
+        continue;
+      }
+
+      double x2 = x1 - f1 * (x1 - x0) / (f1 - f0);
+
+      // Clamp to reasonable range: gammaC in [1e-4, 1000]
+      x2 = std::max(x2, log(1.e-4));
+      x2 = std::min(x2, log(1000.0));
+
+      x0 = x1;
+      f0 = f1;
+      x1 = x2;
+      f1 = computeResidual(x1);
+    }
+
+    if (iter == maxIter) {
+      std::cerr << "**WARNING** ConstrainGammaCFromNccbar: "
+                << "Secant method did not converge after " << maxIter
+                << " iterations, |f| = " << fabs(f1) << std::endl;
+    }
+
+    // gammaC is already set by the last computeResidual call
   }
 
   bool ThermalModelBase::FixChemicalPotentialsThroughDensities(double rhoB, double rhoQ, double rhoS, double rhoC,
@@ -684,7 +778,7 @@ namespace thermalfist {
       if (m_densities[i] != m_densities[i]) {
         m_LastCalculationSuccessFlag = false;
       
-        sprintf(cc, "Density for particle %d (%s) is NaN!\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
+        sprintf(cc, "Density for particle %lld (%s) is NaN!\n", m_TPS->Particle(i).PdgId(), m_TPS->Particle(i).Name().c_str());
         std::cerr << "**WARNING** " << cc << std::endl;
         
 
@@ -1122,6 +1216,95 @@ namespace thermalfist {
       // Guard against NaN propagated from singular correlation matrices
       if (m_wtot[i] != m_wtot[i]) m_wtot[i] = 1.;
     }
+  }
+
+  void ThermalModelBase::ApplyBaryonAnnihilation(double gammaBbar)
+  {
+    double nB = 0., nBbar = 0.;
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      if(TPS()->Particles()[i].BaryonCharge() == 1) nB += m_densities[i];
+      if(TPS()->Particles()[i].BaryonCharge() == -1) nBbar += m_densities[i];
+    }
+
+    // The toy model rescales baryon/antibaryon yields and correlations and
+    // divides by nB and nBbar throughout, so it is undefined without both
+    // present (e.g. a meson-only list, or nBbar underflowing at very large muB).
+    if (nB <= 0. || nBbar <= 0.) {
+      std::cerr << "**WARNING** ThermalModelBase::ApplyBaryonAnnihilation: "
+                << "no baryons and/or antibaryons present; skipping." << std::endl;
+      return;
+    }
+
+    double gammaB = gammaBbar * nBbar / nB + (nB - nBbar) / nB;
+
+    double wp = 0., wm = 0.;
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      const ThermalParticle &part = TPS()->Particles()[i];
+      if (part.BaryonCharge() != 1 && part.BaryonCharge() != -1) continue;
+
+      for(int j = 0; j < ComponentsNumber(); ++j) {
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part2.BaryonCharge() != 1 && part2.BaryonCharge() != -1) continue;
+
+
+        if (part.BaryonCharge() == 1 && part2.BaryonCharge() == 1) 
+          wp += m_PrimCorrel[i][j];
+        if (part.BaryonCharge() == -1 && part2.BaryonCharge() == -1) 
+          wm += m_PrimCorrel[i][j];
+      }
+    }
+    wp = wp * m_Parameters.T / nB;
+    wm = wm * m_Parameters.T / nBbar;
+
+    double wp0 = wp, wm0 = wm;
+    wp = (1. - gammaB + gammaB * wp0);
+    wm = (1. - gammaBbar + gammaBbar * wm0);
+
+    double deltachipm = wp * nB * gammaB - wp0 * nB + wm * nBbar * gammaBbar - wm0 * nBbar;
+    deltachipm *= 1. / m_Parameters.T;
+
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      const ThermalParticle &part = TPS()->Particles()[i];
+      if (part.BaryonCharge() != 1 && part.BaryonCharge() != -1) continue;
+      for(int j = 0; j < ComponentsNumber(); ++j) {
+        const ThermalParticle &part2 = TPS()->Particles()[j];
+        if (part2.BaryonCharge() != 1 && part2.BaryonCharge() != -1) continue;
+
+        if (i == j) {
+          double gamma = (part.BaryonCharge() == 1) ? gammaB : gammaBbar;
+          double chi1i = m_densities[i];
+          double chi2i = m_PrimCorrel[i][j] * m_Parameters.T;
+          double chi2i_new = gamma * (1. - gamma) * chi1i + gamma * gamma * chi2i;
+          m_PrimCorrel[i][j] = chi2i_new / m_Parameters.T;
+          continue;
+        }
+
+        if (part.BaryonCharge() == 1 && part2.BaryonCharge() == 1) {
+          double gamma = gammaB;
+          m_PrimCorrel[i][j] = gamma * gamma * m_PrimCorrel[i][j];
+          continue;
+        }
+
+        if (part.BaryonCharge() == -1 && part2.BaryonCharge() == -1) {
+          double gamma = gammaBbar;
+          m_PrimCorrel[i][j] = gamma * gamma * m_PrimCorrel[i][j];
+          continue;
+        }
+
+        m_PrimCorrel[i][j] += deltachipm * m_densities[i] * m_densities[j] / nB / nBbar;
+      }
+    }
+
+    for(int i = 0; i < ComponentsNumber(); ++i) {
+      if(TPS()->Particles()[i].BaryonCharge() == 1) 
+        m_densities[i] *= gammaB;
+      if(TPS()->Particles()[i].BaryonCharge() == -1) 
+        m_densities[i] *= gammaBbar;
+    }
+
+    CalculateFeeddown();
+    CalculateTwoParticleFluctuationsDecays();
+    CalculateParticleChargeCorrelationMatrix();
   }
 
   double ThermalModelBase::TwoParticleSusceptibilityPrimordial(int i, int j) const

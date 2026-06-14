@@ -29,9 +29,9 @@
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGEV/ExcludedVolumeHelper.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGBase/ThermalModelCanonical.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 #include "HRGEventGenerator/SphericalBlastWaveEventGenerator.h"
 #include "HRGEventGenerator/CylindricalBlastWaveEventGenerator.h"
 #include "HRGEventGenerator/CracowFreezeoutEventGenerator.h"
@@ -446,7 +446,7 @@ EventGeneratorTab::EventGeneratorTab(QWidget *parent, ThermalModelBase *modelop)
     labelgammaC = new QLabel(tr("γ<sub>C</sub>:"));
     spingammaC = new QDoubleSpinBox();
     spingammaC->setMinimum(0.);
-    spingammaC->setMaximum(50.);
+    spingammaC->setMaximum(1000.);
     spingammaC->setDecimals(4);
     spingammaC->setValue(model->Parameters().gammaC);
     spingammaC->setToolTip(tr("Chemical non-equilibrium factor for charm quarks"));

@@ -26,11 +26,11 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGEV/ThermalModelEVCrossterms.h"
 #include "HRGVDW/ThermalModelVDW.h"
-#include "HRGBase/ThermalModelCanonical.h"
-#include "HRGBase/ThermalModelCanonicalStrangeness.h"
+#include "HRGCanonical/ThermalModelCanonical.h"
+#include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGEV/ThermalModelEVCanonicalStrangeness.h"
 #include "HRGVDW/ThermalModelVDWCanonicalStrangeness.h"
-#include "HRGBase/ThermalModelCanonicalCharm.h"
+#include "HRGCanonical/ThermalModelCanonicalCharm.h"
 #include "HRGPCE/ThermalModelPCE.h"
 #include "HRGPCE/ThermalModelPCEAnnihilation.h"
 #include "HRGRealGas/ThermalModelRealGas.h"
@@ -157,7 +157,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
     labelgammaC = new QLabel(tr("γ<sub>C</sub>:"));
     spingammaC = new QDoubleSpinBox();
     spingammaC->setMinimum(0.);
-    spingammaC->setMaximum(50.);
+    spingammaC->setMaximum(1000.);
     spingammaC->setDecimals(4);
     spingammaC->setValue(model->Parameters().gammaC);
     spingammaC->setToolTip(tr("Chemical non-equilibrium factor for charm quarks"));
@@ -496,7 +496,8 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   QElapsedTimer timerc;
   timerc.start();
 
-  if (config.ModelType == ThermalModelConfig::CE) {
+  if (config.ModelType == ThermalModelConfig::CE && config.CanonicalMethod == 0) {
+    // Warnings only for Gauss-Legendre quadrature; saddle-point methods are fast
     int messageType = 0;
     // 0 - Ok
     // 1 - Warning, light nuclei in the list
@@ -511,9 +512,9 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
     QVector<QString> messages = {
       "Everything is OK",
-      "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list.\n\nDo you want to proceed with the calculation?",
-      "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only.\n\nDo you want to proceed with the calculation?",
-      "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects.\n\nDo you want to proceed with the calculation?"
+      "Warning: Canonical ensemble calculations for light nuclei can be very slow. Consider removing them from the list or using the saddle-point method.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations including quantum statistics for baryons can be very slow. Consider using quantum statistics for mesons only or the saddle-point method.\n\nDo you want to proceed with the calculation?",
+      "Warning: Canonical ensemble calculations for light nuclei as well as quantum statistics for baryons can be very slow. Consider switching off these effects or using the saddle-point method.\n\nDo you want to proceed with the calculation?"
     };
 
     if (messageType != 0) {
@@ -590,9 +591,18 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
 
   SetThermalModelConfiguration(model, config);
 
-  //if (config.InteractionModel != ThermalModelConfig::InteractionIdeal)
-  SetThermalModelInteraction(model, config);
-
+  // For non-ideal CE: interactions are set on the auxiliary GCE model, not the canonical model itself.
+  // SetThermalModelInteraction does static_casts that are only valid for the matching model type.
+  ThermalModelBase *modelGCE = nullptr;
+  if (config.ModelType == ThermalModelConfig::CE
+      && config.InteractionModel != ThermalModelConfig::InteractionIdeal) {
+    modelGCE = CreateGCEModelForCanonical(model->TPS(), config);
+    if (modelGCE != nullptr) {
+      static_cast<ThermalModelCanonical*>(model)->SetModelGCE(modelGCE);
+    }
+  } else {
+    SetThermalModelInteraction(model, config);
+  }
 
   // If fluctuations are calculated within the CE one needs a twice larger range of quantum numbers
   if (config.ModelType == ThermalModelConfig::CE) {
@@ -682,8 +692,10 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
     dbgstrm << "Q/B\t\t= " << model->CalculateChargeDensity() / model->CalculateBaryonDensity() << Qt::endl;
   if (model->TPS()->hasStrange())
     dbgstrm << "S/|S|\t\t= " << model->CalculateStrangenessDensity() / model->CalculateAbsoluteStrangenessDensity() << Qt::endl;
-  if (model->TPS()->hasCharmed())
+  if (model->TPS()->hasCharmed()) {
     dbgstrm << "C/|C|\t\t= " << model->CalculateCharmDensity() / model->CalculateAbsoluteCharmDensity() << Qt::endl;
+    dbgstrm << "Nccbar\t\t= " << model->GetNccbar() << Qt::endl;
+  }
   if (model->InteractionModel() == ThermalModelBase::DiagonalEV)
     dbgstrm << "EV/V\t\t= " << model->CalculateEigenvolumeFraction() << Qt::endl;
   dbgstrm << Qt::endl;
@@ -790,6 +802,13 @@ void ModelTab::performCalculation(const ThermalModelConfig & config)
   }
   labelValid->setVisible(true);
 
+  // Clean up auxiliary GCE model for non-ideal CE
+  if (modelGCE != nullptr) {
+    static_cast<ThermalModelCanonical*>(model)->SetModelGCE(nullptr);
+    delete modelGCE;
+    modelGCE = nullptr;
+  }
+
   // // Clean EMM for pions
   // {
   //   std::vector<long long> pdgs = {211, 111, -211};
@@ -808,14 +827,21 @@ void ModelTab::calculate() {
   ThermalModelConfig config = getConfig();
   performCalculation(config);
 
-  if (!(config.Ensemble == ThermalModelConfig::EnsembleCE)) {
+  // Update chemical potential spinboxes with the solved values.
+  // For canonical ensembles, only update non-canonical charges
+  // (canonical charges have their mu solved internally in PrepareModelGCE).
+  if (!model->IsConservedChargeCanonical(ConservedCharge::BaryonCharge))
     spinmuB->setValue(model->Parameters().muB * 1.e3);
+  if (!model->IsConservedChargeCanonical(ConservedCharge::ElectricCharge))
     spinmuQ->setValue(model->Parameters().muQ * 1.e3);
-    if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE))
-      spinmuS->setValue(model->Parameters().muS * 1.e3);
-    if (!(config.Ensemble == ThermalModelConfig::EnsembleSCE) && !(config.Ensemble == ThermalModelConfig::EnsembleCCE))
-      spinmuC->setValue(model->Parameters().muC * 1.e3);
-  }
+  if (!model->IsConservedChargeCanonical(ConservedCharge::StrangenessCharge))
+    spinmuS->setValue(model->Parameters().muS * 1.e3);
+  if (!model->IsConservedChargeCanonical(ConservedCharge::CharmCharge))
+    spinmuC->setValue(model->Parameters().muC * 1.e3);
+
+  // Update gammaC spinbox with the solved value if constrained
+  if (config.ConstrainGammaC)
+    spingammaC->setValue(model->Parameters().gammaC);
 
   spinrhoB->setValue(model->BaryonDensity());
   spinrhoQ->setValue(model->ElectricChargeDensity());
@@ -1147,6 +1173,9 @@ void ModelTab::modelChanged()
   spingammaC->setVisible(model->TPS()->hasCharmed());
   labelgammaS->setVisible(model->TPS()->hasStrange());
   labelgammaC->setVisible(model->TPS()->hasCharmed());
+
+  // Disable gammaC spinbox when it is constrained from Nccbar
+  spingammaC->setEnabled(!configWidget->currentConfig.ConstrainGammaC);
 }
 
 void ModelTab::updateFontSizes() {

@@ -36,6 +36,11 @@ jobs:
                 qts: 5.15.2
               - os: macos-15
                 qts: 5.15.2
+              # Qt 5.15.2 (EOL) uses stdext::make_checked_array_iterator in QVector,
+              # which the current windows-latest MSVC toolset has removed. Qt 5.15 is
+              # still covered on Linux.
+              - os: windows-latest
+                qts: 5.15.2
 
     steps:
     - uses: actions/checkout@v2
