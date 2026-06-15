@@ -11,6 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 #include <algorithm>
 #include <map>
@@ -212,6 +213,106 @@ namespace thermalfist {
         TPS.ProcessDecays();
       }
       return removed;
+    }
+
+    std::vector<long long> AddPhaseShiftChannel(ThermalParticleSystem& TPS,
+                                                const PhaseShiftChannel& ch,
+                                                const PhaseShiftModel& model) {
+      const double mass = ch.m1 + ch.m2;   // nominal; density override supplies thermodynamics
+      std::vector<long long> added;
+
+      // ---- add members (with isospin-CG decays) and their antiparticles ----
+      for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
+        const int Q = (twoIz + ch.B + ch.S + ch.C) / 2;
+
+        std::vector<std::pair<double, std::pair<long long, long long> > > dec = ChannelDecays(ch, twoIz);
+        ThermalParticle::ParticleDecaysVector pdecays;
+        for (size_t i = 0; i < dec.size(); ++i) {
+          ParticleDecayChannel c;
+          c.mBratio = dec[i].first;
+          c.mDaughters.push_back(dec[i].second.first);
+          c.mDaughters.push_back(dec[i].second.second);
+          pdecays.push_back(c);
+        }
+        const bool selfConj = selfConjugate(ch, twoIz);
+
+        for (size_t w = 0; w < model.waves.size(); ++w) {
+          const int twoJp1 = model.waves[w].twoJplus1;
+          const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
+          const std::string name = ch.name + "[" + IzLabel(twoIz) + ",2J+1=" + std::to_string(twoJp1) + "]";
+
+          ThermalParticle part(/*Stable*/ false, name, mag, /*Deg*/ 1., ch.statistics, mass,
+                               ch.S, ch.B, Q, std::abs(ch.S), 0., mass, ch.C, std::abs(ch.C), 0);
+          part.SetDecays(pdecays);
+          part.SetDecaysOriginal(pdecays);
+          TPS.AddParticle(part);
+          added.push_back(mag);
+
+          if (!selfConj) {
+            TPS.AddParticle(part.GenerateAntiParticle());
+            // charge-conjugate the antiparticle decays (pi+ pi+ -> pi- pi-, ...)
+            ThermalParticle::ParticleDecaysVector adec = TPS.GetDecaysFromAntiParticle(pdecays);
+            TPS.ParticleByPDG(-mag).SetDecays(adec);
+            TPS.ParticleByPDG(-mag).SetDecaysOriginal(adec);
+            added.push_back(-mag);
+          }
+        }
+      }
+
+      TPS.FinalizeList();                  // sort + PDG map + decay types
+      AttachDensities(TPS, ch, model);     // bind the chosen model's delta(M)
+      SubsumeResonances(TPS, ch);          // graceful resonance removal (no-op if none)
+
+      // rebuild decay bookkeeping so feeddown includes the new clusters
+      TPS.FillDecayProperties();
+      TPS.FillDecayThresholds();
+      TPS.ProcessDecays();
+      return added;
+    }
+
+    PhaseShiftChannel ChannelByName(const std::string& name) {
+      if (name == "pipi_I2") return PiPi_I2_Channel();
+      throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
+    }
+
+    PhaseShiftModel ParsePhaseShiftModel(const std::string& spec) {
+      if (spec.substr(0, 4) == "tab:") {
+        std::vector<std::pair<int, std::string> > waveFiles;
+        std::string rest = spec.substr(4);
+        std::stringstream ss(rest);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+          std::string::size_type eq = item.find('=');
+          if (eq == std::string::npos)
+            throw std::invalid_argument("ParsePhaseShiftModel: expected '<2J+1>=<file>' in '" + item + "'");
+          int twoJp1 = std::atoi(item.substr(0, eq).c_str());
+          std::string file = item.substr(eq + 1);
+          waveFiles.push_back(std::make_pair(twoJp1, file));
+        }
+        return TabulatedModel(spec, waveFiles);
+      }
+      return AnalyticModel(spec);
+    }
+
+    std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
+                                                         const std::string& configFile) {
+      std::ifstream fin(configFile.c_str());
+      if (!fin.is_open())
+        throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
+      std::vector<long long> all;
+      std::string line;
+      while (std::getline(fin, line)) {
+        std::string::size_type hash = line.find('#');
+        if (hash != std::string::npos) line = line.substr(0, hash);
+        std::istringstream iss(line);
+        std::string chName, modelSpec;
+        if (!(iss >> chName >> modelSpec)) continue;       // skip blank/comment lines
+        PhaseShiftChannel ch = ChannelByName(chName);
+        PhaseShiftModel  model = ParsePhaseShiftModel(modelSpec);
+        std::vector<long long> a = AddPhaseShiftChannel(TPS, ch, model);
+        all.insert(all.end(), a.begin(), a.end());
+      }
+      return all;
     }
 
     PhaseShiftChannel PiPi_I2_Channel() {

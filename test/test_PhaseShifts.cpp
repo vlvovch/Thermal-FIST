@@ -306,4 +306,64 @@ namespace {
     std::remove(sF.c_str()); std::remove(dF.c_str());
   }
 
+  // ---- high-level convenience API ----
+
+  TEST(PhaseShifts, AddPhaseShiftChannelOneCall) {
+    // The one-call in-memory helper must reproduce the file-based result: the
+    // channel's Susc(Q,Q) contribution equals 10*chi2, and its (repulsive)
+    // feeddown reduces the total pion density.
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_c.dat";
+    writePionList(pionF);
+
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, pionF));
+    ThermalModelIdeal mb(&TPSbase);
+    mb.SetTemperature(T); mb.SetBaryonChemicalPotential(0.0);
+    mb.SetElectricChemicalPotential(0.0); mb.SetStrangenessChemicalPotential(0.0);
+    mb.CalculateDensities(); mb.CalculateFluctuations();
+    double base = mb.Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    double piBase = mb.GetDensity(211, Feeddown::StabilityFlag);
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+    ThermalModelIdeal m(&TPS);
+    m.SetTemperature(T); m.SetBaryonChemicalPotential(0.0);
+    m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+    m.CalculateDensities(); m.CalculateFluctuations();
+    double full = m.Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    double piFull = m.GetDensity(211, Feeddown::StabilityFlag);
+
+    PhaseShiftDensity psd = makePiPiI2(64);
+    double direct = 10.0 * psd.Quantity(IdealGasFunctions::chi2, T, 0.0);
+    EXPECT_NEAR(full - base, direct, 1e-6 * std::fabs(direct));
+    EXPECT_GT(piBase, 0.0);
+    EXPECT_LT(piFull, piBase);    // repulsion -> negative feeddown -> fewer pions
+
+    std::remove(pionF.c_str());
+  }
+
+  TEST(PhaseShifts, AddPhaseShiftChannelsFromConfig) {
+    // A single config file ("<channel> <model>") wires everything in one call.
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_d.dat";
+    writePionList(pionF);
+    const std::string confF = dir + "ps_config.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "# channel  model\n";
+      f << "pipi_I2    pipi_I2:GarciaMartin2011\n";
+    }
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    EXPECT_EQ(added.size(), 10u);                    // 5 Iz x 2 waves
+    ASSERT_GE(TPS.PdgToId(99144005), 0);             // Iz=+2 D-wave present
+    EXPECT_NE(TPS.ParticleByPDG(99144005).GetGeneralizedDensity(), nullptr);
+    EXPECT_NE(TPS.ParticleByPDG(-99144005).GetGeneralizedDensity(), nullptr);
+
+    std::remove(pionF.c_str()); std::remove(confF.c_str());
+  }
+
 }

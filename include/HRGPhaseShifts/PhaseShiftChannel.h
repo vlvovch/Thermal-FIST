@@ -155,6 +155,62 @@ namespace thermalfist {
     /// Catalog: the repulsive pi-pi I=2 channel (constituents + structure only).
     PhaseShiftChannel PiPi_I2_Channel();
 
+    // ------------------------------------------------------------------------
+    // High-level convenience API (no file juggling).
+    // ------------------------------------------------------------------------
+
+    /**
+     * \brief One-call: add a fully-wired phase-shift channel to an already-loaded
+     *        ThermalParticleSystem.
+     *
+     * Adds the cluster members and their antiparticles, sets the isospin-CG decay
+     * channels (charge-conjugated for antiparticles), attaches the chosen model's
+     * delta(M) density to each member, removes any subsumed resonances, and
+     * reprocesses the decays so feeddown includes the new clusters. The channel's
+     * constituent species (e.g. the pions) must already be present in the list.
+     *
+     * Typical use:
+     * \code
+     *   ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
+     *   PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+     *       PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+     *   ThermalModelIdeal model(&TPS);
+     * \endcode
+     *
+     * \return The PDG ids of the members added (signed).
+     */
+    std::vector<long long> AddPhaseShiftChannel(ThermalParticleSystem& TPS,
+                                                const PhaseShiftChannel& ch,
+                                                const PhaseShiftModel& model);
+
+    /// Look up a catalog channel by name (e.g. "pipi_I2").
+    /// \throws std::invalid_argument for an unknown name.
+    PhaseShiftChannel ChannelByName(const std::string& name);
+
+    /// Parse a model spec into a PhaseShiftModel:
+    ///   "tab:<2J+1>=<file>[,<2J+1>=<file>...]" -> TabulatedModel,
+    ///   anything else                          -> AnalyticModel(spec).
+    PhaseShiftModel ParsePhaseShiftModel(const std::string& spec);
+
+    /**
+     * \brief One-call: add every channel listed in a single config file.
+     *
+     * The file lists one channel per line as "<channel_name>  <model_spec>"
+     * ('#' comments and blank lines ignored), e.g.
+     * \verbatim
+     *   # channel   model
+     *   pipi_I2     pipi_I2:GarciaMartin2011
+     *   # tabulated alternative:
+     *   # pipi_I2   tab:1=delta_S.dat,5=delta_D.dat
+     * \endverbatim
+     * Each line is resolved via ChannelByName() + ParsePhaseShiftModel() and
+     * added with AddPhaseShiftChannel().
+     *
+     * \return The PDG ids of all members added across all channels.
+     */
+    std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
+                                                         const std::string& configFile);
+
   } // namespace PhaseShifts
 
 } // namespace thermalfist

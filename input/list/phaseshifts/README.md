@@ -17,21 +17,47 @@ model)`, where `model` is a selectable `PhaseShiftModel` (a named analytic
 parametrization or a tabulated phase shift). This separation lets the same
 channel be evaluated with different models.
 
-Typical use:
+## Usage
+
+Simplest — one call adds a fully-wired channel (members + antiparticles + decays
++ delta(M) + resonance subsumption) to an already-loaded list:
 
 ```cpp
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
 #include "HRGPhaseShifts/PhaseShiftModel.h"
 using namespace thermalfist;
 
+ThermalParticleSystem TPS("input/list/PDG2020/list.dat");   // your usual base list
+PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+    PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+ThermalModelIdeal model(&TPS);
+```
+
+Single config file listing the channels you want (one `<channel> <model>` per
+line) — wire them all in one call:
+
+```cpp
+ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
+PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "phaseshifts.conf");
+```
+```
+# phaseshifts.conf
+pipi_I2   pipi_I2:GarciaMartin2011
+# tabulated alternative for the same channel:
+# pipi_I2 tab:1=delta_S.dat,5=delta_D.dat
+```
+
+Low-level (data-file modules) — load the generated `.dat` files through the
+standard list build, then attach the model:
+
+```cpp
 ThermalParticleSystem TPS(
   { "input/list/PDG2020/list.dat",  "input/list/phaseshifts/list-pipi_I2.dat" },
   { "input/list/PDG2020/decays.dat","input/list/phaseshifts/decays-pipi_I2.dat" });
-
 PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
 PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
-PhaseShifts::AttachDensities(TPS, ch, model);   // bind delta(M)
-PhaseShifts::SubsumeResonances(TPS, ch);        // remove channel resonances if present
+PhaseShifts::AttachDensities(TPS, ch, model);
+PhaseShifts::SubsumeResonances(TPS, ch);
 ```
 
 The `.dat` files here are generated from the channel definitions via
