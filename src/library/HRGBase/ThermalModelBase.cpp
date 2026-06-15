@@ -2296,8 +2296,11 @@ namespace thermalfist {
   }
 
   void ThermalModelBase::ClearDensityModels() {
-    for (auto& particle : TPS()->Particles())
-      particle.ClearGeneralizedDensity();
+    for (auto& particle : TPS()->Particles()) {
+      GeneralizedDensity* gd = particle.GetGeneralizedDensity();
+      if (gd && gd->IsClearable())   // keep persistent models (e.g. phase shifts)
+        particle.ClearGeneralizedDensity();
+    }
   }
 
   void ThermalModelBase::SetMagneticField(double B, int lmax) {

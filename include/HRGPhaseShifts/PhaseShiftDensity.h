@@ -95,6 +95,11 @@ namespace thermalfist {
     void SetEnabled(bool enabled) { m_enabled = enabled; }
     bool IsEnabled() const { return m_enabled; }
 
+    /// Phase-shift channels are managed independently of the thermal-model
+    /// configuration, so ClearDensityModels() (which resets the EMM pion models)
+    /// must not delete them.
+    bool IsClearable() const override { return false; }
+
   private:
     std::vector<PhaseShiftPartialWave> m_waves;
     double m_m1, m_m2;

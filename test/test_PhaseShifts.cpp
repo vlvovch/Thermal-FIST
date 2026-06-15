@@ -382,6 +382,31 @@ namespace {
     std::remove(pionF.c_str()); std::remove(listF.c_str()); std::remove(decF.c_str());
   }
 
+  TEST(PhaseShifts, SurvivesClearDensityModels) {
+    // ClearDensityModels() resets the EMM pion-BEC models and is called by the
+    // GUI on every calculation; it must NOT delete phase-shift densities, or the
+    // channels silently revert to ideal mesons (positive density, dead toggle).
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_g.dat";
+    writePionList(pionF);
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+    ThermalModelIdeal model(&TPS);
+    ASSERT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);
+
+    model.ClearDensityModels();   // what SetThermalModelConfiguration does
+
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);   // must survive
+    ASSERT_NE(TPS.ParticleByPDG(99144005).GetGeneralizedDensity(), nullptr);
+    double c2 = TPS.ParticleByPDG(99144005).GetGeneralizedDensity()
+                  ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0);
+    EXPECT_LT(c2, 0.0);
+
+    std::remove(pionF.c_str());
+  }
+
   TEST(PhaseShifts, EnableDisableToggle) {
     // Disabling the channels (without removing them) must zero their contribution
     // exactly, and re-enabling must restore it bit-for-bit.

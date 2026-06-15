@@ -988,6 +988,11 @@ namespace thermalfist {
     virtual double EffectiveMass() const { return -1.; }
     virtual bool   IsBECPhase() const { return false; }
     virtual double BECFraction() const { return 0.; }
+    /// Whether ThermalModelBase::ClearDensityModels() may delete this model.
+    /// Transient models (e.g. the EMM pion-BEC models reset on each calculation)
+    /// return true; persistent ones (e.g. S-matrix phase-shift channels managed
+    /// independently of the model configuration) return false.
+    virtual bool   IsClearable() const { return true; }
   };
 
 } // namespace thermalfist
