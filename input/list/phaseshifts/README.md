@@ -34,14 +34,14 @@ ThermalModelIdeal model(&TPS);
 ```
 
 Single config file listing the channels you want (one `<channel> <model>` per
-line) — wire them all in one call:
+line) — wire them all in one call. A ready-made `pipi.conf` ships here:
 
 ```cpp
 ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
-PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "phaseshifts.conf");
+PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "input/list/phaseshifts/pipi.conf");
 ```
 ```
-# phaseshifts.conf
+# pipi.conf
 pipi_I2   pipi_I2:GarciaMartin2011
 # tabulated alternative for the same channel:
 # pipi_I2 tab:1=delta_S.dat,5=delta_D.dat
