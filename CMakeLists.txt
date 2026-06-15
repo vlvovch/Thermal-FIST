@@ -94,6 +94,9 @@ endif(MSVC)
 option (STANDALONE_MINUIT
         "Build Minuit2 within project instead of linking one from ROOT distribution" OFF)
 
+option (BUILD_GUI
+        "Build the Qt-based graphical user interface (QtThermalFIST)" ON)
+
 option (USE_QT5
 		"Use Qt5 for GUI instead of Qt6" OFF)
 
@@ -204,8 +207,8 @@ set (HRGFit_INCLUDE             "${PROJECT_SOURCE_DIR}/include/HRGFit")
 # The main library
 add_subdirectory(src/library)
 
-# GUI (skip for WASM library-only builds without Qt6)
-if(NOT THERMALFIST_WASM OR THERMALFIST_WASM_GUI)
+# GUI (optional; skip with -DBUILD_GUI=OFF, or for WASM library-only builds without Qt6)
+if(BUILD_GUI AND (NOT THERMALFIST_WASM OR THERMALFIST_WASM_GUI))
   add_subdirectory(src/gui/QtThermalFIST)
 endif()
 
