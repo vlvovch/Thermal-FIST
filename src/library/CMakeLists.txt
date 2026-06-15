@@ -218,11 +218,27 @@ include_directories ("$ENV{ROOTSYS}/include/root")
 include_directories ("$ENV{ROOTSYS}/include") 
 endif (NOT STANDALONE_MINUIT)
 
+# S-matrix / phase-shift part
+set(SRCS_HRGPhaseShifts
+HRGPhaseShifts/PhaseShiftDensity.cpp
+HRGPhaseShifts/LightMesonPhaseShifts.cpp
+)
+
+source_group("HRGPhaseShifts\\Source Files" FILES ${SRCS_HRGPhaseShifts})
+
+set(HEADERS_HRGPhaseShifts
+${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/PhaseShiftDensity.h
+${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/LightMesonPhaseShifts.h
+)
+
+source_group("HRGPhaseShifts\\Header Files" FILES ${HEADERS_HRGPhaseShifts})
+
 # Set Properties->General->Configuration Type to Dynamic Library(.dll)
 # Creates math.dll with the listed sources collected in the variables
 # Also adds sources to the Solution Explorer
 add_library(ThermalFIST
 ${SRCS_HRGBase} ${HEADERS_HRGBase}
+${SRCS_HRGPhaseShifts} ${HEADERS_HRGPhaseShifts}
 ${SRCS_HRGCanonical} ${HEADERS_HRGCanonical}
 ${SRCS_HRGEV} ${HEADERS_HRGEV}
 ${SRCS_HRGVDW} ${HEADERS_HRGVDW} 
