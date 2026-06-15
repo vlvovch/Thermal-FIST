@@ -452,16 +452,24 @@ namespace {
     const std::string confF = dir + "ps_config.conf";
     {
       std::ofstream f(confF.c_str());
-      f << "# channel  model\n";
-      f << "pipi_I2    pipi_I2:GarciaMartin2011\n";
+      f << "# channel wave model\n";
+      f << "pipi_I2 S GarciaMartin2011\n";
+      f << "pipi_I2 D GarciaMartin2011\n";
     }
 
     ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
     std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
     EXPECT_EQ(added.size(), 10u);                    // 5 Iz x 2 waves
-    ASSERT_GE(TPS.PdgToId(99144005), 0);             // Iz=+2 D-wave present
+    // per-wave conf: both the S (last digit 1) and D (last digit 5) clusters present,
+    // each with its density attached
+    ASSERT_GE(TPS.PdgToId(99144001), 0);             // Iz=+2 S-wave
+    ASSERT_GE(TPS.PdgToId(99144005), 0);             // Iz=+2 D-wave
+    EXPECT_NE(TPS.ParticleByPDG(99144001).GetGeneralizedDensity(), nullptr);
     EXPECT_NE(TPS.ParticleByPDG(99144005).GetGeneralizedDensity(), nullptr);
     EXPECT_NE(TPS.ParticleByPDG(-99144005).GetGeneralizedDensity(), nullptr);
+    // spectroscopic naming: name ends with the wave letter, not "2J+1=..."
+    EXPECT_NE(TPS.ParticleByPDG(99144001).Name().find("S]"), std::string::npos);
+    EXPECT_NE(TPS.ParticleByPDG(99144005).Name().find("D]"), std::string::npos);
 
     std::remove(pionF.c_str()); std::remove(confF.c_str());
   }

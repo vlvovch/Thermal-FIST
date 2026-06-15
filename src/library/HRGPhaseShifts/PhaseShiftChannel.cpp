@@ -9,6 +9,7 @@
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
 
 #include <cmath>
+#include <cctype>
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
@@ -72,6 +73,26 @@ namespace thermalfist {
                             : ("Iz=" + sign + std::to_string(a) + "/2");
       }
 
+      // Spectroscopic letter of a partial wave from its degeneracy 2J+1.
+      std::string WaveLabel(int twoJplus1) {
+        switch (twoJplus1) {
+          case 1: return "S"; case 3: return "P"; case 5: return "D";
+          case 7: return "F"; case 9: return "G";
+        }
+        return "J" + std::to_string((twoJplus1 - 1) / 2);
+      }
+
+      // Inverse: partial-wave token ("S".."G", or a numeric 2J+1) -> 2J+1.
+      int WaveTokenToTwoJplus1(const std::string& tok) {
+        if (tok.size() == 1) {
+          switch (std::toupper(tok[0])) {
+            case 'S': return 1; case 'P': return 3; case 'D': return 5;
+            case 'F': return 7; case 'G': return 9;
+          }
+        }
+        return std::atoi(tok.c_str());   // numeric 2J+1
+      }
+
     } // anonymous namespace
 
     long long PhaseShiftPdgId(const PhaseShiftChannel& ch, int twoIz, int twoJplus1) {
@@ -126,7 +147,7 @@ namespace thermalfist {
         for (size_t w = 0; w < model.waves.size(); ++w) {
           const int twoJp1 = model.waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          const std::string name = ch.name + "[" + IzLabel(twoIz) + ",2J+1=" + std::to_string(twoJp1) + "]";
+          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
           fout << std::setw(12) << pdg << "  " << std::setw(28) << std::left << name << std::right
                << "  " << 0                      // stable=0 (decays to constituents)
                << "  " << std::setprecision(8) << mass
@@ -152,7 +173,7 @@ namespace thermalfist {
         for (size_t w = 0; w < model.waves.size(); ++w) {
           const int twoJp1 = model.waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          fout << pdg << "  # " << ch.name << "[" << IzLabel(twoIz) << ",2J+1=" << twoJp1 << "]\n";
+          fout << pdg << "  # " << ch.name << "[" << IzLabel(twoIz) << "," << WaveLabel(twoJp1) << "]\n";
           fout << dec.size() << "\n";
           for (size_t i = 0; i < dec.size(); ++i)
             fout << std::setprecision(10) << dec[i].first << "  "
@@ -239,7 +260,7 @@ namespace thermalfist {
         for (size_t w = 0; w < model.waves.size(); ++w) {
           const int twoJp1 = model.waves[w].twoJplus1;
           const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          const std::string name = ch.name + "[" + IzLabel(twoIz) + ",2J+1=" + std::to_string(twoJp1) + "]";
+          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
 
           // Idempotent: if the cluster is already in the list (e.g. loaded from a
           // list-<name>.dat file), don't re-add it - AttachDensities() below will
@@ -307,16 +328,59 @@ namespace thermalfist {
       std::ifstream fin(configFile.c_str());
       if (!fin.is_open())
         throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
-      std::vector<long long> all;
+
+      // Resolve a "<wave> <model>" entry into one or more partial waves.
+      // wave: S/P/D/F/G (or numeric 2J+1), or "all"/"*" for every wave of an
+      // analytic model. model: an analytic parametrization name, or "tab:<file>".
+      auto resolveWaves = [](const std::string& channel, const std::string& waveTok,
+                             const std::string& modelSpec) -> std::vector<PhaseShiftPartialWave> {
+        std::vector<PhaseShiftPartialWave> out;
+        const bool tab = modelSpec.substr(0, 4) == "tab:";
+        if (waveTok == "all" || waveTok == "*") {
+          if (tab) throw std::invalid_argument("AddPhaseShiftChannelsFromFile: 'all' needs an analytic model");
+          out = AnalyticModel(channel + ":" + modelSpec).waves;
+        } else {
+          const int twoJp1 = WaveTokenToTwoJplus1(waveTok);
+          if (tab) {
+            std::vector<std::pair<int, std::string> > wf(1, std::make_pair(twoJp1, modelSpec.substr(4)));
+            out.push_back(TabulatedModel("tab", wf).waves[0]);
+          } else {
+            PhaseShiftModel m = AnalyticModel(channel + ":" + modelSpec);
+            for (size_t i = 0; i < m.waves.size(); ++i)
+              if (m.waves[i].twoJplus1 == twoJp1) { out.push_back(m.waves[i]); break; }
+            if (out.empty())
+              throw std::invalid_argument("AddPhaseShiftChannelsFromFile: analytic model '" + modelSpec +
+                                          "' has no " + waveTok + "-wave for channel '" + channel + "'");
+          }
+        }
+        return out;
+      };
+
+      // Collect partial waves per channel (one conf line = one wave, or "all").
+      std::vector<std::string> order;
+      std::map<std::string, std::vector<PhaseShiftPartialWave> > chanWaves;
       std::string line;
       while (std::getline(fin, line)) {
         std::string::size_type hash = line.find('#');
         if (hash != std::string::npos) line = line.substr(0, hash);
         std::istringstream iss(line);
-        std::string chName, modelSpec;
-        if (!(iss >> chName >> modelSpec)) continue;       // skip blank/comment lines
-        PhaseShiftChannel ch = ChannelByName(chName);
-        PhaseShiftModel  model = ParsePhaseShiftModel(modelSpec);
+        std::string chName, tok2, tok3;
+        if (!(iss >> chName >> tok2)) continue;   // skip blank/comment lines
+        std::string waveTok, modelSpec;
+        if (iss >> tok3) { waveTok = tok2;    modelSpec = tok3; }  // "channel wave model"
+        else             { waveTok = "all";   modelSpec = tok2; }  // "channel model" (all waves)
+        std::vector<PhaseShiftPartialWave> ws = resolveWaves(chName, waveTok, modelSpec);
+        if (chanWaves.find(chName) == chanWaves.end()) order.push_back(chName);
+        chanWaves[chName].insert(chanWaves[chName].end(), ws.begin(), ws.end());
+      }
+
+      // Build each channel once from its collected waves.
+      std::vector<long long> all;
+      for (size_t i = 0; i < order.size(); ++i) {
+        PhaseShiftChannel ch = ChannelByName(order[i]);
+        PhaseShiftModel model;
+        model.name  = order[i];
+        model.waves = chanWaves[order[i]];
         std::vector<long long> a = AddPhaseShiftChannel(TPS, ch, model);
         all.insert(all.end(), a.begin(), a.end());
       }

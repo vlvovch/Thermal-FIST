@@ -41,11 +41,18 @@ ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
 PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "input/list/phaseshifts/pipi.conf");
 ```
 ```
-# pipi.conf
-pipi_I2   pipi_I2:GarciaMartin2011
-# tabulated alternative for the same channel:
-# pipi_I2 tab:1=delta_S.dat,5=delta_D.dat
+# pipi.conf  --  one line per wave:  <channel>  <wave>  <model>
+pipi_I2   S   GarciaMartin2011
+pipi_I2   D   GarciaMartin2011
+# mix models per wave (e.g. a tabulated D-wave):
+# pipi_I2 D   tab:delta_pipi_I2_D.dat
+# shorthand for all waves of an analytic model:
+# pipi_I2     GarciaMartin2011
 ```
+
+`<wave>` is the spectroscopic letter S/P/D/F/G (or a numeric 2J+1), so each
+partial wave can use a different model. Cluster names show the wave letter, e.g.
+`pipi_I2[Iz=+1,D]`.
 
 Low-level (data-file modules) — load the generated `.dat` files through the
 standard list build, then attach the model:
