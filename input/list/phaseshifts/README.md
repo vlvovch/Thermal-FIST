@@ -64,6 +64,29 @@ The `.dat` files here are generated from the channel definitions via
 `PhaseShifts::WritePhaseShiftFiles(channel, model, dir)` and committed for
 inspection; regenerate them if a channel's structure changes.
 
+## Excluded volume / van der Waals
+
+The cluster members are added as ordinary hadrons (a pi-pi channel cluster has
+B = 0, so it is a meson). They therefore receive excluded-volume / vdW
+parameters from the *same* quantum-number-based assignment as every other
+species (uniform radius, mass-proportional `(m/m_N)^{1/3}`, or
+baryon-content / point-like-meson). No special-casing is applied or needed:
+because the clusters are suppressed consistently with the pions they are made
+of, total (free + feeddown) particle densities stay consistent — whereas
+leaving the clusters EV-free while the pions are suppressed could drive the
+total pion density negative.
+
+Notes:
+- The cluster's nominal mass (the threshold m1 + m2) is what a mass-proportional
+  radius scheme sees; its thermodynamics still come from the phase-shift
+  spectral integral, not this nominal mass.
+- In the diagonal-EV model clusters never source excluded volume (their density
+  is an interaction correction, possibly negative) but are suppressed by the
+  global free-volume factor; in the matrix models (Crossterms/VDW/RealGas) they
+  participate through their (meson) parameters like any other meson.
+- In the GUI, if you change the interaction settings, re-apply them after
+  enabling phase shifts so the freshly added clusters are included.
+
 ## Channels
 
 - `pipi_I2` — repulsive pi-pi I=2 (S- and D-waves; Garcia-Martin et al.,
