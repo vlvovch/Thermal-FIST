@@ -112,33 +112,38 @@ namespace thermalfist {
 
     } // anonymous namespace
 
-    PhaseShiftModel AnalyticModel(const std::string& name,
+    std::vector<PhaseShiftPartialWave> AnalyticWaves(const std::string& name,
                                   const std::map<std::string, double>& /*params*/) {
-      PhaseShiftModel model;
-      model.name = name;
-      if (name == "pipi_I2:GarciaMartin2011") {
-        model.waves = PiPi_I2_Waves();
-      } else {
-        throw std::invalid_argument("AnalyticModel: unknown model name '" + name + "'");
-      }
-      return model;
+      if (name == "pipi_I2:GarciaMartin2011")
+        return PiPi_I2_Waves();
+      throw std::invalid_argument("AnalyticWaves: unknown model name '" + name + "'");
     }
 
-    PhaseShiftModel TabulatedModel(const std::string& name,
+    PhaseShiftPartialWave AnalyticWave(const std::string& name, int twoJplus1,
+                                  const std::map<std::string, double>& params) {
+      std::vector<PhaseShiftPartialWave> waves = AnalyticWaves(name, params);
+      for (size_t i = 0; i < waves.size(); ++i)
+        if (waves[i].twoJplus1 == twoJplus1) return waves[i];
+      throw std::invalid_argument("AnalyticWave: model '" + name + "' has no wave with 2J+1="
+                                  + std::to_string(twoJplus1));
+    }
+
+    PhaseShiftPartialWave TabulatedWave(int twoJplus1, const std::string& file) {
+      std::vector<double> M, d;
+      readTable(file, M, d);
+      std::shared_ptr<CubicSpline> sp = std::make_shared<CubicSpline>(M, d);
+      return PhaseShiftPartialWave(
+        twoJplus1,
+        [sp](double m) { return sp->f(m); },     // delta(M)
+        [sp](double m) { return sp->df(m); });   // analytic ddelta/dM
+    }
+
+    std::vector<PhaseShiftPartialWave> TabulatedWaves(
                                    const std::vector<std::pair<int, std::string> >& waveFiles) {
-      PhaseShiftModel model;
-      model.name = name;
-      for (size_t i = 0; i < waveFiles.size(); ++i) {
-        std::vector<double> M, d;
-        readTable(waveFiles[i].second, M, d);
-        std::shared_ptr<CubicSpline> sp = std::make_shared<CubicSpline>(M, d);
-        PhaseShiftPartialWave wave(
-          waveFiles[i].first,
-          [sp](double m) { return sp->f(m); },     // delta(M)
-          [sp](double m) { return sp->df(m); });   // analytic ddelta/dM
-        model.waves.push_back(wave);
-      }
-      return model;
+      std::vector<PhaseShiftPartialWave> waves;
+      for (size_t i = 0; i < waveFiles.size(); ++i)
+        waves.push_back(TabulatedWave(waveFiles[i].first, waveFiles[i].second));
+      return waves;
     }
 
   } // namespace PhaseShifts

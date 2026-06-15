@@ -1,4 +1,4 @@
-# S-matrix phase-shift channel 'pipi_I2' (model: pipi_I2:GarciaMartin2011)
+# S-matrix phase-shift channel 'pipi_I2' (2 partial waves)
 # pdgid name stable mass deg stat B Q S C |S| |C| width threshold
     99140001  pipi_I2[Iz=0,S]               0  0.27914  1  -1  0  0  0  0  0  0  0  0.27914
     99140005  pipi_I2[Iz=0,D]               0  0.27914  1  -1  0  0  0  0  0  0  0  0.27914

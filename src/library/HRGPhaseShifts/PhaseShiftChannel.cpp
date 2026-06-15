@@ -134,18 +134,18 @@ namespace thermalfist {
       return out;
     }
 
-    void WritePhaseShiftListFile(const PhaseShiftChannel& ch, const PhaseShiftModel& model,
+    void WritePhaseShiftListFile(const PhaseShiftChannel& ch, const std::vector<PhaseShiftPartialWave>& waves,
                                  const std::string& listFile) {
       std::ofstream fout(listFile.c_str());
       if (!fout.is_open())
         throw std::runtime_error("WritePhaseShiftListFile: cannot open " + listFile);
       const double mass = ch.m1 + ch.m2;     // nominal; density override supplies thermodynamics
-      fout << "# S-matrix phase-shift channel '" << ch.name << "' (model: " << model.name << ")\n";
+      fout << "# S-matrix phase-shift channel '" << ch.name << "' (" << waves.size() << " partial waves)\n";
       fout << "# pdgid name stable mass deg stat B Q S C |S| |C| width threshold\n";
       for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
         const int Q = (twoIz + ch.B + ch.S + ch.C) / 2;
-        for (size_t w = 0; w < model.waves.size(); ++w) {
-          const int twoJp1 = model.waves[w].twoJplus1;
+        for (size_t w = 0; w < waves.size(); ++w) {
+          const int twoJp1 = waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
           const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
           fout << std::setw(12) << pdg << "  " << std::setw(28) << std::left << name << std::right
@@ -162,7 +162,7 @@ namespace thermalfist {
       }
     }
 
-    void WritePhaseShiftDecaysFile(const PhaseShiftChannel& ch, const PhaseShiftModel& model,
+    void WritePhaseShiftDecaysFile(const PhaseShiftChannel& ch, const std::vector<PhaseShiftPartialWave>& waves,
                                    const std::string& decaysFile) {
       std::ofstream fout(decaysFile.c_str());
       if (!fout.is_open())
@@ -170,8 +170,8 @@ namespace thermalfist {
       fout << "# S-matrix phase-shift channel '" << ch.name << "' decays (isospin Clebsch-Gordan)\n";
       for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
         std::vector<std::pair<double, std::pair<long long, long long> > > dec = ChannelDecays(ch, twoIz);
-        for (size_t w = 0; w < model.waves.size(); ++w) {
-          const int twoJp1 = model.waves[w].twoJplus1;
+        for (size_t w = 0; w < waves.size(); ++w) {
+          const int twoJp1 = waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
           fout << pdg << "  # " << ch.name << "[" << IzLabel(twoIz) << "," << WaveLabel(twoJp1) << "]\n";
           fout << dec.size() << "\n";
@@ -182,28 +182,28 @@ namespace thermalfist {
       }
     }
 
-    void WritePhaseShiftFiles(const PhaseShiftChannel& ch, const PhaseShiftModel& model,
+    void WritePhaseShiftFiles(const PhaseShiftChannel& ch, const std::vector<PhaseShiftPartialWave>& waves,
                               const std::string& dir) {
       std::string base = dir;
       if (!base.empty() && base[base.size() - 1] != '/' && base[base.size() - 1] != '\\')
         base += "/";
-      WritePhaseShiftListFile(ch, model, base + "list-" + ch.name + ".dat");
-      WritePhaseShiftDecaysFile(ch, model, base + "decays-" + ch.name + ".dat");
+      WritePhaseShiftListFile(ch, waves, base + "list-" + ch.name + ".dat");
+      WritePhaseShiftDecaysFile(ch, waves, base + "decays-" + ch.name + ".dat");
     }
 
     std::vector<long long> AttachDensities(ThermalParticleSystem& TPS,
                                            const PhaseShiftChannel& ch,
-                                           const PhaseShiftModel& model) {
+                                           const std::vector<PhaseShiftPartialWave>& waves) {
       std::vector<long long> touched;
       for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
         const bool selfConj = selfConjugate(ch, twoIz);
-        for (size_t w = 0; w < model.waves.size(); ++w) {
-          const long long mag = PhaseShiftPdgId(ch, twoIz, model.waves[w].twoJplus1);
+        for (size_t w = 0; w < waves.size(); ++w) {
+          const long long mag = PhaseShiftPdgId(ch, twoIz, waves[w].twoJplus1);
           long long pdgs[2] = { mag, -mag };
           const int npdg = selfConj ? 1 : 2;
           for (int s = 0; s < npdg; ++s) {
             if (TPS.PdgToId(pdgs[s]) < 0) continue;
-            std::vector<PhaseShiftPartialWave> oneWave(1, model.waves[w]);
+            std::vector<PhaseShiftPartialWave> oneWave(1, waves[w]);
             TPS.ParticleByPDG(pdgs[s]).SetGeneralizedDensity(
               new PhaseShiftDensity(oneWave, ch.m1, ch.m2, ch.Mmax, ch.statistics, ch.quadratureNodes));
             touched.push_back(pdgs[s]);
@@ -238,7 +238,7 @@ namespace thermalfist {
 
     std::vector<long long> AddPhaseShiftChannel(ThermalParticleSystem& TPS,
                                                 const PhaseShiftChannel& ch,
-                                                const PhaseShiftModel& model) {
+                                                const std::vector<PhaseShiftPartialWave>& waves) {
       const double mass = ch.m1 + ch.m2;   // nominal; density override supplies thermodynamics
       std::vector<long long> added;
 
@@ -257,8 +257,8 @@ namespace thermalfist {
         }
         const bool selfConj = selfConjugate(ch, twoIz);
 
-        for (size_t w = 0; w < model.waves.size(); ++w) {
-          const int twoJp1 = model.waves[w].twoJplus1;
+        for (size_t w = 0; w < waves.size(); ++w) {
+          const int twoJp1 = waves[w].twoJplus1;
           const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
           const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
 
@@ -289,7 +289,7 @@ namespace thermalfist {
       }
 
       TPS.FinalizeList();                  // sort + PDG map + decay types
-      AttachDensities(TPS, ch, model);     // bind the chosen model's delta(M)
+      AttachDensities(TPS, ch, waves);     // bind each wave's delta(M)
       SubsumeResonances(TPS, ch);          // graceful resonance removal (no-op if none)
 
       // rebuild decay bookkeeping so feeddown includes the new clusters
@@ -304,59 +304,32 @@ namespace thermalfist {
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
     }
 
-    PhaseShiftModel ParsePhaseShiftModel(const std::string& spec) {
-      if (spec.substr(0, 4) == "tab:") {
-        std::vector<std::pair<int, std::string> > waveFiles;
-        std::string rest = spec.substr(4);
-        std::stringstream ss(rest);
-        std::string item;
-        while (std::getline(ss, item, ',')) {
-          std::string::size_type eq = item.find('=');
-          if (eq == std::string::npos)
-            throw std::invalid_argument("ParsePhaseShiftModel: expected '<2J+1>=<file>' in '" + item + "'");
-          int twoJp1 = std::atoi(item.substr(0, eq).c_str());
-          std::string file = item.substr(eq + 1);
-          waveFiles.push_back(std::make_pair(twoJp1, file));
-        }
-        return TabulatedModel(spec, waveFiles);
-      }
-      return AnalyticModel(spec);
-    }
-
     std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
                                                          const std::string& configFile) {
       std::ifstream fin(configFile.c_str());
       if (!fin.is_open())
         throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
 
-      // Resolve a "<wave> <model>" entry into one or more partial waves.
+      // Resolve a "<wave> <model>" entry into one or more per-wave models.
       // wave: S/P/D/F/G (or numeric 2J+1), or "all"/"*" for every wave of an
       // analytic model. model: an analytic parametrization name, or "tab:<file>".
       auto resolveWaves = [](const std::string& channel, const std::string& waveTok,
                              const std::string& modelSpec) -> std::vector<PhaseShiftPartialWave> {
-        std::vector<PhaseShiftPartialWave> out;
         const bool tab = modelSpec.substr(0, 4) == "tab:";
         if (waveTok == "all" || waveTok == "*") {
           if (tab) throw std::invalid_argument("AddPhaseShiftChannelsFromFile: 'all' needs an analytic model");
-          out = AnalyticModel(channel + ":" + modelSpec).waves;
-        } else {
-          const int twoJp1 = WaveTokenToTwoJplus1(waveTok);
-          if (tab) {
-            std::vector<std::pair<int, std::string> > wf(1, std::make_pair(twoJp1, modelSpec.substr(4)));
-            out.push_back(TabulatedModel("tab", wf).waves[0]);
-          } else {
-            PhaseShiftModel m = AnalyticModel(channel + ":" + modelSpec);
-            for (size_t i = 0; i < m.waves.size(); ++i)
-              if (m.waves[i].twoJplus1 == twoJp1) { out.push_back(m.waves[i]); break; }
-            if (out.empty())
-              throw std::invalid_argument("AddPhaseShiftChannelsFromFile: analytic model '" + modelSpec +
-                                          "' has no " + waveTok + "-wave for channel '" + channel + "'");
-          }
+          return AnalyticWaves(channel + ":" + modelSpec);
         }
+        const int twoJp1 = WaveTokenToTwoJplus1(waveTok);
+        std::vector<PhaseShiftPartialWave> out;
+        if (tab)
+          out.push_back(TabulatedWave(twoJp1, modelSpec.substr(4)));
+        else
+          out.push_back(AnalyticWave(channel + ":" + modelSpec, twoJp1));
         return out;
       };
 
-      // Collect partial waves per channel (one conf line = one wave, or "all").
+      // Collect per-wave models per channel (one conf line = one wave, or "all").
       std::vector<std::string> order;
       std::map<std::string, std::vector<PhaseShiftPartialWave> > chanWaves;
       std::string line;
@@ -374,14 +347,11 @@ namespace thermalfist {
         chanWaves[chName].insert(chanWaves[chName].end(), ws.begin(), ws.end());
       }
 
-      // Build each channel once from its collected waves.
+      // Build each channel once from its collected per-wave models.
       std::vector<long long> all;
       for (size_t i = 0; i < order.size(); ++i) {
         PhaseShiftChannel ch = ChannelByName(order[i]);
-        PhaseShiftModel model;
-        model.name  = order[i];
-        model.waves = chanWaves[order[i]];
-        std::vector<long long> a = AddPhaseShiftChannel(TPS, ch, model);
+        std::vector<long long> a = AddPhaseShiftChannel(TPS, ch, chanWaves[order[i]]);
         all.insert(all.end(), a.begin(), a.end());
       }
       return all;

@@ -191,7 +191,7 @@ namespace {
 
     PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
     ch.name = "pipi_I2_a";    // unique file names (PDG ids unchanged: family+2I)
-    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    auto model = PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011");
     const std::string listF = dir + "list-" + ch.name + ".dat";
     const std::string decF  = dir + "decays-" + ch.name + ".dat";
     PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
@@ -237,7 +237,7 @@ namespace {
 
     PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
     ch.name = "pipi_I2_b";
-    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    auto model = PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011");
     const std::string listF = dir + "list-" + ch.name + ".dat";
     const std::string decF  = dir + "decays-" + ch.name + ".dat";
     PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
@@ -288,10 +288,10 @@ namespace {
     std::vector<std::pair<int, std::string> > waveFiles;
     waveFiles.push_back(std::make_pair(1, sF));
     waveFiles.push_back(std::make_pair(5, dF));
-    PhaseShifts::PhaseShiftModel tab = PhaseShifts::TabulatedModel("tab", waveFiles);
+    auto tab = PhaseShifts::TabulatedWaves(waveFiles);
 
     PhaseShiftDensity ana(PhaseShifts::PiPi_I2_Waves(), mpi, mpi, Mmax, -1, 64);
-    PhaseShiftDensity tabd(tab.waves,                  mpi, mpi, Mmax, -1, 64);
+    PhaseShiftDensity tabd(tab,                  mpi, mpi, Mmax, -1, 64);
 
     // Sample only within the parametrization range (qmax ~ 0.696 for Mmax=1.42);
     // the small residual is the cubic-spline derivative error near the threshold cusp.
@@ -327,7 +327,7 @@ namespace {
 
     ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
     PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
-                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+                                      PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011"));
     ThermalModelIdeal m(&TPS);
     m.SetTemperature(T); m.SetBaryonChemicalPotential(0.0);
     m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
@@ -355,7 +355,7 @@ namespace {
 
     PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
     ch.name = "pipi_I2_f";
-    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    auto model = PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011");
     const std::string listF = dir + "list-" + ch.name + ".dat";
     const std::string decF  = dir + "decays-" + ch.name + ".dat";
     PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
@@ -392,7 +392,7 @@ namespace {
 
     ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
     PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
-                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+                                      PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011"));
     ThermalModelIdeal model(&TPS);
     ASSERT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);
 
@@ -417,7 +417,7 @@ namespace {
 
     ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
     PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
-                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+                                      PhaseShifts::AnalyticWaves("pipi_I2:GarciaMartin2011"));
     EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);
 
     auto suscQ = [&](ThermalParticleSystem& T_) {
