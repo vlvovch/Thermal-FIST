@@ -84,8 +84,11 @@ Notes:
   is an interaction correction, possibly negative) but are suppressed by the
   global free-volume factor; in the matrix models (Crossterms/VDW/RealGas) they
   participate through their (meson) parameters like any other meson.
-- In the GUI, if you change the interaction settings, re-apply them after
-  enabling phase shifts so the freshly added clusters are included.
+- In the GUI, enabling phase shifts adds the clusters once; toggling the
+  checkbox afterwards just switches their densities on/off without rebuilding the
+  list (PhaseShifts::SetPhaseShiftsEnabled). The clusters keep their meson
+  EV/vdW parameters either way; when off their zero density makes them inert, so
+  interactions never need manual re-apply.
 
 ## Channels
 

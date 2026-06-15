@@ -562,6 +562,11 @@ void MainWindow::applyParticleList(const std::vector<std::string>& listPaths,
 
 void MainWindow::resetAllTabs()
 {
+  // Each tab's resetTPS() recomputes its EV/vdW interaction matrix over the
+  // current particle list (QvdWParameters::GetParameters), so the clusters
+  // (B=0 mesons) always carry meson parameters. Enabling/disabling phase shifts
+  // only flips the cluster densities (the list is unchanged), so no manual
+  // interaction re-apply is ever needed.
   tab1->resetTPS();
   tab2->resetTPS();
   tabEoS->resetTPS();
@@ -575,8 +580,11 @@ void MainWindow::resetAllTabs()
 void MainWindow::refreshListDisplay()
 {
   QString t = clists;
-  if (chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConf.isEmpty())
+  const bool present = TPS && PhaseShifts::CountPhaseShiftDensities(*TPS) > 0;
+  if (present && chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConf.isEmpty())
     t += " + PS[" + QFileInfo(m_phaseShiftConf).fileName() + "]";
+  else if (present)
+    t += " (phase shifts off)";   // clusters still in the list but disabled
   if (TPS)
     t += " [" + QString::number(TPS->Particles().size()) + " particles]";
   leList->setText(t);
@@ -611,7 +619,17 @@ void MainWindow::rebuildCurrentList()
 
 void MainWindow::onPhaseShiftToggled()
 {
-  rebuildCurrentList();
+  const bool on = chkPhaseShifts->isChecked();
+  if (PhaseShifts::CountPhaseShiftDensities(*TPS) > 0) {
+    // Clusters already in the list: just switch their density on/off. No rebuild,
+    // so the EV/vdW matrix (which already includes them) is untouched.
+    PhaseShifts::SetPhaseShiftsEnabled(*TPS, on);
+    refreshListDisplay();
+    resetAllTabs();
+  } else if (on) {
+    // First time on: add the channels to the list (one rebuild).
+    rebuildCurrentList();
+  }
 }
 
 void MainWindow::loadPhaseShiftConf()
@@ -624,10 +642,12 @@ void MainWindow::loadPhaseShiftConf()
   if (path.isEmpty())
     return;
   m_phaseShiftConf = path;
-  if (!chkPhaseShifts->isChecked())
-    chkPhaseShifts->setChecked(true);   // emits toggled -> rebuildCurrentList
-  else
-    rebuildCurrentList();
+  // A new config means different channels: rebuild from the base list so the old
+  // clusters are dropped and the new ones added (with the box checked).
+  chkPhaseShifts->blockSignals(true);
+  chkPhaseShifts->setChecked(true);
+  chkPhaseShifts->blockSignals(false);
+  rebuildCurrentList();
 }
 
 void MainWindow::updateListVariants()

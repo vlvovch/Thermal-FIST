@@ -89,12 +89,19 @@ namespace thermalfist {
     /// Effective spectral weight in q-space: (1/pi) sum_l (2J_l+1) ddelta_l/dq.
     double SpectralWeight(double q) const;
 
+    /// Enable/disable the contribution. When disabled, Quantity() returns 0 for
+    /// every quantity, so the channel contributes nothing to densities,
+    /// susceptibilities or feeddown without removing it from the particle list.
+    void SetEnabled(bool enabled) { m_enabled = enabled; }
+    bool IsEnabled() const { return m_enabled; }
+
   private:
     std::vector<PhaseShiftPartialWave> m_waves;
     double m_m1, m_m2;
     double m_Mmax, m_qmax;
     int    m_stat;
     int    m_nodes;
+    bool   m_enabled;
   };
 
 } // namespace thermalfist

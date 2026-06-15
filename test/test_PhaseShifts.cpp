@@ -344,6 +344,43 @@ namespace {
     std::remove(pionF.c_str());
   }
 
+  TEST(PhaseShifts, EnableDisableToggle) {
+    // Disabling the channels (without removing them) must zero their contribution
+    // exactly, and re-enabling must restore it bit-for-bit.
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_e.dat";
+    writePionList(pionF);
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+                                      PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);
+
+    auto suscQ = [&](ThermalParticleSystem& T_) {
+      ThermalModelIdeal m(&T_);
+      m.SetTemperature(T); m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+      m.CalculatePrimordialDensities(); m.CalculateFluctuations();
+      return m.Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    };
+
+    double on = suscQ(TPS);
+    PhaseShifts::SetPhaseShiftsEnabled(TPS, false);
+    double off = suscQ(TPS);
+    PhaseShifts::SetPhaseShiftsEnabled(TPS, true);
+    double on2 = suscQ(TPS);
+
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, pionF));
+    double base = suscQ(TPSbase);
+
+    EXPECT_LT(on, off);                       // enabled repulsive channel lowers chi2Q
+    EXPECT_DOUBLE_EQ(on, on2);                // toggling back restores exactly
+    EXPECT_NEAR(off, base, 1e-12 * std::fabs(base) + 1e-15);  // disabled == pion-only
+
+    std::remove(pionF.c_str());
+  }
+
   TEST(PhaseShifts, AddPhaseShiftChannelsFromConfig) {
     // A single config file ("<channel> <model>") wires everything in one call.
     const std::string dir = ::testing::TempDir();

@@ -211,6 +211,21 @@ namespace thermalfist {
     std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
                                                          const std::string& configFile);
 
+    /**
+     * \brief Enable or disable every phase-shift channel already in the system,
+     *        without rebuilding the list.
+     *
+     * Flips the enabled flag on each PhaseShiftDensity attached to a species.
+     * A disabled channel contributes nothing (its density returns 0), so its
+     * effect on densities, susceptibilities and feeddown vanishes while the
+     * clusters stay in the list (and keep their EV/vdW parameters). Useful for a
+     * cheap on/off toggle. Returns the number of channels affected.
+     */
+    int SetPhaseShiftsEnabled(ThermalParticleSystem& TPS, bool enabled);
+
+    /// Number of species in the system carrying a PhaseShiftDensity.
+    int CountPhaseShiftDensities(const ThermalParticleSystem& TPS);
+
   } // namespace PhaseShifts
 
 } // namespace thermalfist

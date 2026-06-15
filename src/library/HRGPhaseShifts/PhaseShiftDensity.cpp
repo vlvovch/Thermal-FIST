@@ -19,7 +19,7 @@ namespace thermalfist {
   PhaseShiftDensity::PhaseShiftDensity(const std::vector<PhaseShiftPartialWave>& waves,
                                        double m1, double m2, double Mmax,
                                        int statistics, int quadratureNodes)
-    : m_waves(waves), m_m1(m1), m_m2(m2), m_Mmax(Mmax), m_stat(statistics), m_nodes(quadratureNodes)
+    : m_waves(waves), m_m1(m1), m_m2(m2), m_Mmax(Mmax), m_stat(statistics), m_nodes(quadratureNodes), m_enabled(true)
   {
     if (m1 <= 0. || m2 <= 0.)
       throw std::invalid_argument("PhaseShiftDensity: constituent masses must be positive");
@@ -73,6 +73,7 @@ namespace thermalfist {
   }
 
   double PhaseShiftDensity::Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) {
+    if (!m_enabled) return 0.;   // disabled channel contributes nothing
     std::vector<double> xleg, wleg;
     NumericalIntegration::GetCoefsIntegrateLegendre(m_nodes, 0., m_qmax, &xleg, &wleg);
 

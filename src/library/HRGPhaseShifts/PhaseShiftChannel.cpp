@@ -315,6 +315,23 @@ namespace thermalfist {
       return all;
     }
 
+    int SetPhaseShiftsEnabled(ThermalParticleSystem& TPS, bool enabled) {
+      int n = 0;
+      for (int i = 0; i < TPS.ComponentsNumber(); ++i) {
+        GeneralizedDensity* gd = TPS.Particle(i).GetGeneralizedDensity();
+        PhaseShiftDensity* psd = dynamic_cast<PhaseShiftDensity*>(gd);
+        if (psd) { psd->SetEnabled(enabled); ++n; }
+      }
+      return n;
+    }
+
+    int CountPhaseShiftDensities(const ThermalParticleSystem& TPS) {
+      int n = 0;
+      for (int i = 0; i < TPS.ComponentsNumber(); ++i)
+        if (dynamic_cast<PhaseShiftDensity*>(TPS.Particles()[i].GetGeneralizedDensity())) ++n;
+      return n;
+    }
+
     PhaseShiftChannel PiPi_I2_Channel() {
       PhaseShiftChannel ch;
       ch.name       = "pipi_I2";
