@@ -1,10 +1,11 @@
 # S-matrix / phase-shift list modules
 
-Each scattering channel is a drop-in Thermal-FIST list module — a particle
-table (`list-<name>.dat`) plus a decays file (`decays-<name>.dat`) — that adds
-the channel's isospin multiplet as effective "cluster" degrees of freedom. The
-clusters carry the channel's conserved charges and decay (with isospin
-Clebsch-Gordan branchings) into their constituent hadrons.
+Everything here is **per partial wave**. Each wave of a scattering channel is a
+drop-in Thermal-FIST list module — a particle table (`list-<channel>_<wave>.dat`)
+plus a decays file (`decays-<channel>_<wave>.dat`) — that adds the wave's isospin
+multiplet as effective "cluster" degrees of freedom. The clusters carry the
+channel's conserved charges and decay (with isospin Clebsch-Gordan branchings)
+into their constituent hadrons.
 
 The synthetic PDG ids follow `99 F (2I) (2|Iz|) nn (2J+1)`: the last digit is
 the wave's spin degeneracy `2J+1`, the `99` prefix keeps them clear of real PDG
@@ -12,64 +13,72 @@ codes, and the sign selects particle/antiparticle (generated automatically at
 load). Charges/baryon/strangeness live in the table columns, not in the id.
 
 These files only define the *structure*. The actual phase shift `delta(M)` — the
-dynamics — is attached in code by `PhaseShifts::AttachDensities(TPS, channel,
-model)`, where `model` is a selectable `PhaseShiftModel` (a named analytic
-parametrization or a tabulated phase shift). This separation lets the same
-channel be evaluated with different models.
+dynamics — is a per-wave model: a wave-specific analytic parametrization name
+(`PhaseShifts::AnalyticWave(channel, param)`, e.g. `param = "GarciaMartin2011_S"`)
+or a tabulated phase shift (`PhaseShifts::TabulatedWave(2J+1, file)`). The model
+name is per-wave (two waves of one paper get two names — they have different phase
+shifts); there is no "all waves" model.
 
 ## Usage
 
-Simplest — one call adds a fully-wired channel (members + antiparticles + decays
-+ delta(M) + resonance subsumption) to an already-loaded list:
+Single config file (recommended) — one line **per wave**, referencing that wave's
+list/decay files and its model. `AddPhaseShiftChannelsFromFile` loads the
+referenced `.dat` files (members + antiparticles + decays), attaches each wave's
+`delta(M)`, and removes any subsumed resonances. A ready-made `pipi.conf` ships
+here:
 
 ```cpp
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
-#include "HRGPhaseShifts/PhaseShiftModel.h"
 using namespace thermalfist;
 
 ThermalParticleSystem TPS("input/list/PDG2020/list.dat");   // your usual base list
-PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
-    PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "input/list/phaseshifts/pipi.conf");
 ThermalModelIdeal model(&TPS);
 ```
+```
+# pipi.conf -- one line per wave: <channel>:<wave> <list> <decays> <model>
+pipi_I2:S   list-pipi_I2_S.dat   decays-pipi_I2_S.dat   GarciaMartin2011_S   # S (J=0)
+pipi_I2:D   list-pipi_I2_D.dat   decays-pipi_I2_D.dat   GarciaMartin2011_D   # D (J=2)
+# swap one wave for a tabulated phase shift (table is M[GeV] delta[rad]):
+# pipi_I2:D list-pipi_I2_D.dat   decays-pipi_I2_D.dat   tab:delta_pipi_I2_D.dat
+```
 
-Single config file listing the channels you want (one `<channel> <model>` per
-line) — wire them all in one call. A ready-made `pipi.conf` ships here:
+Column 1 is a unique wave key: the channel before the `:`, the wave (S/P/D/F/G or
+a numeric 2J+1) after it. Columns 2-3 are the per-wave list/decay files (paths
+resolved relative to the config file). Column 4 is the model: an analytic
+`<param>` name, or `tab:<file>` for a tabulated wave. The `.dat` files are the
+hand-editable source of truth — edit them (or point at your own) and the loader
+picks them up. Cluster names show the wave letter, e.g. `pipi_I2[Iz=+1,D]`.
+
+Programmatic (no files) — build a wave set in code and add it in one call:
 
 ```cpp
 ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
-PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "input/list/phaseshifts/pipi.conf");
-```
-```
-# pipi.conf  --  one line per entry:  <channel>  <modelspec>
-pipi_I2   GarciaMartin2011               # analytic, all waves (S + D)
-# per-wave / mixed models (wave folded into the token):
-# pipi_I2 GarciaMartin2011:S             # just the S-wave (analytic)
-# pipi_I2 tab:D:delta_pipi_I2_D.dat      # ...and the D-wave from a table
+std::vector<PhaseShiftPartialWave> waves;
+waves.push_back(PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_S"));  // S
+waves.push_back(PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_D"));  // D
+PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(), waves);
 ```
 
-The wave (S/P/D/F/G or a numeric 2J+1) is folded into the model token: a bare
-`<param>` is all the parametrization's waves, `<param>:<wave>` a single analytic
-wave, and `tab:<wave>:<file>` a tabulated wave (the table has no J, so the wave
-is required). Lines for the same channel accumulate, so each wave can use a
-different model. Cluster names show the wave letter, e.g. `pipi_I2[Iz=+1,D]`.
-
-Low-level (data-file modules) — load the generated `.dat` files through the
-standard list build, then attach the model:
+Low-level — load the per-wave `.dat` files through the standard list build, then
+attach each wave's model:
 
 ```cpp
 ThermalParticleSystem TPS(
-  { "input/list/PDG2020/list.dat",  "input/list/phaseshifts/list-pipi_I2.dat" },
-  { "input/list/PDG2020/decays.dat","input/list/phaseshifts/decays-pipi_I2.dat" });
+  { "input/list/PDG2020/list.dat",   "input/list/phaseshifts/list-pipi_I2_S.dat",
+                                      "input/list/phaseshifts/list-pipi_I2_D.dat" },
+  { "input/list/PDG2020/decays.dat", "input/list/phaseshifts/decays-pipi_I2_S.dat",
+                                      "input/list/phaseshifts/decays-pipi_I2_D.dat" });
 PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
-PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
-PhaseShifts::AttachDensities(TPS, ch, model);
+PhaseShifts::AttachDensities(TPS, ch, { PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_S") });
+PhaseShifts::AttachDensities(TPS, ch, { PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_D") });
 PhaseShifts::SubsumeResonances(TPS, ch);
 ```
 
 The `.dat` files here are generated from the channel definitions via
-`PhaseShifts::WritePhaseShiftFiles(channel, model, dir)` and committed for
-inspection; regenerate them if a channel's structure changes.
+`PhaseShifts::WritePhaseShiftFiles(channel, waves, dir)` (one list + one decay
+file per wave) and committed for inspection; regenerate them if a channel's
+structure changes.
 
 ## Excluded volume / van der Waals
 

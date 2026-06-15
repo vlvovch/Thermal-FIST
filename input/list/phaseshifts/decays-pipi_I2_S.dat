@@ -1,0 +1,11 @@
+# S-matrix phase-shift channel 'pipi_I2' decays (isospin Clebsch-Gordan), wave: S
+99140001  # pipi_I2[Iz=0,S]
+2
+0.3333333333  -211 211
+0.6666666667  111 111
+99142001  # pipi_I2[Iz=+1,S]
+1
+1  111 211
+99144001  # pipi_I2[Iz=+2,S]
+1
+1  211 211

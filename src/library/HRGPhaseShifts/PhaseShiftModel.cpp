@@ -112,20 +112,23 @@ namespace thermalfist {
 
     } // anonymous namespace
 
-    std::vector<PhaseShiftPartialWave> AnalyticWaves(const std::string& name,
-                                  const std::map<std::string, double>& /*params*/) {
-      if (name == "pipi_I2:GarciaMartin2011")
-        return PiPi_I2_Waves();
-      throw std::invalid_argument("AnalyticWaves: unknown model name '" + name + "'");
-    }
-
-    PhaseShiftPartialWave AnalyticWave(const std::string& name, int twoJplus1,
-                                  const std::map<std::string, double>& params) {
-      std::vector<PhaseShiftPartialWave> waves = AnalyticWaves(name, params);
+    PhaseShiftPartialWave AnalyticWave(const std::string& channel, const std::string& param) {
+      // Per-wave registry: the model NAME is wave-specific, so (channel, param)
+      // maps to exactly one wave. The wave's 2J+1 comes from the catalog wave set.
+      std::vector<PhaseShiftPartialWave> waves;
+      int twoJplus1 = -1;
+      if (channel == "pipi_I2") {
+        waves = PiPi_I2_Waves();
+        if      (param == "GarciaMartin2011_S") twoJplus1 = 1;
+        else if (param == "GarciaMartin2011_D") twoJplus1 = 5;
+      }
+      if (twoJplus1 < 0)
+        throw std::invalid_argument("AnalyticWave: unknown analytic model '"
+                                    + channel + ":" + param + "'");
       for (size_t i = 0; i < waves.size(); ++i)
         if (waves[i].twoJplus1 == twoJplus1) return waves[i];
-      throw std::invalid_argument("AnalyticWave: model '" + name + "' has no wave with 2J+1="
-                                  + std::to_string(twoJplus1));
+      throw std::invalid_argument("AnalyticWave: model '" + channel + ":" + param
+                                  + "' wave (2J+1=" + std::to_string(twoJplus1) + ") unavailable");
     }
 
     PhaseShiftPartialWave TabulatedWave(int twoJplus1, const std::string& file) {
@@ -136,14 +139,6 @@ namespace thermalfist {
         twoJplus1,
         [sp](double m) { return sp->f(m); },     // delta(M)
         [sp](double m) { return sp->df(m); });   // analytic ddelta/dM
-    }
-
-    std::vector<PhaseShiftPartialWave> TabulatedWaves(
-                                   const std::vector<std::pair<int, std::string> >& waveFiles) {
-      std::vector<PhaseShiftPartialWave> waves;
-      for (size_t i = 0; i < waveFiles.size(); ++i)
-        waves.push_back(TabulatedWave(waveFiles[i].first, waveFiles[i].second));
-      return waves;
     }
 
   } // namespace PhaseShifts

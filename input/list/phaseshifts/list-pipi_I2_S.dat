@@ -1,0 +1,5 @@
+# S-matrix phase-shift channel 'pipi_I2', wave: S
+# pdgid name stable mass deg stat B Q S C |S| |C| width threshold
+    99140001  pipi_I2[Iz=0,S]               0  0.27914  1  -1  0  0  0  0  0  0  0  0.27914
+    99142001  pipi_I2[Iz=+1,S]              0  0.27914  1  -1  0  1  0  0  0  0  0  0.27914
+    99144001  pipi_I2[Iz=+2,S]              0  0.27914  1  -1  0  2  0  0  0  0  0  0.27914

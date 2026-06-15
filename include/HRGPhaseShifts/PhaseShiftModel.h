@@ -20,9 +20,6 @@
  */
 
 #include <string>
-#include <vector>
-#include <map>
-#include <utility>
 
 #include "HRGPhaseShifts/PhaseShiftDensity.h"
 
@@ -33,21 +30,22 @@ namespace thermalfist {
     /**
      * \brief One partial wave of a named analytic parametrization.
      *
-     * Known names:
-     *   - "pipi_I2:GarciaMartin2011" : Garcia-Martin et al. (2011), I=2 (S, D).
+     * The model registry is per-wave, and the model NAME is wave-specific: each
+     * (channel, param) resolves to exactly one wave's delta(M) (the returned wave
+     * carries its own 2J+1). There is no name that stands for "all waves" - two
+     * waves of one paper get two names (they have different phase shifts).
      *
-     * \param name       Registry key (channel:parametrization).
-     * \param twoJplus1  Spin degeneracy 2J+1 of the wanted wave (e.g. 1=S, 5=D).
-     * \param params     Optional named parameter overrides (ignored otherwise).
-     * \throws std::invalid_argument if the name is unknown or has no such wave.
+     * Known (channel, param):
+     *   - ("pipi_I2", "GarciaMartin2011_S") : Garcia-Martin et al. (2011) I=2
+     *     S-wave (2J+1=1).
+     *   - ("pipi_I2", "GarciaMartin2011_D") : Garcia-Martin et al. (2011) I=2
+     *     D-wave (2J+1=5).
+     *
+     * \param channel    Channel name, e.g. "pipi_I2".
+     * \param param      Wave-specific parametrization name, e.g. "GarciaMartin2011_S".
+     * \throws std::invalid_argument if the (channel, param) is unknown.
      */
-    PhaseShiftPartialWave AnalyticWave(const std::string& name, int twoJplus1,
-                                       const std::map<std::string, double>& params = std::map<std::string, double>());
-
-    /// All partial waves of a named analytic parametrization (whole-channel
-    /// convenience, e.g. the full S+D set of "pipi_I2:GarciaMartin2011").
-    std::vector<PhaseShiftPartialWave> AnalyticWaves(const std::string& name,
-                                       const std::map<std::string, double>& params = std::map<std::string, double>());
+    PhaseShiftPartialWave AnalyticWave(const std::string& channel, const std::string& param);
 
     /**
      * \brief One tabulated partial wave: delta(M) [radians] read from a
@@ -60,10 +58,6 @@ namespace thermalfist {
      * \throws std::runtime_error if the file cannot be read or has < 2 points.
      */
     PhaseShiftPartialWave TabulatedWave(int twoJplus1, const std::string& file);
-
-    /// Several tabulated waves at once (one per (2J+1, file) entry).
-    std::vector<PhaseShiftPartialWave> TabulatedWaves(
-                                       const std::vector<std::pair<int, std::string> >& waveFiles);
 
   } // namespace PhaseShifts
 

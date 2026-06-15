@@ -16,6 +16,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <map>
+#include <set>
 
 #include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/ThermalParticle.h"
@@ -93,6 +94,68 @@ namespace thermalfist {
         return std::atoi(tok.c_str());   // numeric 2J+1
       }
 
+      // Directory part of a path (with trailing separator), or "" if none.
+      std::string dirOf(const std::string& path) {
+        std::string::size_type p = path.find_last_of("/\\");
+        return (p == std::string::npos) ? std::string("") : path.substr(0, p + 1);
+      }
+
+      bool isAbsPath(const std::string& p) {
+        return !p.empty() && (p[0] == '/' || p[0] == '\\'
+                              || (p.size() > 1 && p[1] == ':'));   // C:\ ...
+      }
+
+      // Resolve a (possibly relative) path against a base directory.
+      std::string resolvePath(const std::string& dir, const std::string& file) {
+        return isAbsPath(file) ? file : dir + file;
+      }
+
+      // Read a phase-shift decays file (the new free format) into pdg -> decays.
+      // Does not touch any ThermalParticleSystem, so it is additive by design.
+      std::map<long long, ThermalParticle::ParticleDecaysVector>
+        readClusterDecays(const std::string& file) {
+        std::ifstream f(file.c_str());
+        if (!f.is_open())
+          throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open decay file " + file);
+        std::map<long long, ThermalParticle::ParticleDecaysVector> out;
+        std::string raw, s;
+        // next non-blank, comment-stripped line
+        struct Next { std::ifstream& f; std::string& raw;
+          bool operator()(std::string& s) {
+            while (std::getline(f, raw)) {
+              std::string::size_type h = raw.find('#');
+              if (h != std::string::npos) raw = raw.substr(0, h);
+              std::string::size_type a = raw.find_first_not_of(" \t\r\n");
+              if (a == std::string::npos) continue;
+              s = raw.substr(a);
+              return true;
+            }
+            return false;
+          }
+        } next{f, raw};
+        while (next(s)) {
+          std::istringstream hs(s);
+          long long pdg;
+          if (!(hs >> pdg)) continue;
+          std::string cs;
+          if (!next(cs)) break;
+          const int ndec = std::atoi(cs.c_str());
+          ThermalParticle::ParticleDecaysVector decs;
+          for (int i = 0; i < ndec; ++i) {
+            std::string ds;
+            if (!next(ds)) break;
+            std::istringstream is(ds);
+            ParticleDecayChannel c;
+            if (!(is >> c.mBratio)) continue;
+            long long d;
+            while (is >> d) c.mDaughters.push_back(d);
+            decs.push_back(c);
+          }
+          out[pdg] = decs;
+        }
+        return out;
+      }
+
     } // anonymous namespace
 
     long long PhaseShiftPdgId(const PhaseShiftChannel& ch, int twoIz, int twoJplus1) {
@@ -140,7 +203,9 @@ namespace thermalfist {
       if (!fout.is_open())
         throw std::runtime_error("WritePhaseShiftListFile: cannot open " + listFile);
       const double mass = ch.m1 + ch.m2;     // nominal; density override supplies thermodynamics
-      fout << "# S-matrix phase-shift channel '" << ch.name << "' (" << waves.size() << " partial waves)\n";
+      fout << "# S-matrix phase-shift channel '" << ch.name << "', wave" << (waves.size() == 1 ? "" : "s") << ":";
+      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
+      fout << "\n";
       fout << "# pdgid name stable mass deg stat B Q S C |S| |C| width threshold\n";
       for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
         const int Q = (twoIz + ch.B + ch.S + ch.C) / 2;
@@ -167,7 +232,10 @@ namespace thermalfist {
       std::ofstream fout(decaysFile.c_str());
       if (!fout.is_open())
         throw std::runtime_error("WritePhaseShiftDecaysFile: cannot open " + decaysFile);
-      fout << "# S-matrix phase-shift channel '" << ch.name << "' decays (isospin Clebsch-Gordan)\n";
+      fout << "# S-matrix phase-shift channel '" << ch.name << "' decays (isospin Clebsch-Gordan), wave"
+           << (waves.size() == 1 ? "" : "s") << ":";
+      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
+      fout << "\n";
       for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
         std::vector<std::pair<double, std::pair<long long, long long> > > dec = ChannelDecays(ch, twoIz);
         for (size_t w = 0; w < waves.size(); ++w) {
@@ -187,8 +255,14 @@ namespace thermalfist {
       std::string base = dir;
       if (!base.empty() && base[base.size() - 1] != '/' && base[base.size() - 1] != '\\')
         base += "/";
-      WritePhaseShiftListFile(ch, waves, base + "list-" + ch.name + ".dat");
-      WritePhaseShiftDecaysFile(ch, waves, base + "decays-" + ch.name + ".dat");
+      // One list + one decay file per partial wave, named list-<channel>_<wave>.dat
+      // and decays-<channel>_<wave>.dat (wave = S/P/D/F/G).
+      for (size_t w = 0; w < waves.size(); ++w) {
+        const std::vector<PhaseShiftPartialWave> one(1, waves[w]);
+        const std::string suffix = "_" + WaveLabel(waves[w].twoJplus1) + ".dat";
+        WritePhaseShiftListFile(ch, one, base + "list-" + ch.name + suffix);
+        WritePhaseShiftDecaysFile(ch, one, base + "decays-" + ch.name + suffix);
+      }
     }
 
     std::vector<long long> AttachDensities(ThermalParticleSystem& TPS,
@@ -310,54 +384,98 @@ namespace thermalfist {
       if (!fin.is_open())
         throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
 
-      // Resolve a "<channel> <modelspec>" entry into one or more per-wave models.
-      // The wave (when needed) is folded into the model token:
-      //   "<param>"            analytic, all waves of the parametrization
-      //   "<param>:<wave>"     analytic, a single wave (S/P/D/F/G or numeric 2J+1)
-      //   "tab:<wave>:<file>"  a tabulated wave (the table carries no J, so the
-      //                        wave must be given); <file> may contain ':'.
-      auto resolveWaves = [](const std::string& channel,
-                             const std::string& spec) -> std::vector<PhaseShiftPartialWave> {
-        if (spec.substr(0, 4) == "tab:") {
-          std::string rest = spec.substr(4);                 // "<wave>:<file>"
-          std::string::size_type colon = rest.find(':');     // first ':' (file may contain more)
-          if (colon == std::string::npos)
-            throw std::invalid_argument("AddPhaseShiftChannelsFromFile: tabulated spec must be "
-                                        "tab:<wave>:<file>, got 'tab:" + rest + "'");
-          int twoJp1 = WaveTokenToTwoJplus1(rest.substr(0, colon));
-          return std::vector<PhaseShiftPartialWave>(1, TabulatedWave(twoJp1, rest.substr(colon + 1)));
-        }
-        // analytic: optional ":<wave>" suffix (param names carry no ':')
-        std::string::size_type colon = spec.rfind(':');
-        if (colon == std::string::npos)
-          return AnalyticWaves(channel + ":" + spec);                       // all waves
-        int twoJp1 = WaveTokenToTwoJplus1(spec.substr(colon + 1));
-        return std::vector<PhaseShiftPartialWave>(
-                 1, AnalyticWave(channel + ":" + spec.substr(0, colon), twoJp1));
-      };
+      const std::string dir = dirOf(configFile);
 
-      // Collect per-wave models per channel; lines for the same channel accumulate.
-      std::vector<std::string> order;
-      std::map<std::string, std::vector<PhaseShiftPartialWave> > chanWaves;
+      // One line per wave: "<channel>:<wave>  <listFile>  <decayFile>  <model>".
+      // The list and decay files (per wave) carry the cluster members and their
+      // isospin-CG decays; the model column gives the delta(M):
+      //   <model> = <param>        analytic parametrization name (-> AnalyticWave)
+      //           = tab:<file>     a tabulated (M, delta) table
+      // File paths are resolved relative to the config file's directory.
+      struct Entry {
+        std::string channel; int twoJplus1;
+        std::string listFile, decayFile, model;
+      };
+      std::vector<Entry> entries;
       std::string line;
       while (std::getline(fin, line)) {
         std::string::size_type hash = line.find('#');
         if (hash != std::string::npos) line = line.substr(0, hash);
         std::istringstream iss(line);
-        std::string chName, spec;
-        if (!(iss >> chName >> spec)) continue;   // skip blank/comment lines
-        std::vector<PhaseShiftPartialWave> ws = resolveWaves(chName, spec);
-        if (chanWaves.find(chName) == chanWaves.end()) order.push_back(chName);
-        chanWaves[chName].insert(chanWaves[chName].end(), ws.begin(), ws.end());
+        std::string key, listF, decF, model;
+        if (!(iss >> key >> listF >> decF >> model)) continue;   // skip blank/comment lines
+        std::string::size_type colon = key.find(':');
+        if (colon == std::string::npos)
+          throw std::invalid_argument("AddPhaseShiftChannelsFromFile: column 1 must be "
+                                      "'<channel>:<wave>', got '" + key + "'");
+        Entry e;
+        e.channel    = key.substr(0, colon);
+        e.twoJplus1  = WaveTokenToTwoJplus1(key.substr(colon + 1));
+        e.listFile   = resolvePath(dir, listF);
+        e.decayFile  = resolvePath(dir, decF);
+        e.model      = model;
+        entries.push_back(e);
       }
 
-      // Build each channel once from its collected per-wave models.
-      std::vector<long long> all;
-      for (size_t i = 0; i < order.size(); ++i) {
-        PhaseShiftChannel ch = ChannelByName(order[i]);
-        std::vector<long long> a = AddPhaseShiftChannel(TPS, ch, chanWaves[order[i]]);
-        all.insert(all.end(), a.begin(), a.end());
+      // 1. Add the per-wave cluster members from each (unique) list file. Thermal-
+      //    FIST generates the antiparticles; existing species are left untouched.
+      std::set<std::string> addedLists;
+      for (size_t i = 0; i < entries.size(); ++i)
+        if (addedLists.insert(entries[i].listFile).second)
+          TPS.AddParticlesToListFromFile(entries[i].listFile);
+      TPS.FinalizeList();
+
+      // 2. Attach each wave's isospin-CG decays from its (unique) decay file.
+      //    Additive: only the listed cluster pdgs get decays; antiparticle decays
+      //    are charge-conjugated. The rest of the list keeps its decays.
+      std::set<std::string> loadedDecays;
+      for (size_t i = 0; i < entries.size(); ++i) {
+        if (!loadedDecays.insert(entries[i].decayFile).second) continue;
+        std::map<long long, ThermalParticle::ParticleDecaysVector> dm =
+          readClusterDecays(entries[i].decayFile);
+        for (std::map<long long, ThermalParticle::ParticleDecaysVector>::const_iterator it =
+               dm.begin(); it != dm.end(); ++it) {
+          if (TPS.PdgToId(it->first) >= 0) {
+            TPS.ParticleByPDG(it->first).SetDecays(it->second);
+            TPS.ParticleByPDG(it->first).SetDecaysOriginal(it->second);
+          }
+          if (TPS.PdgToId(-it->first) >= 0) {
+            ThermalParticle::ParticleDecaysVector adec = TPS.GetDecaysFromAntiParticle(it->second);
+            TPS.ParticleByPDG(-it->first).SetDecays(adec);
+            TPS.ParticleByPDG(-it->first).SetDecaysOriginal(adec);
+          }
+        }
       }
+
+      // 3. Attach the per-wave delta(M) density to each wave's clusters.
+      std::vector<long long> all;
+      std::vector<std::string> channelOrder;
+      std::set<std::string> channelSeen;
+      for (size_t i = 0; i < entries.size(); ++i) {
+        const Entry& e = entries[i];
+        PhaseShiftChannel ch = ChannelByName(e.channel);
+        // A tabulated wave takes its 2J+1 from the wave key (col 1); an analytic
+        // wave's name is wave-specific, so its 2J+1 must match the wave key.
+        PhaseShiftPartialWave w = (e.model.substr(0, 4) == "tab:")
+          ? TabulatedWave(e.twoJplus1, resolvePath(dir, e.model.substr(4)))
+          : AnalyticWave(e.channel, e.model);
+        if (w.twoJplus1 != e.twoJplus1)
+          throw std::invalid_argument("AddPhaseShiftChannelsFromFile: wave key '"
+            + e.channel + ":" + WaveLabel(e.twoJplus1) + "' does not match model '"
+            + e.model + "' (a " + WaveLabel(w.twoJplus1) + "-wave)");
+        std::vector<long long> t = AttachDensities(TPS, ch, std::vector<PhaseShiftPartialWave>(1, w));
+        all.insert(all.end(), t.begin(), t.end());
+        if (channelSeen.insert(e.channel).second) channelOrder.push_back(e.channel);
+      }
+
+      // 4. Remove any resonances subsumed by these channels (no-op if absent).
+      for (size_t i = 0; i < channelOrder.size(); ++i)
+        SubsumeResonances(TPS, ChannelByName(channelOrder[i]));
+
+      // 5. Rebuild decay bookkeeping so feeddown includes the new clusters.
+      TPS.FillDecayProperties();
+      TPS.FillDecayThresholds();
+      TPS.ProcessDecays();
       return all;
     }
 

@@ -170,11 +170,13 @@ namespace thermalfist {
      * reprocesses the decays so feeddown includes the new clusters. The channel's
      * constituent species (e.g. the pions) must already be present in the list.
      *
-     * Typical use:
+     * Typical use (a per-wave model set; each wave is explicit):
      * \code
      *   ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
-     *   PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
-     *       PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011"));
+     *   std::vector<PhaseShiftPartialWave> waves;
+     *   waves.push_back(PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_S")); // S
+     *   waves.push_back(PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_D")); // D
+     *   PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(), waves);
      *   ThermalModelIdeal model(&TPS);
      * \endcode
      *
@@ -191,16 +193,22 @@ namespace thermalfist {
     /**
      * \brief One-call: add every channel listed in a single config file.
      *
-     * One line per entry, "<channel>  <modelspec>". The partial wave (when needed)
-     * is folded into the model token:
+     * One line per wave, "<channel>:<wave>  <listFile>  <decayFile>  <model>".
+     * Column 1 is a unique wave key (channel before the ':', wave after it); the
+     * per-wave list and decay files carry the cluster members and their isospin-CG
+     * decays; the model column gives delta(M):
      * \verbatim
-     *   # channel  modelspec
-     *   pipi_I2    GarciaMartin2011          # analytic, all waves of the parametrization
-     *   pipi_I2    GarciaMartin2011:S        # analytic, a single wave (S/P/D/F/G or 2J+1)
-     *   pipi_I2    tab:D:delta_pipi_I2_D.dat # a tabulated wave (table carries no J)
+     *   # wave       list                  decays                 model
+     *   pipi_I2:S    list-pipi_I2_S.dat    decays-pipi_I2_S.dat   GarciaMartin2011_S
+     *   pipi_I2:D    list-pipi_I2_D.dat    decays-pipi_I2_D.dat   GarciaMartin2011_D
+     *   pipi_I2:D    list-pipi_I2_D.dat    decays-pipi_I2_D.dat   tab:delta_pipi_I2_D.dat
      * \endverbatim
-     * Lines for the same channel accumulate (so S and D can use different models);
-     * each channel is built once via AddPhaseShiftChannel().
+     * <wave> is S/P/D/F/G or a numeric 2J+1; <model> is a wave-specific analytic
+     * parametrization name or "tab:<file>". The analytic name is per-wave (two
+     * waves of one paper get two names) and must agree with the wave key, else it
+     * throws. File paths are resolved relative to the config file's directory. The
+     * referenced .dat files are loaded into \p TPS, so they are the (hand-editable)
+     * source of truth, decoupled from the in-code catalog.
      *
      * \return The PDG ids of all members added across all channels.
      */
