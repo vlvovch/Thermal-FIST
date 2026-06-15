@@ -7,9 +7,17 @@
  */
 #include <vector>
 #include <cmath>
+#include <cstdlib>
+#include <cstdio>
+#include <string>
+#include <fstream>
 #include "HRGPhaseShifts/PhaseShiftDensity.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
+#include "HRGPhaseShifts/PhaseShiftModel.h"
+#include "HRGPhaseShifts/PhaseShiftChannel.h"
 #include "HRGBase/IdealGasFunctions.h"
+#include "HRGBase/ThermalParticleSystem.h"
+#include "HRGBase/ThermalModelIdeal.h"
 #include "gtest/gtest.h"
 
 using namespace thermalfist;
@@ -106,6 +114,196 @@ namespace {
     ASSERT_LT(std::fabs(c128), 1.0);          // sanity: O(<1) contribution
     EXPECT_NEAR(c64,  c128, 1e-4 * std::fabs(c128));
     EXPECT_NEAR(c32,  c128, 1e-2 * std::fabs(c128));
+  }
+
+  // ---- channel loader: PDG-id scheme + isospin expansion + model routing ----
+
+  TEST(PhaseShifts, PdgIdSchemeFollowsPdgConventions) {
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
+    // PDG-aligned scheme: 99 F (2I) (2|Iz|) nn (2J+1), last digit = 2J+1.
+    // pi-pi I=2: family 1, 2I=4. S-wave 2J+1=1, D-wave 2J+1=5.
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 4, 1), 99144001LL); // Iz=+2, S-wave
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 4, 5), 99144005LL); // Iz=+2, D-wave
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 2, 1), 99142001LL); // Iz=+1, S-wave
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 0, 5), 99140005LL); // Iz=0,  D-wave
+    // Magnitude uses |2Iz| (antiparticle uses the negative of the whole id).
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, -4, 5), 99144005LL);
+    // Last digit is a genuine 2J+1, per PDG.
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 4, 1) % 10, 1LL);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 4, 5) % 10, 5LL);
+    // 8-digit 99-prefix, clear of real PDG codes (<=7-digit hadrons, 10-digit nuclei).
+    long long id = PhaseShifts::PhaseShiftPdgId(ch, 4, 5);
+    EXPECT_EQ(id / 1000000LL,        99LL);   // reserved S-matrix block
+    EXPECT_EQ((id / 100000LL) % 10,  1LL);    // family = pi pi
+    EXPECT_EQ((id / 10000LL)  % 10,  4LL);    // 2I
+    EXPECT_EQ((id / 1000LL)   % 10,  4LL);    // 2|Iz|
+    EXPECT_EQ((id / 10LL)     % 100, 0LL);    // reserved excitation slot
+    EXPECT_GE(id, 10000000LL);                // 8 digits
+    EXPECT_LT(id, 100000000LL);
+    // Charge/baryon/strangeness are NOT in the code (1 wouldn't matter); they
+    // are carried by the particle fields (checked in the expansion test).
+  }
+
+  // Write a minimal base list with pi+ and pi0 (pi- auto-generated) for the
+  // module's decays to resolve against. New (whitespace) list format:
+  //   pdgid name stable mass deg stat B Q S C |S| |C| width threshold
+  void writePionList(const std::string& path) {
+    std::ofstream f(path.c_str());
+    f << "# base pions\n";
+    f << "211 pi+ 1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+    f << "111 pi0 1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+  }
+
+  TEST(PhaseShifts, ClebschGordanDecays) {
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
+    // Iz=+2 -> pi+ pi+
+    auto d2 = PhaseShifts::ChannelDecays(ch, 4);
+    ASSERT_EQ(d2.size(), 1u);
+    EXPECT_NEAR(d2[0].first, 1.0, 1e-12);
+    EXPECT_EQ(d2[0].second.first, 211); EXPECT_EQ(d2[0].second.second, 211);
+    // Iz=+1 -> pi+ pi0 (sorted daughters 111, 211)
+    auto d1 = PhaseShifts::ChannelDecays(ch, 2);
+    ASSERT_EQ(d1.size(), 1u);
+    EXPECT_NEAR(d1[0].first, 1.0, 1e-12);
+    EXPECT_EQ(d1[0].second.first, 111); EXPECT_EQ(d1[0].second.second, 211);
+    // Iz=0 -> 1/3 pi+ pi- + 2/3 pi0 pi0
+    auto d0 = PhaseShifts::ChannelDecays(ch, 0);
+    ASSERT_EQ(d0.size(), 2u);
+    double sum = 0., brPM = 0., br00 = 0.;
+    for (size_t i = 0; i < d0.size(); ++i) {
+      sum += d0[i].first;
+      if (d0[i].second.first == -211 && d0[i].second.second == 211) brPM = d0[i].first;
+      if (d0[i].second.first ==  111 && d0[i].second.second == 111) br00 = d0[i].first;
+    }
+    EXPECT_NEAR(sum, 1.0, 1e-12);
+    EXPECT_NEAR(brPM, 1.0 / 3.0, 1e-9);
+    EXPECT_NEAR(br00, 2.0 / 3.0, 1e-9);
+  }
+
+  TEST(PhaseShifts, ListBuildAttachChi2Q) {
+    // Build via the list path (LoadList generates antiparticles + decays), attach
+    // the chosen model, and verify the channel's contribution to Susc(Q,Q)
+    // equals the direct 10 * chi2 and is negative.
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_a.dat";
+    writePionList(pionF);
+
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
+    ch.name = "pipi_I2_a";    // unique file names (PDG ids unchanged: family+2I)
+    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    const std::string listF = dir + "list-" + ch.name + ".dat";
+    const std::string decF  = dir + "decays-" + ch.name + ".dat";
+    PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
+    PhaseShifts::WritePhaseShiftDecaysFile(ch, model, decF);
+
+    auto suscQ = [&](ThermalParticleSystem& TPS) {
+      ThermalModelIdeal m(&TPS);
+      m.SetTemperature(T);
+      m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0);
+      m.SetStrangenessChemicalPotential(0.0);
+      m.CalculatePrimordialDensities();
+      m.CalculateFluctuations();
+      return m.Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    };
+
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, pionF));
+    double base = suscQ(TPSbase);
+
+    std::vector<std::string> lists; lists.push_back(pionF); lists.push_back(listF);
+    ThermalParticleSystem TPS(lists, std::vector<std::string>(1, decF));
+    PhaseShifts::AttachDensities(TPS, ch, model);
+    PhaseShifts::SubsumeResonances(TPS, ch);   // no-op for I=2
+    double full = suscQ(TPS);
+
+    PhaseShiftDensity psd = makePiPiI2(64);
+    double direct = 10.0 * psd.Quantity(IdealGasFunctions::chi2, T, 0.0);
+
+    EXPECT_LT(full - base, 0.0);
+    ASSERT_NE(direct, 0.0);
+    EXPECT_NEAR(full - base, direct, 1e-6 * std::fabs(direct));
+
+    std::remove(pionF.c_str()); std::remove(listF.c_str()); std::remove(decF.c_str());
+  }
+
+  TEST(PhaseShifts, FeeddownReducesPionDensity) {
+    // The repulsive clusters decay to pions, so their (negative) feeddown must
+    // reduce the total pion density relative to the free pion gas.
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_b.dat";
+    writePionList(pionF);
+
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
+    ch.name = "pipi_I2_b";
+    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    const std::string listF = dir + "list-" + ch.name + ".dat";
+    const std::string decF  = dir + "decays-" + ch.name + ".dat";
+    PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
+    PhaseShifts::WritePhaseShiftDecaysFile(ch, model, decF);
+
+    auto totalPiPlus = [&](ThermalParticleSystem& TPS, bool attach) {
+      ThermalModelIdeal m(&TPS);
+      m.SetTemperature(T);
+      m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0);
+      m.SetStrangenessChemicalPotential(0.0);
+      m.CalculateDensities();
+      return m.GetDensity(211, Feeddown::StabilityFlag);
+    };
+
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, pionF));
+    double piBase = totalPiPlus(TPSbase, false);
+
+    std::vector<std::string> lists; lists.push_back(pionF); lists.push_back(listF);
+    ThermalParticleSystem TPS(lists, std::vector<std::string>(1, decF));
+    PhaseShifts::AttachDensities(TPS, ch, model);
+    double piFull = totalPiPlus(TPS, true);
+
+    EXPECT_GT(piBase, 0.0);
+    EXPECT_LT(piFull, piBase);    // repulsion -> negative feeddown -> fewer pions
+
+    std::remove(pionF.c_str()); std::remove(listF.c_str()); std::remove(decF.c_str());
+  }
+
+  TEST(PhaseShifts, AnalyticVsTabulated) {
+    // Tabulate the Garcia-Martin delta(M) for the S and D waves, build a tabulated
+    // model (cubic-spline), and check it reproduces the analytic spectral weight
+    // and chi2 closely.
+    const std::string dir = ::testing::TempDir();
+    const std::string sF = dir + "ps_tab_S.dat", dF = dir + "ps_tab_D.dat";
+    const double mpi = PhaseShifts::PionMass();
+    const double thr = 2. * mpi, Mmax = PhaseShifts::PiPiI2_Mmax();
+    const int N = 2000;
+    {
+      std::ofstream fs(sF.c_str()), fd(dF.c_str());
+      fs << "# M delta_S\n"; fd << "# M delta_D\n";
+      for (int i = 0; i <= N; ++i) {
+        double M = thr + (Mmax - thr) * i / N;
+        fs << M << " " << PhaseShifts::PiPi_delta_I2_S(M) << "\n";
+        fd << M << " " << PhaseShifts::PiPi_delta_I2_D(M) << "\n";
+      }
+    }
+    std::vector<std::pair<int, std::string> > waveFiles;
+    waveFiles.push_back(std::make_pair(1, sF));
+    waveFiles.push_back(std::make_pair(5, dF));
+    PhaseShifts::PhaseShiftModel tab = PhaseShifts::TabulatedModel("tab", waveFiles);
+
+    PhaseShiftDensity ana(PhaseShifts::PiPi_I2_Waves(), mpi, mpi, Mmax, -1, 64);
+    PhaseShiftDensity tabd(tab.waves,                  mpi, mpi, Mmax, -1, 64);
+
+    // Sample only within the parametrization range (qmax ~ 0.696 for Mmax=1.42);
+    // the small residual is the cubic-spline derivative error near the threshold cusp.
+    for (double q : {0.1, 0.2, 0.4, 0.6}) {
+      double wa = ana.SpectralWeight(q), wt = tabd.SpectralWeight(q);
+      EXPECT_NEAR(wt, wa, 5e-3 * std::fabs(wa) + 1e-4) << "q=" << q;
+    }
+    double ca = ana.Quantity(IdealGasFunctions::chi2, 0.150, 0.0);
+    double ct = tabd.Quantity(IdealGasFunctions::chi2, 0.150, 0.0);
+    EXPECT_NEAR(ct, ca, 2e-3 * std::fabs(ca));
+
+    std::remove(sF.c_str()); std::remove(dF.c_str());
   }
 
 }
