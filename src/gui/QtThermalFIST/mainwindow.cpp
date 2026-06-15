@@ -29,6 +29,7 @@
 #include "HRGEV/ThermalModelEVDiagonal.h"
 #include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGCanonical/ThermalModelCanonicalCharm.h"
+#include "HRGPhaseShifts/PhaseShiftChannel.h"
 
 #include "aboutdialog.h"
 
@@ -158,12 +159,30 @@ MainWindow::MainWindow(QWidget *parent)
   buttonLoadDecays = new QPushButton(tr("Load decays..."));
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
+  // S-matrix / phase-shift controls. Default config ships with the package.
+  m_phaseShiftConf = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf";
+  chkPhaseShifts = new QCheckBox(tr("Phase shifts"));
+  chkPhaseShifts->setToolTip(tr("Add S-matrix / phase-shift channels from a config file\n"
+                                "as effective degrees of freedom (Beth-Uhlenbeck)."));
+  chkPhaseShifts->setChecked(false);
+  connect(chkPhaseShifts, SIGNAL(toggled(bool)), this, SLOT(onPhaseShiftToggled()));
+
+  buttonPhaseShifts = new QPushButton(tr("Phase shifts..."));
+  buttonPhaseShifts->setToolTip(tr("Choose the phase-shift config file."));
+  connect(buttonPhaseShifts, SIGNAL(clicked()), this, SLOT(loadPhaseShiftConf()));
+
   dataLay->addWidget(labelData);
   dataLay->addWidget(comboPDGEdition);
   dataLay->addWidget(comboListVariant);
   dataLay->addWidget(leList, 1);
   dataLay->addWidget(buttonLoad);
   dataLay->addWidget(buttonLoadDecays);
+  dataLay->addWidget(chkPhaseShifts);
+  dataLay->addWidget(buttonPhaseShifts);
+
+  // Remember the initially loaded base list so phase shifts can be (re)applied.
+  m_lastListPaths = std::vector<std::string>(1, listpath.toStdString());
+  m_lastDecayPaths = std::vector<std::string>();
 
   tab1 = new ModelTab(NULL, model);
   //tab1->resetTPS();
@@ -309,25 +328,23 @@ void MainWindow::loadDecays()
     std::vector<std::string> decayspaths;
     for (int i = 0; i < pathdecays.length(); ++i)
       decayspaths.push_back(pathdecays[i].toStdString());
-    TPS->LoadDecays(decayspaths);
-    model->ChangeTPS(TPS);
-    tab1->resetTPS();
-    tab2->resetTPS();
-    tab5->resetTPS();
-    tabEditor->resetTPS();
-    tabCosmicEoS->resetTPS();
 
-    leList->setText(clists);
+    m_lastDecayPaths = decayspaths;
 
-    if (QFileInfo(QString::fromStdString(decayspaths[0])).dir().absolutePath() !=
-      QFileInfo(clists).dir().absolutePath())
-      leList->setText(leList->text() + " + " + QString::fromStdString(decayspaths[0]));
-    else
-      leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decayspaths[0])).fileName());
-
-    for (int idec = 1; idec < decayspaths.size(); ++idec) {
-      leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decayspaths[idec])).fileName());
+    // Rebuild the base display name (list files + new decay files).
+    QString disp;
+    for (size_t i = 0; i < m_lastListPaths.size(); ++i) {
+      QString fn = (i == 0) ? shortListDisplayName(QString::fromStdString(m_lastListPaths[0]))
+                            : QFileInfo(QString::fromStdString(m_lastListPaths[i])).fileName();
+      disp += (i == 0 ? QString() : QString(" + ")) + fn;
     }
+    for (size_t idec = 0; idec < decayspaths.size(); ++idec)
+      disp += " + " + QFileInfo(QString::fromStdString(decayspaths[idec])).fileName();
+    clists = disp;
+
+    // Rebuild from base with the new decays, re-applying phase shifts if enabled
+    // (a plain TPS->LoadDecays would wipe the phase-shift cluster decays).
+    rebuildCurrentList();
   }
 #endif
 }
@@ -439,31 +456,20 @@ void MainWindow::loadList()
       // Note: In WASM, we skip the dialog asking for decays file for simplicity
       // User can load decays separately via the Load Decays menu
 
-      *TPS = ThermalParticleSystem(paths, decays);
-      model->ChangeTPS(TPS);
+      QString disp = QFileInfo(listSandboxPath).fileName();
+      for (size_t idec = 0; idec < decays.size(); ++idec)
+        disp += " + " + QFileInfo(QString::fromStdString(decays[idec])).fileName();
+      clists = disp;
 
-      QString displayName = QFileInfo(listSandboxPath).fileName();
-      leList->setText(displayName);
-      clists = leList->text();
-
-      if (decays.size() > 0) {
-        leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[0])).fileName());
-      }
-      leList->setText(leList->text() + " [" + QString::number(TPS->Particles().size()) + " particles]");
+      m_lastListPaths  = paths;
+      m_lastDecayPaths = decays;
+      cpath = listSandboxPath;
 
       // Mark combos as custom (user-uploaded file)
       comboPDGEdition->setCurrentIndex(-1);
       comboListVariant->setCurrentIndex(-1);
 
-      tab1->resetTPS();
-      tab2->resetTPS();
-      tabEoS->resetTPS();
-      tab5->resetTPS();
-      tabEditor->resetTPS();
-      tabEditor->setListPath(listSandboxPath);
-      tabCosmicEoS->resetTPS();
-
-      cpath = listSandboxPath;
+      rebuildCurrentList();   // build base + (re)apply phase shifts + display + reset
     }
   );
 #else
@@ -509,44 +515,23 @@ void MainWindow::loadList()
     else {
       decays.push_back(decpath[0].toStdString());
     }
-    *TPS = ThermalParticleSystem(paths, decays);
+    // Build the base display name (list + decay file names, no particle count).
+    QString disp = shortListDisplayName(pathlist[0]);
+    for (int il = 1; il < pathlist.size(); ++il)
+      disp += " + " + QFileInfo(pathlist[il]).fileName();
+    for (size_t idec = 0; idec < decays.size(); ++idec)
+      disp += " + " + QFileInfo(QString::fromStdString(decays[idec])).fileName();
+    clists = disp;
 
-    //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
-    model->ChangeTPS(TPS);
-    leList->setText(shortListDisplayName(pathlist[0]));
-    if (pathlist.size() > 1) {
-      for (int il = 1; il < pathlist.size(); ++il) {
-        leList->setText(leList->text() + " + " + QFileInfo(pathlist[il]).fileName());
-      }
-    }
-    clists = leList->text();
-
-    if (decays.size() > 0) {
-      leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[0])).fileName());
-
-      for (int idec = 1; idec < decays.size(); ++idec) {
-        leList->setText(leList->text() + " + " + QFileInfo(QString::fromStdString(decays[idec])).fileName());
-      }
-    }
-    leList->setText(leList->text() + " [" + QString::number(TPS->Particles().size()) + " particles]");
+    m_lastListPaths  = paths;
+    m_lastDecayPaths = decays;
+    cpath = pathlist[0];
 
     // Mark combos as custom (user-selected file)
     comboPDGEdition->setCurrentIndex(-1);
     comboListVariant->setCurrentIndex(-1);
 
-    tab1->resetTPS();
-    tab2->resetTPS();
-
-    tabEoS->resetTPS();
-
-    tab5->resetTPS();
-
-    tabEditor->resetTPS();
-    tabEditor->setListPath(pathlist[0]);
-
-    tabCosmicEoS->resetTPS();
-
-    cpath = pathlist[0];
+    rebuildCurrentList();   // build base + (re)apply phase shifts + display + reset
   }
 #endif
 }
@@ -567,23 +552,82 @@ void MainWindow::applyParticleList(const std::vector<std::string>& listPaths,
                                    const std::vector<std::string>& decayPaths,
                                    const QString& displayName)
 {
-  *TPS = ThermalParticleSystem(listPaths, decayPaths);
-  model->ChangeTPS(TPS);
-
-  leList->setText(displayName + " [" + QString::number(TPS->Particles().size()) + " particles]");
+  m_lastListPaths  = listPaths;
+  m_lastDecayPaths = decayPaths;
   clists = displayName;
-
   if (!listPaths.empty())
     cpath = QString::fromStdString(listPaths[0]);
+  rebuildCurrentList();
+}
 
+void MainWindow::resetAllTabs()
+{
   tab1->resetTPS();
   tab2->resetTPS();
   tabEoS->resetTPS();
   tab5->resetTPS();
   tabEditor->resetTPS();
-  if (!listPaths.empty())
+  if (!cpath.isEmpty())
     tabEditor->setListPath(cpath);
   tabCosmicEoS->resetTPS();
+}
+
+void MainWindow::refreshListDisplay()
+{
+  QString t = clists;
+  if (chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConf.isEmpty())
+    t += " + PS[" + QFileInfo(m_phaseShiftConf).fileName() + "]";
+  if (TPS)
+    t += " [" + QString::number(TPS->Particles().size()) + " particles]";
+  leList->setText(t);
+}
+
+void MainWindow::applyPhaseShiftsIfEnabled()
+{
+  if (!chkPhaseShifts || !chkPhaseShifts->isChecked()) return;
+  if (m_phaseShiftConf.isEmpty()) return;
+  try {
+    PhaseShifts::AddPhaseShiftChannelsFromFile(*TPS, m_phaseShiftConf.toStdString());
+  } catch (const std::exception& e) {
+    QMessageBox::warning(this, tr("Phase shifts"),
+      tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
+    chkPhaseShifts->blockSignals(true);
+    chkPhaseShifts->setChecked(false);
+    chkPhaseShifts->blockSignals(false);
+  }
+}
+
+void MainWindow::rebuildCurrentList()
+{
+  // Rebuild the base list from the stored selection, then (re)apply the
+  // phase-shift channels on top if enabled. Rebuilding from scratch is how
+  // disabling/swapping works, since AddPhaseShiftChannel mutates the list.
+  *TPS = ThermalParticleSystem(m_lastListPaths, m_lastDecayPaths);
+  model->ChangeTPS(TPS);
+  applyPhaseShiftsIfEnabled();
+  refreshListDisplay();
+  resetAllTabs();
+}
+
+void MainWindow::onPhaseShiftToggled()
+{
+  rebuildCurrentList();
+}
+
+void MainWindow::loadPhaseShiftConf()
+{
+  QString prefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts";
+  if (!m_phaseShiftConf.isEmpty())
+    prefix = m_phaseShiftConf;
+  QString path = QFileDialog::getOpenFileName(this, tr("Open phase-shift config file"), prefix,
+                   tr("Config files (*.conf *.txt *.dat);;All files (*)"));
+  if (path.isEmpty())
+    return;
+  m_phaseShiftConf = path;
+  if (!chkPhaseShifts->isChecked())
+    chkPhaseShifts->setChecked(true);   // emits toggled -> rebuildCurrentList
+  else
+    rebuildCurrentList();
 }
 
 void MainWindow::updateListVariants()

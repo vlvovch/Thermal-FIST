@@ -20,6 +20,9 @@
 #include <QTextEdit>
 #include <QTabWidget>
 
+#include <string>
+#include <vector>
+
 #include "trajectoriestab.h"
 #include "modeltab.h"
 #include "eventgeneratortab.h"
@@ -55,12 +58,19 @@ class MainWindow : public QMainWindow
     QComboBox *comboListVariant;
     QPushButton *buttonLoad;
     QPushButton *buttonLoadDecays;
+    QCheckBox   *chkPhaseShifts;
+    QPushButton *buttonPhaseShifts;
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
 
     QString cpath  = "";
     QString clists = "";
+
+    // S-matrix / phase-shift state
+    QString m_phaseShiftConf = "";                 ///< path to the phase-shift config file
+    std::vector<std::string> m_lastListPaths;      ///< base list files of the current selection
+    std::vector<std::string> m_lastDecayPaths;     ///< base decay files of the current selection
 
 public:
     MainWindow(QWidget *parent = 0);
@@ -75,10 +85,21 @@ private:
                            const std::vector<std::string>& decayPaths,
                            const QString& displayName);
     static QString shortListDisplayName(const QString& fullPath);
+    /// (Re)build TPS from the stored base list/decay files, (re)apply the
+    /// phase-shift config if enabled, refresh the display and reset all tabs.
+    void rebuildCurrentList();
+    /// Add the phase-shift config channels to the current TPS (if enabled).
+    void applyPhaseShiftsIfEnabled();
+    /// Update the particle-list line edit (base name + optional PS tag + count).
+    void refreshListDisplay();
+    /// Reset every tab's view of the TPS.
+    void resetAllTabs();
 private slots:
     void loadList();
     void loadDecays();
     void switchParticleList();
+    void onPhaseShiftToggled();
+    void loadPhaseShiftConf();
     void updateListVariants();
     void tabChanged(int newIndex);
     void about();
