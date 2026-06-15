@@ -310,26 +310,33 @@ namespace thermalfist {
       if (!fin.is_open())
         throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
 
-      // Resolve a "<wave> <model>" entry into one or more per-wave models.
-      // wave: S/P/D/F/G (or numeric 2J+1), or "all"/"*" for every wave of an
-      // analytic model. model: an analytic parametrization name, or "tab:<file>".
-      auto resolveWaves = [](const std::string& channel, const std::string& waveTok,
-                             const std::string& modelSpec) -> std::vector<PhaseShiftPartialWave> {
-        const bool tab = modelSpec.substr(0, 4) == "tab:";
-        if (waveTok == "all" || waveTok == "*") {
-          if (tab) throw std::invalid_argument("AddPhaseShiftChannelsFromFile: 'all' needs an analytic model");
-          return AnalyticWaves(channel + ":" + modelSpec);
+      // Resolve a "<channel> <modelspec>" entry into one or more per-wave models.
+      // The wave (when needed) is folded into the model token:
+      //   "<param>"            analytic, all waves of the parametrization
+      //   "<param>:<wave>"     analytic, a single wave (S/P/D/F/G or numeric 2J+1)
+      //   "tab:<wave>:<file>"  a tabulated wave (the table carries no J, so the
+      //                        wave must be given); <file> may contain ':'.
+      auto resolveWaves = [](const std::string& channel,
+                             const std::string& spec) -> std::vector<PhaseShiftPartialWave> {
+        if (spec.substr(0, 4) == "tab:") {
+          std::string rest = spec.substr(4);                 // "<wave>:<file>"
+          std::string::size_type colon = rest.find(':');     // first ':' (file may contain more)
+          if (colon == std::string::npos)
+            throw std::invalid_argument("AddPhaseShiftChannelsFromFile: tabulated spec must be "
+                                        "tab:<wave>:<file>, got 'tab:" + rest + "'");
+          int twoJp1 = WaveTokenToTwoJplus1(rest.substr(0, colon));
+          return std::vector<PhaseShiftPartialWave>(1, TabulatedWave(twoJp1, rest.substr(colon + 1)));
         }
-        const int twoJp1 = WaveTokenToTwoJplus1(waveTok);
-        std::vector<PhaseShiftPartialWave> out;
-        if (tab)
-          out.push_back(TabulatedWave(twoJp1, modelSpec.substr(4)));
-        else
-          out.push_back(AnalyticWave(channel + ":" + modelSpec, twoJp1));
-        return out;
+        // analytic: optional ":<wave>" suffix (param names carry no ':')
+        std::string::size_type colon = spec.rfind(':');
+        if (colon == std::string::npos)
+          return AnalyticWaves(channel + ":" + spec);                       // all waves
+        int twoJp1 = WaveTokenToTwoJplus1(spec.substr(colon + 1));
+        return std::vector<PhaseShiftPartialWave>(
+                 1, AnalyticWave(channel + ":" + spec.substr(0, colon), twoJp1));
       };
 
-      // Collect per-wave models per channel (one conf line = one wave, or "all").
+      // Collect per-wave models per channel; lines for the same channel accumulate.
       std::vector<std::string> order;
       std::map<std::string, std::vector<PhaseShiftPartialWave> > chanWaves;
       std::string line;
@@ -337,12 +344,9 @@ namespace thermalfist {
         std::string::size_type hash = line.find('#');
         if (hash != std::string::npos) line = line.substr(0, hash);
         std::istringstream iss(line);
-        std::string chName, tok2, tok3;
-        if (!(iss >> chName >> tok2)) continue;   // skip blank/comment lines
-        std::string waveTok, modelSpec;
-        if (iss >> tok3) { waveTok = tok2;    modelSpec = tok3; }  // "channel wave model"
-        else             { waveTok = "all";   modelSpec = tok2; }  // "channel model" (all waves)
-        std::vector<PhaseShiftPartialWave> ws = resolveWaves(chName, waveTok, modelSpec);
+        std::string chName, spec;
+        if (!(iss >> chName >> spec)) continue;   // skip blank/comment lines
+        std::vector<PhaseShiftPartialWave> ws = resolveWaves(chName, spec);
         if (chanWaves.find(chName) == chanWaves.end()) order.push_back(chName);
         chanWaves[chName].insert(chanWaves[chName].end(), ws.begin(), ws.end());
       }

@@ -452,9 +452,9 @@ namespace {
     const std::string confF = dir + "ps_config.conf";
     {
       std::ofstream f(confF.c_str());
-      f << "# channel wave model\n";
-      f << "pipi_I2 S GarciaMartin2011\n";
-      f << "pipi_I2 D GarciaMartin2011\n";
+      f << "# channel modelspec (wave folded into the token)\n";
+      f << "pipi_I2 GarciaMartin2011:S\n";
+      f << "pipi_I2 GarciaMartin2011:D\n";
     }
 
     ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));

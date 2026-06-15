@@ -189,18 +189,18 @@ namespace thermalfist {
     PhaseShiftChannel ChannelByName(const std::string& name);
 
     /**
-     * \brief One-call: add every channel/wave listed in a single config file.
+     * \brief One-call: add every channel listed in a single config file.
      *
-     * One line per partial wave, "<channel>  <wave>  <model>":
+     * One line per entry, "<channel>  <modelspec>". The partial wave (when needed)
+     * is folded into the model token:
      * \verbatim
-     *   # channel  wave  model
-     *   pipi_I2    S     GarciaMartin2011
-     *   pipi_I2    D     tab:delta_pipi_I2_D.dat
+     *   # channel  modelspec
+     *   pipi_I2    GarciaMartin2011          # analytic, all waves of the parametrization
+     *   pipi_I2    GarciaMartin2011:S        # analytic, a single wave (S/P/D/F/G or 2J+1)
+     *   pipi_I2    tab:D:delta_pipi_I2_D.dat # a tabulated wave (table carries no J)
      * \endverbatim
-     * <wave> is S/P/D/F/G (or a numeric 2J+1), or "all"/"*" for every wave of an
-     * analytic model (a 2-token line "<channel> <model>" is shorthand for "all").
-     * <model> is an analytic parametrization name or "tab:<file>". Lines for the
-     * same channel accumulate; each channel is built once via AddPhaseShiftChannel().
+     * Lines for the same channel accumulate (so S and D can use different models);
+     * each channel is built once via AddPhaseShiftChannel().
      *
      * \return The PDG ids of all members added across all channels.
      */

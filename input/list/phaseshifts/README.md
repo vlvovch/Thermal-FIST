@@ -41,18 +41,18 @@ ThermalParticleSystem TPS("input/list/PDG2020/list.dat");
 PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, "input/list/phaseshifts/pipi.conf");
 ```
 ```
-# pipi.conf  --  one line per wave:  <channel>  <wave>  <model>
-pipi_I2   S   GarciaMartin2011
-pipi_I2   D   GarciaMartin2011
-# mix models per wave (e.g. a tabulated D-wave):
-# pipi_I2 D   tab:delta_pipi_I2_D.dat
-# shorthand for all waves of an analytic model:
-# pipi_I2     GarciaMartin2011
+# pipi.conf  --  one line per entry:  <channel>  <modelspec>
+pipi_I2   GarciaMartin2011               # analytic, all waves (S + D)
+# per-wave / mixed models (wave folded into the token):
+# pipi_I2 GarciaMartin2011:S             # just the S-wave (analytic)
+# pipi_I2 tab:D:delta_pipi_I2_D.dat      # ...and the D-wave from a table
 ```
 
-`<wave>` is the spectroscopic letter S/P/D/F/G (or a numeric 2J+1), so each
-partial wave can use a different model. Cluster names show the wave letter, e.g.
-`pipi_I2[Iz=+1,D]`.
+The wave (S/P/D/F/G or a numeric 2J+1) is folded into the model token: a bare
+`<param>` is all the parametrization's waves, `<param>:<wave>` a single analytic
+wave, and `tab:<wave>:<file>` a tabulated wave (the table has no J, so the wave
+is required). Lines for the same channel accumulate, so each wave can use a
+different model. Cluster names show the wave letter, e.g. `pipi_I2[Iz=+1,D]`.
 
 Low-level (data-file modules) — load the generated `.dat` files through the
 standard list build, then attach the model:
