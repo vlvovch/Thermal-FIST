@@ -344,6 +344,44 @@ namespace {
     std::remove(pionF.c_str());
   }
 
+  TEST(PhaseShifts, AddChannelAttachesToExistingClusters) {
+    // If the clusters are already in the list as plain particles (e.g. loaded
+    // from a list-<name>.dat file with no densities), AddPhaseShiftChannel must
+    // attach densities to them rather than duplicate-add - so a phase-shift list
+    // loaded directly still ends up with the negative Beth-Uhlenbeck densities.
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_f.dat";
+    writePionList(pionF);
+
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
+    ch.name = "pipi_I2_f";
+    PhaseShifts::PhaseShiftModel model = PhaseShifts::AnalyticModel("pipi_I2:GarciaMartin2011");
+    const std::string listF = dir + "list-" + ch.name + ".dat";
+    const std::string decF  = dir + "decays-" + ch.name + ".dat";
+    PhaseShifts::WritePhaseShiftListFile(ch, model, listF);
+    PhaseShifts::WritePhaseShiftDecaysFile(ch, model, decF);
+
+    // load base + raw module files (clusters present, but WITHOUT densities)
+    std::vector<std::string> lists; lists.push_back(pionF); lists.push_back(listF);
+    ThermalParticleSystem TPS(lists, std::vector<std::string>(1, decF));
+    ASSERT_GE(TPS.PdgToId(99144005), 0);                        // cluster is present
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 0);   // but carries no density
+    double idealdens = TPS.ParticleByPDG(99144005).GetGeneralizedDensity() == nullptr ? 1. : -1.;
+    EXPECT_GT(idealdens, 0.0);                                  // no GeneralizedDensity yet
+    const int nbefore = TPS.ComponentsNumber();
+
+    // now attach via the channel: must not duplicate, must bind densities
+    PhaseShifts::AddPhaseShiftChannel(TPS, ch, model);
+    EXPECT_EQ(TPS.ComponentsNumber(), nbefore);                 // no duplicates added
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 10);  // densities now attached
+    ASSERT_NE(TPS.ParticleByPDG(99144005).GetGeneralizedDensity(), nullptr);
+    double c2 = TPS.ParticleByPDG(99144005).GetGeneralizedDensity()
+                  ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0);
+    EXPECT_LT(c2, 0.0);                                         // repulsive -> negative
+
+    std::remove(pionF.c_str()); std::remove(listF.c_str()); std::remove(decF.c_str());
+  }
+
   TEST(PhaseShifts, EnableDisableToggle) {
     // Disabling the channels (without removing them) must zero their contribution
     // exactly, and re-enabling must restore it bit-for-bit.

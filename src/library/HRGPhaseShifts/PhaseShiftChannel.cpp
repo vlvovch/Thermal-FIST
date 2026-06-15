@@ -241,19 +241,27 @@ namespace thermalfist {
           const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
           const std::string name = ch.name + "[" + IzLabel(twoIz) + ",2J+1=" + std::to_string(twoJp1) + "]";
 
-          ThermalParticle part(/*Stable*/ false, name, mag, /*Deg*/ 1., ch.statistics, mass,
-                               ch.S, ch.B, Q, std::abs(ch.S), 0., mass, ch.C, std::abs(ch.C), 0);
-          part.SetDecays(pdecays);
-          part.SetDecaysOriginal(pdecays);
-          TPS.AddParticle(part);
+          // Idempotent: if the cluster is already in the list (e.g. loaded from a
+          // list-<name>.dat file), don't re-add it - AttachDensities() below will
+          // bind the density to the existing entry.
+          if (TPS.PdgToId(mag) < 0) {
+            ThermalParticle part(/*Stable*/ false, name, mag, /*Deg*/ 1., ch.statistics, mass,
+                                 ch.S, ch.B, Q, std::abs(ch.S), 0., mass, ch.C, std::abs(ch.C), 0);
+            part.SetDecays(pdecays);
+            part.SetDecaysOriginal(pdecays);
+            TPS.AddParticle(part);
+          }
           added.push_back(mag);
 
           if (!selfConj) {
-            TPS.AddParticle(part.GenerateAntiParticle());
-            // charge-conjugate the antiparticle decays (pi+ pi+ -> pi- pi-, ...)
-            ThermalParticle::ParticleDecaysVector adec = TPS.GetDecaysFromAntiParticle(pdecays);
-            TPS.ParticleByPDG(-mag).SetDecays(adec);
-            TPS.ParticleByPDG(-mag).SetDecaysOriginal(adec);
+            if (TPS.PdgToId(-mag) < 0) {
+              ThermalParticle anti = TPS.ParticleByPDG(mag).GenerateAntiParticle();
+              TPS.AddParticle(anti);
+              // charge-conjugate the antiparticle decays (pi+ pi+ -> pi- pi-, ...)
+              ThermalParticle::ParticleDecaysVector adec = TPS.GetDecaysFromAntiParticle(pdecays);
+              TPS.ParticleByPDG(-mag).SetDecays(adec);
+              TPS.ParticleByPDG(-mag).SetDecaysOriginal(adec);
+            }
             added.push_back(-mag);
           }
         }
