@@ -70,6 +70,12 @@ namespace thermalfist {
       int    statistics;               ///< cluster stat (-1 Bose, +1 Fermi, 0 Boltzmann)
       int    twoI;                     ///< 2 * total isospin
       int    B, S, C;                  ///< cluster baryon / strangeness / charm
+      int    excitation;               ///< the synthetic-id "n n" slot (0 by default).
+                                       ///< Distinguishes channels with the same
+                                       ///< (family, 2I, Iz, 2J+1): for baryon waves
+                                       ///< (J = l +- 1/2) it carries the orbital l, so
+                                       ///< e.g. S31 (l=0) and P31 (l=1) - which share
+                                       ///< 2J+1=2 - get distinct codes.
       PhaseShiftConstituent a, b;      ///< the two scattering constituents (for decays)
       std::vector<long long> subsumedPdg; ///< PDG codes of resonances this channel replaces
       int    quadratureNodes;          ///< Gauss-Legendre nodes for the q-integral
@@ -85,7 +91,7 @@ namespace thermalfist {
 
       PhaseShiftChannel()
         : family(FamilyPiPi), m1(0.), m2(0.), Mmax(0.), statistics(-1),
-          twoI(0), B(0), S(0), C(0), quadratureNodes(64) {}
+          twoI(0), B(0), S(0), C(0), excitation(0), quadratureNodes(64) {}
     };
 
     /**
@@ -198,6 +204,25 @@ namespace thermalfist {
     /// codes (K*(892)+=323, K*(892)0=313), overriding their contribution; elastic
     /// below the K-eta threshold. Separate from the kappa (different wave/resonance).
     PhaseShiftChannel PiK_K892_Channel();
+
+    /// Catalog: the pi-N I=3/2 P-wave channel - the Delta(1232) (P33). A baryon
+    /// channel (B=+1, fermionic), elastic across the resonance up to ~1.38 GeV.
+    /// REUSES the real Delta codes (Delta++=2224, Delta+=2214, Delta0=2114,
+    /// Delta-=1114), overriding their contribution; they stay as decay products.
+    /// (Roy-Steiner conformal parametrization, arXiv:1510.06039.)
+    PhaseShiftChannel PiN_Delta_Channel();
+
+    /// Catalog: the non-resonant pi-N Roy-Steiner background waves (same reference,
+    /// Schenk parametrization). Synthetic clusters (no resonance to reuse): each is
+    /// its own single-wave channel with its own elastic cutoff. S31, P13 are
+    /// elastic to ~1.38 GeV; S11, P31, P11 only below the pi-pi-N threshold ~1.22
+    /// GeV. The orbital l goes in the synthetic-id excitation slot so same-(I,J)
+    /// waves (S31/P31, S11/P11) get distinct codes.
+    PhaseShiftChannel PiN_S31_Channel();
+    PhaseShiftChannel PiN_S11_Channel();
+    PhaseShiftChannel PiN_P31_Channel();
+    PhaseShiftChannel PiN_P11_Channel();
+    PhaseShiftChannel PiN_P13_Channel();
 
     // ------------------------------------------------------------------------
     // High-level convenience API (no file juggling).

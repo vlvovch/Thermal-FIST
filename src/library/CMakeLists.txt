@@ -222,6 +222,7 @@ endif (NOT STANDALONE_MINUIT)
 set(SRCS_HRGPhaseShifts
 HRGPhaseShifts/PhaseShiftDensity.cpp
 HRGPhaseShifts/LightMesonPhaseShifts.cpp
+HRGPhaseShifts/MesonBaryonPhaseShifts.cpp
 HRGPhaseShifts/PhaseShiftModel.cpp
 HRGPhaseShifts/PhaseShiftChannel.cpp
 )
@@ -231,6 +232,7 @@ source_group("HRGPhaseShifts\\Source Files" FILES ${SRCS_HRGPhaseShifts})
 set(HEADERS_HRGPhaseShifts
 ${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/PhaseShiftDensity.h
 ${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/LightMesonPhaseShifts.h
+${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/MesonBaryonPhaseShifts.h
 ${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/PhaseShiftModel.h
 ${PROJECT_SOURCE_DIR}/include/HRGPhaseShifts/PhaseShiftChannel.h
 )

@@ -14,6 +14,7 @@
 #include "ThermalFISTConfig.h"
 #include "HRGPhaseShifts/PhaseShiftDensity.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
+#include "HRGPhaseShifts/MesonBaryonPhaseShifts.h"
 #include "HRGPhaseShifts/PhaseShiftModel.h"
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
 #include "HRGBase/IdealGasFunctions.h"
@@ -164,6 +165,21 @@ namespace {
     f << "111 pi0 1 0.134977 1 -1 0  0 0 0 0 0 0 0\n";
     f << "321 K+  1 0.493677 1 -1 0  1 1 0 1 0 0 0\n";
     f << "311 K0  1 0.497611 1 -1 0  0 1 0 1 0 0 0\n";
+  }
+
+  // Pions + nucleons + the Delta(1232) multiplet (antiparticles auto-generated)
+  // for the pi-N module. Baryons carry stat = +1 (Fermi), B = +1.
+  void writePiNList(const std::string& path) {
+    std::ofstream f(path.c_str());
+    f << "# base pions + nucleons + Delta(1232)\n";
+    f << "211  pi+          1 0.13957  1 -1 0  1 0 0 0 0 0 0\n";
+    f << "111  pi0          1 0.134977 1 -1 0  0 0 0 0 0 0 0\n";
+    f << "2212 p            1 0.938272 2  1 1  1 0 0 0 0 0 0\n";
+    f << "2112 n            1 0.939565 2  1 1  0 0 0 0 0 0 0\n";
+    f << "2224 Delta(1232)++ 0 1.232   4  1 1  2 0 0 0 0 0.117 1.078\n";
+    f << "2214 Delta(1232)+  0 1.232   4  1 1  1 0 0 0 0 0.117 1.075\n";
+    f << "2114 Delta(1232)0  0 1.232   4  1 1  0 0 0 0 0 0.117 1.076\n";
+    f << "1114 Delta(1232)-  0 1.232   4  1 1 -1 0 0 0 0 0.117 1.079\n";
   }
 
   TEST(PhaseShifts, ClebschGordanDecays) {
@@ -1192,6 +1208,276 @@ namespace {
     std::remove((dir + "decays-piK_I32_S.dat").c_str());
     std::remove((dir + "decays-piK_I32_P.dat").c_str());
     std::remove((dir + "decays-piK_I32_D.dat").c_str());
+  }
+
+  // ---- pi-N: the Delta(1232) (meson-baryon, B=1, Fermi, resonant) ----
+
+  TEST(PhaseShifts, PiNDeltaP33Resonant) {
+    // delta_1+^{3/2} = the Delta(1232): 0 at threshold, branch-tracked through
+    // 90 deg at the resonance (~1.232 GeV), rising to ~150 deg by the matching
+    // point 1.38 GeV; elastic across the resonance.
+    const double r2d = 180.0 / M_PI;
+    const double thr = PhaseShifts::PionMass() + PhaseShifts::NucleonMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiN_delta_P33(thr), 0.0);
+    EXPECT_GT(PhaseShifts::PiN_delta_P33(1.15), 0.0);                  // attractive
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P33(1.232) * r2d, 90.0, 5.0);  // ~90 at the Delta
+    EXPECT_GT(PhaseShifts::PiN_delta_P33(1.38) * r2d, 140.0);         // well past 90
+    // monotonic through 90 deg up to the matching point
+    double prev = -1.0; bool crossed90 = false, monotonic = true;
+    for (double M = thr + 1e-3; M <= PhaseShifts::PiN_Delta_Mmax(); M += 0.005) {
+      double d = PhaseShifts::PiN_delta_P33(M) * r2d;
+      if (d < prev - 1e-6) monotonic = false;
+      if (prev < 90.0 && d >= 90.0) crossed90 = true;
+      prev = d;
+    }
+    EXPECT_TRUE(monotonic);
+    EXPECT_TRUE(crossed90);
+  }
+
+  TEST(PhaseShifts, PiNDeltaChannelAndDecays) {
+    // Baryon channel: I=3/2, B=+1, fermionic (stat=+1), reuses the real Delta
+    // codes; not self-conjugate so every Iz is a distinct member.
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiN_Delta_Channel();
+    EXPECT_EQ(ch.twoI, 3);
+    EXPECT_EQ(ch.B, 1);
+    EXPECT_EQ(ch.statistics, 1);                  // Fermi
+    EXPECT_EQ(ch.memberPdg[+3], 2224LL);          // Delta++
+    EXPECT_EQ(ch.memberPdg[+1], 2214LL);          // Delta+
+    EXPECT_EQ(ch.memberPdg[-1], 2114LL);          // Delta0
+    EXPECT_EQ(ch.memberPdg[-3], 1114LL);          // Delta-
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +3, 4), 2224LL);   // reuses real code
+    EXPECT_TRUE(ch.subsumedPdg.empty());
+    // electric charge Q = Iz + (B+S+C)/2: Delta++ Q=2, Delta- Q=-1
+    EXPECT_EQ((3 + ch.B) / 2, 2);
+    EXPECT_EQ((-3 + ch.B) / 2, -1);
+    // isospin-CG decays: Delta++ -> pi+ p; Delta+ -> 2/3 pi0 p + 1/3 pi+ n
+    auto d3 = PhaseShifts::ChannelDecays(ch, 3);
+    ASSERT_EQ(d3.size(), 1u);
+    EXPECT_NEAR(d3[0].first, 1.0, 1e-9);
+    EXPECT_EQ(d3[0].second.first, 211); EXPECT_EQ(d3[0].second.second, 2212);
+    auto d1 = PhaseShifts::ChannelDecays(ch, 1);
+    ASSERT_EQ(d1.size(), 2u);
+    double tot = 0.; for (size_t i = 0; i < d1.size(); ++i) tot += d1[i].first;
+    EXPECT_NEAR(tot, 1.0, 1e-9);
+    for (size_t i = 0; i < d1.size(); ++i) {
+      if (d1[i].second.first == 111 && d1[i].second.second == 2212)
+        EXPECT_NEAR(d1[i].first, 2.0 / 3.0, 1e-9);   // pi0 p
+      if (d1[i].second.first == 211 && d1[i].second.second == 2112)
+        EXPECT_NEAR(d1[i].first, 1.0 / 3.0, 1e-9);   // pi+ n
+    }
+  }
+
+  TEST(PhaseShifts, PiNDeltaBuildOverride) {
+    // Build against a list with the Delta present: the density overrides all four
+    // Delta charge states AND their four antiparticles (8 overridden resonances),
+    // the cluster is a B=1 fermion with pi+N constituent fugacity (gammaq^5), and
+    // the attractive resonance gives a positive chi2.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_piN_list.dat";
+    writePiNList(lst);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    EXPECT_EQ(TPS.ParticleByPDG(2224).GetGeneralizedDensity(), nullptr);  // plain resonance
+
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiN_Delta_Channel(),
+                                      PhaseShifts::PiN_Delta_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber(), nbefore);          // nothing added (all overridden)
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 8);  // 4 Delta + 4 anti-Delta
+    for (long long pdg : {2224LL, 2214LL, 2114LL, 1114LL, -2224LL, -2214LL, -2114LL, -1114LL})
+      ASSERT_NE(TPS.ParticleByPDG(pdg).GetGeneralizedDensity(), nullptr) << "pdg=" << pdg;
+
+    const ThermalParticle& dpp = TPS.ParticleByPDG(2224);
+    EXPECT_EQ(dpp.BaryonCharge(), 1);
+    EXPECT_EQ(dpp.Statistics(), 1);                      // Fermi cluster
+    EXPECT_DOUBLE_EQ(dpp.AbsoluteQuark(), 5.0);          // pi (2) + N (3) light quarks
+    EXPECT_DOUBLE_EQ(dpp.AbsoluteStrangeness(), 0.0);
+    // attractive resonance -> positive chi2 (Beth-Uhlenbeck)
+    EXPECT_GT(dpp.GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiNDeltaRaisesNucleons) {
+    // Against a Delta-less pi+N base, the attractive Delta cluster (created here,
+    // its codes being absent) decays to pi N, so its POSITIVE Beth-Uhlenbeck
+    // feeddown increases the proton density. (Note: vs a base that already has a
+    // zero-width pole Delta the BU effective density is smaller - the pole-mass
+    // treatment overcounts the broad resonance; that is the point of the S-matrix
+    // term - so the right additive test uses a Delta-less base.)
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_piN_fd.dat";   // pi + N only, NO Delta
+    {
+      std::ofstream f(lst.c_str());
+      f << "211  pi+ 1 0.13957  1 -1 0  1 0 0 0 0 0 0\n";
+      f << "111  pi0 1 0.134977 1 -1 0  0 0 0 0 0 0 0\n";
+      f << "2212 p   1 0.938272 2  1 1  1 0 0 0 0 0 0\n";
+      f << "2112 n   1 0.939565 2  1 1  0 0 0 0 0 0 0\n";
+    }
+    auto protons = [&](ThermalParticleSystem& TPS) {
+      ThermalModelIdeal m(&TPS);
+      m.SetTemperature(T); m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+      m.CalculateDensities();
+      return m.GetDensity(2212, Feeddown::StabilityFlag);
+    };
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, lst));
+    double pBase = protons(TPSbase);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiN_Delta_Channel(),
+                                      PhaseShifts::PiN_Delta_Waves());
+    ASSERT_GE(TPS.PdgToId(2224), 0);          // Delta created (was absent)
+    EXPECT_GT(PhaseShifts::CountOverriddenResonances(TPS), 0);  // real codes -> rebuild toggle
+    double pFull = protons(TPS);
+    EXPECT_GT(pBase, 0.0);
+    EXPECT_GT(pFull, pBase);   // attraction -> positive feeddown -> more protons
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiNDeltaFromConfig) {
+    // Config path: the Delta reuses its real codes ("-" files); the wave key is
+    // the numeric 2J+1 = 4 (J=3/2; the S/P/D letters encode 2J+1 = 2l+1 for
+    // mesons, which does not apply to baryon waves).
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_piN_cfg.dat";
+    writePiNList(lst);
+    const std::string confF = dir + "ps_piN.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "piN_Delta:4   -   -   RoySteiner2016_P33\n";   // Delta, reuses 2224/2214/2114/1114
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    EXPECT_EQ(added.size(), 8u);                          // 4 Delta + 4 anti-Delta
+    EXPECT_NE(TPS.ParticleByPDG(2224).GetGeneralizedDensity(), nullptr);
+    EXPECT_NE(TPS.ParticleByPDG(-2224).GetGeneralizedDensity(), nullptr);
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 8);
+    std::remove(lst.c_str()); std::remove(confF.c_str());
+  }
+
+  // ---- pi-N non-resonant Roy-Steiner background waves (S31, S11, P31, P11, P13) ----
+
+  TEST(PhaseShifts, PiNBackgroundDeltaValues) {
+    // Lock the transcription against the verified Roy-Steiner values (degrees) at
+    // sqrt(s) = 1.15 and 1.20 GeV (see piN_RoySteiner_reference.md). Signs: S31
+    // repulsive, S11 attractive, P-waves small.
+    const double r2d = 180.0 / M_PI;
+    EXPECT_NEAR(PhaseShifts::PiN_delta_S31(1.15) * r2d, -7.3, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_S31(1.20) * r2d, -11.2, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_S11(1.15) * r2d,  8.4, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_S11(1.20) * r2d, 10.1, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P13(1.15) * r2d, -1.0, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P13(1.20) * r2d, -2.0, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P31(1.15) * r2d, -1.8, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P31(1.20) * r2d, -3.6, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P11(1.15) * r2d, -1.0, 0.15);
+    EXPECT_NEAR(PhaseShifts::PiN_delta_P11(1.20) * r2d,  0.3, 0.15);
+    // zero at threshold; non-resonant (no 90 deg crossing in the elastic range)
+    const double thr = PhaseShifts::PionMass() + PhaseShifts::NucleonMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiN_delta_S31(thr), 0.0);
+    EXPECT_LT(PhaseShifts::PiN_delta_S31(1.30) * r2d, 0.0);
+    EXPECT_GT(PhaseShifts::PiN_delta_S11(1.30) * r2d, 0.0);
+    EXPECT_LT(std::fabs(PhaseShifts::PiN_delta_P13(1.30) * r2d), 30.0);  // small
+  }
+
+  TEST(PhaseShifts, PiNBackgroundPdgDisambiguation) {
+    // Baryon waves with the same (I, J) but different orbital l (S31/P31 and
+    // S11/P11, all 2J+1=2) must get DISTINCT synthetic codes via the excitation
+    // (n n) slot = orbital l. Meson codes (excitation 0) are unaffected.
+    PhaseShifts::PhaseShiftChannel s31 = PhaseShifts::PiN_S31_Channel();
+    PhaseShifts::PhaseShiftChannel p31 = PhaseShifts::PiN_P31_Channel();
+    EXPECT_EQ(s31.excitation, 0);   // S-wave (l=0)
+    EXPECT_EQ(p31.excitation, 1);   // P-wave (l=1)
+    long long cs = PhaseShifts::PhaseShiftPdgId(s31, 3, 2);   // S31 Iz=+3/2
+    long long cp = PhaseShifts::PhaseShiftPdgId(p31, 3, 2);   // P31 Iz=+3/2
+    EXPECT_NE(cs, cp);
+    EXPECT_EQ((cs / 10) % 100, 0);  // n n = 0 for S
+    EXPECT_EQ((cp / 10) % 100, 1);  // n n = 1 for P
+    EXPECT_EQ(cs % 10, 2);          // 2J+1 = 2 (last digit) for both
+    EXPECT_EQ(cp % 10, 2);
+    // family/2I unchanged
+    EXPECT_EQ((cs / 100000) % 10, 4);   // FamilyPiN
+    EXPECT_EQ((cs / 10000) % 10, 3);    // 2I = 3
+    // S11 vs P11 (I=1/2) likewise distinct
+    EXPECT_NE(PhaseShifts::PhaseShiftPdgId(PhaseShifts::PiN_S11_Channel(), 1, 2),
+              PhaseShifts::PhaseShiftPdgId(PhaseShifts::PiN_P11_Channel(), 1, 2));
+    // regression: a meson channel (excitation 0) is unchanged (pi-pi I=2 D-wave)
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(PhaseShifts::PiPi_I2_Channel(), 4, 5), 99144005LL);
+  }
+
+  TEST(PhaseShifts, PiNBackgroundSyntheticBuild) {
+    // The background waves are synthetic clusters (no resonance to reuse): build
+    // creates the full I=3/2 multiplet + antiparticles (8), none overriding a real
+    // code; B=1 Fermi clusters with pi+N fugacity (gammaq^5); S31 repulsive -> chi2<0,
+    // S11 attractive -> chi2>0.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_piN_bg.dat";
+    {
+      std::ofstream f(lst.c_str());        // pi + N only (no resonances)
+      f << "211  pi+ 1 0.13957  1 -1 0  1 0 0 0 0 0 0\n";
+      f << "111  pi0 1 0.134977 1 -1 0  0 0 0 0 0 0 0\n";
+      f << "2212 p   1 0.938272 2  1 1  1 0 0 0 0 0 0\n";
+      f << "2112 n   1 0.939565 2  1 1  0 0 0 0 0 0 0\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiN_S31_Channel(),
+                                      PhaseShifts::PiN_S31_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber() - nbefore, 8);            // 4 members + 4 anti (synthetic)
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 8);
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 0); // synthetic, no real-code reuse
+    const long long s31pp = PhaseShifts::PhaseShiftPdgId(PhaseShifts::PiN_S31_Channel(), 3, 2);
+    ASSERT_GE(TPS.PdgToId(s31pp), 0);
+    const ThermalParticle& cl = TPS.ParticleByPDG(s31pp);
+    EXPECT_EQ(cl.BaryonCharge(), 1);
+    EXPECT_EQ(cl.ElectricCharge(), 2);          // Iz=+3/2, B=1 -> Q=2
+    EXPECT_EQ(cl.Statistics(), 1);              // Fermi
+    EXPECT_DOUBLE_EQ(cl.AbsoluteQuark(), 5.0);  // pi (2) + N (3)
+    EXPECT_LT(cl.GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);  // repulsive
+
+    // S11 (I=1/2, attractive): 2 members + 2 anti = 4; chi2 > 0
+    ThermalParticleSystem TPS2(std::vector<std::string>(1, lst));
+    PhaseShifts::AddPhaseShiftChannel(TPS2, PhaseShifts::PiN_S11_Channel(),
+                                      PhaseShifts::PiN_S11_Waves());
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS2), 4);
+    const long long s11p = PhaseShifts::PhaseShiftPdgId(PhaseShifts::PiN_S11_Channel(), 1, 2);
+    ASSERT_GE(TPS2.PdgToId(s11p), 0);
+    EXPECT_GT(TPS2.ParticleByPDG(s11p).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);   // attractive
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiNFullSetFromConfig) {
+    // Load the full pi-N set (Delta + 5 backgrounds) from a config against a list
+    // with the Delta present: the Delta overrides its 8 real codes; the 5
+    // background waves create synthetic clusters - I=3/2 S31+P31 = 2x8 = 16, I=1/2
+    // S11+P11+P13 = 3x4 = 12. Total added = 8 + 16 + 12 = 36.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_piN_full.dat";
+    writePiNList(lst);
+    const std::string confF = dir + "ps_piN_full.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "piN_Delta:4  -  -  RoySteiner2016_P33\n";
+      f << "piN_S31:2    -  -  RoySteiner2016_S31\n";
+      f << "piN_P13:4    -  -  RoySteiner2016_P13\n";
+      f << "piN_S11:2    -  -  RoySteiner2016_S11\n";
+      f << "piN_P31:2    -  -  RoySteiner2016_P31\n";
+      f << "piN_P11:2    -  -  RoySteiner2016_P11\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    EXPECT_EQ(added.size(), 36u);                  // 8 (Delta) + 16 (I=3/2 x2) + 12 (I=1/2 x3)
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 8);   // only the Delta reuses real codes
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 36);
+    // a thermal calculation with the full pi-N set runs
+    ThermalModelIdeal m(&TPS); m.ClearDensityModels();
+    m.SetTemperature(0.150); m.SetBaryonChemicalPotential(0.0);
+    m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+    m.CalculateDensities();
+    EXPECT_TRUE(std::isfinite(m.GetDensity(2212, Feeddown::StabilityFlag)));
+    std::remove(lst.c_str()); std::remove(confF.c_str());
   }
 
 }

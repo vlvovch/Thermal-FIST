@@ -7,6 +7,7 @@
  */
 #include "HRGPhaseShifts/PhaseShiftModel.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
+#include "HRGPhaseShifts/MesonBaryonPhaseShifts.h"
 
 #include <fstream>
 #include <sstream>
@@ -151,6 +152,30 @@ namespace thermalfist {
       else if (channel == "piK_K892") {
         waves = PiK_K892_Waves();
         if (param == "PelaezRodas2016_P") twoJplus1 = 3;
+      }
+      else if (channel == "piN_Delta") {
+        waves = PiN_Delta_Waves();
+        if (param == "RoySteiner2016_P33") twoJplus1 = 4;   // J=3/2 -> 2J+1=4
+      }
+      else if (channel == "piN_S31") {
+        waves = PiN_S31_Waves();
+        if (param == "RoySteiner2016_S31") twoJplus1 = 2;   // J=1/2 -> 2J+1=2
+      }
+      else if (channel == "piN_S11") {
+        waves = PiN_S11_Waves();
+        if (param == "RoySteiner2016_S11") twoJplus1 = 2;
+      }
+      else if (channel == "piN_P31") {
+        waves = PiN_P31_Waves();
+        if (param == "RoySteiner2016_P31") twoJplus1 = 2;
+      }
+      else if (channel == "piN_P11") {
+        waves = PiN_P11_Waves();
+        if (param == "RoySteiner2016_P11") twoJplus1 = 2;
+      }
+      else if (channel == "piN_P13") {
+        waves = PiN_P13_Waves();
+        if (param == "RoySteiner2016_P13") twoJplus1 = 4;   // J=3/2 -> 2J+1=4
       }
       if (twoJplus1 < 0)
         throw std::invalid_argument("AnalyticWave: unknown analytic model '"

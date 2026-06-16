@@ -159,11 +159,13 @@ MainWindow::MainWindow(QWidget *parent)
   buttonLoadDecays = new QPushButton(tr("Load decays..."));
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
-  // S-matrix / phase-shift controls. Default: pi-pi + pi-K (as in the Wuppertal
-  // analysis). Both ship with the package; use "Phase shifts..." to change them.
+  // S-matrix / phase-shift controls. Default: pi-pi + pi-K (the Wuppertal
+  // analysis) plus pi-N (the Delta(1232)). All ship with the package; use
+  // "Phase shifts..." to change the selection.
   m_phaseShiftConfs = QStringList()
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf")
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf");
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf")
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piN.conf");
   chkPhaseShifts = new QCheckBox(tr("Phase shifts"));
   chkPhaseShifts->setToolTip(tr("Add S-matrix / phase-shift channels from a config file\n"
                                 "as effective degrees of freedom (Beth-Uhlenbeck)."));
@@ -566,10 +568,11 @@ void MainWindow::applyParticleList(const std::vector<std::string>& listPaths,
 void MainWindow::resetAllTabs()
 {
   // Each tab's resetTPS() recomputes its EV/vdW interaction matrix over the
-  // current particle list (QvdWParameters::GetParameters), so the clusters
-  // (B=0 mesons) always carry meson parameters. Enabling/disabling phase shifts
-  // only flips the cluster densities (the list is unchanged), so no manual
-  // interaction re-apply is ever needed.
+  // current particle list (QvdWParameters::GetParameters), so every cluster gets
+  // EV/vdW parameters from the same quantum-number-based assignment as any other
+  // species - meson parameters for pi-pi / pi-K clusters (B=0), baryon parameters
+  // for pi-N clusters (B=1). Enabling/disabling phase shifts only flips the
+  // cluster densities (the list is unchanged), so no manual re-apply is needed.
   tab1->resetTPS();
   tab2->resetTPS();
   tabEoS->resetTPS();

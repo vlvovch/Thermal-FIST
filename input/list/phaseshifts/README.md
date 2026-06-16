@@ -123,6 +123,26 @@ quantum-number-based assignment as every other species — no special-casing.
   (branch-tracked through 90 deg), elastic below the K-eta threshold. It **reuses
   the real K*(892) codes (323, 313)**, overriding their contribution. Config:
   `piK.conf`.
+- `piN_Delta` — pi-N I=3/2 P-wave = the **Delta(1232)** (P33; Hoferichter et al.,
+  Phys. Rept. 625 (2016) 1, Roy-Steiner conformal parametrization). A
+  **meson-baryon** channel (B=+1, **fermionic**), resonant (branch-tracked through
+  90 deg), elastic across the resonance up to ~1.38 GeV. It **reuses the real Delta
+  codes (2224, 2214, 2114, 1114)**, overriding their contribution. Config:
+  `piN.conf`.
+- `piN_S31`, `piN_S11`, `piN_P31`, `piN_P11`, `piN_P13` — the non-resonant pi-N
+  Roy-Steiner background waves (same reference, Schenk parametrization). **Synthetic
+  clusters** (no resonance to reuse), each its own single-wave channel with its own
+  elastic cutoff: S31 (repulsive) and P13 are elastic to ~1.38 GeV; S11
+  (attractive), P31 and P11 only below the pi-pi-N threshold ~1.22 GeV. Config:
+  `piN.conf`.
+
+  **Wave keys for baryons:** the config wave key is the numeric `2J+1` (S/P J=1/2 ->
+  `2`, the J=3/2 waves P13/P33 -> `4`), because the S/P/D letters encode `2J+1 =
+  2l+1`, valid only for mesons (J=l). For baryons J = l +- 1/2, so distinct waves
+  can share `2J+1` (S31/P31 and S11/P11 all have `2J+1=2`); the orbital `l` is
+  carried in the synthetic-id excitation (`n n`) slot to keep their codes distinct.
+  All Roy-Steiner coefficients and a numerical validation are in
+  `piN_RoySteiner_reference.md`.
 
 ### Subsumption by PDG coincidence
 A channel can REUSE a real resonance's PDG code (`memberPdg`, the `-` list/decay
@@ -134,8 +154,9 @@ is not separately counted. Because these are real (non-synthetic)
 codes, the cheap enable/disable toggle is not exact for them, so the GUI rebuilds
 the list when toggling (see `CountOverriddenResonances`).
 
-pi-K carries strangeness (S=+1), so unlike pi-pi it is **not** a self-conjugate
-multiplet: every Iz is a distinct member (Q = Iz + 1/2 for the S=+1 sector) and
-the antiparticles form the S=-1 sector. The builder handles this automatically;
-synthetic ids encode the multiplet index I+Iz (0..2I) rather than 2|Iz|. To run
-pi-pi + pi-K together, load both `pipi.conf` and `piK.conf`.
+pi-K (S=+1) and pi-N (B=+1) carry a conserved charge, so unlike pi-pi they are
+**not** self-conjugate multiplets: every Iz is a distinct member and the
+antiparticles form the conjugate (S=-1 / antibaryon) sector. The builder handles
+this automatically; synthetic ids encode the multiplet index I+Iz (0..2I) rather
+than 2|Iz|. To run several channels together, load their configs together (the GUI
+loads `pipi.conf` + `piK.conf` + `piN.conf` by default).

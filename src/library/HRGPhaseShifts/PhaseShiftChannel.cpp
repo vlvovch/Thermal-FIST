@@ -7,6 +7,7 @@
  */
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
+#include "HRGPhaseShifts/MesonBaryonPhaseShifts.h"
 
 #include <cmath>
 #include <cctype>
@@ -119,13 +120,18 @@ namespace thermalfist {
                             : ("Iz=" + sign + std::to_string(a) + "/2");
       }
 
-      // Spectroscopic letter of a partial wave from its degeneracy 2J+1.
-      std::string WaveLabel(int twoJplus1) {
-        switch (twoJplus1) {
-          case 1: return "S"; case 3: return "P"; case 5: return "D";
-          case 7: return "F"; case 9: return "G";
+      // Spectroscopic ORBITAL letter (S/P/D/F/G) of a partial wave. Meson waves
+      // have odd 2J+1 with J=l, so the orbital follows from 2J+1. Baryon waves
+      // have even 2J+1 with J=l+-1/2, so 2J+1 does NOT fix l - the orbital is then
+      // taken from the channel's excitation slot (which carries l, e.g. S31->0,
+      // P31->1), giving correct labels for J=3/2 waves (P33/P13 are "P", not "J1").
+      std::string WaveLabel(int twoJplus1, int excitation = 0) {
+        const int l = (twoJplus1 % 2 == 1) ? (twoJplus1 - 1) / 2 : excitation;
+        switch (l) {
+          case 0: return "S"; case 1: return "P"; case 2: return "D";
+          case 3: return "F"; case 4: return "G";
         }
-        return "J" + std::to_string((twoJplus1 - 1) / 2);
+        return "L" + std::to_string(l);
       }
 
       // Inverse: partial-wave token ("S".."G", or a numeric 2J+1) -> 2J+1.
@@ -222,11 +228,15 @@ namespace thermalfist {
       const long long z = selfConjMultiplet(ch)
         ? std::llabs((long long)twoIz)
         : (long long)((ch.twoI + twoIz) / 2);
-      // 9 9 | F | (2I) | (Iz field) | n n | (2J+1) ; excitation slot n n = 00.
+      if (ch.excitation < 0 || ch.excitation > 99)
+        throw std::invalid_argument("PhaseShiftPdgId: excitation (n n slot) must be 0..99");
+      // 9 9 | F | (2I) | (Iz field) | n n | (2J+1) ; n n = excitation (orbital l
+      // for baryon waves, 0 for mesons) occupies the tens+hundreds digits.
       return 99LL * 1000000LL
-           + (long long)ch.family * 100000LL
-           + (long long)ch.twoI   * 10000LL
-           +              z        * 1000LL
+           + (long long)ch.family    * 100000LL
+           + (long long)ch.twoI      * 10000LL
+           +              z           * 1000LL
+           + (long long)ch.excitation * 10LL
            + (long long)twoJplus1;
     }
 
@@ -264,7 +274,7 @@ namespace thermalfist {
         throw std::runtime_error("WritePhaseShiftListFile: cannot open " + listFile);
       const double mass = ch.m1 + ch.m2;     // nominal; density override supplies thermodynamics
       fout << "# S-matrix phase-shift channel '" << ch.name << "', wave" << (waves.size() == 1 ? "" : "s") << ":";
-      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
+      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1, ch.excitation);
       fout << "\n";
       fout << "# pdgid name stable mass deg stat B Q S C |S| |C| width threshold\n";
       const std::vector<int> izs = memberTwoIz(ch);
@@ -274,7 +284,7 @@ namespace thermalfist {
         for (size_t w = 0; w < waves.size(); ++w) {
           const int twoJp1 = waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
+          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1, ch.excitation) + "]";
           fout << std::setw(12) << pdg << "  " << std::setw(28) << std::left << name << std::right
                << "  " << 0                      // stable=0 (decays to constituents)
                << "  " << std::setprecision(8) << mass
@@ -296,7 +306,7 @@ namespace thermalfist {
         throw std::runtime_error("WritePhaseShiftDecaysFile: cannot open " + decaysFile);
       fout << "# S-matrix phase-shift channel '" << ch.name << "' decays (isospin Clebsch-Gordan), wave"
            << (waves.size() == 1 ? "" : "s") << ":";
-      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
+      for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1, ch.excitation);
       fout << "\n";
       const std::vector<int> izs = memberTwoIz(ch);
       for (size_t ii = 0; ii < izs.size(); ++ii) {
@@ -305,7 +315,7 @@ namespace thermalfist {
         for (size_t w = 0; w < waves.size(); ++w) {
           const int twoJp1 = waves[w].twoJplus1;
           const long long pdg = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          fout << pdg << "  # " << ch.name << "[" << IzLabel(twoIz) << "," << WaveLabel(twoJp1) << "]\n";
+          fout << pdg << "  # " << ch.name << "[" << IzLabel(twoIz) << "," << WaveLabel(twoJp1, ch.excitation) << "]\n";
           fout << dec.size() << "\n";
           for (size_t i = 0; i < dec.size(); ++i)
             fout << std::setprecision(10) << dec[i].first << "  "
@@ -323,7 +333,7 @@ namespace thermalfist {
       // and decays-<channel>_<wave>.dat (wave = S/P/D/F/G).
       for (size_t w = 0; w < waves.size(); ++w) {
         const std::vector<PhaseShiftPartialWave> one(1, waves[w]);
-        const std::string suffix = "_" + WaveLabel(waves[w].twoJplus1) + ".dat";
+        const std::string suffix = "_" + WaveLabel(waves[w].twoJplus1, ch.excitation) + ".dat";
         WritePhaseShiftListFile(ch, one, base + "list-" + ch.name + suffix);
         WritePhaseShiftDecaysFile(ch, one, base + "decays-" + ch.name + suffix);
       }
@@ -415,7 +425,7 @@ namespace thermalfist {
         for (size_t w = 0; w < waves.size(); ++w) {
           const int twoJp1 = waves[w].twoJplus1;
           const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
-          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
+          const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1, ch.excitation) + "]";
 
           // Idempotent create-or-override: if the member is already in the list
           // (a synthetic cluster from a list file, or a real resonance reused via
@@ -466,6 +476,12 @@ namespace thermalfist {
       if (name == "piK_I32") return PiK_I32_Channel();
       if (name == "piK_I12") return PiK_I12_Channel();
       if (name == "piK_K892") return PiK_K892_Channel();
+      if (name == "piN_Delta") return PiN_Delta_Channel();
+      if (name == "piN_S31") return PiN_S31_Channel();
+      if (name == "piN_S11") return PiN_S11_Channel();
+      if (name == "piN_P31") return PiN_P31_Channel();
+      if (name == "piN_P11") return PiN_P11_Channel();
+      if (name == "piN_P13") return PiN_P13_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
     }
 
@@ -561,8 +577,8 @@ namespace thermalfist {
           : AnalyticWave(e.channel, e.model);
         if (w.twoJplus1 != e.twoJplus1)
           throw std::invalid_argument("AddPhaseShiftChannelsFromFile: wave key '"
-            + e.channel + ":" + WaveLabel(e.twoJplus1) + "' does not match model '"
-            + e.model + "' (a " + WaveLabel(w.twoJplus1) + "-wave)");
+            + e.channel + ":" + WaveLabel(e.twoJplus1, ch.excitation) + "' does not match model '"
+            + e.model + "' (a " + WaveLabel(w.twoJplus1, ch.excitation) + "-wave)");
         const std::vector<PhaseShiftPartialWave> one(1, w);
         std::vector<long long> t = e.listFile.empty()
           ? AddPhaseShiftChannel(TPS, ch, one)   // reuse real codes (create-or-override)
@@ -769,6 +785,76 @@ namespace thermalfist {
       ch.memberPdg[+1] = 323;        // K*(892)+  (Iz=+1/2, Q=+1)
       ch.memberPdg[-1] = 313;        // K*(892)0  (Iz=-1/2, Q=0)
       return ch;
+    }
+
+    // ---- pi-N (meson-baryon, B = +1; not a self-conjugate multiplet) --------
+
+    static PhaseShiftChannel PiN_ChannelBase() {
+      PhaseShiftChannel ch;
+      ch.family     = FamilyPiN;
+      ch.m1         = PionMass();
+      ch.m2         = NucleonMass();
+      ch.statistics = +1;            // fermionic cluster (a baryon)
+      ch.B = +1;                     // baryon number of the nucleon
+      ch.S = ch.C = 0;
+      ch.a.twoIsospin = 2;           // pion isospin triplet
+      ch.a.chargeStates[+2] = 211;   // pi+
+      ch.a.chargeStates[ 0] = 111;   // pi0
+      ch.a.chargeStates[-2] = -211;  // pi-
+      ch.b.twoIsospin = 1;           // nucleon isospin doublet (B=+1)
+      ch.b.chargeStates[+1] = 2212;  // proton   (Iz=+1/2, Q=+1)
+      ch.b.chargeStates[-1] = 2112;  // neutron  (Iz=-1/2, Q=0)
+      ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    PhaseShiftChannel PiN_Delta_Channel() {
+      // I=3/2 P-wave = the Delta(1232) (P33): resonant (branch-tracked through
+      // 90 deg), elastic across the resonance up to sqrt(s) = 1.38 GeV. REUSES the
+      // real Delta codes, overriding their thermal contribution while they stay in
+      // the list as decay products (subsumption by PDG coincidence). A baryon
+      // channel (B=+1), so every Iz is a distinct member and the antiparticles
+      // (anti-Delta) form the conjugate multiplet.
+      PhaseShiftChannel ch = PiN_ChannelBase();
+      ch.name = "piN_Delta";
+      ch.twoI = 3;                   // I = 3/2
+      ch.Mmax = PiN_Delta_Mmax();    // elastic up to the matching point ~1.38 GeV
+      ch.memberPdg[+3] = 2224;       // Delta(1232)++  (Iz=+3/2, Q=+2)
+      ch.memberPdg[+1] = 2214;       // Delta(1232)+   (Iz=+1/2, Q=+1)
+      ch.memberPdg[-1] = 2114;       // Delta(1232)0   (Iz=-1/2, Q=0)
+      ch.memberPdg[-3] = 1114;       // Delta(1232)-   (Iz=-3/2, Q=-1)
+      return ch;
+    }
+
+    // Non-resonant pi-N background waves (Roy-Steiner). Synthetic clusters (no
+    // resonance to reuse in the elastic region); each is its own single-wave
+    // channel so it gets its own elastic cutoff Mmax. The orbital l goes in the
+    // synthetic-id excitation slot so same-(I,J) waves (e.g. S31/P31, S11/P11,
+    // which share 2J+1=2) get distinct codes.
+    static PhaseShiftChannel PiN_BackgroundChannel(const std::string& name,
+                                                   int twoI, int orbitalL, double Mmax) {
+      PhaseShiftChannel ch = PiN_ChannelBase();
+      ch.name       = name;
+      ch.twoI       = twoI;
+      ch.excitation = orbitalL;      // n n slot = orbital l (S=0, P=1)
+      ch.Mmax       = Mmax;
+      return ch;                     // synthetic (no memberPdg)
+    }
+
+    PhaseShiftChannel PiN_S31_Channel() {  // I=3/2 S-wave (repulsive), elastic to 1.38
+      return PiN_BackgroundChannel("piN_S31", 3, 0, PiN_Mmax_elastic());
+    }
+    PhaseShiftChannel PiN_S11_Channel() {  // I=1/2 S-wave (attractive), elastic to ~1.22
+      return PiN_BackgroundChannel("piN_S11", 1, 0, PiN_Mmax_inelastic());
+    }
+    PhaseShiftChannel PiN_P31_Channel() {  // I=3/2 P-wave (J=1/2), elastic to ~1.22
+      return PiN_BackgroundChannel("piN_P31", 3, 1, PiN_Mmax_inelastic());
+    }
+    PhaseShiftChannel PiN_P11_Channel() {  // I=1/2 P-wave (J=1/2, Roper tail), elastic to ~1.22
+      return PiN_BackgroundChannel("piN_P11", 1, 1, PiN_Mmax_inelastic());
+    }
+    PhaseShiftChannel PiN_P13_Channel() {  // I=1/2 P-wave (J=3/2), elastic to 1.38
+      return PiN_BackgroundChannel("piN_P13", 1, 1, PiN_Mmax_elastic());
     }
 
   } // namespace PhaseShifts
