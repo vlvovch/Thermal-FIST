@@ -544,9 +544,10 @@ namespace {
     EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +3, 1), 99233001LL);  // Iz=+3/2
     EXPECT_EQ((99233001LL / 100000LL) % 10, 2LL);                    // family = pi-K
     EXPECT_EQ((99233001LL / 10000LL)  % 10, 3LL);                    // 2I = 3
+    // I=1/2 reuses the real kappa/K0*(700) codes (subsumption by coincidence)
     PhaseShifts::PhaseShiftChannel c12 = PhaseShifts::PiK_I12_Channel();
-    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, -1, 1), 99210001LL);
-    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, +1, 1), 99211001LL);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, -1, 1), 9000311LL);  // K0*(700)0
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, +1, 1), 9000321LL);  // K0*(700)+
   }
 
   TEST(PhaseShifts, PiKClebschGordanDecays) {
@@ -600,21 +601,20 @@ namespace {
   }
 
   TEST(PhaseShifts, PiKChi2QFromConfig) {
-    // Load both pi-K channels from a config (per-wave files) and check the net
-    // electric-charge susceptibility contribution is negative (repulsive I=3/2,
-    // sum Q^2=12, dominates the attractive I=1/2, sum Q^2=2).
+    // Load both pi-K channels from a config and check the net electric-charge
+    // susceptibility contribution is negative (repulsive I=3/2, sum Q^2=12,
+    // dominates the attractive I=1/2, sum Q^2=2). I=3/2 uses synthetic-cluster
+    // files; I=1/2 reuses the real kappa codes ("-", created since absent).
     const std::string dir = ::testing::TempDir();
     const std::string lst = dir + "ps_pik_cfg_list.dat";
     writePiKList(lst);
     PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiK_I32_Channel(),
                                       PhaseShifts::PiK_I32_Waves(), dir);
-    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiK_I12_Channel(),
-                                      PhaseShifts::PiK_I12_Waves(), dir);
     const std::string confF = dir + "ps_piK.conf";
     {
       std::ofstream f(confF.c_str());
       f << "piK_I32:S  list-piK_I32_S.dat  decays-piK_I32_S.dat  PelaezRodas2016_S\n";
-      f << "piK_I12:S  list-piK_I12_S.dat  decays-piK_I12_S.dat  PelaezRodas2016_S\n";
+      f << "piK_I12:S  -  -  PelaezRodas2016_S\n";   // kappa reuses 9000321/9000311
     }
     auto suscQ = [&](ThermalParticleSystem& T_) {
       ThermalModelIdeal m(&T_);
@@ -627,15 +627,134 @@ namespace {
     double base = suscQ(TPSbase);
     ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
     std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
-    EXPECT_EQ(added.size(), 12u);                 // (4+4) I=3/2 + (2+2) I=1/2
+    EXPECT_EQ(added.size(), 12u);                 // (4+4) I=3/2 + (2+2) I=1/2 (kappa)
+    EXPECT_GE(TPS.PdgToId(9000321), 0);           // kappa created with its real code
+    EXPECT_GE(TPS.PdgToId(9000311), 0);
     double full = suscQ(TPS);
     EXPECT_LT(full - base, 0.0);                  // net repulsive
 
     std::remove(lst.c_str()); std::remove(confF.c_str());
     std::remove((dir + "list-piK_I32_S.dat").c_str());
     std::remove((dir + "decays-piK_I32_S.dat").c_str());
-    std::remove((dir + "list-piK_I12_S.dat").c_str());
-    std::remove((dir + "decays-piK_I12_S.dat").c_str());
+  }
+
+  // ---- pi-pi I=0 (the sigma; resonant, branch-tracked) ----
+
+  TEST(PhaseShifts, PiPiI0DeltaBranchTracking) {
+    // delta_0^0 is attractive (>0), 0 at threshold, rises monotonically THROUGH
+    // 90 deg (the sigma) without a discontinuity, and equals d0=226.5 deg exactly
+    // at the K-Kbar threshold (the matched intermediate parametrization).
+    const double r2d = 180.0 / M_PI;
+    const double thr = 2.0 * PhaseShifts::PionMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiPi_delta_I0_S(thr), 0.0);
+    EXPECT_GT(PhaseShifts::PiPi_delta_I0_S(0.5), 0.0);            // attractive
+    // monotonic through 90 deg
+    double prev = -1.0; bool crossed90 = false, monotonic = true;
+    for (double M = thr + 1e-3; M <= 2.0 * 0.496; M += 0.01) {
+      double d = PhaseShifts::PiPi_delta_I0_S(M) * r2d;
+      if (d < prev - 1e-6) monotonic = false;
+      if (prev < 90.0 && d >= 90.0) crossed90 = true;
+      prev = d;
+    }
+    EXPECT_TRUE(monotonic);
+    EXPECT_TRUE(crossed90);                                       // passes the 90 deg point
+    // d0 at the K-Kbar threshold (Table V CFD): 226.5 deg
+    EXPECT_NEAR(PhaseShifts::PiPi_delta_I0_S(2.0 * 0.496) * r2d, 226.5, 1e-3);
+    // continuity (no jump) at the low/intermediate matching point sqrt(sM)=0.85:
+    // delta rises steeply here (~3.5 rad/GeV), so use a tiny step - a real jump
+    // would be O(0.01+ rad) regardless of step, continuity gives ~slope*2eps.
+    EXPECT_NEAR(PhaseShifts::PiPi_delta_I0_S(0.85 - 1e-5),
+                PhaseShifts::PiPi_delta_I0_S(0.85 + 1e-5), 1e-3);
+  }
+
+  TEST(PhaseShifts, PiPiI0DecaysAndMember) {
+    // I=0 isoscalar: single neutral self-conjugate member, decays 2/3 pi+pi- + 1/3 pi0pi0.
+    // It reuses the real sigma/f0(500) code (9000221).
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I0_Channel();
+    EXPECT_EQ(ch.twoI, 0);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 0, 1), 9000221LL);
+    auto d = PhaseShifts::ChannelDecays(ch, 0);
+    ASSERT_EQ(d.size(), 2u);
+    double tot = 0.; for (size_t i = 0; i < d.size(); ++i) tot += d[i].first;
+    EXPECT_NEAR(tot, 1.0, 1e-9);
+    for (size_t i = 0; i < d.size(); ++i) {
+      if (d[i].second.first == -211 && d[i].second.second == 211)
+        EXPECT_NEAR(d[i].first, 2.0 / 3.0, 1e-9);   // pi+ pi-
+      if (d[i].second.first == 111 && d[i].second.second == 111)
+        EXPECT_NEAR(d[i].first, 1.0 / 3.0, 1e-9);   // pi0 pi0
+    }
+  }
+
+  TEST(PhaseShifts, PiPiI0AttractiveRaisesPions) {
+    // The attractive I=0 cluster has POSITIVE density and decays to pions, so its
+    // feeddown INCREASES the total pion density (opposite to the repulsive I=2).
+    const double T = 0.150;
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_i0.dat";
+    writePionList(pionF);
+
+    auto totalPiPlus = [&](ThermalParticleSystem& TPS) {
+      ThermalModelIdeal m(&TPS);
+      m.SetTemperature(T); m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+      m.CalculateDensities();
+      return m.GetDensity(211, Feeddown::StabilityFlag);
+    };
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, pionF));
+    double piBase = totalPiPlus(TPSbase);
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I0_Channel(),
+                                      PhaseShifts::PiPi_I0_Waves());
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 1);     // single neutral member
+    // sigma absent here -> created with its real code 9000221 (a real-resonance
+    // cluster, so it counts as "overridden" -> the toggle rebuilds)
+    ASSERT_GE(TPS.PdgToId(9000221), 0);
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 1);
+    // attractive -> positive chi2 for the cluster
+    EXPECT_GT(TPS.ParticleByPDG(9000221).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, T, 0.0), 0.0);
+    double piFull = totalPiPlus(TPS);
+    EXPECT_GT(piBase, 0.0);
+    EXPECT_GT(piFull, piBase);   // attraction -> positive feeddown -> more pions
+
+    std::remove(pionF.c_str());
+  }
+
+  TEST(PhaseShifts, PiPiI0f0980ReusesRealResonance) {
+    // The f0(980) channel reuses the real f0(980) PDG code (subsumption by
+    // coincidence): it does NOT add a particle, overrides the existing f0(980)'s
+    // thermal contribution with the phase-shift density, and keeps it (with its
+    // decays) in the list.
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I0_f0980_Channel();
+    EXPECT_EQ(ch.memberPdg[0], 9010221LL);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 0, 1), 9010221LL);   // reuses real code
+    EXPECT_TRUE(ch.subsumedPdg.empty());                            // no removal
+
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_f0_list.dat";
+    {
+      std::ofstream f(lst.c_str());
+      f << "211 pi+      1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+      f << "111 pi0      1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+      f << "9010221 f0(980) 0 0.990  1 -1 0 0 0 0 0 0 0 0\n";   // a plain BW resonance
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    ASSERT_GE(TPS.PdgToId(9010221), 0);
+    EXPECT_EQ(TPS.ParticleByPDG(9010221).GetGeneralizedDensity(), nullptr);  // plain BW
+
+    PhaseShifts::AddPhaseShiftChannel(TPS, ch, PhaseShifts::PiPi_I0_f0980_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber(), nbefore);                    // NOT a new particle
+    ASSERT_GE(TPS.PdgToId(9010221), 0);                            // still present
+    ASSERT_NE(TPS.ParticleByPDG(9010221).GetGeneralizedDensity(), nullptr);  // now overridden
+    // it is an overridden real resonance (not a synthetic cluster) -> the cheap
+    // toggle is not exact, so the GUI rebuilds instead.
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 1);
+    // the f0(980) region of delta_0^0 rises -> positive (attractive) contribution
+    EXPECT_GT(TPS.ParticleByPDG(9010221).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
   }
 
 }

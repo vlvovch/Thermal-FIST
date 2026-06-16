@@ -178,6 +178,15 @@ namespace thermalfist {
     } // anonymous namespace
 
     long long PhaseShiftPdgId(const PhaseShiftChannel& ch, int twoIz, int twoJplus1) {
+      // A channel may reuse real resonance PDG codes (subsumption by coincidence):
+      // each member 2Iz maps to a real code, which the phase-shift density then
+      // overrides (if present) or is created under (if absent, e.g. the kappa).
+      if (!ch.memberPdg.empty()) {
+        std::map<int, long long>::const_iterator it = ch.memberPdg.find(twoIz);
+        if (it != ch.memberPdg.end()) return it->second;
+        throw std::invalid_argument("PhaseShiftPdgId: memberPdg has no entry for 2Iz="
+                                    + std::to_string(twoIz) + " in channel '" + ch.name + "'");
+      }
       if (twoJplus1 < 1 || twoJplus1 > 9)
         throw std::invalid_argument("PhaseShiftPdgId: 2J+1 must be a single digit (J <= 4)");
       // Iz field: for a self-conjugate multiplet use 2|Iz| (Iz<0 is the
@@ -369,9 +378,12 @@ namespace thermalfist {
           const long long mag = PhaseShiftPdgId(ch, twoIz, twoJp1);
           const std::string name = ch.name + "[" + IzLabel(twoIz) + "," + WaveLabel(twoJp1) + "]";
 
-          // Idempotent: if the cluster is already in the list (e.g. loaded from a
-          // list-<name>.dat file), don't re-add it - AttachDensities() below will
-          // bind the density to the existing entry.
+          // Idempotent create-or-override: if the member is already in the list
+          // (a synthetic cluster from a list file, or a real resonance reused via
+          // memberPdg, e.g. the sigma / f0(980)), don't re-add it or touch its
+          // decays - AttachDensities() below overrides only its thermal
+          // contribution. If absent (e.g. the kappa, whose code is excluded from
+          // the list) it is created here with the channel's isospin-CG decays.
           if (TPS.PdgToId(mag) < 0) {
             ThermalParticle part(/*Stable*/ false, name, mag, /*Deg*/ 1., ch.statistics, mass,
                                  ch.S, ch.B, Q, std::abs(ch.S), 0., mass, ch.C, std::abs(ch.C), 0);
@@ -408,6 +420,8 @@ namespace thermalfist {
 
     PhaseShiftChannel ChannelByName(const std::string& name) {
       if (name == "pipi_I2") return PiPi_I2_Channel();
+      if (name == "pipi_I0") return PiPi_I0_Channel();
+      if (name == "pipi_I0_f0980") return PiPi_I0_f0980_Channel();
       if (name == "piK_I32") return PiK_I32_Channel();
       if (name == "piK_I12") return PiK_I12_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
@@ -426,7 +440,10 @@ namespace thermalfist {
       // isospin-CG decays; the model column gives the delta(M):
       //   <model> = <param>        analytic parametrization name (-> AnalyticWave)
       //           = tab:<file>     a tabulated (M, delta) table
-      // File paths are resolved relative to the config file's directory.
+      // File paths are resolved relative to the config file's directory. A "-" in
+      // the list and/or decay column means "no file": the channel reuses an
+      // existing resonance (memberPdg), so nothing is added/loaded and the model
+      // is just attached to it (subsumption by PDG coincidence).
       struct Entry {
         std::string channel; int twoJplus1;
         std::string listFile, decayFile, model;
@@ -446,17 +463,18 @@ namespace thermalfist {
         Entry e;
         e.channel    = key.substr(0, colon);
         e.twoJplus1  = WaveTokenToTwoJplus1(key.substr(colon + 1));
-        e.listFile   = resolvePath(dir, listF);
-        e.decayFile  = resolvePath(dir, decF);
+        e.listFile   = (listF == "-") ? std::string() : resolvePath(dir, listF);
+        e.decayFile  = (decF  == "-") ? std::string() : resolvePath(dir, decF);
         e.model      = model;
         entries.push_back(e);
       }
 
       // 1. Add the per-wave cluster members from each (unique) list file. Thermal-
       //    FIST generates the antiparticles; existing species are left untouched.
+      //    Entries with no list file ("-") reuse an existing resonance: nothing added.
       std::set<std::string> addedLists;
       for (size_t i = 0; i < entries.size(); ++i)
-        if (addedLists.insert(entries[i].listFile).second)
+        if (!entries[i].listFile.empty() && addedLists.insert(entries[i].listFile).second)
           TPS.AddParticlesToListFromFile(entries[i].listFile);
       TPS.FinalizeList();
 
@@ -465,6 +483,7 @@ namespace thermalfist {
       //    are charge-conjugated. The rest of the list keeps its decays.
       std::set<std::string> loadedDecays;
       for (size_t i = 0; i < entries.size(); ++i) {
+        if (entries[i].decayFile.empty()) continue;          // reused resonance keeps its decays
         if (!loadedDecays.insert(entries[i].decayFile).second) continue;
         std::map<long long, ThermalParticle::ParticleDecaysVector> dm =
           readClusterDecays(entries[i].decayFile);
@@ -482,7 +501,11 @@ namespace thermalfist {
         }
       }
 
-      // 3. Attach the per-wave delta(M) density to each wave's clusters.
+      // 3. Bind each wave's delta(M). File-based entries already have their cluster
+      //    members in the list (added in step 1), so we just attach the density.
+      //    "-" entries reuse real resonance codes (memberPdg): route them through
+      //    the catalog AddPhaseShiftChannel, which create-or-overrides those codes
+      //    (creates the kappa, overrides the sigma / f0(980)).
       std::vector<long long> all;
       std::vector<std::string> channelOrder;
       std::set<std::string> channelSeen;
@@ -498,7 +521,10 @@ namespace thermalfist {
           throw std::invalid_argument("AddPhaseShiftChannelsFromFile: wave key '"
             + e.channel + ":" + WaveLabel(e.twoJplus1) + "' does not match model '"
             + e.model + "' (a " + WaveLabel(w.twoJplus1) + "-wave)");
-        std::vector<long long> t = AttachDensities(TPS, ch, std::vector<PhaseShiftPartialWave>(1, w));
+        const std::vector<PhaseShiftPartialWave> one(1, w);
+        std::vector<long long> t = e.listFile.empty()
+          ? AddPhaseShiftChannel(TPS, ch, one)   // reuse real codes (create-or-override)
+          : AttachDensities(TPS, ch, one);        // synthetic clusters from the list file
         all.insert(all.end(), t.begin(), t.end());
         if (channelSeen.insert(e.channel).second) channelOrder.push_back(e.channel);
       }
@@ -531,6 +557,21 @@ namespace thermalfist {
       return n;
     }
 
+    int CountOverriddenResonances(const ThermalParticleSystem& TPS) {
+      // A phase-shift density on a REUSED real resonance (memberPdg) rather than a
+      // synthetic cluster: its PDG code is not in the synthetic 99-prefixed block
+      // [99000000, 99999999]. For these the cheap enable/disable toggle is not
+      // exact (a disabled override gives 0, not the pole-mass term), so the list
+      // must be rebuilt to toggle them.
+      int n = 0;
+      for (int i = 0; i < TPS.ComponentsNumber(); ++i) {
+        if (!dynamic_cast<PhaseShiftDensity*>(TPS.Particles()[i].GetGeneralizedDensity())) continue;
+        const long long pdg = std::llabs((long long)TPS.Particles()[i].PdgId());
+        if (pdg < 99000000LL || pdg >= 100000000LL) ++n;   // not a synthetic id
+      }
+      return n;
+    }
+
     PhaseShiftChannel PiPi_I2_Channel() {
       PhaseShiftChannel ch;
       ch.name       = "pipi_I2";
@@ -549,6 +590,46 @@ namespace thermalfist {
       ch.b = ch.a;
       // Purely repulsive, non-resonant: subsumes no resonances.
       ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    PhaseShiftChannel PiPi_I0_Channel() {
+      PhaseShiftChannel ch;
+      ch.name       = "pipi_I0";
+      ch.family     = FamilyPiPi;
+      ch.m1         = PionMass();
+      ch.m2         = PionMass();
+      ch.Mmax       = PiPiI0_Mmax();   // K-Kbar threshold (2 M_K): elastic sigma region
+      ch.statistics = -1;              // bosonic cluster
+      ch.twoI       = 0;               // I = 0 (isoscalar; single neutral member)
+      ch.B = ch.S = ch.C = 0;
+      ch.a.twoIsospin = 2;             // pion isospin triplet
+      ch.a.chargeStates[+2] = 211;     // pi+
+      ch.a.chargeStates[ 0] = 111;     // pi0
+      ch.a.chargeStates[-2] = -211;    // pi-
+      ch.b = ch.a;
+      // The I=0 S-wave IS the sigma/f0(500): reuse its real PDG code (9000221).
+      // The sigma is in the list with degeneracy 0, so the phase-shift density
+      // overrides a zero baseline (no double counting), and it stays a decay
+      // product. Toggling phase shifts off restores its (deg=0) list entry.
+      ch.memberPdg[0] = 9000221;       // f0(500)/sigma
+      ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    PhaseShiftChannel PiPi_I0_f0980_Channel() {
+      // Same I=0 structure as the sigma channel, but covering the part of
+      // delta_0^0 ABOVE the K-Kbar threshold (up to 1.42 GeV) - the f0(980).
+      // It REUSES the real f0(980) PDG code (9010221): the phase-shift density is
+      // attached to that existing resonance, overriding its thermal contribution
+      // (subsumption by PDG coincidence). The f0(980) stays in the
+      // list, so it is still a decay product of heavier resonances, and keeps its
+      // own decays. (Above K-Kbar the I=0 wave is inelastic, so the elastic
+      // Beth-Uhlenbeck term is an approximation.)
+      PhaseShiftChannel ch = PiPi_I0_Channel();
+      ch.name      = "pipi_I0_f0980";
+      ch.Mmax      = PiPiI2_Mmax();      // 1.42 GeV (full Garcia-Martin upper range)
+      ch.memberPdg[0] = 9010221;         // reuse the real f0(980) -> override it
       return ch;
     }
 
@@ -586,9 +667,13 @@ namespace thermalfist {
       ch.name = "piK_I12";
       ch.twoI = 1;                   // I = 1/2 (attractive, the kappa/K0*(700))
       ch.Mmax = PiK_I12_Mmax();      // elastic only below the K-eta threshold
-      // NOTE: the I=1/2 S-wave IS the kappa/K0*(700). If that resonance is also in
-      // the HRG list it is double-counted; add its codes to subsumedPdg to remove
-      // it (kept empty here to match the Wuppertal treatment).
+      // The I=1/2 S-wave IS the kappa/K0*(700): reuse its real PDG codes. The
+      // kappa is usually excluded from the HRG list (its contribution being the
+      // I=1/2 phase shift), so these are created with the channel's isospin-CG
+      // decays; if present they are overridden instead. (Subsumption by PDG
+      // coincidence: 2Iz -> code.)
+      ch.memberPdg[+1] = 9000321;    // K(0)*(700)+  (Iz=+1/2, Q=+1)
+      ch.memberPdg[-1] = 9000311;    // K(0)*(700)0  (Iz=-1/2, Q=0)
       return ch;
     }
 

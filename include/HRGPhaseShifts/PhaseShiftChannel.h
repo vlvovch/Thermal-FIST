@@ -73,6 +73,15 @@ namespace thermalfist {
       PhaseShiftConstituent a, b;      ///< the two scattering constituents (for decays)
       std::vector<long long> subsumedPdg; ///< PDG codes of resonances this channel replaces
       int    quadratureNodes;          ///< Gauss-Legendre nodes for the q-integral
+      std::map<int, long long> memberPdg; ///< if non-empty, each member REUSES a real PDG
+                                       ///< code (2Iz -> code) instead of a synthetic id:
+                                       ///< "subsumption by PDG coincidence". If that code
+                                       ///< is already in the list the phase-shift density
+                                       ///< overrides its thermal contribution (and it
+                                       ///< keeps its decays / stays a decay product); if
+                                       ///< absent it is created (e.g. the kappa) with the
+                                       ///< channel's isospin-CG decays. Must cover every
+                                       ///< member 2Iz of the channel.
 
       PhaseShiftChannel()
         : family(FamilyPiPi), m1(0.), m2(0.), Mmax(0.), statistics(-1),
@@ -84,10 +93,12 @@ namespace thermalfist {
      *        following the spirit of the PDG MC numbering.
      *
      * Layout (8 digits): "9 9 F (2I) (2|Iz|) n n (2J+1)". The LAST digit is the
-     * wave's spin degeneracy 2J+1 (as in PDG); electric charge, baryon number and
-     * strangeness are carried by the ThermalParticle fields, not packed into the
-     * code; the 8-digit 99-prefix stays clear of all real PDG codes. The
-     * antiparticle uses the negative.
+     * wave's spin degeneracy 2J+1 (as in PDG); the two "n n" digits are the
+     * channel's excitation index (0 by default), which distinguishes two channels
+     * with the same (family, 2I, Iz, 2J+1) - e.g. sigma (00) vs f0(980) (01) in
+     * pi-pi I=0; electric charge, baryon number and strangeness are carried by the
+     * ThermalParticle fields, not packed into the code; the 8-digit 99-prefix
+     * stays clear of all real PDG codes. The antiparticle uses the negative.
      *
      * \param ch          Channel (provides family and twoI).
      * \param twoIz        2*Iz of the member (magnitude uses |2Iz|).
@@ -156,6 +167,18 @@ namespace thermalfist {
     /// Catalog: the repulsive pi-pi I=2 channel (constituents + structure only).
     PhaseShiftChannel PiPi_I2_Channel();
 
+    /// Catalog: the attractive pi-pi I=0 channel (the sigma/f0(500)); a single
+    /// neutral isoscalar member. The sigma is kept (deg=0) in the list, not
+    /// subsumed. Integrated up to the K-Kbar threshold (the elastic limit).
+    PhaseShiftChannel PiPi_I0_Channel();
+
+    /// Catalog: the pi-pi I=0 f0(980) channel - the part of delta_0^0 above the
+    /// K-Kbar threshold (up to 1.42 GeV). It REUSES the real f0(980) PDG code
+    /// (9010221, memberPdg): the phase-shift density is attached to that existing
+    /// resonance, overriding its thermal contribution (subsumption by PDG
+    /// coincidence). The f0(980) stays in the list (still a decay product).
+    PhaseShiftChannel PiPi_I0_f0980_Channel();
+
     /// Catalog: the pi-K I=3/2 (repulsive) and I=1/2 (attractive, kappa/K0*(700))
     /// channels (constituents + structure only; S = +1). The members span all Iz
     /// of the multiplet (a strange channel is not self-conjugate).
@@ -208,13 +231,16 @@ namespace thermalfist {
      *   pipi_I2:S    list-pipi_I2_S.dat    decays-pipi_I2_S.dat   GarciaMartin2011_S
      *   pipi_I2:D    list-pipi_I2_D.dat    decays-pipi_I2_D.dat   GarciaMartin2011_D
      *   pipi_I2:D    list-pipi_I2_D.dat    decays-pipi_I2_D.dat   tab:delta_pipi_I2_D.dat
+     *   pipi_I0_f0980:S   -    -    GarciaMartin2011_S     # reuse existing f0(980)
      * \endverbatim
      * <wave> is S/P/D/F/G or a numeric 2J+1; <model> is a wave-specific analytic
      * parametrization name or "tab:<file>". The analytic name is per-wave (two
      * waves of one paper get two names) and must agree with the wave key, else it
      * throws. File paths are resolved relative to the config file's directory. The
      * referenced .dat files are loaded into \p TPS, so they are the (hand-editable)
-     * source of truth, decoupled from the in-code catalog.
+     * source of truth, decoupled from the in-code catalog. A "-" list/decay column
+     * means "no file": the channel reuses an existing resonance (memberPdg) and the
+     * model is attached to it (subsumption by PDG coincidence), nothing is added.
      *
      * \return The PDG ids of all members added across all channels.
      */
@@ -235,6 +261,12 @@ namespace thermalfist {
 
     /// Number of species in the system carrying a PhaseShiftDensity.
     int CountPhaseShiftDensities(const ThermalParticleSystem& TPS);
+
+    /// Number of phase-shift densities attached to a REUSED real resonance (a real
+    /// PDG code, not a synthetic 99-prefixed cluster). When > 0 the cheap
+    /// enable/disable toggle is not exact - a disabled override yields 0 instead of
+    /// the resonance's own (pole-mass) contribution - so rebuild the list to toggle.
+    int CountOverriddenResonances(const ThermalParticleSystem& TPS);
 
   } // namespace PhaseShifts
 

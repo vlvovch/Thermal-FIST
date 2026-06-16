@@ -212,6 +212,88 @@ namespace thermalfist {
       return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiK_delta_I12_S));
     }
 
+    // ---- pi-pi I=0 S-wave (the sigma/f0(500)) -------------------------------
+    // Garcia-Martin et al., PRD83 (2011) 074004 [1102.2183], Appendix A.1
+    // (Eqs. A1-A3, Table V CFD). Low energy (s <= sM): conformal expansion of
+    // cot delta. Intermediate (sM < s < (1.42 GeV)^2): matched polynomial in the
+    // kaon/eta momenta (in degrees). The phase rises through 90 deg (sigma), so
+    // the low-energy branch uses atan2(1, cot delta) for a continuous delta(s).
+    namespace {
+      const double mK_I0   = 0.496;       // M_K  [GeV]
+      const double meta_I0 = 0.54751;     // M_eta [GeV]
+      const double deg2rad = 3.14159265358979323846 / 180.;
+
+      // low-energy conformal parameters (Table V, CFD)
+      const double S0_B0 = 7.14, S0_B1 = -25.3, S0_B2 = -33.2, S0_B3 = -26.2;
+      const double S0_z0 = mpi;                       // z0 = M_pi
+      const double S0_s0conf = 4. * mK_I0 * mK_I0;    // conformal s0 = 4 M_K^2
+      const double S0_sM = 0.85 * 0.85;               // matching point [GeV^2]
+      const double S0_4MK2   = 4. * mK_I0 * mK_I0;
+      const double S0_4Meta2 = 4. * meta_I0 * meta_I0;
+      // intermediate parameters (Table V, CFD), converted from degrees
+      const double S0_d0 = 226.5 * deg2rad;
+      const double S0_c  = -81.0 * deg2rad;
+      const double S0_B  =  93.3 * deg2rad;
+      const double S0_C  =  48.7 * deg2rad;
+      const double S0_D  = -88.3 * deg2rad;
+
+      inline double w_I0(double s) {                  // conformal variable, Eq.A2
+        double a = std::sqrt(s), b = std::sqrt(S0_s0conf - s);
+        return (a - b) / (a + b);
+      }
+      inline double cotd_I0_lowE(double s) {          // Eq.A1
+        double k = std::sqrt(s / 4. - mpi * mpi);     // CM momentum
+        double w = w_I0(s);
+        double poly = S0_z0 * S0_z0 / (mpi * std::sqrt(s))
+                    + S0_B0 + S0_B1 * w + S0_B2 * w * w + S0_B3 * w * w * w;
+        return std::sqrt(s) * mpi * mpi / (2. * k * (s - 0.5 * S0_z0 * S0_z0)) * poly;
+      }
+      inline double delta_I0_lowE(double s) {         // radians, branch-tracked in (0, pi)
+        return std::atan2(1.0, cotd_I0_lowE(s));
+      }
+      // matching-point values (computed once from the low-energy parametrization)
+      const double S0_kM = std::sqrt(mK_I0 * mK_I0 - S0_sM / 4.);   // |k2(sM)|
+      const double S0_deltaM = delta_I0_lowE(S0_sM);                // radians
+      const double S0_deltaMp = (delta_I0_lowE(S0_sM + 1e-5)
+                               - delta_I0_lowE(S0_sM - 1e-5)) / (2e-5);  // d delta/ds
+    } // anonymous namespace
+
+    double PiPi_delta_I0_S(double M) {
+      double s = M * M;
+      if (s <= 4. * mpi * mpi) return 0.;
+      if (s <= S0_sM) return delta_I0_lowE(s);        // low energy (Eq.A1), branch-tracked
+      if (s < S0_4MK2) {                              // Eq.A3, sM < s < 4 M_K^2
+        double k2 = std::sqrt(mK_I0 * mK_I0 - s / 4.);   // |k2| (real below K-Kbar)
+        double r  = k2 / S0_kM;
+        return S0_d0 * (1. - r) * (1. - r)
+             + S0_deltaM * r * (2. - r)
+             + k2 * (S0_kM - k2) * (8. * S0_deltaMp + S0_c * (S0_kM - k2) / (mK_I0 * mK_I0 * mK_I0));
+      }
+      // Eq.A3, 4 M_K^2 < s < (1.42 GeV)^2 (above the elastic limit; only reached
+      // if the channel Mmax is raised past 2 M_K)
+      double u = (s / 4. - mK_I0 * mK_I0) / (mK_I0 * mK_I0);   // k2^2 / M_K^2
+      double d = S0_d0 + S0_B * u + S0_C * u * u;
+      if (s > S0_4Meta2)
+        d += S0_D * (s / 4. - meta_I0 * meta_I0) / (meta_I0 * meta_I0);  // eta-momentum term
+      return d;
+    }
+
+    double PiPi_delta_I0_f0980_S(double M) {
+      double s = M * M;
+      if (s <= S0_4MK2) return 0.;          // below K-Kbar: handled by the sigma wave
+      // offset so the wave starts at 0 at 2 M_K (S0_d0 = delta_0^0 there); only
+      // d(delta)/dM matters for the spectral weight, the offset is cosmetic.
+      return PiPi_delta_I0_S(M) - S0_d0;
+    }
+
+    std::vector<PhaseShiftPartialWave> PiPi_I0_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiPi_delta_I0_S));
+    }
+
+    std::vector<PhaseShiftPartialWave> PiPi_I0_f0980_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiPi_delta_I0_f0980_S));
+    }
+
   } // namespace PhaseShifts
 
 } // namespace thermalfist

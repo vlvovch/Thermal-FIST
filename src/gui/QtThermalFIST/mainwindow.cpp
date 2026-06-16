@@ -629,14 +629,18 @@ void MainWindow::rebuildCurrentList()
 void MainWindow::onPhaseShiftToggled()
 {
   const bool on = chkPhaseShifts->isChecked();
-  if (PhaseShifts::CountPhaseShiftDensities(*TPS) > 0) {
-    // Clusters already in the list: just switch their density on/off. No rebuild,
-    // so the EV/vdW matrix (which already includes them) is untouched.
+  // The cheap enable/disable (zeroing the densities) is exact ONLY for synthetic
+  // clusters, which have no baseline. If any phase-shift density overrides a real
+  // resonance (reused PDG code), disabling it would give 0 instead of that
+  // resonance's own (pole-mass) contribution - so rebuild the list to toggle exactly.
+  if (PhaseShifts::CountPhaseShiftDensities(*TPS) > 0
+      && PhaseShifts::CountOverriddenResonances(*TPS) == 0) {
     PhaseShifts::SetPhaseShiftsEnabled(*TPS, on);
     refreshListDisplay();
     resetAllTabs();
-  } else if (on) {
-    // First time on: add the channels to the list (one rebuild).
+  } else {
+    // Overridden resonances present (or first activation): rebuild from the base
+    // list so the OFF state restores each resonance's list entry exactly.
     rebuildCurrentList();
   }
 }

@@ -1,9 +1,0 @@
-# S-matrix phase-shift channel 'piK_I12' decays (isospin Clebsch-Gordan), wave: S
-99210001  # piK_I12[Iz=-1/2,S]
-2
-0.6666666667  -211 321
-0.3333333333  111 311
-99211001  # piK_I12[Iz=+1/2,S]
-2
-0.3333333333  111 321
-0.6666666667  211 311

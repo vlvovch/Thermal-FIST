@@ -82,45 +82,45 @@ structure changes.
 
 ## Excluded volume / van der Waals
 
-The cluster members are added as ordinary hadrons (a pi-pi channel cluster has
-B = 0, so it is a meson). They therefore receive excluded-volume / vdW
-parameters from the *same* quantum-number-based assignment as every other
-species (uniform radius, mass-proportional `(m/m_N)^{1/3}`, or
-baryon-content / point-like-meson). No special-casing is applied or needed:
-because the clusters are suppressed consistently with the pions they are made
-of, total (free + feeddown) particle densities stay consistent — whereas
-leaving the clusters EV-free while the pions are suppressed could drive the
-total pion density negative.
-
-Notes:
-- The cluster's nominal mass (the threshold m1 + m2) is what a mass-proportional
-  radius scheme sees; its thermodynamics still come from the phase-shift
-  spectral integral, not this nominal mass.
-- In the diagonal-EV model clusters never source excluded volume (their density
-  is an interaction correction, possibly negative) but are suppressed by the
-  global free-volume factor; in the matrix models (Crossterms/VDW/RealGas) they
-  participate through their (meson) parameters like any other meson.
-- In the GUI, enabling phase shifts adds the clusters once; toggling the
-  checkbox afterwards just switches their densities on/off without rebuilding the
-  list (PhaseShifts::SetPhaseShiftsEnabled). The clusters keep their meson
-  EV/vdW parameters either way; when off their zero density makes them inert, so
-  interactions never need manual re-apply.
+The cluster members are ordinary hadrons (a pi-pi cluster has B = 0, so it is a
+meson), so they get excluded-volume / vdW parameters from the same
+quantum-number-based assignment as every other species — no special-casing.
 
 ## Channels
 
 - `pipi_I2` — repulsive pi-pi I=2 (S- and D-waves; Garcia-Martin et al.,
   Phys. Rev. D83 (2011) 074004). Non-resonant: subsumes no resonances.
   Config: `pipi.conf`.
+- `pipi_I0` — attractive pi-pi I=0 (S-wave; same reference, Appendix A), i.e. the
+  sigma/f0(500). The phase passes through 90 deg, so it is branch-tracked
+  (`atan2`). Isoscalar and neutral, so it contributes to the EoS and pion feeddown
+  but not to charge fluctuations. Integrated up to the K-Kbar threshold (2 M_K),
+  the elastic limit. It **reuses the real f0(500) code (9000221)**: the density
+  overrides the sigma's (deg=0) list entry. Config: `pipi.conf`.
+- `pipi_I0_f0980` — the part of delta_0^0 above the K-Kbar threshold (the
+  f0(980)). It **reuses the real f0(980) code (9010221)**, overriding its thermal
+  contribution. Config: `pipi.conf`.
 - `piK_I32` — repulsive pi-K I=3/2 (S-wave; Pelaez, Rodas, Phys. Rev. D93 (2016)
-  074025). Non-resonant, elastic up to ~1.74 GeV. Config: `piK.conf`.
+  074025). Non-resonant, elastic up to ~1.74 GeV. Synthetic clusters. Config:
+  `piK.conf`.
 - `piK_I12` — attractive pi-K I=1/2 (S-wave; same reference), i.e. the
-  kappa/K0*(700). Elastic only below the K-eta threshold. This S-wave *is* the
-  kappa: if K0*(700) is also in the HRG list it is double-counted (matching the
-  Wuppertal treatment); add its codes to the channel's `subsumedPdg` to remove
-  it. Config: `piK.conf`.
+  kappa/K0*(700). Elastic only below the K-eta threshold. It **reuses the real
+  kappa codes (9000321, 9000311)**; since the kappa is usually excluded from the
+  list, these are created with the isospin-CG decays (if present, overridden).
+  Config: `piK.conf`.
+
+### Subsumption by PDG coincidence
+A channel can REUSE a real resonance's PDG code (`memberPdg`, the `-` list/decay
+columns in the config) instead of a synthetic id. If that code is already in the
+list (sigma, f0(980)) the phase-shift density **overrides** its thermal
+contribution while it stays in the list (still a decay product); if absent (the
+kappa) it is **created** with the channel's decays. Either way the real resonance
+is not separately counted. Because these are real (non-synthetic)
+codes, the cheap enable/disable toggle is not exact for them, so the GUI rebuilds
+the list when toggling (see `CountOverriddenResonances`).
 
 pi-K carries strangeness (S=+1), so unlike pi-pi it is **not** a self-conjugate
 multiplet: every Iz is a distinct member (Q = Iz + 1/2 for the S=+1 sector) and
 the antiparticles form the S=-1 sector. The builder handles this automatically;
-the PDG id encodes the multiplet index I+Iz (0..2I) rather than 2|Iz|. To run
+synthetic ids encode the multiplet index I+Iz (0..2I) rather than 2|Iz|. To run
 pi-pi + pi-K together, load both `pipi.conf` and `piK.conf`.

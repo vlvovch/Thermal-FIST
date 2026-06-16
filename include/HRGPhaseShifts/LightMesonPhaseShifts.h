@@ -15,6 +15,11 @@
  *        meson-meson scattering, for use with PhaseShiftDensity (S-matrix HRG).
  *
  * Currently implemented:
+ *   - pi-pi, I=0 (attractive, the sigma/f0(500)): S-wave (J=0), conformal CFD
+ *     parametrization of Garcia-Martin et al., Phys.Rev. D83 (2011) 074004
+ *     [arXiv:1102.2183], Appendix A.1 (Eqs. A1-A3, Table V). The phase passes
+ *     through 90 deg (sigma), so it is branch-tracked; elastic below the K-Kbar
+ *     threshold.
  *   - pi-pi, I=2 (repulsive): S-wave (J=0) and D-wave (J=2),
  *     conformal CFD parametrization of Garcia-Martin et al.,
  *     Phys.Rev. D83 (2011) 074004 [arXiv:1102.2183], Tables VI, IX.
@@ -36,6 +41,27 @@ namespace thermalfist {
     constexpr double PionMass() { return 0.13957; }
     /// Upper validity limit sqrt(s)_max [GeV] of the pi-pi I=2 parametrization.
     constexpr double PiPiI2_Mmax() { return 1.420; }
+    /// pi-pi I=0 S-wave is treated as elastic up to the K-Kbar threshold (2 M_K),
+    /// which is the physical limit of the phase-shift-only Beth-Uhlenbeck term and
+    /// covers the sigma/f0(500). Raise to 1.420 for the full Garcia-Martin range
+    /// (then the f0(980) is included and must not be double-counted in the list).
+    constexpr double PiPiI0_Mmax() { return 2. * 0.496; }   // 2 M_K
+
+    /// pi-pi I=0 S-wave phase shift delta_0^{(0)}(M) [radians]. Attractive (> 0),
+    /// branch-tracked through 90 deg (sigma); full Garcia-Martin A1-A3 form.
+    double PiPi_delta_I0_S(double M);
+
+    /// The part of delta_0^{(0)} ABOVE the K-Kbar threshold (the f0(980) region),
+    /// offset to 0 at 2 M_K so it carries only the high-mass spectral weight (the
+    /// sigma part below 2 M_K is the separate PiPi_delta_I0_S wave). [radians]
+    double PiPi_delta_I0_f0980_S(double M);
+
+    /// S-wave (2J+1=1) of the pi-pi I=0 channel (the sigma). d(delta)/dM uses the
+    /// engine's finite-difference fallback.
+    std::vector<PhaseShiftPartialWave> PiPi_I0_Waves();
+
+    /// S-wave (2J+1=1) of the pi-pi I=0 f0(980) region (above the K-Kbar threshold).
+    std::vector<PhaseShiftPartialWave> PiPi_I0_f0980_Waves();
 
     /// pi-pi I=2 S-wave phase shift delta_0^{(2)}(M) [radians]. Repulsive (< 0).
     double PiPi_delta_I2_S(double M);
