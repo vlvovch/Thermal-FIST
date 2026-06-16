@@ -72,7 +72,7 @@ namespace thermalfist {
     return w / xMath::Pi();
   }
 
-  double PhaseShiftDensity::Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) {
+  double PhaseShiftDensity::Integrate(IdealGasFunctions::Quantity quantity, int statistics, double T, double mu) const {
     if (!m_enabled) return 0.;   // disabled channel contributes nothing
     std::vector<double> xleg, wleg;
     NumericalIntegration::GetCoefsIntegrateLegendre(m_nodes, 0., m_qmax, &xleg, &wleg);
@@ -82,10 +82,33 @@ namespace thermalfist {
       double q = xleg[i];
       double M = Mfromq(q);
       double Xideal = IdealGasFunctions::IdealGasQuantity(
-        quantity, IdealGasFunctions::Quadratures, m_stat, T, mu, M, /*deg*/ 1., /*order*/ 1);
+        quantity, IdealGasFunctions::Quadratures, statistics, T, mu, M, /*deg*/ 1., /*order*/ 1);
       ret += wleg[i] * SpectralWeight(q) * Xideal;
     }
     return ret;
+  }
+
+  double PhaseShiftDensity::Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) {
+    return Integrate(quantity, m_stat, T, mu);
+  }
+
+  double PhaseShiftDensity::QuantityCluster(int n, IdealGasFunctions::Quantity quantity, double T, double mu) {
+    if (n < 1) return 0.;
+    // n-th term of the Boltzmann cluster (fugacity) expansion: the spectral
+    // integral with Boltzmann statistics at temperature T/n. The mass-M ideal
+    // term n_id(T/n, mu) carries fugacity exp(n mu/T), so the sum over n
+    // reconstructs the quantum (m_stat) Quantity() for the fugacity-linear
+    // quantities the canonical ensemble requests (ParticleDensity, Pressure,
+    // EnergyDensity). For other quantities (entropy, susceptibilities, T
+    // derivatives) the T/n term is NOT the correct cluster term, so we keep only
+    // the leading n==1 Boltzmann term - matching the base-class semantics - rather
+    // than add wrong higher-order terms. The cluster sign (fermionic clusters) is
+    // applied by ThermalParticle::DensityCluster.
+    if (n > 1 && quantity != IdealGasFunctions::ParticleDensity
+              && quantity != IdealGasFunctions::Pressure
+              && quantity != IdealGasFunctions::EnergyDensity)
+      return 0.;
+    return Integrate(quantity, /*Boltzmann*/ 0, T / static_cast<double>(n), mu);
   }
 
 } // namespace thermalfist

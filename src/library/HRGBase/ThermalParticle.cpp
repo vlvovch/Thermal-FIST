@@ -27,7 +27,7 @@ namespace thermalfist {
     int Strange, int Baryon, int Charge, double AbsS, double Width, double Threshold, int Charm, double AbsC, int Quark) :
     m_Stable(Stable), m_AntiParticle(false), m_Name(Name), m_PDGID(PDGID), m_Degeneracy(Deg), m_Statistics(Stat), m_StatisticsOrig(Stat), m_Mass(Mass),
     m_Strangeness(Strange), m_Baryon(Baryon), m_ElectricCharge(Charge), m_Charm(Charm), m_ArbitraryCharge(Baryon), m_AbsS(AbsS), m_AbsC(AbsC), m_Width(Width), m_Threshold(Threshold), m_Quark(Quark), m_Weight(1.),
-    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth), m_GeneralizedDensity(NULL),
+    m_ResonanceWidthShape(ThermalParticle::RelativisticBreitWigner), m_ResonanceWidthIntegrationType(ThermalParticle::ZeroWidth), m_GeneralizedDensity(nullptr),
     m_IGFExtraConfig()
   {
     if (!Disclaimer::DisclaimerPrinted) 
@@ -240,6 +240,10 @@ namespace thermalfist {
       name = "anti-" + name;
 
     ThermalParticle ret = *this;
+    // A freshly generated antiparticle starts with no generalized density (it
+    // would otherwise share the particle's via the shared_ptr copy); the caller
+    // attaches its own model afterwards (e.g. PhaseShifts::AttachDensities).
+    ret.ClearGeneralizedDensity();
     ret.SetName(name);
     ret.SetPdgId(-PdgId());
     ret.SetBaryonCharge(-BaryonCharge());
@@ -583,15 +587,20 @@ namespace thermalfist {
 
 
   double ThermalParticle::Density(const ThermalModelParameters &params, IdealGasFunctions::Quantity type, bool useWidth, double mu) const {
-    if (m_GeneralizedDensity != NULL)
-      return m_GeneralizedDensity->Quantity(type, params.T, mu);
-    
-    if (m_Degeneracy == 0.0)
+    // A zero-degeneracy species contributes nothing UNLESS it carries a
+    // generalized density (e.g. a phase-shift cluster overriding a resonance).
+    if (m_GeneralizedDensity == nullptr && m_Degeneracy == 0.0)
       return 0.0;
-    
+
+    // Non-equilibrium fugacity factors apply to every species, including those
+    // with a generalized density: the cluster's constituents carry the gamma
+    // powers via its absolute quark/strangeness/charm content.
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
+
+    if (m_GeneralizedDensity != nullptr)
+      return m_GeneralizedDensity->Quantity(type, params.T, mu);
 
     if (!useWidth || m_Mass == 0.0 || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, m_Statistics, params.T, mu, m_Mass, m_Degeneracy, m_ClusterExpansionOrder, m_IGFExtraConfig);
@@ -650,6 +659,13 @@ namespace thermalfist {
     if (!(params.gammaq == 1.))                  mu += log(params.gammaq) * m_AbsQuark /*GetAbsQ()*/  * params.T;
     if (!(params.gammaS == 1. || m_AbsS == 0.))  mu += log(params.gammaS) * m_AbsS     * params.T;
     if (!(params.gammaC == 1. || m_AbsC == 0.))  mu += log(params.gammaC) * m_AbsC     * params.T;
+
+    // A generalized density (e.g. a phase-shift cluster) supplies its own
+    // (Beth-Uhlenbeck) thermodynamics; route the canonical cluster expansion
+    // through its n-th Boltzmann term so charged/strange canonical species do not
+    // fall back to the ideal pole-mass particle.
+    if (m_GeneralizedDensity != nullptr)
+      return mn * m_GeneralizedDensity->QuantityCluster(n, type, params.T, mu);
 
     if (!useWidth || ZeroWidthEnforced() || m_ResonanceWidthIntegrationType == ZeroWidth) {
       return mn * IdealGasFunctions::IdealGasQuantity(type, m_QuantumStatisticsCalculationType, 0, params.T / static_cast<double>(n), mu, m_Mass, m_Degeneracy, 1, m_IGFExtraConfig);
@@ -778,15 +794,18 @@ namespace thermalfist {
   }
 
   void ThermalParticle::ClearGeneralizedDensity() {
-    if (m_GeneralizedDensity != NULL) {
-      delete m_GeneralizedDensity;
-      m_GeneralizedDensity = NULL;
-    }
+    m_GeneralizedDensity.reset();
   }
 
   void ThermalParticle::SetGeneralizedDensity(GeneralizedDensity *density_model) {
-    ClearGeneralizedDensity();
-    m_GeneralizedDensity = density_model;
+    // Takes SOLE ownership of a freshly-allocated object: the shared_ptr wraps it
+    // in a new control block and frees any previous model. Never pass the same
+    // raw pointer to two particles (use the shared_ptr overload to share).
+    m_GeneralizedDensity.reset(density_model);
+  }
+
+  void ThermalParticle::SetGeneralizedDensity(std::shared_ptr<GeneralizedDensity> density_model) {
+    m_GeneralizedDensity = std::move(density_model);
   }
 
   void ThermalParticle::SetMagneticField(double B, int lmax) {

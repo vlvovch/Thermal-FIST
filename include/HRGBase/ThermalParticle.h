@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <memory>
 
 #include "HRGBase/ParticleDecay.h"
 #include "HRGBase/ThermalModelParameters.h"
@@ -665,9 +666,21 @@ namespace thermalfist {
     bool operator==(const ThermalParticle &rhs) const; // TODO: improve
     bool operator!=(const ThermalParticle &rhs) const { return !(*this == rhs); }
 
-    /// \brief Getter/Setter for the generalized density object
-    GeneralizedDensity* GetGeneralizedDensity() const { return m_GeneralizedDensity; }
+    /// \brief Non-owning raw pointer to the generalized density object (or null).
+    GeneralizedDensity* GetGeneralizedDensity() const { return m_GeneralizedDensity.get(); }
+
+    /// \brief Attach a generalized density, taking SOLE ownership of a
+    /// freshly-allocated object.
+    ///
+    /// The pointer is wrapped in an owning shared_ptr, so it is freed
+    /// automatically. Each call creates an independent owner: do NOT pass the
+    /// same raw pointer to more than one particle (that would free it twice). To
+    /// share one model across several particles, use the shared_ptr overload.
     void SetGeneralizedDensity(GeneralizedDensity *density_model);
+
+    /// \brief Attach a generalized density via a shared_ptr (safe to share the
+    /// same model across multiple particles).
+    void SetGeneralizedDensity(std::shared_ptr<GeneralizedDensity> density_model);
 
     /// \brief Clear the generalized density
     void ClearGeneralizedDensity();
@@ -760,8 +773,11 @@ namespace thermalfist {
     /// Whether BEC was encountered
     bool m_LastDensityOk;
 
-    /// Whether to use an outside procedure for calculating densities
-    GeneralizedDensity *m_GeneralizedDensity;
+    /// Whether to use an outside procedure for calculating densities.
+    /// Owned via shared_ptr so it is freed on destruction (no leak on list
+    /// rebuild/toggle) and copied safely (ThermalParticle is value-copied into
+    /// the particle vector); copies share the same model, the last one frees it.
+    std::shared_ptr<GeneralizedDensity> m_GeneralizedDensity;
 
     /// Extra parameters such as magnetic field
     IdealGasFunctions::IdealGasFunctionsExtraConfig m_IGFExtraConfig;

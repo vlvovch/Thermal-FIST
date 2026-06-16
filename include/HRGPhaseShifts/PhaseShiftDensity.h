@@ -77,6 +77,15 @@ namespace thermalfist {
 
     double Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) override;
 
+    /// n-th Boltzmann cluster term of the Beth-Uhlenbeck integral (for the
+    /// canonical ensemble): the spectral integral with Boltzmann statistics at
+    /// temperature T/n. Summing over n reconstructs the quantum Quantity() for the
+    /// fugacity-linear quantities the canonical ensemble sums (ParticleDensity,
+    /// Pressure, EnergyDensity); for other quantities (entropy, susceptibilities)
+    /// only the n==1 Boltzmann term is kept (see GeneralizedDensity::QuantityCluster).
+    /// The cluster sign is applied by the caller.
+    double QuantityCluster(int n, IdealGasFunctions::Quantity quantity, double T, double mu) override;
+
     /// Two-body invariant mass M [GeV] from the CM momentum q [GeV].
     double Mfromq(double q) const;
     /// CM momentum q [GeV] from the invariant mass M [GeV].
@@ -101,6 +110,10 @@ namespace thermalfist {
     bool IsClearable() const override { return false; }
 
   private:
+    /// Spectral integral of the ideal-gas quantity with the given quantum
+    /// statistics at temperature T (shared by Quantity and QuantityCluster).
+    double Integrate(IdealGasFunctions::Quantity quantity, int statistics, double T, double mu) const;
+
     std::vector<PhaseShiftPartialWave> m_waves;
     double m_m1, m_m2;
     double m_Mmax, m_qmax;

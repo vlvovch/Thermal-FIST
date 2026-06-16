@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <string>
 #include <fstream>
+#include "ThermalFISTConfig.h"
 #include "HRGPhaseShifts/PhaseShiftDensity.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
 #include "HRGPhaseShifts/PhaseShiftModel.h"
@@ -18,6 +19,7 @@
 #include "HRGBase/IdealGasFunctions.h"
 #include "HRGBase/ThermalParticleSystem.h"
 #include "HRGBase/ThermalModelIdeal.h"
+#include "HRGBase/ThermalModelCanonical.h"
 #include "gtest/gtest.h"
 
 using namespace thermalfist;
@@ -843,6 +845,204 @@ namespace {
     EXPECT_GT(TPS.ParticleByPDG(99120007).GetGeneralizedDensity()
                 ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);  // attractive
     std::remove(pionF.c_str());
+  }
+
+  // ---- audit fixes: constituent fugacities, GCE gammas, canonical, ownership --
+
+  TEST(PhaseShifts, ConstituentFugacityMetadata) {
+    // P2a: a cluster must carry the SUMMED constituent quark content, not the
+    // single-meson powers GetAbsQ() = 2 - |S| - |C| would give. pi-pi -> gammaq^4;
+    // pi-K -> gammaq^3 gammaS^1.
+    const std::string dir = ::testing::TempDir();
+    {
+      const std::string pionF = dir + "ps_meta_pipi.dat";
+      writePionList(pionF);
+      ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+      PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+                                        PhaseShifts::PiPi_I2_Waves());
+      const ThermalParticle& cl = TPS.ParticleByPDG(99144005);
+      EXPECT_DOUBLE_EQ(cl.AbsoluteQuark(), 4.0);        // 2 pions = 4 light quarks
+      EXPECT_DOUBLE_EQ(cl.AbsoluteStrangeness(), 0.0);
+      std::remove(pionF.c_str());
+    }
+    {
+      const std::string lst = dir + "ps_meta_pik.dat";
+      writePiKList(lst);
+      ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+      PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                        PhaseShifts::PiK_I32_Waves());
+      const ThermalParticle& cl = TPS.ParticleByPDG(99233001);
+      EXPECT_DOUBLE_EQ(cl.AbsoluteQuark(), 3.0);        // pi (2) + K (1 light)
+      EXPECT_DOUBLE_EQ(cl.AbsoluteStrangeness(), 1.0);  // K carries one strange quark
+      std::remove(lst.c_str());
+    }
+  }
+
+  TEST(PhaseShifts, GammaFactorsReachGeneralizedDensity) {
+    // P1b: gammaq/gammaS must be applied to a generalized density. With a
+    // BOLTZMANN cluster the particle density scales EXACTLY as gammaq^Nq gammaS^Ns
+    // (before the fix the gammas were ignored: ratio would be 1).
+    const std::string dir = ::testing::TempDir();
+    // pi-pi I=2 D-wave: gammaq^4
+    {
+      const std::string pionF = dir + "ps_g_pipi.dat";
+      writePionList(pionF);
+      ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+      PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiPi_I2_Channel(),
+                                        PhaseShifts::PiPi_I2_Waves());
+      ThermalParticle& cl = TPS.ParticleByPDG(99144005);
+      ASSERT_DOUBLE_EQ(cl.AbsoluteQuark(), 4.0);
+      // override with a Boltzmann density so the scaling is exact
+      std::vector<PhaseShiftPartialWave> dwave(1,
+        PhaseShiftPartialWave(5, &PhaseShifts::PiPi_delta_I2_D));
+      cl.SetGeneralizedDensity(new PhaseShiftDensity(dwave, PhaseShifts::PionMass(),
+        PhaseShifts::PionMass(), PhaseShifts::PiPiI2_Mmax(), /*Boltzmann*/ 0, 64));
+
+      ThermalModelParameters p1; p1.T = 0.150; p1.gammaq = 1.0;
+      ThermalModelParameters pg = p1; pg.gammaq = 1.7;
+      double n1 = cl.Density(p1, IdealGasFunctions::ParticleDensity, false, 0.0);
+      double ng = cl.Density(pg, IdealGasFunctions::ParticleDensity, false, 0.0);
+      ASSERT_LT(n1, 0.0);                                   // repulsive
+      EXPECT_NEAR(ng / n1, std::pow(1.7, 4), 1e-9);         // gammaq^4 exactly
+      std::remove(pionF.c_str());
+    }
+    // pi-K I=3/2 S-wave: gammaq^3 gammaS^1
+    {
+      const std::string lst = dir + "ps_g_pik.dat";
+      writePiKList(lst);
+      ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+      PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                        PhaseShifts::PiK_I32_Waves());
+      ThermalParticle& cl = TPS.ParticleByPDG(99233001);
+      ASSERT_DOUBLE_EQ(cl.AbsoluteQuark(), 3.0);
+      ASSERT_DOUBLE_EQ(cl.AbsoluteStrangeness(), 1.0);
+      std::vector<PhaseShiftPartialWave> swave(1,
+        PhaseShiftPartialWave(1, &PhaseShifts::PiK_delta_I32_S));
+      cl.SetGeneralizedDensity(new PhaseShiftDensity(swave, PhaseShifts::PionMass(),
+        PhaseShifts::KaonMass(), PhaseShifts::PiK_I32_Mmax(), /*Boltzmann*/ 0, 64));
+
+      ThermalModelParameters p1; p1.T = 0.150; p1.gammaq = 1.0; p1.gammaS = 1.0;
+      ThermalModelParameters pg = p1; pg.gammaq = 1.3; pg.gammaS = 1.5;
+      double n1 = cl.Density(p1, IdealGasFunctions::ParticleDensity, false, 0.0);
+      double ng = cl.Density(pg, IdealGasFunctions::ParticleDensity, false, 0.0);
+      ASSERT_LT(n1, 0.0);                                   // repulsive
+      EXPECT_NEAR(ng / n1, std::pow(1.3, 3) * std::pow(1.5, 1), 1e-9);
+      std::remove(lst.c_str());
+    }
+  }
+
+  TEST(PhaseShifts, CanonicalDensityClusterUsesBethUhlenbeck) {
+    // P1a: DensityCluster() (the canonical-ensemble path) must route through the
+    // generalized density, not fall back to the ideal pole particle. The repulsive
+    // pi-K I=3/2 cluster therefore has NEGATIVE DensityCluster (the BU value);
+    // an ideal pole particle would be positive.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_can_pik.dat";
+    writePiKList(lst);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves());
+    ThermalParticle& cl = TPS.ParticleByPDG(99233001);     // S-wave, S=1, repulsive
+    ThermalModelParameters p; p.T = 0.150;
+    double nc1 = cl.DensityCluster(1, p, IdealGasFunctions::ParticleDensity, false, 0.0);
+    EXPECT_LT(nc1, 0.0);                                    // BU sign, not ideal pole
+    // DensityCluster(1) routes exactly to QuantityCluster(1) (meson sign +1)
+    double bu = cl.GetGeneralizedDensity()
+                  ->QuantityCluster(1, IdealGasFunctions::ParticleDensity, p.T, 0.0);
+    EXPECT_DOUBLE_EQ(nc1, bu);
+    // The n-th Boltzmann cluster terms (Boltzmann gas at T/n) sum to the full
+    // QUANTUM (here Bose) GCE density: Sum_n QuantityCluster(n) == Quantity().
+    // (The n=1 term alone, used by the canonical single-term path, is the
+    // Boltzmann approximation - it differs by the small Bose enhancement.)
+    double sum = 0.;
+    for (int n = 1; n <= 12; ++n)
+      sum += cl.GetGeneralizedDensity()
+               ->QuantityCluster(n, IdealGasFunctions::ParticleDensity, p.T, 0.0);
+    double bose = cl.GetGeneralizedDensity()
+                    ->Quantity(IdealGasFunctions::ParticleDensity, p.T, 0.0);
+    EXPECT_NEAR(sum, bose, 1e-6 * std::fabs(bose) + 1e-12);
+    EXPECT_GT(std::fabs(bose), std::fabs(nc1));   // Bose > Boltzmann n=1 in magnitude
+
+    // Contract guard: the T/n reconstruction is valid only for the fugacity-linear
+    // quantities (number/pressure/energy) the canonical ensemble sums. A supported
+    // quantity has nonzero higher cluster terms; an unsupported one (a
+    // susceptibility) keeps ONLY the n==1 Boltzmann term (higher terms -> 0).
+    GeneralizedDensity* gd = cl.GetGeneralizedDensity();
+    EXPECT_NE(gd->QuantityCluster(2, IdealGasFunctions::ParticleDensity, p.T, 0.0), 0.0);
+    EXPECT_NE(gd->QuantityCluster(2, IdealGasFunctions::EnergyDensity, p.T, 0.0), 0.0);
+    EXPECT_EQ(gd->QuantityCluster(2, IdealGasFunctions::chi2, p.T, 0.0), 0.0);  // guarded
+    EXPECT_EQ(gd->QuantityCluster(3, IdealGasFunctions::chi2, p.T, 0.0), 0.0);
+    // n==1 is the Boltzmann value for ANY quantity (even unsupported ones)
+    EXPECT_NE(gd->QuantityCluster(1, IdealGasFunctions::chi2, p.T, 0.0), 0.0);
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, CanonicalModelKeepsBethUhlenbeckSign) {
+    // End-to-end audit scenario: in a strangeness-canonical calculation the strange
+    // pi-K cluster is treated canonically (DensityCluster path). Its primordial
+    // density must stay negative (repulsive BU), i.e. not revert to an ideal pole.
+    std::string dir = std::string(ThermalFIST_INPUT_FOLDER);
+    ThermalParticleSystem TPS(dir + "/list/PDG2020/list.dat",
+                              dir + "/list/PDG2020/decays.dat");
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves());
+    ASSERT_GE(TPS.PdgToId(99233001), 0);
+    EXPECT_EQ(TPS.ParticleByPDG(99233001).Strangeness(), 1);   // canonical sector
+
+    ThermalModelParameters p;
+    p.T = 0.150; p.muB = 0.; p.muS = 0.; p.muQ = 0.; p.muC = 0.;
+    p.gammaq = 1.; p.gammaS = 1.;
+    p.V = 5000.; p.SVc = 5000.;
+    p.B = 0; p.Q = 0; p.S = 0; p.C = 0;
+
+    ThermalModelCanonical m(&TPS, p);
+    m.SetStatistics(false);
+    m.SetUseWidth(ThermalParticle::ZeroWidth);
+    m.ConserveBaryonCharge(false);
+    m.ConserveElectricCharge(false);
+    m.ConserveStrangeness(true);    // strangeness canonical -> pi-K cluster canonical
+    m.ConserveCharm(false);
+    m.CalculateDensities();
+
+    int id = TPS.PdgToId(99233001);
+    double n = m.Densities()[id];
+    EXPECT_TRUE(std::isfinite(n));
+    EXPECT_LT(n, 0.0);   // BU repulsive survived the canonical (DensityCluster) path
+  }
+
+  TEST(PhaseShifts, GeneralizedDensityOwnershipSurvivesCopyAndRebuild) {
+    // P2b: the density is shared_ptr-owned, so it survives value-copies of the
+    // particle (the list vector copies), the antiparticle does NOT share it, and
+    // reassigning the owning system frees the old densities without dangling.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_own_pik.dat";
+    writePiKList(lst);
+
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves());
+    // particle and antiparticle each have their OWN density (not shared)
+    GeneralizedDensity* dp = TPS.ParticleByPDG(99233001).GetGeneralizedDensity();
+    GeneralizedDensity* da = TPS.ParticleByPDG(-99233001).GetGeneralizedDensity();
+    ASSERT_NE(dp, nullptr);
+    ASSERT_NE(da, nullptr);
+    EXPECT_NE(dp, da);
+
+    // a value-copy of the particle shares the same model and stays valid
+    ThermalParticle copy = TPS.ParticleByPDG(99233001);
+    ASSERT_EQ(copy.GetGeneralizedDensity(), dp);
+    EXPECT_LT(copy.GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+
+    // reassigning the whole system (the GUI rebuild path) frees the old densities
+    // and rebuilds cleanly - no crash, fresh densities attached
+    TPS = ThermalParticleSystem(std::vector<std::string>(1, lst));
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves());
+    ASSERT_NE(TPS.ParticleByPDG(99233001).GetGeneralizedDensity(), nullptr);
+    EXPECT_LT(TPS.ParticleByPDG(99233001).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
   }
 
   // ---- pi-K elastic set: I=3/2 P & D (non-resonant) + K*(892) (resonant) ----

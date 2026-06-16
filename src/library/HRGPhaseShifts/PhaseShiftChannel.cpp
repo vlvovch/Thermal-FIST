@@ -27,6 +27,32 @@ namespace thermalfist {
 
     namespace {
 
+      // Sum the absolute light-quark / strangeness / charm content of the
+      // channel's two scattering constituents (looked up in the list), so the
+      // cluster scales with the correct non-equilibrium fugacity powers: e.g.
+      // gammaq^4 for a pi-pi cluster, gammaq^3 gammaS for pi-K. Without this a
+      // cluster would inherit single-meson powers from GetAbsQ() = 2 - |S| - |C|.
+      // Returns false (leaving the defaults) if a constituent is not in the list.
+      bool ConstituentAbsCharges(ThermalParticleSystem& TPS, const PhaseShiftChannel& ch,
+                                 double& absQ, double& absS, double& absC) {
+        absQ = absS = absC = 0.;
+        const PhaseShiftConstituent* cons[2] = { &ch.a, &ch.b };
+        for (int c = 0; c < 2; ++c) {
+          int id = -1;
+          for (std::map<int, long long>::const_iterator it = cons[c]->chargeStates.begin();
+               it != cons[c]->chargeStates.end(); ++it) {
+            int tid = TPS.PdgToId(it->second);
+            if (tid >= 0) { id = tid; break; }
+          }
+          if (id < 0) return false;
+          const ThermalParticle& p = TPS.Particle(id);
+          absQ += p.GetAbsQ();
+          absS += p.AbsoluteStrangeness();
+          absC += p.AbsoluteCharm();
+        }
+        return true;
+      }
+
       double fact(int n) {
         double r = 1.;
         for (int i = 2; i <= n; ++i) r *= i;
@@ -307,6 +333,11 @@ namespace thermalfist {
                                            const PhaseShiftChannel& ch,
                                            const std::vector<PhaseShiftPartialWave>& waves) {
       std::vector<long long> touched;
+      // Constituent fugacity powers (gammaq^Nq gammaS^Ns gammaC^Nc), shared by
+      // every member of the channel. If a constituent is missing from the list
+      // the cluster keeps its (single-meson) defaults.
+      double absQ = 0., absS = 0., absC = 0.;
+      const bool haveAbs = ConstituentAbsCharges(TPS, ch, absQ, absS, absC);
       const std::vector<int> izs = memberTwoIz(ch);
       for (size_t ii = 0; ii < izs.size(); ++ii) {
         const int twoIz = izs[ii];
@@ -318,8 +349,16 @@ namespace thermalfist {
           for (int s = 0; s < npdg; ++s) {
             if (TPS.PdgToId(pdgs[s]) < 0) continue;
             std::vector<PhaseShiftPartialWave> oneWave(1, waves[w]);
-            TPS.ParticleByPDG(pdgs[s]).SetGeneralizedDensity(
+            ThermalParticle& cl = TPS.ParticleByPDG(pdgs[s]);
+            cl.SetGeneralizedDensity(
               new PhaseShiftDensity(oneWave, ch.m1, ch.m2, ch.Mmax, ch.statistics, ch.quadratureNodes));
+            if (haveAbs) {
+              // Set strangeness/charm first (their setters recompute AbsQuark via
+              // the single-hadron formula), then override AbsQuark last.
+              cl.SetAbsoluteStrangeness(absS);
+              cl.SetAbsoluteCharm(absC);
+              cl.SetAbsoluteQuark(absQ);
+            }
             touched.push_back(pdgs[s]);
           }
         }

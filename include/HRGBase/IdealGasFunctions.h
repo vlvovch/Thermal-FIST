@@ -985,6 +985,24 @@ namespace thermalfist {
     virtual ~GeneralizedDensity() {}
 
     virtual double Quantity(IdealGasFunctions::Quantity quantity, double T, double mu) = 0;
+
+    /// The n-th term of the Boltzmann cluster (fugacity) expansion of Quantity(),
+    /// summed by the canonical ensemble (ThermalParticle::DensityCluster). The
+    /// n-th term is the model evaluated with Boltzmann statistics at temperature
+    /// T/n (the cluster sign for fermionic clusters is applied by the caller).
+    ///
+    /// Summing n=1..inf reproduces Quantity() ONLY for the extensive,
+    /// fugacity-linear quantities the canonical ensemble actually requests -
+    /// ParticleDensity, Pressure and EnergyDensity. Entropy, susceptibilities and
+    /// temperature derivatives carry extra per-term (chain-rule) factors under the
+    /// T/n substitution and are NOT reconstructed by this sum. For every quantity
+    /// the n==1 term equals the Boltzmann value, so the default below
+    /// (n==1 -> Quantity, else 0) is exact for any Boltzmann-statistics model.
+    /// Override for quantum-statistics models.
+    virtual double QuantityCluster(int n, IdealGasFunctions::Quantity quantity, double T, double mu) {
+      return (n == 1) ? Quantity(quantity, T, mu) : 0.;
+    }
+
     virtual double EffectiveMass() const { return -1.; }
     virtual bool   IsBECPhase() const { return false; }
     virtual double BECFraction() const { return 0.; }
