@@ -423,8 +423,10 @@ namespace thermalfist {
       if (name == "pipi_I0") return PiPi_I0_Channel();
       if (name == "pipi_I0_f0980") return PiPi_I0_f0980_Channel();
       if (name == "pipi_I1") return PiPi_I1_Channel();
+      if (name == "pipi_I1_F") return PiPi_I1_F_Channel();
       if (name == "piK_I32") return PiK_I32_Channel();
       if (name == "piK_I12") return PiK_I12_Channel();
+      if (name == "piK_K892") return PiK_K892_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
     }
 
@@ -660,6 +662,18 @@ namespace thermalfist {
       return ch;
     }
 
+    PhaseShiftChannel PiPi_I1_F_Channel() {
+      // pi-pi I=1 F-wave: non-resonant below 1.42 GeV (rho3(1690) is higher and
+      // out of range), so unlike the rho there is no resonance to reuse - it is a
+      // synthetic cluster. Different Mmax (1.42, treated as elastic) than the rho
+      // P-wave (2 M_K), hence a separate channel.
+      PhaseShiftChannel ch = PiPi_I1_Channel();
+      ch.name = "pipi_I1_F";
+      ch.Mmax = PiPiI2_Mmax();         // 1.42 GeV (elastic per the parametrization)
+      ch.memberPdg.clear();            // synthetic cluster (no resonance to reuse)
+      return ch;
+    }
+
     // Shared structure of a pi-K channel (S = +1): pion triplet x kaon doublet.
     static PhaseShiftChannel PiK_ChannelBase() {
       PhaseShiftChannel ch;
@@ -701,6 +715,20 @@ namespace thermalfist {
       // coincidence: 2Iz -> code.)
       ch.memberPdg[+1] = 9000321;    // K(0)*(700)+  (Iz=+1/2, Q=+1)
       ch.memberPdg[-1] = 9000311;    // K(0)*(700)0  (Iz=-1/2, Q=0)
+      return ch;
+    }
+
+    PhaseShiftChannel PiK_K892_Channel() {
+      // I=1/2 P-wave = the K*(892): elastic below the K-eta threshold, resonant.
+      // Reuses the real K*(892) codes (in the list), overriding their contribution.
+      // Separate channel from the kappa (piK_I12): same isospin but a different
+      // wave reusing a different resonance.
+      PhaseShiftChannel ch = PiK_ChannelBase();
+      ch.name = "piK_K892";
+      ch.twoI = 1;                   // I = 1/2
+      ch.Mmax = PiK_I12_Mmax();      // elastic only below the K-eta threshold
+      ch.memberPdg[+1] = 323;        // K*(892)+  (Iz=+1/2, Q=+1)
+      ch.memberPdg[-1] = 313;        // K*(892)0  (Iz=-1/2, Q=0)
       return ch;
     }
 

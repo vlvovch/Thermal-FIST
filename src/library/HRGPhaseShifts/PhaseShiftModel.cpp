@@ -134,13 +134,23 @@ namespace thermalfist {
         waves = PiPi_I1_Waves();
         if (param == "GarciaMartin2011_P") twoJplus1 = 3;
       }
+      else if (channel == "pipi_I1_F") {
+        waves = PiPi_I1_F_Waves();
+        if (param == "GarciaMartin2011_F") twoJplus1 = 7;
+      }
       else if (channel == "piK_I32") {
         waves = PiK_I32_Waves();
-        if (param == "PelaezRodas2016_S") twoJplus1 = 1;
+        if      (param == "PelaezRodas2016_S") twoJplus1 = 1;
+        else if (param == "PelaezRodas2016_P") twoJplus1 = 3;
+        else if (param == "PelaezRodas2016_D") twoJplus1 = 5;
       }
       else if (channel == "piK_I12") {
         waves = PiK_I12_Waves();
         if (param == "PelaezRodas2016_S") twoJplus1 = 1;
+      }
+      else if (channel == "piK_K892") {
+        waves = PiK_K892_Waves();
+        if (param == "PelaezRodas2016_P") twoJplus1 = 3;
       }
       if (twoJplus1 < 0)
         throw std::invalid_argument("AnalyticWave: unknown analytic model '"

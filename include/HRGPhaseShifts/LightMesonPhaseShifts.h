@@ -24,13 +24,18 @@
  *     Garcia-Martin et al., Phys.Rev. D83 (2011) 074004 [arXiv:1102.2183],
  *     Appendix A.3 (Eq. A7, Table VII). The phase passes through 90 deg at the
  *     rho mass, so it is branch-tracked; elastic below the K-Kbar threshold.
+ *   - pi-pi, I=1 F-wave (J=3): conformal parametrization (same reference,
+ *     Eq. A14, Table X). Non-resonant below 1.42 GeV (rho3(1690) is higher),
+ *     small (k^7-suppressed), treated as elastic to 1.42 GeV.
  *   - pi-pi, I=2 (repulsive): S-wave (J=0) and D-wave (J=2),
  *     conformal CFD parametrization of Garcia-Martin et al.,
  *     Phys.Rev. D83 (2011) 074004 [arXiv:1102.2183], Tables VI, IX.
- *   - pi-K, I=3/2 (repulsive) and I=1/2 (attractive, the kappa/K0*(700)):
- *     S-wave (J=0), conformal CFD parametrization of Pelaez, Rodas,
- *     Phys.Rev. D93 (2016) 074025 [arXiv:1602.08404], Eqs. (11), (13),
- *     Tables I, II. The I=1/2 wave is elastic only below the K-eta threshold.
+ *   - pi-K, conformal CFD parametrization of Pelaez, Rodas, Phys.Rev. D93 (2016)
+ *     074025 [arXiv:1602.08404]:
+ *       I=3/2 S (repulsive, Eq.11), I=1/2 S (kappa/K0*(700), Eq.13),
+ *       I=3/2 P (Eq.26) and D (Eq.35) (non-resonant, small),
+ *       I=1/2 P = K*(892) (Eq.28, resonant, branch-tracked).
+ *     I=3/2 is elastic up to ~1.74 GeV; I=1/2 waves are elastic below K-eta.
  */
 
 #include <vector>
@@ -78,6 +83,13 @@ namespace thermalfist {
     /// P-wave (2J+1=3) of the pi-pi I=1 channel (the rho).
     std::vector<PhaseShiftPartialWave> PiPi_I1_Waves();
 
+    /// pi-pi I=1 F-wave phase shift delta_3^{(1)}(M) [radians]. Non-resonant and
+    /// small below 1.42 GeV (rho3(1690) is higher); attractive (> 0).
+    double PiPi_delta_I1_F(double M);
+
+    /// F-wave (2J+1=7) of the pi-pi I=1 channel (non-resonant, below rho3(1690)).
+    std::vector<PhaseShiftPartialWave> PiPi_I1_F_Waves();
+
     /// pi-pi I=2 S-wave phase shift delta_0^{(2)}(M) [radians]. Repulsive (< 0).
     double PiPi_delta_I2_S(double M);
     /// pi-pi I=2 D-wave phase shift delta_2^{(2)}(M) [radians]. Repulsive (< 0).
@@ -102,14 +114,23 @@ namespace thermalfist {
 
     /// pi-K I=3/2 S-wave phase shift delta_0^{3/2}(M) [radians]. Repulsive (< 0).
     double PiK_delta_I32_S(double M);
+    /// pi-K I=3/2 P-wave phase shift delta_1^{3/2}(M) [radians]. Non-resonant, tiny.
+    double PiK_delta_I32_P(double M);
+    /// pi-K I=3/2 D-wave phase shift delta_2^{3/2}(M) [radians]. Non-resonant, tiny.
+    double PiK_delta_I32_D(double M);
     /// pi-K I=1/2 S-wave phase shift delta_0^{1/2}(M) [radians]. Attractive (> 0),
     /// the kappa/K0*(700); returns 0 at/above the K-eta threshold.
     double PiK_delta_I12_S(double M);
+    /// pi-K I=1/2 P-wave phase shift delta_1^{1/2}(M) [radians]. The K*(892);
+    /// resonant (branch-tracked through 90 deg), elastic below the K-eta threshold.
+    double PiK_delta_I12_P(double M);
 
-    /// S-wave (2J+1=1) of the pi-K I=3/2 (repulsive) and I=1/2 (attractive)
-    /// channels. d(delta)/dM uses the engine's finite-difference fallback.
+    /// pi-K I=3/2 waves (S, P, D - all non-resonant; same channel, elastic to 1.74).
     std::vector<PhaseShiftPartialWave> PiK_I32_Waves();
+    /// pi-K I=1/2 S-wave (the kappa).
     std::vector<PhaseShiftPartialWave> PiK_I12_Waves();
+    /// pi-K I=1/2 P-wave (the K*(892)).
+    std::vector<PhaseShiftPartialWave> PiK_K892_Waves();
 
   } // namespace PhaseShifts
 

@@ -162,6 +162,16 @@ namespace thermalfist {
       const double B0_K12 = 0.411, B1_K12 = 0.162;
       const double sAdler_K12 = 0.236;               // GeV^2, ChPT LO (Eq.14)
       const double alpha_K12 = 1.15, s0_K12 = 1.1 * 1.1;
+      // P^{3/2} (Eq.26, Table V) and D^{3/2} (Eq.35, Table VIII), CFD. Both use
+      // alpha=1.45, s0=(1.84 GeV)^2 (same s0 as S^{3/2}, hence y0_K32).
+      const double alpha_PD32 = 1.45;
+      const double B0_P32 = -15.6, B1_P32 = -2.2;
+      const double B0_D32 = -1.67, B1_D32 = -7.0, B2_D32 = -38.;
+      // I=1/2 P-wave = K*(892) (Eq.28, Table VI elastic), CFD. alpha=1.15,
+      // s0=(1.1 GeV)^2 (same as S^{1/2}, hence y0_K12). The (m_r^2 - s) factor
+      // makes the phase cross 90 deg at the K*(892).
+      const double B0_K892 = 0.97, B1_K892 = 0.55, B2_K892 = 0.75;
+      const double mr_K892 = 0.8957;                 // GeV (Table VI)
 
       inline double yofs_piK(double s) {
         double r = (s - DeltaKpi) / (s + DeltaKpi);
@@ -205,11 +215,50 @@ namespace thermalfist {
       return std::atan(1. / cotd);
     }
 
+    double PiK_delta_I32_P(double M) {       // Eq.26, non-resonant (small, repulsive)
+      double s = M * M;
+      if (s <= sthr_piK) return 0.;
+      double q = qCM_piK(M);
+      if (q < 1.e-12) return 0.;
+      double w = omega_piK(yofs_piK(s), alpha_PD32, y0_K32);
+      double cotd = std::sqrt(s) / (2. * q * q * q) * (B0_P32 + B1_P32 * w);
+      return std::atan(1. / cotd);
+    }
+
+    double PiK_delta_I32_D(double M) {       // Eq.35, non-resonant (small)
+      double s = M * M;
+      if (s <= sthr_piK) return 0.;
+      double q = qCM_piK(M);
+      if (q < 1.e-12) return 0.;
+      double q5 = q * q * q * q * q;
+      double w = omega_piK(yofs_piK(s), alpha_PD32, y0_K32);
+      double cotd = std::sqrt(s) / (2. * q5) * (B0_D32 + B1_D32 * w + B2_D32 * w * w);
+      return std::atan(1. / cotd);
+    }
+
+    double PiK_delta_I12_P(double M) {       // K*(892), Eq.28, resonant
+      double s = M * M;
+      if (s <= sthr_piK || s >= sKeta_piK) return 0.;   // elastic region only
+      double q = qCM_piK(M);
+      if (q < 1.e-12) return 0.;
+      double w = omega_piK(yofs_piK(s), alpha_K12, y0_K12);
+      double cotd = std::sqrt(s) / (2. * q * q * q) * (mr_K892 * mr_K892 - s)
+                  * (B0_K892 + B1_K892 * w + B2_K892 * w * w);
+      return std::atan2(1.0, cotd);          // branch-tracked through 90 deg at K*(892)
+    }
+
     std::vector<PhaseShiftPartialWave> PiK_I32_Waves() {
-      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiK_delta_I32_S));
+      std::vector<PhaseShiftPartialWave> w;
+      w.push_back(PhaseShiftPartialWave(1, &PiK_delta_I32_S));   // S (2J+1=1)
+      w.push_back(PhaseShiftPartialWave(3, &PiK_delta_I32_P));   // P (2J+1=3)
+      w.push_back(PhaseShiftPartialWave(5, &PiK_delta_I32_D));   // D (2J+1=5)
+      return w;
     }
     std::vector<PhaseShiftPartialWave> PiK_I12_Waves() {
       return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiK_delta_I12_S));
+    }
+    std::vector<PhaseShiftPartialWave> PiK_K892_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(3, &PiK_delta_I12_P));  // P-wave
     }
 
     // ---- pi-pi I=0 S-wave (the sigma/f0(500)) -------------------------------
@@ -321,6 +370,35 @@ namespace thermalfist {
     std::vector<PhaseShiftPartialWave> PiPi_I1_Waves() {
       // P-wave: J=1 -> 2J+1 = 3.
       return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(3, &PiPi_delta_I1_P));
+    }
+
+    // ---- pi-pi I=1 F-wave ---------------------------------------------------
+    // Garcia-Martin et al., PRD83 (2011) 074004 [1102.2183], Eq.A14, Table X CFD:
+    //   cot delta_3^1(s) = (sqrt s / 2k^7) M_pi^6 [ 2 lambda M_pi / sqrt s + B0 + B1 w(s) ],
+    //   w(s) = (sqrt s - sqrt(s0 - s))/(sqrt s + sqrt(s0 - s)), s0 = (1.45 GeV)^2.
+    // Non-resonant below 1.42 GeV (rho3(1690) is higher) and small (k^7), so the
+    // single-branch atan is fine; the paper neglects the inelasticity to 1.42 GeV.
+    namespace {
+      const double F_B0 = 1.09e5, F_B1 = 1.41e5, F_lambda = 0.051e5;  // Table X, CFD
+      const double F_s0 = 1.45 * 1.45;     // GeV^2 (conformal pivot)
+    }
+
+    double PiPi_delta_I1_F(double M) {
+      double s = M * M;
+      if (s <= 4. * mpi * mpi) return 0.;
+      double k = std::sqrt(s / 4. - mpi * mpi);   // CM momentum
+      if (k < 1.e-12) return 0.;
+      double k7 = k * k * k * k * k * k * k;
+      double mpi6 = mpi * mpi * mpi * mpi * mpi * mpi;
+      double w = conformal_w(s, F_s0);
+      double cotd = std::sqrt(s) / (2. * k7) * mpi6
+                  * (2. * F_lambda * mpi / std::sqrt(s) + F_B0 + F_B1 * w);
+      return std::atan(1. / cotd);                // small, attractive (non-resonant)
+    }
+
+    std::vector<PhaseShiftPartialWave> PiPi_I1_F_Waves() {
+      // F-wave: J=3 -> 2J+1 = 7.
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(7, &PiPi_delta_I1_F));
     }
 
   } // namespace PhaseShifts

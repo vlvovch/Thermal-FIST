@@ -581,7 +581,8 @@ namespace {
 
     PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
                                       PhaseShifts::PiK_I32_Waves());
-    EXPECT_EQ(TPS.ComponentsNumber() - nbefore, 8);   // 4 members + 4 antiparticles
+    // (4 members + 4 antiparticles) per wave, S+P+D -> 24
+    EXPECT_EQ(TPS.ComponentsNumber() - nbefore, 24);
 
     // Iz=3/2: Q=2, S=+1; Iz=-3/2: Q=-1, S=+1 (distinct member, NOT an antiparticle)
     ASSERT_GE(TPS.PdgToId(99233001), 0);
@@ -815,6 +816,182 @@ namespace {
     EXPECT_GT(TPS.ParticleByPDG(113).GetGeneralizedDensity()
                 ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
     std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiPiI1FWaveNonResonant) {
+    // I=1 F-wave: small, attractive, non-resonant (no 90 deg crossing below 1.42).
+    const double r2d = 180.0 / M_PI;
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiPi_delta_I1_F(2.0 * PhaseShifts::PionMass()), 0.0);
+    EXPECT_GT(PhaseShifts::PiPi_delta_I1_F(1.0), 0.0);            // attractive
+    EXPECT_LT(PhaseShifts::PiPi_delta_I1_F(1.42) * r2d, 30.0);    // small (a few deg)
+
+    // synthetic cluster (no resonance to reuse): 2J+1=7, F field, family pi-pi
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I1_F_Channel();
+    EXPECT_TRUE(ch.memberPdg.empty());
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 0, 7), 99120007LL);  // Iz=0
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +2, 7), 99122007LL); // Iz=+1
+
+    // build (catalog create): synthetic F clusters with pi-pi I=1 decays
+    const std::string dir = ::testing::TempDir();
+    const std::string pionF = dir + "ps_pions_fw.dat";
+    writePionList(pionF);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    PhaseShifts::AddPhaseShiftChannel(TPS, ch, PhaseShifts::PiPi_I1_F_Waves());
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 3);     // F0, F+, F- (synthetic)
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 0);    // synthetic, not a reuse
+    ASSERT_GE(TPS.PdgToId(99120007), 0);
+    EXPECT_GT(TPS.ParticleByPDG(99120007).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);  // attractive
+    std::remove(pionF.c_str());
+  }
+
+  // ---- pi-K elastic set: I=3/2 P & D (non-resonant) + K*(892) (resonant) ----
+
+  TEST(PhaseShifts, PiKI32PDWavesSmall) {
+    // The I=3/2 P and D waves are repulsive (delta < 0), zero at threshold, and
+    // small (high-l, momentum-suppressed) across the elastic range.
+    const double r2d = 180.0 / M_PI;
+    const double thr = PhaseShifts::PionMass() + PhaseShifts::KaonMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I32_P(thr), 0.0);
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I32_D(thr), 0.0);
+    EXPECT_LT(PhaseShifts::PiK_delta_I32_P(1.0), 0.0);             // repulsive
+    EXPECT_LT(PhaseShifts::PiK_delta_I32_D(1.0), 0.0);
+    // both are at most a couple of degrees over the whole elastic range
+    for (double M = thr + 0.05; M <= PhaseShifts::PiK_I32_Mmax(); M += 0.1) {
+      EXPECT_LT(std::fabs(PhaseShifts::PiK_delta_I32_P(M)) * r2d, 5.0) << "M=" << M;
+      EXPECT_LT(std::fabs(PhaseShifts::PiK_delta_I32_D(M)) * r2d, 5.0) << "M=" << M;
+    }
+  }
+
+  TEST(PhaseShifts, PiKI32HasThreeWaves) {
+    // The I=3/2 catalog now carries S (2J+1=1), P (3) and D (5).
+    auto w = PhaseShifts::PiK_I32_Waves();
+    ASSERT_EQ(w.size(), 3u);
+    EXPECT_EQ(w[0].twoJplus1, 1);
+    EXPECT_EQ(w[1].twoJplus1, 3);
+    EXPECT_EQ(w[2].twoJplus1, 5);
+    // the analytic registry resolves each wave by its per-wave model name
+    EXPECT_EQ(PhaseShifts::AnalyticWave("piK_I32", "PelaezRodas2016_S").twoJplus1, 1);
+    EXPECT_EQ(PhaseShifts::AnalyticWave("piK_I32", "PelaezRodas2016_P").twoJplus1, 3);
+    EXPECT_EQ(PhaseShifts::AnalyticWave("piK_I32", "PelaezRodas2016_D").twoJplus1, 5);
+  }
+
+  TEST(PhaseShifts, PiKKstar892ResonantBranchTracked) {
+    // delta_1^{1/2} = the K*(892): 0 at threshold, branch-tracked through exactly
+    // 90 deg at the resonance mass (m_r = 0.8957, where (m_r^2 - s) zeroes cot
+    // delta), rising monotonically; elastic only below the K-eta threshold.
+    const double r2d = 180.0 / M_PI;
+    const double thr = PhaseShifts::PionMass() + PhaseShifts::KaonMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I12_P(thr), 0.0);
+    EXPECT_NEAR(PhaseShifts::PiK_delta_I12_P(0.8957) * r2d, 90.0, 1e-6);  // at m_r
+    EXPECT_GT(PhaseShifts::PiK_delta_I12_P(0.8), 0.0);                    // attractive
+    // elastic region only -> 0 at/above the K-eta threshold
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I12_P(PhaseShifts::PiK_I12_Mmax()), 0.0);
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I12_P(1.2), 0.0);
+    // monotonic through 90 deg up to (just below) the K-eta threshold
+    double prev = -1.0; bool crossed90 = false, monotonic = true;
+    for (double M = thr + 1e-3; M < PhaseShifts::PiK_I12_Mmax() - 1e-3; M += 0.005) {
+      double d = PhaseShifts::PiK_delta_I12_P(M) * r2d;
+      if (d < prev - 1e-6) monotonic = false;
+      if (prev < 90.0 && d >= 90.0) crossed90 = true;
+      prev = d;
+    }
+    EXPECT_TRUE(monotonic);
+    EXPECT_TRUE(crossed90);
+  }
+
+  TEST(PhaseShifts, PiKKstar892ReusesRealResonance) {
+    // The K*(892) channel reuses the real K*(892) codes (subsumption by PDG
+    // coincidence): K*(892)+ = 323, K*(892)0 = 313, the P-wave 2J+1=3 carrying the
+    // K* spin. Strange multiplet -> all Iz are distinct members.
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiK_K892_Channel();
+    EXPECT_EQ(ch.twoI, 1);
+    EXPECT_EQ(ch.memberPdg[+1], 323LL);
+    EXPECT_EQ(ch.memberPdg[-1], 313LL);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +1, 3), 323LL);   // K*(892)+
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, -1, 3), 313LL);   // K*(892)0
+    EXPECT_TRUE(ch.subsumedPdg.empty());                          // override, no removal
+
+    // build a list with the K* present -> the density overrides K*+/K*0 and their
+    // antiparticles (K*- = -323, K*bar0 = -313); they stay as decay products.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_kstar_list.dat";
+    {
+      std::ofstream f(lst.c_str());
+      f << "211 pi+      1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+      f << "111 pi0      1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+      f << "321 K+       1 0.493677 1 -1 0 1 1 0 1 0 0 0\n";
+      f << "311 K0       1 0.497611 1 -1 0 0 1 0 1 0 0 0\n";
+      f << "323 K*(892)+ 0 0.89167  3 -1 0 1 1 0 1 0 0.0514 0.633\n";
+      f << "313 K*(892)0 0 0.89555  3 -1 0 0 1 0 1 0 0.0473 0.633\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    EXPECT_EQ(TPS.ParticleByPDG(323).GetGeneralizedDensity(), nullptr);  // plain pole/BW
+    PhaseShifts::AddPhaseShiftChannel(TPS, ch, PhaseShifts::PiK_K892_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber(), nbefore);                  // K* not re-added
+    // K*+, K*0 and their two antiparticles -> 4 overridden real resonances
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 4);
+    ASSERT_NE(TPS.ParticleByPDG(323).GetGeneralizedDensity(), nullptr);
+    ASSERT_NE(TPS.ParticleByPDG(313).GetGeneralizedDensity(), nullptr);
+    ASSERT_NE(TPS.ParticleByPDG(-323).GetGeneralizedDensity(), nullptr);
+    ASSERT_NE(TPS.ParticleByPDG(-313).GetGeneralizedDensity(), nullptr);
+    // attractive resonance -> positive chi2
+    EXPECT_GT(TPS.ParticleByPDG(323).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiKElasticSetFromConfig) {
+    // Load the full elastic pi-K set from a config: I=3/2 S/P/D (synthetic files),
+    // I=1/2 S = kappa (reuse 9000321/9000311) and the K*(892) P-wave (reuse
+    // 323/313). Check the cluster counts and that the densities are attached.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_pik_elastic_list.dat";
+    {
+      std::ofstream f(lst.c_str());
+      f << "211 pi+      1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+      f << "111 pi0      1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+      f << "321 K+       1 0.493677 1 -1 0 1 1 0 1 0 0 0\n";
+      f << "311 K0       1 0.497611 1 -1 0 0 1 0 1 0 0 0\n";
+      f << "323 K*(892)+ 0 0.89167  3 -1 0 1 1 0 1 0 0.0514 0.633\n";
+      f << "313 K*(892)0 0 0.89555  3 -1 0 0 1 0 1 0 0.0473 0.633\n";
+    }
+    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves(), dir);
+    const std::string confF = dir + "ps_piK_elastic.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "piK_I32:S   list-piK_I32_S.dat  decays-piK_I32_S.dat  PelaezRodas2016_S\n";
+      f << "piK_I32:P   list-piK_I32_P.dat  decays-piK_I32_P.dat  PelaezRodas2016_P\n";
+      f << "piK_I32:D   list-piK_I32_D.dat  decays-piK_I32_D.dat  PelaezRodas2016_D\n";
+      f << "piK_I12:S   -  -  PelaezRodas2016_S\n";   // kappa reuses 9000321/9000311
+      f << "piK_K892:P  -  -  PelaezRodas2016_P\n";   // K*(892) reuses 323/313
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    // I=3/2: 8 per wave x 3 waves = 24; kappa created (4); K*(892) overrides (4).
+    EXPECT_EQ(added.size(), 32u);
+    // K*(892) overridden (real codes), kappa created, I=3/2 synthetic clusters.
+    EXPECT_NE(TPS.ParticleByPDG(323).GetGeneralizedDensity(), nullptr);   // K* overridden
+    EXPECT_NE(TPS.ParticleByPDG(313).GetGeneralizedDensity(), nullptr);
+    EXPECT_GE(TPS.PdgToId(9000321), 0);                                   // kappa created
+    EXPECT_GE(TPS.PdgToId(9000311), 0);
+    EXPECT_GE(TPS.PdgToId(99233003), 0);                                  // I=3/2 P cluster
+    EXPECT_GE(TPS.PdgToId(99233005), 0);                                  // I=3/2 D cluster
+    // Both the K*(892) (323/313 + antis) and the kappa (9000321/9000311 + antis)
+    // sit on real (non-synthetic) codes, so both count as overridden resonances:
+    // 4 (K*) + 4 (kappa) = 8. (Created vs pre-existing does not matter - it is the
+    // real code that makes the cheap toggle inexact, so the GUI rebuilds.)
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 8);
+
+    std::remove(lst.c_str()); std::remove(confF.c_str());
+    std::remove((dir + "list-piK_I32_S.dat").c_str());
+    std::remove((dir + "list-piK_I32_P.dat").c_str());
+    std::remove((dir + "list-piK_I32_D.dat").c_str());
+    std::remove((dir + "decays-piK_I32_S.dat").c_str());
+    std::remove((dir + "decays-piK_I32_P.dat").c_str());
+    std::remove((dir + "decays-piK_I32_D.dat").c_str());
   }
 
 }

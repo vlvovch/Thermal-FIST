@@ -108,14 +108,21 @@ quantum-number-based assignment as every other species — no special-casing.
   threshold. It **reuses the real rho codes (rho0=113, rho+=213)**, overriding
   the rho's contribution (the P-wave 2J+1=3 carries the rho spin). Config:
   `pipi.conf`.
-- `piK_I32` — repulsive pi-K I=3/2 (S-wave; Pelaez, Rodas, Phys. Rev. D93 (2016)
-  074025). Non-resonant, elastic up to ~1.74 GeV. Synthetic clusters. Config:
-  `piK.conf`.
-- `piK_I12` — attractive pi-K I=1/2 (S-wave; same reference), i.e. the
+- `pipi_I1_F` — pi-pi I=1 F-wave (same reference, Eq. A14). Non-resonant below
+  1.42 GeV (rho3(1690) is higher) and small (k^7-suppressed); elastic to 1.42 GeV.
+  A synthetic cluster (no resonance to reuse). Config: `pipi.conf`.
+- `piK_I32` — repulsive pi-K I=3/2 (S, P, D waves; Pelaez, Rodas, Phys. Rev. D93
+  (2016) 074025). Non-resonant, elastic up to ~1.74 GeV; the P and D waves are
+  tiny. Synthetic clusters. Config: `piK.conf`.
+- `piK_I12` — attractive pi-K I=1/2 S-wave (same reference), i.e. the
   kappa/K0*(700). Elastic only below the K-eta threshold. It **reuses the real
   kappa codes (9000321, 9000311)**; since the kappa is usually excluded from the
   list, these are created with the isospin-CG decays (if present, overridden).
   Config: `piK.conf`.
+- `piK_K892` — pi-K I=1/2 P-wave = the K*(892) (same reference, Eq. 28). Resonant
+  (branch-tracked through 90 deg), elastic below the K-eta threshold. It **reuses
+  the real K*(892) codes (323, 313)**, overriding their contribution. Config:
+  `piK.conf`.
 
 ### Subsumption by PDG coincidence
 A channel can REUSE a real resonance's PDG code (`memberPdg`, the `-` list/decay

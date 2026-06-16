@@ -184,11 +184,20 @@ namespace thermalfist {
     /// contribution; the rho stays in the list (still a decay product).
     PhaseShiftChannel PiPi_I1_Channel();
 
+    /// Catalog: the pi-pi I=1 F-wave channel - non-resonant below 1.42 GeV
+    /// (rho3(1690) is higher), so a synthetic cluster (no resonance to reuse).
+    PhaseShiftChannel PiPi_I1_F_Channel();
+
     /// Catalog: the pi-K I=3/2 (repulsive) and I=1/2 (attractive, kappa/K0*(700))
     /// channels (constituents + structure only; S = +1). The members span all Iz
     /// of the multiplet (a strange channel is not self-conjugate).
     PhaseShiftChannel PiK_I32_Channel();
     PhaseShiftChannel PiK_I12_Channel();
+
+    /// Catalog: the pi-K I=1/2 P-wave channel - the K*(892). REUSES the real K*
+    /// codes (K*(892)+=323, K*(892)0=313), overriding their contribution; elastic
+    /// below the K-eta threshold. Separate from the kappa (different wave/resonance).
+    PhaseShiftChannel PiK_K892_Channel();
 
     // ------------------------------------------------------------------------
     // High-level convenience API (no file juggling).
