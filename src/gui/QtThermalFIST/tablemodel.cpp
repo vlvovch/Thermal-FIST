@@ -13,6 +13,7 @@
 #include <fstream>
 
 #include "HRGBase/ThermalModelBase.h"
+#include "HRGPhaseShifts/PhaseShiftDensity.h"
 
 using namespace thermalfist;
 
@@ -46,7 +47,14 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
         case Qt::DisplayRole:
             if (col==0) return QString(model->TPS()->Particles()[RowToParticle[row]].Name().c_str());
             if (col==1) return model->TPS()->Particles()[RowToParticle[row]].PdgId();
-            if (col==2) return model->TPS()->Particles()[RowToParticle[row]].Mass();
+            if (col==2) {
+                const thermalfist::ThermalParticle& part = model->TPS()->Particles()[RowToParticle[row]];
+                // Mark S-matrix / phase-shift "particles" (Beth-Uhlenbeck clusters)
+                // with an asterisk - their mass is only the nominal threshold.
+                if (dynamic_cast<thermalfist::PhaseShiftDensity*>(part.GetGeneralizedDensity()))
+                    return QString::number(part.Mass()) + " *";
+                return part.Mass();
+            }
             if ((col==3 && model->TPS()->Particles()[RowToParticle[row]].IsStable()) ||
                 (col==4 && model->TPS()->Particles()[RowToParticle[row]].IsNeutral()!=0)) return "*";
             if (col == 3 && !model->TPS()->Particles()[RowToParticle[row]].IsStable())

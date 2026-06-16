@@ -139,6 +139,79 @@ namespace thermalfist {
       return waves;
     }
 
+    // ---- pi-K S-wave phase shifts -------------------------------------------
+    // Pelaez, Rodas, Phys.Rev. D93 (2016) 074025 [arXiv:1602.08404], Eqs.(11),(13),
+    // Tables I (I=3/2) and II (I=1/2), CFD. Conformal variable
+    //   omega(y) = (sqrt y - alpha sqrt(y0 - y)) / (sqrt y + alpha sqrt(y0 - y)),
+    //   y(s) = ((s - Delta_Kpi)/(s + Delta_Kpi))^2,  Delta_Kpi = m_K^2 - m_pi^2.
+    //   cot delta = -+ (sqrt s / (2q)) * 1/(s - sAdler) * {B0 + B1 omega + ...}
+    // (minus = repulsive I=3/2; plus = attractive I=1/2).
+    namespace {
+      const double mK_piK    = KaonMass();    // 0.496 GeV (isospin-averaged)
+      const double meta_piK  = EtaMass();     // 0.5478 GeV
+      const double SigmaKpi  = mK_piK * mK_piK + mpi * mpi;   // m_K^2 + m_pi^2
+      const double DeltaKpi  = mK_piK * mK_piK - mpi * mpi;   // m_K^2 - m_pi^2
+      const double sthr_piK  = (mK_piK + mpi) * (mK_piK + mpi);
+      const double sKeta_piK = (mK_piK + meta_piK) * (mK_piK + meta_piK);
+
+      // S^{3/2} parameters (Table I, CFD)
+      const double B0_K32 = 2.27, B1_K32 = 3.94, B2_K32 = 3.36;
+      const double sAdler_K32 = SigmaKpi;            // ChPT LO
+      const double alpha_K32 = 1.4, s0_K32 = 1.84 * 1.84;
+      // S^{1/2} elastic parameters (Table II, CFD)
+      const double B0_K12 = 0.411, B1_K12 = 0.162;
+      const double sAdler_K12 = 0.236;               // GeV^2, ChPT LO (Eq.14)
+      const double alpha_K12 = 1.15, s0_K12 = 1.1 * 1.1;
+
+      inline double yofs_piK(double s) {
+        double r = (s - DeltaKpi) / (s + DeltaKpi);
+        return r * r;
+      }
+      const double y0_K32 = yofs_piK(s0_K32);
+      const double y0_K12 = yofs_piK(s0_K12);
+
+      inline double qCM_piK(double M) {
+        double s = M * M;
+        double a1 = s - sthr_piK;
+        double a2 = s - (mK_piK - mpi) * (mK_piK - mpi);
+        return (a1 > 0.) ? std::sqrt(a1 * a2) / (2. * M) : 0.;
+      }
+      inline double omega_piK(double y, double alpha, double y0) {
+        if (y >= y0) return 1.;
+        double sy = std::sqrt(y), sd = std::sqrt(y0 - y);
+        return (sy - alpha * sd) / (sy + alpha * sd);
+      }
+    } // anonymous namespace
+
+    double PiK_delta_I32_S(double M) {
+      double s = M * M;
+      if (s <= sthr_piK) return 0.;
+      double q = qCM_piK(M);
+      if (q < 1.e-12) return 0.;
+      double w = omega_piK(yofs_piK(s), alpha_K32, y0_K32);
+      // minus sign: repulsive channel (delta < 0)
+      double cotd = -(M / (2. * q * (s - sAdler_K32))) * (B0_K32 + B1_K32 * w + B2_K32 * w * w);
+      return std::atan(1. / cotd);
+    }
+
+    double PiK_delta_I12_S(double M) {
+      double s = M * M;
+      if (s <= sthr_piK || s >= sKeta_piK) return 0.;   // elastic region only
+      double q = qCM_piK(M);
+      if (q < 1.e-12) return 0.;
+      double w = omega_piK(yofs_piK(s), alpha_K12, y0_K12);
+      // plus sign: attractive channel (delta > 0, kappa/K0*(700))
+      double cotd = +(M / (2. * q * (s - sAdler_K12))) * (B0_K12 + B1_K12 * w);
+      return std::atan(1. / cotd);
+    }
+
+    std::vector<PhaseShiftPartialWave> PiK_I32_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiK_delta_I32_S));
+    }
+    std::vector<PhaseShiftPartialWave> PiK_I12_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiK_delta_I12_S));
+    }
+
   } // namespace PhaseShifts
 
 } // namespace thermalfist

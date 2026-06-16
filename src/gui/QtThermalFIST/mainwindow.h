@@ -19,6 +19,7 @@
 #include <QRadioButton>
 #include <QTextEdit>
 #include <QTabWidget>
+#include <QStringList>
 
 #include <string>
 #include <vector>
@@ -68,7 +69,7 @@ class MainWindow : public QMainWindow
     QString clists = "";
 
     // S-matrix / phase-shift state
-    QString m_phaseShiftConf = "";                 ///< path to the phase-shift config file
+    QStringList m_phaseShiftConfs;                  ///< phase-shift config file(s), applied in order
     std::vector<std::string> m_lastListPaths;      ///< base list files of the current selection
     std::vector<std::string> m_lastDecayPaths;     ///< base decay files of the current selection
 

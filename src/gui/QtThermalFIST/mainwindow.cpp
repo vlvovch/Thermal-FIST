@@ -159,8 +159,11 @@ MainWindow::MainWindow(QWidget *parent)
   buttonLoadDecays = new QPushButton(tr("Load decays..."));
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
-  // S-matrix / phase-shift controls. Default config ships with the package.
-  m_phaseShiftConf = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf";
+  // S-matrix / phase-shift controls. Default: pi-pi + pi-K (as in the Wuppertal
+  // analysis). Both ship with the package; use "Phase shifts..." to change them.
+  m_phaseShiftConfs = QStringList()
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf")
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf");
   chkPhaseShifts = new QCheckBox(tr("Phase shifts"));
   chkPhaseShifts->setToolTip(tr("Add S-matrix / phase-shift channels from a config file\n"
                                 "as effective degrees of freedom (Beth-Uhlenbeck)."));
@@ -581,8 +584,12 @@ void MainWindow::refreshListDisplay()
 {
   QString t = clists;
   const bool present = TPS && PhaseShifts::CountPhaseShiftDensities(*TPS) > 0;
-  if (present && chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConf.isEmpty())
-    t += " + PS[" + QFileInfo(m_phaseShiftConf).fileName() + "]";
+  if (present && chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConfs.isEmpty()) {
+    QStringList names;
+    for (int i = 0; i < m_phaseShiftConfs.size(); ++i)
+      names << QFileInfo(m_phaseShiftConfs[i]).fileName();
+    t += " + PS[" + names.join(", ") + "]";
+  }
   else if (present)
     t += " (phase shifts off)";   // clusters still in the list but disabled
   if (TPS)
@@ -593,9 +600,11 @@ void MainWindow::refreshListDisplay()
 void MainWindow::applyPhaseShiftsIfEnabled()
 {
   if (!chkPhaseShifts || !chkPhaseShifts->isChecked()) return;
-  if (m_phaseShiftConf.isEmpty()) return;
+  if (m_phaseShiftConfs.isEmpty()) return;
   try {
-    PhaseShifts::AddPhaseShiftChannelsFromFile(*TPS, m_phaseShiftConf.toStdString());
+    // Apply every selected config in order (e.g. pipi.conf + piK.conf together).
+    for (int i = 0; i < m_phaseShiftConfs.size(); ++i)
+      PhaseShifts::AddPhaseShiftChannelsFromFile(*TPS, m_phaseShiftConfs[i].toStdString());
   } catch (const std::exception& e) {
     QMessageBox::warning(this, tr("Phase shifts"),
       tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
@@ -635,13 +644,14 @@ void MainWindow::onPhaseShiftToggled()
 void MainWindow::loadPhaseShiftConf()
 {
   QString prefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts";
-  if (!m_phaseShiftConf.isEmpty())
-    prefix = m_phaseShiftConf;
-  QString path = QFileDialog::getOpenFileName(this, tr("Open phase-shift config file"), prefix,
+  if (!m_phaseShiftConfs.isEmpty())
+    prefix = QFileInfo(m_phaseShiftConfs.first()).absolutePath();
+  // Multi-select so pipi.conf + piK.conf (etc.) can be loaded together.
+  QStringList paths = QFileDialog::getOpenFileNames(this, tr("Open phase-shift config file(s)"), prefix,
                    tr("Config files (*.conf *.txt *.dat);;All files (*)"));
-  if (path.isEmpty())
+  if (paths.isEmpty())
     return;
-  m_phaseShiftConf = path;
+  m_phaseShiftConfs = paths;
   // A new config means different channels: rebuild from the base list so the old
   // clusters are dropped and the new ones added (with the box checked).
   chkPhaseShifts->blockSignals(true);

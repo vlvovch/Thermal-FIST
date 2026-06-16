@@ -156,6 +156,12 @@ namespace thermalfist {
     /// Catalog: the repulsive pi-pi I=2 channel (constituents + structure only).
     PhaseShiftChannel PiPi_I2_Channel();
 
+    /// Catalog: the pi-K I=3/2 (repulsive) and I=1/2 (attractive, kappa/K0*(700))
+    /// channels (constituents + structure only; S = +1). The members span all Iz
+    /// of the multiplet (a strange channel is not self-conjugate).
+    PhaseShiftChannel PiK_I32_Channel();
+    PhaseShiftChannel PiK_I12_Channel();
+
     // ------------------------------------------------------------------------
     // High-level convenience API (no file juggling).
     // ------------------------------------------------------------------------

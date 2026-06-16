@@ -110,3 +110,17 @@ Notes:
 
 - `pipi_I2` — repulsive pi-pi I=2 (S- and D-waves; Garcia-Martin et al.,
   Phys. Rev. D83 (2011) 074004). Non-resonant: subsumes no resonances.
+  Config: `pipi.conf`.
+- `piK_I32` — repulsive pi-K I=3/2 (S-wave; Pelaez, Rodas, Phys. Rev. D93 (2016)
+  074025). Non-resonant, elastic up to ~1.74 GeV. Config: `piK.conf`.
+- `piK_I12` — attractive pi-K I=1/2 (S-wave; same reference), i.e. the
+  kappa/K0*(700). Elastic only below the K-eta threshold. This S-wave *is* the
+  kappa: if K0*(700) is also in the HRG list it is double-counted (matching the
+  Wuppertal treatment); add its codes to the channel's `subsumedPdg` to remove
+  it. Config: `piK.conf`.
+
+pi-K carries strangeness (S=+1), so unlike pi-pi it is **not** a self-conjugate
+multiplet: every Iz is a distinct member (Q = Iz + 1/2 for the S=+1 sector) and
+the antiparticles form the S=-1 sector. The builder handles this automatically;
+the PDG id encodes the multiplet index I+Iz (0..2I) rather than 2|Iz|. To run
+pi-pi + pi-K together, load both `pipi.conf` and `piK.conf`.

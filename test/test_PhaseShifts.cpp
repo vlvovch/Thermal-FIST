@@ -154,6 +154,16 @@ namespace {
     f << "111 pi0 1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
   }
 
+  // Pions + kaons (anti-K auto-generated) for the pi-K module's decays.
+  void writePiKList(const std::string& path) {
+    std::ofstream f(path.c_str());
+    f << "# base pions + kaons\n";
+    f << "211 pi+ 1 0.13957  1 -1 0  1 0 0 0 0 0 0\n";
+    f << "111 pi0 1 0.134977 1 -1 0  0 0 0 0 0 0 0\n";
+    f << "321 K+  1 0.493677 1 -1 0  1 1 0 1 0 0 0\n";
+    f << "311 K0  1 0.497611 1 -1 0  0 1 0 1 0 0 0\n";
+  }
+
   TEST(PhaseShifts, ClebschGordanDecays) {
     PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
     // Iz=+2 -> pi+ pi+
@@ -510,6 +520,122 @@ namespace {
     std::remove((dir + "list-pipi_I2_D.dat").c_str());
     std::remove((dir + "decays-pipi_I2_S.dat").c_str());
     std::remove((dir + "decays-pipi_I2_D.dat").c_str());
+  }
+
+  // ---- pi-K (strange, non-self-conjugate multiplet) ----
+
+  TEST(PhaseShifts, PiKDeltaSigns) {
+    // I=3/2 repulsive (delta < 0), I=1/2 attractive (delta > 0, the kappa).
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I32_S(PhaseShifts::PionMass()
+                                                + PhaseShifts::KaonMass()), 0.0);  // threshold
+    EXPECT_LT(PhaseShifts::PiK_delta_I32_S(0.9), 0.0);
+    EXPECT_GT(PhaseShifts::PiK_delta_I12_S(0.9), 0.0);
+    // I=1/2 is elastic only below the K-eta threshold -> 0 above it
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiK_delta_I12_S(1.2), 0.0);
+  }
+
+  TEST(PhaseShifts, PiKPdgIdStrangeMultiplet) {
+    // Strange (S=+1) -> not self-conjugate: every Iz is a distinct member,
+    // the Iz field encodes I+Iz in 0..2I (antiparticle = the negative code).
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiK_I32_Channel();
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, -3, 1), 99230001LL);  // Iz=-3/2
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, -1, 1), 99231001LL);  // Iz=-1/2
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +1, 1), 99232001LL);  // Iz=+1/2
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +3, 1), 99233001LL);  // Iz=+3/2
+    EXPECT_EQ((99233001LL / 100000LL) % 10, 2LL);                    // family = pi-K
+    EXPECT_EQ((99233001LL / 10000LL)  % 10, 3LL);                    // 2I = 3
+    PhaseShifts::PhaseShiftChannel c12 = PhaseShifts::PiK_I12_Channel();
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, -1, 1), 99210001LL);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(c12, +1, 1), 99211001LL);
+  }
+
+  TEST(PhaseShifts, PiKClebschGordanDecays) {
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiK_I32_Channel();
+    // Iz=3/2 -> pi+ K+ (single channel)
+    auto d3 = PhaseShifts::ChannelDecays(ch, 3);
+    ASSERT_EQ(d3.size(), 1u);
+    EXPECT_NEAR(d3[0].first, 1.0, 1e-9);
+    EXPECT_EQ(d3[0].second.first, 211); EXPECT_EQ(d3[0].second.second, 321);
+    // Iz=1/2 -> 2/3 pi0 K+ (111,321) + 1/3 pi+ K0 (211,311); branchings sum to 1
+    auto d1 = PhaseShifts::ChannelDecays(ch, 1);
+    ASSERT_EQ(d1.size(), 2u);
+    double tot = 0.; for (size_t i = 0; i < d1.size(); ++i) tot += d1[i].first;
+    EXPECT_NEAR(tot, 1.0, 1e-9);
+    for (size_t i = 0; i < d1.size(); ++i) {
+      if (d1[i].second.first == 111 && d1[i].second.second == 321)
+        EXPECT_NEAR(d1[i].first, 2.0 / 3.0, 1e-9);   // pi0 K+
+      if (d1[i].second.first == 211 && d1[i].second.second == 311)
+        EXPECT_NEAR(d1[i].first, 1.0 / 3.0, 1e-9);   // pi+ K0
+    }
+  }
+
+  TEST(PhaseShifts, PiKStrangeMultipletBuild) {
+    // A strange channel builds the FULL multiplet (all Iz, all S=+1) plus the
+    // S=-1 antimultiplet - not just Iz>=0 + antiparticles.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_pik_list.dat";
+    writePiKList(lst);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber() - nbefore, 8);   // 4 members + 4 antiparticles
+
+    // Iz=3/2: Q=2, S=+1; Iz=-3/2: Q=-1, S=+1 (distinct member, NOT an antiparticle)
+    ASSERT_GE(TPS.PdgToId(99233001), 0);
+    EXPECT_EQ(TPS.ParticleByPDG(99233001).ElectricCharge(), 2);
+    EXPECT_EQ(TPS.ParticleByPDG(99233001).Strangeness(),   1);
+    ASSERT_GE(TPS.PdgToId(99230001), 0);
+    EXPECT_EQ(TPS.ParticleByPDG(99230001).ElectricCharge(), -1);
+    EXPECT_EQ(TPS.ParticleByPDG(99230001).Strangeness(),    1);
+    // antiparticle carries S=-1
+    ASSERT_GE(TPS.PdgToId(-99233001), 0);
+    EXPECT_EQ(TPS.ParticleByPDG(-99233001).Strangeness(), -1);
+    // density attached, repulsive -> negative chi2
+    ASSERT_NE(TPS.ParticleByPDG(99233001).GetGeneralizedDensity(), nullptr);
+    EXPECT_LT(TPS.ParticleByPDG(99233001).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, PiKChi2QFromConfig) {
+    // Load both pi-K channels from a config (per-wave files) and check the net
+    // electric-charge susceptibility contribution is negative (repulsive I=3/2,
+    // sum Q^2=12, dominates the attractive I=1/2, sum Q^2=2).
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_pik_cfg_list.dat";
+    writePiKList(lst);
+    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiK_I32_Channel(),
+                                      PhaseShifts::PiK_I32_Waves(), dir);
+    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiK_I12_Channel(),
+                                      PhaseShifts::PiK_I12_Waves(), dir);
+    const std::string confF = dir + "ps_piK.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "piK_I32:S  list-piK_I32_S.dat  decays-piK_I32_S.dat  PelaezRodas2016_S\n";
+      f << "piK_I12:S  list-piK_I12_S.dat  decays-piK_I12_S.dat  PelaezRodas2016_S\n";
+    }
+    auto suscQ = [&](ThermalParticleSystem& T_) {
+      ThermalModelIdeal m(&T_);
+      m.SetTemperature(0.150); m.SetBaryonChemicalPotential(0.0);
+      m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+      m.CalculatePrimordialDensities(); m.CalculateFluctuations();
+      return m.Susc(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge);
+    };
+    ThermalParticleSystem TPSbase(std::vector<std::string>(1, lst));
+    double base = suscQ(TPSbase);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    EXPECT_EQ(added.size(), 12u);                 // (4+4) I=3/2 + (2+2) I=1/2
+    double full = suscQ(TPS);
+    EXPECT_LT(full - base, 0.0);                  // net repulsive
+
+    std::remove(lst.c_str()); std::remove(confF.c_str());
+    std::remove((dir + "list-piK_I32_S.dat").c_str());
+    std::remove((dir + "decays-piK_I32_S.dat").c_str());
+    std::remove((dir + "list-piK_I12_S.dat").c_str());
+    std::remove((dir + "decays-piK_I12_S.dat").c_str());
   }
 
 }

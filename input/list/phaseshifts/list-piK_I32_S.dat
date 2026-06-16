@@ -1,0 +1,6 @@
+# S-matrix phase-shift channel 'piK_I32', wave: S
+# pdgid name stable mass deg stat B Q S C |S| |C| width threshold
+    99230001  piK_I32[Iz=-3/2,S]            0  0.63557  1  -1  0  -1  1  0  1  0  0  0.63557
+    99231001  piK_I32[Iz=-1/2,S]            0  0.63557  1  -1  0  0  1  0  1  0  0  0.63557
+    99232001  piK_I32[Iz=+1/2,S]            0  0.63557  1  -1  0  1  1  0  1  0  0  0.63557
+    99233001  piK_I32[Iz=+3/2,S]            0  0.63557  1  -1  0  2  1  0  1  0  0  0.63557

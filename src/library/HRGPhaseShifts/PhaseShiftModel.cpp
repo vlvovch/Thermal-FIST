@@ -122,6 +122,14 @@ namespace thermalfist {
         if      (param == "GarciaMartin2011_S") twoJplus1 = 1;
         else if (param == "GarciaMartin2011_D") twoJplus1 = 5;
       }
+      else if (channel == "piK_I32") {
+        waves = PiK_I32_Waves();
+        if (param == "PelaezRodas2016_S") twoJplus1 = 1;
+      }
+      else if (channel == "piK_I12") {
+        waves = PiK_I12_Waves();
+        if (param == "PelaezRodas2016_S") twoJplus1 = 1;
+      }
       if (twoJplus1 < 0)
         throw std::invalid_argument("AnalyticWave: unknown analytic model '"
                                     + channel + ":" + param + "'");

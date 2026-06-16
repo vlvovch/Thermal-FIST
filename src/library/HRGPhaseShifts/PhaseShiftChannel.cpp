@@ -66,6 +66,25 @@ namespace thermalfist {
         return twoIz == 0 && ch.B == 0 && ch.S == 0 && ch.C == 0;
       }
 
+      // Does the antiparticle of a member live in the SAME Iz-multiplet? True for
+      // S=B=C=0 (e.g. pi-pi): then Iz<0 members are the antiparticles of Iz>0.
+      // False for strangeness/baryon/charm-carrying channels (e.g. pi-K, S=+1):
+      // every Iz is a distinct member and the antiparticles form a separate
+      // (conjugate) multiplet.
+      bool selfConjMultiplet(const PhaseShiftChannel& ch) {
+        return ch.B == 0 && ch.S == 0 && ch.C == 0;
+      }
+
+      // 2Iz values of the members to create explicitly. Self-conjugate multiplet:
+      // only Iz >= 0 (Iz < 0 are the antiparticles). Otherwise: every Iz in
+      // [-I, +I] (the antiparticles are the conjugate multiplet).
+      std::vector<int> memberTwoIz(const PhaseShiftChannel& ch) {
+        std::vector<int> out;
+        const int lo = selfConjMultiplet(ch) ? twoIzStart(ch.twoI) : -ch.twoI;
+        for (int t = lo; t <= ch.twoI; t += 2) out.push_back(t);
+        return out;
+      }
+
       std::string IzLabel(int twoIz) {
         if (twoIz == 0) return "Iz=0";
         const std::string sign = (twoIz > 0) ? "+" : "-";
@@ -161,8 +180,14 @@ namespace thermalfist {
     long long PhaseShiftPdgId(const PhaseShiftChannel& ch, int twoIz, int twoJplus1) {
       if (twoJplus1 < 1 || twoJplus1 > 9)
         throw std::invalid_argument("PhaseShiftPdgId: 2J+1 must be a single digit (J <= 4)");
-      const long long z = std::llabs((long long)twoIz);  // 2|Iz|
-      // 9 9 | F | (2I) | (2|Iz|) | n n | (2J+1) ; excitation slot n n = 00.
+      // Iz field: for a self-conjugate multiplet use 2|Iz| (Iz<0 is the
+      // antiparticle = the negative code). For a charge/strangeness-carrying
+      // multiplet every Iz is a distinct member, so encode the multiplet index
+      // I+Iz = (2I+2Iz)/2 in 0..2I (the antiparticle stays the negative code).
+      const long long z = selfConjMultiplet(ch)
+        ? std::llabs((long long)twoIz)
+        : (long long)((ch.twoI + twoIz) / 2);
+      // 9 9 | F | (2I) | (Iz field) | n n | (2J+1) ; excitation slot n n = 00.
       return 99LL * 1000000LL
            + (long long)ch.family * 100000LL
            + (long long)ch.twoI   * 10000LL
@@ -207,7 +232,9 @@ namespace thermalfist {
       for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
       fout << "\n";
       fout << "# pdgid name stable mass deg stat B Q S C |S| |C| width threshold\n";
-      for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
+      const std::vector<int> izs = memberTwoIz(ch);
+      for (size_t ii = 0; ii < izs.size(); ++ii) {
+        const int twoIz = izs[ii];
         const int Q = (twoIz + ch.B + ch.S + ch.C) / 2;
         for (size_t w = 0; w < waves.size(); ++w) {
           const int twoJp1 = waves[w].twoJplus1;
@@ -236,7 +263,9 @@ namespace thermalfist {
            << (waves.size() == 1 ? "" : "s") << ":";
       for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1);
       fout << "\n";
-      for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
+      const std::vector<int> izs = memberTwoIz(ch);
+      for (size_t ii = 0; ii < izs.size(); ++ii) {
+        const int twoIz = izs[ii];
         std::vector<std::pair<double, std::pair<long long, long long> > > dec = ChannelDecays(ch, twoIz);
         for (size_t w = 0; w < waves.size(); ++w) {
           const int twoJp1 = waves[w].twoJplus1;
@@ -269,7 +298,9 @@ namespace thermalfist {
                                            const PhaseShiftChannel& ch,
                                            const std::vector<PhaseShiftPartialWave>& waves) {
       std::vector<long long> touched;
-      for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
+      const std::vector<int> izs = memberTwoIz(ch);
+      for (size_t ii = 0; ii < izs.size(); ++ii) {
+        const int twoIz = izs[ii];
         const bool selfConj = selfConjugate(ch, twoIz);
         for (size_t w = 0; w < waves.size(); ++w) {
           const long long mag = PhaseShiftPdgId(ch, twoIz, waves[w].twoJplus1);
@@ -317,7 +348,9 @@ namespace thermalfist {
       std::vector<long long> added;
 
       // ---- add members (with isospin-CG decays) and their antiparticles ----
-      for (int twoIz = twoIzStart(ch.twoI); twoIz <= ch.twoI; twoIz += 2) {
+      const std::vector<int> izs = memberTwoIz(ch);
+      for (size_t ii = 0; ii < izs.size(); ++ii) {
+        const int twoIz = izs[ii];
         const int Q = (twoIz + ch.B + ch.S + ch.C) / 2;
 
         std::vector<std::pair<double, std::pair<long long, long long> > > dec = ChannelDecays(ch, twoIz);
@@ -375,6 +408,8 @@ namespace thermalfist {
 
     PhaseShiftChannel ChannelByName(const std::string& name) {
       if (name == "pipi_I2") return PiPi_I2_Channel();
+      if (name == "piK_I32") return PiK_I32_Channel();
+      if (name == "piK_I12") return PiK_I12_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
     }
 
@@ -514,6 +549,46 @@ namespace thermalfist {
       ch.b = ch.a;
       // Purely repulsive, non-resonant: subsumes no resonances.
       ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    // Shared structure of a pi-K channel (S = +1): pion triplet x kaon doublet.
+    static PhaseShiftChannel PiK_ChannelBase() {
+      PhaseShiftChannel ch;
+      ch.family     = FamilyPiK;
+      ch.m1         = PionMass();
+      ch.m2         = KaonMass();
+      ch.statistics = -1;            // bosonic cluster
+      ch.B = ch.C = 0;
+      ch.S = +1;                     // strangeness of the kaon
+      ch.a.twoIsospin = 2;           // pion isospin triplet
+      ch.a.chargeStates[+2] = 211;   // pi+
+      ch.a.chargeStates[ 0] = 111;   // pi0
+      ch.a.chargeStates[-2] = -211;  // pi-
+      ch.b.twoIsospin = 1;           // kaon isospin doublet (S=+1)
+      ch.b.chargeStates[+1] = 321;   // K+
+      ch.b.chargeStates[-1] = 311;   // K0
+      ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    PhaseShiftChannel PiK_I32_Channel() {
+      PhaseShiftChannel ch = PiK_ChannelBase();
+      ch.name = "piK_I32";
+      ch.twoI = 3;                   // I = 3/2 (repulsive, non-resonant)
+      ch.Mmax = PiK_I32_Mmax();      // elastic up to ~1.74 GeV
+      // Non-resonant: subsumes no resonances.
+      return ch;
+    }
+
+    PhaseShiftChannel PiK_I12_Channel() {
+      PhaseShiftChannel ch = PiK_ChannelBase();
+      ch.name = "piK_I12";
+      ch.twoI = 1;                   // I = 1/2 (attractive, the kappa/K0*(700))
+      ch.Mmax = PiK_I12_Mmax();      // elastic only below the K-eta threshold
+      // NOTE: the I=1/2 S-wave IS the kappa/K0*(700). If that resonance is also in
+      // the HRG list it is double-counted; add its codes to subsumedPdg to remove
+      // it (kept empty here to match the Wuppertal treatment).
       return ch;
     }
 
