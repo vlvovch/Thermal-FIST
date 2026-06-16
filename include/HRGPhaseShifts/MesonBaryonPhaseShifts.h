@@ -30,6 +30,15 @@
  *
  * See input/list/phaseshifts/piN_RoySteiner_reference.md for the full coefficient
  * tables and a numerical validation of all waves.
+ *
+ * Also implemented:
+ *   - K-N (kaon-nucleon, exotic S=+1), partial-wave analysis of Gibbs, Arceo,
+ *     Phys. Rev. C75 (2007) 054005 [arXiv:nucl-th/0611095]. The S- and P-waves
+ *     for both isospins (I=0: S01, P01, P03; I=1: S11, P11, P13), in the form
+ *     delta = atan[a q^(2l+1) / (1 + sum_i b_i q^(2i))], q = CM momentum [GeV/c].
+ *     Non-resonant (no S=+1 resonances); I=1 S-wave strongly repulsive, the I=0
+ *     P-waves show a spin-orbit splitting. Elastic below the K-pi-N threshold
+ *     (m_K + m_pi + m_N ~ 1.57 GeV). The small D/F waves are omitted.
  */
 
 #include <vector>
@@ -68,6 +77,22 @@ namespace thermalfist {
     double PiN_delta_P11(double M);   ///< I=1/2, J=1/2 (the Roper N(1440) tail)
     double PiN_delta_P13(double M);   ///< I=1/2, J=3/2
 
+    // ---- K-N (kaon-nucleon, exotic S=+1; Gibbs-Arceo nucl-th/0611095) ----
+
+    /// K-N is elastic below the K-pi-N threshold m_K + m_pi + m_N [GeV] (~1.57);
+    /// the integration of every K-N wave is cut here.
+    constexpr double KN_Mmax() { return KaonMass() + PionMass() + NucleonMass(); }
+
+    /// K-N S- and P-wave phase shifts [radians]. Non-resonant (exotic S=+1).
+    /// I=0: S01 (weakly repulsive), P01/P03 (spin-orbit split). I=1: S11 (strongly
+    /// repulsive), P11/P13.
+    double KN_delta_S01(double M);
+    double KN_delta_P01(double M);
+    double KN_delta_P03(double M);
+    double KN_delta_S11(double M);
+    double KN_delta_P11(double M);
+    double KN_delta_P13(double M);
+
     /// P-wave (2J+1=4, J=3/2) of the pi-N I=3/2 channel - the Delta(1232).
     std::vector<PhaseShiftPartialWave> PiN_Delta_Waves();
     /// Single-wave sets for the non-resonant pi-N background waves. S/P J=1/2
@@ -77,6 +102,14 @@ namespace thermalfist {
     std::vector<PhaseShiftPartialWave> PiN_P31_Waves();
     std::vector<PhaseShiftPartialWave> PiN_P11_Waves();
     std::vector<PhaseShiftPartialWave> PiN_P13_Waves();
+
+    /// Single-wave sets for the K-N waves (S J=1/2 -> 2J+1=2; P3/2 -> 2J+1=4).
+    std::vector<PhaseShiftPartialWave> KN_S01_Waves();
+    std::vector<PhaseShiftPartialWave> KN_P01_Waves();
+    std::vector<PhaseShiftPartialWave> KN_P03_Waves();
+    std::vector<PhaseShiftPartialWave> KN_S11_Waves();
+    std::vector<PhaseShiftPartialWave> KN_P11_Waves();
+    std::vector<PhaseShiftPartialWave> KN_P13_Waves();
 
   } // namespace PhaseShifts
 

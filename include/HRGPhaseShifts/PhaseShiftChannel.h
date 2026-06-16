@@ -45,7 +45,8 @@ namespace thermalfist {
       FamilyPiK   = 2, ///< pi K
       FamilyKK    = 3, ///< K Kbar
       FamilyPiN   = 4, ///< pi N
-      FamilyPiEta = 5  ///< pi eta
+      FamilyPiEta = 5, ///< pi eta
+      FamilyKN    = 6  ///< K N (exotic, S=+1)
     };
 
     /**
@@ -223,6 +224,18 @@ namespace thermalfist {
     PhaseShiftChannel PiN_P31_Channel();
     PhaseShiftChannel PiN_P11_Channel();
     PhaseShiftChannel PiN_P13_Channel();
+
+    /// Catalog: the K-N (kaon-nucleon, exotic S=+1) S- and P-waves (Gibbs, Arceo,
+    /// Phys. Rev. C75 (2007) 054005). Meson-baryon channels (B=+1, S=+1, fermionic),
+    /// non-resonant (no S=+1 resonances) -> synthetic clusters, each its own
+    /// single-wave channel; elastic below the K-pi-N threshold ~1.57 GeV. Naming
+    /// L_{2I,2J}: S01/P01/P03 are I=0, S11/P11/P13 are I=1.
+    PhaseShiftChannel KN_S01_Channel();
+    PhaseShiftChannel KN_P01_Channel();
+    PhaseShiftChannel KN_P03_Channel();
+    PhaseShiftChannel KN_S11_Channel();
+    PhaseShiftChannel KN_P11_Channel();
+    PhaseShiftChannel KN_P13_Channel();
 
     // ------------------------------------------------------------------------
     // High-level convenience API (no file juggling).

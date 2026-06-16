@@ -160,12 +160,13 @@ MainWindow::MainWindow(QWidget *parent)
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
   // S-matrix / phase-shift controls. Default: pi-pi + pi-K (the Wuppertal
-  // analysis) plus pi-N (the Delta(1232)). All ship with the package; use
-  // "Phase shifts..." to change the selection.
+  // analysis), pi-N (the Delta(1232) + Roy-Steiner backgrounds) and K-N (exotic
+  // S=+1). All ship with the package; use "Phase shifts..." to change the selection.
   m_phaseShiftConfs = QStringList()
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf")
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf")
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piN.conf");
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piN.conf")
+    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/KN.conf");
   chkPhaseShifts = new QCheckBox(tr("Phase shifts"));
   chkPhaseShifts->setToolTip(tr("Add S-matrix / phase-shift channels from a config file\n"
                                 "as effective degrees of freedom (Beth-Uhlenbeck)."));

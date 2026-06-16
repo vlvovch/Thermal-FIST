@@ -143,6 +143,14 @@ quantum-number-based assignment as every other species — no special-casing.
   carried in the synthetic-id excitation (`n n`) slot to keep their codes distinct.
   All Roy-Steiner coefficients and a numerical validation are in
   `piN_RoySteiner_reference.md`.
+- `KN_S01`, `KN_P01`, `KN_P03`, `KN_S11`, `KN_P11`, `KN_P13` — **kaon-nucleon**
+  (exotic S=+1) S- and P-waves (Gibbs, Arceo, Phys. Rev. C75 (2007) 054005). A
+  meson-baryon channel (B=+1, S=+1, **fermionic**); **non-resonant** (no S=+1
+  resonances), so synthetic clusters, each its own single-wave channel; elastic
+  below the K-pi-N threshold ~1.57 GeV. The I=1 S-wave is strongly repulsive; the
+  I=0 P-waves show a spin-orbit splitting. Same baryon wave-key convention as pi-N
+  (numeric 2J+1, orbital l in the excitation slot). Coefficients + validation in
+  `KN_GibbsArceo_reference.md`. Config: `KN.conf`.
 
 ### Subsumption by PDG coincidence
 A channel can REUSE a real resonance's PDG code (`memberPdg`, the `-` list/decay
@@ -154,9 +162,9 @@ is not separately counted. Because these are real (non-synthetic)
 codes, the cheap enable/disable toggle is not exact for them, so the GUI rebuilds
 the list when toggling (see `CountOverriddenResonances`).
 
-pi-K (S=+1) and pi-N (B=+1) carry a conserved charge, so unlike pi-pi they are
-**not** self-conjugate multiplets: every Iz is a distinct member and the
-antiparticles form the conjugate (S=-1 / antibaryon) sector. The builder handles
+pi-K (S=+1), pi-N (B=+1) and K-N (B=+1, S=+1) carry a conserved charge, so unlike
+pi-pi they are **not** self-conjugate multiplets: every Iz is a distinct member and
+the antiparticles form the conjugate (S=-1 / antibaryon) sector. The builder handles
 this automatically; synthetic ids encode the multiplet index I+Iz (0..2I) rather
 than 2|Iz|. To run several channels together, load their configs together (the GUI
-loads `pipi.conf` + `piK.conf` + `piN.conf` by default).
+loads `pipi.conf` + `piK.conf` + `piN.conf` + `KN.conf` by default).

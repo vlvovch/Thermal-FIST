@@ -1480,4 +1480,112 @@ namespace {
     std::remove(lst.c_str()); std::remove(confF.c_str());
   }
 
+  // ---- K-N (kaon-nucleon, exotic S=+1; Gibbs-Arceo) ----
+
+  TEST(PhaseShifts, KNDeltaValues) {
+    // Lock the transcription against the verified Gibbs-Arceo values (degrees) at
+    // sqrt(s) = 1.494 (q~0.2) and 1.565 (q~0.3); see KN_GibbsArceo_reference.md.
+    // I=1 S-wave strongly repulsive; I=0 P-waves spin-orbit split (P01 +, P03 -).
+    const double r2d = 180.0 / M_PI;
+    EXPECT_NEAR(PhaseShifts::KN_delta_S11(1.494) * r2d, -18.1, 0.3);
+    EXPECT_NEAR(PhaseShifts::KN_delta_S11(1.565) * r2d, -27.5, 0.3);
+    EXPECT_NEAR(PhaseShifts::KN_delta_S01(1.565) * r2d, -10.0, 0.3);
+    EXPECT_NEAR(PhaseShifts::KN_delta_P01(1.565) * r2d,  25.7, 0.4);   // I=0 P1/2 attractive
+    EXPECT_NEAR(PhaseShifts::KN_delta_P03(1.565) * r2d,  -4.4, 0.3);   // I=0 P3/2 repulsive
+    // zero at threshold; signs
+    const double thr = PhaseShifts::KaonMass() + PhaseShifts::NucleonMass();
+    EXPECT_DOUBLE_EQ(PhaseShifts::KN_delta_S11(thr), 0.0);
+    EXPECT_LT(PhaseShifts::KN_delta_S11(1.50), 0.0);    // I=1 S-wave repulsive
+    EXPECT_LT(PhaseShifts::KN_delta_S01(1.50), 0.0);    // I=0 S-wave weakly repulsive
+    EXPECT_GT(PhaseShifts::KN_delta_P01(1.50), 0.0);    // spin-orbit: P01 > 0
+    EXPECT_LT(PhaseShifts::KN_delta_P03(1.50), 0.0);    //              P03 < 0
+  }
+
+  TEST(PhaseShifts, KNChannelStructure) {
+    // Exotic S=+1 baryon channels: B=+1, S=+1, fermionic; not self-conjugate.
+    PhaseShifts::PhaseShiftChannel s11 = PhaseShifts::KN_S11_Channel();
+    EXPECT_EQ(s11.twoI, 2);            // I=1
+    EXPECT_EQ(s11.B, 1);
+    EXPECT_EQ(s11.S, 1);
+    EXPECT_EQ(s11.statistics, 1);      // Fermi
+    EXPECT_TRUE(s11.memberPdg.empty()); // synthetic (no S=+1 resonance to reuse)
+    EXPECT_EQ(PhaseShifts::KN_S01_Channel().twoI, 0);   // I=0
+    // S11 vs P11 (same I=1, J=1/2, 2J+1=2) -> distinct codes via excitation = l
+    long long cS = PhaseShifts::PhaseShiftPdgId(s11, 2, 2);                       // Iz=+1
+    long long cP = PhaseShifts::PhaseShiftPdgId(PhaseShifts::KN_P11_Channel(), 2, 2);
+    EXPECT_NE(cS, cP);
+    EXPECT_EQ((cS / 100000) % 10, 6);  // FamilyKN
+    EXPECT_EQ((cS / 10) % 100, 0);     // S-wave n n = 0
+    EXPECT_EQ((cP / 10) % 100, 1);     // P-wave n n = 1
+  }
+
+  TEST(PhaseShifts, KNSyntheticBuild) {
+    // Build the I=1 S-wave against a K+N list: synthetic clusters (3 members +
+    // 3 antibaryons), B=1 S=1 Fermi with gammaq^4 gammaS, repulsive -> chi2 < 0.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_KN.dat";
+    {
+      std::ofstream f(lst.c_str());     // K + N only (no S=+1 resonances exist)
+      f << "321  K+ 1 0.493677 1 -1 0  1 1 0 1 0 0 0\n";
+      f << "311  K0 1 0.497611 1 -1 0  0 1 0 1 0 0 0\n";
+      f << "2212 p  1 0.938272 2  1 1  1 0 0 0 0 0 0\n";
+      f << "2112 n  1 0.939565 2  1 1  0 0 0 0 0 0 0\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    PhaseShifts::AddPhaseShiftChannel(TPS, PhaseShifts::KN_S11_Channel(),
+                                      PhaseShifts::KN_S11_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber() - nbefore, 6);            // 3 members + 3 anti
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 6);
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 0); // synthetic
+    const long long kpp = PhaseShifts::PhaseShiftPdgId(PhaseShifts::KN_S11_Channel(), 2, 2);
+    ASSERT_GE(TPS.PdgToId(kpp), 0);
+    const ThermalParticle& cl = TPS.ParticleByPDG(kpp);
+    EXPECT_EQ(cl.BaryonCharge(), 1);
+    EXPECT_EQ(cl.Strangeness(), 1);            // exotic S=+1
+    EXPECT_EQ(cl.ElectricCharge(), 2);         // Iz=+1, (2Iz+B+S)/2 = 2 (K+ p)
+    EXPECT_EQ(cl.Statistics(), 1);             // Fermi
+    EXPECT_DOUBLE_EQ(cl.AbsoluteQuark(), 4.0); // K (1 light) + N (3 light)
+    EXPECT_DOUBLE_EQ(cl.AbsoluteStrangeness(), 1.0);
+    EXPECT_LT(cl.GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);  // repulsive
+    std::remove(lst.c_str());
+  }
+
+  TEST(PhaseShifts, KNFromConfig) {
+    // Load the full K-N set (6 waves) from a config: all synthetic (no overrides).
+    // I=1 (S11/P11/P13): 3x6 = 18; I=0 (S01/P01/P03): 3x2 = 6. Total 24.
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_KN_cfg.dat";
+    {
+      std::ofstream f(lst.c_str());
+      f << "321  K+ 1 0.493677 1 -1 0  1 1 0 1 0 0 0\n";
+      f << "311  K0 1 0.497611 1 -1 0  0 1 0 1 0 0 0\n";
+      f << "2212 p  1 0.938272 2  1 1  1 0 0 0 0 0 0\n";
+      f << "2112 n  1 0.939565 2  1 1  0 0 0 0 0 0 0\n";
+    }
+    const std::string confF = dir + "ps_KN.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "KN_S11:2 - - GibbsArceo2007_S11\n";
+      f << "KN_P11:2 - - GibbsArceo2007_P11\n";
+      f << "KN_P13:4 - - GibbsArceo2007_P13\n";
+      f << "KN_S01:2 - - GibbsArceo2007_S01\n";
+      f << "KN_P01:2 - - GibbsArceo2007_P01\n";
+      f << "KN_P03:4 - - GibbsArceo2007_P03\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    std::vector<long long> added = PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    EXPECT_EQ(added.size(), 24u);                          // 18 (I=1 x3) + 6 (I=0 x3)
+    EXPECT_EQ(PhaseShifts::CountPhaseShiftDensities(TPS), 24);
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 0);  // all synthetic
+    ThermalModelIdeal m(&TPS); m.ClearDensityModels();
+    m.SetTemperature(0.150); m.SetBaryonChemicalPotential(0.0);
+    m.SetElectricChemicalPotential(0.0); m.SetStrangenessChemicalPotential(0.0);
+    m.CalculateDensities(); m.CalculateFluctuations();
+    // exotic S=+1 baryons are present and the calculation runs
+    EXPECT_TRUE(std::isfinite(m.Pressure()));
+    std::remove(lst.c_str()); std::remove(confF.c_str());
+  }
+
 }

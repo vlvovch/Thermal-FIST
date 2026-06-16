@@ -482,6 +482,12 @@ namespace thermalfist {
       if (name == "piN_P31") return PiN_P31_Channel();
       if (name == "piN_P11") return PiN_P11_Channel();
       if (name == "piN_P13") return PiN_P13_Channel();
+      if (name == "KN_S01") return KN_S01_Channel();
+      if (name == "KN_P01") return KN_P01_Channel();
+      if (name == "KN_P03") return KN_P03_Channel();
+      if (name == "KN_S11") return KN_S11_Channel();
+      if (name == "KN_P11") return KN_P11_Channel();
+      if (name == "KN_P13") return KN_P13_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
     }
 
@@ -856,6 +862,42 @@ namespace thermalfist {
     PhaseShiftChannel PiN_P13_Channel() {  // I=1/2 P-wave (J=3/2), elastic to 1.38
       return PiN_BackgroundChannel("piN_P13", 1, 1, PiN_Mmax_elastic());
     }
+
+    // ---- K-N (kaon-nucleon, exotic S=+1; B=+1, fermionic; Gibbs-Arceo) -------
+
+    static PhaseShiftChannel KN_ChannelBase() {
+      PhaseShiftChannel ch;
+      ch.family     = FamilyKN;
+      ch.m1         = KaonMass();
+      ch.m2         = NucleonMass();
+      ch.statistics = +1;            // fermionic cluster (a baryon)
+      ch.B = +1;                     // baryon number of the nucleon
+      ch.S = +1;                     // strangeness of the kaon (exotic S=+1)
+      ch.C = 0;
+      ch.a.twoIsospin = 1;           // kaon isospin doublet (S=+1)
+      ch.a.chargeStates[+1] = 321;   // K+  (Iz=+1/2)
+      ch.a.chargeStates[-1] = 311;   // K0  (Iz=-1/2)
+      ch.b.twoIsospin = 1;           // nucleon isospin doublet (B=+1)
+      ch.b.chargeStates[+1] = 2212;  // proton  (Iz=+1/2)
+      ch.b.chargeStates[-1] = 2112;  // neutron (Iz=-1/2)
+      ch.quadratureNodes = 64;
+      return ch;
+    }
+
+    // Non-resonant K-N waves: synthetic clusters, each its own single-wave channel,
+    // all elastic to the K-pi-N threshold. The orbital l goes in the excitation slot
+    // so same-(I,J) waves (S/P1/2 share 2J+1=2) get distinct codes.
+    static PhaseShiftChannel KN_WaveChannel(const std::string& name, int twoI, int orbitalL) {
+      PhaseShiftChannel ch = KN_ChannelBase();
+      ch.name = name; ch.twoI = twoI; ch.excitation = orbitalL; ch.Mmax = KN_Mmax();
+      return ch;
+    }
+    PhaseShiftChannel KN_S01_Channel() { return KN_WaveChannel("KN_S01", 0, 0); }
+    PhaseShiftChannel KN_P01_Channel() { return KN_WaveChannel("KN_P01", 0, 1); }
+    PhaseShiftChannel KN_P03_Channel() { return KN_WaveChannel("KN_P03", 0, 1); }
+    PhaseShiftChannel KN_S11_Channel() { return KN_WaveChannel("KN_S11", 2, 0); }
+    PhaseShiftChannel KN_P11_Channel() { return KN_WaveChannel("KN_P11", 2, 1); }
+    PhaseShiftChannel KN_P13_Channel() { return KN_WaveChannel("KN_P13", 2, 1); }
 
   } // namespace PhaseShifts
 

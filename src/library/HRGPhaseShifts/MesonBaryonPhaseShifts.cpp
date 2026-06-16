@@ -64,6 +64,28 @@ namespace thermalfist {
         double poly = A + q2 * (B + q2 * (C + q2 * D));
         return std::atan(q * q * q * poly * (sthr_piN - s1) / (s - s1));
       }
+
+      // ---- K-N (Gibbs-Arceo nucl-th/0611095) -------------------------------
+      const double mK_KN = KaonMass();
+      const double sthr_KN = (mK_KN + mN) * (mK_KN + mN);
+      const double sdif_KN = (mK_KN - mN) * (mK_KN - mN);
+      inline double qCM_KN(double M) {
+        double s = M * M;
+        double a1 = s - sthr_KN;
+        double a2 = s - sdif_KN;
+        return (a1 > 0.) ? std::sqrt(a1 * a2) / (2. * M) : 0.;
+      }
+      // K-N S/P phase shift (Eq. spwaves): delta = atan[a q^(2l+1) /
+      // (1 + b1 q^2 + b2 q^4 + b3 q^6)], q = CM momentum [GeV/c]. Non-resonant.
+      inline double knSP(double M, int ell, double a, double b1, double b2, double b3) {
+        double s = M * M;
+        if (s <= sthr_KN) return 0.;
+        double q = qCM_KN(M);
+        if (q < 1.e-12) return 0.;
+        double q2 = q * q;
+        double ql = (ell == 0) ? q : q * q * q;            // q^(2l+1) for l = 0, 1
+        return std::atan(a * ql / (1. + q2 * (b1 + q2 * (b2 + q2 * b3))));
+      }
     } // anonymous namespace
 
     double PiN_delta_P33(double M) {            // Eq. D.3, resonant (the Delta)
@@ -116,6 +138,36 @@ namespace thermalfist {
     }
     std::vector<PhaseShiftPartialWave> PiN_P13_Waves() {
       return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(4, &PiN_delta_P13));
+    }
+
+    // K-N waves (Gibbs-Arceo Tables; coefficients in powers of GeV/c).
+    // I=0:
+    double KN_delta_S01(double M) { return knSP(M, 0, -0.531, -1.206, 1.362, 0.); }
+    double KN_delta_P01(double M) { return knSP(M, 1, 23.765, 3.690, 0., 0.); }
+    double KN_delta_P03(double M) { return knSP(M, 1, -3.808, 2.919, -10.042, 212.021); }
+    // I=1:
+    double KN_delta_S11(double M) { return knSP(M, 0, -1.562, -1.108, 0.217, 0.); }
+    double KN_delta_P11(double M) { return knSP(M, 1, -12.002, 31.139, 0., 0.); }
+    double KN_delta_P13(double M) { return knSP(M, 1, 13.357, 126.676, -666.951, 1276.123); }
+
+    // S, P1/2 -> 2J+1 = 2; P3/2 -> 2J+1 = 4.
+    std::vector<PhaseShiftPartialWave> KN_S01_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(2, &KN_delta_S01));
+    }
+    std::vector<PhaseShiftPartialWave> KN_P01_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(2, &KN_delta_P01));
+    }
+    std::vector<PhaseShiftPartialWave> KN_P03_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(4, &KN_delta_P03));
+    }
+    std::vector<PhaseShiftPartialWave> KN_S11_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(2, &KN_delta_S11));
+    }
+    std::vector<PhaseShiftPartialWave> KN_P11_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(2, &KN_delta_P11));
+    }
+    std::vector<PhaseShiftPartialWave> KN_P13_Waves() {
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(4, &KN_delta_P13));
     }
 
   } // namespace PhaseShifts
