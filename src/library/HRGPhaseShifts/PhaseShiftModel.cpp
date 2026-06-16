@@ -130,6 +130,10 @@ namespace thermalfist {
         waves = PiPi_I0_f0980_Waves();
         if (param == "GarciaMartin2011_S") twoJplus1 = 1;
       }
+      else if (channel == "pipi_I1") {
+        waves = PiPi_I1_Waves();
+        if (param == "GarciaMartin2011_P") twoJplus1 = 3;
+      }
       else if (channel == "piK_I32") {
         waves = PiK_I32_Waves();
         if (param == "PelaezRodas2016_S") twoJplus1 = 1;

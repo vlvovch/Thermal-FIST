@@ -294,6 +294,35 @@ namespace thermalfist {
       return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(1, &PiPi_delta_I0_f0980_S));
     }
 
+    // ---- pi-pi I=1 P-wave (the rho(770)) -----------------------------------
+    // Garcia-Martin et al., PRD83 (2011) 074004 [1102.2183], Eq.A7, Table VII CFD:
+    //   cot delta_1^1(s) = (sqrt s / 2k^3)(M_rho^2 - s)
+    //                      [ 2 M_pi^3 / (M_rho^2 sqrt s) + B0 + B1 w(s) ],
+    //   w(s) = (sqrt s - sqrt(s0 - s))/(sqrt s + sqrt(s0 - s)), s0 = (1.05 GeV)^2.
+    // (M_rho^2 - s) makes cot delta cross 0 at the rho (delta = 90 deg), so the
+    // phase is branch-tracked with atan2. Elastic up to the K-Kbar threshold.
+    namespace {
+      const double Mrho_P = 0.7736;        // GeV (Garcia-Martin value, 773.6 MeV)
+      const double P_B0 = 1.043, P_B1 = 0.19;   // Table VII, CFD
+      const double P_s0 = 1.05 * 1.05;     // GeV^2 (conformal pivot)
+    }
+
+    double PiPi_delta_I1_P(double M) {
+      double s = M * M;
+      if (s <= 4. * mpi * mpi) return 0.;
+      double k = std::sqrt(s / 4. - mpi * mpi);   // CM momentum
+      if (k < 1.e-12) return 0.;
+      double w = conformal_w(s, P_s0);
+      double cotd = std::sqrt(s) / (2. * k * k * k) * (Mrho_P * Mrho_P - s)
+                  * (2. * mpi * mpi * mpi / (Mrho_P * Mrho_P * std::sqrt(s)) + P_B0 + P_B1 * w);
+      return std::atan2(1.0, cotd);               // branch-tracked through the rho (90 deg)
+    }
+
+    std::vector<PhaseShiftPartialWave> PiPi_I1_Waves() {
+      // P-wave: J=1 -> 2J+1 = 3.
+      return std::vector<PhaseShiftPartialWave>(1, PhaseShiftPartialWave(3, &PiPi_delta_I1_P));
+    }
+
   } // namespace PhaseShifts
 
 } // namespace thermalfist

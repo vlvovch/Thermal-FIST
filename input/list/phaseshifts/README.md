@@ -99,7 +99,15 @@ quantum-number-based assignment as every other species — no special-casing.
   overrides the sigma's (deg=0) list entry. Config: `pipi.conf`.
 - `pipi_I0_f0980` — the part of delta_0^0 above the K-Kbar threshold (the
   f0(980)). It **reuses the real f0(980) code (9010221)**, overriding its thermal
-  contribution. Config: `pipi.conf`.
+  contribution. **OFF by default** (commented out in `pipi.conf`): that region is
+  strongly inelastic (eta_0^0 ~ 0.35, the f0(980) is mostly K-Kbar), which the
+  phase-shift-only Beth-Uhlenbeck ignores - a knowingly-crude ~2% effect. Doing it
+  right needs the coupled-channel (pi-pi/K-Kbar) treatment. Uncomment to enable.
+- `pipi_I1` — the rho(770): pi-pi I=1 P-wave (same reference, Eq. A7),
+  branch-tracked through 90 deg at the rho mass; elastic up to the K-Kbar
+  threshold. It **reuses the real rho codes (rho0=113, rho+=213)**, overriding
+  the rho's contribution (the P-wave 2J+1=3 carries the rho spin). Config:
+  `pipi.conf`.
 - `piK_I32` — repulsive pi-K I=3/2 (S-wave; Pelaez, Rodas, Phys. Rev. D93 (2016)
   074025). Non-resonant, elastic up to ~1.74 GeV. Synthetic clusters. Config:
   `piK.conf`.

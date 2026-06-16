@@ -179,6 +179,11 @@ namespace thermalfist {
     /// coincidence). The f0(980) stays in the list (still a decay product).
     PhaseShiftChannel PiPi_I0_f0980_Channel();
 
+    /// Catalog: the pi-pi I=1 P-wave channel - the rho(770). It REUSES the real
+    /// rho codes (rho0=113, rho+=213, memberPdg): the density overrides the rho's
+    /// contribution; the rho stays in the list (still a decay product).
+    PhaseShiftChannel PiPi_I1_Channel();
+
     /// Catalog: the pi-K I=3/2 (repulsive) and I=1/2 (attractive, kappa/K0*(700))
     /// channels (constituents + structure only; S = +1). The members span all Iz
     /// of the multiplet (a strange channel is not self-conjugate).

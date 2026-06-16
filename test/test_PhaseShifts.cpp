@@ -757,4 +757,64 @@ namespace {
     std::remove(lst.c_str());
   }
 
+  // ---- pi-pi I=1 P-wave (the rho; resonant, branch-tracked) ----
+
+  TEST(PhaseShifts, PiPiI1RhoDelta) {
+    // delta_1^1 = 0 at threshold, exactly 90 deg at the rho mass (the (Mrho^2-s)
+    // factor zeroes cot delta there), and rises monotonically through it.
+    const double r2d = 180.0 / M_PI;
+    EXPECT_DOUBLE_EQ(PhaseShifts::PiPi_delta_I1_P(2.0 * PhaseShifts::PionMass()), 0.0);
+    EXPECT_NEAR(PhaseShifts::PiPi_delta_I1_P(0.7736) * r2d, 90.0, 1e-6);   // at Mrho
+    EXPECT_GT(PhaseShifts::PiPi_delta_I1_P(0.6), 0.0);                     // attractive
+    double prev = -1.0; bool crossed90 = false, monotonic = true;
+    for (double M = 2.0 * PhaseShifts::PionMass() + 1e-3; M <= 2.0 * 0.496; M += 0.01) {
+      double d = PhaseShifts::PiPi_delta_I1_P(M) * r2d;
+      if (d < prev - 1e-6) monotonic = false;
+      if (prev < 90.0 && d >= 90.0) crossed90 = true;
+      prev = d;
+    }
+    EXPECT_TRUE(monotonic);
+    EXPECT_TRUE(crossed90);
+  }
+
+  TEST(PhaseShifts, PiPiI1RhoReuseAndDecays) {
+    // P-wave I=1 = rho(770): reuses the real rho codes (rho0=113, rho+=213),
+    // self-conjugate multiplet. Decays: rho0 -> pi+ pi- ; rho+ -> pi+ pi0.
+    PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I1_Channel();
+    EXPECT_EQ(ch.twoI, 2);
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, 0, 3), 113LL);   // rho0
+    EXPECT_EQ(PhaseShifts::PhaseShiftPdgId(ch, +2, 3), 213LL);  // rho+
+    auto d0 = PhaseShifts::ChannelDecays(ch, 0);                // rho0 -> pi+ pi- (pi0pi0 forbidden)
+    ASSERT_EQ(d0.size(), 1u);
+    EXPECT_NEAR(d0[0].first, 1.0, 1e-9);
+    EXPECT_EQ(d0[0].second.first, -211); EXPECT_EQ(d0[0].second.second, 211);
+    auto d1 = PhaseShifts::ChannelDecays(ch, 2);                // rho+ -> pi0 pi+
+    ASSERT_EQ(d1.size(), 1u);
+    EXPECT_NEAR(d1[0].first, 1.0, 1e-9);
+    EXPECT_EQ(d1[0].second.first, 111); EXPECT_EQ(d1[0].second.second, 211);
+
+    // build: a list with the rho -> the density overrides rho0/rho+/rho-
+    const std::string dir = ::testing::TempDir();
+    const std::string lst = dir + "ps_rho_list.dat";
+    {
+      std::ofstream f(lst.c_str());
+      f << "211 pi+  1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+      f << "111 pi0  1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+      f << "113 rho0 0 0.77526  3 -1 0 0 0 0 0 0 0.147 0.279\n";
+      f << "213 rho+ 0 0.77511  3 -1 0 1 0 0 0 0 0.149 0.279\n";
+    }
+    ThermalParticleSystem TPS(std::vector<std::string>(1, lst));
+    const int nbefore = TPS.ComponentsNumber();
+    PhaseShifts::AddPhaseShiftChannel(TPS, ch, PhaseShifts::PiPi_I1_Waves());
+    EXPECT_EQ(TPS.ComponentsNumber(), nbefore);                 // rho not re-added
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS), 3);  // rho0, rho+, rho-
+    ASSERT_NE(TPS.ParticleByPDG(113).GetGeneralizedDensity(), nullptr);
+    ASSERT_NE(TPS.ParticleByPDG(213).GetGeneralizedDensity(), nullptr);
+    ASSERT_NE(TPS.ParticleByPDG(-213).GetGeneralizedDensity(), nullptr);  // rho- too
+    // attractive resonance -> positive chi2
+    EXPECT_GT(TPS.ParticleByPDG(113).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);
+    std::remove(lst.c_str());
+  }
+
 }

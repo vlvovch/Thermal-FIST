@@ -20,6 +20,10 @@
  *     [arXiv:1102.2183], Appendix A.1 (Eqs. A1-A3, Table V). The phase passes
  *     through 90 deg (sigma), so it is branch-tracked; elastic below the K-Kbar
  *     threshold.
+ *   - pi-pi, I=1 (the rho(770)): P-wave (J=1), conformal CFD parametrization of
+ *     Garcia-Martin et al., Phys.Rev. D83 (2011) 074004 [arXiv:1102.2183],
+ *     Appendix A.3 (Eq. A7, Table VII). The phase passes through 90 deg at the
+ *     rho mass, so it is branch-tracked; elastic below the K-Kbar threshold.
  *   - pi-pi, I=2 (repulsive): S-wave (J=0) and D-wave (J=2),
  *     conformal CFD parametrization of Garcia-Martin et al.,
  *     Phys.Rev. D83 (2011) 074004 [arXiv:1102.2183], Tables VI, IX.
@@ -62,6 +66,17 @@ namespace thermalfist {
 
     /// S-wave (2J+1=1) of the pi-pi I=0 f0(980) region (above the K-Kbar threshold).
     std::vector<PhaseShiftPartialWave> PiPi_I0_f0980_Waves();
+
+    /// pi-pi I=1 P-wave is treated as elastic up to the K-Kbar threshold (2 M_K),
+    /// which covers the rho(770).
+    constexpr double PiPiI1_Mmax() { return 2. * 0.496; }   // 2 M_K
+
+    /// pi-pi I=1 P-wave phase shift delta_1^{(1)}(M) [radians]. The rho(770);
+    /// attractive, branch-tracked through 90 deg at the rho mass.
+    double PiPi_delta_I1_P(double M);
+
+    /// P-wave (2J+1=3) of the pi-pi I=1 channel (the rho).
+    std::vector<PhaseShiftPartialWave> PiPi_I1_Waves();
 
     /// pi-pi I=2 S-wave phase shift delta_0^{(2)}(M) [radians]. Repulsive (< 0).
     double PiPi_delta_I2_S(double M);

@@ -422,6 +422,7 @@ namespace thermalfist {
       if (name == "pipi_I2") return PiPi_I2_Channel();
       if (name == "pipi_I0") return PiPi_I0_Channel();
       if (name == "pipi_I0_f0980") return PiPi_I0_f0980_Channel();
+      if (name == "pipi_I1") return PiPi_I1_Channel();
       if (name == "piK_I32") return PiK_I32_Channel();
       if (name == "piK_I12") return PiK_I12_Channel();
       throw std::invalid_argument("ChannelByName: unknown channel '" + name + "'");
@@ -629,7 +630,33 @@ namespace thermalfist {
       PhaseShiftChannel ch = PiPi_I0_Channel();
       ch.name      = "pipi_I0_f0980";
       ch.Mmax      = PiPiI2_Mmax();      // 1.42 GeV (full Garcia-Martin upper range)
+      ch.memberPdg.clear();
       ch.memberPdg[0] = 9010221;         // reuse the real f0(980) -> override it
+      return ch;
+    }
+
+    PhaseShiftChannel PiPi_I1_Channel() {
+      PhaseShiftChannel ch;
+      ch.name       = "pipi_I1";
+      ch.family     = FamilyPiPi;
+      ch.m1         = PionMass();
+      ch.m2         = PionMass();
+      ch.Mmax       = PiPiI1_Mmax();   // K-Kbar threshold (2 M_K): elastic rho region
+      ch.statistics = -1;              // bosonic cluster
+      ch.twoI       = 2;               // I = 1 (the rho isospin triplet)
+      ch.B = ch.S = ch.C = 0;
+      ch.a.twoIsospin = 2;             // pion isospin triplet
+      ch.a.chargeStates[+2] = 211;     // pi+
+      ch.a.chargeStates[ 0] = 111;     // pi0
+      ch.a.chargeStates[-2] = -211;    // pi-
+      ch.b = ch.a;
+      // The I=1 P-wave IS the rho(770): reuse its real PDG codes (the rho is in
+      // the list, so the density overrides its contribution; it stays a decay
+      // product). Self-conjugate multiplet: rho0 (Iz=0) + rho+ (Iz=+1, antiparticle
+      // rho-). The P-wave's 2J+1=3 (in the spectral weight) carries the rho spin.
+      ch.memberPdg[0]  = 113;          // rho0  (Iz=0,  Q=0)
+      ch.memberPdg[+2] = 213;          // rho+  (Iz=+1, Q=1; antiparticle -213 = rho-)
+      ch.quadratureNodes = 64;
       return ch;
     }
 
