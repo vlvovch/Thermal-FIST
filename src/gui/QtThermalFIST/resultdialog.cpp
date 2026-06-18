@@ -283,24 +283,29 @@ QString ResultDialog::GetResults() {
   if (model->IsFluctuationsCalculated()) {
     ret += "\r\n";
 
-    sprintf(cc, "%-25s = ", "cs2");
-    ret += QString(cc);
-    ret += QString::number(model->cs2()) + "\r\n";
-
-    double cT2 = model->cT2();
-    if (cT2 != 0.) {
-      sprintf(cc, "%-25s = ", "cT2");
+    // The speed of sound and heat capacity require temperature derivatives, which
+    // are not implemented for every ensemble (e.g. the canonical ensemble, where
+    // cs2()/cT2()/HeatCapacity() would throw). Show them only when available.
+    if (model->IsTemperatureDerivativesCalculated()) {
+      sprintf(cc, "%-25s = ", "cs2");
       ret += QString(cc);
-      ret += QString::number(cT2) + "\r\n";
-    }
+      ret += QString::number(model->cs2()) + "\r\n";
 
-    double cV = model->HeatCapacity();
-    if (cV != 0.) {
-      sprintf(cc, "%-25s = ", "cV/T^3");
-      ret += QString(cc);
-      ret += QString::number(cV / xMath::GeVtoifm3() / pow(model->Parameters().T, 3)) + "\r\n";
+      double cT2 = model->cT2();
+      if (cT2 != 0.) {
+        sprintf(cc, "%-25s = ", "cT2");
+        ret += QString(cc);
+        ret += QString::number(cT2) + "\r\n";
+      }
+
+      double cV = model->HeatCapacity();
+      if (cV != 0.) {
+        sprintf(cc, "%-25s = ", "cV/T^3");
+        ret += QString(cc);
+        ret += QString::number(cV / xMath::GeVtoifm3() / pow(model->Parameters().T, 3)) + "\r\n";
+      }
+      ret += "\r\n";
     }
-    ret += "\r\n";
 
     sprintf(cc, "%-25s = ", "\\chi2B");
     ret += QString(cc);
@@ -367,54 +372,58 @@ QString ResultDialog::GetResults() {
 
     ret += "\r\n";
 
-    double T = model->Parameters().T;
+    // T * d(chi)/dT also requires temperature derivatives (unavailable e.g. in the
+    // canonical ensemble); show this block only when they are calculated.
+    if (model->IsTemperatureDerivativesCalculated()) {
+      double T = model->Parameters().T;
 
-    sprintf(cc, "%-25s = ", "T*\\chi2B'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
-
-    sprintf(cc, "%-25s = ", "T*\\chi2Q'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)) + "\r\n";
-
-    sprintf(cc, "%-25s = ", "T*\\chi2S'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
-
-    if (model->TPS()->hasCharmed()) {
-      sprintf(cc, "%-25s = ", "T*\\chi2C'");
+      sprintf(cc, "%-25s = ", "T*\\chi2B'");
       ret += QString(cc);
-      ret += QString::number(T * model->dSuscdT(ConservedCharge::CharmCharge, ConservedCharge::CharmCharge)) + "\r\n";
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::BaryonCharge)) + "\r\n";
+
+      sprintf(cc, "%-25s = ", "T*\\chi2Q'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::ElectricCharge)) + "\r\n";
+
+      sprintf(cc, "%-25s = ", "T*\\chi2S'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+
+      if (model->TPS()->hasCharmed()) {
+        sprintf(cc, "%-25s = ", "T*\\chi2C'");
+        ret += QString(cc);
+        ret += QString::number(T * model->dSuscdT(ConservedCharge::CharmCharge, ConservedCharge::CharmCharge)) + "\r\n";
+      }
+
+      sprintf(cc, "%-25s = ", "T*\\chi11BQ'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge)) + "\r\n";
+
+
+      sprintf(cc, "%-25s = ", "T*\\chi11QS'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+
+      sprintf(cc, "%-25s = ", "T*\\chi11BS'");
+      ret += QString(cc);
+      ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
+
+      if (model->TPS()->hasCharmed()) {
+        sprintf(cc, "%-25s = ", "T*\\chi11BC'");
+        ret += QString(cc);
+        ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::CharmCharge)) + "\r\n";
+
+        sprintf(cc, "%-25s = ", "T*\\chi11QC'");
+        ret += QString(cc);
+        ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::CharmCharge)) + "\r\n";
+
+        sprintf(cc, "%-25s = ", "T*\\chi11SC'");
+        ret += QString(cc);
+        ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::CharmCharge)) + "\r\n";
+      }
+
+      ret += "\r\n";
     }
-
-    sprintf(cc, "%-25s = ", "T*\\chi11BQ'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::ElectricCharge)) + "\r\n";
-
-    
-    sprintf(cc, "%-25s = ", "T*\\chi11QS'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
-
-    sprintf(cc, "%-25s = ", "T*\\chi11BS'");
-    ret += QString(cc);
-    ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::StrangenessCharge)) + "\r\n";
-      
-    if (model->TPS()->hasCharmed()) {
-      sprintf(cc, "%-25s = ", "T*\\chi11BC'");
-      ret += QString(cc);
-      ret += QString::number(T * model->dSuscdT(ConservedCharge::BaryonCharge, ConservedCharge::CharmCharge)) + "\r\n";
-
-      sprintf(cc, "%-25s = ", "T*\\chi11QC'");
-      ret += QString(cc);
-      ret += QString::number(T * model->dSuscdT(ConservedCharge::ElectricCharge, ConservedCharge::CharmCharge)) + "\r\n";
-
-      sprintf(cc, "%-25s = ", "T*\\chi11SC'");
-      ret += QString(cc);
-      ret += QString::number(T * model->dSuscdT(ConservedCharge::StrangenessCharge, ConservedCharge::CharmCharge)) + "\r\n";
-    }
-
-    ret += "\r\n";
 
     sprintf(cc, "%-25s = ", "\\chi2prot");
     ret += QString(cc);
