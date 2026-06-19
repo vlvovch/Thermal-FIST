@@ -113,7 +113,7 @@ ModelTab::ModelTab(QWidget *parent, ThermalModelBase *modelop)
 
     QGroupBox *grModelConfig = new QGroupBox(tr("HRG model configuration:"));
 
-    configWidget = new ModelConfigWidget(NULL, model);
+    configWidget = new ModelConfigWidget(NULL, model, false, false, /*showPhaseShifts*/ true);
     connect(configWidget, SIGNAL(changed()), this, SLOT(modelChanged()));
 
     QHBoxLayout *layModelConfig = new QHBoxLayout();

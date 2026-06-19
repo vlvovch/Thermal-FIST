@@ -87,6 +87,8 @@ public:
     ThermalModelConfig getConfigFromFit(thermalfist::ThermalModelFit *fit, const ThermalModelConfig & configfit);
     void setFitTab(const FitToExperimentTab *tab) { tabFit = tab; }
     void updateControlsWithConfig(const ThermalModelConfig & config);
+    /// The model-configuration widget (carries the "Phase shifts..." button).
+    ModelConfigWidget* configurationWidget() { return configWidget; }
 private slots:
     void changedRow();
     void performCalculation(const ThermalModelConfig & config);

@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <utility>
 
 #include "HRGPhaseShifts/PhaseShiftModel.h"
@@ -313,6 +314,41 @@ namespace thermalfist {
      */
     std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
                                                          const std::string& configFile);
+
+    /**
+     * \brief As AddPhaseShiftChannelsFromFile, but skips every config entry whose
+     *        channel name is in \p skipChannels.
+     *
+     * Lets a caller (e.g. a GUI) apply a config with individual channels turned off:
+     * a skipped channel is not loaded/overridden at all, so a reused resonance stays
+     * the plain (pole-mass) particle from the base list. The no-skip overload above
+     * delegates here with an empty set.
+     */
+    std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
+                                                         const std::string& configFile,
+                                                         const std::set<std::string>& skipChannels);
+
+    /**
+     * \brief Summary of one channel referenced by a phase-shift config file: its
+     *        name, the partial-wave labels present, and whether it reuses a real
+     *        resonance's PDG codes (subsumption) or is a synthetic cluster.
+     */
+    struct PhaseShiftConfigChannel {
+      std::string name;                    ///< channel name (config column 1 before ':')
+      std::vector<std::string> waves;      ///< partial-wave labels (S/P/D/F/G)
+      bool reusesResonance;                ///< true if it reuses real PDG codes
+      std::vector<long long> reusedCodes;  ///< those codes (empty for a synthetic cluster)
+      PhaseShiftConfigChannel() : reusesResonance(false) {}
+    };
+
+    /**
+     * \brief Enumerate the channels referenced by a phase-shift config file - one
+     *        entry per distinct channel, in file order - WITHOUT modifying any
+     *        system. Useful to present the channels (e.g. a toggle list in a UI)
+     *        before applying them. Commented and "-" entries are handled as in
+     *        AddPhaseShiftChannelsFromFile.
+     */
+    std::vector<PhaseShiftConfigChannel> ListPhaseShiftConfigChannels(const std::string& configFile);
 
     /**
      * \brief Enable or disable every phase-shift channel already in the system,

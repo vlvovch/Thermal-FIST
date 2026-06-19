@@ -49,9 +49,10 @@ namespace {
   const QString ModelRealGas = "Quantum real gas";
 }
 
-ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode, bool thermalFitMode)
+ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop, bool eventGeneratorMode, bool thermalFitMode, bool showPhaseShifts)
   : QWidget(parent), m_eventGeneratorMode(eventGeneratorMode), m_thermalFitMode(thermalFitMode)
 {
+  buttonPhaseShifts = NULL;
   model = modelop;
 
   currentConfig = ThermalModelConfig::fromThermalModel(model);
@@ -156,6 +157,16 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   layOptions->addWidget(buttonInteractions);
   layOptions->addSpacing(20);
   layOptions->addWidget(buttonOther);
+
+  // S-matrix / phase-shift (Beth-Uhlenbeck) channels. Only shown where wired up
+  // (the main Thermal model tab); clicking it asks the owner to open the dialog.
+  if (showPhaseShifts) {
+    buttonPhaseShifts = new QPushButton(tr("Phase shifts..."));
+    buttonPhaseShifts->setToolTip(tr("Configure S-matrix / phase-shift (Beth-Uhlenbeck) channels."));
+    connect(buttonPhaseShifts, &QPushButton::clicked, this, &ModelConfigWidget::phaseShiftsRequested);
+    layOptions->addSpacing(20);
+    layOptions->addWidget(buttonPhaseShifts);
+  }
 
 
 

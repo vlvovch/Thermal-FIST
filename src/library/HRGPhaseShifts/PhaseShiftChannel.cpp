@@ -512,6 +512,12 @@ namespace thermalfist {
 
     std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
                                                          const std::string& configFile) {
+      return AddPhaseShiftChannelsFromFile(TPS, configFile, std::set<std::string>());
+    }
+
+    std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
+                                                         const std::string& configFile,
+                                                         const std::set<std::string>& skipChannels) {
       std::ifstream fin(configFile.c_str());
       if (!fin.is_open())
         throw std::runtime_error("AddPhaseShiftChannelsFromFile: cannot open " + configFile);
@@ -552,6 +558,7 @@ namespace thermalfist {
                                       "'<channel>:<wave>', got '" + key + "'");
         Entry e;
         e.channel    = key.substr(0, colon);
+        if (skipChannels.count(e.channel)) continue;   // individually disabled
         e.twoJplus1  = WaveTokenToTwoJplus1(key.substr(colon + 1));
         e.listFile   = (listF == "-") ? std::string() : resolvePath(dir, listF);
         e.decayFile  = (decF  == "-") ? std::string() : resolvePath(dir, decF);
@@ -645,6 +652,55 @@ namespace thermalfist {
       TPS.FillDecayThresholds();
       TPS.ProcessDecays();
       return all;
+    }
+
+    std::vector<PhaseShiftConfigChannel> ListPhaseShiftConfigChannels(const std::string& configFile) {
+      std::ifstream fin(configFile.c_str());
+      if (!fin.is_open())
+        throw std::runtime_error("ListPhaseShiftConfigChannels: cannot open " + configFile);
+
+      std::vector<PhaseShiftConfigChannel> out;
+      std::map<std::string, size_t> index;   // channel name -> position in out (file order)
+      std::string line;
+      while (std::getline(fin, line)) {
+        std::string::size_type hash = line.find('#');
+        if (hash != std::string::npos) line = line.substr(0, hash);
+        std::istringstream iss(line);
+        std::string key, listF, decF, model;
+        if (!(iss >> key >> listF >> decF >> model)) continue;   // blank/comment line
+        std::string::size_type colon = key.find(':');
+        if (colon == std::string::npos) continue;
+        const std::string channel = key.substr(0, colon);
+        const int twoJp1 = WaveTokenToTwoJplus1(key.substr(colon + 1));
+
+        // Resolve the channel's excitation (for the wave label) and reuse info from
+        // the catalog; unknown channels still list (synthetic, excitation 0).
+        int excitation = 0;
+        bool reuses = false;
+        std::vector<long long> codes;
+        try {
+          PhaseShiftChannel ch = ChannelByName(channel);
+          excitation = ch.excitation;
+          reuses = !ch.memberPdg.empty();
+          for (std::map<int, long long>::const_iterator it = ch.memberPdg.begin();
+               it != ch.memberPdg.end(); ++it)
+            codes.push_back(it->second);
+        } catch (const std::exception&) { /* unknown channel: leave defaults */ }
+
+        std::map<std::string, size_t>::iterator f = index.find(channel);
+        if (f == index.end()) {
+          PhaseShiftConfigChannel info;
+          info.name = channel;
+          info.reusesResonance = reuses;
+          info.reusedCodes = codes;
+          info.waves.push_back(WaveLabel(twoJp1, excitation));
+          index[channel] = out.size();
+          out.push_back(info);
+        } else {
+          out[f->second].waves.push_back(WaveLabel(twoJp1, excitation));
+        }
+      }
+      return out;
     }
 
     int SetPhaseShiftsEnabled(ThermalParticleSystem& TPS, bool enabled) {

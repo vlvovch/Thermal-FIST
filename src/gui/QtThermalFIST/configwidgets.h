@@ -54,6 +54,8 @@ public:
 
   QPushButton *buttonOther;
 
+  QPushButton *buttonPhaseShifts;   ///< only created when showPhaseShifts is set
+
   ThermalModelConfig currentConfig;
 
   bool m_eventGeneratorMode;
@@ -62,7 +64,7 @@ public:
   thermalfist::ThermalModelBase *model;
 
 
-  ModelConfigWidget(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL, bool eventGeneratorMode = false, bool thermalFitMode = false);
+  ModelConfigWidget(QWidget *parent = 0, thermalfist::ThermalModelBase *model = NULL, bool eventGeneratorMode = false, bool thermalFitMode = false, bool showPhaseShifts = false);
   ~ModelConfigWidget();
   ThermalModelConfig updatedConfig();
 private slots:
@@ -78,6 +80,7 @@ public:
   void setNewConfig(const ThermalModelConfig &config);
 signals:
   void changed();
+  void phaseShiftsRequested();   ///< the "Phase shifts..." button was clicked
 };
 
 

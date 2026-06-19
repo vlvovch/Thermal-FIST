@@ -20,6 +20,7 @@
 #include <QTextEdit>
 #include <QTabWidget>
 #include <QStringList>
+#include <QSet>
 
 #include <string>
 #include <vector>
@@ -59,8 +60,6 @@ class MainWindow : public QMainWindow
     QComboBox *comboListVariant;
     QPushButton *buttonLoad;
     QPushButton *buttonLoadDecays;
-    QCheckBox   *chkPhaseShifts;
-    QPushButton *buttonPhaseShifts;
 
     thermalfist::ThermalParticleSystem *TPS;
     thermalfist::ThermalModelBase *model;
@@ -68,8 +67,10 @@ class MainWindow : public QMainWindow
     QString cpath  = "";
     QString clists = "";
 
-    // S-matrix / phase-shift state
+    // S-matrix / phase-shift state (configured via the Model configuration dialog)
+    bool m_phaseShiftsEnabled = false;             ///< master on/off for phase shifts
     QStringList m_phaseShiftConfs;                  ///< phase-shift config file(s), applied in order
+    QSet<QString> m_phaseShiftDisabledChannels;     ///< channels switched off individually
     std::vector<std::string> m_lastListPaths;      ///< base list files of the current selection
     std::vector<std::string> m_lastDecayPaths;     ///< base decay files of the current selection
 
@@ -99,8 +100,9 @@ private slots:
     void loadList();
     void loadDecays();
     void switchParticleList();
-    void onPhaseShiftToggled();
-    void loadPhaseShiftConf();
+    /// Open the phase-shift configuration dialog (from the Model configuration);
+    /// on accept, store the new selection and rebuild the list.
+    void openPhaseShiftsDialog();
     void updateListVariants();
     void tabChanged(int newIndex);
     void about();

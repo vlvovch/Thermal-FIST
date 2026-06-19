@@ -32,6 +32,8 @@
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
 
 #include "aboutdialog.h"
+#include "configwidgets.h"
+#include "phaseshiftsdialog.h"
 
 using namespace thermalfist;
 
@@ -159,23 +161,15 @@ MainWindow::MainWindow(QWidget *parent)
   buttonLoadDecays = new QPushButton(tr("Load decays..."));
   connect(buttonLoadDecays, SIGNAL(clicked()), this, SLOT(loadDecays()));
 
-  // S-matrix / phase-shift controls. Default: pi-pi + pi-K (the Wuppertal
+  // S-matrix / phase-shift default selection: pi-pi + pi-K (the Wuppertal
   // analysis), pi-N (the Delta(1232) + Roy-Steiner backgrounds) and K-N (exotic
-  // S=+1). All ship with the package; use "Phase shifts..." to change the selection.
+  // S=+1). All ship with the package. The controls live in the Model
+  // configuration ("Phase shifts..." button) rather than this top data row.
   m_phaseShiftConfs = QStringList()
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf")
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf")
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piN.conf")
     << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/KN.conf");
-  chkPhaseShifts = new QCheckBox(tr("Phase shifts"));
-  chkPhaseShifts->setToolTip(tr("Add S-matrix / phase-shift channels from a config file\n"
-                                "as effective degrees of freedom (Beth-Uhlenbeck)."));
-  chkPhaseShifts->setChecked(false);
-  connect(chkPhaseShifts, SIGNAL(toggled(bool)), this, SLOT(onPhaseShiftToggled()));
-
-  buttonPhaseShifts = new QPushButton(tr("Phase shifts..."));
-  buttonPhaseShifts->setToolTip(tr("Choose the phase-shift config file."));
-  connect(buttonPhaseShifts, SIGNAL(clicked()), this, SLOT(loadPhaseShiftConf()));
 
   dataLay->addWidget(labelData);
   dataLay->addWidget(comboPDGEdition);
@@ -183,8 +177,6 @@ MainWindow::MainWindow(QWidget *parent)
   dataLay->addWidget(leList, 1);
   dataLay->addWidget(buttonLoad);
   dataLay->addWidget(buttonLoadDecays);
-  dataLay->addWidget(chkPhaseShifts);
-  dataLay->addWidget(buttonPhaseShifts);
 
   // Remember the initially loaded base list so phase shifts can be (re)applied.
   m_lastListPaths = std::vector<std::string>(1, listpath.toStdString());
@@ -192,6 +184,12 @@ MainWindow::MainWindow(QWidget *parent)
 
   tab1 = new ModelTab(NULL, model);
   //tab1->resetTPS();
+
+  // The "Phase shifts..." button lives in the Thermal model tab's Model
+  // configuration; route its click here (the list mutation is a global op).
+  if (tab1->configurationWidget())
+    connect(tab1->configurationWidget(), &ModelConfigWidget::phaseShiftsRequested,
+            this, &MainWindow::openPhaseShiftsDialog);
 
   tab2 = new FitToExperimentTab(NULL, model);
   tab1->setFitTab(tab2);
@@ -588,11 +586,13 @@ void MainWindow::refreshListDisplay()
 {
   QString t = clists;
   const bool present = TPS && PhaseShifts::CountPhaseShiftDensities(*TPS) > 0;
-  if (present && chkPhaseShifts && chkPhaseShifts->isChecked() && !m_phaseShiftConfs.isEmpty()) {
+  if (present && m_phaseShiftsEnabled && !m_phaseShiftConfs.isEmpty()) {
     QStringList names;
     for (int i = 0; i < m_phaseShiftConfs.size(); ++i)
       names << QFileInfo(m_phaseShiftConfs[i]).fileName();
     t += " + PS[" + names.join(", ") + "]";
+    if (!m_phaseShiftDisabledChannels.isEmpty())
+      t += " (-" + QString::number(m_phaseShiftDisabledChannels.size()) + " off)";
   }
   else if (present)
     t += " (phase shifts off)";   // clusters still in the list but disabled
@@ -603,18 +603,22 @@ void MainWindow::refreshListDisplay()
 
 void MainWindow::applyPhaseShiftsIfEnabled()
 {
-  if (!chkPhaseShifts || !chkPhaseShifts->isChecked()) return;
+  if (!m_phaseShiftsEnabled) return;
   if (m_phaseShiftConfs.isEmpty()) return;
+  // Channels switched off individually in the dialog are skipped (a skipped
+  // reused-resonance channel just leaves the pole-mass particle in place).
+  std::set<std::string> skip;
+  for (QSet<QString>::const_iterator it = m_phaseShiftDisabledChannels.constBegin();
+       it != m_phaseShiftDisabledChannels.constEnd(); ++it)
+    skip.insert(it->toStdString());
   try {
     // Apply every selected config in order (e.g. pipi.conf + piK.conf together).
     for (int i = 0; i < m_phaseShiftConfs.size(); ++i)
-      PhaseShifts::AddPhaseShiftChannelsFromFile(*TPS, m_phaseShiftConfs[i].toStdString());
+      PhaseShifts::AddPhaseShiftChannelsFromFile(*TPS, m_phaseShiftConfs[i].toStdString(), skip);
   } catch (const std::exception& e) {
     QMessageBox::warning(this, tr("Phase shifts"),
       tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
-    chkPhaseShifts->blockSignals(true);
-    chkPhaseShifts->setChecked(false);
-    chkPhaseShifts->blockSignals(false);
+    m_phaseShiftsEnabled = false;
   }
 }
 
@@ -630,41 +634,17 @@ void MainWindow::rebuildCurrentList()
   resetAllTabs();
 }
 
-void MainWindow::onPhaseShiftToggled()
+void MainWindow::openPhaseShiftsDialog()
 {
-  const bool on = chkPhaseShifts->isChecked();
-  // The cheap enable/disable (zeroing the densities) is exact ONLY for synthetic
-  // clusters, which have no baseline. If any phase-shift density overrides a real
-  // resonance (reused PDG code), disabling it would give 0 instead of that
-  // resonance's own (pole-mass) contribution - so rebuild the list to toggle exactly.
-  if (PhaseShifts::CountPhaseShiftDensities(*TPS) > 0
-      && PhaseShifts::CountOverriddenResonances(*TPS) == 0) {
-    PhaseShifts::SetPhaseShiftsEnabled(*TPS, on);
-    refreshListDisplay();
-    resetAllTabs();
-  } else {
-    // Overridden resonances present (or first activation): rebuild from the base
-    // list so the OFF state restores each resonance's list entry exactly.
-    rebuildCurrentList();
-  }
-}
-
-void MainWindow::loadPhaseShiftConf()
-{
-  QString prefix = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts";
-  if (!m_phaseShiftConfs.isEmpty())
-    prefix = QFileInfo(m_phaseShiftConfs.first()).absolutePath();
-  // Multi-select so pipi.conf + piK.conf (etc.) can be loaded together.
-  QStringList paths = QFileDialog::getOpenFileNames(this, tr("Open phase-shift config file(s)"), prefix,
-                   tr("Config files (*.conf *.txt *.dat);;All files (*)"));
-  if (paths.isEmpty())
+  PhaseShiftsDialog dlg(this, m_phaseShiftsEnabled, m_phaseShiftConfs, m_phaseShiftDisabledChannels);
+  if (dlg.exec() != QDialog::Accepted)
     return;
-  m_phaseShiftConfs = paths;
-  // A new config means different channels: rebuild from the base list so the old
-  // clusters are dropped and the new ones added (with the box checked).
-  chkPhaseShifts->blockSignals(true);
-  chkPhaseShifts->setChecked(true);
-  chkPhaseShifts->blockSignals(false);
+  m_phaseShiftsEnabled         = dlg.phaseShiftsEnabled();
+  m_phaseShiftConfs            = dlg.configs();
+  m_phaseShiftDisabledChannels = dlg.disabledChannels();
+  // Always rebuild from the base list: this both applies the (possibly new)
+  // enabled-channel subset and exactly restores overridden resonances that were
+  // turned off (their pole-mass list entries come back).
   rebuildCurrentList();
 }
 
