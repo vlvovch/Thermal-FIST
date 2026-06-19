@@ -272,9 +272,20 @@ namespace thermalfist {
       std::ofstream fout(listFile.c_str());
       if (!fout.is_open())
         throw std::runtime_error("WritePhaseShiftListFile: cannot open " + listFile);
-      const double mass = ch.m1 + ch.m2;     // nominal; density override supplies thermodynamics
+      // A subsumed-resonance channel (memberPdg) writes the real resonance QN -
+      // mass, degeneracy 2J+1 and width - so that when the code is ABSENT from the
+      // base list it is created as the genuine resonance (and the pole-mass fallback,
+      // if phase shifts are toggled off, is physical). The phase-shift density still
+      // overrides the thermodynamics. A synthetic cluster instead uses the cluster
+      // nominal mass m1+m2, deg 1 (the 2J+1 lives in the spectral weight) and width 0.
+      const bool reuse = !ch.memberPdg.empty();
+      const double clusterMass = ch.m1 + ch.m2;     // decay threshold into constituents
+      const double mass  = (reuse && ch.resMass > 0.) ? ch.resMass : clusterMass;
+      const int    deg   = reuse ? ch.resDeg : 1;
+      const double width = reuse ? ch.resWidth : 0.0;
       fout << "# S-matrix phase-shift channel '" << ch.name << "', wave" << (waves.size() == 1 ? "" : "s") << ":";
       for (size_t w = 0; w < waves.size(); ++w) fout << " " << WaveLabel(waves[w].twoJplus1, ch.excitation);
+      if (reuse) fout << "  (reuses real resonance codes)";
       fout << "\n";
       fout << "# pdgid name stable mass deg stat B Q S C |S| |C| width threshold\n";
       const std::vector<int> izs = memberTwoIz(ch);
@@ -288,12 +299,12 @@ namespace thermalfist {
           fout << std::setw(12) << pdg << "  " << std::setw(28) << std::left << name << std::right
                << "  " << 0                      // stable=0 (decays to constituents)
                << "  " << std::setprecision(8) << mass
-               << "  " << 1                      // degeneracy (2J+1 lives in the spectral weight)
+               << "  " << deg                    // 1 for synthetic clusters, 2J+1 for reused resonances
                << "  " << ch.statistics
                << "  " << ch.B << "  " << Q << "  " << ch.S << "  " << ch.C
                << "  " << std::abs(ch.S) << "  " << std::abs(ch.C)
-               << "  " << 0.0                    // width
-               << "  " << mass                   // threshold
+               << "  " << width
+               << "  " << clusterMass            // threshold (constituent sum)
                << "\n";
         }
       }
@@ -402,7 +413,15 @@ namespace thermalfist {
     std::vector<long long> AddPhaseShiftChannel(ThermalParticleSystem& TPS,
                                                 const PhaseShiftChannel& ch,
                                                 const std::vector<PhaseShiftPartialWave>& waves) {
-      const double mass = ch.m1 + ch.m2;   // nominal; density override supplies thermodynamics
+      // For a subsumed-resonance channel created here (its real code being absent),
+      // use the real resonance QN (mass, deg=2J+1, width); a synthetic cluster uses
+      // the nominal cluster mass m1+m2, deg 1, width 0. Either way the phase-shift
+      // density supplies the thermodynamics.
+      const bool reuse = !ch.memberPdg.empty();
+      const double clusterMass = ch.m1 + ch.m2;
+      const double partMass  = (reuse && ch.resMass > 0.) ? ch.resMass : clusterMass;
+      const double partDeg   = reuse ? (double)ch.resDeg : 1.;
+      const double partWidth = reuse ? ch.resWidth : 0.;
       std::vector<long long> added;
 
       // ---- add members (with isospin-CG decays) and their antiparticles ----
@@ -434,8 +453,8 @@ namespace thermalfist {
           // contribution. If absent (e.g. the kappa, whose code is excluded from
           // the list) it is created here with the channel's isospin-CG decays.
           if (TPS.PdgToId(mag) < 0) {
-            ThermalParticle part(/*Stable*/ false, name, mag, /*Deg*/ 1., ch.statistics, mass,
-                                 ch.S, ch.B, Q, std::abs(ch.S), 0., mass, ch.C, std::abs(ch.C), 0);
+            ThermalParticle part(/*Stable*/ false, name, mag, partDeg, ch.statistics, partMass,
+                                 ch.S, ch.B, Q, std::abs(ch.S), partWidth, clusterMass, ch.C, std::abs(ch.C), 0);
             part.SetDecays(pdecays);
             part.SetDecaysOriginal(pdecays);
             TPS.AddParticle(part);
@@ -504,10 +523,17 @@ namespace thermalfist {
       // isospin-CG decays; the model column gives the delta(M):
       //   <model> = <param>        analytic parametrization name (-> AnalyticWave)
       //           = tab:<file>     a tabulated (M, delta) table
-      // File paths are resolved relative to the config file's directory. A "-" in
-      // the list and/or decay column means "no file": the channel reuses an
-      // existing resonance (memberPdg), so nothing is added/loaded and the model
-      // is just attached to it (subsumption by PDG coincidence).
+      // File paths are resolved relative to the config file's directory.
+      //
+      // A subsumed-resonance channel (memberPdg) may EITHER give per-resonance files
+      // (list-/decays-<res>.dat with the resonance's real QN) or use "-". With files
+      // the list is loaded "create-if-absent, keep-if-present" (skip_duplicates): the
+      // resonance is created with its real QN where the base list lacks it (e.g. the
+      // kappa) and left untouched where it is present (only its thermal contribution
+      // is overridden by the density); its CG decays are applied only to the members
+      // this call creates, so a pre-existing resonance keeps its own decays. A "-" in
+      // the list and/or decay column means "no file": the catalog creates-or-overrides
+      // the reused codes directly (subsumption by PDG coincidence), with no decay file.
       struct Entry {
         std::string channel; int twoJplus1;
         std::string listFile, decayFile, model;
@@ -533,18 +559,32 @@ namespace thermalfist {
         entries.push_back(e);
       }
 
+      // Snapshot the codes already in the list BEFORE loading any module file, so
+      // step 2 can tell a freshly created cluster/resonance (gets the CG decays)
+      // from a pre-existing resonance the module merely overrides (keeps its decays).
+      std::set<long long> preexisting;
+      for (int i = 0; i < TPS.ComponentsNumber(); ++i)
+        preexisting.insert(TPS.Particle(i).PdgId());
+
       // 1. Add the per-wave cluster members from each (unique) list file. Thermal-
-      //    FIST generates the antiparticles; existing species are left untouched.
+      //    FIST generates the antiparticles. A subsumed-resonance file may name a
+      //    code already present (e.g. the rho), so load with skip_duplicates: an
+      //    already-present code is kept (its thermodynamics are overridden later by
+      //    the density), an absent one (e.g. the kappa) is created with its real QN.
       //    Entries with no list file ("-") reuse an existing resonance: nothing added.
+      std::set<std::string> flags;
+      flags.insert(ThermalParticleSystem::flag_skip_duplicates);
       std::set<std::string> addedLists;
       for (size_t i = 0; i < entries.size(); ++i)
         if (!entries[i].listFile.empty() && addedLists.insert(entries[i].listFile).second)
-          TPS.AddParticlesToListFromFile(entries[i].listFile);
+          TPS.AddParticlesToListFromFile(entries[i].listFile, flags);
       TPS.FinalizeList();
 
       // 2. Attach each wave's isospin-CG decays from its (unique) decay file.
       //    Additive: only the listed cluster pdgs get decays; antiparticle decays
-      //    are charge-conjugated. The rest of the list keeps its decays.
+      //    are charge-conjugated. The rest of the list keeps its decays. A code that
+      //    pre-existed this call (an overridden resonance) keeps ITS OWN decays - we
+      //    only set the CG decays on members this call actually created.
       std::set<std::string> loadedDecays;
       for (size_t i = 0; i < entries.size(); ++i) {
         if (entries[i].decayFile.empty()) continue;          // reused resonance keeps its decays
@@ -553,6 +593,8 @@ namespace thermalfist {
           readClusterDecays(entries[i].decayFile);
         for (std::map<long long, ThermalParticle::ParticleDecaysVector>::const_iterator it =
                dm.begin(); it != dm.end(); ++it) {
+          if (preexisting.count(it->first) || preexisting.count(-it->first))
+            continue;   // a pre-existing resonance keeps its own (real) decays
           if (TPS.PdgToId(it->first) >= 0) {
             TPS.ParticleByPDG(it->first).SetDecays(it->second);
             TPS.ParticleByPDG(it->first).SetDecaysOriginal(it->second);
@@ -566,10 +608,11 @@ namespace thermalfist {
       }
 
       // 3. Bind each wave's delta(M). File-based entries already have their cluster
-      //    members in the list (added in step 1), so we just attach the density.
-      //    "-" entries reuse real resonance codes (memberPdg): route them through
-      //    the catalog AddPhaseShiftChannel, which create-or-overrides those codes
-      //    (creates the kappa, overrides the sigma / f0(980)).
+      //    members in the list (created or kept in step 1), so we just attach the
+      //    density - this covers synthetic clusters AND subsumed resonances that
+      //    carry per-resonance files. "-" entries (no file) reuse real resonance
+      //    codes (memberPdg): route them through the catalog AddPhaseShiftChannel,
+      //    which create-or-overrides those codes directly.
       std::vector<long long> all;
       std::vector<std::string> channelOrder;
       std::set<std::string> channelSeen;
@@ -677,6 +720,15 @@ namespace thermalfist {
       // overrides a zero baseline (no double counting), and it stays a decay
       // product. Toggling phase shifts off restores its (deg=0) list entry.
       ch.memberPdg[0] = 9000221;       // f0(500)/sigma
+      // Real QN written to list-pipi_I0_S.dat / used if 9000221 is absent. The
+      // f0(500) is a J=0 scalar, so its degeneracy is 2J+1 = 1 (its real quantum
+      // number) - same convention as the other subsumed resonances. (Some base
+      // lists carry the sigma with deg=0 to exclude it from the pole-mass sum; that
+      // is the list's own choice and is preserved when it is present - skip_duplicates
+      // keeps the existing entry - while the density overrides its thermodynamics.)
+      ch.resMass  = 0.475;             // PDG f0(500) nominal
+      ch.resDeg   = 1;                 // 2J+1 = 1 (scalar)
+      ch.resWidth = 0.550;
       ch.quadratureNodes = 64;
       return ch;
     }
@@ -695,6 +747,9 @@ namespace thermalfist {
       ch.Mmax      = PiPiI2_Mmax();      // 1.42 GeV (full Garcia-Martin upper range)
       ch.memberPdg.clear();
       ch.memberPdg[0] = 9010221;         // reuse the real f0(980) -> override it
+      ch.resMass  = 0.990;               // real f0(980) QN (a genuine resonance, deg=1)
+      ch.resDeg   = 1;
+      ch.resWidth = 0.060;
       return ch;
     }
 
@@ -719,6 +774,10 @@ namespace thermalfist {
       // rho-). The P-wave's 2J+1=3 (in the spectral weight) carries the rho spin.
       ch.memberPdg[0]  = 113;          // rho0  (Iz=0,  Q=0)
       ch.memberPdg[+2] = 213;          // rho+  (Iz=+1, Q=1; antiparticle -213 = rho-)
+      // Real rho(770) QN written to list-pipi_I1_P.dat / used if 113/213 absent.
+      ch.resMass  = 0.77526;
+      ch.resDeg   = 3;                 // 2J+1 = 3 (vector)
+      ch.resWidth = 0.1491;
       ch.quadratureNodes = 64;
       return ch;
     }
@@ -732,6 +791,7 @@ namespace thermalfist {
       ch.name = "pipi_I1_F";
       ch.Mmax = PiPiI2_Mmax();         // 1.42 GeV (elastic per the parametrization)
       ch.memberPdg.clear();            // synthetic cluster (no resonance to reuse)
+      ch.resMass = 0.; ch.resDeg = 0; ch.resWidth = 0.;  // synthetic: no reuse QN
       return ch;
     }
 
@@ -776,6 +836,11 @@ namespace thermalfist {
       // coincidence: 2Iz -> code.)
       ch.memberPdg[+1] = 9000321;    // K(0)*(700)+  (Iz=+1/2, Q=+1)
       ch.memberPdg[-1] = 9000311;    // K(0)*(700)0  (Iz=-1/2, Q=0)
+      // Real K0*(700) QN written to list-piK_I12_S.dat / used to CREATE the kappa
+      // when absent (it usually is - it is excluded from the PDG HRG lists).
+      ch.resMass  = 0.824;           // PDG K0*(700) (Breit-Wigner) mass estimate
+      ch.resDeg   = 1;               // 2J+1 = 1 (scalar)
+      ch.resWidth = 0.478;
       return ch;
     }
 
@@ -790,6 +855,10 @@ namespace thermalfist {
       ch.Mmax = PiK_I12_Mmax();      // elastic only below the K-eta threshold
       ch.memberPdg[+1] = 323;        // K*(892)+  (Iz=+1/2, Q=+1)
       ch.memberPdg[-1] = 313;        // K*(892)0  (Iz=-1/2, Q=0)
+      // Real K*(892) QN written to list-piK_K892_P.dat / used if 323/313 absent.
+      ch.resMass  = 0.89555;
+      ch.resDeg   = 3;               // 2J+1 = 3 (vector)
+      ch.resWidth = 0.0473;
       return ch;
     }
 
@@ -824,11 +893,18 @@ namespace thermalfist {
       PhaseShiftChannel ch = PiN_ChannelBase();
       ch.name = "piN_Delta";
       ch.twoI = 3;                   // I = 3/2
+      ch.excitation = 1;             // orbital l = 1 (P33): only labels the wave (P, not S);
+                                     // the synthetic-id slot is unused for a reused code.
       ch.Mmax = PiN_Delta_Mmax();    // elastic up to the matching point ~1.38 GeV
       ch.memberPdg[+3] = 2224;       // Delta(1232)++  (Iz=+3/2, Q=+2)
       ch.memberPdg[+1] = 2214;       // Delta(1232)+   (Iz=+1/2, Q=+1)
       ch.memberPdg[-1] = 2114;       // Delta(1232)0   (Iz=-1/2, Q=0)
       ch.memberPdg[-3] = 1114;       // Delta(1232)-   (Iz=-3/2, Q=-1)
+      // Real Delta(1232) QN written to list-piN_Delta_P.dat / used if the codes are
+      // absent. A J=3/2 baryon: deg=2J+1=4, fermionic (stat already +1 from base).
+      ch.resMass  = 1.232;
+      ch.resDeg   = 4;
+      ch.resWidth = 0.117;
       return ch;
     }
 

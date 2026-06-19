@@ -89,10 +89,25 @@ namespace thermalfist {
                                        ///< absent it is created (e.g. the kappa) with the
                                        ///< channel's isospin-CG decays. Must cover every
                                        ///< member 2Iz of the channel.
+      double resMass;                  ///< for memberPdg (subsumed-resonance) channels: the
+                                       ///< real resonance mass [GeV] written to the generated
+                                       ///< list file and used when the code is absent and must
+                                       ///< be created (so the created entry, and the pole-mass
+                                       ///< fallback if phase shifts are toggled off, are
+                                       ///< physical). <= 0 -> fall back to the cluster mass
+                                       ///< m1+m2. Ignored for synthetic clusters.
+      int    resDeg;                   ///< real spin degeneracy 2J+1 of the subsumed resonance
+                                       ///< (may legitimately be 0, e.g. the broad sigma kept
+                                       ///< as a phase-shift-only placeholder). Ignored for
+                                       ///< synthetic clusters (which use deg 1).
+      double resWidth;                 ///< real width [GeV] of the subsumed resonance for the
+                                       ///< created/fallback entry (0 default; ignored when the
+                                       ///< phase-shift density overrides the thermodynamics).
 
       PhaseShiftChannel()
         : family(FamilyPiPi), m1(0.), m2(0.), Mmax(0.), statistics(-1),
-          twoI(0), B(0), S(0), C(0), excitation(0), quadratureNodes(64) {}
+          twoI(0), B(0), S(0), C(0), excitation(0), quadratureNodes(64),
+          resMass(0.), resDeg(0), resWidth(0.) {}
     };
 
     /**

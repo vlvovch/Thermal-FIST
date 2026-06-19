@@ -1,0 +1,15 @@
+# S-matrix phase-shift channel 'piN_Delta' decays (isospin Clebsch-Gordan), wave: P
+1114  # piN_Delta[Iz=-3/2,P]
+1
+1  -211 2112
+2114  # piN_Delta[Iz=-1/2,P]
+2
+0.3333333333  -211 2212
+0.6666666667  111 2112
+2214  # piN_Delta[Iz=+1/2,P]
+2
+0.6666666667  111 2212
+0.3333333333  211 2112
+2224  # piN_Delta[Iz=+3/2,P]
+1
+1  211 2212

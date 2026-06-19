@@ -1,11 +1,16 @@
 # S-matrix / phase-shift list modules
 
 Everything here is **per partial wave**. Each wave of a scattering channel is a
-drop-in Thermal-FIST list module — a particle table (`list-<channel>_<wave>.dat`)
-plus a decays file (`decays-<channel>_<wave>.dat`) — that adds the wave's isospin
-multiplet as effective "cluster" degrees of freedom. The clusters carry the
+drop-in Thermal-FIST list module — a particle table (`list/list-<channel>_<wave>.dat`)
+plus a decays file (`decays/decays-<channel>_<wave>.dat`) — that adds the wave's
+isospin multiplet as effective "cluster" degrees of freedom. The clusters carry the
 channel's conserved charges and decay (with isospin Clebsch-Gordan branchings)
 into their constituent hadrons.
+
+The data files live in two subfolders — particle tables in `list/`, decays in
+`decays/` — while the `.conf` entry points stay at the top level. The config paths
+are resolved relative to the config file, so they include the `list/` and `decays/`
+prefixes.
 
 The synthetic PDG ids follow `99 F (2I) (2|Iz|) nn (2J+1)`: the last digit is
 the wave's spin degeneracy `2J+1`, the `99` prefix keeps them clear of real PDG
@@ -37,10 +42,10 @@ ThermalModelIdeal model(&TPS);
 ```
 ```
 # pipi.conf -- one line per wave: <channel>:<wave> <list> <decays> <model>
-pipi_I2:S   list-pipi_I2_S.dat   decays-pipi_I2_S.dat   GarciaMartin2011_S   # S (J=0)
-pipi_I2:D   list-pipi_I2_D.dat   decays-pipi_I2_D.dat   GarciaMartin2011_D   # D (J=2)
+pipi_I2:S   list/list-pipi_I2_S.dat   decays/decays-pipi_I2_S.dat   GarciaMartin2011_S   # S (J=0)
+pipi_I2:D   list/list-pipi_I2_D.dat   decays/decays-pipi_I2_D.dat   GarciaMartin2011_D   # D (J=2)
 # swap one wave for a tabulated phase shift (table is M[GeV] delta[rad]):
-# pipi_I2:D list-pipi_I2_D.dat   decays-pipi_I2_D.dat   tab:delta_pipi_I2_D.dat
+# pipi_I2:D list/list-pipi_I2_D.dat   decays/decays-pipi_I2_D.dat   tab:delta_pipi_I2_D.dat
 ```
 
 Column 1 is a unique wave key: the channel before the `:`, the wave (S/P/D/F/G or
@@ -65,10 +70,10 @@ attach each wave's model:
 
 ```cpp
 ThermalParticleSystem TPS(
-  { "input/list/PDG2020/list.dat",   "input/list/phaseshifts/list-pipi_I2_S.dat",
-                                      "input/list/phaseshifts/list-pipi_I2_D.dat" },
-  { "input/list/PDG2020/decays.dat", "input/list/phaseshifts/decays-pipi_I2_S.dat",
-                                      "input/list/phaseshifts/decays-pipi_I2_D.dat" });
+  { "input/list/PDG2020/list.dat",   "input/list/phaseshifts/list/list-pipi_I2_S.dat",
+                                      "input/list/phaseshifts/list/list-pipi_I2_D.dat" },
+  { "input/list/PDG2020/decays.dat", "input/list/phaseshifts/decays/decays-pipi_I2_S.dat",
+                                      "input/list/phaseshifts/decays/decays-pipi_I2_D.dat" });
 PhaseShifts::PhaseShiftChannel ch = PhaseShifts::PiPi_I2_Channel();
 PhaseShifts::AttachDensities(TPS, ch, { PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_S") });
 PhaseShifts::AttachDensities(TPS, ch, { PhaseShifts::AnalyticWave("pipi_I2", "GarciaMartin2011_D") });
@@ -78,7 +83,9 @@ PhaseShifts::SubsumeResonances(TPS, ch);
 The `.dat` files here are generated from the channel definitions via
 `PhaseShifts::WritePhaseShiftFiles(channel, waves, dir)` (one list + one decay
 file per wave) and committed for inspection; regenerate them if a channel's
-structure changes.
+structure changes. `WritePhaseShiftFiles` writes both files flat into `dir`, so
+after regenerating, move the `list-*.dat` into `list/` and the `decays-*.dat` into
+`decays/` (the layout the bundled configs expect).
 
 ## Excluded volume / van der Waals
 
@@ -95,8 +102,9 @@ quantum-number-based assignment as every other species — no special-casing.
   sigma/f0(500). The phase passes through 90 deg, so it is branch-tracked
   (`atan2`). Isoscalar and neutral, so it contributes to the EoS and pion feeddown
   but not to charge fluctuations. Integrated up to the K-Kbar threshold (2 M_K),
-  the elastic limit. It **reuses the real f0(500) code (9000221)**: the density
-  overrides the sigma's (deg=0) list entry. Config: `pipi.conf`.
+  the elastic limit. It **reuses the real f0(500) code (9000221)** (a J=0 scalar,
+  deg=1): the density overrides the sigma's list entry (some base lists give it
+  deg=0 to drop the pole-mass term; that choice is kept). Config: `pipi.conf`.
 - `pipi_I0_f0980` — the part of delta_0^0 above the K-Kbar threshold (the
   f0(980)). It **reuses the real f0(980) code (9010221)**, overriding its thermal
   contribution. **OFF by default** (commented out in `pipi.conf`): that region is
@@ -116,9 +124,10 @@ quantum-number-based assignment as every other species — no special-casing.
   tiny. Synthetic clusters. Config: `piK.conf`.
 - `piK_I12` — attractive pi-K I=1/2 S-wave (same reference), i.e. the
   kappa/K0*(700). Elastic only below the K-eta threshold. It **reuses the real
-  kappa codes (9000321, 9000311)**; since the kappa is usually excluded from the
-  list, these are created with the isospin-CG decays (if present, overridden).
-  Config: `piK.conf`.
+  kappa codes (9000321, 9000311)** via `list/list-piK_I12_S.dat` (real QN); since the
+  kappa is usually excluded from the list, these are created from that file with the
+  isospin-CG decays (if a list does have them, that entry is kept and only its
+  thermodynamics are overridden). Config: `piK.conf`.
 - `piK_K892` — pi-K I=1/2 P-wave = the K*(892) (same reference, Eq. 28). Resonant
   (branch-tracked through 90 deg), elastic below the K-eta threshold. It **reuses
   the real K*(892) codes (323, 313)**, overriding their contribution. Config:
@@ -153,14 +162,32 @@ quantum-number-based assignment as every other species — no special-casing.
   `KN_GibbsArceo_reference.md`. Config: `KN.conf`.
 
 ### Subsumption by PDG coincidence
-A channel can REUSE a real resonance's PDG code (`memberPdg`, the `-` list/decay
-columns in the config) instead of a synthetic id. If that code is already in the
-list (sigma, f0(980)) the phase-shift density **overrides** its thermal
-contribution while it stays in the list (still a decay product); if absent (the
-kappa) it is **created** with the channel's decays. Either way the real resonance
-is not separately counted. Because these are real (non-synthetic)
-codes, the cheap enable/disable toggle is not exact for them, so the GUI rebuilds
-the list when toggling (see `CountOverriddenResonances`).
+A channel can REUSE a real resonance's PDG code (`memberPdg`) instead of a synthetic
+id. If that code is already in the base list (sigma, f0(980), rho, K*, Delta) the
+phase-shift density **overrides** its thermal contribution while it stays in the list
+(still a decay product, keeping its own decays); if absent (the kappa) it is
+**created**. Either way the real resonance is not separately counted.
+
+**Each subsumed resonance ships its own `list/list-<res>.dat` / `decays/decays-<res>.dat`**
+(e.g. `list/list-pipi_I1_P.dat` for the rho, `list/list-piK_I12_S.dat` for the kappa), referenced
+from the config like any other wave. Unlike the synthetic-cluster files, these carry
+the resonance's **real quantum numbers** — physical mass, degeneracy `2J+1` and width
+— so that where the base list lacks the resonance it is created as the genuine
+particle (with isospin-CG decays), and the pole-mass fallback (phase shifts toggled
+off) is physical. The files are loaded "create-if-absent, keep-if-present": an
+already-present code is left untouched (its own QN and decays win; only the density
+overrides its thermodynamics), an absent one is created from the file. This uses the
+`ThermalParticleSystem::flag_skip_duplicates` load flag (the loader otherwise throws
+on a duplicate PDG code). **This matters because not every base list has every
+resonance** — the kappa, for instance, is excluded from PDG2014/2020/2025.
+
+As a fileless alternative, a `-` in the list and/or decay column means the catalog
+creates-or-overrides the reused codes directly (no per-resonance file); the in-code
+`AddPhaseShiftChannel` does the same. Both create absent codes with the real QN.
+
+Because these are real (non-synthetic) codes, the cheap enable/disable toggle is not
+exact for them, so the GUI rebuilds the list when toggling (see
+`CountOverriddenResonances`).
 
 pi-K (S=+1), pi-N (B=+1) and K-N (B=+1, S=+1) carry a conserved charge, so unlike
 pi-pi they are **not** self-conjugate multiplets: every Iz is a distinct member and

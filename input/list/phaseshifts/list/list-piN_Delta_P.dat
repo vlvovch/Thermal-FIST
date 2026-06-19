@@ -1,0 +1,6 @@
+# S-matrix phase-shift channel 'piN_Delta', wave: P  (reuses real resonance codes)
+# pdgid name stable mass deg stat B Q S C |S| |C| width threshold
+        1114  piN_Delta[Iz=-3/2,P]          0  1.232  4  1  1  -1  0  0  0  0  0.117  1.077842
+        2114  piN_Delta[Iz=-1/2,P]          0  1.232  4  1  1  0  0  0  0  0  0.117  1.077842
+        2214  piN_Delta[Iz=+1/2,P]          0  1.232  4  1  1  1  0  0  0  0  0.117  1.077842
+        2224  piN_Delta[Iz=+3/2,P]          0  1.232  4  1  1  2  0  0  0  0  0.117  1.077842

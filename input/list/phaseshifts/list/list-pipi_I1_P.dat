@@ -1,0 +1,4 @@
+# S-matrix phase-shift channel 'pipi_I1', wave: P  (reuses real resonance codes)
+# pdgid name stable mass deg stat B Q S C |S| |C| width threshold
+         113  pipi_I1[Iz=0,P]               0  0.77526  3  -1  0  0  0  0  0  0  0.1491  0.27914
+         213  pipi_I1[Iz=+1,P]              0  0.77526  3  -1  0  1  0  0  0  0  0.1491  0.27914

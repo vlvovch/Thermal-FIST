@@ -61,6 +61,7 @@ namespace thermalfist {
   const std::string ThermalParticleSystem::flag_nocharm = "no_charm";
   const std::string ThermalParticleSystem::flag_nonuclei = "no_nuclei";
   const std::string ThermalParticleSystem::flag_noexcitednuclei = "no_excitednuclei";
+  const std::string ThermalParticleSystem::flag_skip_duplicates = "skip_duplicates";
 
 
   ThermalParticleSystem::ThermalParticleSystem(const std::vector<std::string>& ListFiles, const std::vector<std::string>& DecayFiles, const std::set<std::string>& flags, double mcut)
@@ -624,7 +625,12 @@ namespace thermalfist {
 
         //if (mcut >= 0. && mass > mcut) {
         if (m_PDGtoID.count(pdgid) != 0) {
-          throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
+          if (flags.count(ThermalParticleSystem::flag_skip_duplicates) == 0)
+            throw std::invalid_argument("ThermalParticleSystem::LoadTable_OldFormat: Duplicate pdg code " + std::to_string(pdgid));
+          // skip-duplicates: keep the existing entry, ignore this one
+          fin.getline(tmpc, 500);
+          tmp = string(tmpc);
+          continue;
         }
         if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0) {
           fin.getline(tmpc, 500);
@@ -704,7 +710,9 @@ namespace thermalfist {
 
           //if (mcut >= 0. && mass > mcut)
           if (m_PDGtoID.count(pdgid) != 0) {
-            throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
+            if (flags.count(ThermalParticleSystem::flag_skip_duplicates) == 0)
+              throw std::invalid_argument("ThermalParticleSystem::LoadTable_NewFormat: Duplicate pdg code " + std::to_string(pdgid));
+            continue;   // skip-duplicates: keep the existing entry, ignore this one
           }
 
           if (!AcceptParticle(part_candidate, flags, mcut) || m_PDGtoID.count(pdgid) != 0)

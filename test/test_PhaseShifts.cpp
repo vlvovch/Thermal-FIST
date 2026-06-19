@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <string>
 #include <fstream>
+#include <set>
 #include "ThermalFISTConfig.h"
 #include "HRGPhaseShifts/PhaseShiftDensity.h"
 #include "HRGPhaseShifts/LightMesonPhaseShifts.h"
@@ -1586,6 +1587,123 @@ namespace {
     // exotic S=+1 baryons are present and the calculation runs
     EXPECT_TRUE(std::isfinite(m.Pressure()));
     std::remove(lst.c_str()); std::remove(confF.c_str());
+  }
+
+  // ---- subsumed-resonance per-resonance files (create-if-absent / keep-if-present) ----
+
+  TEST(PhaseShifts, SkipDuplicatesLoaderFlag) {
+    // The skip_duplicates load flag must KEEP an already-present code (with its QN)
+    // instead of throwing on the duplicate, while still adding genuinely new codes.
+    const std::string dir = ::testing::TempDir();
+    const std::string base = dir + "ps_dup_base.dat";
+    {
+      std::ofstream f(base.c_str());
+      f << "113 rho0 0 0.77526 3 -1 0 0 0 0 0 0 0.149 0.279\n";
+    }
+    const std::string more = dir + "ps_dup_more.dat";
+    {
+      std::ofstream f(more.c_str());
+      f << "113 rho0_alt 0 0.990  1 -1 0 0 0 0 0 0 0.5    0.279\n";  // duplicate pdg, other QN
+      f << "223 omega    0 0.7827 3 -1 0 0 0 0 0 0 0.0085 0.41\n";   // genuinely new
+    }
+    // without the flag: a duplicate pdg throws
+    ThermalParticleSystem TPS1(std::vector<std::string>(1, base), std::vector<std::string>());
+    EXPECT_THROW(TPS1.AddParticlesToListFromFile(more), std::invalid_argument);
+    // with the flag: existing 113 kept (deg=3, not 1), omega added
+    ThermalParticleSystem TPS2(std::vector<std::string>(1, base), std::vector<std::string>());
+    std::set<std::string> flags;
+    flags.insert(ThermalParticleSystem::flag_skip_duplicates);
+    EXPECT_NO_THROW(TPS2.AddParticlesToListFromFile(more, flags));
+    TPS2.FinalizeList();
+    ASSERT_GE(TPS2.PdgToId(113), 0);
+    EXPECT_DOUBLE_EQ(TPS2.ParticleByPDG(113).Degeneracy(), 3.0);  // kept the original, not 1
+    EXPECT_NEAR(TPS2.ParticleByPDG(113).Mass(), 0.77526, 1e-9);   // kept the original mass
+    EXPECT_GE(TPS2.PdgToId(223), 0);                               // new code added
+    std::remove(base.c_str()); std::remove(more.c_str());
+  }
+
+  TEST(PhaseShifts, SubsumedResonanceFilesCarryRealQN) {
+    // The generated per-resonance list file writes the REAL resonance QN (mass,
+    // deg=2J+1, width), not the cluster nominal (m1+m2, deg 1). Check the rho file.
+    const std::string dir = ::testing::TempDir();
+    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiPi_I1_Channel(),
+                                      PhaseShifts::PiPi_I1_Waves(), dir);
+    const std::string base = dir + "ps_sub_pions.dat";
+    writePionList(base);
+    // Load the rho list file directly (no densities) and check the QN on 113.
+    std::vector<std::string> lists; lists.push_back(base);
+    lists.push_back(dir + "list-pipi_I1_P.dat");
+    ThermalParticleSystem TPS(lists);
+    ASSERT_GE(TPS.PdgToId(113), 0);
+    EXPECT_DOUBLE_EQ(TPS.ParticleByPDG(113).Degeneracy(), 3.0);    // 2J+1, not 1
+    EXPECT_NEAR(TPS.ParticleByPDG(113).Mass(), 0.77526, 1e-6);     // real rho mass, not 2*mpi
+    EXPECT_GE(TPS.PdgToId(213), 0);
+    EXPECT_GE(TPS.PdgToId(-213), 0);                               // rho- auto-generated
+    std::remove(base.c_str());
+    std::remove((dir + "list-pipi_I1_P.dat").c_str());
+    std::remove((dir + "decays-pipi_I1_P.dat").c_str());
+  }
+
+  TEST(PhaseShifts, SubsumedResonanceFromFileCreateOrKeep) {
+    // The headline feature: a subsumed-resonance channel referenced by per-resonance
+    // files (a) CREATES the resonance with its real QN + CG decays where the base
+    // list lacks it, and (b) KEEPS the existing entry (QN + its own decays) where the
+    // list has it, attaching the density either way (no duplicates).
+    const std::string dir = ::testing::TempDir();
+    PhaseShifts::WritePhaseShiftFiles(PhaseShifts::PiPi_I1_Channel(),
+                                      PhaseShifts::PiPi_I1_Waves(), dir);
+    const std::string confF = dir + "ps_rho_file.conf";
+    {
+      std::ofstream f(confF.c_str());
+      f << "pipi_I1:P  list-pipi_I1_P.dat  decays-pipi_I1_P.dat  GarciaMartin2011_P\n";
+    }
+
+    // (a) rho ABSENT -> created with real QN + the isospin-CG decay
+    const std::string pionF = dir + "ps_rho_pions.dat";
+    writePionList(pionF);
+    ThermalParticleSystem TPS(std::vector<std::string>(1, pionF));
+    ASSERT_LT(TPS.PdgToId(113), 0);                               // absent before
+    PhaseShifts::AddPhaseShiftChannelsFromFile(TPS, confF);
+    ASSERT_GE(TPS.PdgToId(113), 0);                               // created
+    EXPECT_DOUBLE_EQ(TPS.ParticleByPDG(113).Degeneracy(), 3.0);   // real deg, not 1
+    EXPECT_NEAR(TPS.ParticleByPDG(113).Mass(), 0.77526, 1e-6);    // real mass
+    ASSERT_NE(TPS.ParticleByPDG(113).GetGeneralizedDensity(), nullptr);   // density attached
+    EXPECT_GT(TPS.ParticleByPDG(113).GetGeneralizedDensity()
+                ->Quantity(IdealGasFunctions::chi2, 0.150, 0.0), 0.0);    // attractive rho
+    ASSERT_EQ(TPS.ParticleByPDG(113).Decays().size(), 1u);        // CG rho0 -> pi+ pi-
+
+    // (b) rho PRESENT with a distinctive mass and TWO of its own decays -> kept,
+    //     density attached, not duplicated, decays NOT overwritten by the CG single.
+    const std::string rhoL = dir + "ps_rho_with.dat";
+    const std::string rhoD = dir + "ps_rho_with_dec.dat";
+    {
+      std::ofstream f(rhoL.c_str());
+      f << "211 pi+  1 0.13957  1 -1 0 1 0 0 0 0 0 0\n";
+      f << "111 pi0  1 0.134977 1 -1 0 0 0 0 0 0 0 0\n";
+      f << "113 rho0 0 0.77000  3 -1 0 0 0 0 0 0 0.150 0.279\n";  // distinctive mass 0.770
+      f << "213 rho+ 0 0.77000  3 -1 0 1 0 0 0 0 0.150 0.279\n";
+    }
+    {   // give rho0 two (placeholder) decay channels to prove they survive
+        // (leading '#' header selects the new free decay format)
+      std::ofstream f(rhoD.c_str());
+      f << "# rho0 placeholder decays\n113\n2\n0.5 -211 211\n0.5 111 111\n";
+    }
+    ThermalParticleSystem TPS2(std::vector<std::string>(1, rhoL),
+                               std::vector<std::string>(1, rhoD));
+    const int nbefore = TPS2.ComponentsNumber();
+    ASSERT_EQ(TPS2.ParticleByPDG(113).Decays().size(), 2u);       // its own decays
+    PhaseShifts::AddPhaseShiftChannelsFromFile(TPS2, confF);
+    EXPECT_EQ(TPS2.ComponentsNumber(), nbefore);                  // no duplicate added
+    EXPECT_NEAR(TPS2.ParticleByPDG(113).Mass(), 0.77000, 1e-6);   // KEPT the list's QN
+    EXPECT_DOUBLE_EQ(TPS2.ParticleByPDG(113).Degeneracy(), 3.0);
+    EXPECT_EQ(TPS2.ParticleByPDG(113).Decays().size(), 2u);       // KEPT its own decays (not CG)
+    ASSERT_NE(TPS2.ParticleByPDG(113).GetGeneralizedDensity(), nullptr);  // density attached
+    EXPECT_EQ(PhaseShifts::CountOverriddenResonances(TPS2), 3);   // rho0, rho+, rho-
+
+    std::remove(pionF.c_str()); std::remove(confF.c_str());
+    std::remove(rhoL.c_str()); std::remove(rhoD.c_str());
+    std::remove((dir + "list-pipi_I1_P.dat").c_str());
+    std::remove((dir + "decays-pipi_I1_P.dat").c_str());
   }
 
 }

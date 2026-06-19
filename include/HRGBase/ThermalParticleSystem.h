@@ -554,6 +554,11 @@ namespace thermalfist {
     static const std::string flag_nocharm;
     static const std::string flag_nonuclei;
     static const std::string flag_noexcitednuclei;
+    /// When set, AddParticlesToListFromFile silently SKIPS a particle whose PDG code
+    /// is already in the system (keeping the existing entry) instead of throwing on
+    /// the duplicate. Used to load "create-if-absent, keep-if-present" supplemental
+    /// lists (e.g. the phase-shift subsumed-resonance files).
+    static const std::string flag_skip_duplicates;
 
     /**
      * \brief Calculates vector of conserved charges for all particle species.
