@@ -26,6 +26,33 @@
     <file alias="lists/PDG2014/decays.dat">../../../input/list/PDG2014/decays.dat</file>
     <!-- Default experimental data for WASM builds -->
     <file alias="ALICE-PbPb2.76TeV-0-10-all.dat">../../../input/data/ALICE-PbPb2.76TeV-0-10-all.dat</file>
+    <!-- Phase-shift (Beth-Uhlenbeck) configs + per-wave/per-resonance modules -->
+    <file alias="phaseshifts/pipi.conf">../../../input/list/phaseshifts/pipi.conf</file>
+    <file alias="phaseshifts/piK.conf">../../../input/list/phaseshifts/piK.conf</file>
+    <file alias="phaseshifts/piN.conf">../../../input/list/phaseshifts/piN.conf</file>
+    <file alias="phaseshifts/KN.conf">../../../input/list/phaseshifts/KN.conf</file>
+    <file alias="phaseshifts/list/list-pipi_I2_S.dat">../../../input/list/phaseshifts/list/list-pipi_I2_S.dat</file>
+    <file alias="phaseshifts/list/list-pipi_I2_D.dat">../../../input/list/phaseshifts/list/list-pipi_I2_D.dat</file>
+    <file alias="phaseshifts/list/list-pipi_I0_S.dat">../../../input/list/phaseshifts/list/list-pipi_I0_S.dat</file>
+    <file alias="phaseshifts/list/list-pipi_I0_f0980_S.dat">../../../input/list/phaseshifts/list/list-pipi_I0_f0980_S.dat</file>
+    <file alias="phaseshifts/list/list-pipi_I1_P.dat">../../../input/list/phaseshifts/list/list-pipi_I1_P.dat</file>
+    <file alias="phaseshifts/list/list-piK_I32_S.dat">../../../input/list/phaseshifts/list/list-piK_I32_S.dat</file>
+    <file alias="phaseshifts/list/list-piK_I32_P.dat">../../../input/list/phaseshifts/list/list-piK_I32_P.dat</file>
+    <file alias="phaseshifts/list/list-piK_I32_D.dat">../../../input/list/phaseshifts/list/list-piK_I32_D.dat</file>
+    <file alias="phaseshifts/list/list-piK_I12_S.dat">../../../input/list/phaseshifts/list/list-piK_I12_S.dat</file>
+    <file alias="phaseshifts/list/list-piK_K892_P.dat">../../../input/list/phaseshifts/list/list-piK_K892_P.dat</file>
+    <file alias="phaseshifts/list/list-piN_Delta_P.dat">../../../input/list/phaseshifts/list/list-piN_Delta_P.dat</file>
+    <file alias="phaseshifts/decays/decays-pipi_I2_S.dat">../../../input/list/phaseshifts/decays/decays-pipi_I2_S.dat</file>
+    <file alias="phaseshifts/decays/decays-pipi_I2_D.dat">../../../input/list/phaseshifts/decays/decays-pipi_I2_D.dat</file>
+    <file alias="phaseshifts/decays/decays-pipi_I0_S.dat">../../../input/list/phaseshifts/decays/decays-pipi_I0_S.dat</file>
+    <file alias="phaseshifts/decays/decays-pipi_I0_f0980_S.dat">../../../input/list/phaseshifts/decays/decays-pipi_I0_f0980_S.dat</file>
+    <file alias="phaseshifts/decays/decays-pipi_I1_P.dat">../../../input/list/phaseshifts/decays/decays-pipi_I1_P.dat</file>
+    <file alias="phaseshifts/decays/decays-piK_I32_S.dat">../../../input/list/phaseshifts/decays/decays-piK_I32_S.dat</file>
+    <file alias="phaseshifts/decays/decays-piK_I32_P.dat">../../../input/list/phaseshifts/decays/decays-piK_I32_P.dat</file>
+    <file alias="phaseshifts/decays/decays-piK_I32_D.dat">../../../input/list/phaseshifts/decays/decays-piK_I32_D.dat</file>
+    <file alias="phaseshifts/decays/decays-piK_I12_S.dat">../../../input/list/phaseshifts/decays/decays-piK_I12_S.dat</file>
+    <file alias="phaseshifts/decays/decays-piK_K892_P.dat">../../../input/list/phaseshifts/decays/decays-piK_K892_P.dat</file>
+    <file alias="phaseshifts/decays/decays-piN_Delta_P.dat">../../../input/list/phaseshifts/decays/decays-piN_Delta_P.dat</file>
     <!-- Lattice QCD data for WASM builds -->
     <file alias="lqcd/WB-EoS.dat">../../../input/lqcd/WB-EoS.dat</file>
     <file alias="lqcd/WB-chi2-1112.4416.dat">../../../input/lqcd/WB-chi2-1112.4416.dat</file>

@@ -40,6 +40,9 @@ using namespace thermalfist;
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
 {
+  // Directory the bundled phase-shift configs live in (native: the source input
+  // tree; WASM: a sandbox dir the embedded resources are extracted to below).
+  QString phaseshiftsDir;
 #ifdef Q_OS_WASM
   // WASM: Extract default particle list from embedded resources to sandbox FS
   QString sandboxDir = WasmFileIO::getSandboxTempDir() + "/default";
@@ -108,6 +111,33 @@ MainWindow::MainWindow(QWidget *parent)
     }
   }
 
+  // Extract the phase-shift configs + their per-wave/per-resonance modules,
+  // preserving the list/ and decays/ subdirs (the configs reference them by
+  // relative path, and the library reads them with std::ifstream from the FS).
+  QString psDir = sandboxDir + "/phaseshifts";
+  QDir().mkpath(psDir + "/list");
+  QDir().mkpath(psDir + "/decays");
+  QStringList psFiles = {
+    "pipi.conf", "piK.conf", "piN.conf", "KN.conf",
+    "list/list-pipi_I2_S.dat", "list/list-pipi_I2_D.dat", "list/list-pipi_I0_S.dat",
+    "list/list-pipi_I0_f0980_S.dat", "list/list-pipi_I1_P.dat",
+    "list/list-piK_I32_S.dat", "list/list-piK_I32_P.dat", "list/list-piK_I32_D.dat",
+    "list/list-piK_I12_S.dat", "list/list-piK_K892_P.dat", "list/list-piN_Delta_P.dat",
+    "decays/decays-pipi_I2_S.dat", "decays/decays-pipi_I2_D.dat", "decays/decays-pipi_I0_S.dat",
+    "decays/decays-pipi_I0_f0980_S.dat", "decays/decays-pipi_I1_P.dat",
+    "decays/decays-piK_I32_S.dat", "decays/decays-piK_I32_P.dat", "decays/decays-piK_I32_D.dat",
+    "decays/decays-piK_I12_S.dat", "decays/decays-piK_K892_P.dat", "decays/decays-piN_Delta_P.dat"
+  };
+  for (const QString& f : psFiles) {
+    QFile res(":/data/phaseshifts/" + f);
+    if (res.open(QIODevice::ReadOnly)) {
+      QFile out(psDir + "/" + f);
+      if (out.open(QIODevice::WriteOnly)) { out.write(res.readAll()); out.close(); }
+      res.close();
+    }
+  }
+  phaseshiftsDir = psDir;
+
   cpath = listPath;
   QString listpath = listPath;
   TPS = new ThermalParticleSystem(listpath.toStdString(), decaysPath.toStdString());
@@ -117,6 +147,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   QString listpath = cpath;
   TPS = new ThermalParticleSystem(listpath.toStdString());
+  phaseshiftsDir = QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts";
 #endif
 
   //TPS->SetSortMode(ThermalParticleSystem::SortByBaryonAndMassAndPDG);
@@ -166,10 +197,10 @@ MainWindow::MainWindow(QWidget *parent)
   // S=+1). All ship with the package. The controls live in the Model
   // configuration ("Phase shifts..." button) rather than this top data row.
   m_phaseShiftConfs = QStringList()
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/pipi.conf")
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piK.conf")
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/piN.conf")
-    << (QString(ThermalFIST_INPUT_FOLDER) + "/list/phaseshifts/KN.conf");
+    << (phaseshiftsDir + "/pipi.conf")
+    << (phaseshiftsDir + "/piK.conf")
+    << (phaseshiftsDir + "/piN.conf")
+    << (phaseshiftsDir + "/KN.conf");
 
   dataLay->addWidget(labelData);
   dataLay->addWidget(comboPDGEdition);
@@ -619,6 +650,11 @@ void MainWindow::applyPhaseShiftsIfEnabled()
     QMessageBox::warning(this, tr("Phase shifts"),
       tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
     m_phaseShiftsEnabled = false;
+    // A config may have failed mid-way (e.g. the 2nd of several), leaving the
+    // earlier ones already added to TPS. Reset to the clean base list so the OFF
+    // state is honest (no partially-applied channels left behind).
+    *TPS = ThermalParticleSystem(m_lastListPaths, m_lastDecayPaths);
+    model->ChangeTPS(TPS);
   }
 }
 
@@ -639,10 +675,18 @@ void MainWindow::openPhaseShiftsDialog()
   PhaseShiftsDialog dlg(this, m_phaseShiftsEnabled, m_phaseShiftConfs, m_phaseShiftDisabledChannels);
   if (dlg.exec() != QDialog::Accepted)
     return;
+  // Only rebuild if the selection actually changed. rebuildCurrentList()
+  // reconstructs TPS from the base list files, which would discard any in-memory
+  // particle-list editor changes - so a no-op OK must NOT trigger it.
+  const bool changed = (m_phaseShiftsEnabled         != dlg.phaseShiftsEnabled())
+                    || (m_phaseShiftConfs            != dlg.configs())
+                    || (m_phaseShiftDisabledChannels != dlg.disabledChannels());
   m_phaseShiftsEnabled         = dlg.phaseShiftsEnabled();
   m_phaseShiftConfs            = dlg.configs();
   m_phaseShiftDisabledChannels = dlg.disabledChannels();
-  // Always rebuild from the base list: this both applies the (possibly new)
+  if (!changed)
+    return;
+  // Rebuild from the base list: this both applies the (possibly new)
   // enabled-channel subset and exactly restores overridden resonances that were
   // turned off (their pole-mass list entries come back).
   rebuildCurrentList();
