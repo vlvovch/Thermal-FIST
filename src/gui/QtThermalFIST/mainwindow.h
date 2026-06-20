@@ -24,6 +24,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include "trajectoriestab.h"
 #include "modeltab.h"
@@ -73,6 +74,9 @@ class MainWindow : public QMainWindow
     QSet<QString> m_phaseShiftDisabledChannels;     ///< channels switched off individually
     std::vector<std::string> m_lastListPaths;      ///< base list files of the current selection
     std::vector<std::string> m_lastDecayPaths;     ///< base decay files of the current selection
+    std::set<long long> m_basePdgCodes;            ///< PDG codes of the base list captured before
+                                                   ///< the last phase-shift apply; lets stripPhaseShifts
+                                                   ///< tell created clusters from overridden resonances
 
 public:
     MainWindow(QWidget *parent = 0);
@@ -89,7 +93,16 @@ private:
     static QString shortListDisplayName(const QString& fullPath);
     /// (Re)build TPS from the stored base list/decay files, (re)apply the
     /// phase-shift config if enabled, refresh the display and reset all tabs.
+    /// Used for list (re)loads - discards in-memory edits by design.
     void rebuildCurrentList();
+    /// Re-apply the phase-shift selection while PRESERVING the current in-memory
+    /// list (including list-editor edits): strips the previous phase-shift
+    /// additions in place instead of reloading from files, then re-applies.
+    void reapplyPhaseShifts();
+    /// Remove the last phase-shift apply's additions from TPS, recovering the base
+    /// list: drop created clusters/resonances, clear overriding densities. Editor
+    /// edits (no phase-shift density) are untouched. Uses m_basePdgCodes.
+    void stripPhaseShifts();
     /// Add the phase-shift config channels to the current TPS (if enabled).
     void applyPhaseShiftsIfEnabled();
     /// Update the particle-list line edit (base name + optional PS tag + count).

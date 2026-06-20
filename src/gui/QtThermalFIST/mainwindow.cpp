@@ -30,6 +30,7 @@
 #include "HRGCanonical/ThermalModelCanonicalStrangeness.h"
 #include "HRGCanonical/ThermalModelCanonicalCharm.h"
 #include "HRGPhaseShifts/PhaseShiftChannel.h"
+#include "HRGPhaseShifts/PhaseShiftDensity.h"
 
 #include "aboutdialog.h"
 #include "configwidgets.h"
@@ -634,6 +635,12 @@ void MainWindow::refreshListDisplay()
 
 void MainWindow::applyPhaseShiftsIfEnabled()
 {
+  // Snapshot the base (pre-phase-shift) PDG codes so the additions can later be
+  // stripped in place (recovering the edited base) without reloading from files.
+  m_basePdgCodes.clear();
+  for (int i = 0; i < TPS->ComponentsNumber(); ++i)
+    m_basePdgCodes.insert(TPS->Particle(i).PdgId());
+
   if (!m_phaseShiftsEnabled) return;
   if (m_phaseShiftConfs.isEmpty()) return;
   // Channels switched off individually in the dialog are skipped (a skipped
@@ -651,11 +658,54 @@ void MainWindow::applyPhaseShiftsIfEnabled()
       tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
     m_phaseShiftsEnabled = false;
     // A config may have failed mid-way (e.g. the 2nd of several), leaving the
-    // earlier ones already added to TPS. Reset to the clean base list so the OFF
-    // state is honest (no partially-applied channels left behind).
-    *TPS = ThermalParticleSystem(m_lastListPaths, m_lastDecayPaths);
+    // earlier ones already added to TPS. Strip them so the OFF state is honest
+    // (no partially-applied channels), while keeping any list-editor edits.
+    stripPhaseShifts();
     model->ChangeTPS(TPS);
   }
+}
+
+void MainWindow::stripPhaseShifts()
+{
+  if (!TPS) return;
+  // Undo the last phase-shift apply in place: species the apply CREATED (synthetic
+  // clusters and resonances absent from the base, e.g. the kappa) are removed;
+  // real resonances it OVERRODE (present in the base) keep their list entry but
+  // lose the overriding density (back to pole-mass). m_basePdgCodes (captured
+  // before that apply) makes the distinction. Species without a phase-shift
+  // density - ordinary particles and any list-editor additions - are untouched.
+  std::vector<long long> toRemove;
+  for (int i = 0; i < TPS->ComponentsNumber(); ++i) {
+    ThermalParticle& p = TPS->Particle(i);
+    if (dynamic_cast<PhaseShiftDensity*>(p.GetGeneralizedDensity()) == nullptr)
+      continue;
+    if (m_basePdgCodes.count(p.PdgId()))
+      p.ClearGeneralizedDensity();
+    else
+      toRemove.push_back(p.PdgId());
+  }
+  for (size_t k = 0; k < toRemove.size(); ++k) {
+    int id = TPS->PdgToId(toRemove[k]);
+    if (id >= 0) TPS->RemoveParticleAt(id);
+  }
+  if (!toRemove.empty()) {
+    TPS->FinalizeList();
+    TPS->FillDecayProperties();
+    TPS->FillDecayThresholds();
+    TPS->ProcessDecays();
+  }
+}
+
+void MainWindow::reapplyPhaseShifts()
+{
+  // Preserve the current in-memory list (incl. list-editor edits): recover the
+  // base by stripping the previous phase-shift additions, then re-apply the
+  // (possibly new) selection - rather than reloading the base from files.
+  stripPhaseShifts();
+  model->ChangeTPS(TPS);
+  applyPhaseShiftsIfEnabled();
+  refreshListDisplay();
+  resetAllTabs();
 }
 
 void MainWindow::rebuildCurrentList()
@@ -686,10 +736,11 @@ void MainWindow::openPhaseShiftsDialog()
   m_phaseShiftDisabledChannels = dlg.disabledChannels();
   if (!changed)
     return;
-  // Rebuild from the base list: this both applies the (possibly new)
-  // enabled-channel subset and exactly restores overridden resonances that were
-  // turned off (their pole-mass list entries come back).
-  rebuildCurrentList();
+  // Re-apply preserving the in-memory base: strips the previous additions and
+  // applies the new selection (restoring any turned-off overridden resonances to
+  // their pole-mass entries) WITHOUT reloading from files, so list-editor edits
+  // survive a phase-shift change.
+  reapplyPhaseShifts();
 }
 
 void MainWindow::updateListVariants()
