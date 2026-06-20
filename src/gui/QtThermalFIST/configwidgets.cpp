@@ -59,6 +59,7 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
 
   QVBoxLayout* layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(6);                  // tight, uniform row spacing
   layout->setAlignment(Qt::AlignTop);
 
   QHBoxLayout* layModelEnsemble = new QHBoxLayout();
@@ -158,19 +159,6 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   layOptions->addSpacing(20);
   layOptions->addWidget(buttonOther);
 
-  // S-matrix / phase-shift (Beth-Uhlenbeck) channels. Only shown where wired up
-  // (the main Thermal model tab); clicking it asks the owner to open the dialog.
-  if (showPhaseShifts) {
-    buttonPhaseShifts = new QPushButton(tr("Phase shifts..."));
-    buttonPhaseShifts->setToolTip(tr("Configure S-matrix / phase-shift (Beth-Uhlenbeck) channels."));
-    connect(buttonPhaseShifts, &QPushButton::clicked, this, &ModelConfigWidget::phaseShiftsRequested);
-    layOptions->addSpacing(20);
-    layOptions->addWidget(buttonPhaseShifts);
-  }
-
-
-
-
   QHBoxLayout* layOptions2 = new QHBoxLayout();
   layOptions2->setAlignment(Qt::AlignLeft);
 
@@ -189,6 +177,18 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   layOptions2->addWidget(labelWidth);
   layOptions2->addWidget(comboWidth);
   layOptions2->addWidget(buttonQvdWparameters);
+
+  // S-matrix / phase-shift (Beth-Uhlenbeck) channels. Only shown where wired up
+  // (the main Thermal model tab); clicking it asks the owner to open the dialog.
+  // Placed on the widths row to use its spare width (keeps the dialog-button row
+  // below to three).
+  if (showPhaseShifts) {
+    buttonPhaseShifts = new QPushButton(tr("Phase shifts..."));
+    buttonPhaseShifts->setToolTip(tr("Configure S-matrix / phase-shift (Beth-Uhlenbeck) channels."));
+    connect(buttonPhaseShifts, &QPushButton::clicked, this, &ModelConfigWidget::phaseShiftsRequested);
+    layOptions2->addSpacing(20);
+    layOptions2->addWidget(buttonPhaseShifts);
+  }
   if (0 && m_eventGeneratorMode) {
     layOptions2->addSpacing(10);
     layOptions2->addWidget(labelStats);
@@ -207,11 +207,8 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   }
 
   layout->addLayout(layModelEnsemble);
-  layout->addSpacing(10);
   layout->addLayout(layStats);
-  layout->addSpacing(10);
   layout->addLayout(layOptions2);
-  layout->addSpacing(10);
   layout->addLayout(layOptions);
 
 
