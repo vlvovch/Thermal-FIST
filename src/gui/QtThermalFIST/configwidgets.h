@@ -44,8 +44,6 @@ public:
   QComboBox *comboQuant;
   QCheckBox *CBQuadratures;
 
-  QPushButton* buttonQvdWparameters;
-
   QPushButton *buttonConservationLaws;
 
   QPushButton *buttonInteractions;
@@ -70,7 +68,6 @@ public:
 private slots:
   void conservationLawsDialog();
   void interactionsDialog();
-  void QvdWparametersDialog();
   void otherOptionsDialog();
   void modelTypeChanged();
   void ensembleChanged();

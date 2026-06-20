@@ -69,6 +69,7 @@ namespace {
 
 InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(parent), m_parent(parent)
 {
+  m_vdWmatrixCustomized = false;
   QVBoxLayout* layout = new QVBoxLayout();
 
   if (parent->currentConfig.InteractionModel == ThermalModelConfig::InteractionRealGas) {
@@ -261,6 +262,15 @@ InteractionsDialog::InteractionsDialog(ModelConfigWidget* parent) : QDialog(pare
   groupMC->setLayout(layoutMC);
   layout->addWidget(groupMC);
 
+  // Per-pair EV/vdW parameter table (moved here from the model-configuration row).
+  buttonParamList = new QPushButton(tr("EV/vdW parameter list..."));
+  buttonParamList->setToolTip(tr("Inspect/edit the per-pair excluded-volume and vdW parameter matrix."));
+  connect(buttonParamList, &QPushButton::clicked, this, &InteractionsDialog::paramListDialog);
+  QHBoxLayout* layParamList = new QHBoxLayout();
+  layParamList->setAlignment(Qt::AlignLeft);
+  layParamList->addWidget(buttonParamList);
+  layout->addLayout(layParamList);
+
   QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
     | QDialogButtonBox::Cancel);
 
@@ -440,7 +450,7 @@ void InteractionsDialog::updateSPR()
 }
 
 
-void InteractionsDialog::OK()
+void InteractionsDialog::applyControls(bool recomputeMatrix)
 {
   if (radSet->isChecked())
     m_parent->currentConfig.InteractionScaling = comboScaling->currentIndex();
@@ -475,11 +485,39 @@ void InteractionsDialog::OK()
   m_parent->currentConfig.fUseEVRejectionCoordinates = CBEVCoord->isChecked();
   m_parent->currentConfig.fUseEVUseSPRApproximation = CBEVSPR->isChecked();
 
-  m_parent->currentConfig.vdWparams = QvdWParameters::GetParameters(m_parent->model->TPS(), &m_parent->currentConfig);
+  // (Re)derive the per-pair matrix from the scalar a/b unless the user has hand-
+  // edited it via the parameter table (in which case keep their entries).
+  if (recomputeMatrix)
+    m_parent->currentConfig.vdWparams = QvdWParameters::GetParameters(m_parent->model->TPS(), &m_parent->currentConfig);
 
   if (comboEVprescr != NULL)
     m_parent->currentConfig.RealGasExcludedVolumePrescription = comboEVprescr->currentIndex();
+}
 
+void InteractionsDialog::paramListDialog()
+{
+  // Apply the current controls so the table reflects the latest a/b/scaling, then
+  // open the per-pair parameter table. Editing it customizes the matrix, so OK
+  // afterwards keeps those entries rather than recomputing them from a/b.
+  applyControls(true);
+#ifdef Q_OS_WASM
+  QvdWParametersTableDialog* dialog = new QvdWParametersTableDialog(this, &m_parent->currentConfig, m_parent->model->TPS());
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setModal(true);
+  dialog->showMaximized();
+  m_vdWmatrixCustomized = true;
+#else
+  QvdWParametersTableDialog dialog(this, &m_parent->currentConfig, m_parent->model->TPS());
+  dialog.setWindowFlags(Qt::Window);
+  dialog.showMaximized();
+  if (dialog.exec() == QDialog::Accepted)
+    m_vdWmatrixCustomized = true;
+#endif
+}
+
+void InteractionsDialog::OK()
+{
+  applyControls(!m_vdWmatrixCustomized);
   QDialog::accept();
 }
 

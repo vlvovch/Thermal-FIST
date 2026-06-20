@@ -171,12 +171,11 @@ ModelConfigWidget::ModelConfigWidget(QWidget* parent, ThermalModelBase* modelop,
   comboWidth->setCurrentIndex(static_cast<int>(model->TPS()->ResonanceWidthIntegrationType()));
   comboWidth->setToolTip(tr("Prescription for the treatment of resonance widths"));
 
-  buttonQvdWparameters = new QPushButton(tr("EV/vdW parameter list..."));
-  connect(buttonQvdWparameters, &QPushButton::clicked, this, &ModelConfigWidget::QvdWparametersDialog);
+  // The "EV/vdW parameter list..." button now lives inside the EV/vdW
+  // interactions dialog (InteractionsDialog), so it is not added here.
 
   layOptions2->addWidget(labelWidth);
   layOptions2->addWidget(comboWidth);
-  layOptions2->addWidget(buttonQvdWparameters);
 
   // S-matrix / phase-shift (Beth-Uhlenbeck) channels. Only shown where wired up
   // (the main Thermal model tab); clicking it asks the owner to open the dialog.
@@ -363,24 +362,6 @@ void ModelConfigWidget::interactionsDialog()
 #endif
 }
 
-void ModelConfigWidget::QvdWparametersDialog()
-{
-  currentConfig = updatedConfig();
-#ifdef Q_OS_WASM
-  QvdWParametersTableDialog *dialog = new QvdWParametersTableDialog(this, &currentConfig, model->TPS());
-  dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->setModal(true);
-  connect(dialog, &QDialog::finished, this, &ModelConfigWidget::changed);
-  dialog->showMaximized();
-#else
-  QvdWParametersTableDialog dialog(this, &currentConfig, model->TPS());
-  dialog.setWindowFlags(Qt::Window);
-  dialog.showMaximized();
-  dialog.exec();
-  emit changed();
-#endif
-}
-
 void ModelConfigWidget::otherOptionsDialog()
 {
   currentConfig = updatedConfig();
@@ -435,14 +416,9 @@ void ModelConfigWidget::modelTypeChanged()
     comboEnsemble->blockSignals(false);
   }
 
-  if (comboModel->currentText() == ModelIdeal) {
-    buttonInteractions->setEnabled(false);
-    buttonQvdWparameters->setEnabled(false);
-  }
-  else {
-    buttonInteractions->setEnabled(true);
-    buttonQvdWparameters->setEnabled(true);
-  }
+  // The EV/vdW parameter list is reachable only through the interactions dialog,
+  // which is itself disabled for the Ideal model - so no separate gating needed.
+  buttonInteractions->setEnabled(comboModel->currentText() != ModelIdeal);
 
   emit changed();
 }

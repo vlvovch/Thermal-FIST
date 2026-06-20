@@ -67,14 +67,25 @@ public:
   QGroupBox* groupMC;
   QCheckBox* CBEVMult, * CBEVCoord, * CBEVSPR;
 
+  QPushButton* buttonParamList;   ///< opens the per-pair EV/vdW parameter table
+  bool m_vdWmatrixCustomized;     ///< true once the parameter table was edited here;
+                                  ///< then OK keeps that matrix instead of recomputing
+
 public:
   explicit  InteractionsDialog(ModelConfigWidget* parent = 0);
+
+private:
+  /// Write the dialog's controls into the parent's config. If \p recomputeMatrix,
+  /// also (re)derive the per-pair vdW matrix from the scalar a/b (skipped once the
+  /// user has customized it via the parameter table).
+  void applyControls(bool recomputeMatrix);
 
 private slots:
   void modeToggled();
   void chooseInputFile();
   void updateRadius();
   void updateSPR();
+  void paramListDialog();   ///< apply controls, then open the parameter table
 public slots:
   void OK();
   void Discard() { QDialog::reject(); };
