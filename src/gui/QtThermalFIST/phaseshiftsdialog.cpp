@@ -61,7 +61,7 @@ PhaseShiftsDialog::PhaseShiftsDialog(QWidget* parent,
   m_table = new QTableWidget();
   m_table->setColumnCount(3);
   QStringList headers;
-  headers << tr("Channel") << tr("Waves") << tr("Source");
+  headers << tr("Channel") << tr("Wave") << tr("Source");
   m_table->setHorizontalHeaderLabels(headers);
   m_table->verticalHeader()->setVisible(false);
   m_table->setSelectionMode(QAbstractItemView::NoSelection);
@@ -121,12 +121,13 @@ void PhaseShiftsDialog::repopulate()
   m_populating = true;
   m_table->setRowCount(0);
 
-  // Merge the channels of all configs, deduped by name. A channel appearing in
-  // more than one config is shown ONCE: the LAST config wins for the displayed
-  // waves/source, matching the last-wins apply semantics (and avoiding a
-  // name-keyed toggle acting on duplicate rows). Row order = first appearance.
-  std::vector<PhaseShifts::PhaseShiftConfigChannel> merged;
-  std::map<std::string, size_t> mergedIndex;
+  // One row per PARTIAL WAVE, keyed by "<channel>:<wave>" so each wave can be
+  // toggled separately (e.g. pipi_I2 -> an S row and a D row). Rows are deduped by
+  // that key across configs (the last config wins for the shown source), in
+  // first-appearance order.
+  struct Row { QString channel, wave, source, key; };
+  std::vector<Row> rows;
+  std::map<QString, size_t> rowIndex;
   for (int i = 0; i < m_configs.size(); ++i) {
     std::vector<PhaseShifts::PhaseShiftConfigChannel> chans;
     try {
@@ -137,47 +138,44 @@ void PhaseShiftsDialog::repopulate()
       continue;
     }
     for (size_t c = 0; c < chans.size(); ++c) {
-      std::map<std::string, size_t>::iterator f = mergedIndex.find(chans[c].name);
-      if (f == mergedIndex.end()) {
-        mergedIndex[chans[c].name] = merged.size();
-        merged.push_back(chans[c]);
+      const PhaseShifts::PhaseShiftConfigChannel& ci = chans[c];
+      QString source;
+      if (ci.reusesResonance) {
+        QStringList codes;
+        for (size_t k = 0; k < ci.reusedCodes.size(); ++k)
+          codes << QString::number(ci.reusedCodes[k]);
+        source = tr("replaces resonance(s): %1").arg(codes.join(", "));
       } else {
-        merged[f->second] = chans[c];   // later config overrides the shown info
+        source = tr("synthetic cluster");
+      }
+      for (size_t w = 0; w < ci.waves.size(); ++w) {
+        Row r;
+        r.channel = QString::fromStdString(ci.name);
+        r.wave    = QString::fromStdString(ci.waves[w]);
+        r.source  = source;
+        r.key     = r.channel + ":" + r.wave;
+        std::map<QString, size_t>::iterator f = rowIndex.find(r.key);
+        if (f == rowIndex.end()) { rowIndex[r.key] = rows.size(); rows.push_back(r); }
+        else { rows[f->second] = r; }   // later config overrides the shown info
       }
     }
   }
 
   QSet<QString> present;
-  for (size_t r = 0; r < merged.size(); ++r) {
-    const PhaseShifts::PhaseShiftConfigChannel& ci = merged[r];
-    const QString name = QString::fromStdString(ci.name);
-    present.insert(name);
-
-    QString waves;
-    for (size_t w = 0; w < ci.waves.size(); ++w)
-      waves += (w ? ", " : "") + QString::fromStdString(ci.waves[w]);
-
-    QString source;
-    if (ci.reusesResonance) {
-      QStringList codes;
-      for (size_t k = 0; k < ci.reusedCodes.size(); ++k)
-        codes << QString::number(ci.reusedCodes[k]);
-      source = tr("reuses resonance(s): %1").arg(codes.join(", "));
-    } else {
-      source = tr("synthetic cluster");
-    }
-
+  for (size_t r = 0; r < rows.size(); ++r) {
+    present.insert(rows[r].key);
     const int row = m_table->rowCount();
     m_table->insertRow(row);
-    QTableWidgetItem* itName = new QTableWidgetItem(name);
+    QTableWidgetItem* itName = new QTableWidgetItem(rows[r].channel);
     itName->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-    itName->setCheckState(m_disabled.contains(name) ? Qt::Unchecked : Qt::Checked);
+    itName->setCheckState(m_disabled.contains(rows[r].key) ? Qt::Unchecked : Qt::Checked);
+    itName->setData(Qt::UserRole, rows[r].key);
     m_table->setItem(row, 0, itName);
-    m_table->setItem(row, 1, new QTableWidgetItem(waves));
-    m_table->setItem(row, 2, new QTableWidgetItem(source));
+    m_table->setItem(row, 1, new QTableWidgetItem(rows[r].wave));
+    m_table->setItem(row, 2, new QTableWidgetItem(rows[r].source));
   }
 
-  // Drop remembered disables for channels no longer present (keeps the set tidy).
+  // Drop remembered disables for waves no longer present (keeps the set tidy).
   QSet<QString> stillDisabled;
   for (QSet<QString>::const_iterator it = m_disabled.constBegin(); it != m_disabled.constEnd(); ++it)
     if (present.contains(*it))
@@ -193,11 +191,13 @@ void PhaseShiftsDialog::onItemChanged(QTableWidgetItem* item)
 {
   if (m_populating || !item || item->column() != 0)
     return;
-  const QString name = item->text();
+  const QString key = item->data(Qt::UserRole).toString();   // "<channel>:<wave>"
+  if (key.isEmpty())
+    return;
   if (item->checkState() == Qt::Checked)
-    m_disabled.remove(name);
+    m_disabled.remove(key);
   else
-    m_disabled.insert(name);
+    m_disabled.insert(key);
 }
 
 void PhaseShiftsDialog::loadConfigs()
@@ -241,7 +241,7 @@ void PhaseShiftsDialog::selectNone()
   for (int r = 0; r < m_table->rowCount(); ++r) {
     QTableWidgetItem* it = m_table->item(r, 0);
     it->setCheckState(Qt::Unchecked);
-    m_disabled.insert(it->text());
+    m_disabled.insert(it->data(Qt::UserRole).toString());
   }
   m_populating = false;
 }

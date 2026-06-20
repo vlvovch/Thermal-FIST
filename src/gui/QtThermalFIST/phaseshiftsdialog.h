@@ -38,7 +38,8 @@ public:
 
   bool phaseShiftsEnabled() const;
   QStringList configs() const { return m_configs; }
-  /// Channels switched OFF in the table (those present in the configs but unchecked).
+  /// Partial waves switched OFF in the table, as "<channel>:<wave>" skip keys
+  /// (consumed by AddPhaseShiftChannelsFromFile's skip set).
   QSet<QString> disabledChannels() const;
 
 private slots:

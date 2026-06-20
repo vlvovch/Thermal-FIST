@@ -558,8 +558,15 @@ namespace thermalfist {
                                       "'<channel>:<wave>', got '" + key + "'");
         Entry e;
         e.channel    = key.substr(0, colon);
-        if (skipChannels.count(e.channel)) continue;   // individually disabled
         e.twoJplus1  = WaveTokenToTwoJplus1(key.substr(colon + 1));
+        // Skip if disabled either as a whole channel ("<channel>") or as a single
+        // wave ("<channel>:<waveLabel>", e.g. "pipi_I2:D").
+        if (skipChannels.count(e.channel)) continue;
+        if (!skipChannels.empty()) {
+          int exc = 0;
+          try { exc = ChannelByName(e.channel).excitation; } catch (const std::exception&) {}
+          if (skipChannels.count(e.channel + ":" + WaveLabel(e.twoJplus1, exc))) continue;
+        }
         e.listFile   = (listF == "-") ? std::string() : resolvePath(dir, listF);
         e.decayFile  = (decF  == "-") ? std::string() : resolvePath(dir, decF);
         e.model      = model;

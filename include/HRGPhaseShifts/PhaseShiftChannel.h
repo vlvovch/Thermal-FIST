@@ -316,13 +316,16 @@ namespace thermalfist {
                                                          const std::string& configFile);
 
     /**
-     * \brief As AddPhaseShiftChannelsFromFile, but skips every config entry whose
-     *        channel name is in \p skipChannels.
+     * \brief As AddPhaseShiftChannelsFromFile, but skips config entries listed in
+     *        \p skipChannels.
      *
-     * Lets a caller (e.g. a GUI) apply a config with individual channels turned off:
-     * a skipped channel is not loaded/overridden at all, so a reused resonance stays
-     * the plain (pole-mass) particle from the base list. The no-skip overload above
-     * delegates here with an empty set.
+     * Each skip key is either a whole channel name ("pipi_I2", drops all its waves)
+     * or a single wave "<channel>:<waveLabel>" (e.g. "pipi_I2:D", drops just that
+     * partial wave; the label is the spectroscopic S/P/D... from WaveLabel). Lets a
+     * caller (e.g. a GUI) apply a config with individual channels or waves turned
+     * off: a skipped entry is not loaded/overridden at all, so a reused resonance
+     * stays the plain (pole-mass) particle from the base list. The no-skip overload
+     * above delegates here with an empty set.
      */
     std::vector<long long> AddPhaseShiftChannelsFromFile(ThermalParticleSystem& TPS,
                                                          const std::string& configFile,
