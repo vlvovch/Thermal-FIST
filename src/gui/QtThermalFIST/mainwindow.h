@@ -102,7 +102,14 @@ private:
     /// Remove the last phase-shift apply's additions from TPS, recovering the base
     /// list: drop created clusters/resonances, clear overriding densities. Editor
     /// edits (no phase-shift density) are untouched. Uses m_basePdgCodes.
-    void stripPhaseShifts();
+    ///
+    /// \param fullRollback when true (only valid right after m_basePdgCodes was
+    ///   snapshotted, i.e. the catch of a failed apply), ALSO removes any species
+    ///   not in the snapshot that lack a phase-shift density - orphan module
+    ///   particles left by an apply that threw before attaching densities. Must NOT
+    ///   be used for a normal reapply, where post-snapshot editor additions are not
+    ///   in m_basePdgCodes yet would be wrongly removed.
+    void stripPhaseShifts(bool fullRollback = false);
     /// Add the phase-shift config channels to the current TPS (if enabled).
     void applyPhaseShiftsIfEnabled();
     /// Update the particle-list line edit (base name + optional PS tag + count).

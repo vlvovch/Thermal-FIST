@@ -657,15 +657,17 @@ void MainWindow::applyPhaseShiftsIfEnabled()
     QMessageBox::warning(this, tr("Phase shifts"),
       tr("Failed to apply phase-shift config:\n%1\n\nDisabling phase shifts.").arg(e.what()));
     m_phaseShiftsEnabled = false;
-    // A config may have failed mid-way (e.g. the 2nd of several), leaving the
-    // earlier ones already added to TPS. Strip them so the OFF state is honest
-    // (no partially-applied channels), while keeping any list-editor edits.
-    stripPhaseShifts();
+    // A config may have failed mid-way (e.g. the 2nd of several, or before any
+    // density was attached - a valid list file but a bad decay file). Full rollback
+    // to the just-snapshotted base: drop everything this apply added (including
+    // orphan module particles with no density yet) and clear overriding densities,
+    // while keeping any list-editor edits present before the apply.
+    stripPhaseShifts(/*fullRollback=*/ true);
     model->ChangeTPS(TPS);
   }
 }
 
-void MainWindow::stripPhaseShifts()
+void MainWindow::stripPhaseShifts(bool fullRollback)
 {
   if (!TPS) return;
   // Undo the last phase-shift apply in place: species the apply CREATED (synthetic
@@ -673,13 +675,20 @@ void MainWindow::stripPhaseShifts()
   // real resonances it OVERRODE (present in the base) keep their list entry but
   // lose the overriding density (back to pole-mass). m_basePdgCodes (captured
   // before that apply) makes the distinction. Species without a phase-shift
-  // density - ordinary particles and any list-editor additions - are untouched.
+  // density - ordinary particles and any list-editor additions - are untouched,
+  // EXCEPT under fullRollback (a failed apply): then any species not in the
+  // just-snapshotted base is also removed, clearing orphan module particles that
+  // a throwing apply added before any density was attached.
   std::vector<long long> toRemove;
   for (int i = 0; i < TPS->ComponentsNumber(); ++i) {
     ThermalParticle& p = TPS->Particle(i);
-    if (dynamic_cast<PhaseShiftDensity*>(p.GetGeneralizedDensity()) == nullptr)
+    const bool inBase = m_basePdgCodes.count(p.PdgId()) != 0;
+    if (dynamic_cast<PhaseShiftDensity*>(p.GetGeneralizedDensity()) == nullptr) {
+      if (fullRollback && !inBase)
+        toRemove.push_back(p.PdgId());   // orphan from an apply that threw early
       continue;
-    if (m_basePdgCodes.count(p.PdgId()))
+    }
+    if (inBase)
       p.ClearGeneralizedDensity();
     else
       toRemove.push_back(p.PdgId());
