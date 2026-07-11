@@ -24,6 +24,14 @@
 #include "HRGBase/ThermalModelCanonical.h"
 #include "gtest/gtest.h"
 
+// M_PI is a POSIX extension, not part of the C++ standard. MSVC does not
+// define it in <cmath> unless _USE_MATH_DEFINES is set before the first
+// inclusion of <cmath>, which cannot be guaranteed across transitive
+// includes. Provide a local fallback that is safe on every toolchain.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 using namespace thermalfist;
 
 namespace {
