@@ -18,7 +18,7 @@ jobs:
         fail-fast: false
         matrix:
             os: [ubuntu-latest, ubuntu-22.04, macos-15, macos-latest, windows-latest]
-            qts: [6.2.0, 5.15.2]
+            qts: [6.8.0, 5.15.2]
             include:
               - os: ubuntu-latest
                 prefix: bin/examples/
@@ -41,6 +41,9 @@ jobs:
               # still covered on Linux.
               - os: windows-latest
                 qts: 5.15.2
+    # Note: Qt 6.2 was bumped to Qt 6.8 (current LTS) because the older release
+    # links QtPrintSupport against the legacy AGL framework, which the macOS 26
+    # SDK no longer provides. AGL was dropped in Qt 6.5.
 
     steps:
     - uses: actions/checkout@v2
