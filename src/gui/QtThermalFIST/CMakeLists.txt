@@ -54,6 +54,27 @@ endif()
 #if (Qt5Widgets_FOUND AND Qt5PrintSupport_FOUND)'
 if(UseQt5 OR UseQt6)
 
+# On modern macOS SDKs (macOS 26+) the legacy AGL framework has been
+# removed. Prebuilt Qt binaries from install-qt-action were built against
+# an older SDK and still list AGL in Qt6::PrintSupport's transitive
+# INTERFACE_LINK_LIBRARIES, which breaks linking with:
+#     ld: framework 'AGL' not found
+# The AGL/OpenGL frameworks were legacy dependencies that Qt does not
+# actually need any more, so strip them out of the imported targets here.
+if(APPLE)
+  foreach(_qt_tgt Qt6::PrintSupport Qt6::Widgets Qt6::Gui
+                  Qt5::PrintSupport Qt5::Widgets Qt5::Gui)
+    if(TARGET ${_qt_tgt})
+      get_target_property(_qt_libs ${_qt_tgt} INTERFACE_LINK_LIBRARIES)
+      if(_qt_libs)
+        list(FILTER _qt_libs EXCLUDE REGEX "(^|/)AGL(\\.framework)?$")
+        set_target_properties(${_qt_tgt} PROPERTIES
+                              INTERFACE_LINK_LIBRARIES "${_qt_libs}")
+      endif()
+    endif()
+  endforeach()
+endif()
+
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
