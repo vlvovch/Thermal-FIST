@@ -56,23 +56,46 @@ if(UseQt5 OR UseQt6)
 
 # On modern macOS SDKs (macOS 26+) the legacy AGL framework has been
 # removed. Prebuilt Qt binaries from install-qt-action were built against
-# an older SDK and still list AGL in Qt6::PrintSupport's transitive
-# INTERFACE_LINK_LIBRARIES, which breaks linking with:
+# an older SDK and their generated CMake/link metadata still adds
+# "-framework AGL" to the executable's link line, producing:
 #     ld: framework 'AGL' not found
-# The AGL/OpenGL frameworks were legacy dependencies that Qt does not
-# actually need any more, so strip them out of the imported targets here.
+# The reference is stale (Qt does not actually call any AGL symbol at
+# runtime). Trying to strip it out of Qt's imported targets is fragile
+# because it can be injected through several channels (private targets,
+# INTERFACE_LINK_OPTIONS, extra target-info files, etc.). Instead, if the
+# current SDK does not ship AGL, build a small empty AGL.framework in the
+# build tree and prepend it to the framework search path. The linker is
+# then satisfied without changing the intended runtime behaviour.
 if(APPLE)
-  foreach(_qt_tgt Qt6::PrintSupport Qt6::Widgets Qt6::Gui
-                  Qt5::PrintSupport Qt5::Widgets Qt5::Gui)
-    if(TARGET ${_qt_tgt})
-      get_target_property(_qt_libs ${_qt_tgt} INTERFACE_LINK_LIBRARIES)
-      if(_qt_libs)
-        list(FILTER _qt_libs EXCLUDE REGEX "(^|/)AGL(\\.framework)?$")
-        set_target_properties(${_qt_tgt} PROPERTIES
-                              INTERFACE_LINK_LIBRARIES "${_qt_libs}")
+  execute_process(
+    COMMAND xcrun --show-sdk-path
+    OUTPUT_VARIABLE _macos_sdk_path
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  if(_macos_sdk_path
+     AND NOT EXISTS "${_macos_sdk_path}/System/Library/Frameworks/AGL.framework")
+    set(_agl_stub_dir "${CMAKE_BINARY_DIR}/agl_stub_framework")
+    set(_agl_stub_lib "${_agl_stub_dir}/AGL.framework/AGL")
+    if(NOT EXISTS "${_agl_stub_lib}")
+      file(MAKE_DIRECTORY "${_agl_stub_dir}/AGL.framework")
+      file(WRITE "${CMAKE_BINARY_DIR}/agl_stub_empty.c" "")
+      execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -dynamiclib
+                -install_name /System/Library/Frameworks/AGL.framework/AGL
+                -o "${_agl_stub_lib}"
+                "${CMAKE_BINARY_DIR}/agl_stub_empty.c"
+        RESULT_VARIABLE _agl_stub_rc
+        ERROR_VARIABLE  _agl_stub_err)
+      if(NOT _agl_stub_rc EQUAL 0)
+        message(WARNING "Failed to build AGL stub framework: ${_agl_stub_err}")
       endif()
     endif()
-  endforeach()
+    if(EXISTS "${_agl_stub_lib}")
+      message(STATUS "Providing AGL.framework stub for macOS SDK without AGL: ${_agl_stub_dir}")
+      # -F prepends a framework search path for both compile and link.
+      add_link_options("-F${_agl_stub_dir}")
+    endif()
+  endif()
 endif()
 
 # Find includes in corresponding build directories
