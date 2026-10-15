@@ -67,11 +67,16 @@ if(UseQt5 OR UseQt6)
 # build tree and prepend it to the framework search path. The linker is
 # then satisfied without changing the intended runtime behaviour.
 if(APPLE)
-  execute_process(
-    COMMAND xcrun --show-sdk-path
-    OUTPUT_VARIABLE _macos_sdk_path
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET)
+  # The SDK the targets are compiled against, or the default one
+  if(CMAKE_OSX_SYSROOT AND IS_DIRECTORY "${CMAKE_OSX_SYSROOT}")
+    set(_macos_sdk_path "${CMAKE_OSX_SYSROOT}")
+  else()
+    execute_process(
+      COMMAND xcrun --show-sdk-path
+      OUTPUT_VARIABLE _macos_sdk_path
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+  endif()
   if(_macos_sdk_path
      AND NOT EXISTS "${_macos_sdk_path}/System/Library/Frameworks/AGL.framework")
     set(_agl_stub_dir "${CMAKE_BINARY_DIR}/agl_stub_framework")
@@ -79,8 +84,17 @@ if(APPLE)
     if(NOT EXISTS "${_agl_stub_lib}")
       file(MAKE_DIRECTORY "${_agl_stub_dir}/AGL.framework")
       file(WRITE "${CMAKE_BINARY_DIR}/agl_stub_empty.c" "")
+      # The compiler is called directly here, so pass the SDK, architectures and
+      # deployment target that CMake otherwise adds to every compile and link command
+      set(_agl_stub_flags -isysroot "${_macos_sdk_path}")
+      foreach(_agl_stub_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
+        list(APPEND _agl_stub_flags -arch ${_agl_stub_arch})
+      endforeach()
+      if(CMAKE_OSX_DEPLOYMENT_TARGET)
+        list(APPEND _agl_stub_flags -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+      endif()
       execute_process(
-        COMMAND ${CMAKE_C_COMPILER} -dynamiclib
+        COMMAND ${CMAKE_C_COMPILER} -dynamiclib ${_agl_stub_flags}
                 -install_name /System/Library/Frameworks/AGL.framework/AGL
                 -o "${_agl_stub_lib}"
                 "${CMAKE_BINARY_DIR}/agl_stub_empty.c"
