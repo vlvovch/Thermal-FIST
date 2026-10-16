@@ -38,6 +38,17 @@ namespace thermalfist {
 
     bool calculationHadBECIssue = false;
 
+    /// \brief Squared effective (transverse) mass of the Landau level (l, sz)
+    ///        of a particle with mass m and charge Qmod = |Q| in magnetic field B,
+    ///        M^2_{l,sz} = m^2 + |Q| B (2l + 1 - 2 sz).
+    ///
+    /// The value is clipped at zero to avoid NaNs for the (tachyonic) lowest
+    /// levels of g = 2 particles with spin > 1/2.
+    static double LandauLevelMassSqr(double m, double Qmod, double B, int l, double sz) {
+      double M2 = m * m + Qmod * B * (2. * l + 1. - 2. * sz);
+      return (M2 > 0.) ? M2 : 0.;
+    }
+
     double BoltzmannDensity(double T, double mu, double m, double deg,
                             const IdealGasFunctionsExtraConfig& extraConfig) {
       // Check for magnetic field effect for charged particles
@@ -1399,6 +1410,28 @@ namespace thermalfist {
     double FermiZeroTDensity(double mu, double m, double deg,
                              const IdealGasFunctionsExtraConfig& extraConfig)
     {
+      // Landau levels in a non-zero magnetic field.
+      // n = |Q| B / (2 pi^2) * sum_{sz,l} p_F^{l,sz},  p_F^{l,sz} = sqrt(mu^2 - M^2_{l,sz})
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        if (mu <= 0.)
+          return 0.0;
+        const double B = extraConfig.MagneticField.B;
+        const double Qmod = abs(extraConfig.MagneticField.Q);
+        std::vector<double> spins = GetSpins(extraConfig.MagneticField.degSpin);
+        double ret = 0.;
+        for (size_t isz = 0; isz < spins.size(); ++isz) {
+          // At T = 0 the sum over the Landau levels terminates exactly
+          // at the last level with M_{l,sz} < mu
+          for (int l = 0; ; ++l) {
+            double M2 = LandauLevelMassSqr(m, Qmod, B, l, spins[isz]);
+            if (M2 >= mu * mu)
+              break;
+            ret += sqrt(mu * mu - M2);
+          }
+        }
+        return ret * Qmod * B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      }
+
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1408,7 +1441,30 @@ namespace thermalfist {
     double FermiZeroTPressure(double mu, double m, double deg,
                               const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      // Landau levels in a non-zero magnetic field.
+      // p = |Q| B / (2 pi^2) * sum_{sz,l} \int_0^{p_F} dp_z p_z^2 / E
+      //   = |Q| B / (4 pi^2) * sum_{sz,l} [ p_F mu - M^2 ln((p_F + mu)/M) ]
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        if (mu <= 0.)
+          return 0.0;
+        const double B = extraConfig.MagneticField.B;
+        const double Qmod = abs(extraConfig.MagneticField.Q);
+        std::vector<double> spins = GetSpins(extraConfig.MagneticField.degSpin);
+        double ret = 0.;
+        for (size_t isz = 0; isz < spins.size(); ++isz) {
+          for (int l = 0; ; ++l) {
+            double M2 = LandauLevelMassSqr(m, Qmod, B, l, spins[isz]);
+            if (M2 >= mu * mu)
+              break;
+            double Ml = sqrt(M2);
+            double pf = sqrt(mu * mu - M2);
+            double lg = (Ml > 0.) ? log((pf + mu) / Ml) : 0.;
+            ret += 0.5 * (pf * mu - M2 * lg);
+          }
+        }
+        return ret * Qmod * B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      }
+
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1426,7 +1482,15 @@ namespace thermalfist {
     double FermiZeroTEnergyDensity(double mu, double m, double deg,
                                    const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      // e = -p + T (dp/dT) + mu (dp/dmu) + B (dp/dB), with T (dp/dT) = 0 at T = 0.
+      // Same convention as the finite-temperature magnetic field expressions.
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        return -FermiZeroTPressure(mu, m, deg, extraConfig)
+               + mu * FermiZeroTDensity(mu, m, deg, extraConfig)
+               + extraConfig.MagneticField.B * FermiZeroTMagnetization(mu, m, deg, extraConfig)
+                 * xMath::GeVtoifm3();
+      }
+
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1450,18 +1514,39 @@ namespace thermalfist {
     double FermiZeroTdsdT(double mu, double m, double deg,
                            const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      // ds/dT|_{T=0} = g/(2pi^2) * pi^2/3 * mu * pF = g * mu * pF / 6
-      assert(extraConfig.MagneticField.B == 0.0);
-      if (m >= mu)
-        return 0.0;
-      double pf = sqrt(mu * mu - m * m);
-      return deg * mu * pf / 6. * xMath::GeVtoifm3();
+      // Sommerfeld: ds/dT|_{T=0} = (pi^2/3) * (dn/dmu), the density of states
+      // at the Fermi surface. Valid with and without a magnetic field.
+      // At B = 0 this reduces to g/(2pi^2) * pi^2/3 * mu * pF = g * mu * pF / 6.
+      return xMath::Pi() * xMath::Pi() / 3. * FermiZeroTdn1dmu1(mu, m, deg, extraConfig);
     }
 
     double FermiZeroTScalarDensity(double mu, double m, double deg,
                                    const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      // n_s = |Q| B m / (2 pi^2) * sum_{sz,l} \int_0^{p_F} dp_z / E
+      //     = |Q| B m / (2 pi^2) * sum_{sz,l} ln((p_F + mu)/M)
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        if (mu <= 0.)
+          return 0.0;
+        const double B = extraConfig.MagneticField.B;
+        const double Qmod = abs(extraConfig.MagneticField.Q);
+        std::vector<double> spins = GetSpins(extraConfig.MagneticField.degSpin);
+        double ret = 0.;
+        for (size_t isz = 0; isz < spins.size(); ++isz) {
+          for (int l = 0; ; ++l) {
+            double M2 = LandauLevelMassSqr(m, Qmod, B, l, spins[isz]);
+            if (M2 >= mu * mu)
+              break;
+            double Ml = sqrt(M2);
+            if (Ml == 0.)
+              continue;
+            double pf = sqrt(mu * mu - M2);
+            ret += log((pf + mu) / Ml);
+          }
+        }
+        return ret * m * Qmod * B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      }
+
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1479,7 +1564,26 @@ namespace thermalfist {
     double FermiZeroTdn1dmu1(double mu, double m, double deg,
                              const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      // dn/dmu = |Q| B / (2 pi^2) * sum_{sz,l} mu / p_F^{l,sz}
+      // Note: diverges whenever mu coincides with a Landau level threshold
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.) {
+        if (mu <= 0.)
+          return 0.0;
+        const double B = extraConfig.MagneticField.B;
+        const double Qmod = abs(extraConfig.MagneticField.Q);
+        std::vector<double> spins = GetSpins(extraConfig.MagneticField.degSpin);
+        double ret = 0.;
+        for (size_t isz = 0; isz < spins.size(); ++isz) {
+          for (int l = 0; ; ++l) {
+            double M2 = LandauLevelMassSqr(m, Qmod, B, l, spins[isz]);
+            if (M2 >= mu * mu)
+              break;
+            ret += mu / sqrt(mu * mu - M2);
+          }
+        }
+        return ret * Qmod * B / 2. / xMath::Pi() / xMath::Pi() * xMath::GeVtoifm3();
+      }
+
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1489,7 +1593,8 @@ namespace thermalfist {
     double FermiZeroTdn2dmu2(double mu, double m, double deg,
                              const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        throw std::runtime_error("**ERROR** FermiZeroTdn2dmu2: not implemented in a magnetic field");
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1499,7 +1604,8 @@ namespace thermalfist {
     double FermiZeroTdn3dmu3(double mu, double m, double deg,
                              const IdealGasFunctionsExtraConfig& extraConfig)
     {
-      assert(extraConfig.MagneticField.B == 0.0);
+      if (extraConfig.MagneticField.B != 0. && extraConfig.MagneticField.Q != 0.)
+        throw std::runtime_error("**ERROR** FermiZeroTdn3dmu3: not implemented in a magnetic field");
       if (m >= mu)
         return 0.0;
       double pf = sqrt(mu * mu - m * m);
@@ -1782,8 +1888,32 @@ namespace thermalfist {
     }
 
     double FermiZeroTMagnetization(double mu, double m, double deg, const IdealGasFunctionsExtraConfig &extraConfig) {
-      assert(extraConfig.MagneticField.B == 0.0);
-      return 0.;
+      // m_B = dp/dB
+      //     = |Q| / (2 pi^2) * sum_{sz,l} \int_0^{p_F} dp_z [ p_z^2 - |Q| B (l + 1/2 - sz) ] / E
+      //     = |Q| / (4 pi^2) * sum_{sz,l} [ p_F mu - (2 M^2_{l,sz} - m^2) ln((p_F + mu)/M_{l,sz}) ]
+      // Zero-temperature counterpart of QuantumNumericalIntegrationMagnetization().
+      // Returned in GeV^2, i.e. NOT converted to fm^-3 units, same as at finite T.
+      if (extraConfig.MagneticField.B == 0. || extraConfig.MagneticField.Q == 0.)
+        return 0.;
+      if (mu <= 0.)
+        return 0.;
+
+      const double B = extraConfig.MagneticField.B;
+      const double Qmod = abs(extraConfig.MagneticField.Q);
+      std::vector<double> spins = GetSpins(extraConfig.MagneticField.degSpin);
+      double ret = 0.;
+      for (size_t isz = 0; isz < spins.size(); ++isz) {
+        for (int l = 0; ; ++l) {
+          double M2 = LandauLevelMassSqr(m, Qmod, B, l, spins[isz]);
+          if (M2 >= mu * mu)
+            break;
+          double Ml = sqrt(M2);
+          double pf = sqrt(mu * mu - M2);
+          double lg = (Ml > 0.) ? log((pf + mu) / Ml) : 0.;
+          ret += pf * mu - (2. * M2 - m * m) * lg;
+        }
+      }
+      return ret * Qmod / 4. / xMath::Pi() / xMath::Pi();
     }
 
     /// Temperature derivatives
