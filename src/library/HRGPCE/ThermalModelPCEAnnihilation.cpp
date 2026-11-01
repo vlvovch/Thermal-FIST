@@ -244,9 +244,6 @@ namespace thermalfist {
     }
 
     ThermalModelBase *model = m_THM->ThermalModel();
-    model->SetChemicalPotentials(Chem);
-
-
     if (m_Mode == PCEMode::AtFixedTemperature) {
       const double& Vtmp = x[x.size() - 1];
       m_THM->m_ParametersCurrent.V = Vtmp;
@@ -257,6 +254,8 @@ namespace thermalfist {
     }
     double V = m_THM->m_ParametersCurrent.V;
     model->SetParameters(m_THM->m_ParametersCurrent);
+    // SetParameters() refills the chemical potentials from (muB, muQ, muS, muC): set the PCE ones after it
+    model->SetChemicalPotentials(Chem);
 
     /// Calculate densities of all hadrons
     model->CalculateDensities();
