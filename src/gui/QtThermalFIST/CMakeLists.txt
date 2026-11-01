@@ -79,7 +79,11 @@ if(APPLE)
   endif()
   if(_macos_sdk_path
      AND NOT EXISTS "${_macos_sdk_path}/System/Library/Frameworks/AGL.framework")
-    set(_agl_stub_dir "${CMAKE_BINARY_DIR}/agl_stub_framework")
+    # One stub per compiler, SDK, architectures and deployment target, so that
+    # reconfiguring the build directory with other settings builds a matching stub
+    string(SHA256 _agl_stub_config
+      "${CMAKE_C_COMPILER}|${_macos_sdk_path}|${CMAKE_OSX_ARCHITECTURES}|${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    set(_agl_stub_dir "${CMAKE_BINARY_DIR}/agl_stub_framework/${_agl_stub_config}")
     set(_agl_stub_lib "${_agl_stub_dir}/AGL.framework/AGL")
     if(NOT EXISTS "${_agl_stub_lib}")
       file(MAKE_DIRECTORY "${_agl_stub_dir}/AGL.framework")
