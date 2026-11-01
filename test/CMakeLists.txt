@@ -35,6 +35,10 @@ set_property(TARGET test_ThermalModelCanonical PROPERTY FOLDER tests)
 set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD 17)
 set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD_REQUIRED ON)
 
+add_executable(test_PCE test_PCE.cpp)
+target_link_libraries(test_PCE ThermalFIST GTest::gtest_main)
+set_property(TARGET test_PCE PROPERTY FOLDER tests)
+
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
 set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
@@ -64,6 +68,9 @@ gtest_discover_tests(test_PhaseShifts)
 
 # Canonical ensemble tests
 gtest_discover_tests(test_ThermalModelCanonical)
+
+# Partial chemical equilibrium tests
+gtest_discover_tests(test_PCE)
 
 
 # CPC tests
