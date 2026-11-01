@@ -19,6 +19,10 @@ add_executable(test_EMMDerivatives test_EMMDerivatives.cpp)
 target_link_libraries(test_EMMDerivatives ThermalFIST GTest::gtest_main)
 set_property(TARGET test_EMMDerivatives PROPERTY FOLDER tests)
 
+add_executable(test_NumericalIntegration test_NumericalIntegration.cpp)
+target_link_libraries(test_NumericalIntegration ThermalFIST GTest::gtest_main)
+set_property(TARGET test_NumericalIntegration PROPERTY FOLDER tests)
+
 add_executable(test_ThermalModelCanonical test_ThermalModelCanonical.cpp)
 target_link_libraries(test_ThermalModelCanonical ThermalFIST GTest::gtest_main)
 set_property(TARGET test_ThermalModelCanonical PROPERTY FOLDER tests)
@@ -26,6 +30,10 @@ set_property(TARGET test_ThermalModelCanonical PROPERTY FOLDER tests)
 # standard, and MSVC's default mode lacks them, so require C++17 for this target.
 set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD 17)
 set_property(TARGET test_ThermalModelCanonical PROPERTY CXX_STANDARD_REQUIRED ON)
+
+add_executable(test_PCE test_PCE.cpp)
+target_link_libraries(test_PCE ThermalFIST GTest::gtest_main)
+set_property(TARGET test_PCE PROPERTY FOLDER tests)
 
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
@@ -48,8 +56,14 @@ gtest_discover_tests(test_ZeroTemperature)
 # EMM derivatives tests
 gtest_discover_tests(test_EMMDerivatives)
 
+# Numerical integration (Gauss quadrature) tests
+gtest_discover_tests(test_NumericalIntegration)
+
 # Canonical ensemble tests
 gtest_discover_tests(test_ThermalModelCanonical)
+
+# Partial chemical equilibrium tests
+gtest_discover_tests(test_PCE)
 
 
 # CPC tests
