@@ -138,6 +138,15 @@ if(THERMALFIST_WASM)
   if(EMSCRIPTEN)
     string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif()
+
+  # Multi-threaded Qt for WebAssembly links with shared memory, so all code must be
+  # compiled with thread support. Otherwise atomics (e.g. shared_ptr reference counts)
+  # are stripped and wasm-ld rejects the objects.
+  if(EMSCRIPTEN AND THERMALFIST_WASM_GUI AND QT_FEATURE_thread)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    message(STATUS "  -pthread enabled for multi-threaded Qt for WebAssembly")
+  endif()
 endif()
 
 # ROOT/Minuit2 detection (skip for wasm builds)
