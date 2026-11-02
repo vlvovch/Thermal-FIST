@@ -37,6 +37,8 @@
 
 #include "CosmicEoStab.h"
 
+class PhaseShiftsDialog;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -116,6 +118,8 @@ private:
     void refreshListDisplay();
     /// Reset every tab's view of the TPS.
     void resetAllTabs();
+    /// Store the selection of an accepted phase-shift dialog and re-apply it if it changed.
+    void applyPhaseShiftsSelection(const PhaseShiftsDialog& dlg);
 private slots:
     void loadList();
     void loadDecays();

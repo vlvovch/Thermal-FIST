@@ -731,9 +731,26 @@ void MainWindow::rebuildCurrentList()
 
 void MainWindow::openPhaseShiftsDialog()
 {
+#ifdef Q_OS_WASM
+  // WASM: exec() is not supported, use a heap-allocated modal dialog and apply
+  // the selection when it is accepted
+  PhaseShiftsDialog *dlg = new PhaseShiftsDialog(this, m_phaseShiftsEnabled, m_phaseShiftConfs, m_phaseShiftDisabledChannels);
+  dlg->setAttribute(Qt::WA_DeleteOnClose);
+  dlg->setModal(true);
+  connect(dlg, &QDialog::finished, this, [this, dlg](int result) {
+    if (result == QDialog::Accepted)
+      applyPhaseShiftsSelection(*dlg);
+  });
+  dlg->show();
+#else
   PhaseShiftsDialog dlg(this, m_phaseShiftsEnabled, m_phaseShiftConfs, m_phaseShiftDisabledChannels);
-  if (dlg.exec() != QDialog::Accepted)
-    return;
+  if (dlg.exec() == QDialog::Accepted)
+    applyPhaseShiftsSelection(dlg);
+#endif
+}
+
+void MainWindow::applyPhaseShiftsSelection(const PhaseShiftsDialog& dlg)
+{
   // Only rebuild if the selection actually changed. rebuildCurrentList()
   // reconstructs TPS from the base list files, which would discard any in-memory
   // particle-list editor changes - so a no-op OK must NOT trigger it.

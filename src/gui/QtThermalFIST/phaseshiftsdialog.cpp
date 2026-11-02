@@ -52,6 +52,12 @@ PhaseShiftsDialog::PhaseShiftsDialog(QWidget* parent,
   m_btnLoad = new QPushButton(tr("Load configs..."));
   m_btnLoad->setToolTip(tr("Choose one or more phase-shift config (.conf) files."));
   connect(m_btnLoad, SIGNAL(clicked()), this, SLOT(loadConfigs()));
+#ifdef Q_OS_WASM
+  // WASM: there are no local config files in the browser sandbox (a .conf also
+  // refers to its list/decay files), so only the bundled configs are available
+  m_btnLoad->setEnabled(false);
+  m_btnLoad->setToolTip(tr("Loading custom phase-shift configs is only available in the desktop version."));
+#endif
 
   QHBoxLayout* confLay = new QHBoxLayout();
   confLay->addWidget(labelConf);
@@ -133,8 +139,15 @@ void PhaseShiftsDialog::repopulate()
     try {
       chans = PhaseShifts::ListPhaseShiftConfigChannels(m_configs[i].toStdString());
     } catch (const std::exception& e) {
-      QMessageBox::warning(this, tr("Phase shifts"),
-        tr("Could not read config:\n%1\n\n%2").arg(m_configs[i]).arg(e.what()));
+      const QString msg = tr("Could not read config:\n%1\n\n%2").arg(m_configs[i]).arg(e.what());
+#ifdef Q_OS_WASM
+      // WASM: static message boxes call exec(), which is not supported
+      QMessageBox *box = new QMessageBox(QMessageBox::Warning, tr("Phase shifts"), msg, QMessageBox::Ok, this);
+      box->setAttribute(Qt::WA_DeleteOnClose);
+      box->open();
+#else
+      QMessageBox::warning(this, tr("Phase shifts"), msg);
+#endif
       continue;
     }
     for (size_t c = 0; c < chans.size(); ++c) {
@@ -219,7 +232,9 @@ void PhaseShiftsDialog::loadConfigs()
 void PhaseShiftsDialog::onEnableToggled(bool on)
 {
   m_leConfigs->setEnabled(on);
-  m_btnLoad->setEnabled(on);
+#ifndef Q_OS_WASM
+  m_btnLoad->setEnabled(on);   // stays disabled on WASM, see the constructor
+#endif
   m_table->setEnabled(on);
   m_btnAll->setEnabled(on);
   m_btnNone->setEnabled(on);
