@@ -8,23 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 Date: 2026-11-01
 
-A bugfix release. Partial chemical equilibrium (PCE) calculations were broken in versions 1.6 and 1.6.1, where they silently returned full chemical equilibrium.
+A bugfix release. Some partial chemical equilibrium (PCE) calculations were broken in versions 1.6 and 1.6.1: they may have silently returned full chemical equilibrium. If you used PCE with either version, please update and redo those calculations.
 
 ### Partial chemical equilibrium
 
-- Fixed `ThermalModelPCE` and `ThermalModelPCEAnnihilation` returning full chemical equilibrium instead of the PCE solution since version 1.6. This affected PCE calculations in the GUI, the event generator in PCE mode, and thermal fits with yields at the kinetic freeze-out (`UseTkin`). `SetParameters()`, which since 1.6 refills the chemical potentials from (muB, muQ, muS, muC), overwrote the PCE chemical potentials.
-- Added a PCE test suite (`test_PCE`).
+- Fixed: since version 1.6, `ThermalModelPCE` and `ThermalModelPCEAnnihilation` returned full chemical equilibrium instead of the PCE solution (at the LHC all chemical potentials stayed at zero), without any error or warning. This may have affected the following PCE calculations: in the GUI, the event generator in PCE mode, and thermal fits with yields evaluated at the kinetic freeze-out (`UseTkin`). The cause was that `SetParameters()`, which since 1.6 refills the chemical potentials from (μB, μQ, μS, μC), overwrote the PCE chemical potentials.
+- Added a PCE test suite (`test_PCE`): a regression test for this bug, reference values, conservation of stable-hadron yields and entropy, the Saha equation for light nuclei, baryon annihilation, and the event-generator and thermal-fit code paths.
 
 ### Numerical integration
 
-- Gaussian quadrature nodes and weights are computed (Golub-Welsch algorithm) for any number of nodes and cached, instead of being taken from hard-coded tables.
-- API change: the `NumericalIntegration::coefficients_*` arrays were removed. Use `GetGaussLegendreNodes(n)`, `GetGaussLaguerreWeights(n)` etc., or `GetCoefsIntegrateLegendre/Laguerre(n, ...)`.
+- Gaussian quadrature nodes and weights are now computed (Golub-Welsch algorithm) for any number of nodes and cached, instead of being taken from hard-coded tables. They are accurate to machine precision. Supported: Legendre, Laguerre, generalized Laguerre, Hermite and Jacobi rules. Results change only at the 1e-12 level.
+- API change: the hard-coded `NumericalIntegration::coefficients_*` arrays were removed. Use `GetGaussLegendreNodes(n)`, `GetGaussLaguerreWeights(n)` etc., or `GetCoefsIntegrateLegendre/Laguerre(n, ...)`. The old fixed-order functions such as `GetCoefsIntegrateLegendre32` still work.
 
 ### GUI
 
-- Fixed a crash of the "Thermodynamics..." results dialog after canonical-ensemble calculations with fluctuations.
-- The bundled QCustomPlot builds against Qt 6.9 and newer.
-- The GUI builds on macOS 26, whose SDK no longer contains the AGL framework.
+- Fixed a crash when opening the "Thermodynamics..." results dialog after a canonical-ensemble calculation with fluctuations. The quantities that need temperature derivatives (speed of sound, heat capacity, T dχ/dT) are now shown only when those are available.
+- The bundled QCustomPlot now builds against Qt 6.9 and newer, which deprecate or remove some of the Qt APIs it used.
+- The GUI now builds on macOS 26, whose SDK no longer contains the AGL framework that prebuilt Qt binaries still link.
 
 ## [Version 1.6.1]
 
