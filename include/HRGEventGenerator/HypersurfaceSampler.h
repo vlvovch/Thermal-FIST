@@ -438,7 +438,7 @@ namespace thermalfist {
         if (!m_zeroMuBmode) {
           ret[1] = rhoB / m_rhoB - 1.;
           ret[2] = m_THM->StrangenessDensity() / m_THM->AbsoluteStrangenessDensity();
-          ret[3] = m_THM->ElectricChargeDensity() / m_THM->BaryonDensity() / 0.4 - 1.;
+          ret[3] = (m_THM->ElectricChargeDensity() - 0.4 * rhoB) / m_rhoB;
         }
         else {
           ret[1] = 0.;
