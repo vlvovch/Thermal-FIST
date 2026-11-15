@@ -35,6 +35,10 @@ add_executable(test_PCE test_PCE.cpp)
 target_link_libraries(test_PCE ThermalFIST GTest::gtest_main)
 set_property(TARGET test_PCE PROPERTY FOLDER tests)
 
+add_executable(test_RandomGenerators test_RandomGenerators.cpp)
+target_link_libraries(test_RandomGenerators ThermalFIST GTest::gtest_main)
+set_property(TARGET test_RandomGenerators PROPERTY FOLDER tests)
+
 add_executable(test_CompareOutputs test_CompareOutputs.cpp)
 target_link_libraries(test_CompareOutputs)
 set_property(TARGET test_CompareOutputs PROPERTY FOLDER tests)
@@ -64,6 +68,9 @@ gtest_discover_tests(test_ThermalModelCanonical)
 
 # Partial chemical equilibrium tests
 gtest_discover_tests(test_PCE)
+
+# Random numbers in the event generator: shuffling, reproducibility for a fixed seed
+gtest_discover_tests(test_RandomGenerators)
 
 
 # CPC tests
