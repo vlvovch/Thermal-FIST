@@ -41,7 +41,8 @@ namespace thermalfist {
      * \param m1  Mass of the first daughter particle
      * \param m2  Mass of the first daughter particle
      * \param m3  Mass of the first daughter particle
-     * \return    Maximum of the \f$m_{12}\f$ probability density function
+     * \return    Maximum of the \f$m_{12}\f$ probability density function.
+     *            Zero if there is no phase space (up to rounding errors).
      */
     double TernaryThreeBodym12Maximum(double M, double m1, double m2, double m3);
 
@@ -52,6 +53,11 @@ namespace thermalfist {
      * \brief Sample the invariant mass \f$m_{12}\f$ of the leading two
      *        daughter particles in a three-body decay.
      * 
+     * Uses rejection sampling. If there is no phase space, i.e. if
+     * \f$M - m_1 - m_2 - m_3\f$ does not exceed \f$10^{-12} M\f$, or if fm12max
+     * is not a positive finite number, no sampling is done and the middle of
+     * the allowed range of \f$m_{12}\f$ is returned.
+     *
      * \param M   Mass of the decaying particle
      * \param m1  Mass of the first daughter particle
      * \param m2  Mass of the first daughter particle

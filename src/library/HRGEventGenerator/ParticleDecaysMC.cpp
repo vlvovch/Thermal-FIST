@@ -7,6 +7,10 @@
  */
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+
 #include "HRGBase/xMath.h"
 #include "HRGEventGenerator/RandomGenerators.h"
 
@@ -38,23 +42,42 @@ namespace thermalfist {
         m1 = l + (r - l) / 3.;
         m2 = r - (r - l) / 3.;
       }
-      return sqrt(ThreeBodym12F2((m1 + m2) / 2., M, m1_, m2_, m3_));
+      // Without phase space the density is zero, rounding errors can make it negative
+      double f2max = ThreeBodym12F2((m1 + m2) / 2., M, m1_, m2_, m3_);
+      return (f2max > 0.) ? sqrt(f2max) : 0.;
     }
 
     int threebodysucc = 0, threebodytot = 0;
 
     // Random sample for m12 in a 3-body decay
     double GetRandomThreeBodym12(double M, double m1_, double m2_, double m3_, double fm12max) {
-      while (true) {
+      // The allowed values of m12 are in [m1 + m2, M - m3]
+      double m12min = m1_ + m2_;
+      double dm = M - m1_ - m2_ - m3_;
+
+      // No phase space: the mother mass is at the threshold up to rounding errors,
+      // which happens in the decays into four or more particles (see ManyBodyDecay()),
+      // or the maximum of the density is not a positive number.
+      // m12 is then fixed by the kinematics, the rejection sampling would never terminate.
+      if (!(dm > 1.e-12 * M) || !(fm12max > 0.) || !std::isfinite(fm12max))
+        return m12min + std::max(dm, 0.) / 2.;
+
+      const int maxIterations = 1000000;
+      for (int iter = 0; iter < maxIterations; ++iter) {
         threebodytot++;
-        double x0 = m1_ + m2_ + (M - m1_ - m2_ - m3_) * RandomGenerators::randgenMT.randDblExc();
+        double x0 = m12min + dm * RandomGenerators::randgenMT.randDblExc();
         double y0 = fm12max * RandomGenerators::randgenMT.randDblExc();
         if (y0*y0 < ThreeBodym12F2(x0, M, m1_, m2_, m3_)) {
           threebodysucc++;
           return x0;
         }
       }
-      return 0.;
+
+      // Does not happen with fm12max from TernaryThreeBodym12Maximum()
+      std::cerr << "**WARNING** ParticleDecaysMC::GetRandomThreeBodym12: No value of m12 accepted in "
+        << maxIterations << " attempts for M = " << M << " and fm12max = " << fm12max
+        << ". Using the middle of the allowed range." << std::endl;
+      return m12min + dm / 2.;
     }
 
     SimpleParticle LorentzBoost(const SimpleParticle &part, double vx, double vy, double vz) {
@@ -123,7 +146,11 @@ namespace thermalfist {
       //SimpleParticle Mo = LorentzBoost(Mother, vx, vy, vz);
       SimpleParticle Mo = LorentzBoostMomentumOnly(Mother, vx, vy, vz);
       double ten1 = (Mo.m*Mo.m - m2 * m2 + m1 * m1) / 2. / Mo.m;
-      double tp = sqrt(ten1*ten1 - m1 * m1);
+      double tp2 = ten1 * ten1 - m1 * m1;
+      // At the threshold rounding errors can make tp2 slightly negative
+      if (tp2 < 0. && tp2 > -1.e-12 * Mo.m * Mo.m)
+        tp2 = 0.;
+      double tp = sqrt(tp2);
       double tphi = 2. * xMath::Pi() * RandomGenerators::randgenMT.rand();
       double cthe = 2. * RandomGenerators::randgenMT.rand() - 1.;
       double sthe = sqrt(1. - cthe * cthe);
@@ -202,7 +229,8 @@ namespace thermalfist {
       }
       else // More than 3 body decay kinematics are only approximate!
       {
-        mijk = tmin + (tmax - tmin) * RandomGenerators::randgenMT.rand();
+        // Uniform in (tmin, tmax): there is no phase space at the ends of the range
+        mijk = tmin + (tmax - tmin) * RandomGenerators::randgenMT.randDblExc();
       }
       std::vector<SimpleParticle> ret1 = TwoBodyDecay(Mother2, mijk, 11111, masses[masses.size() - 1], pdgs[pdgs.size() - 1]);
       ret.push_back(ret1[1]);
