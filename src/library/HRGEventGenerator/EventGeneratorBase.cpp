@@ -1468,7 +1468,9 @@ namespace thermalfist {
           for (size_t j = 0; j < primParticles[i].size(); ++j) {
             if (!primParticles[i][j].processed) {
               flag_repeat = true;
-              double DecParam = RandomGenerators::randgenMT.rand(), tsum = 0.;
+              // Uniform in [0,1): rand() can return exactly 1, which no channel is selected for
+              // when the branching ratios add up to one, and the particle would disappear
+              double DecParam = RandomGenerators::randgenMT.randExc(), tsum = 0.;
 
               std::vector<double> Bratios;
               double Width = 0.;

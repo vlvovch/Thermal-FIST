@@ -17,6 +17,9 @@
 // sampling of the invariant mass m12 in GetRandomThreeBodym12() never terminated in
 // this case (seen in a production run when a uniform draw returned exactly zero).
 // The tests below hang, up to the timeout of ctest, if this problem comes back.
+//
+// The last test checks the choice of the decay channel in EventGeneratorBase::PerformDecays()
+// for the largest output of the generator.
 
 #include <cmath>
 #include <limits>
@@ -24,6 +27,9 @@
 #include <string>
 #include <vector>
 
+#include "ThermalFISTConfig.h"
+#include "HRGBase/ThermalParticleSystem.h"
+#include "HRGEventGenerator/EventGeneratorBase.h"
 #include "HRGEventGenerator/ParticleDecaysMC.h"
 #include "HRGEventGenerator/RandomGenerators.h"
 #include "HRGEventGenerator/SimpleParticle.h"
@@ -271,6 +277,63 @@ namespace {
         }
         M = std::nextafter(M, 10.);
       }
+    }
+  }
+
+  // PerformDecays() selects the decay channel with a uniform draw compared to the cumulative
+  // branching ratios. A particle for which no channel is selected disappears without
+  // decay products: this is meant for lists whose branching ratios do not add up to one.
+  // A draw from the closed interval [0, 1] gave this result for every particle when the draw
+  // was exactly 1 (probability 2^-32 per decay), which violated the conservation of charges
+  // (seen in a production run as one event in 3.4 million with a nonzero total charge).
+  // The branching ratios of the PDG2025 list add up to one, so every unstable hadron must decay
+  // even for the largest output of the generator: with constant branching ratios and with
+  // the mass-dependent ones of the eBW scheme.
+  TEST(ParticleDecaysMC, DecayChannelWithLargestDraw)
+  {
+    ThermalParticleSystem TPS(std::string(ThermalFIST_INPUT_FOLDER) + "/list/PDG2025/list.dat");
+    for (int ieBW = 0; ieBW < 2; ++ieBW) {
+      if (ieBW == 1)
+        TPS.SetResonanceWidthIntegrationType(ThermalParticle::eBW);
+      int nchecked = 0;
+      for (int i = 0; i < TPS.ComponentsNumber(); ++i) {
+        const ThermalParticle& part = TPS.Particles()[i];
+        if (part.IsStable())
+          continue;
+        // eBW: the branching ratios are undefined where all channels are closed;
+        // the sampled masses never get there, because the mass distribution vanishes
+        if (ieBW == 1 && !(part.TotalWidtheBW(part.Mass()) > 0.))
+          continue;
+        std::string label = part.Name() + (ieBW == 1 ? " (eBW)" : "");
+
+        SimpleParticle mother(0.1, -0.2, 0.3, part.Mass(), part.PdgId());
+        SimpleEvent event;
+        event.Particles.push_back(mother);
+        event.AllParticles.push_back(mother);
+        event.DecayMap.push_back(-1);
+
+        RandomGenerators::SetSeed(4);
+        // The first draw of PerformDecays() selects the decay channel of the mother
+        ForceUpcomingOutput(0, 0xffffffffUL);
+        SimpleEvent decayed = EventGeneratorBase::PerformDecays(event, &TPS);
+
+        // Every unstable hadron of the decay chain, starting with the mother, has decay products
+        ASSERT_EQ(decayed.DecayMap.size(), decayed.AllParticles.size()) << label;
+        std::vector<int> nproducts(decayed.AllParticles.size(), 0);
+        for (size_t k = 0; k < decayed.DecayMap.size(); ++k)
+          if (decayed.DecayMap[k] >= 0)
+            nproducts[decayed.DecayMap[k]]++;
+        EXPECT_GT(nproducts[0], 0) << label << " disappeared without decay products";
+        for (size_t k = 1; k < decayed.AllParticles.size(); ++k) {
+          long long id = TPS.PdgToId(decayed.AllParticles[k].PDGID);
+          if (id != -1 && !TPS.Particles()[id].IsStable())
+            EXPECT_GT(nproducts[k], 0) << label << ": decay product " << decayed.AllParticles[k].PDGID << " disappeared";
+        }
+        // Stable hadrons, or photons and leptons only (e.g. the last channel of the eta is two photons)
+        EXPECT_GT(decayed.Particles.size() + decayed.PhotonsLeptons.size(), 0u) << label;
+        ++nchecked;
+      }
+      EXPECT_GT(nchecked, 200) << (ieBW == 1 ? "eBW" : "constant branching ratios");
     }
   }
 
