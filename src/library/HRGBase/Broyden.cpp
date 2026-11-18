@@ -91,8 +91,12 @@ namespace thermalfist {
     m_MaxDifference = 0.;
 
     // Nothing to solve
-    if (m_Equations->Dimension() == 0 || x0.empty())
+    if (m_Equations->Dimension() == 0)
       return x0;
+
+    if (m_Equations->Dimension() != static_cast<int>(x0.size())) {
+      throw std::runtime_error("**ERROR** Broyden::Solve: Equations dimension does not match that of the initial guess!");
+    }
 
     BroydenSolutionCriterium *SolutionCriterium = solcrit;
     bool UseDefaultSolutionCriterium = false;
