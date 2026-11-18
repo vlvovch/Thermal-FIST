@@ -2041,8 +2041,12 @@ namespace thermalfist {
       NNN++;
     }
     if (repeat) {
+      if (UseDefaultSolutionCriterium)
+        delete SolutionCriterium;
+      if (UseDefaultJacobian)
+        delete JacobianInUse;
       std::vector<double> ret = Solve(x0, solcrit, max_iterations);
-      m_THM->ConstrainMuQ(constrmuB);
+      m_THM->ConstrainMuB(constrmuB);
       m_THM->ConstrainMuQ(constrmuQ);
       m_THM->ConstrainMuS(constrmuS);
       m_THM->ConstrainMuC(constrmuC);
@@ -2052,6 +2056,11 @@ namespace thermalfist {
     if (Jac.determinant() == 0.0)
     {
       std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve" << std::endl;
+      m_Iterations = max_iterations;  // Signal failure
+      if (UseDefaultSolutionCriterium)
+        delete SolutionCriterium;
+      if (UseDefaultJacobian)
+        delete JacobianInUse;
       return xcur;
     }
 

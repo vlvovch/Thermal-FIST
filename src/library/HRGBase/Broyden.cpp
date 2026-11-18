@@ -87,6 +87,12 @@ namespace thermalfist {
     }
 
     m_MaxIterations = max_iterations;
+    m_Iterations = 0;
+    m_MaxDifference = 0.;
+
+    // Nothing to solve
+    if (m_Equations->Dimension() == 0 || x0.empty())
+      return x0;
 
     BroydenSolutionCriterium *SolutionCriterium = solcrit;
     bool UseDefaultSolutionCriterium = false;
@@ -116,6 +122,11 @@ namespace thermalfist {
     if (det == 0.0 || std::abs(det) < 1.e-300)
     {
       std::cerr << "**WARNING** Singular Jacobian in Broyden::Solve (det=" << det << ")" << std::endl;
+      m_Iterations = max_iterations;  // Signal failure
+      if (UseDefaultSolutionCriterium)
+        delete SolutionCriterium;
+      if (UseDefaultJacobian)
+        delete JacobianInUse;
       return xcur;
     }
 
@@ -128,6 +139,12 @@ namespace thermalfist {
         if (std::isnan(Jinv(i,j)) || std::isinf(Jinv(i,j)))
           hasNaNInverse = true;
     if (hasNaNInverse) {
+      std::cerr << "**WARNING** NaN/Inf in the inverse Jacobian in Broyden::Solve, solver failed" << std::endl;
+      m_Iterations = max_iterations;  // Signal failure
+      if (UseDefaultSolutionCriterium)
+        delete SolutionCriterium;
+      if (UseDefaultJacobian)
+        delete JacobianInUse;
       return xcur;
     }
     tmpvec = m_Equations->Equations(xcur);
