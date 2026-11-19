@@ -1,13 +1,14 @@
 /*
  * Thermal-FIST package
  *
- * Copyright (c) 2014-2025 Volodymyr Vovchenko
+ * Copyright (c) 2014-2026 Volodymyr Vovchenko
  *
  * GNU General Public License (GPLv3 or later)
  */
 #include <vector>
 #include <cmath>
 #include <utility>
+#include <algorithm>
 #include "HRGBase/NumericalIntegration.h"
 #include "gtest/gtest.h"
 
@@ -176,6 +177,103 @@ namespace {
     EXPECT_THROW(NI::JacobiPolynomial(-1.0, 0.0), std::invalid_argument);
     EXPECT_THROW(NI::JacobiPolynomial(0.0, -1.0), std::invalid_argument);
     EXPECT_NO_THROW(NI::JacobiPolynomial(-0.5, -0.5));
+  }
+
+  // ---- Fixes synced from upstream GaussQuad (gaussquad-cpp v1.1.0) --------
+
+  // Exact Jacobi moment \int_{-1}^{1} (1-x)^a (1+x)^b x^m dx, via
+  // x^m = sum_j C(m,j) (1+x)^j (-1)^(m-j) and beta integrals.
+  double JacobiMomentExact(double a, double b, int m) {
+    double ret = 0., binom = 1.;
+    for (int j = 0; j <= m; ++j) {
+      double beta = std::exp(std::lgamma(a + 1.) + std::lgamma(b + j + 1.) - std::lgamma(a + b + j + 2.));
+      ret += binom * ((m - j) % 2 ? -1. : 1.) * std::pow(2., a + b + j + 1.) * beta;
+      binom = binom * (m - j) / (j + 1.);
+    }
+    return ret;
+  }
+
+  TEST(NumericalIntegrationJacobi, AsymmetricWeightMoments) {
+    // Regression: the a_n recurrence coefficient lacked a (2n+a+b+1) factor, so
+    // rules with alpha != beta were wrong from the x^3 moment on.
+    for (auto ab : { std::make_pair(2.5, 0.5), std::make_pair(1.0, 0.0), std::make_pair(-0.5, 3.0) }) {
+      NI::JacobiPolynomial jac(ab.first, ab.second);
+      const int n = 6;
+      auto q = NI::GaussianQuadrature(n, &jac);
+      for (int m = 0; m <= 2 * n - 1; ++m) {
+        double s = 0.;
+        for (int k = 0; k < n; ++k) s += q.second[k] * std::pow(q.first[k], m);
+        double ex = JacobiMomentExact(ab.first, ab.second, m);
+        EXPECT_NEAR(s, ex, 1e-8 * std::max(1., std::abs(ex)))  // reference sum loses digits to cancellation; the old bug was off by ~1e-1
+          << "alpha=" << ab.first << " beta=" << ab.second << " m=" << m;
+      }
+    }
+  }
+
+  TEST(NumericalIntegrationJacobi, LargeExponentsStayFinite) {
+    // Regression: tgamma overflow gave mu0 = inf/inf = NaN for large exponents.
+    NI::JacobiPolynomial jac(100., 100.);
+    auto q = NI::GaussianQuadrature(16, &jac);
+    double s = 0.;
+    for (double w : q.second) { EXPECT_TRUE(std::isfinite(w)); s += w; }
+    EXPECT_NEAR(s, JacobiMomentExact(100., 100., 0), 1e-12 * s);
+
+    NI::GeneralizedLaguerrePolynomial glag(0.5);
+    EXPECT_TRUE(std::isfinite(glag.Norm(200)));
+  }
+
+  TEST(NumericalIntegrationSymmetry, EvenWeightRulesAreExactlySymmetric) {
+    NI::LegendrePolynomial leg;
+    for (int n : { 4, 5, 101 }) {
+      auto q = NI::GaussianQuadrature(n, &leg);
+      for (int k = 0; k < n; ++k) {
+        EXPECT_EQ(q.first[k], -q.first[n - 1 - k]) << "n=" << n << " k=" << k;
+        EXPECT_EQ(q.second[k], q.second[n - 1 - k]) << "n=" << n << " k=" << k;
+      }
+      if (n % 2 == 1) EXPECT_EQ(q.first[n / 2], 0.);
+    }
+  }
+
+  TEST(NumericalIntegrationNewton, LaguerreAndHermiteSeedsGiveValidRules) {
+    // Regression: the asymptotic seeds made Newton converge to duplicate roots
+    // (Hermite n = 4: 3 distinct nodes, sum of weights 2.496 instead of sqrt(pi)).
+    NI::LaguerrePolynomial lag;
+    NI::HermitePolynomial her;
+    for (int n : { 1, 2, 3, 4, 5, 8, 16, 32, 64, 100 }) {
+      auto L = NI::GaussianQuadraturesNewton(n, NI::InitialGuessLaguerre(n), &lag);
+      auto H = NI::GaussianQuadraturesNewton(n, NI::InitialGuessHermite(n), &her);
+      auto Lg = NI::GaussianQuadrature(n, &lag);
+      auto Hg = NI::GaussianQuadrature(n, &her);
+      double sl = 0., sh = 0.;
+      for (int k = 0; k < n; ++k) {
+        sl += L.second[k]; sh += H.second[k];
+        EXPECT_NEAR(L.first[k], Lg.first[k], 1e-10 * std::max(1., Lg.first[k])) << "Laguerre n=" << n << " k=" << k;
+        EXPECT_NEAR(H.first[k], Hg.first[k], 1e-12) << "Hermite n=" << n << " k=" << k;
+        if (k > 0) {
+          EXPECT_LT(L.first[k - 1], L.first[k]) << "Laguerre n=" << n;
+          EXPECT_LT(H.first[k - 1], H.first[k]) << "Hermite n=" << n;
+        }
+      }
+      EXPECT_NEAR(sl, 1., 1e-12) << "Laguerre n=" << n;
+      EXPECT_NEAR(sh, std::sqrt(std::acos(-1.)), 1e-12) << "Hermite n=" << n;
+    }
+  }
+
+  TEST(NumericalIntegrationNewton, LaguerreAndHermiteSeedsAtHighOrder) {
+    // The seeds are computed without Golub-Welsch; compare them with it at
+    // orders where the Newton weights themselves would overflow.
+    NI::LaguerrePolynomial lag;
+    NI::HermitePolynomial her;
+    for (int n : { 200, 500 }) {
+      auto xl = NI::InitialGuessLaguerre(n);
+      auto xh = NI::InitialGuessHermite(n);
+      auto gl = NI::NodesGolubWelsch(n, &lag);
+      auto gh = NI::NodesGolubWelsch(n, &her);
+      for (int k = 0; k < n; ++k) {
+        EXPECT_NEAR(xl[k], gl[k], 1e-11 * std::max(1., gl[k])) << "Laguerre n=" << n << " k=" << k;
+        EXPECT_NEAR(xh[k], gh[k], 1e-11) << "Hermite n=" << n << " k=" << k;
+      }
+    }
   }
 
 }
