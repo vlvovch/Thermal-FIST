@@ -234,4 +234,29 @@ namespace {
     }
   }
 
+  TEST(NumericalIntegrationNewton, LaguerreAndHermiteSeedsGiveValidRules) {
+    // Regression: the asymptotic seeds made Newton converge to duplicate roots
+    // (Hermite n = 4: 3 distinct nodes, sum of weights 2.496 instead of sqrt(pi)).
+    NI::LaguerrePolynomial lag;
+    NI::HermitePolynomial her;
+    for (int n : { 4, 8, 16, 32 }) {
+      auto L = NI::GaussianQuadraturesNewton(n, NI::InitialGuessLaguerre(n), &lag);
+      auto H = NI::GaussianQuadraturesNewton(n, NI::InitialGuessHermite(n), &her);
+      auto Lg = NI::GaussianQuadrature(n, &lag);
+      auto Hg = NI::GaussianQuadrature(n, &her);
+      double sl = 0., sh = 0.;
+      for (int k = 0; k < n; ++k) {
+        sl += L.second[k]; sh += H.second[k];
+        EXPECT_NEAR(L.first[k], Lg.first[k], 1e-10 * std::max(1., Lg.first[k])) << "Laguerre n=" << n << " k=" << k;
+        EXPECT_NEAR(H.first[k], Hg.first[k], 1e-12) << "Hermite n=" << n << " k=" << k;
+        if (k > 0) {
+          EXPECT_LT(L.first[k - 1], L.first[k]) << "Laguerre n=" << n;
+          EXPECT_LT(H.first[k - 1], H.first[k]) << "Hermite n=" << n;
+        }
+      }
+      EXPECT_NEAR(sl, 1., 1e-12) << "Laguerre n=" << n;
+      EXPECT_NEAR(sh, std::sqrt(std::acos(-1.)), 1e-12) << "Hermite n=" << n;
+    }
+  }
+
 }

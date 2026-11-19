@@ -7,7 +7,9 @@
  *
  * Vendored from GaussQuad (https://github.com/vlvovch/gaussquad-cpp), v1.1.0,
  * commit a1dc387. Local changes: namespace gaussquad -> thermalfist::NumericalIntegration,
- * include paths and include guards. Keep in sync with upstream.
+ * include paths and include guards, and InitialGuessLaguerre/InitialGuessHermite
+ * return the Golub-Welsch nodes (the upstream asymptotic seeds converge to
+ * duplicate roots). Keep in sync with upstream.
  */
 /**
  * @file GaussianQuadrature.h
@@ -337,28 +339,23 @@ namespace NumericalIntegration {
     return x0;
   }
 
+  // Seeds for GaussianQuadraturesNewton. The asymptotic formulas used upstream
+  // (GaussQuad v1.1.0) do not isolate the roots: from them Newton converges to
+  // duplicate roots (Hermite already at n = 4, Laguerre at n = 32), giving an
+  // invalid rule. The Golub-Welsch nodes are the roots themselves to round-off,
+  // so Newton only polishes them.
   inline std::vector<double> InitialGuessLaguerre(int n) {
     if (n <= 0)
       throw std::invalid_argument("InitialGuessLaguerre: number of nodes n must be positive");
-    std::vector<double> x0(n);
-    for(int k = 0; k < n; ++k) {
-      int i = k + 1;
-      double xi = detail::pi * (i - 0.25) - (4.*i - 1.) / (8. * detail::pi * (i - 0.25));
-      double base = (xi * xi) / (4 * n + 2);
-      double factor = 1. + 0.4 * (i - 1.) / n;
-      x0[k] = base * factor;
-    }
-    return x0;
+    LaguerrePolynomial poly;
+    return NodesGolubWelsch(n, &poly);
   }
 
   inline std::vector<double> InitialGuessHermite(int n) {
     if (n <= 0)
       throw std::invalid_argument("InitialGuessHermite: number of nodes n must be positive");
-    std::vector<double> x0(n);
-    for (int i = 0; i < n; ++i) {
-      x0[i] = std::sqrt(i + 0.5) * std::cos(detail::pi * (i + 0.75) / (n + 0.5));
-    }
-    return x0;
+    HermitePolynomial poly;
+    return NodesGolubWelsch(n, &poly);
   }
 
   inline std::pair<std::vector<double>, std::vector<double>> GaussianQuadraturesLegendre(int n) {
