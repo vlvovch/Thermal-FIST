@@ -8,8 +8,8 @@
  * Vendored from GaussQuad (https://github.com/vlvovch/gaussquad-cpp), v1.1.0,
  * commit a1dc387. Local changes: namespace gaussquad -> thermalfist::NumericalIntegration,
  * include paths and include guards, and InitialGuessLaguerre/InitialGuessHermite
- * return the Golub-Welsch nodes (the upstream asymptotic seeds converge to
- * duplicate roots). Keep in sync with upstream.
+ * use root-by-root Numerical Recipes guesses (the upstream asymptotic seeds
+ * converge to duplicate roots). Keep in sync with upstream.
  */
 /**
  * @file GaussianQuadrature.h
@@ -339,23 +339,141 @@ namespace NumericalIntegration {
     return x0;
   }
 
+  namespace detail {
+    // p_n(z) and p_n'(z) of the family, up to a common positive factor, from
+    // the three-term recurrence. The rescaling keeps high-order Hermite and
+    // Laguerre values from overflowing; it changes neither signs nor p/p'.
+    inline void EvalPolyAndDerivative(int n, double z, const OrthogonalPolynomial* poly,
+                                      double& p, double& dp) {
+      double p0 = 0., p1 = 1., dp0 = 0., dp1 = 0.;
+      for (int j = 0; j < n; ++j) {
+        const std::vector<double> c = poly->Recurrence(j);
+        const double np  = (c[0] * z - c[1]) * p1 - c[2] * p0;
+        const double ndp = c[0] * p1 + (c[0] * z - c[1]) * dp1 - c[2] * dp0;
+        p0 = p1; p1 = np; dp0 = dp1; dp1 = ndp;
+        if (std::max(std::abs(p1), std::abs(dp1)) > 1e150) {
+          p0 *= 1e-150; p1 *= 1e-150; dp0 *= 1e-150; dp1 *= 1e-150;
+        }
+      }
+      p = p1; dp = dp1;
+    }
+
+    // Newton's method safeguarded by bisection on a bracket [a, b] with
+    // p_n(a) and p_n(b) of opposite signs, so it cannot leave the bracket and
+    // always returns the root inside it.
+    inline double SafeNewtonRoot(int n, double a, double b, double z,
+                                 const OrthogonalPolynomial* poly, const int MAX_ITER = 200) {
+      double pa, dpa, pz, dpz;
+      if (a > b) std::swap(a, b);
+      EvalPolyAndDerivative(n, a, poly, pa, dpa);
+      if (!(z > a && z < b)) z = 0.5 * (a + b);
+      for (int iter = 0; iter < MAX_ITER; ++iter) {
+        EvalPolyAndDerivative(n, z, poly, pz, dpz);
+        if (pz == 0.0) return z;
+        if ((pz < 0.) == (pa < 0.)) { a = z; pa = pz; }
+        else b = z;
+        double znew = (dpz != 0.0) ? z - pz / dpz : 0.5 * (a + b);
+        if (!(znew > a && znew < b)) znew = 0.5 * (a + b);
+        if (std::abs(znew - z) <= 1e-15 * std::max(1., std::abs(znew)) || b - a <= 1e-15 * std::max(1., std::abs(z)))
+          return znew;
+        z = znew;
+      }
+      return z;
+    }
+
+    // The root next to a known root xprev in the direction of the estimate
+    // zguess. Steps away from xprev by a quarter of the estimated spacing until
+    // p_n changes sign, which brackets exactly the neighbouring root as long as
+    // the step is below the root spacing, then refines it inside the bracket.
+    inline double NextRoot(int n, double xprev, double zguess, const OrthogonalPolynomial* poly) {
+      const double d = zguess - xprev;
+      double a = xprev + 1e-6 * d, pa, dpa, pb, dpb;
+      EvalPolyAndDerivative(n, a, poly, pa, dpa);
+      double b = a;
+      for (int k = 0; k < 10000; ++k) {
+        const double bn = b + 0.25 * d;
+        EvalPolyAndDerivative(n, bn, poly, pb, dpb);
+        if ((pb < 0.) != (pa < 0.) || pb == 0.)
+          return SafeNewtonRoot(n, b, bn, zguess, poly);
+        b = bn;
+      }
+      throw std::runtime_error("NextRoot: could not bracket the next root");
+    }
+
+    // Plain Newton from a guess, for the first (outermost) root.
+    inline double NewtonRoot(int n, double z, const OrthogonalPolynomial* poly, const int MAX_ITER = 200) {
+      for (int iter = 0; iter < MAX_ITER; ++iter) {
+        double p, dp;
+        EvalPolyAndDerivative(n, z, poly, p, dp);
+        if (dp == 0.0 || !std::isfinite(dp) || !std::isfinite(p))
+          throw std::runtime_error("NewtonRoot: zero or non-finite derivative");
+        const double dx = -p / dp;
+        z += dx;
+        if (std::abs(dx) <= 1e-15 * std::max(1., std::abs(z))) return z;
+      }
+      throw std::runtime_error("NewtonRoot: Newton-Raphson did not converge");
+    }
+  } // namespace detail
+
   // Seeds for GaussianQuadraturesNewton. The asymptotic formulas used upstream
   // (GaussQuad v1.1.0) do not isolate the roots: from them Newton converges to
   // duplicate roots (Hermite already at n = 4, Laguerre at n = 32), giving an
-  // invalid rule. The Golub-Welsch nodes are the roots themselves to round-off,
-  // so Newton only polishes them.
+  // invalid rule. Here each root is guessed from the previously found ones with
+  // the empirical formulas of Numerical Recipes (gaulag, gauher; after Stroud and
+  // Secrest). Each later root is bracketed next to the previous one by a sign
+  // change of p_n and refined by Newton safeguarded with bisection, so no root
+  // can be found twice. No Golub-Welsch step is involved.
   inline std::vector<double> InitialGuessLaguerre(int n) {
     if (n <= 0)
       throw std::invalid_argument("InitialGuessLaguerre: number of nodes n must be positive");
     LaguerrePolynomial poly;
-    return NodesGolubWelsch(n, &poly);
+    std::vector<double> x(n);
+    double z = 0.;
+    for (int i = 0; i < n; ++i) {
+      if (i == 0)
+        z = 3. / (1. + 2.4 * n);
+      else if (i == 1)
+        z += 15. / (1. + 2.5 * n);
+      else {
+        const double ai = i - 1.;
+        z += (1. + 2.55 * ai) / (1.9 * ai) * (z - x[i - 2]);
+      }
+      if (i > 0 && !(z > x[i - 1]))  // the estimate must lie above the last root
+        z = x[i - 1] + (i > 1 ? x[i - 1] - x[i - 2] : x[i - 1]);
+      z = (i == 0) ? detail::NewtonRoot(n, z, &poly) : detail::NextRoot(n, x[i - 1], z, &poly);
+      x[i] = z;
+    }
+    return x;
   }
 
   inline std::vector<double> InitialGuessHermite(int n) {
     if (n <= 0)
       throw std::invalid_argument("InitialGuessHermite: number of nodes n must be positive");
     HermitePolynomial poly;
-    return NodesGolubWelsch(n, &poly);
+    std::vector<double> x(n);
+    const int m = (n + 1) / 2;
+    double z = 0.;
+    // Positive roots from the largest down; the rest follow by symmetry.
+    for (int i = 0; i < m; ++i) {
+      if (i == 0)
+        z = std::sqrt(2. * n + 1.) - 1.85575 * std::pow(2. * n + 1., -0.16667);
+      else if (i == 1)
+        z -= 1.14 * std::pow(static_cast<double>(n), 0.426) / z;
+      else if (i == 2)
+        z = 1.86 * z - 0.86 * x[n - 1];
+      else if (i == 3)
+        z = 1.91 * z - 0.91 * x[n - 2];
+      else
+        z = 2. * z - x[n - i + 1];
+      if (n % 2 == 1 && i == m - 1) break;  // the middle root is 0
+      if (i > 0 && !(z < x[n - i]))  // the estimate must lie below the last root
+        z = x[n - i] - (i > 1 ? x[n - i + 1] - x[n - i] : 0.5 * x[n - i]);
+      z = (i == 0) ? detail::NewtonRoot(n, z, &poly) : detail::NextRoot(n, x[n - i], z, &poly);
+      x[n - 1 - i] = z;
+      x[i] = -z;
+    }
+    if (n % 2 == 1) x[n / 2] = 0.;
+    return x;
   }
 
   inline std::pair<std::vector<double>, std::vector<double>> GaussianQuadraturesLegendre(int n) {

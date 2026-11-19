@@ -239,7 +239,7 @@ namespace {
     // (Hermite n = 4: 3 distinct nodes, sum of weights 2.496 instead of sqrt(pi)).
     NI::LaguerrePolynomial lag;
     NI::HermitePolynomial her;
-    for (int n : { 4, 8, 16, 32 }) {
+    for (int n : { 1, 2, 3, 4, 5, 8, 16, 32, 64, 100 }) {
       auto L = NI::GaussianQuadraturesNewton(n, NI::InitialGuessLaguerre(n), &lag);
       auto H = NI::GaussianQuadraturesNewton(n, NI::InitialGuessHermite(n), &her);
       auto Lg = NI::GaussianQuadrature(n, &lag);
@@ -256,6 +256,23 @@ namespace {
       }
       EXPECT_NEAR(sl, 1., 1e-12) << "Laguerre n=" << n;
       EXPECT_NEAR(sh, std::sqrt(std::acos(-1.)), 1e-12) << "Hermite n=" << n;
+    }
+  }
+
+  TEST(NumericalIntegrationNewton, LaguerreAndHermiteSeedsAtHighOrder) {
+    // The seeds are computed without Golub-Welsch; compare them with it at
+    // orders where the Newton weights themselves would overflow.
+    NI::LaguerrePolynomial lag;
+    NI::HermitePolynomial her;
+    for (int n : { 200, 500 }) {
+      auto xl = NI::InitialGuessLaguerre(n);
+      auto xh = NI::InitialGuessHermite(n);
+      auto gl = NI::NodesGolubWelsch(n, &lag);
+      auto gh = NI::NodesGolubWelsch(n, &her);
+      for (int k = 0; k < n; ++k) {
+        EXPECT_NEAR(xl[k], gl[k], 1e-11 * std::max(1., gl[k])) << "Laguerre n=" << n << " k=" << k;
+        EXPECT_NEAR(xh[k], gh[k], 1e-11) << "Hermite n=" << n << " k=" << k;
+      }
     }
   }
 
