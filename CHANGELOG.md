@@ -20,7 +20,7 @@ Note one behavior change: the Broyden solver now reports a failure when its init
 
 ### Bugfixes
 
-- `Broyden::Solve` reports a failure on a singular initial Jacobian; VDW and real-gas models then fall back to `SearchFirstSolution()`
+- `Broyden::Solve`, which all models use to solve their equations (chemical potential constraints, EV/VDW/real-gas, PCE, canonical saddle point, ...), reports a failure on a singular initial Jacobian. Where the solution is checked, such points are now flagged as failed; VDW and real-gas models first retry with `SearchFirstSolution()`
 - Fixed the retry in `SolveChemicalPotentials`, which left μB unconstrained afterwards
 - Fixed an infinite loop when an interaction parameters file does not exist
 - Fixed a crash in `ThermalModelFit::PrintYields*` when the output file cannot be opened
