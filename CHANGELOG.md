@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6.3]
+
+Date: 2026-11-23
+
+A bugfix and stability release, mainly for the event generator.
+One notable behavior change: the Broyden solver now reports a failure when its initial Jacobian is singular, whereas it used to return the initial guess as converged. This does not affect the converged results, but some points that used to look valid are now flagged as failed.
+
+### Event generator
+
+- Consistent use of random number generator: all random numbers come from `randgenMT` (the time-seeded `RandomGenerators::rng_std` was removed) and events for a fixed seed are now reproducible.
+- Fixed a rare infinite loop in decays into four or more particles near the threshold
+- Fixed a rare loss of an unstable hadron without decay products, which could break charge conservation in the event
+- Fixed the convergence of the T–μ matching in `HypersurfaceSampler` (thanks to [G. Alocco](https://github.com/galocco), #68)
+
+### Bugfixes
+
+- Broyden solver now reports a failure on a singular initial Jacobian instead of returning the initial guess as converged
+- Fixed the retry code in `SolveChemicalPotentials`, which could leave μB unconstrained afterwards
+- Fixed an infinite loop when an interaction parameters file does not exist
+- Fixed a crash in `ThermalModelFit::PrintYields*` when the output file cannot be opened
+
+### Numerical integration
+
+- Synced the Gaussian quadrature code with [GaussQuad](https://github.com/vlvovch/gaussquad-cpp) v1.1.0. This includes fixes for Jacobi rules with α ≠ β and for large exponents which however were never used in Thermal-FIST
+
 ## [Version 1.6.2]
 
 Date: 2026-11-01
@@ -484,6 +509,8 @@ Date: 2018-12-10
 Date: 2018-08-02
 
 **The first public version of Thermal-FIST**
+
+[Version 1.6.3]: https://github.com/vlvovch/Thermal-FIST/compare/v1.6.2...v1.6.3
 
 [Version 1.6.2]: https://github.com/vlvovch/Thermal-FIST/compare/v1.6.1...v1.6.2
 
