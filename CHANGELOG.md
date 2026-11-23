@@ -9,26 +9,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Date: 2026-11-23
 
 A bugfix and stability release, mainly for the event generator.
-Note one behavior change: the Broyden solver now reports a failure when its initial Jacobian is singular, where it used to return the initial guess as converged. Converged results are unchanged, but some points that used to look valid are now flagged as failed.
+One notable behavior change: the Broyden solver now reports a failure when its initial Jacobian is singular, whereas it used to return the initial guess as converged. This does not affect the converged results, but some points that used to look valid are now flagged as failed.
 
 ### Event generator
 
-- Events for a fixed seed are now reproducible: all random numbers come from `randgenMT` (the time-seeded `RandomGenerators::rng_std` was removed)
+- Consistent use of random number generator: all random numbers come from `randgenMT` (the time-seeded `RandomGenerators::rng_std` was removed) and events for a fixed seed are now reproducible.
 - Fixed a rare infinite loop in decays into four or more particles near the threshold
-- Fixed a rare loss of an unstable hadron without decay products, which broke charge conservation in the event
+- Fixed a rare loss of an unstable hadron without decay products, which could break charge conservation in the event
 - Fixed the convergence of the T–μ matching in `HypersurfaceSampler` (thanks to [G. Alocco](https://github.com/galocco), #68)
 
 ### Bugfixes
 
-- `Broyden::Solve`, which all models use to solve their equations (chemical potential constraints, EV/VDW/real-gas, PCE, canonical saddle point, ...), reports a failure on a singular initial Jacobian. Where the solution is checked, such points are now flagged as failed; VDW and real-gas models first retry with `SearchFirstSolution()`
-- Fixed the retry in `SolveChemicalPotentials`, which left μB unconstrained afterwards
+- Broyden solver now reports a failure on a singular initial Jacobian instead of returning the initial guess as converged
+- Fixed the retry code in `SolveChemicalPotentials`, which could leave μB unconstrained afterwards
 - Fixed an infinite loop when an interaction parameters file does not exist
 - Fixed a crash in `ThermalModelFit::PrintYields*` when the output file cannot be opened
 
 ### Numerical integration
 
-- Synced the Gaussian quadrature code with [GaussQuad](https://github.com/vlvovch/gaussquad-cpp) v1.1.0: fixes for Jacobi rules with α ≠ β and for large exponents
-- Fixed duplicate roots in the Newton-Raphson Laguerre and Hermite rules (the default Golub-Welsch rules are not affected)
+- Synced the Gaussian quadrature code with [GaussQuad](https://github.com/vlvovch/gaussquad-cpp) v1.1.0. This includes fixes for Jacobi rules with α ≠ β and for large exponents which however were never used in Thermal-FIST
 
 ## [Version 1.6.2]
 
