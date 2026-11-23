@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Version 1.6.3]
 
-Date: 2026-11-XX
+Date: 2026-11-23
 
 A bugfix and stability release. Note one behavior change: when the Broyden solver cannot even start, because its initial Jacobian is singular or not finite, it now reports a failure. Before, it returned the unchanged initial guess as if it had converged. Results of calculations that converged are unchanged. Some points that used to look valid are now flagged as failed (see Nonlinear solvers below).
 
