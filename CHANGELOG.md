@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Version 1.6.3]
+
+Date: 2026-11-XX
+
+A bugfix and stability release. Note one behavior change: when the Broyden solver cannot even start, because its initial Jacobian is singular or not finite, it now reports a failure. Before, it returned the unchanged initial guess as if it had converged. Results of calculations that converged are unchanged. Some points that used to look valid are now flagged as failed (see Nonlinear solvers below).
+
+### Event generator
+
+- Fixed: the events for a fixed seed were not reproducible from run to run. The order in which particle momenta are sampled was shuffled with a second random engine, `RandomGenerators::rng_std`, seeded from the clock and not set by `SetSeed()`. This affected the spherical and cylindrical blast-wave and Cracow generators, with or without excluded volume, as well as the hypersurface samplers. All random numbers now come from `randgenMT`, and the shuffle is the new `RandomGenerators::RandomShuffle()`, which gives the same permutation with every standard library. The events for a given seed change once. API change: `rng_std` was removed, and `SetSeed()` alone now fixes the events.
+- Fixed a rare hang in decays into four or more particles. A draw exactly at the end of [0, 1] (probability 2^-32 per decay) put a three-body sub-decay at its threshold, where the rejection sampling of m12 never accepted. Sampling at or near the threshold is now safe: the draw excludes the ends, there is no phase-space NaN, and rejection sampling stops after 10^6 attempts with a warning. Two- and three-body decays are unchanged bit for bit for a fixed seed.
+- Fixed: an unstable hadron could disappear without decay products, breaking charge conservation in the event (about one event in 3.4 million). This happened when the decay-channel draw was exactly 1. Events for a given seed change only where that draw occurred.
+- Fixed the convergence of the T–μ matching in `HypersurfaceSampler` (the Q/B equation is now normalized by the target baryon density), which matters in particular with γS < 1 (Giacomo Alocco, PR #68).
+- New tests: `test_RandomGenerators` and `test_ParticleDecaysMC`.
+
+### Nonlinear solvers
+
+- Behavior change: `Broyden::Solve` now reports a failure (`Iterations() == MaxIterations()`) when the initial Jacobian is singular or its inverse contains NaN/Inf. Before, it returned the initial guess with `Iterations() == 0`, which most callers read as converged. Code that checks for convergence now sees these failures:
+  - VDW and real-gas models fall back to `SearchFirstSolution()` and do not keep the initial guess, and `IsLastSolutionOK()` returns false if that fails too;
+  - the canonical saddle-point methods skip a charge sector whose chemical potentials could not be determined;
+  - `EffectiveMassModel` returns zero for the BEC temperature when its solve fails.
+- `ThermalModelBase::SolveChemicalPotentials`: fixed the retry with the μB constraint released (triggered by vanishing entropy or baryon density, or a very steep Jacobian). It restored the μQ constraint flag in place of the μB one, so μB stayed unconstrained in the following calls. This could happen in S/B-constrained calculations, for example when starting from μB = 0.
+- `Broyden::Solve` returns at once for a system with no equations, and throws `std::runtime_error` if the size of the initial guess does not match the system. It no longer leaks its default convergence criterion and Jacobian on early returns.
+
+### Stability
+
+- Fixed an infinite loop in `ReadInteractionParameters` (EV diagonal, EV crossterms, legacy EV crossterms, EV and VDW canonical strangeness, VDW) when the interaction parameters file does not exist. These functions now print a warning and return.
+- Fixed a crash in `ThermalModelFit::PrintYieldsTable`, `PrintYieldsTable2`, `PrintYieldsLatex` and `PrintYieldsLatexAll` when the output file cannot be opened.
+
+### Numerical integration
+
+- The Gaussian quadrature headers were synced with [GaussQuad](https://github.com/vlvovch/gaussquad-cpp) v1.1.0:
+  - fixed the Jacobi recurrence, so rules with α ≠ β were wrong beyond the x² moment;
+  - no overflow in the Jacobi and generalized Laguerre norms for large exponents (Jacobi(100,100) gave NaN weights);
+  - an error on a zero or non-finite derivative in Newton-Raphson;
+  - exactly symmetric even-weight rules (changes at the 1e-15 level).
+- The Newton-Raphson path (`GaussianQuadraturesNewton`) for Laguerre and Hermite rules could find the same root twice. It now uses the Numerical Recipes initial guesses with bracketing and safeguarded Newton, and agrees with Golub-Welsch to 1e-12 up to n = 1000. The default Golub-Welsch rules used by the physics code, and therefore the physics results, are not affected.
+
 ## [Version 1.6.2]
 
 Date: 2026-11-01
