@@ -13,6 +13,8 @@
 #include "MersenneTwister.h"
 #include "HRGEventGenerator/MomentumDistribution.h"
 #include "HRGBase/ThermalParticle.h"
+#include <algorithm>
+#include <iterator>
 #include <random>
 #include <utility>
 
@@ -23,13 +25,35 @@ namespace thermalfist {
   namespace RandomGenerators {
 
     /// \brief The Mersenne Twister random number generator
+    ///
+    /// The event generators take all their random numbers from this generator,
+    /// so the seed set with SetSeed() determines the generated events.
     extern MTRand randgenMT;
-
-    /// \brief The Mersenne Twister random number generator from STD library
-    extern std::mt19937 rng_std;
 
     /// \brief Set the seed of the random number generator randgenMT
     void SetSeed(const unsigned int seed);
+
+    /**
+     * \brief Randomly permutes the elements in the range [first, last)
+     *
+     * Fisher-Yates shuffle with the random numbers from rangen (randgenMT by default).
+     * Used instead of std::shuffle, whose algorithm depends on the implementation
+     * of the standard library: the permutation for a given seed is the same everywhere.
+     *
+     * \param first  Iterator to the first element
+     * \param last   Iterator past the last element
+     * \param rangen The Mersenne Twister random number generator to use
+     */
+    template<class RandomIt>
+    void RandomShuffle(RandomIt first, RandomIt last, MTRand& rangen = randgenMT)
+    {
+      typedef typename std::iterator_traits<RandomIt>::difference_type diff_t;
+      for (diff_t i = (last - first) - 1; i > 0; --i) {
+        // Uniform in [0, i]
+        diff_t j = static_cast<diff_t>(rangen.randInt(static_cast<MTRand::uint32>(i)));
+        std::iter_swap(first + i, first + j);
+      }
+    }
 
     /// \brief Generates random integer distributed by Poisson with specified mean
     /// Uses randgenMT

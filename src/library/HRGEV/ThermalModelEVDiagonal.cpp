@@ -81,8 +81,12 @@ namespace thermalfist {
     m_v = std::vector<double>(m_TPS->Particles().size(), 0.);
 
     ifstream fin(filename.c_str());
+    if (!fin.is_open()) {
+      std::cerr << "**WARNING** ThermalModelEVDiagonal::ReadInteractionParameters: cannot open file " << filename << std::endl;
+      return;
+    }
     char cc[2000];
-    while (!fin.eof()) {
+    while (fin.good()) {
       fin.getline(cc, 2000);
       string tmp = string(cc);
       vector<string> elems = CuteHRGHelper::split(tmp, '#');

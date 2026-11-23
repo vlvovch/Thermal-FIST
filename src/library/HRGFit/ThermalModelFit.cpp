@@ -685,6 +685,10 @@ namespace thermalfist {
 
   void ThermalModelFit::PrintYieldsTable(std::string filename) {
     FILE *f = fopen(filename.c_str(), "w");
+    if (f == NULL) {
+      std::cerr << "**WARNING** ThermalModelFit::PrintYieldsTable: cannot open file " << filename << " for writing" << std::endl;
+      return;
+    }
 
     fprintf(f, "%15s\t%25s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\n", 
       "N", "Name", "Data", "Error", "Fit", "Deviation", "Deviation2", 
@@ -734,6 +738,10 @@ namespace thermalfist {
 
   void ThermalModelFit::PrintYieldsTable2(std::string filename) {
     FILE *f = fopen(filename.c_str(), "w");
+    if (f == NULL) {
+      std::cerr << "**WARNING** ThermalModelFit::PrintYieldsTable2: cannot open file " << filename << " for writing" << std::endl;
+      return;
+    }
 
     fprintf(f, "%15s\t%25s\t%15s\t%15s\t%15s\t%15s\n", "N", "Name", "Data", "Error", "Fit", "Deviation");
     //m_model->SetParameters(m_Parameters.GetThermalModelParameters());
@@ -769,6 +777,10 @@ namespace thermalfist {
 
   void ThermalModelFit::PrintYieldsLatex(std::string filename, std::string name) {
     FILE *f = fopen(filename.c_str(), "w");
+    if (f == NULL) {
+      std::cerr << "**WARNING** ThermalModelFit::PrintYieldsLatex: cannot open file " << filename << " for writing" << std::endl;
+      return;
+    }
     fprintf(f, "\\begin{tabular}{|c|c|c|c|}\n");
     fprintf(f, "\\hline\n");
     fprintf(f, "\\multicolumn{4}{|c|}{%s} \\\\\n", name.c_str());
@@ -828,6 +840,10 @@ namespace thermalfist {
 
   void ThermalModelFit::PrintYieldsLatexAll(std::string filename, std::string name, bool asymm) {
     FILE *f = fopen(filename.c_str(), "w");
+    if (f == NULL) {
+      std::cerr << "**WARNING** ThermalModelFit::PrintYieldsLatexAll: cannot open file " << filename << " for writing" << std::endl;
+      return;
+    }
     fprintf(f, "\\begin{tabular}{|c|c|c|c|}\n");
     fprintf(f, "\\hline\n");
     fprintf(f, "\\multicolumn{4}{|c|}{%s} \\\\\n", name.c_str());
